@@ -1,8 +1,8 @@
 #!/bin/bash
 # Wrapper automatique qui combine golangci-lint + ktn-linter
 
-# Trouver le vrai golangci-lint
-REAL_GOLANGCI_LINT="/home/vscode/.cache/go/bin/golangci-lint"
+# Trouver le vrai golangci-lint (v2.5.0)
+REAL_GOLANGCI_LINT="$(which golangci-lint)"
 
 # Fichier temporaire pour stocker la sortie
 TEMPFILE=$(mktemp)
