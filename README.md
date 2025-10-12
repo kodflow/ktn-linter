@@ -73,16 +73,16 @@ make build
 ./builds/ktn-linter -v ./...
 ```
 
-### Avec golangci-lint (via wrapper)
+### Avec VSCode (intégration automatique)
 
-Le projet utilise un wrapper qui combine golangci-lint + ktn-linter.
+Le projet utilise un wrapper qui exécute uniquement KTN-Linter.
 
 ```bash
 # Analyser avec le wrapper
 ./bin/golangci-lint-wrapper run ./...
 
 # Dans VSCode, le wrapper est automatiquement utilisé
-# via .vscode/settings.json
+# Les erreurs apparaissent lors de la sauvegarde (Ctrl+S)
 ```
 
 ---
@@ -106,12 +106,12 @@ make install-tools   # Installer golangci-lint
 ```
 .
 ├── bin/
-│   └── golangci-lint-wrapper    # Wrapper golangci-lint + ktn-linter
+│   └── golangci-lint-wrapper    # Wrapper pour KTN-Linter
 ├── src/
 │   ├── cmd/ktn-linter/          # Linter standalone
 │   ├── pkg/analyzer/            # Analyseurs (const.go, ...)
 │   │   └── formatter/           # Formatage sortie
-│   └── plugin/                  # Plugin (pour wrapper)
+│   └── plugin/                  # Plugin module (pour future intégration)
 ├── tests/
 │   ├── source/                  # Code avec erreurs
 │   │   └── rules_*/             # Une règle = un dossier
@@ -120,7 +120,7 @@ make install-tools   # Installer golangci-lint
 ├── .vscode/
 │   ├── settings.json            # Config VSCode + wrapper
 │   └── extensions.json          # Extension Go recommandée
-├── .golangci.yml                # Config golangci-lint
+├── .golangci.yml                # Config minimale (wrapper uniquement)
 ├── go.mod
 ├── Makefile
 └── README.md
@@ -211,19 +211,18 @@ lint:
 Le projet est pré-configuré pour VSCode avec intégration automatique :
 
 **Configuration :**
-- `.vscode/settings.json` : Configure golangci-lint pour utiliser le wrapper
-- `.golangci.yml` : Configuration des linters golangci-lint
-- Le wrapper combine automatiquement golangci-lint + ktn-linter
+- `.vscode/settings.json` : Configure le wrapper KTN-Linter
+- `.golangci.yml` : Configuration minimale
+- Le wrapper exécute uniquement KTN-Linter (pas de linters golangci-lint)
 
 **Utilisation :**
 - Les erreurs apparaissent automatiquement lors de la sauvegarde (`Ctrl+S`)
 - Le panel **PROBLEMS** affiche toutes les erreurs avec liens cliquables
-- Les erreurs KTN sont préfixées par `[KTN-CONST-XXX]`
+- Les erreurs sont préfixées par `[KTN-CONST-XXX]`
 
 **Prérequis :**
 1. Installer l'extension Go : `Ctrl+Shift+X` → rechercher "Go"
 2. Compiler le linter : `make build`
-3. golangci-lint v2+ doit être installé
 
 ---
 

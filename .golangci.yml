@@ -5,38 +5,10 @@ run:
   tests: true
   go: "1.25"
 
+# Configuration minimale : uniquement KTN-Linter via le wrapper
+# Aucun linter golangci-lint activé
 linters:
-  enable:
-    # Standards (déjà activés)
-    - govet          # Analyse statique officielle
-    - errcheck       # Vérifie les erreurs non traitées
-    - staticcheck    # Analyse statique complète (inclut gosimple + stylecheck)
-    - unused         # Code non utilisé
-
-    # Dernières features et bonnes pratiques Go
-    - intrange       # ⭐ Encourage integer ranges (Go 1.22+)
-    - copyloopvar    # Détecte copies inutiles de loop vars (Go 1.22+)
-    - errorlint      # Error wrapping moderne (Go 1.13+)
-    - usestdlibvars  # Utilise constantes stdlib
-    - unconvert      # Supprime conversions inutiles
-
-    # Style et idiomes Go modernes
-    - gocritic       # Diagnostics complets (bugs, perf, style)
-    - revive         # Remplaçant moderne de golint
-
-    # Qualité de code
-    - misspell       # Détecte fautes d'orthographe
-    - gocyclo        # Complexité cyclomatique
-    - dupl           # Code dupliqué
-    - godox          # TODO/FIXME/BUG dans le code
-    - goconst        # Strings répétées → constantes
-
-    # Sécurité et bugs
-    - gosec          # Problèmes de sécurité
-    - bodyclose      # HTTP response body fermé
-    - noctx          # HTTP requests sans context
-    - rowserrcheck   # sql.Rows.Err vérifié
-    - sqlclosecheck  # sql.Rows/Stmt fermés
+  enable: []
 
 issues:
   max-issues-per-linter: 0

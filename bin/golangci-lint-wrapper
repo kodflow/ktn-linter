@@ -1,39 +1,38 @@
 #!/bin/bash
-# Wrapper automatique qui combine golangci-lint + ktn-linter
-
-# Trouver le vrai golangci-lint (v2.5.0)
-REAL_GOLANGCI_LINT="$(which golangci-lint)"
-
-# Fichier temporaire pour stocker la sortie
-TEMPFILE=$(mktemp)
-
-# Exécuter le vrai golangci-lint et capturer la sortie
-$REAL_GOLANGCI_LINT "$@" 2>&1 | grep -E '^[^:]+:[0-9]+:[0-9]+:' >> "$TEMPFILE" || true
+# Wrapper pour KTN-Linter uniquement (pas de golangci-lint)
 
 # Détecter si on analyse un fichier spécifique ou un pattern
 FILE_ARG=""
+PATTERN_ARG=""
+
 for arg in "$@"; do
+    # Ignorer les flags
+    if [[ "$arg" == -* ]]; then
+        continue
+    fi
+
+    # Fichier Go spécifique
     if [[ "$arg" == *.go ]] && [[ -f "$arg" ]]; then
         FILE_ARG="$arg"
         break
     fi
+
+    # Pattern (./..., tests/, src/, etc.)
+    if [[ "$arg" == *"..."* ]] || [[ "$arg" == *"/"* ]]; then
+        PATTERN_ARG="$arg"
+        break
+    fi
 done
 
-# Si c'est un fichier Go spécifique, exécuter ktn-linter dessus
+# Exécuter ktn-linter
 if [[ -n "$FILE_ARG" ]]; then
-    /workspace/builds/ktn-linter -simple "$FILE_ARG" 2>&1 >> "$TEMPFILE" || true
+    /workspace/builds/ktn-linter -simple "$FILE_ARG" 2>&1 || true
+elif [[ -n "$PATTERN_ARG" ]]; then
+    /workspace/builds/ktn-linter -simple "$PATTERN_ARG" 2>&1 || true
+else
+    # Par défaut, analyser tout
+    /workspace/builds/ktn-linter -simple ./... 2>&1 || true
 fi
-
-# Si c'est un pattern comme ./..., exécuter ktn-linter sur le workspace
-if [[ "$*" == *"./..."* ]] || [[ "$*" == *"tests/"* ]]; then
-    /workspace/builds/ktn-linter -simple ./... 2>&1 >> "$TEMPFILE" || true
-fi
-
-# Afficher le contenu trié et unique
-sort -u "$TEMPFILE"
-
-# Nettoyer
-rm -f "$TEMPFILE"
 
 # Retourner 0 pour ne pas bloquer l'extension Go
 exit 0
