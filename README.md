@@ -153,7 +153,7 @@ Documentation complète : [tests/source/rules_const/.README.md](./tests/source/r
 
 2. **Créer les fichiers :**
    - `tests/source/rules_<nom>/.README.md` : Documentation
-   - `tests/source/rules_<nom>/from.go` : Code incorrect
+   - `tests/source/rules_<nom>/source.go` : Code incorrect
    - `tests/target/rules_<nom>/target.go` : Code correct
 
 3. **Implémenter l'analyseur :**
