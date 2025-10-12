@@ -58,9 +58,9 @@ func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 			}
 
 			// Vérifier chaque constante dans le groupe
-			for _, spec := range genDecl.Specs {
+			for i, spec := range genDecl.Specs {
 				valueSpec := spec.(*ast.ValueSpec)
-				checkConstSpec(pass, valueSpec)
+				checkConstSpec(pass, valueSpec, i == 0 && hasGroupComment)
 			}
 		}
 	}
@@ -68,7 +68,7 @@ func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec) {
+func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool) {
 	for _, name := range spec.Names {
 		if name.Name == "_" {
 			continue
@@ -77,7 +77,11 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec) {
 		// KTN-CONST-003: Vérifier le commentaire individuel
 		hasComment := false
 		if spec.Doc != nil && len(spec.Doc.List) > 0 {
-			hasComment = true
+			// Si c'est la première constante d'un groupe avec commentaire de groupe,
+			// on ignore le commentaire de groupe qui lui est attaché
+			if !isFirstWithGroupComment {
+				hasComment = true
+			}
 		} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
 			hasComment = true
 		}
