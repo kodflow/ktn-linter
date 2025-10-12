@@ -278,18 +278,18 @@ func isLiteralValue(expr ast.Expr) bool {
 func looksLikeConstantName(name string) bool {
 	// Liste de noms connus de constantes mathématiques/scientifiques
 	knownConstants := map[string]bool{
-		"Pi":              true,
-		"E":               true,
-		"Euler":           true,
-		"EulerNumber":     true,
-		"GoldenRatio":     true,
-		"Phi":             true,
-		"Tau":             true,
-		"SpeedOfLight":    true,
-		"PlanckConstant":  true,
-		"AvogadroNumber":  true,
-		"BoltzmannConst":  true,
-		"GravityConst":    true,
+		"Pi":             true,
+		"E":              true,
+		"Euler":          true,
+		"EulerNumber":    true,
+		"GoldenRatio":    true,
+		"Phi":            true,
+		"Tau":            true,
+		"SpeedOfLight":   true,
+		"PlanckConstant": true,
+		"AvogadroNumber": true,
+		"BoltzmannConst": true,
+		"GravityConst":   true,
 	}
 
 	// Vérifier si c'est un nom connu
@@ -300,7 +300,7 @@ func looksLikeConstantName(name string) bool {
 	// Vérifier si le nom contient des indicateurs de constante mathématique
 	nameLower := strings.ToLower(name)
 	if strings.Contains(nameLower, "constant") ||
-	   strings.Contains(nameLower, "ratio") && strings.Contains(nameLower, "golden") {
+		strings.Contains(nameLower, "ratio") && strings.Contains(nameLower, "golden") {
 		return true
 	}
 
