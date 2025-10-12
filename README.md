@@ -1,190 +1,261 @@
-# DevContainer Minimal Template
+# KTN-Linter
 
-Template minimaliste pour démarrer rapidement vos projets avec un environnement DevContainer propre et léger.
+Linter Go personnalisé pour appliquer les bonnes pratiques Kodflow.
 
-## Fonctionnalités
+## Vue d'ensemble
 
-- **Ubuntu 24.04 LTS** comme base
-- **User vscode** (UID/GID 1000:1000) avec sudo
-- **Zsh + Oh My Zsh + Powerlevel10k** pré-installé et configuré
-- **Outils essentiels** : git, curl, wget, jq, yq, build-essential
-- **Persistance** via volumes Docker
-- **Aucune feature externe** : tout est dans le Dockerfile
+KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kodflow.
 
-## Ce qui n'est PAS inclus
+**Formats de sortie :**
+- **Format humain** (défaut) : Sortie colorée et structurée
+- **Mode IA** (`-ai`) : Format Markdown pour Claude, ChatGPT
+- **Mode simple** (`-simple`) : Une ligne par erreur pour IDE/VSCode
+- **Sans couleurs** (`-no-color`) : Pour CI/CD et logs
 
-Ce template est **volontairement minimaliste**. Il ne contient pas :
+**Règles implémentées :**
+- ✅ **Constantes** : Regroupement, documentation et typage explicite
 
-- ❌ Langages de programmation (Go, Node.js, Python, etc.)
-- ❌ CLIs spécifiques (GitHub CLI, Claude CLI, etc.)
-- ❌ Docker-in-Docker
-- ❌ Bases de données
+---
 
-**Pourquoi ?** Pour garder l'image légère et vous laisser installer uniquement ce dont vous avez besoin.
+## Installation
 
-## Installation rapide
+### Prérequis
 
-### Via GitHub
+- **Go 1.23+** (requis)
+- **golangci-lint** (optionnel)
 
-```bash
-# Utiliser ce repository comme template
-gh repo create mon-projet --template .repository --public
-cd mon-projet
-code .
-```
-
-### Localement
+### Installation rapide
 
 ```bash
-# Copier le template
-cp -r .repository mon-projet
-cd mon-projet
-rm -rf .git
-git init
-code .
+# 1. Vérifier Go
+go version
+
+# 2. Installer les dépendances
+make deps
+
+# 3. Compiler
+make build
+
+# 4. Tester
+./builds/ktn-linter --help
 ```
 
-Acceptez l'ouverture dans le DevContainer lorsque VS Code vous le propose.
+---
 
-## Personnalisation
+## Utilisation
 
-### Ajouter des langages/outils
-
-**Option 1 : Dans le Dockerfile** (recommandé pour les outils systèmes)
-
-Éditez `.devcontainer/Dockerfile` :
-
-```dockerfile
-# Ajouter des packages apt
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    && apt-get clean
-
-# Installer Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-    && apt-get install -y nodejs
-```
-
-**Option 2 : Avec les DevContainer Features** (pour les langages standards)
-
-Ajoutez dans `.devcontainer/devcontainer.json` :
-
-```json
-"features": {
-  "ghcr.io/devcontainers/features/go:1": {
-    "version": "latest"
-  },
-  "ghcr.io/devcontainers/features/node:1": {
-    "version": "lts"
-  }
-}
-```
-
-Voir : <https://containers.dev/features>
-
-**Option 3 : Installation manuelle** (pour les outils utilisateur)
-
-Installez après l'ouverture du container :
+### Mode standalone
 
 ```bash
-# Exemple
-curl -sSL https://example.com/install.sh | sh
+# Analyser un fichier
+./builds/ktn-linter ./path/to/file.go
+
+# Analyser un package
+./builds/ktn-linter ./pkg/...
+
+# Analyser tout le projet
+./builds/ktn-linter ./...
 ```
 
-### Ajouter des extensions VS Code
-
-Éditez `.devcontainer/devcontainer.json` dans `customizations.vscode.extensions`.
-
-### Variables d'environnement
-
-Créez un fichier `.env` à la racine pour vos variables d'environnement.
-
-### Personnaliser Powerlevel10k
-
-Pour configurer le prompt Powerlevel10k :
+### Options
 
 ```bash
-# Lancer l'assistant de configuration interactif
-p10k configure
+# Mode IA (pour Claude/ChatGPT)
+./builds/ktn-linter -ai ./...
+
+# Mode simple (pour IDE/VSCode)
+./builds/ktn-linter -simple ./...
+
+# Sans couleurs (pour CI/CD)
+./builds/ktn-linter -no-color ./...
+
+# Verbose
+./builds/ktn-linter -v ./...
 ```
 
-Cela créera un fichier `~/.p10k.zsh` avec votre configuration personnalisée. Ce fichier sera automatiquement chargé au démarrage du shell.
+### Avec golangci-lint (via wrapper)
 
-## Structure des volumes
-
-Les volumes Docker persistent entre les rebuilds :
-
-### Volumes spécifiques au projet
-
-- `{nom-du-projet}-local-bin` : Binaires locaux installés
-
-### Volumes partagés
-
-- `vscode-extensions` : Extensions VS Code
-- `vscode-insiders-extensions` : Extensions VS Code Insiders
-- `zsh-history` : Historique Zsh
-
-Vous pouvez ajouter vos propres volumes dans `.devcontainer/devcontainer.json`.
-
-## Commandes utiles
-
-### Rebuild du container
+Le projet utilise un wrapper qui combine golangci-lint + ktn-linter.
 
 ```bash
-# Depuis VS Code
-Cmd+Shift+P > "Dev Containers: Rebuild Container"
+# Analyser avec le wrapper
+./bin/golangci-lint-wrapper run ./...
 
-# Ou depuis le terminal
-docker compose -f .devcontainer/docker-compose.yml down
-docker compose -f .devcontainer/docker-compose.yml build --no-cache
-docker compose -f .devcontainer/docker-compose.yml up -d
+# Dans VSCode, le wrapper est automatiquement utilisé
+# via .vscode/settings.json
 ```
 
-### Nettoyer les volumes
+---
+
+## Commandes Make
 
 ```bash
-# Supprimer tous les volumes (⚠️ perte de données)
-docker compose -f .devcontainer/docker-compose.yml down -v
+make help            # Aide
+make deps            # Installer dépendances
+make build           # Compiler linter
+make lint            # Tester sur tests/
+make test            # Tests unitaires
+make clean           # Nettoyer binaires
+make install-tools   # Installer golangci-lint
 ```
 
-### Voir les logs
+---
+
+## Structure du projet
+
+```
+.
+├── bin/
+│   └── golangci-lint-wrapper    # Wrapper golangci-lint + ktn-linter
+├── src/
+│   ├── cmd/ktn-linter/          # Linter standalone
+│   ├── pkg/analyzer/            # Analyseurs (const.go, ...)
+│   │   └── formatter/           # Formatage sortie
+│   └── plugin/                  # Plugin (pour wrapper)
+├── tests/
+│   ├── source/                  # Code avec erreurs
+│   │   └── rules_*/             # Une règle = un dossier
+│   └── target/                  # Code conforme
+│       └── rules_*/
+├── .vscode/
+│   ├── settings.json            # Config VSCode + wrapper
+│   └── extensions.json          # Extension Go recommandée
+├── .golangci.yml                # Config golangci-lint
+├── go.mod
+├── Makefile
+└── README.md
+```
+
+---
+
+## Codes d'erreur
+
+### Constantes (KTN-CONST-XXX)
+
+| Code | Description |
+|------|-------------|
+| `KTN-CONST-001` | Constante non groupée dans `const ()` |
+| `KTN-CONST-002` | Groupe sans commentaire |
+| `KTN-CONST-003` | Constante sans commentaire individuel |
+| `KTN-CONST-004` | Constante sans type explicite |
+
+Documentation complète : [tests/source/rules_const/.README.md](./tests/source/rules_const/.README.md)
+
+---
+
+## Ajouter une règle
+
+1. **Créer la structure de test :**
+   ```bash
+   mkdir -p tests/source/rules_<nom>
+   mkdir -p tests/target/rules_<nom>
+   ```
+
+2. **Créer les fichiers :**
+   - `tests/source/rules_<nom>/.README.md` : Documentation
+   - `tests/source/rules_<nom>/from.go` : Code incorrect
+   - `tests/target/rules_<nom>/target.go` : Code correct
+
+3. **Implémenter l'analyseur :**
+   - `src/pkg/analyzer/<nom>.go`
+
+4. **Enregistrer l'analyseur :**
+   - Dans `src/cmd/ktn-linter/main.go`
+   - Dans `src/plugin/plugin.go`
+
+5. **Tester :**
+   ```bash
+   make lint
+   ```
+
+Le Makefile analyse automatiquement tous les dossiers dans `tests/source/` et `tests/target/`.
+
+---
+
+## Intégration CI/CD
+
+### GitHub Actions
+
+```yaml
+- name: Setup Go
+  uses: actions/setup-go@v4
+  with:
+    go-version: '1.23'
+
+- name: Run KTN-Linter
+  run: |
+    make build
+    ./builds/ktn-linter ./...
+```
+
+### GitLab CI
+
+```yaml
+lint:
+  script:
+    - make build
+    - ./builds/ktn-linter ./...
+```
+
+### Pre-commit hook
+
+`.git/hooks/pre-commit` :
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml logs -f devcontainer
+#!/bin/sh
+./builds/ktn-linter ./... || exit 1
 ```
 
-## Dépannage
+### VSCode Integration
 
-### Problèmes de permissions
+Le projet est pré-configuré pour VSCode avec intégration automatique :
 
+**Configuration :**
+- `.vscode/settings.json` : Configure golangci-lint pour utiliser le wrapper
+- `.golangci.yml` : Configuration des linters golangci-lint
+- Le wrapper combine automatiquement golangci-lint + ktn-linter
+
+**Utilisation :**
+- Les erreurs apparaissent automatiquement lors de la sauvegarde (`Ctrl+S`)
+- Le panel **PROBLEMS** affiche toutes les erreurs avec liens cliquables
+- Les erreurs KTN sont préfixées par `[KTN-CONST-XXX]`
+
+**Prérequis :**
+1. Installer l'extension Go : `Ctrl+Shift+X` → rechercher "Go"
+2. Compiler le linter : `make build`
+3. golangci-lint v2+ doit être installé
+
+---
+
+## Troubleshooting
+
+**Go non installé :**
 ```bash
-# Depuis le container
-sudo chown -R vscode:vscode $HOME
+# Installer : https://go.dev/doc/install
+go version
 ```
 
-### Rebuild complet
-
+**golangci-lint non installé :**
 ```bash
-# Supprimer le container et les volumes
-docker compose -f .devcontainer/docker-compose.yml down -v
-docker system prune -a
-
-# Rouvrir dans VS Code
-code .
+make install-tools
 ```
 
-## Philosophie
+**Wrapper ne trouve pas ktn-linter :**
+```bash
+make clean && make build
+```
 
-Ce template suit le principe **"moins c'est plus"** :
+**Erreurs ne s'affichent pas dans VSCode :**
+```bash
+# Vérifier que golangci-lint v2+ est installé
+golangci-lint --version
 
-- ✅ Démarrage rapide
-- ✅ Faible consommation de ressources
-- ✅ Facile à personnaliser
-- ✅ Pas de dépendances inutiles
+# Recompiler le linter
+make build
+```
 
-Ajoutez seulement ce dont vous avez besoin, quand vous en avez besoin.
+---
 
-## License
+## Licence
 
-Libre d'utilisation pour vos projets personnels et professionnels.
+À définir

@@ -46,6 +46,7 @@
         "redhat.vscode-yaml", // Support YAML
         "tamasfe.even-better-toml", // Support TOML
         "editorconfig.editorconfig", // EditorConfig
+        "emeraldwalk.runonsave", // Run on Save - pour exécuter ktn-linter automatiquement
         // Code Quality
         "codacy-app.codacy" // Codacy - analyse de qualité de code
       ]

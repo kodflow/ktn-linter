@@ -1,0 +1,40 @@
+#!/bin/bash
+# Wrapper automatique qui combine golangci-lint + ktn-linter
+
+# Trouver le vrai golangci-lint
+REAL_GOLANGCI_LINT="/home/vscode/.cache/go/bin/golangci-lint"
+
+# Fichier temporaire pour stocker la sortie
+TEMPFILE=$(mktemp)
+
+# Exécuter le vrai golangci-lint et capturer la sortie
+$REAL_GOLANGCI_LINT "$@" 2>&1 | grep -E '^[^:]+:[0-9]+:[0-9]+:' >> "$TEMPFILE" || true
+
+# Détecter si on analyse un fichier spécifique ou un pattern
+FILE_ARG=""
+for arg in "$@"; do
+    if [[ "$arg" == *.go ]] && [[ -f "$arg" ]]; then
+        FILE_ARG="$arg"
+        break
+    fi
+done
+
+# Si c'est un fichier Go spécifique, exécuter ktn-linter dessus
+if [[ -n "$FILE_ARG" ]]; then
+    /workspace/builds/ktn-linter -simple "$FILE_ARG" 2>&1 >> "$TEMPFILE" || true
+fi
+
+# Si c'est un pattern comme ./..., exécuter ktn-linter sur le workspace
+if [[ "$*" == *"./..."* ]] || [[ "$*" == *"tests/"* ]]; then
+    /workspace/builds/ktn-linter -simple ./... 2>&1 >> "$TEMPFILE" || true
+fi
+
+# Afficher le contenu trié et unique
+sort -u "$TEMPFILE"
+
+# Nettoyer
+rm -f "$TEMPFILE"
+
+# Retourner 0 pour ne pas bloquer l'extension Go
+exit 0
+

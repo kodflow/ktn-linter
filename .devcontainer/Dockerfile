@@ -1,5 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
+# Detect architecture automatically for multi-platform builds
+ARG TARGETARCH
+
 # Install all system tools in a single layer (rarely changes - good for cache)
 # hadolint ignore=DL3008
 RUN apt-get update \
@@ -47,13 +50,15 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install AWS CLI v2 and golangci-lint in parallel (rarely changes - good for cache)
-RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" & \
+# Install AWS CLI v2 and golangci-lint v2 in parallel (rarely changes - good for cache)
+# AWS CLI uses different architecture naming: arm64 -> aarch64, amd64 -> x86_64
+RUN AWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") && \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" -o "/tmp/awscliv2.zip" & \
     curl -fsSL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" -o "/tmp/golangci-install.sh" & \
     wait && \
     unzip /tmp/awscliv2.zip -d /tmp && \
     /tmp/aws/install && \
-    sh /tmp/golangci-install.sh -b /usr/local/bin && \
+    sh /tmp/golangci-install.sh -b /usr/local/bin v2.5.0 && \
     rm -rf /tmp/awscliv2.zip /tmp/aws /tmp/golangci-install.sh
 
 # Switch to vscode user
@@ -99,8 +104,18 @@ RUN sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.z
         echo 'alias super-claude="claude --dangerously-skip-permissions --mcp-config /home/vscode/.devcontainer/mcp.json"'; \
     } >> "$HOME/.zshrc"
 
-# Install npm global packages as root (uses @latest - may change often, so at the end)
+# Install Go 1.25.2 as root (placed near end for cache optimization)
+# Go uses standard architecture naming: arm64, amd64
 USER root
+RUN GO_ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "amd64" || echo "arm64") && \
+    curl -fsSL https://go.dev/dl/go1.25.2.linux-${GO_ARCH}.tar.gz -o /tmp/go.tar.gz && \
+    rm -rf /usr/local/go && \
+    tar -C /usr/local -xzf /tmp/go.tar.gz && \
+    rm /tmp/go.tar.gz && \
+    ln -sf /usr/local/go/bin/go /usr/local/bin/go && \
+    ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+
+# Install npm global packages as root (uses @latest - may change often, so at the end)
 RUN npm install -g @anthropic-ai/claude-code@latest @bazel/bazelisk
 USER vscode
 

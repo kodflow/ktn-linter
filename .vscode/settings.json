@@ -1,0 +1,21 @@
+{
+  // Configuration golangci-lint avec wrapper pour plugin KTN
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "workspace",
+  "go.useLanguageServer": true,
+  "go.lintFlags": [
+    "--fast"
+  ],
+  "go.alternateTools": {
+    "golangci-lint": "${workspaceFolder}/bin/golangci-lint-wrapper"
+  },
+
+  // Désactive les analyzers gopls en doublon avec golangci-lint
+  "gopls": {
+    "ui.diagnostic.analyses": {
+      "unusedparams": false,
+      "unusedwrite": false,
+      "unusedfunc": false
+    }
+  }
+}

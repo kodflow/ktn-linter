@@ -10,8 +10,6 @@ Thumbs.db
 # IDE & Editor Files
 .vscode/*
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
 !.vscode/extensions.json
 .idea/
 *.swp
@@ -128,7 +126,6 @@ Pipfile.lock
 Gemfile.lock
 
 # Rust
-target/
 Cargo.lock
 **/*.rs.bk
 *.pdb
@@ -145,7 +142,6 @@ gradle-app.setting
 .gradletasknamecache
 .mvn/
 .m2/
-target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -193,6 +189,15 @@ docker-compose.override.yml
 .cursor/
 .windsurf/
 .codacy/
+
+# Build artifacts
+builds/*
+!builds/.gitkeep
+
+# Keep wrapper script in bin/
+bin/*
+!bin/golangci-lint-wrapper
+!bin/.gitkeep
 
 # Keep empty directories
 !.gitkeep
