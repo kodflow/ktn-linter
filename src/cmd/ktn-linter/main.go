@@ -63,33 +63,43 @@ func main() {
 		fset *token.FileSet
 	}
 
+	// Liste des analyseurs à exécuter
+	analyzers := []*analysis.Analyzer{
+		analyzer.ConstAnalyzer,
+		analyzer.VarAnalyzer,
+	}
+
 	// Exécuter l'analyse
 	var allDiagnostics []diagWithFset
 
 	for _, pkg := range pkgs {
 		pkgFset := pkg.Fset // Capturer le FileSet du package
-		pass := &analysis.Pass{
-			Analyzer: analyzer.ConstAnalyzer,
-			Fset:     pkgFset,
-			Files:    pkg.Syntax,
-			Pkg:      pkg.Types,
-			TypesInfo: pkg.TypesInfo,
-			Report: func(diag analysis.Diagnostic) {
-				allDiagnostics = append(allDiagnostics, diagWithFset{
-					diag: diag,
-					fset: pkgFset,
-				})
-			},
-		}
 
 		if *verbose {
 			fmt.Fprintf(os.Stderr, "Analyzing package: %s\n", pkg.PkgPath)
 		}
 
-		_, err := analyzer.ConstAnalyzer.Run(pass)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error running analyzer on %s: %v\n", pkg.PkgPath, err)
-			os.Exit(1)
+		// Exécuter chaque analyseur
+		for _, a := range analyzers {
+			pass := &analysis.Pass{
+				Analyzer: a,
+				Fset:     pkgFset,
+				Files:    pkg.Syntax,
+				Pkg:      pkg.Types,
+				TypesInfo: pkg.TypesInfo,
+				Report: func(diag analysis.Diagnostic) {
+					allDiagnostics = append(allDiagnostics, diagWithFset{
+						diag: diag,
+						fset: pkgFset,
+					})
+				},
+			}
+
+			_, err := a.Run(pass)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error running analyzer %s on %s: %v\n", a.Name, pkg.PkgPath, err)
+				os.Exit(1)
+			}
 		}
 	}
 

@@ -1,33 +1,28 @@
 package rules_const
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 1 : Constantes correctement regroupées
+// CONSTANTES TYPE : BOOL
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Les constantes sont regroupées dans const ()
-//    ✓ Le groupe a un commentaire de groupe (2 lignes)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Regroupement dans const ()
+//    ✓ Commentaire de groupe (2 lignes : titre + description)
 //    ✓ Chaque constante a son commentaire individuel
-//    ✓ Les types sont explicites (bool)
-//    ✓ Naming MixedCaps respecté
+//    ✓ Type bool explicite pour toutes
+//    ✓ Naming MixedCaps (publiques et privées)
 //
-// 📝 STRUCTURE :
-//    // Ligne 1 : Titre court du groupe
-//    // Ligne 2 : Description détaillée du groupe
+// 💡 PATTERN :
+//    // Titre du groupe
+//    // Description détaillée du groupe
 //    const (
-//        // Commentaire individuel constante 1
-//        Constante1 Type = valeur
-//        // Commentaire individuel constante 2
-//        Constante2 Type = valeur
+//        // Commentaire constante publique
+//        PublicConst bool = true
+//        // Commentaire constante privée
+//        privateConst bool = false
 //    )
-//
-// 💡 POURQUOI :
-//    - Regroupement facilite la navigation et la compréhension
-//    - Commentaires permettent génération automatique documentation
-//    - Types explicites évitent ambiguïté et erreurs de conversion
 // ════════════════════════════════════════════════════════════════════════════
 
 // Boolean configuration
-// Ces constantes représentent des valeurs booléennes pour la configuration
+// Ces constantes configurent les fonctionnalités de l'application
 const (
 	// EnableFeatureX active la fonctionnalité X
 	EnableFeatureX bool = true
@@ -38,17 +33,12 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 2 : String constants avec métadonnées
+// CONSTANTES TYPE : STRING
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Groupe thématique cohérent (métadonnées d'application)
-//    ✓ Commentaire de groupe explicite
-//    ✓ Chaque constante documentée individuellement
-//    ✓ Type string explicite pour toutes
-//
-// 📝 PATTERN :
-//    Pour les constantes string, toujours être explicite sur le type
-//    même si Go pourrait l'inférer. Cela améliore la lisibilité.
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type string explicite (même si Go pourrait l'inférer)
+//    ✓ Commentaires décrivent le rôle, pas juste le nom
+//    ✓ Cohésion thématique (métadonnées ensemble, thèmes ensemble)
 // ════════════════════════════════════════════════════════════════════════════
 
 // Application metadata
@@ -62,21 +52,34 @@ const (
 	defaultEncoding string = "UTF-8"
 )
 
+// Theme configuration
+// Ces constantes définissent les thèmes disponibles dans l'interface
+const (
+	// ThemeLight est l'identifiant du thème clair
+	ThemeLight string = "light"
+	// ThemeDark est l'identifiant du thème sombre
+	ThemeDark string = "dark"
+	// ThemeAuto est l'identifiant du thème automatique
+	ThemeAuto string = "auto"
+	// ThemeCustom est l'identifiant du thème personnalisé
+	ThemeCustom string = "custom"
+)
+
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 3 : Integer constants avec type int explicite
+// CONSTANTES TYPE : INT (taille dépend de l'architecture: 32 ou 64 bits)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type int explicite (important : taille dépend de l'architecture)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type int explicite
+//    ✓ Mix de constantes publiques et privées
 //    ✓ Commentaires précis sur le rôle de chaque constante
-//    ✓ Mix de constantes publiques (MajConnections) et privées (maxRetries)
 //
-// 📝 IMPORTANT :
+// ⚠️  IMPORTANT :
 //    Le type "int" peut être 32 ou 64 bits selon l'architecture.
 //    Si la taille est critique, utiliser int32 ou int64 explicitement.
 // ════════════════════════════════════════════════════════════════════════════
 
 // Integer constants (int)
-// Ces constantes utilisent le type int (taille dépend de l'architecture: 32 ou 64 bits)
+// Ces constantes utilisent le type int (taille dépend de l'architecture)
 const (
 	// MaxConnections définit le nombre maximum de connexions simultanées
 	MaxConnections int = 1000
@@ -87,17 +90,12 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 4 : Integer 8-bit (int8) pour petites valeurs
+// CONSTANTES TYPE : INT8 (valeurs -128 à 127)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type int8 explicite (valeurs -128 à 127)
-//    ✓ Commentaire de groupe mentionne la plage de valeurs
-//    ✓ Choix de int8 justifié (âges, priorités : petites valeurs)
-//
-// 📝 QUAND UTILISER int8 :
-//    - Valeurs garanties dans la plage -128 à 127
-//    - Optimisation mémoire importante (tableaux, structures)
-//    - Besoin d'être explicite sur la taille
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type int8 explicite
+//    ✓ Choix justifié : valeurs garanties dans la plage -128 à 127
+//    ✓ Approprié pour âges, priorités, petites valeurs
 // ════════════════════════════════════════════════════════════════════════════
 
 // Integer 8-bit constants
@@ -112,17 +110,12 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 5 : Integer 16-bit (int16) pour valeurs moyennes
+// CONSTANTES TYPE : INT16 (valeurs -32768 à 32767)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type int16 explicite (valeurs -32768 à 32767)
-//    ✓ Approprié pour tailles de queue, buffers
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type int16 explicite
+//    ✓ Approprié pour tailles de queue, buffers, caches
 //    ✓ Commentaires mentionnent l'unité ou le contexte
-//
-// 📝 QUAND UTILISER int16 :
-//    - Valeurs dans la plage -32768 à 32767
-//    - Compteurs, tailles de buffers modérés
-//    - Besoin d'économiser mémoire vs int/int32
 // ════════════════════════════════════════════════════════════════════════════
 
 // Integer 16-bit constants
@@ -137,17 +130,12 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 6 : Integer 32-bit (int32) pour grandes valeurs
+// CONSTANTES TYPE : INT32 (valeurs -2147483648 à 2147483647)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type int32 explicite (valeurs -2147483648 à 2147483647)
-//    ✓ Approprié pour tailles de fichiers, timeouts en ms
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type int32 explicite
+//    ✓ Approprié pour tailles de fichiers, timeouts, compteurs
 //    ✓ Commentaires incluent les unités (octets, millisecondes)
-//
-// 📝 QUAND UTILISER int32 :
-//    - Valeurs dans la plage ~-2 milliards à ~2 milliards
-//    - Garantir 32 bits même sur architecture 64 bits
-//    - Compatibilité avec APIs qui attendent int32
 // ════════════════════════════════════════════════════════════════════════════
 
 // Integer 32-bit constants
@@ -162,18 +150,13 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 7 : Integer 64-bit (int64) pour très grandes valeurs
+// CONSTANTES TYPE : INT64 (très grandes valeurs)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type int64 explicite (très grandes valeurs)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type int64 explicite
 //    ✓ Approprié pour espace disque, timestamps, nanosecondes
-//    ✓ Commentaires explicites avec unités (octets, nanosecondes)
 //    ✓ Valeur 0 documentée comme "intentionnelle" (UnixEpoch)
-//
-// 📝 QUAND UTILISER int64 :
-//    - Très grandes valeurs (espace disque, timestamps)
-//    - Timestamps Unix (secondes depuis 1970)
-//    - Nanosecondes, microsecondes
+//    ✓ Commentaires explicites avec unités
 // ════════════════════════════════════════════════════════════════════════════
 
 // Integer 64-bit constants
@@ -188,17 +171,12 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 8 : Unsigned integer (uint) pour valeurs positives
+// CONSTANTES TYPE : UINT (taille dépend de l'architecture: 32 ou 64 bits)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type uint explicite (taille architecture: 32 ou 64 bits)
-//    ✓ Approprié pour IDs, tailles qui ne sont jamais négatives
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type uint explicite
+//    ✓ Approprié pour valeurs garanties positives (IDs, compteurs, tailles)
 //    ✓ Double la plage positive vs int de même taille
-//
-// 📝 QUAND UTILISER uint :
-//    - Valeurs garanties positives (IDs, compteurs)
-//    - Besoin de doubler la plage positive vs int
-//    - APIs qui requièrent unsigned (ex: longueur d'array)
 // ════════════════════════════════════════════════════════════════════════════
 
 // Unsigned integer constants (uint)
@@ -213,16 +191,15 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 9 : Unsigned 8-bit (uint8) alias de byte
+// CONSTANTES TYPE : UINT8 (valeurs 0 à 255)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type uint8 explicite (valeurs 0 à 255)
-//    ✓ Approprié pour qualité (0-100), niveaux (0-10)
-//    ✓ Commentaires mentionnent les plages valides
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type uint8 explicite
+//    ✓ Approprié pour qualité (0-100), niveaux (0-10), pourcentages
+//    ✓ Commentaires mentionnent les plages valides quand pertinent
 //
-// 📝 NOTE :
-//    uint8 et byte sont équivalents en Go.
-//    Utiliser byte pour données binaires, uint8 pour nombres.
+// 📝 NOTE : uint8 et byte sont équivalents. Utiliser byte pour données binaires,
+//           uint8 pour nombres.
 // ════════════════════════════════════════════════════════════════════════════
 
 // Unsigned 8-bit constants
@@ -237,10 +214,10 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 10 : Unsigned 16-bit (uint16) pour ports réseau
+// CONSTANTES TYPE : UINT16 (valeurs 0 à 65535)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type uint16 explicite (valeurs 0 à 65535)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type uint16 explicite
 //    ✓ Parfait pour ports réseau (plage 0-65535)
 //    ✓ Naming avec initialismes corrects (HTTPPort, HTTPSPort)
 //
@@ -262,11 +239,11 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 11 : Unsigned 32-bit (uint32) pour compteurs
+// CONSTANTES TYPE : UINT32 (valeurs 0 à 4294967295)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type uint32 explicite (valeurs 0 à 4294967295)
-//    ✓ Approprié pour compteurs d'enregistrements, chunks
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type uint32 explicite
+//    ✓ Approprié pour compteurs d'enregistrements, chunks, IDs
 //    ✓ Commentaires avec unités (octets) quand applicable
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -282,17 +259,15 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 12 : Unsigned 64-bit (uint64) pour très grandes valeurs positives
+// CONSTANTES TYPE : UINT64 (valeurs 0 à 18446744073709551615)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type uint64 explicite (0 à 18446744073709551615)
-//    ✓ TOUTES les constantes ont leur type (même MaxTransactionID!)
-//    ✓ Approprié pour mémoire, IDs de transaction
-//    ✓ Commentaires en ligne pour clarifier les valeurs (16 GB)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type uint64 explicite sur TOUTES les constantes
+//    ✓ Approprié pour mémoire, IDs de transaction, très grandes valeurs positives
+//    ✓ Commentaires en ligne pour clarifier les grandes valeurs (16 GB)
 //
-// 📝 IMPORTANT :
-//    Chaque constante DOIT avoir son type explicite, même dans un groupe
-//    où toutes ont le même type. Cohérence > concision.
+// ⚠️  IMPORTANT : Chaque constante DOIT avoir son type explicite, même dans un
+//                 groupe où toutes ont le même type. Cohérence > concision.
 // ════════════════════════════════════════════════════════════════════════════
 
 // Unsigned 64-bit constants
@@ -307,20 +282,20 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 13 : Byte constants (alias de uint8)
+// CONSTANTES TYPE : BYTE (alias de uint8)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
+// ✅ CE QUI EST CORRECT :
 //    ✓ Type byte explicite (pour données binaires/octets)
-//    ✓ Commentaire de groupe ET commentaires individuels
-//    ✓ Notation hexadécimale appropriée (0x00, 0x0A)
+//    ✓ Notation hexadécimale appropriée (0x00, 0x0A, 0x09)
+//    ✓ Commentaires expliquent la signification de chaque octet
 //
 // 📝 BYTE vs UINT8 :
 //    - byte : Pour données binaires, protocoles, encodages
 //    - uint8 : Pour valeurs numériques de 0 à 255
 // ════════════════════════════════════════════════════════════════════════════
 
-// Byte constants (alias de uint8)
-// Ces constantes représentent des octets individuels (0 à 255)
+// Byte constants
+// Ces constantes représentent des octets individuels pour encodages et protocoles
 const (
 	// NullByte représente l'octet null
 	NullByte byte = 0x00
@@ -331,9 +306,9 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 14 : Rune constants (alias de int32) pour Unicode
+// CONSTANTES TYPE : RUNE (alias de int32)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
+// ✅ CE QUI EST CORRECT :
 //    ✓ Type rune explicite (pour caractères Unicode)
 //    ✓ Mix de caractères ASCII (' ', '\n') et Unicode (❤)
 //    ✓ Commentaires expliquent chaque caractère
@@ -341,11 +316,11 @@ const (
 // 📝 RUNE vs INT32 :
 //    - rune : Pour représenter des code points Unicode
 //    - int32 : Pour valeurs numériques signées 32 bits
-//    rune et int32 sont équivalents mais rune est plus expressif
+//    rune et int32 sont équivalents mais rune est plus expressif pour Unicode
 // ════════════════════════════════════════════════════════════════════════════
 
-// Rune constants (alias de int32)
-// Ces constantes représentent des caractères Unicode
+// Rune constants
+// Ces constantes représentent des caractères Unicode (code points)
 const (
 	// SpaceRune représente le caractère espace
 	SpaceRune rune = ' '
@@ -356,11 +331,11 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 15 : Float32 constants (précision simple)
+// CONSTANTES TYPE : FLOAT32 (précision simple, ~7 décimales)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
+// ✅ CE QUI EST CORRECT :
 //    ✓ Type float32 explicite
-//    ✓ Commentaires mentionnent "approximation" pour Pi
+//    ✓ Commentaires mentionnent "approximation" pour valeurs mathématiques
 //    ✓ Approprié quand 32 bits de précision suffisent
 //
 // 📝 FLOAT32 vs FLOAT64 :
@@ -370,7 +345,7 @@ const (
 // ════════════════════════════════════════════════════════════════════════════
 
 // Float32 constants
-// Ces constantes utilisent des nombres à virgule flottante 32 bits
+// Ces constantes utilisent des nombres à virgule flottante 32 bits (précision simple)
 const (
 	// Pi32 est une approximation de Pi en float32
 	Pi32 float32 = 3.14159265
@@ -381,15 +356,15 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 16 : Float64 constants (double précision)
+// CONSTANTES TYPE : FLOAT64 (double précision, ~15 décimales)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
+// ✅ CE QUI EST CORRECT :
 //    ✓ Type float64 explicite (précision double)
 //    ✓ Haute précision pour constantes mathématiques
 //    ✓ Commentaires mentionnent les noms mathématiques (Euler, nombre d'or)
 //
 // 📝 BEST PRACTICE :
-//    Préférer float64 par défaut en Go (c'est le type par défaut).
+//    Préférer float64 par défaut en Go (c'est le type par défaut pour les littéraux).
 //    Utiliser float32 seulement si besoin spécifique d'économie mémoire.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -405,10 +380,10 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 17 : Complex64 constants (nombres complexes simple précision)
+// CONSTANTES TYPE : COMPLEX64 (float32 + float32)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type complex64 explicite (float32 + float32)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type complex64 explicite (composé de deux float32)
 //    ✓ Notation mathématique i pour unité imaginaire
 //    ✓ Commentaires expliquent chaque valeur complexe
 //
@@ -419,7 +394,7 @@ const (
 // ════════════════════════════════════════════════════════════════════════════
 
 // Complex64 constants
-// Ces constantes représentent des nombres complexes (float32 + float32)
+// Ces constantes représentent des nombres complexes en précision simple (float32 + float32)
 const (
 	// ImaginaryUnit64 représente l'unité imaginaire i en complex64
 	ImaginaryUnit64 complex64 = 0 + 1i
@@ -430,10 +405,10 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 18 : Complex128 constants (nombres complexes haute précision)
+// CONSTANTES TYPE : COMPLEX128 (float64 + float64)
 // ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ Type complex128 explicite (float64 + float64)
+// ✅ CE QUI EST CORRECT :
+//    ✓ Type complex128 explicite (composé de deux float64)
 //    ✓ Commentaire de groupe explique "haute précision"
 //    ✓ Chaque constante documentée avec son rôle mathématique
 //
@@ -455,33 +430,6 @@ const (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ EXEMPLE 19 : Theme configuration (cohésion thématique)
-// ════════════════════════════════════════════════════════════════════════════
-// 🎯 CE QUI EST CORRECT ICI :
-//    ✓ TOUTES les constantes du même thème dans UN seul groupe
-//    ✓ Pas de constantes séparées du même thème ailleurs
-//    ✓ Cohérence : 4 thèmes ensemble, pas dispersés
-//
-// 📝 PRINCIPE DE COHÉSION :
-//    Les constantes du même domaine fonctionnel doivent être groupées
-//    ensemble, même si ajoutées à des moments différents.
-//    Ne pas créer de "Partie 2" ailleurs dans le fichier.
-// ════════════════════════════════════════════════════════════════════════════
-
-// Theme configuration
-// Ces constantes définissent les thèmes disponibles
-const (
-	// ThemeLight est l'identifiant du thème clair
-	ThemeLight string = "light"
-	// ThemeDark est l'identifiant du thème sombre
-	ThemeDark string = "dark"
-	// ThemeAuto est l'identifiant du thème automatique
-	ThemeAuto string = "auto"
-	// ThemeCustom est l'identifiant du thème personnalisé
-	ThemeCustom string = "custom"
-)
-
-// ════════════════════════════════════════════════════════════════════════════
 // 📚 RÉSUMÉ DES BONNES PRATIQUES
 // ════════════════════════════════════════════════════════════════════════════
 //
@@ -493,7 +441,7 @@ const (
 // 2. COMMENTAIRES :
 //    ✓ Commentaire de groupe : 2 lignes (titre + description)
 //    ✓ Commentaire individuel : 1 ligne par constante
-//    ✓ Commentaires au-dessus (pas à côté)
+//    ✓ Commentaires au-dessus de la constante (pas à côté)
 //
 // 3. TYPES :
 //    ✓ TOUJOURS spécifier le type explicitement
@@ -513,7 +461,7 @@ const (
 //
 // 6. ORGANISATION :
 //    ✓ Constantes du même domaine ensemble
-//    ✓ Ordre logique (types simples → complexes)
+//    ✓ Ordre logique par type (bool → int → float → complex)
 //    ✓ Séparation visuelle avec commentaires de section
 //
 // ════════════════════════════════════════════════════════════════════════════

@@ -12,6 +12,7 @@ type AnalyzerPlugin struct{}
 func (*AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 	return []*analysis.Analyzer{
 		analyzer.ConstAnalyzer,
+		analyzer.VarAnalyzer,
 	}
 }
 
