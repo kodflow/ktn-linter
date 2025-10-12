@@ -58,9 +58,15 @@ func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 			}
 
 			// Vérifier chaque constante dans le groupe
-			for i, spec := range genDecl.Specs {
+			for _, spec := range genDecl.Specs {
 				valueSpec := spec.(*ast.ValueSpec)
-				checkConstSpec(pass, valueSpec, i == 0 && hasGroupComment)
+				// Vérifier si le commentaire de la constante est le même que le commentaire de groupe
+				// (cela arrive quand il n'y a qu'un seul commentaire pour le groupe ET la première constante)
+				isGroupCommentOnly := hasGroupComment &&
+					valueSpec.Doc != nil &&
+					genDecl.Doc != nil &&
+					valueSpec.Doc.Pos() == genDecl.Doc.Pos()
+				checkConstSpec(pass, valueSpec, isGroupCommentOnly)
 			}
 		}
 	}

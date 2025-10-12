@@ -13,7 +13,8 @@ KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kod
 - **Sans couleurs** (`-no-color`) : Pour CI/CD et logs
 
 **Règles implémentées :**
-- ✅ **Constantes** : Regroupement, documentation et typage explicite
+- ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite
+- 🚧 **Variables (package-level)** : En cours de développement
 
 ---
 
@@ -130,7 +131,7 @@ make install-tools   # Installer golangci-lint
 
 ## Codes d'erreur
 
-### Constantes (KTN-CONST-XXX)
+### Constantes Package-Level (KTN-CONST-XXX)
 
 | Code | Description |
 |------|-------------|
@@ -140,6 +141,22 @@ make install-tools   # Installer golangci-lint
 | `KTN-CONST-004` | Constante sans type explicite |
 
 Documentation complète : [tests/source/rules_const/.README.md](./tests/source/rules_const/.README.md)
+
+### Variables Package-Level (KTN-VAR-XXX) 🚧
+
+| Code | Description |
+|------|-------------|
+| `KTN-VAR-001` | Variable non groupée dans `var ()` |
+| `KTN-VAR-002` | Groupe sans commentaire |
+| `KTN-VAR-003` | Variable sans commentaire individuel |
+| `KTN-VAR-004` | Variable sans type explicite |
+| `KTN-VAR-005` | Variable devrait être une constante |
+| `KTN-VAR-006` | Multiple variables sur une ligne |
+| `KTN-VAR-007` | Channel sans buffer size explicite |
+| `KTN-VAR-008` | Nom avec underscore (utiliser MixedCaps) |
+| `KTN-VAR-009` | Nom en ALL_CAPS (utiliser MixedCaps) |
+
+Documentation complète : [tests/source/rules_var/.README.md](./tests/source/rules_var/.README.md)
 
 ---
 
@@ -153,8 +170,8 @@ Documentation complète : [tests/source/rules_const/.README.md](./tests/source/r
 
 2. **Créer les fichiers :**
    - `tests/source/rules_<nom>/.README.md` : Documentation
-   - `tests/source/rules_<nom>/source.go` : Code incorrect
-   - `tests/target/rules_<nom>/target.go` : Code correct
+   - `tests/source/rules_<nom>/package-level.go` : Code incorrect (ou autre nom descriptif)
+   - `tests/target/rules_<nom>/package-level.go` : Code correct (ou autre nom descriptif)
 
 3. **Implémenter l'analyseur :**
    - `src/pkg/analyzer/<nom>.go`
