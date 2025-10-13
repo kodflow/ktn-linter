@@ -13,8 +13,8 @@ KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kod
 - **Sans couleurs** (`-no-color`) : Pour CI/CD et logs
 
 **Règles implémentées :**
-- ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite
-- 🚧 **Variables (package-level)** : En cours de développement
+- ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite (32 tests isolés)
+- ✅ **Variables (package-level)** : Regroupement, documentation, typage et nommage (51 tests isolés)
 
 ---
 
@@ -110,22 +110,35 @@ make install-tools   # Installer golangci-lint
 │   └── golangci-lint-wrapper    # Wrapper pour KTN-Linter
 ├── src/
 │   ├── cmd/ktn-linter/          # Linter standalone
-│   ├── pkg/analyzer/            # Analyseurs (const.go, ...)
+│   ├── pkg/analyzer/            # Analyseurs (const.go, var.go, ...)
 │   │   └── formatter/           # Formatage sortie
+│   ├── internal/                # Packages internes
+│   │   ├── astutil/             # Utilitaires AST
+│   │   ├── naming/              # Validation nommage
+│   │   └── messageutil/         # Extraction messages
 │   └── plugin/                  # Plugin module (pour future intégration)
 ├── tests/
-│   ├── source/                  # Code avec erreurs
-│   │   └── rules_*/             # Une règle = un dossier
-│   └── target/                  # Code conforme
-│       └── rules_*/
+│   ├── source/                  # Code avec erreurs isolées (UNIQUEMENT)
+│   │   ├── rules_const/         # Tests CONST (32 erreurs isolées)
+│   │   └── rules_var/           # Tests VAR (51 erreurs isolées)
+│   └── target/                  # Code parfait (UNIQUEMENT)
+│       ├── rules_const/         # Exemples parfaits CONST (0 erreur)
+│       └── rules_var/           # Exemples parfaits VAR (0 erreur)
 ├── .vscode/
 │   ├── settings.json            # Config VSCode + wrapper
 │   └── extensions.json          # Extension Go recommandée
 ├── .golangci.yml                # Config minimale (wrapper uniquement)
+├── FUNCTION_BEST_PRACTICES.md   # Documentation bonnes pratiques fonctions
 ├── go.mod
 ├── Makefile
 └── README.md
 ```
+
+**Architecture des tests :**
+- **Principe** : "Tout parfait SAUF l'erreur testée"
+- **source/** : Code avec erreurs isolées (chaque test = 1 seule erreur)
+- **target/** : Code parfait à 100% (aucune erreur détectée)
+- **Isolation** : Chaque cas de test ne déclenche QUE l'erreur spécifique testée
 
 ---
 
@@ -142,7 +155,7 @@ make install-tools   # Installer golangci-lint
 
 Documentation complète : [tests/source/rules_const/.README.md](./tests/source/rules_const/.README.md)
 
-### Variables Package-Level (KTN-VAR-XXX) 🚧
+### Variables Package-Level (KTN-VAR-XXX)
 
 | Code | Description |
 |------|-------------|
