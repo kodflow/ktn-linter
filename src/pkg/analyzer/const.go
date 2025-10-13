@@ -5,6 +5,8 @@ import (
 	"go/token"
 
 	"golang.org/x/tools/go/analysis"
+
+	"github.com/kodflow/ktn-linter/src/internal/astutil"
 )
 
 // ConstAnalyzer vérifie que les constantes respectent les règles KTN
@@ -39,7 +41,7 @@ func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 					for _, name := range valueSpec.Names {
 						pass.Reportf(name.Pos(),
 							"[KTN-CONST-001] Constante '%s' déclarée individuellement. Regroupez les constantes dans un bloc const ().\nExemple:\n  const (\n      %s %s = ...\n  )",
-							name.Name, name.Name, getTypeString(valueSpec))
+							name.Name, name.Name, astutil.GetTypeString(valueSpec))
 					}
 				}
 				continue
@@ -95,7 +97,7 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 		if !hasComment {
 			pass.Reportf(name.Pos(),
 				"[KTN-CONST-003] Constante '%s' sans commentaire individuel.\nChaque constante doit avoir un commentaire explicatif.\nExemple:\n  // %s décrit son rôle\n  %s %s = ...",
-				name.Name, name.Name, name.Name, getTypeString(spec))
+				name.Name, name.Name, name.Name, astutil.GetTypeString(spec))
 		}
 
 		// KTN-CONST-004: Vérifier le type explicite
@@ -104,29 +106,5 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 				"[KTN-CONST-004] Constante '%s' sans type explicite.\nSpécifiez toujours le type : bool, string, int, int8, uint, float64, etc.\nExemple:\n  %s int = ...",
 				name.Name, name.Name)
 		}
-	}
-}
-
-func getTypeString(spec *ast.ValueSpec) string {
-	if spec.Type != nil {
-		return exprToString(spec.Type)
-	}
-	return "<type>"
-}
-
-func exprToString(expr ast.Expr) string {
-	switch e := expr.(type) {
-	case *ast.Ident:
-		return e.Name
-	case *ast.SelectorExpr:
-		return exprToString(e.X) + "." + e.Sel.Name
-	case *ast.ArrayType:
-		return "[]" + exprToString(e.Elt)
-	case *ast.MapType:
-		return "map[" + exprToString(e.Key) + "]" + exprToString(e.Value)
-	case *ast.StarExpr:
-		return "*" + exprToString(e.X)
-	default:
-		return "unknown"
 	}
 }

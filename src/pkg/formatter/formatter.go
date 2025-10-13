@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
+
+	"github.com/kodflow/ktn-linter/src/internal/messageutil"
 )
 
 // Colors ANSI
@@ -99,14 +101,14 @@ func (f *Formatter) formatForAI(fset *token.FileSet, diagnostics []analysis.Diag
 
 		for _, diag := range group.Diagnostics {
 			pos := fset.Position(diag.Pos)
-			code := f.extractCode(diag.Message)
+			code := messageutil.ExtractCode(diag.Message)
 
 			fmt.Fprintf(f.writer, "### Issue at line %d, column %d\n", pos.Line, pos.Column)
 			fmt.Fprintf(f.writer, "- **Code**: %s\n", code)
 			fmt.Fprintf(f.writer, "- **Message**: %s\n", diag.Message)
 			fmt.Fprintf(f.writer, "- **Category**: %s\n", diag.Category)
 
-			if suggestion := f.extractSuggestion(diag.Message); suggestion != "" {
+			if suggestion := messageutil.ExtractSuggestion(diag.Message); suggestion != "" {
 				fmt.Fprintf(f.writer, "- **Suggestion**:\n```go\n%s\n```\n", suggestion)
 			}
 
@@ -143,8 +145,8 @@ func (f *Formatter) formatSimple(fset *token.FileSet, diagnostics []analysis.Dia
 	// Afficher chaque diagnostic sur une ligne
 	for _, diag := range sorted {
 		pos := fset.Position(diag.Pos)
-		code := f.extractCode(diag.Message)
-		message := f.extractMessage(diag.Message)
+		code := messageutil.ExtractCode(diag.Message)
+		message := messageutil.ExtractMessage(diag.Message)
 
 		// Format: file:line:column: [CODE] message
 		fmt.Fprintf(f.writer, "%s:%d:%d: [%s] %s\n",
@@ -205,9 +207,9 @@ func (f *Formatter) printFileHeader(filename string, count int) {
 }
 
 func (f *Formatter) printDiagnostic(num int, pos token.Position, diag analysis.Diagnostic) {
-	code := f.extractCode(diag.Message)
-	message := f.extractMessage(diag.Message)
-	suggestion := f.extractSuggestion(diag.Message)
+	code := messageutil.ExtractCode(diag.Message)
+	message := messageutil.ExtractMessage(diag.Message)
+	suggestion := messageutil.ExtractSuggestion(diag.Message)
 	example := f.generateExample(code, message, suggestion)
 
 	// Format cliquable : fichier:ligne:colonne
@@ -265,44 +267,6 @@ func (f *Formatter) printSummary(count int) {
 	}
 }
 
-func (f *Formatter) extractCode(message string) string {
-	if idx := strings.Index(message, "[KTN-"); idx != -1 {
-		if end := strings.Index(message[idx:], "]"); end != -1 {
-			return message[idx+1 : idx+end]
-		}
-	}
-	return "UNKNOWN"
-}
-
-func (f *Formatter) extractMessage(message string) string {
-	if idx := strings.Index(message, "]"); idx != -1 {
-		msg := strings.TrimSpace(message[idx+1:])
-		// Extraire seulement la première ligne (le message principal)
-		if newline := strings.Index(msg, "\n"); newline != -1 {
-			return msg[:newline]
-		}
-		return msg
-	}
-	return message
-}
-
-func (f *Formatter) extractSuggestion(message string) string {
-	// Extraire l'exemple de code
-	if idx := strings.Index(message, "Exemple:"); idx != -1 {
-		suggestion := strings.TrimSpace(message[idx+8:])
-		// Nettoyer les lignes vides au début et à la fin
-		lines := strings.Split(suggestion, "\n")
-		var cleaned []string
-		for _, line := range lines {
-			if trimmed := strings.TrimSpace(line); trimmed != "" {
-				cleaned = append(cleaned, line)
-			}
-		}
-		return strings.Join(cleaned, "\n")
-	}
-	return ""
-}
-
 func (f *Formatter) indentCode(code string, indent string) string {
 	lines := strings.Split(code, "\n")
 	var result []string
@@ -340,8 +304,8 @@ func (f *Formatter) generateExample(code, message, suggestion string) string {
 	switch code {
 	case "KTN-CONST-001":
 		// Constante non groupée
-		constName := f.extractConstName(message)
-		constType := f.extractType(suggestion)
+		constName := messageutil.ExtractConstName(message)
+		constType := messageutil.ExtractType(suggestion)
 		before = fmt.Sprintf("const %s %s = ...", constName, constType)
 		after = fmt.Sprintf(`const (
     %s %s = ...
@@ -360,15 +324,15 @@ const (
 
 	case "KTN-CONST-003":
 		// Constante sans commentaire individuel
-		constName := f.extractConstName(message)
-		constType := f.extractType(suggestion)
+		constName := messageutil.ExtractConstName(message)
+		constType := messageutil.ExtractType(suggestion)
 		before = fmt.Sprintf("    %s %s = ...", constName, constType)
 		after = fmt.Sprintf(`    // %s defines ...
     %s %s = ...`, constName, constName, constType)
 
 	case "KTN-CONST-004":
 		// Constante sans type
-		constName := f.extractConstName(message)
+		constName := messageutil.ExtractConstName(message)
 		before = fmt.Sprintf("    %s = ...", constName)
 		after = fmt.Sprintf("    %s int = ...", constName)
 
@@ -387,40 +351,4 @@ const (
 		f.indentCode(before, "    "+Gray+"│"+Reset+" "),
 		Green, Reset,
 		f.indentCode(after, "    "+Green+"│"+Reset+" "))
-}
-
-// extractConstName extrait le nom de la constante du message
-func (f *Formatter) extractConstName(message string) string {
-	// Chercher entre quotes simples
-	start := strings.Index(message, "'")
-	if start == -1 {
-		return "MyConst"
-	}
-	end := strings.Index(message[start+1:], "'")
-	if end == -1 {
-		return "MyConst"
-	}
-	return message[start+1 : start+1+end]
-}
-
-// extractType extrait le type de la suggestion
-func (f *Formatter) extractType(suggestion string) string {
-	// Chercher après le nom de constante
-	words := strings.Fields(suggestion)
-	for i, word := range words {
-		// Chercher des types Go connus
-		if word == "bool" || word == "string" || word == "int" ||
-			word == "int8" || word == "int16" || word == "int32" || word == "int64" ||
-			word == "uint" || word == "uint8" || word == "uint16" || word == "uint32" || word == "uint64" ||
-			word == "float32" || word == "float64" ||
-			word == "byte" || word == "rune" ||
-			word == "complex64" || word == "complex128" {
-			return word
-		}
-		// Si on trouve "<type>", deviner le type
-		if word == "<type>" && i > 0 {
-			return "int"
-		}
-	}
-	return "int"
 }
