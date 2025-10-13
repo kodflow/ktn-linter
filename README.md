@@ -15,7 +15,7 @@ KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kod
 **Règles implémentées :**
 - ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite (32 tests isolés)
 - ✅ **Variables (package-level)** : Regroupement, documentation, typage et nommage (51 tests isolés)
-- ✅ **Fonctions (natives)** : Nommage, documentation stricte, complexité < 10, longueur < 35 lignes (16 tests isolés)
+- ✅ **Fonctions (natives)** : Nommage, documentation stricte, complexité < 10, longueur < 35 lignes (9 tests isolés)
 
 ---
 
@@ -122,7 +122,7 @@ make install-tools   # Installer golangci-lint
 │   ├── source/                  # Code avec erreurs isolées (UNIQUEMENT)
 │   │   ├── rules_const/         # Tests CONST (32 erreurs isolées)
 │   │   ├── rules_var/           # Tests VAR (51 erreurs isolées)
-│   │   └── rules_func/          # Tests FUNC (16 erreurs isolées)
+│   │   └── rules_func/          # Tests FUNC (9 erreurs isolées)
 │   └── target/                  # Code parfait (UNIQUEMENT)
 │       ├── rules_const/         # Exemples parfaits CONST (0 erreur)
 │       ├── rules_var/           # Exemples parfaits VAR (0 erreur)
@@ -179,15 +179,12 @@ Documentation complète : [tests/source/rules_var/.README.md](./tests/source/rul
 | Code | Description |
 |------|-------------|
 | `KTN-FUNC-001` | Nom pas en MixedCaps/mixedCaps (snake_case interdit) |
-| `KTN-FUNC-002` | Fonction exportée sans commentaire godoc |
+| `KTN-FUNC-002` | Fonction sans commentaire godoc (exportée ET privée) |
 | `KTN-FUNC-003` | Commentaire godoc incomplet - paramètres non documentés |
 | `KTN-FUNC-004` | Commentaire godoc incomplet - valeurs de retour non documentées |
 | `KTN-FUNC-005` | Trop de paramètres (> 5) |
 | `KTN-FUNC-006` | Fonction trop longue (> 35 lignes) |
 | `KTN-FUNC-007` | Complexité cyclomatique trop élevée (≥ 10) |
-| `KTN-FUNC-008` | Préfixe "Get" inutile pour getter |
-| `KTN-FUNC-009` | Initialismes incorrects (HTTP, URL, ID, etc.) |
-| `KTN-FUNC-010` | Context pas en premier paramètre |
 
 Documentation complète : [tests/source/rules_func/.README.md](./tests/source/rules_func/.README.md)
 
