@@ -193,3 +193,147 @@ func TestIsAllCaps_Unicode(t *testing.T) {
 		})
 	}
 }
+
+func TestIsMixedCaps(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		// Valides
+		{name: "MixedCaps exporté", input: "ParseHTTPRequest", expected: true},
+		{name: "mixedCaps privé", input: "calculateTotal", expected: true},
+		{name: "Simple exporté", input: "Process", expected: true},
+		{name: "Simple privé", input: "validate", expected: true},
+		{name: "HTTPServer", input: "HTTPServer", expected: true},
+		{name: "URLParser", input: "URLParser", expected: true},
+		{name: "UserID", input: "UserID", expected: true},
+
+		// Invalides - snake_case
+		{name: "snake_case", input: "parse_http_request", expected: false},
+		{name: "Snake_Case", input: "Calculate_Total", expected: false},
+		{name: "underscore début", input: "_private", expected: false},
+		{name: "underscore milieu", input: "parse_request", expected: false},
+
+		// Invalides - ALL_CAPS non initialisme
+		{name: "ALL_CAPS", input: "MAX_SIZE", expected: false},
+		{name: "MAXSIZE non initialisme", input: "MAXSIZE", expected: false},
+
+		// Valides - initialismes complets
+		{name: "HTTP seul", input: "HTTP", expected: true},
+		{name: "URL seul", input: "URL", expected: true},
+		{name: "ID seul", input: "ID", expected: true},
+
+		// Cas spéciaux
+		{name: "empty", input: "", expected: false},
+		{name: "underscore seul", input: "_", expected: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsMixedCaps(tt.input)
+			if result != tt.expected {
+				t.Errorf("IsMixedCaps(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestHasGetterPrefix(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		// Doit signaler
+		{name: "GetUserName", input: "GetUserName", expected: true},
+		{name: "GetEmail", input: "GetEmail", expected: true},
+		{name: "GetHTTPClient", input: "GetHTTPClient", expected: true},
+		{name: "GetID", input: "GetID", expected: true},
+		{name: "GetValue", input: "GetValue", expected: true},
+
+		// Ne doit PAS signaler - exceptions
+		{name: "GetOrCreate", input: "GetOrCreate", expected: false},
+		{name: "GetOrSet", input: "GetOrSet", expected: false},
+		{name: "GetOrDefault", input: "GetOrDefault", expected: false},
+		{name: "GetAndSet", input: "GetAndSet", expected: false},
+		{name: "GetAndUpdate", input: "GetAndUpdate", expected: false},
+		{name: "GetOrElse", input: "GetOrElse", expected: false},
+
+		// Ne doit PAS signaler - pas de préfixe Get
+		{name: "UserName", input: "UserName", expected: false},
+		{name: "Email", input: "Email", expected: false},
+		{name: "Parse", input: "Parse", expected: false},
+		{name: "Calculate", input: "Calculate", expected: false},
+
+		// Ne doit PAS signaler - Get sans majuscule après
+		{name: "Getter", input: "Getter", expected: false},
+		{name: "Get seul", input: "Get", expected: false},
+
+		// Cas spéciaux
+		{name: "empty", input: "", expected: false},
+		{name: "G", input: "G", expected: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := HasGetterPrefix(tt.input)
+			if result != tt.expected {
+				t.Errorf("HasGetterPrefix(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFixInitialisms(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		// Corrections simples
+		{name: "HttpServer", input: "HttpServer", expected: []string{"HTTPServer"}},
+		{name: "UrlParser", input: "UrlParser", expected: []string{"URLParser"}},
+		{name: "IdGenerator", input: "IdGenerator", expected: []string{"IDGenerator"}},
+		{name: "ApiClient", input: "ApiClient", expected: []string{"APIClient"}},
+		{name: "JsonEncoder", input: "JsonEncoder", expected: []string{"JSONEncoder"}},
+		{name: "XmlParser", input: "XmlParser", expected: []string{"XMLParser"}},
+
+		// Déjà correct - pas de suggestion
+		{name: "HTTPServer correct", input: "HTTPServer", expected: []string{}},
+		{name: "URLParser correct", input: "URLParser", expected: []string{}},
+		{name: "UserName correct", input: "UserName", expected: []string{}},
+
+		// Multiples initialismes incorrects
+		{name: "HttpApiClient", input: "HttpApiClient", expected: []string{"HTTPAPIClient"}},
+		{name: "UrlIdParser", input: "UrlIdParser", expected: []string{"URLIDParser"}},
+
+		// Cas spéciaux
+		{name: "empty", input: "", expected: []string{}},
+		{name: "no initialism", input: "UserName", expected: []string{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := FixInitialisms(tt.input)
+			// Comparer les longueurs
+			if len(result) != len(tt.expected) {
+				t.Errorf("FixInitialisms(%q) returned %d suggestions, want %d", tt.input, len(result), len(tt.expected))
+				return
+			}
+			// Comparer le contenu (si attendu non vide)
+			if len(tt.expected) > 0 {
+				found := false
+				for _, r := range result {
+					if r == tt.expected[0] {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("FixInitialisms(%q) = %v, want %v", tt.input, result, tt.expected)
+				}
+			}
+		})
+	}
+}

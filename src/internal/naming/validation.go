@@ -24,6 +24,123 @@ func IsAllCaps(s string) bool {
 	return hasLetter
 }
 
+// IsMixedCaps vérifie si un nom suit la convention MixedCaps/mixedCaps
+// Retourne true si le nom est valide (pas de snake_case, pas de ALL_CAPS sauf initialismes)
+// Exemples valides: ParseHTTPRequest, calculateTotal, HTTPServer, UserID
+// Exemples invalides: parse_http_request, Calculate_Total, PARSE_REQUEST
+func IsMixedCaps(name string) bool {
+	// Vide invalide
+	if len(name) == 0 {
+		return false
+	}
+
+	// Contient underscore = invalide (sauf initialismes sans underscore)
+	if strings.Contains(name, "_") {
+		return false
+	}
+
+	// Si tout est en majuscules, vérifier si c'est un initialisme valide
+	if IsAllCaps(name) {
+		return IsValidInitialism(name)
+	}
+
+	// Sinon, c'est valide si ça ne contient pas d'underscore
+	return true
+}
+
+// HasGetterPrefix vérifie si un nom de fonction a un préfixe "Get" inutile
+// Retourne true si le nom commence par "Get" et ce n'est pas une exception
+// Exemples à signaler: GetUserName, GetEmail, GetHTTPClient
+// Exceptions acceptées: GetOrCreate, GetAndSet (verbe composé)
+func HasGetterPrefix(name string) bool {
+	if !strings.HasPrefix(name, "Get") {
+		return false
+	}
+
+	// Exceptions: verbes composés avec Get
+	exceptions := []string{
+		"GetOrCreate", "GetOrSet", "GetOrDefault",
+		"GetAndSet", "GetAndUpdate", "GetAndDelete",
+		"GetOrElse", "GetOrInsert",
+	}
+
+	for _, ex := range exceptions {
+		if name == ex || strings.HasPrefix(name, ex) {
+			return false
+		}
+	}
+
+	// Si ça commence par Get suivi d'une majuscule, c'est un getter
+	if len(name) > 3 && unicode.IsUpper(rune(name[3])) {
+		return true
+	}
+
+	return false
+}
+
+// FixInitialisms trouve les initialismes incorrects dans un nom
+// Retourne une liste de corrections suggérées (maximum 1 suggestion avec toutes les corrections)
+// Exemples: "HttpServer" -> ["HTTPServer"], "UrlParser" -> ["URLParser"]
+func FixInitialisms(name string) []string {
+	// Liste des initialismes Go courants avec leur forme correcte
+	initialismsMap := map[string]string{
+		"Http":  "HTTP",
+		"Https": "HTTPS",
+		"Url":   "URL",
+		"Uri":   "URI",
+		"Id":    "ID",
+		"Api":   "API",
+		"Json":  "JSON",
+		"Xml":   "XML",
+		"Html":  "HTML",
+		"Sql":   "SQL",
+		"Tls":   "TLS",
+		"Ssl":   "SSL",
+		"Tcp":   "TCP",
+		"Udp":   "UDP",
+		"Ip":    "IP",
+		"Dns":   "DNS",
+		"Ssh":   "SSH",
+		"Ftp":   "FTP",
+		"Ok":    "OK",
+		"Eof":   "EOF",
+		"Uid":   "UID",
+		"Uuid":  "UUID",
+		"Ascii": "ASCII",
+		"Utf":   "UTF",
+		"Cpu":   "CPU",
+		"Ram":   "RAM",
+		"Io":    "IO",
+		"Db":    "DB",
+		"Rpc":   "RPC",
+		"Cdn":   "CDN",
+		"Aws":   "AWS",
+		"Gcp":   "GCP",
+		"Ttl":   "TTL",
+		"Acl":   "ACL",
+		"Cors":  "CORS",
+		"Csrf":  "CSRF",
+	}
+
+	fixed := name
+	hasChanges := false
+
+	// Chercher et remplacer tous les initialismes incorrects dans une seule passe
+	for incorrect, correct := range initialismsMap {
+		if strings.Contains(fixed, incorrect) {
+			fixed = strings.ReplaceAll(fixed, incorrect, correct)
+			hasChanges = true
+		}
+	}
+
+	// Si des changements ont été faits, retourner la version corrigée
+	if hasChanges && fixed != name {
+		return []string{fixed}
+	}
+
+	return []string{}
+}
+
 // IsValidInitialism vérifie si le nom est composé uniquement d'initialismes Go valides
 // Exemples valides: HTTP, HTTPS, URL, HTTPOK, URLID, APIURL, HTTPSPort
 // Exemples invalides: MAX_BUFFER, HTTP_OK (contiennent des underscores)

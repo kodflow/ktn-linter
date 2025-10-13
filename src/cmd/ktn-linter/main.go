@@ -67,6 +67,7 @@ func main() {
 	analyzers := []*analysis.Analyzer{
 		analyzer.ConstAnalyzer,
 		analyzer.VarAnalyzer,
+		analyzer.FuncAnalyzer,
 	}
 
 	// Exécuter l'analyse
