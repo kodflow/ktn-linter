@@ -381,14 +381,16 @@ var (
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Noms avec underscore
-// ERREURS : KTN-VAR-008 sur HTTP_OK, NOT_FOUND
-// HTTP codes
+// ❌ CAS INCORRECT 1 : Noms avec underscore (mais PAS en ALL_CAPS)
+// ERREURS : KTN-VAR-008 UNIQUEMENT sur max_size, buffer_Size, http_client
+// Buffer settings
 var (
-	// HTTP_OK représente le code 200
-	HTTP_OK int = 200
-	// NOT_FOUND représente le code 404
-	NOT_FOUND int = 404
+	// max_size définit la taille maximale (snake_case)
+	max_size int = 1024
+	// buffer_Size définit la taille du buffer (mixte avec underscore)
+	buffer_Size int = 512
+	// http_client est le client HTTP (snake_case)
+	http_client string = "default"
 )
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -414,14 +416,16 @@ var (
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Noms en ALL_CAPS (convention autre langage)
-// ERREURS : KTN-VAR-009 sur MAX_BUFFER_SIZE, DEFAULT_TIMEOUT
-// Buffer configuration
+// ❌ CAS INCORRECT 1 : Noms en ALL_CAPS (sans underscore)
+// ERREURS : KTN-VAR-009 UNIQUEMENT sur MAXSIZE, TIMEOUT, BUFFERSIZE
+// Size configuration
 var (
-	// MAX_BUFFER_SIZE est la taille maximale du buffer
-	MAX_BUFFER_SIZE int = 1024
-	// DEFAULT_TIMEOUT est le timeout par défaut
-	DEFAULT_TIMEOUT int = 30
+	// MAXSIZE est la taille maximale (ALL_CAPS sans underscore)
+	MAXSIZE int = 1024
+	// TIMEOUT est le timeout par défaut (ALL_CAPS sans underscore)
+	TIMEOUT int = 30
+	// BUFFERSIZE est la taille du buffer (ALL_CAPS sans underscore)
+	BUFFERSIZE int = 512
 )
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -441,6 +445,16 @@ var (
 // ERREURS : KTN-VAR-001 sur ThemeHighContrast, ThemeSepia
 var ThemeHighContrast string = "high-contrast"
 var ThemeSepia string = "sepia"
+
+// ❌ ERREUR : Cumul VAR-008 + VAR-009 (underscore ET ALL_CAPS)
+// ERREURS : KTN-VAR-008 + KTN-VAR-009 sur MAX_BUFFER_SIZE, DEFAULT_TIMEOUT
+// Buffer configuration
+var (
+	// MAX_BUFFER_SIZE viole les deux règles (underscore + ALL_CAPS)
+	MAX_BUFFER_SIZE int = 2048
+	// DEFAULT_TIMEOUT viole les deux règles (underscore + ALL_CAPS)
+	DEFAULT_TIMEOUT int = 60
+)
 
 // ════════════════════════════════════════════════════════════════════════════
 // Types factices pour les exemples

@@ -1,15 +1,29 @@
 package rules_var
 
 // ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : BOOL
+// KTN-VAR-001 : Variables groupées dans var ()
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Regroupement dans var ()
-//    ✓ Commentaire de groupe (2 lignes : titre + description)
-//    ✓ Chaque variable a son commentaire individuel
-//    ✓ Type bool explicite pour toutes
-//    ✓ Naming MixedCaps (publiques et privées)
-//    ✓ Variables mutables (peuvent changer à runtime)
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Les variables package-level doivent être regroupées dans un bloc var ()
+//    au lieu d'être déclarées individuellement avec "var X = ..."
+//
+//    POURQUOI :
+//    - Améliore la lisibilité et l'organisation du code
+//    - Facilite la maintenance (variables liées regroupées)
+//    - Rend les variables mutables explicites et visibles
+//    - Standard Go universel pour variables package-level
+//
+// ✅ CAS PARFAIT (pas d'erreur) :
+//
+//    // Boolean configuration
+//    // Ces variables configurent les fonctionnalités (mutables)
+//    var (
+//        // EnableFeatureX active la fonctionnalité X
+//        EnableFeatureX bool = true
+//        // EnableDebug active le mode debug
+//        EnableDebug bool = false
+//    )
+//
 // ════════════════════════════════════════════════════════════════════════════
 
 // Boolean configuration
@@ -23,13 +37,50 @@ var (
 	isProduction bool = true
 )
 
+// String configuration
+// Ces variables configurent les thèmes de l'application
+var (
+	// ThemeAuto est l'identifiant du thème automatique
+	ThemeAuto string = "auto"
+	// ThemeCustom est l'identifiant du thème personnalisé
+	ThemeCustom string = "custom"
+)
+
+// Integer configuration
+// Ces variables configurent les limites entières (ajustables à runtime)
+var (
+	// MaxQueueSize est la taille maximale de la queue
+	MaxQueueSize int16 = 10000
+	// DefaultBufferSize est la taille par défaut du buffer
+	DefaultBufferSize int16 = 4096
+	// minCacheSize est la taille minimale du cache
+	minCacheSize int16 = 512
+)
+
 // ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : STRING
+// KTN-VAR-002 : Groupe avec commentaire de groupe
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type string explicite
-//    ✓ Cohésion thématique (métadonnées ensemble, thèmes ensemble)
-//    ✓ Commentaires expliquent pourquoi variables (mutables en production)
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Chaque bloc var () doit avoir un commentaire de groupe avant le bloc
+//    pour expliquer le contexte global de ces variables mutables.
+//
+//    POURQUOI :
+//    - Documente l'intention du regroupement
+//    - Aide à comprendre pourquoi ces variables sont mutables
+//    - Requis par les outils de documentation Go (godoc)
+//    - Améliore la maintenabilité
+//
+// ✅ CAS PARFAIT (pas d'erreur) :
+//
+//    // Application metadata
+//    // Ces variables contiennent les métadonnées (mutables en production)
+//    var (
+//        // ApplicationName est le nom de l'application
+//        ApplicationName string = "MyApp"
+//        // Version est la version actuelle
+//        Version string = "1.0.0"
+//    )
+//
 // ════════════════════════════════════════════════════════════════════════════
 
 // Application metadata
@@ -43,45 +94,44 @@ var (
 	defaultEncoding string = "UTF-8"
 )
 
-// Theme configuration
-// Ces variables définissent les thèmes disponibles (configurables)
+// Disk and time values
+// Ces variables utilisent int64 pour les grandes valeurs
 var (
-	// ThemeLight est l'identifiant du thème clair
-	ThemeLight string = "light"
-	// ThemeDark est l'identifiant du thème sombre
-	ThemeDark string = "dark"
-	// ThemeAuto est l'identifiant du thème automatique
-	ThemeAuto string = "auto"
-	// ThemeCustom est l'identifiant du thème personnalisé
-	ThemeCustom string = "custom"
+	// MaxDiskSpace est l'espace disque maximum en octets
+	MaxDiskSpace int64 = 1099511627776
+	// UnixEpoch représente le timestamp Unix epoch (intentionnellement 0)
+	UnixEpoch int64 = 0
+	// nanosPerSecond est le nombre de nanosecondes par seconde
+	nanosPerSecond int64 = 1000000000
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INT
+// KTN-VAR-003 : Variable avec commentaire individuel
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type int explicite
-//    ✓ Mix de variables publiques et privées
-//    ✓ Commentaires expliquent le rôle de chaque variable
-// ════════════════════════════════════════════════════════════════════════════
-
-// Integer configuration
-// Ces variables configurent les limites entières (ajustables à runtime)
-var (
-	// MaxConnections définit le nombre maximum de connexions simultanées
-	MaxConnections int = 1000
-	// DefaultPort est le port par défaut de l'application
-	DefaultPort int = 8080
-	// maxRetries définit le nombre maximum de tentatives
-	maxRetries int = 3
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INT8
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type int8 explicite (valeurs -128 à 127)
-//    ✓ Approprié pour âges, priorités
+// 📝 DESCRIPTION DU PROBLÈME :
+//    CHAQUE variable (publique ET privée) doit avoir son propre commentaire
+//    individuel qui explique son rôle spécifique. Le commentaire doit être
+//    sur la ligne juste au-dessus de la variable.
+//
+//    POURQUOI :
+//    - Documente précisément le rôle de CETTE variable
+//    - Obligatoire pour les variables publiques (godoc)
+//    - Recommandé aussi pour les privées (maintenabilité)
+//    - Variables mutables nécessitent plus de documentation
+//
+// ✅ CAS PARFAIT (pas d'erreur) :
+//
+//    // Age limits
+//    // Ces variables définissent les limites d'âge (configurables)
+//    var (
+//        // MinAge est l'âge minimum autorisé
+//        MinAge int8 = 18
+//        // MaxAge est l'âge maximum autorisé
+//        MaxAge int8 = 120
+//        // defaultPriority est la priorité par défaut
+//        defaultPriority int8 = 5
+//    )
+//
 // ════════════════════════════════════════════════════════════════════════════
 
 // Age limits
@@ -96,31 +146,42 @@ var (
 )
 
 // ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INT16
+// KTN-VAR-004 : Variable avec type explicite
 // ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type int16 explicite (valeurs -32768 à 32767)
-//    ✓ Approprié pour tailles de queue, buffers
+// 📝 DESCRIPTION DU PROBLÈME :
+//    TOUTES les variables doivent avoir un type explicite spécifié.
+//    Ne jamais laisser le compilateur inférer le type, même si c'est évident.
+//
+//    POURQUOI :
+//    - Élimine l'ambiguïté (int ? int32 ? int64 ?)
+//    - Rend le contrat explicite (important pour variables mutables)
+//    - Évite les surprises de conversion de types
+//    - Facilite la relecture et la maintenance
+//    - Plus critique que pour const car variables mutables
+//
+// ✅ CAS PARFAIT (pas d'erreur) :
+//
+//    // Integer configuration
+//    // Ces variables configurent les limites (mutables)
+//    var (
+//        // MaxConnections définit le nombre maximum de connexions
+//        MaxConnections int = 1000
+//        // DefaultPort est le port par défaut
+//        DefaultPort int = 8080
+//    )
+//
 // ════════════════════════════════════════════════════════════════════════════
 
-// Queue configuration
-// Ces variables configurent les tailles de queue (ajustables)
+// Integer configuration
+// Ces variables configurent les limites entières (ajustables à runtime)
 var (
-	// MaxQueueSize est la taille maximale de la queue
-	MaxQueueSize int16 = 10000
-	// DefaultBufferSize est la taille par défaut du buffer
-	DefaultBufferSize int16 = 4096
-	// minCacheSize est la taille minimale du cache
-	minCacheSize int16 = 512
+	// MaxConnections définit le nombre maximum de connexions simultanées
+	MaxConnections int = 1000
+	// DefaultPort est le port par défaut de l'application
+	DefaultPort int = 8080
+	// maxRetries définit le nombre maximum de tentatives
+	maxRetries int = 3
 )
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INT32
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type int32 explicite
-//    ✓ Commentaires incluent les unités (octets, millisecondes)
-// ════════════════════════════════════════════════════════════════════════════
 
 // File and timeout limits
 // Ces variables définissent les limites de fichier et timeout
@@ -133,56 +194,6 @@ var (
 	maxRequestsPerMinute int32 = 1000
 )
 
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INT64
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type int64 explicite
-//    ✓ Valeur 0 documentée comme "intentionnelle" (UnixEpoch)
-// ════════════════════════════════════════════════════════════════════════════
-
-// Disk and time values
-// Ces variables utilisent int64 pour les grandes valeurs
-var (
-	// MaxDiskSpace est l'espace disque maximum en octets
-	MaxDiskSpace int64 = 1099511627776
-	// UnixEpoch représente le timestamp Unix epoch (intentionnellement 0)
-	UnixEpoch int64 = 0
-	// nanosPerSecond est le nombre de nanosecondes par seconde
-	nanosPerSecond int64 = 1000000000
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : UINT
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type uint explicite
-//    ✓ Approprié pour valeurs garanties positives (IDs, compteurs)
-// ════════════════════════════════════════════════════════════════════════════
-
-// User and pool limits
-// Ces variables définissent les limites utilisateur et pool
-var (
-	// MaxUserID est l'ID utilisateur maximum
-	MaxUserID uint = 4294967295
-	// DefaultPoolSize est la taille par défaut du pool
-	DefaultPoolSize uint = 100
-	// minWorkers est le nombre minimum de workers
-	minWorkers uint = 4
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : SLICE
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type slice complet explicite : []string, []int
-//    ✓ Initialisation claire avec valeurs
-//    ✓ Commentaires expliquent le contenu
-//
-// ⚠️  IMPORTANT : Pour les slices, TOUJOURS spécifier le type complet
-//                 []string = []string{...}, pas = []string{...}
-// ════════════════════════════════════════════════════════════════════════════
-
 // Default tags
 // Ces variables définissent les tags par défaut (modifiables)
 var (
@@ -193,18 +204,6 @@ var (
 	// errorCodes liste les codes d'erreur HTTP standards
 	errorCodes []int = []int{400, 401, 403, 404, 500}
 )
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : MAP
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type map complet explicite : map[string]string
-//    ✓ Initialisation avec make ou littéral
-//    ✓ Commentaires expliquent le contenu
-//
-// ⚠️  IMPORTANT : Pour les maps, TOUJOURS spécifier le type complet
-//                 map[string]string = map[string]string{...}
-// ════════════════════════════════════════════════════════════════════════════
 
 // Configuration maps
 // Ces variables contiennent les configurations sous forme de maps
@@ -220,100 +219,6 @@ var (
 	}
 )
 
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : CHANNEL
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type channel explicite : chan string, chan error
-//    ✓ Buffer size explicite dans le commentaire
-//    ✓ "unbuffered" mentionné quand pertinent
-//
-// ⚠️  IMPORTANT : TOUJOURS préciser dans le commentaire :
-//                 - (buffer=N) pour buffered channels
-//                 - (unbuffered) pour channels synchrones
-// ════════════════════════════════════════════════════════════════════════════
-
-// Channel variables
-// Ces variables sont des channels pour la communication inter-goroutines
-var (
-	// MessageQueue est le channel pour les messages (buffer=100)
-	MessageQueue chan string = make(chan string, 100)
-	// ErrorQueue est le channel pour les erreurs (buffer=50)
-	ErrorQueue chan error = make(chan error, 50)
-	// doneSignal signale la fin d'exécution (unbuffered intentionnel)
-	doneSignal chan bool = make(chan bool)
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INT (COMPTEURS AVEC ZERO VALUE)
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type int explicite
-//    ✓ Initialisation à 0 explicite (zero value intentionnelle)
-//    ✓ Commentaire mentionne "zero value intentionnelle"
-//
-// 📝 NOTE : Pour les compteurs, toujours initialiser explicitement à 0
-//           et mentionner dans le commentaire que c'est intentionnel
-// ════════════════════════════════════════════════════════════════════════════
-
-// Counter variables
-// Ces variables comptent les événements (zero value intentionnelle)
-var (
-	// RequestCount compte le nombre total de requêtes
-	RequestCount int = 0
-	// ErrorCount compte le nombre total d'erreurs
-	ErrorCount int = 0
-	// warningCount compte le nombre total d'avertissements
-	warningCount int = 0
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : HTTP STATUS CODES
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Naming avec initialismes corrects (HTTPOK, HTTPNotFound)
-//    ✓ Type int explicite
-//    ✓ Commentaires clairs
-//
-// 📝 NAMING : HTTPOK (pas Http_OK, HTTP_OK, ou HttpOk)
-// ════════════════════════════════════════════════════════════════════════════
-
-// HTTP status codes
-// Ces variables représentent les codes de statut HTTP standards
-var (
-	// HTTPOK représente le code HTTP 200
-	HTTPOK int = 200
-	// HTTPNotFound représente le code HTTP 404
-	HTTPNotFound int = 404
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : NETWORK SETTINGS
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Une variable par ligne (pas HostName, Port = ...)
-//    ✓ Chaque variable a son propre commentaire
-//    ✓ Types explicites
-// ════════════════════════════════════════════════════════════════════════════
-
-// Network settings
-// Ces variables configurent les paramètres réseau
-var (
-	// HostName est le nom d'hôte par défaut
-	HostName string = "localhost"
-	// Port est le port réseau par défaut
-	Port int = 8080
-)
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : INITIALISÉES PAR FONCTION
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type explicite (string, interface{})
-//    ✓ Commentaires expliquent la source d'initialisation
-//    ✓ Même si initialisées par fonction, le type doit être explicite
-// ════════════════════════════════════════════════════════════════════════════
-
 // Initialized variables
 // Ces variables sont initialisées via des fonctions à l'initialisation du package
 var (
@@ -322,15 +227,6 @@ var (
 	// defaultLogger est l'instance de logger par défaut
 	defaultLogger interface{} = createLogger()
 )
-
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : STRUCT
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type struct complet explicite
-//    ✓ Définition du type ET initialisation
-//    ✓ Commentaire explique la structure
-// ════════════════════════════════════════════════════════════════════════════
 
 // Config struct
 // DefaultConfig contient la configuration par défaut de l'application
@@ -348,15 +244,6 @@ var (
 	}
 )
 
-// ════════════════════════════════════════════════════════════════════════════
-// VARIABLES TYPE : POINTER
-// ════════════════════════════════════════════════════════════════════════════
-// ✅ CE QUI EST CORRECT :
-//    ✓ Type pointer explicite : *Context, *User
-//    ✓ Initialisation claire avec &Type{}
-//    ✓ Commentaires expliquent l'usage
-// ════════════════════════════════════════════════════════════════════════════
-
 // Pointer variables
 // Ces variables sont des pointeurs vers des structures (partagées)
 var (
@@ -366,52 +253,225 @@ var (
 	defaultUser *User = &User{Name: "anonymous"}
 )
 
+// Counter variables with explicit zero value
+// Ces variables comptent les événements (zero value intentionnelle)
+var (
+	// RequestCount compte le nombre total de requêtes
+	RequestCount int = 0
+	// ErrorCount compte le nombre total d'erreurs
+	ErrorCount int = 0
+	// warningCount compte le nombre total d'avertissements
+	warningCount int = 0
+)
+
 // ════════════════════════════════════════════════════════════════════════════
-// 📚 RÉSUMÉ DES BONNES PRATIQUES POUR VARIABLES
+// KTN-VAR-005 : Variable vs Constante (utiliser const quand approprié)
 // ════════════════════════════════════════════════════════════════════════════
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Si une valeur ne change jamais (comme Pi, Version fixe, etc.),
+//    elle devrait être déclarée comme const, pas var.
 //
-// 1. REGROUPEMENT :
-//    ✓ Toujours utiliser var () pour regrouper
-//    ✓ Grouper les variables par thème/domaine fonctionnel
-//    ✓ Ne jamais déclarer var X = ... individuellement
+//    POURQUOI :
+//    - const est thread-safe par nature (immuable)
+//    - Indique clairement l'intention (ne changera jamais)
+//    - Évite les modifications accidentelles
+//    - Optimisations possibles par le compilateur
 //
-// 2. COMMENTAIRES :
-//    ✓ Commentaire de groupe : 2 lignes (titre + description)
-//    ✓ Commentaire individuel : 1 ligne par variable
-//    ✓ Mentionner si la valeur est "mutable" ou pourquoi c'est une var
+// ✅ CAS PARFAIT (utiliser var correctement) :
 //
-// 3. TYPES :
-//    ✓ TOUJOURS spécifier le type explicitement
-//    ✓ Même pour slices : []string = []string{...}
-//    ✓ Même pour maps : map[K]V = map[K]V{...}
-//    ✓ Même initialisées par fonction : var X Type = func()
+//    Variables qui PEUVENT changer à runtime :
 //
-// 4. CHANNELS :
-//    ✓ TOUJOURS préciser buffer size dans commentaire
-//    ✓ Exemple : // Queue canal (buffer=100)
-//    ✓ Ou : // Done signal (unbuffered)
+//    // User and pool limits
+//    // Ces variables définissent les limites (ajustables à runtime)
+//    var (
+//        // MaxUserID est l'ID utilisateur maximum (peut être augmenté)
+//        MaxUserID uint = 4294967295
+//        // DefaultPoolSize est la taille par défaut du pool (configurable)
+//        DefaultPoolSize uint = 100
+//    )
 //
-// 5. ZERO VALUES :
-//    ✓ Toujours initialiser explicitement : int = 0
-//    ✓ Mentionner "zero value intentionnelle" dans commentaire
+//    Valeurs immuables qui devraient être const, pas var :
 //
-// 6. CONST vs VAR :
-//    ✓ Si la valeur ne change JAMAIS → utiliser const
-//    ✓ var est pour les valeurs MUTABLES uniquement
-//
-// 7. NAMING :
-//    ✓ MixedCaps : MaxConnections, defaultPort
-//    ✓ Jamais underscore : max_connections ❌
-//    ✓ Jamais ALL_CAPS : MAX_CONNECTIONS ❌
-//
-// 8. ORGANISATION :
-//    ✓ Variables du même domaine ensemble
-//    ✓ Ordre logique par type (simple → complexe)
-//    ✓ Séparation visuelle avec commentaires de section
+//    // Mathematical constants
+//    const (
+//        // Pi est la valeur de pi (immuable)
+//        Pi float64 = 3.14159265358979323846
+//    )
 //
 // ════════════════════════════════════════════════════════════════════════════
 
+// User and pool limits
+// Ces variables définissent les limites utilisateur et pool (ajustables)
+var (
+	// MaxUserID est l'ID utilisateur maximum (peut être modifié dynamiquement)
+	MaxUserID uint = 4294967295
+	// DefaultPoolSize est la taille par défaut du pool (configurable)
+	DefaultPoolSize uint = 100
+	// minWorkers est le nombre minimum de workers (peut varier selon charge)
+	minWorkers uint = 4
+)
+
+// ════════════════════════════════════════════════════════════════════════════
+// KTN-VAR-006 : Une variable par ligne (pas de déclaration multiple)
+// ════════════════════════════════════════════════════════════════════════════
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Plusieurs variables déclarées sur une ligne (HostName, Port = "localhost", 8080)
+//    rendent impossible la documentation individuelle de chaque variable.
+//
+//    POURQUOI :
+//    - Impossible de mettre un commentaire par variable
+//    - Difficile à lire et à maintenir
+//    - Contraire aux bonnes pratiques de documentation
+//
+// ✅ CAS PARFAIT (une variable par ligne) :
+//
+//    // Network settings
+//    // Ces variables configurent la connexion réseau
+//    var (
+//        // HostName est le nom d'hôte
+//        HostName string = "localhost"
+//        // Port est le port réseau
+//        Port int = 8080
+//    )
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+// Network settings
+// Ces variables configurent les paramètres réseau
+var (
+	// HostName est le nom d'hôte par défaut
+	HostName string = "localhost"
+	// Port est le port réseau par défaut
+	Port int = 8080
+)
+
+// ════════════════════════════════════════════════════════════════════════════
+// KTN-VAR-007 : Channel avec buffer size explicite
+// ════════════════════════════════════════════════════════════════════════════
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Les channels doivent avoir le buffer size explicite dans le commentaire
+//    ou préciser "unbuffered" si intentionnel.
+//
+//    POURQUOI :
+//    - Clarté sur la sémantique (synchrone vs asynchrone)
+//    - Aide à comprendre les performances attendues
+//    - Évite les deadlocks non intentionnels
+//    - Important pour la concurrence
+//
+// ✅ CAS PARFAIT (buffer size explicite) :
+//
+//    // Channel variables
+//    // Ces variables gèrent les messages inter-goroutines
+//    var (
+//        // MessageQueue canal de messages (buffer=100)
+//        MessageQueue chan string = make(chan string, 100)
+//        // ErrorQueue canal d'erreurs (buffer=50)
+//        ErrorQueue chan error = make(chan error, 50)
+//        // DoneSignal signale la fin (unbuffered intentionnel)
+//        DoneSignal chan bool = make(chan bool)
+//    )
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+// Channel variables
+// Ces variables sont des channels pour la communication inter-goroutines
+var (
+	// MessageQueue est le channel pour les messages (buffer=100)
+	MessageQueue chan string = make(chan string, 100)
+	// ErrorQueue est le channel pour les erreurs (buffer=50)
+	ErrorQueue chan error = make(chan error, 50)
+	// doneSignal signale la fin d'exécution (unbuffered intentionnel)
+	doneSignal chan bool = make(chan bool)
+)
+
+// ════════════════════════════════════════════════════════════════════════════
+// KTN-VAR-008 : Nom avec MixedCaps (pas d'underscore)
+// ════════════════════════════════════════════════════════════════════════════
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Les noms de variables doivent utiliser MixedCaps, pas underscore.
+//    Go style : HTTPPort, maxRetries (pas HTTP_PORT, max_retries)
+//
+//    POURQUOI :
+//    - Convention Go standard (Effective Go)
+//    - Cohérence avec la stdlib Go
+//    - Facilite la lecture (style uniforme)
+//
+// ✅ CAS PARFAIT (MixedCaps) :
+//
+//    // HTTP status codes
+//    // Ces variables contiennent les codes HTTP standards
+//    var (
+//        // HTTPOK représente le code 200
+//        HTTPOK int = 200
+//        // HTTPNotFound représente le code 404
+//        HTTPNotFound int = 404
+//    )
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+// HTTP status codes
+// Ces variables représentent les codes de statut HTTP standards
+var (
+	// HTTPOK représente le code HTTP 200
+	HTTPOK int = 200
+	// HTTPNotFound représente le code HTTP 404
+	HTTPNotFound int = 404
+)
+
+// ════════════════════════════════════════════════════════════════════════════
+// KTN-VAR-009 : Nom en MixedCaps (pas ALL_CAPS)
+// ════════════════════════════════════════════════════════════════════════════
+// 📝 DESCRIPTION DU PROBLÈME :
+//    Les noms en ALL_CAPS sont réservés aux constantes dans d'autres langages
+//    (C, Java) mais Go utilise MixedCaps pour tout.
+//
+//    POURQUOI :
+//    - Convention Go standard (pas ALL_CAPS)
+//    - Évite confusion avec conventions d'autres langages
+//    - MixedCaps est le style unifié Go
+//
+// ✅ CAS PARFAIT (MixedCaps) :
+//
+//    // Buffer configuration
+//    // Cette variable configure la taille du buffer
+//    var (
+//        // MaxBufferSize est la taille maximale du buffer
+//        MaxBufferSize int = 1024
+//        // DefaultTimeout est le timeout par défaut
+//        DefaultTimeout int = 30
+//    )
+//
+// ════════════════════════════════════════════════════════════════════════════
+
+// Buffer configuration
+// Ces variables configurent les buffers et timeouts
+var (
+	// MaxBufferSize est la taille maximale du buffer
+	MaxBufferSize int = 1024
+	// DefaultTimeoutSeconds est le timeout par défaut en secondes
+	DefaultTimeoutSeconds int = 30
+)
+
+// ════════════════════════════════════════════════════════════════════════════
+// CAS MIXTES : Cumul de bonnes pratiques
+// ════════════════════════════════════════════════════════════════════════════
+
+// Theme configuration - Toutes les variables du même thème regroupées
+// Ces variables définissent les thèmes disponibles (tous configurables ensemble)
+var (
+	// ThemeLight est l'identifiant du thème clair
+	ThemeLight string = "light"
+	// ThemeDark est l'identifiant du thème sombre
+	ThemeDark string = "dark"
+	// ThemeHighContrast est l'identifiant du thème à haut contraste
+	ThemeHighContrast string = "high-contrast"
+	// ThemeSepia est l'identifiant du thème sépia
+	ThemeSepia string = "sepia"
+)
+
+// ════════════════════════════════════════════════════════════════════════════
 // Types factices pour les exemples
+// ════════════════════════════════════════════════════════════════════════════
 func getCurrentTime() string    { return "" }
 func createLogger() interface{} { return nil }
 

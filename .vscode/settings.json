@@ -8,5 +8,21 @@
   ],
   "go.alternateTools": {
     "golangci-lint": "${workspaceFolder}/bin/golangci-lint-wrapper"
+  },
+  // Désactiver les diagnostics "unused" et autres dans les fichiers de test
+  "gopls": {
+    "analyses": {
+      "unusedparams": false,
+      "unusedwrite": false,
+      "unusedvariable": false,
+      "unusedfunc": false,
+      "useany": false
+    }
+  },
+  // Désactiver complètement gopls pour les fichiers de test
+  "[go]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
   }
 }
