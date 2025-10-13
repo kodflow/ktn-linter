@@ -80,18 +80,28 @@ var orphanVar = 42
 // ════════════════════════════════════════════════════════════════════════════
 
 // ❌ CAS INCORRECT 1 : Pas de commentaire de groupe avec strings
-// ERREURS : KTN-VAR-002 sur le groupe + KTN-VAR-003 sur chaque variable
+// NOTE : Tout est parfait (commentaires individuels + types) SAUF pas de commentaire de groupe
+// ERREUR ATTENDUE : KTN-VAR-002 UNIQUEMENT sur le groupe
+
 var (
+	// ApplicationName est le nom de l'application
 	ApplicationName string = "MyApp"
-	Version         string = "1.0.0"
+	// Version est la version actuelle
+	Version string = "1.0.0"
+	// defaultEncoding est l'encodage par défaut
 	defaultEncoding string = "UTF-8"
 )
 
 // ❌ CAS INCORRECT 2 : Pas de commentaire de groupe avec int64
-// ERREURS : KTN-VAR-002 + KTN-VAR-003 sur chaque variable
+// NOTE : Tout est parfait (commentaires individuels + types) SAUF pas de commentaire de groupe
+// ERREUR ATTENDUE : KTN-VAR-002 UNIQUEMENT sur le groupe
+
 var (
-	MaxDiskSpace   int64 = 1099511627776
-	UnixEpoch      int64 = 0
+	// MaxDiskSpace définit l'espace disque maximum en octets
+	MaxDiskSpace int64 = 1099511627776
+	// UnixEpoch représente le timestamp Unix de référence
+	UnixEpoch int64 = 0
+	// nanosPerSecond est le nombre de nanosecondes dans une seconde
 	nanosPerSecond int64 = 1000000000
 )
 
@@ -170,12 +180,17 @@ var (
 	maxRetries = 3
 )
 
-// ❌ CAS INCORRECT 2 : Int32 sans type explicite + pas de commentaires individuels
-// ERREURS : KTN-VAR-003 + KTN-VAR-004 sur chaque variable
+// ❌ CAS INCORRECT 2 : Int32 sans type explicite
+// NOTE : Tout est parfait (groupe + commentaire groupe + commentaires individuels) SAUF types manquants
+// ERREURS ATTENDUES : KTN-VAR-004 UNIQUEMENT sur MaxFileSize, DefaultTimeout, maxRequestsPerMinute
 // Integer 32-bit variables
+// Ces variables utilisent des entiers 32 bits
 var (
-	MaxFileSize          = 104857600
-	DefaultTimeout       = 30000
+	// MaxFileSize définit la taille maximale d'un fichier en octets
+	MaxFileSize = 104857600
+	// DefaultTimeout est le timeout par défaut en millisecondes
+	DefaultTimeout = 30000
+	// maxRequestsPerMinute définit le nombre maximum de requêtes par minute
 	maxRequestsPerMinute = 1000
 )
 
@@ -344,16 +359,17 @@ var (
 // ════════════════════════════════════════════════════════════════════════════
 
 // ❌ CAS INCORRECT 1 : Channels sans buffer info dans commentaire
-// ERREURS : KTN-VAR-007 sur MessageQueue, doneSignal
-// ERREURS : KTN-VAR-004 sur doneSignal (type manquant)
+// NOTE : Tout est parfait (groupe + commentaire groupe + commentaires individuels + types) SAUF buffer size manquant
+// ERREURS ATTENDUES : KTN-VAR-007 UNIQUEMENT sur MessageQueue, doneSignal
 // Channel variables
+// Ces variables gèrent les channels de communication
 var (
 	// MessageQueue est la file de messages
 	MessageQueue chan string = make(chan string)
 	// ErrorQueue est la file d'erreurs
 	ErrorQueue chan error
 	// doneSignal signale la fin
-	doneSignal = make(chan bool)
+	doneSignal chan bool = make(chan bool)
 )
 
 // ════════════════════════════════════════════════════════════════════════════

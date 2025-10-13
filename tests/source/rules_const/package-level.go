@@ -26,53 +26,52 @@ package rules_const
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Bool non groupés
-// ERREURS : KTN-CONST-001 sur EnableFeatureX, EnableDebug, isProduction
+// ❌ CAS INCORRECT 1 : Bool non groupé (SEULE ERREUR : KTN-CONST-001)
+// NOTE : Tout est parfait (commentaire + type) SAUF pas de ()
+// ERREUR ATTENDUE : KTN-CONST-001 sur EnableFeatureX
+
+// EnableFeatureX active la fonctionnalité X
 const EnableFeatureX bool = true
-const EnableDebug bool = false
-const isProduction bool = true
 
-// ❌ CAS INCORRECT 2 : String non groupés
-// ERREURS : KTN-CONST-001 sur ThemeAuto, ThemeCustom
+// ❌ CAS INCORRECT 2 : String non groupé (SEULE ERREUR : KTN-CONST-001)
+// NOTE : Tout est parfait (commentaire + type) SAUF pas de ()
+// ERREUR ATTENDUE : KTN-CONST-001 sur ThemeAuto
+
+// ThemeAuto est l'identifiant du thème automatique
 const ThemeAuto string = "auto"
-const ThemeCustom string = "custom"
 
-// ❌ CAS INCORRECT 3 : Int non groupés avec type manquant
-// ERREURS : KTN-CONST-001 + KTN-CONST-004 sur MaxUserID, DefaultPoolSize, minWorkers
-const MaxUserID = 4294967295
-const DefaultPoolSize = 100
-const minWorkers = 4
+// ❌ CAS INCORRECT 3 : Int non groupé (SEULE ERREUR : KTN-CONST-001)
+// NOTE : Tout est parfait (commentaire + type) SAUF pas de ()
+// ERREUR ATTENDUE : KTN-CONST-001 sur MaxUserID
 
-// ❌ CAS INCORRECT 4 : Int16 non groupés
-// ERREURS : KTN-CONST-001 sur MaxQueueSize, DefaultBufferSize, minCacheSize
+// MaxUserID définit l'ID utilisateur maximum
+const MaxUserID uint32 = 4294967295
+
+// ❌ CAS INCORRECT 4 : Int16 non groupés (SEULE ERREUR : KTN-CONST-001 x3)
+// NOTE : Tout est parfait (commentaires + types) SAUF pas de ()
+// ERREURS ATTENDUES : KTN-CONST-001 sur MaxQueueSize, DefaultBufferSize, minCacheSize
+
+// MaxQueueSize définit la taille maximale de la queue
 const MaxQueueSize int16 = 10000
+
+// DefaultBufferSize est la taille du buffer par défaut
 const DefaultBufferSize int16 = 4096
+
+// minCacheSize est la taille minimale du cache
 const minCacheSize int16 = 512
 
-// ❌ CAS INCORRECT 5 : Uint32 non groupés avec type manquant
-// ERREURS : KTN-CONST-001 + KTN-CONST-004 sur MaxRecordCount, DefaultChunkSize, minBatchSize
-// MaxRecordCount définit le nombre maximum d'enregistrements
-const MaxRecordCount = 1000000
+// ❌ CAS INCORRECT 5 : Float64 non groupés (SEULE ERREUR : KTN-CONST-001 x3)
+// NOTE : Tout est parfait (commentaires + types) SAUF pas de ()
+// ERREURS ATTENDUES : KTN-CONST-001 sur Pi, EulerNumber, goldenRatio
 
-// DefaultChunkSize est la taille par défaut d'un chunk en octets
-const DefaultChunkSize = 65536
-const minBatchSize = 100
-
-// ❌ CAS INCORRECT 6 : Float64 non groupés
-// ERREURS : KTN-CONST-001 sur Pi, EulerNumber, goldenRatio
+// Pi est une approximation de Pi en haute précision
 const Pi float64 = 3.14159265358979323846
+
+// EulerNumber est le nombre d'Euler (e)
 const EulerNumber float64 = 2.71828182845904523536
+
+// goldenRatio est le nombre d'or (phi)
 const goldenRatio float64 = 1.618033988749894848204586
-
-// ❌ CAS INCORRECT 7 : Rune non groupés avec type manquant
-// ERREURS : KTN-CONST-001 + KTN-CONST-004 sur SpaceRune, NewlineRune, heartEmoji
-const SpaceRune = ' '
-const NewlineRune = '\n'
-const heartEmoji = '❤'
-
-// ❌ CAS INCORRECT 8 : Constante orpheline (toutes les erreurs)
-// ERREURS : KTN-CONST-001 + KTN-CONST-004
-const orphanConst = 42
 
 // ════════════════════════════════════════════════════════════════════════════
 // KTN-CONST-002 : Groupe sans commentaire de groupe
@@ -100,36 +99,56 @@ const orphanConst = 42
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Pas de commentaire de groupe avec strings (+ pas de commentaires individuels)
-// ERREURS : KTN-CONST-002 sur le groupe + KTN-CONST-003 sur chaque constante
+// ❌ CAS INCORRECT 1 : Pas de commentaire de groupe (SEULE ERREUR : KTN-CONST-002)
+// NOTE : Groupe OK, commentaires individuels OK, types OK, MAIS pas de commentaire de groupe
+// ERREUR ATTENDUE : KTN-CONST-002 sur le groupe
+
 const (
+	// ApplicationName est le nom de l'application
 	ApplicationName string = "MyApp"
-	Version         string = "1.0.0"
+	// Version est la version actuelle
+	Version string = "1.0.0"
+	// defaultEncoding est l'encodage par défaut
 	defaultEncoding string = "UTF-8"
 )
 
-// ❌ CAS INCORRECT 2 : Pas de commentaire de groupe avec int64 (+ pas de commentaires individuels)
-// ERREURS : KTN-CONST-002 sur le groupe + KTN-CONST-003 sur chaque constante
+// ❌ CAS INCORRECT 2 : Pas de commentaire de groupe avec int64 (SEULE ERREUR : KTN-CONST-002)
+// NOTE : Groupe OK, commentaires individuels OK, types OK, MAIS pas de commentaire de groupe
+// ERREUR ATTENDUE : KTN-CONST-002 sur le groupe
+
 const (
-	MaxDiskSpace   int64 = 1099511627776
-	UnixEpoch      int64 = 0
+	// MaxDiskSpace définit l'espace disque maximum en octets
+	MaxDiskSpace int64 = 1099511627776
+	// UnixEpoch représente le timestamp Unix de référence
+	UnixEpoch int64 = 0
+	// nanosPerSecond est le nombre de nanosecondes dans une seconde
 	nanosPerSecond int64 = 1000000000
 )
 
-// ❌ CAS INCORRECT 3 : Pas de commentaire de groupe avec byte
-// ERREURS : KTN-CONST-002 sur le groupe + KTN-CONST-003 sur chaque constante
+// ❌ CAS INCORRECT 3 : Pas de commentaire de groupe avec byte (SEULE ERREUR : KTN-CONST-002)
+// NOTE : Groupe OK, commentaires individuels OK, types OK, MAIS pas de commentaire de groupe
+// ERREUR ATTENDUE : KTN-CONST-002 sur le groupe
+
 const (
-	NullByte    byte = 0x00
+	// NullByte représente l'octet null
+	NullByte byte = 0x00
+	// NewlineByte représente l'octet newline
 	NewlineByte byte = 0x0A
-	tabByte     byte = 0x09
+	// tabByte représente l'octet tabulation
+	tabByte byte = 0x09
 )
 
-// ❌ CAS INCORRECT 4 : Pas de commentaire de groupe avec complex64 (+ types manquants)
-// ERREURS : KTN-CONST-002 + KTN-CONST-003 sur chaque + KTN-CONST-004 sur chaque
+// ❌ CAS INCORRECT 4 : Pas de commentaire de groupe avec complex64 (SEULE ERREUR : KTN-CONST-002)
+// NOTE : Groupe OK, commentaires individuels OK, types OK, MAIS pas de commentaire de groupe
+// ERREUR ATTENDUE : KTN-CONST-002 sur le groupe
+
 const (
-	ImaginaryUnit64 = 0 + 1i
-	ComplexZero64   = 0 + 0i
-	sampleComplex64 = 3.5 + 2.8i
+	// ImaginaryUnit64 est l'unité imaginaire en complex64
+	ImaginaryUnit64 complex64 = 0 + 1i
+	// ComplexZero64 est zéro en complex64
+	ComplexZero64 complex64 = 0 + 0i
+	// sampleComplex64 est un exemple de nombre complexe
+	sampleComplex64 complex64 = 3.5 + 2.8i
 )
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -159,18 +178,22 @@ const (
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Int8 avec commentaire de groupe mais pas de commentaires individuels
-// ERREURS : KTN-CONST-003 sur MinAge, MaxAge, defaultPriority
-// Ces constantes utilisent des entiers 8 bits (-128 à 127)
+// ❌ CAS INCORRECT 1 : Int8 sans commentaires individuels (SEULE ERREUR : KTN-CONST-003 x3)
+// NOTE : Groupe OK, commentaire de groupe OK, types OK, MAIS pas de commentaires individuels
+// ERREURS ATTENDUES : KTN-CONST-003 sur MinAge, MaxAge, defaultPriority
+// Age configuration
+// Ces constantes utilisent des entiers 8 bits pour les âges
 const (
 	MinAge          int8 = 18
 	MaxAge          int8 = 120
 	defaultPriority int8 = 5
 )
 
-// ❌ CAS INCORRECT 2 : Uint16 avec commentaire groupe + partiellement commentées
-// ERREURS : KTN-CONST-003 sur HTTPSPort, customPort (HTTPPort est OK)
-// Unsigned 16-bit constants
+// ❌ CAS INCORRECT 2 : Uint16 avec partiellement commentées (SEULE ERREUR : KTN-CONST-003 x2)
+// NOTE : Groupe OK, commentaire groupe OK, types OK, HTTPPort commenté, MAIS HTTPSPort et customPort non commentés
+// ERREURS ATTENDUES : KTN-CONST-003 sur HTTPSPort, customPort
+// Port configuration
+// Ces constantes définissent les ports réseau standards
 const (
 	// HTTPPort est le port HTTP standard
 	HTTPPort   uint16 = 80
@@ -178,21 +201,27 @@ const (
 	customPort uint16 = 3000
 )
 
-// ❌ CAS INCORRECT 3 : Float32 avec commentaire groupe mais pas individuels
-// ERREURS : KTN-CONST-003 sur Pi32, DefaultRate, minThreshold
-// Float32 constants
+// ❌ CAS INCORRECT 3 : Float32 sans commentaires individuels (SEULE ERREUR : KTN-CONST-003 x3)
+// NOTE : Groupe OK, commentaire groupe OK, types OK, MAIS pas de commentaires individuels
+// ERREURS ATTENDUES : KTN-CONST-003 sur Pi32, DefaultRate, minThreshold
+// Mathematical constants
+// Ces constantes représentent des valeurs mathématiques en float32
 const (
 	Pi32         float32 = 3.14159265
 	DefaultRate  float32 = 1.5
 	minThreshold float32 = 0.01
 )
 
-// ❌ CAS INCORRECT 4 : Complex128 avec un seul commentaire partagé
-// ERREURS : KTN-CONST-003 sur ComplexZero, eulerIdentityBase
+// ❌ CAS INCORRECT 4 : Complex128 avec première constante non commentée (SEULE ERREUR : KTN-CONST-003 x1)
+// NOTE : Groupe OK, commentaire groupe OK, types OK, MAIS ImaginaryUnit sans commentaire individuel
+// ERREUR ATTENDUE : KTN-CONST-003 sur ImaginaryUnit
+// Complex number constants
+// Ces constantes représentent des nombres complexes en complex128
 const (
-	// Ces constantes représentent des valeurs complexes
-	ImaginaryUnit     complex128 = 0 + 1i
-	ComplexZero       complex128 = 0 + 0i
+	ImaginaryUnit complex128 = 0 + 1i
+	// ComplexZero est zéro en complex128
+	ComplexZero complex128 = 0 + 0i
+	// eulerIdentityBase est la base de l'identité d'Euler
 	eulerIdentityBase complex128 = 2.71828182845904523536 + 0i
 )
 
@@ -223,9 +252,11 @@ const (
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Int sans type explicite
-// ERREURS : KTN-CONST-004 sur MaxConnections, DefaultPort, maxRetries
-// Ces constantes n'ont pas de type explicite
+// ❌ CAS INCORRECT 1 : Int sans type explicite (SEULE ERREUR : KTN-CONST-004 x3)
+// NOTE : Groupe OK, commentaire groupe OK, commentaires individuels OK, MAIS types manquants
+// ERREURS ATTENDUES : KTN-CONST-004 sur MaxConnections, DefaultPort, maxRetries
+// Connection limits
+// Ces constantes définissent les limites de connexion
 const (
 	// MaxConnections définit le nombre maximum de connexions simultanées
 	MaxConnections = 1000
@@ -235,18 +266,25 @@ const (
 	maxRetries = 3
 )
 
-// ❌ CAS INCORRECT 2 : Int32 sans type explicite (avec commentaires individuels manquants)
-// ERREURS : KTN-CONST-003 + KTN-CONST-004 sur chaque constante
-// Integer 32-bit constants
+// ❌ CAS INCORRECT 2 : Int32 sans type explicite (SEULE ERREUR : KTN-CONST-004 x3)
+// NOTE : Groupe OK, commentaire groupe OK, commentaires individuels OK, MAIS types manquants
+// ERREURS ATTENDUES : KTN-CONST-004 sur MaxFileSize, DefaultTimeout, maxRequestsPerMinute
+// File and timeout settings
+// Ces constantes définissent les limites de fichiers et timeouts
 const (
-	MaxFileSize          = 104857600
-	DefaultTimeout       = 30000
+	// MaxFileSize définit la taille maximale d'un fichier en octets
+	MaxFileSize = 104857600
+	// DefaultTimeout est le timeout par défaut en millisecondes
+	DefaultTimeout = 30000
+	// maxRequestsPerMinute définit le nombre maximum de requêtes par minute
 	maxRequestsPerMinute = 1000
 )
 
-// ❌ CAS INCORRECT 3 : Uint8 sans type explicite
-// ERREURS : KTN-CONST-004 sur MaxRetryAttempts, DefaultQuality, minCompressionLevel
-// Unsigned 8-bit constants
+// ❌ CAS INCORRECT 3 : Uint8 sans type explicite (SEULE ERREUR : KTN-CONST-004 x3)
+// NOTE : Groupe OK, commentaire groupe OK, commentaires individuels OK, MAIS types manquants
+// ERREURS ATTENDUES : KTN-CONST-004 sur MaxRetryAttempts, DefaultQuality, minCompressionLevel
+// Quality settings
+// Ces constantes définissent les paramètres de qualité
 const (
 	// MaxRetryAttempts définit le nombre maximum de tentatives
 	MaxRetryAttempts = 10
@@ -256,32 +294,16 @@ const (
 	minCompressionLevel = 1
 )
 
-// ❌ CAS INCORRECT 4 : Uint64 avec une seule constante sans type dans un groupe presque parfait
-// ERREURS : KTN-CONST-004 sur MaxTransactionID uniquement
-// Unsigned 64-bit constants
+// ❌ CAS INCORRECT 4 : Une seule constante sans type dans un groupe presque parfait (SEULE ERREUR : KTN-CONST-004 x1)
+// NOTE : Groupe OK, commentaires OK, 2 constantes avec types, MAIS MaxTransactionID sans type
+// ERREUR ATTENDUE : KTN-CONST-004 sur MaxTransactionID uniquement
+// Transaction limits
+// Ces constantes définissent les limites de transactions
 const (
 	// MaxMemoryBytes définit la mémoire maximale en octets
 	MaxMemoryBytes uint64 = 17179869184
 	// MaxTransactionID est l'ID de transaction maximum
-	MaxTransactionID = 18446744073709551615 // Type manquant !
+	MaxTransactionID = 18446744073709551615
 	// defaultCacheExpiry est le délai d'expiration du cache en nanosecondes
 	defaultCacheExpiry uint64 = 3600000000000
 )
-
-// ════════════════════════════════════════════════════════════════════════════
-// CAS MIXTES : Cumul de plusieurs erreurs
-// ════════════════════════════════════════════════════════════════════════════
-
-// Configuration theme - Partie 1 (groupe valide)
-const (
-	// ThemeLight est le thème clair
-	ThemeLight string = "light"
-	// ThemeDark est le thème sombre
-	ThemeDark string = "dark"
-)
-
-// ❌ ERREUR : Mélange groupé/non-groupé sur le même thème
-// Les constantes ci-dessous devraient être dans le groupe au-dessus
-// ERREURS : KTN-CONST-001 sur ThemeHighContrast, ThemeSepia
-const ThemeHighContrast string = "high-contrast"
-const ThemeSepia string = "sepia"
