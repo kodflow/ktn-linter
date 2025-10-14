@@ -1,7 +1,4 @@
-// Tests for KTN-INTERFACE-005 (version corrigée)
-package rules_interface
-
-// KTN-INTERFACE-005 GOOD: Les interfaces sont maintenant dans interfaces.go
+package KTN_INTERFACE_005
 
 // paymentProcessorImplI005Good est l'implémentation privée.
 type paymentProcessorImplI005Good struct {

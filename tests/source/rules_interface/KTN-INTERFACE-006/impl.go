@@ -1,7 +1,4 @@
-// Tests for KTN-INTERFACE-006: Interfaces sans constructeurs
-package rules_interface
-
-// KTN-INTERFACE-006: Les interfaces dans interfaces.go n'ont pas de constructeurs
+package KTN_INTERFACE_006
 
 // cacheManagerImplI006 est l'implémentation du CacheManagerI006.
 type cacheManagerImplI006 struct {

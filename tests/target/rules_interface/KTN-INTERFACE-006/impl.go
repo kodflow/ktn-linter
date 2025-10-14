@@ -1,7 +1,4 @@
-// Tests for KTN-INTERFACE-006 (version corrigée)
-package rules_interface
-
-// KTN-INTERFACE-006 GOOD: Les interfaces ont maintenant des constructeurs
+package KTN_INTERFACE_006
 
 // cacheManagerImplI006Good est l'implémentation du CacheManagerI006Good.
 type cacheManagerImplI006Good struct {

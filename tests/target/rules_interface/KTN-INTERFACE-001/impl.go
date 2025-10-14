@@ -1,7 +1,4 @@
-// Tests for KTN-INTERFACE-001 (version corrigée)
-package rules_interface
-
-// KTN-INTERFACE-001 GOOD: Le package a maintenant interfaces.go
+package KTN_INTERFACE_001
 
 // userServiceImplI001Good est une implémentation privée avec interface publique.
 type userServiceImplI001Good struct {
