@@ -78,7 +78,7 @@ func printUsage() {
 func loadPackages(patterns []string) []*packages.Package {
 	cfg := &packages.Config{
 		Mode:  packages.NeedName | packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
-		Tests: false,
+		Tests: true, // Charger les fichiers *_test.go pour KTN-TEST rules
 	}
 
 	pkgs, err := packages.Load(cfg, patterns...)
@@ -121,6 +121,7 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		analyzer.VarAnalyzer,
 		analyzer.FuncAnalyzer,
 		analyzer.InterfaceAnalyzer,
+		analyzer.TestAnalyzer,
 	}
 
 	var allDiagnostics []diagWithFset
