@@ -92,7 +92,19 @@ func (f *formatterImpl) Format(fset *token.FileSet, diagnostics []analysis.Diagn
 func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	groups := f.groupByFile(fset, diagnostics)
 
-	f.printHeader(len(diagnostics))
+	// Compter le nombre réel de diagnostics après filtrage
+	totalCount := 0
+	for _, group := range groups {
+		totalCount += len(group.Diagnostics)
+	}
+
+	// Si tous les diagnostics ont été filtrés, afficher le succès
+	if totalCount == 0 {
+		f.printSuccess()
+		return
+	}
+
+	f.printHeader(totalCount)
 
 	for _, group := range groups {
 		f.printFileHeader(group.Filename, len(group.Diagnostics))
@@ -105,15 +117,21 @@ func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analys
 		fmt.Fprintln(f.writer)
 	}
 
-	f.printSummary(len(diagnostics))
+	f.printSummary(totalCount)
 }
 
 // formatForAI affiche un format optimisé pour l'IA
 func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
-	fmt.Fprintf(f.writer, "# KTN-Linter Report (AI Mode)\n\n")
-	fmt.Fprintf(f.writer, "Total issues found: %d\n\n", len(diagnostics))
-
 	groups := f.groupByFile(fset, diagnostics)
+
+	// Compter le nombre réel de diagnostics après filtrage
+	totalCount := 0
+	for _, group := range groups {
+		totalCount += len(group.Diagnostics)
+	}
+
+	fmt.Fprintf(f.writer, "# KTN-Linter Report (AI Mode)\n\n")
+	fmt.Fprintf(f.writer, "Total issues found: %d\n\n", totalCount)
 
 	for _, group := range groups {
 		fmt.Fprintf(f.writer, "## File: %s (%d issues)\n\n", group.Filename, len(group.Diagnostics))
@@ -146,12 +164,22 @@ func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.
 
 // formatSimple affiche un format simple une ligne par erreur (pour IDE)
 func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
-	// Trier les diagnostics par position
-	sorted := make([]analysis.Diagnostic, len(diagnostics))
-	copy(sorted, diagnostics)
-	sort.Slice(sorted, func(i, j int) bool {
-		posI := fset.Position(sorted[i].Pos)
-		posJ := fset.Position(sorted[j].Pos)
+	// Filtrer et trier les diagnostics par position
+	var filtered []analysis.Diagnostic
+	for _, diag := range diagnostics {
+		pos := fset.Position(diag.Pos)
+		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		if strings.Contains(pos.Filename, "/.cache/go-build/") ||
+		   strings.Contains(pos.Filename, "/tmp/") ||
+		   strings.Contains(pos.Filename, "\\cache\\go-build\\") {
+			continue
+		}
+		filtered = append(filtered, diag)
+	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		posI := fset.Position(filtered[i].Pos)
+		posJ := fset.Position(filtered[j].Pos)
 		if posI.Filename != posJ.Filename {
 			return posI.Filename < posJ.Filename
 		}
@@ -162,7 +190,7 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 	})
 
 	// Afficher chaque diagnostic sur une ligne
-	for _, diag := range sorted {
+	for _, diag := range filtered {
 		pos := fset.Position(diag.Pos)
 		code := messageutil.ExtractCode(diag.Message)
 		message := messageutil.ExtractMessage(diag.Message)
@@ -179,6 +207,14 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 	for _, diag := range diagnostics {
 		pos := fset.Position(diag.Pos)
 		filename := pos.Filename
+
+		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		if strings.Contains(filename, "/.cache/go-build/") ||
+		   strings.Contains(filename, "/tmp/") ||
+		   strings.Contains(filename, "\\cache\\go-build\\") {
+			continue
+		}
+
 		fileMap[filename] = append(fileMap[filename], diag)
 	}
 
