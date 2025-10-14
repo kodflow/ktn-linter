@@ -129,8 +129,9 @@ type myServiceImpl struct {
 				Files: []*ast.File{interfacesFile, file},
 				Pkg:   types.NewPackage("example.com/myservice", "myservice"),
 				Report: func(diag analysis.Diagnostic) {
-					// Ignorer INTERFACE-001
-					if !containsInterface(diag.Message, "KTN-INTERFACE-001") {
+					// Ignorer INTERFACE-001 et INTERFACE-007 (fichier vide pour les tests)
+					if !containsInterface(diag.Message, "KTN-INTERFACE-001") &&
+						!containsInterface(diag.Message, "KTN-INTERFACE-007") {
 						foundError = true
 						t.Logf("Found error: %s", diag.Message)
 					}
