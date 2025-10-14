@@ -10,27 +10,94 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestFuncAnalyzerValidCases vérifie que les fonctions correctement documentées passent.
+// runFuncAnalyzerValidTest exécute un test qui ne devrait pas produire d'erreur.
 //
 // Params:
 //   - t: instance de test
-func TestFuncAnalyzerValidCases(t *testing.T) {
-	tests := []struct {
-		name string
-		code string
-	}{
-		{
-			name: "Fonction sans params ni returns",
-			code: `package test
+//   - name: nom du test
+//   - code: code source à tester
+func runFuncAnalyzerValidTest(t *testing.T, name, code string) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+		if err != nil {
+			t.Fatalf("Failed to parse code: %v", err)
+		}
+
+		pass := &analysis.Pass{
+			Fset:  fset,
+			Files: []*ast.File{file},
+			Report: func(diag analysis.Diagnostic) {
+				t.Errorf("Unexpected diagnostic: %s at %s", diag.Message, fset.Position(diag.Pos))
+			},
+		}
+
+		_, err = analyzer.FuncAnalyzer.Run(pass)
+		if err != nil {
+			t.Errorf("Analyzer returned error: %v", err)
+		}
+	})
+}
+
+// runFuncAnalyzerErrorTest exécute un test qui devrait produire une erreur spécifique.
+//
+// Params:
+//   - t: instance de test
+//   - name: nom du test
+//   - code: code source à tester
+//   - expectedError: code d'erreur attendu
+func runFuncAnalyzerErrorTest(t *testing.T, name, code, expectedError string) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+		if err != nil {
+			t.Fatalf("Failed to parse code: %v", err)
+		}
+
+		foundExpectedError := false
+		pass := &analysis.Pass{
+			Fset:  fset,
+			Files: []*ast.File{file},
+			Report: func(diag analysis.Diagnostic) {
+				if expectedError != "" && !foundExpectedError {
+					foundExpectedError = true
+					t.Logf("Found expected error: %s", diag.Message)
+				}
+			},
+		}
+
+		_, err = analyzer.FuncAnalyzer.Run(pass)
+		if err != nil {
+			t.Errorf("Analyzer returned error: %v", err)
+		}
+
+		if expectedError != "" && !foundExpectedError {
+			t.Errorf("Expected error containing %q, but no errors were reported", expectedError)
+		}
+	})
+}
+
+// TestFuncAnalyzerBasicCases vérifie les cas basiques sans params/returns.
+//
+// Params:
+//   - t: instance de test
+func TestFuncAnalyzerBasicCases(t *testing.T) {
+	runFuncAnalyzerValidTest(t, "Fonction sans params ni returns", `package test
 
 // doSomething fait quelque chose.
 func doSomething() {
 }
-`,
-		},
-		{
-			name: "Fonction avec params seulement",
-			code: `package test
+`)
+}
+
+// TestFuncAnalyzerWithParams vérifie les fonctions avec paramètres.
+//
+// Params:
+//   - t: instance de test
+func TestFuncAnalyzerWithParams(t *testing.T) {
+	runFuncAnalyzerValidTest(t, "Fonction avec params seulement", `package test
 
 // processData traite les données.
 //
@@ -39,41 +106,9 @@ func doSomething() {
 //   - count: le nombre d'éléments
 func processData(data string, count int) {
 }
-`,
-		},
-		{
-			name: "Fonction avec returns seulement",
-			code: `package test
+`)
 
-// getValue retourne une valeur.
-//
-// Returns:
-//   - string: la valeur récupérée
-func getValue() string {
-	return "test"
-}
-`,
-		},
-		{
-			name: "Fonction avec params et returns",
-			code: `package test
-
-// calculateSum calcule la somme.
-//
-// Params:
-//   - a: le premier nombre
-//   - b: le second nombre
-//
-// Returns:
-//   - int: la somme de a et b
-func calculateSum(a int, b int) int {
-	return a + b
-}
-`,
-		},
-		{
-			name: "Fonction avec 4 paramètres (en dessous de la limite)",
-			code: `package test
+	runFuncAnalyzerValidTest(t, "Fonction avec 4 paramètres (en dessous de la limite)", `package test
 
 // complexFunction effectue un traitement complexe.
 //
@@ -88,11 +123,41 @@ func calculateSum(a int, b int) int {
 func complexFunction(param1 string, param2 int, param3 bool, param4 float64) bool {
 	return true
 }
-`,
-		},
-		{
-			name: "Fonction avec nommage MixedCaps",
-			code: `package test
+`)
+}
+
+// TestFuncAnalyzerWithReturns vérifie les fonctions avec valeurs de retour.
+//
+// Params:
+//   - t: instance de test
+func TestFuncAnalyzerWithReturns(t *testing.T) {
+	runFuncAnalyzerValidTest(t, "Fonction avec returns seulement", `package test
+
+// getValue retourne une valeur.
+//
+// Returns:
+//   - string: la valeur récupérée
+func getValue() string {
+	return "test"
+}
+`)
+
+	runFuncAnalyzerValidTest(t, "Fonction avec params et returns", `package test
+
+// calculateSum calcule la somme.
+//
+// Params:
+//   - a: le premier nombre
+//   - b: le second nombre
+//
+// Returns:
+//   - int: la somme de a et b
+func calculateSum(a int, b int) int {
+	return a + b
+}
+`)
+
+	runFuncAnalyzerValidTest(t, "Fonction avec nommage MixedCaps", `package test
 
 // calculateTotalAmount calcule le montant total.
 //
@@ -104,77 +169,42 @@ func complexFunction(param1 string, param2 int, param3 bool, param4 float64) boo
 func calculateTotalAmount(amount float64) float64 {
 	return amount * 1.2
 }
-`,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("Failed to parse code: %v", err)
-			}
-
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					t.Errorf("Unexpected diagnostic: %s at %s", diag.Message, fset.Position(diag.Pos))
-				},
-			}
-
-			_, err = analyzer.FuncAnalyzer.Run(pass)
-			if err != nil {
-				t.Errorf("Analyzer returned error: %v", err)
-			}
-		})
-	}
+`)
 }
 
-// TestFuncAnalyzerErrorCases vérifie que les violations sont bien détectées.
+// TestFuncAnalyzerMissingDoc vérifie les erreurs de documentation.
 //
 // Params:
 //   - t: instance de test
-func TestFuncAnalyzerErrorCases(t *testing.T) {
-	tests := []struct {
-		name          string
-		code          string
-		expectedError string
-	}{
-		{
-			name: "Fonction sans commentaire",
-			code: `package test
+func TestFuncAnalyzerMissingDoc(t *testing.T) {
+	runFuncAnalyzerErrorTest(t, "Fonction sans commentaire", `package test
 
 func noComment() {
 }
-`,
-			expectedError: "KTN-FUNC-002",
-		},
-		{
-			name: "Fonction avec params non documentés",
-			code: `package test
+`, "KTN-FUNC-002")
+
+	runFuncAnalyzerErrorTest(t, "Fonction avec params non documentés", `package test
 
 // processData traite les données.
 func processData(data string) {
 }
-`,
-			expectedError: "KTN-FUNC-003",
-		},
-		{
-			name: "Fonction avec returns non documenté",
-			code: `package test
+`, "KTN-FUNC-003")
+
+	runFuncAnalyzerErrorTest(t, "Fonction avec returns non documenté", `package test
 
 // getValue retourne une valeur.
 func getValue() string {
 	return "test"
 }
-`,
-			expectedError: "KTN-FUNC-004",
-		},
-		{
-			name: "Fonction avec trop de paramètres",
-			code: `package test
+`, "KTN-FUNC-004")
+}
+
+// TestFuncAnalyzerViolations vérifie les violations de règles.
+//
+// Params:
+//   - t: instance de test
+func TestFuncAnalyzerViolations(t *testing.T) {
+	runFuncAnalyzerErrorTest(t, "Fonction avec trop de paramètres", `package test
 
 // tooManyParams a trop de paramètres.
 //
@@ -191,71 +221,23 @@ func getValue() string {
 func tooManyParams(p1, p2, p3, p4, p5, p6 int) bool {
 	return true
 }
-`,
-			expectedError: "KTN-FUNC-005",
-		},
-		{
-			name: "Fonction avec mauvais nommage",
-			code: `package test
+`, "KTN-FUNC-005")
+
+	runFuncAnalyzerErrorTest(t, "Fonction avec mauvais nommage", `package test
 
 // bad_naming utilise des underscores.
 func bad_naming() {
 }
-`,
-			expectedError: "KTN-FUNC-001",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("Failed to parse code: %v", err)
-			}
-
-			foundExpectedError := false
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					if tt.expectedError != "" {
-						// Vérifier que le message contient le code d'erreur attendu
-						if !foundExpectedError {
-							foundExpectedError = true
-							t.Logf("Found expected error: %s", diag.Message)
-						}
-					}
-				},
-			}
-
-			_, err = analyzer.FuncAnalyzer.Run(pass)
-			if err != nil {
-				t.Errorf("Analyzer returned error: %v", err)
-			}
-
-			if tt.expectedError != "" && !foundExpectedError {
-				t.Errorf("Expected error containing %q, but no errors were reported", tt.expectedError)
-			}
-		})
-	}
+`, "KTN-FUNC-001")
 }
 
 
-// TestCheckParamsFormat teste la vérification du format des paramètres.
+// TestParamsFormatValid teste le format valide des paramètres.
 //
 // Params:
 //   - t: instance de test
-func TestCheckParamsFormat(t *testing.T) {
-	tests := []struct {
-		name          string
-		code          string
-		shouldPass    bool
-		expectedParam string // Si shouldPass=false, param manquant attendu
-	}{
-		{
-			name: "Tous les params documentés",
-			code: `package test
+func TestParamsFormatValid(t *testing.T) {
+	runFuncAnalyzerValidTest(t, "Tous les params documentés", `package test
 
 // process traite les données.
 //
@@ -264,26 +246,9 @@ func TestCheckParamsFormat(t *testing.T) {
 //   - count: le nombre
 func process(data string, count int) {
 }
-`,
-			shouldPass: true,
-		},
-		{
-			name: "Param manquant",
-			code: `package test
+`)
 
-// process traite les données.
-//
-// Params:
-//   - data: les données
-func process(data string, count int) {
-}
-`,
-			shouldPass:    false,
-			expectedParam: "count",
-		},
-		{
-			name: "Format avec indentation",
-			code: `package test
+	runFuncAnalyzerValidTest(t, "Format avec indentation", `package test
 
 // calculate effectue un calcul.
 //
@@ -297,41 +262,23 @@ func process(data string, count int) {
 func calculate(x, y, z int) int {
 	return x + y + z
 }
-`,
-			shouldPass: true,
-		},
-	}
+`)
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("Failed to parse code: %v", err)
-			}
+// TestParamsFormatInvalid teste les erreurs de format des paramètres.
+//
+// Params:
+//   - t: instance de test
+func TestParamsFormatInvalid(t *testing.T) {
+	runFuncAnalyzerErrorTest(t, "Param manquant", `package test
 
-			hasError := false
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					hasError = true
-					t.Logf("Diagnostic: %s", diag.Message)
-				},
-			}
-
-			_, err = analyzer.FuncAnalyzer.Run(pass)
-			if err != nil {
-				t.Errorf("Analyzer returned error: %v", err)
-			}
-
-			if tt.shouldPass && hasError {
-				t.Errorf("Expected no errors, but got diagnostic")
-			} else if !tt.shouldPass && !hasError {
-				t.Errorf("Expected error for missing param %q, but got none", tt.expectedParam)
-			}
-		})
-	}
+// process traite les données.
+//
+// Params:
+//   - data: les données
+func process(data string, count int) {
+}
+`, "KTN-FUNC-003")
 }
 
 // TestRealWorldExample teste un exemple réel du codebase.

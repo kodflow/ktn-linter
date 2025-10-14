@@ -56,14 +56,34 @@ func runFuncAnalyzer(pass *analysis.Pass) (any, error) {
 //   - funcDecl: la déclaration de fonction à vérifier
 func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) {
 	funcName := funcDecl.Name.Name
+	isTestFile := isTestFile(pass)
+
 	checkFuncNaming(pass, funcDecl, funcName)
 	checkFuncDocumentation(pass, funcDecl, funcName)
 	checkFuncParams(pass, funcDecl, funcName)
-	checkFuncLength(pass, funcDecl, funcName)
-	checkFuncComplexity(pass, funcDecl, funcName)
+	checkFuncLength(pass, funcDecl, funcName, isTestFile)
+	checkFuncComplexity(pass, funcDecl, funcName, isTestFile)
+	checkNestingDepth(pass, funcDecl, funcName)
 	// TODO: Désactivé temporairement - nécessite une meilleure implémentation
 	// checkFuncInternalComments(pass, funcDecl, funcName)
 	// checkFuncReturnComments(pass, funcDecl, funcName)
+}
+
+// isTestFile vérifie si le fichier analysé est un fichier de test.
+//
+// Params:
+//   - pass: la passe d'analyse
+//
+// Returns:
+//   - bool: true si c'est un fichier de test (_test.go)
+func isTestFile(pass *analysis.Pass) bool {
+	for _, f := range pass.Files {
+		pos := pass.Fset.Position(f.Pos())
+		if strings.HasSuffix(pos.Filename, "_test.go") {
+			return true
+		}
+	}
+	return false
 }
 
 // checkFuncNaming vérifie le nommage de la fonction.
@@ -121,12 +141,18 @@ func checkFuncParams(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - funcDecl: la déclaration de fonction
 //   - funcName: le nom de la fonction
-func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
+//   - isTestFile: true si c'est un fichier de test
+func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, isTestFile bool) {
 	funcLength := calculateFuncLength(pass.Fset, funcDecl)
-	if funcLength > 35 {
+	maxLength := 35
+	if isTestFile {
+		maxLength = 100 // Limite plus souple pour les tests
+	}
+
+	if funcLength > maxLength {
 		pass.Reportf(funcDecl.Name.Pos(),
-			"[KTN-FUNC-006] Fonction '%s' est trop longue (%d lignes > 35).\nLimitez les fonctions à 35 lignes maximum. Découpez en fonctions plus petites.",
-			funcName, funcLength)
+			"[KTN-FUNC-006] Fonction '%s' est trop longue (%d lignes > %d).\nLimitez les fonctions à %d lignes maximum. Découpez en fonctions plus petites.",
+			funcName, funcLength, maxLength, maxLength)
 	}
 }
 
@@ -136,13 +162,94 @@ func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - funcDecl: la déclaration de fonction
 //   - funcName: le nom de la fonction
-func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
+//   - isTestFile: true si c'est un fichier de test
+func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, isTestFile bool) {
 	complexity := calculateCyclomaticComplexity(funcDecl)
-	if complexity > 10 {
-		pass.Reportf(funcDecl.Name.Pos(),
-			"[KTN-FUNC-007] Fonction '%s' a une complexité cyclomatique trop élevée (%d > 10).\nRéduisez la complexité en extrayant des sous-fonctions ou en simplifiant la logique.",
-			funcName, complexity)
+	maxComplexity := 10
+	if isTestFile {
+		maxComplexity = 15 // Limite plus souple pour les tests
 	}
+
+	if complexity > maxComplexity {
+		pass.Reportf(funcDecl.Name.Pos(),
+			"[KTN-FUNC-007] Fonction '%s' a une complexité cyclomatique trop élevée (%d > %d).\nRéduisez la complexité en extrayant des sous-fonctions ou en simplifiant la logique.",
+			funcName, complexity, maxComplexity)
+	}
+}
+
+// checkNestingDepth vérifie la profondeur d'imbrication des blocs.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
+func checkNestingDepth(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
+	if funcDecl.Body == nil {
+		return
+	}
+
+	maxDepth := calculateMaxNestingDepth(funcDecl.Body, 0)
+	if maxDepth > 3 {
+		pass.Reportf(funcDecl.Name.Pos(),
+			"[KTN-FUNC-010] Fonction '%s' a une profondeur d'imbrication trop élevée (%d > 3).\nLimitez l'imbrication à 3 niveaux maximum. Extrayez des sous-fonctions pour réduire la complexité.",
+			funcName, maxDepth)
+	}
+}
+
+// calculateMaxNestingDepth calcule la profondeur maximale d'imbrication dans un bloc.
+//
+// Params:
+//   - node: le nœud AST à analyser
+//   - currentDepth: la profondeur actuelle
+//
+// Returns:
+//   - int: la profondeur maximale trouvée
+func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
+	maxDepth := currentDepth
+
+	ast.Inspect(node, func(n ast.Node) bool {
+		switch stmt := n.(type) {
+		case *ast.IfStmt:
+			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+			if stmt.Else != nil {
+				depth = calculateMaxNestingDepth(stmt.Else, currentDepth+1)
+				if depth > maxDepth {
+					maxDepth = depth
+				}
+			}
+			return false
+		case *ast.ForStmt:
+			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+			return false
+		case *ast.RangeStmt:
+			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+			return false
+		case *ast.SwitchStmt:
+			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+			return false
+		case *ast.SelectStmt:
+			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
+			if depth > maxDepth {
+				maxDepth = depth
+			}
+			return false
+		}
+		return true
+	})
+
+	return maxDepth
 }
 
 // checkGodocQuality vérifie la qualité du commentaire godoc avec format strict.
