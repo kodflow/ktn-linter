@@ -9,12 +9,15 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestAnalyzer vérifie que les fichiers de test respectent les conventions KTN.
-var TestAnalyzer = &analysis.Analyzer{
-	Name: "ktntest",
-	Doc:  "Vérifie la structure et convention des fichiers de test",
-	Run:  runTestAnalyzer,
-}
+// Analyzers
+var (
+	// TestAnalyzer vérifie que les fichiers de test respectent les conventions KTN.
+	TestAnalyzer *analysis.Analyzer = &analysis.Analyzer{
+		Name: "ktntest",
+		Doc:  "Vérifie la structure et convention des fichiers de test",
+		Run:  runTestAnalyzer,
+	}
+)
 
 // fileInfo contient les informations sur un fichier Go.
 type fileInfo struct {
