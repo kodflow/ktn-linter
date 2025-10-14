@@ -80,9 +80,9 @@ var (
 // Ces variables sont des pointeurs vers des structures (partagées)
 var (
 	// GlobalContextV004Good est le contexte global de l'application
-	GlobalContextV004Good *ContextV004Good = &ContextV004Good{}
+	GlobalContextV004Good *ContextV004GoodData = &ContextV004GoodData{}
 	// defaultUserV004Good est l'utilisateur par défaut (anonyme)
-	defaultUserV004Good *UserV004Good = &UserV004Good{Name: "anonymous"}
+	defaultUserV004Good *UserV004GoodData = &UserV004GoodData{Name: "anonymous"}
 )
 
 // Counter variables with explicit zero value
@@ -121,5 +121,5 @@ func updateConfigV004Good() {
 	warningCountV004Good = 5
 }
 
-type ContextV004Good struct{}
-type UserV004Good struct{ Name string }
+type ContextV004GoodData struct{}
+type UserV004GoodData struct{ Name string }
