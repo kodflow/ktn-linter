@@ -210,46 +210,45 @@ func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 	ast.Inspect(node, func(n ast.Node) bool {
 		switch stmt := n.(type) {
 		case *ast.IfStmt:
-			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
-			if depth > maxDepth {
-				maxDepth = depth
-			}
+			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
 			if stmt.Else != nil {
-				depth = calculateMaxNestingDepth(stmt.Else, currentDepth+1)
-				if depth > maxDepth {
-					maxDepth = depth
-				}
+				maxDepth = updateMaxDepth(maxDepth, stmt.Else, currentDepth)
 			}
 			return false
 		case *ast.ForStmt:
-			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
-			if depth > maxDepth {
-				maxDepth = depth
-			}
+			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
 			return false
 		case *ast.RangeStmt:
-			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
-			if depth > maxDepth {
-				maxDepth = depth
-			}
+			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
 			return false
 		case *ast.SwitchStmt:
-			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
-			if depth > maxDepth {
-				maxDepth = depth
-			}
+			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
 			return false
 		case *ast.SelectStmt:
-			depth := calculateMaxNestingDepth(stmt.Body, currentDepth+1)
-			if depth > maxDepth {
-				maxDepth = depth
-			}
+			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
 			return false
 		}
 		return true
 	})
 
 	return maxDepth
+}
+
+// updateMaxDepth met à jour la profondeur maximale pour un nœud donné.
+//
+// Params:
+//   - currentMax: la profondeur maximale actuelle
+//   - node: le nœud à analyser
+//   - depth: la profondeur actuelle
+//
+// Returns:
+//   - int: la nouvelle profondeur maximale
+func updateMaxDepth(currentMax int, node ast.Node, depth int) int {
+	newDepth := calculateMaxNestingDepth(node, depth+1)
+	if newDepth > currentMax {
+		return newDepth
+	}
+	return currentMax
 }
 
 // checkGodocQuality vérifie la qualité du commentaire godoc avec format strict.

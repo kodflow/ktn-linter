@@ -68,6 +68,28 @@ func TestIsConstCompatibleType(t *testing.T) {
 	}
 }
 
+// findLastVarSpec trouve la dernière déclaration de variable dans un fichier.
+//
+// Params:
+//   - file: le fichier AST à analyser
+//
+// Returns:
+//   - *ast.ValueSpec: la spécification de la dernière variable trouvée, ou nil
+func findLastVarSpec(file *ast.File) *ast.ValueSpec {
+	for i := len(file.Decls) - 1; i >= 0; i-- {
+		genDecl, ok := file.Decls[i].(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR || len(genDecl.Specs) == 0 {
+			continue
+		}
+
+		vs, ok := genDecl.Specs[0].(*ast.ValueSpec)
+		if ok && len(vs.Values) > 0 {
+			return vs
+		}
+	}
+	return nil
+}
+
 // TestIsLiteralValue teste la détection de valeurs littérales.
 //
 // Params:
@@ -97,7 +119,6 @@ func TestIsLiteralValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Parser avec les références non résolues
 			fset := token.NewFileSet()
 			src := "package test\nvar s string\nvar y int\n" + tt.code
 			file, err := parser.ParseFile(fset, "", src, 0)
@@ -105,19 +126,7 @@ func TestIsLiteralValue(t *testing.T) {
 				t.Fatalf("Failed to parse code: %v", err)
 			}
 
-			// Trouver la dernière déclaration (celle avec tt.code)
-			var spec *ast.ValueSpec
-			for i := len(file.Decls) - 1; i >= 0; i-- {
-				if genDecl, ok := file.Decls[i].(*ast.GenDecl); ok && genDecl.Tok == token.VAR {
-					if len(genDecl.Specs) > 0 {
-						if vs, ok := genDecl.Specs[0].(*ast.ValueSpec); ok && len(vs.Values) > 0 {
-							spec = vs
-							break
-						}
-					}
-				}
-			}
-
+			spec := findLastVarSpec(file)
 			if spec == nil {
 				t.Fatalf("Failed to find variable spec in code: %s", tt.code)
 			}

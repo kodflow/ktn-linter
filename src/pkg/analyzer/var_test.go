@@ -80,6 +80,10 @@ var (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
+
+func updateConfig() {
+	MaxConnections = 200
+}
 `,
 			wantDiag: false,
 			wantMsg:  "KTN-VAR-002",
@@ -476,6 +480,10 @@ var (
 	// HTTPServer is the server
 	HTTPServer string = "localhost"
 )
+
+func updateHTTPServer() {
+	HTTPServer = "example.com"
+}
 `, false, "")
 
 	runVarTest(t, "mixed initialism", `package test
@@ -485,6 +493,10 @@ var (
 	// APIEndpoint is the endpoint
 	APIEndpoint string = "https://api.example.com"
 )
+
+func updateAPIEndpoint() {
+	APIEndpoint = "https://api.new.com"
+}
 `, false, "")
 }
 

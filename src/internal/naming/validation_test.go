@@ -315,6 +315,23 @@ func TestHasGetterPrefix(t *testing.T) {
 	}
 }
 
+// containsSuggestion vérifie si une suggestion est présente dans les résultats.
+//
+// Params:
+//   - results: les suggestions retournées
+//   - expected: la suggestion attendue
+//
+// Returns:
+//   - bool: true si la suggestion est trouvée
+func containsSuggestion(results []string, expected string) bool {
+	for _, r := range results {
+		if r == expected {
+			return true
+		}
+	}
+	return false
+}
+
 // TestFixInitialisms teste FixInitialisms.
 //
 // Params:
@@ -350,23 +367,13 @@ func TestFixInitialisms(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.FixInitialisms(tt.input)
-			// Comparer les longueurs
 			if len(result) != len(tt.expected) {
 				t.Errorf("naming.FixInitialisms(%q) returned %d suggestions, want %d", tt.input, len(result), len(tt.expected))
 				return
 			}
-			// Comparer le contenu (si attendu non vide)
-			if len(tt.expected) > 0 {
-				found := false
-				for _, r := range result {
-					if r == tt.expected[0] {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("naming.FixInitialisms(%q) = %v, want %v", tt.input, result, tt.expected)
-				}
+
+			if len(tt.expected) > 0 && !containsSuggestion(result, tt.expected[0]) {
+				t.Errorf("naming.FixInitialisms(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}

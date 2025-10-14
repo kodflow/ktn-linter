@@ -114,26 +114,37 @@ func checkTestPackageNames(pass *analysis.Pass, files map[string]*fileInfo) {
 	expectedPkg := pass.Pkg.Name() + "_test"
 
 	for _, info := range files {
-		if !info.isTest {
+		if !info.isTest || strings.HasSuffix(info.packageName, "_test") {
 			continue
 		}
 
-		// Le package name doit se terminer par _test
-		if !strings.HasSuffix(info.packageName, "_test") {
-			// Trouver le fichier AST pour reporter l'erreur
-			for _, file := range pass.Files {
-				if pass.Fset.File(file.Pos()).Name() == info.path {
-					pass.Reportf(file.Package,
-						"[KTN-TEST-001] Fichier de test '%s' a le package '%s' au lieu de '%s'.\n"+
-							"Les fichiers *_test.go doivent utiliser le suffixe _test pour le package.\n"+
-							"Exemple:\n"+
-							"  package %s",
-						filepath.Base(info.path), info.packageName, expectedPkg, expectedPkg)
-					break
-				}
-			}
+		file := findASTFile(pass, info.path)
+		if file != nil {
+			pass.Reportf(file.Package,
+				"[KTN-TEST-001] Fichier de test '%s' a le package '%s' au lieu de '%s'.\n"+
+					"Les fichiers *_test.go doivent utiliser le suffixe _test pour le package.\n"+
+					"Exemple:\n"+
+					"  package %s",
+				filepath.Base(info.path), info.packageName, expectedPkg, expectedPkg)
 		}
 	}
+}
+
+// findASTFile trouve le fichier AST correspondant à un chemin.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - path: le chemin du fichier à trouver
+//
+// Returns:
+//   - *ast.File: le fichier AST trouvé ou nil
+func findASTFile(pass *analysis.Pass, path string) *ast.File {
+	for _, file := range pass.Files {
+		if pass.Fset.File(file.Pos()).Name() == path {
+			return file
+		}
+	}
+	return nil
 }
 
 // checkTestCoverage vérifie que chaque fichier .go a son _test.go.
@@ -148,37 +159,32 @@ func checkTestCoverage(pass *analysis.Pass, files map[string]*fileInfo) {
 	}
 
 	for fileName, info := range files {
-		// Ignorer les fichiers de test
 		if info.isTest {
 			continue
 		}
 
-		// Vérifier si le fichier _test.go existe dans le système de fichiers
 		testFileName := strings.TrimSuffix(fileName, ".go") + "_test.go"
-		dir := filepath.Dir(info.path)
-		testPath := filepath.Join(dir, testFileName)
+		testPath := filepath.Join(filepath.Dir(info.path), testFileName)
 
-		// Vérifier l'existence du fichier sur le disque
-		if !fileExists(testPath) {
-			// Trouver le fichier AST pour reporter l'erreur
-			for _, file := range pass.Files {
-				if pass.Fset.File(file.Pos()).Name() == info.path {
-					pass.Reportf(file.Package,
-						"[KTN-TEST-002] Fichier '%s' n'a pas de fichier de test correspondant.\n"+
-							"Créez '%s' pour tester ce fichier.\n"+
-							"Exemple:\n"+
-							"  // %s\n"+
-							"  package %s_test\n"+
-							"\n"+
-							"  import \"testing\"\n"+
-							"\n"+
-							"  func TestExample(t *testing.T) {\n"+
-							"      // Tests ici\n"+
-							"  }",
-						fileName, testFileName, testFileName, pass.Pkg.Name())
-					break
-				}
-			}
+		if fileExists(testPath) {
+			continue
+		}
+
+		file := findASTFile(pass, info.path)
+		if file != nil {
+			pass.Reportf(file.Package,
+				"[KTN-TEST-002] Fichier '%s' n'a pas de fichier de test correspondant.\n"+
+					"Créez '%s' pour tester ce fichier.\n"+
+					"Exemple:\n"+
+					"  // %s\n"+
+					"  package %s_test\n"+
+					"\n"+
+					"  import \"testing\"\n"+
+					"\n"+
+					"  func TestExample(t *testing.T) {\n"+
+					"      // Tests ici\n"+
+					"  }",
+				fileName, testFileName, testFileName, pass.Pkg.Name())
 		}
 	}
 }
@@ -195,29 +201,24 @@ func checkOrphanTestFiles(pass *analysis.Pass, files map[string]*fileInfo) {
 	}
 
 	for fileName, info := range files {
-		// Ignorer les fichiers non-test
 		if !info.isTest {
 			continue
 		}
 
-		// Vérifier si le fichier .go existe dans le système de fichiers
 		sourceFileName := strings.TrimSuffix(fileName, "_test.go") + ".go"
-		dir := filepath.Dir(info.path)
-		sourcePath := filepath.Join(dir, sourceFileName)
+		sourcePath := filepath.Join(filepath.Dir(info.path), sourceFileName)
 
-		// Vérifier l'existence du fichier sur le disque
-		if !fileExists(sourcePath) {
-			// Trouver le fichier AST pour reporter l'erreur
-			for _, file := range pass.Files {
-				if pass.Fset.File(file.Pos()).Name() == info.path {
-					pass.Reportf(file.Package,
-						"[KTN-TEST-003] Fichier de test '%s' n'a pas de fichier source correspondant.\n"+
-							"Le fichier '%s' n'existe pas.\n"+
-							"Créez '%s' ou renommez/supprimez ce fichier de test.",
-						fileName, sourceFileName, sourceFileName)
-					break
-				}
-			}
+		if fileExists(sourcePath) {
+			continue
+		}
+
+		file := findASTFile(pass, info.path)
+		if file != nil {
+			pass.Reportf(file.Package,
+				"[KTN-TEST-003] Fichier de test '%s' n'a pas de fichier source correspondant.\n"+
+					"Le fichier '%s' n'existe pas.\n"+
+					"Créez '%s' ou renommez/supprimez ce fichier de test.",
+				fileName, sourceFileName, sourceFileName)
 		}
 	}
 }
@@ -229,20 +230,13 @@ func checkOrphanTestFiles(pass *analysis.Pass, files map[string]*fileInfo) {
 //   - files: les informations sur tous les fichiers
 func checkTestFuncsInNonTest(pass *analysis.Pass, files map[string]*fileInfo) {
 	for fileName, info := range files {
-		// Ignorer les fichiers de test
-		if info.isTest {
+		if info.isTest || !info.hasTests {
 			continue
 		}
 
-		// Vérifier si le fichier contient des fonctions de test
-		if info.hasTests {
-			// Trouver le fichier AST pour reporter les fonctions de test
-			for _, file := range pass.Files {
-				if pass.Fset.File(file.Pos()).Name() == info.path {
-					reportTestFunctionsInNonTest(pass, file, fileName)
-					break
-				}
-			}
+		file := findASTFile(pass, info.path)
+		if file != nil {
+			reportTestFunctionsInNonTest(pass, file, fileName)
 		}
 	}
 }
