@@ -300,199 +300,210 @@ func TestFormatterFormatSimpleModeSorting(t *testing.T) {
 	}
 }
 
-// TestFormatterAllErrorCodes tests all KTN error codes for complete coverage
+// allErrorCodesDiagnostics contient tous les codes d'erreur KTN pour les tests de couverture complète.
 //
 // Params:
-//   - t: instance de test
-func TestFormatterAllErrorCodes(t *testing.T) {
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", 1, 200)
-
-	// Test all error code suffixes (-001, -002, -003, -004) to exercise getCodeColor
-	diagnostics := []analysis.Diagnostic{
-		{
-			Pos: file.Pos(10),
-			Message: "[KTN-CONST-001] Constante 'MaxValue' déclarée individuellement.\n" +
-				"Exemple:\n  const (\n      MaxValue int = ...\n  )",
-		},
-		{
-			Pos: file.Pos(20),
-			Message: "[KTN-CONST-002] Groupe de constantes sans commentaire de groupe.",
-		},
-		{
-			Pos: file.Pos(30),
-			Message: "[KTN-CONST-003] Constante 'Timeout' sans commentaire individuel.\n" +
-				"Exemple:\n  // Timeout décrit son rôle\n  Timeout int = ...",
-		},
-		{
-			Pos: file.Pos(40),
-			Message: "[KTN-CONST-004] Constante 'BufferSize' sans type explicite.\n" +
-				"Exemple:\n  BufferSize int = ...",
-		},
-		{
-			Pos: file.Pos(50),
-			Message: "[KTN-VAR-001] Variable 'MaxConnections' déclarée individuellement.\n" +
-				"Exemple:\n  var (\n      MaxConnections int = ...\n  )",
-		},
-		{
-			Pos: file.Pos(60),
-			Message: "[KTN-VAR-002] Groupe de variables sans commentaire de groupe.",
-		},
-		{
-			Pos: file.Pos(70),
-			Message: "[KTN-VAR-005] Variable 'Pi' avec valeur littérale semble être une constante immuable.\n" +
-				"Exemple:\n  const Pi float64 = ...",
-		},
-		{
-			Pos: file.Pos(80),
-			Message: "Diagnostic without code format",
-		},
+//   - file: le fichier token pour créer les positions
+//
+// Returns:
+//   - []analysis.Diagnostic: diagnostics de test couvrant tous les codes d'erreur
+func allErrorCodesDiagnostics(file *token.File) []analysis.Diagnostic {
+	return []analysis.Diagnostic{
+		{Pos: file.Pos(10), Message: "[KTN-CONST-001] Constante 'MaxValue' déclarée individuellement.\nExemple:\n  const (\n      MaxValue int = ...\n  )"},
+		{Pos: file.Pos(20), Message: "[KTN-CONST-002] Groupe de constantes sans commentaire de groupe."},
+		{Pos: file.Pos(30), Message: "[KTN-CONST-003] Constante 'Timeout' sans commentaire individuel.\nExemple:\n  // Timeout décrit son rôle\n  Timeout int = ..."},
+		{Pos: file.Pos(40), Message: "[KTN-CONST-004] Constante 'BufferSize' sans type explicite.\nExemple:\n  BufferSize int = ..."},
+		{Pos: file.Pos(50), Message: "[KTN-VAR-001] Variable 'MaxConnections' déclarée individuellement.\nExemple:\n  var (\n      MaxConnections int = ...\n  )"},
+		{Pos: file.Pos(60), Message: "[KTN-VAR-002] Groupe de variables sans commentaire de groupe."},
+		{Pos: file.Pos(70), Message: "[KTN-VAR-005] Variable 'Pi' avec valeur littérale semble être une constante immuable.\nExemple:\n  const Pi float64 = ..."},
+		{Pos: file.Pos(80), Message: "Diagnostic without code format"},
 	}
-
-	// Test human mode with colors
-	t.Run("human_mode_with_colors", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, false, false)
-		f.Format(fset, diagnostics)
-
-		output := buf.String()
-		// Should contain all error codes
-		for _, code := range []string{"KTN-CONST-001", "KTN-CONST-002", "KTN-CONST-003", "KTN-CONST-004", "KTN-VAR-001", "KTN-VAR-002", "KTN-VAR-005"} {
-			if !strings.Contains(output, code) {
-				t.Errorf("Expected output to contain %s", code)
-			}
-		}
-		// Should contain ANSI codes for colors
-		if !strings.Contains(output, "\033[") {
-			t.Error("Expected ANSI color codes in output")
-		}
-	})
-
-	// Test AI mode with suggestions
-	t.Run("ai_mode_with_suggestions", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, true, false, false)
-		f.Format(fset, diagnostics)
-
-		output := buf.String()
-		// Should contain AI mode markers
-		if !strings.Contains(output, "# KTN-Linter Report (AI Mode)") {
-			t.Error("Expected AI mode header")
-		}
-		if !strings.Contains(output, "**Instructions for AI**") {
-			t.Error("Expected AI instructions")
-		}
-		// Should contain suggestions in code blocks
-		if !strings.Contains(output, "```go") {
-			t.Error("Expected code block with suggestions")
-		}
-	})
-
-	// Test simple mode
-	t.Run("simple_mode", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, true, true)
-		f.Format(fset, diagnostics)
-
-		output := buf.String()
-		lines := strings.Split(strings.TrimSpace(output), "\n")
-		if len(lines) != len(diagnostics) {
-			t.Errorf("Expected %d lines, got %d", len(diagnostics), len(lines))
-		}
-		// Each line should have format: file:line:column: [CODE] message
-		for _, line := range lines {
-			if !strings.Contains(line, "test.go:") {
-				t.Errorf("Expected line to contain filename, got: %s", line)
-			}
-		}
-	})
 }
 
-// TestFormatterEdgeCases tests edge cases for extractors
+// TestFormatterHumanModeWithColors teste le mode humain avec couleurs.
 //
 // Params:
 //   - t: instance de test
-func TestFormatterEdgeCases(t *testing.T) {
+func TestFormatterHumanModeWithColors(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 200)
+	diagnostics := allErrorCodesDiagnostics(file)
+
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, false, false)
+	f.Format(fset, diagnostics)
+
+	output := buf.String()
+	// Should contain all error codes
+	for _, code := range []string{"KTN-CONST-001", "KTN-CONST-002", "KTN-CONST-003", "KTN-CONST-004", "KTN-VAR-001", "KTN-VAR-002", "KTN-VAR-005"} {
+		if !strings.Contains(output, code) {
+			t.Errorf("Expected output to contain %s", code)
+		}
+	}
+	// Should contain ANSI codes for colors
+	if !strings.Contains(output, "\033[") {
+		t.Error("Expected ANSI color codes in output")
+	}
+}
+
+// TestFormatterAIModeWithSuggestions teste le mode AI avec suggestions.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterAIModeWithSuggestions(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 200)
+	diagnostics := allErrorCodesDiagnostics(file)
+
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, true, false, false)
+	f.Format(fset, diagnostics)
+
+	output := buf.String()
+	// Should contain AI mode markers
+	if !strings.Contains(output, "# KTN-Linter Report (AI Mode)") {
+		t.Error("Expected AI mode header")
+	}
+	if !strings.Contains(output, "**Instructions for AI**") {
+		t.Error("Expected AI instructions")
+	}
+	// Should contain suggestions in code blocks
+	if !strings.Contains(output, "```go") {
+		t.Error("Expected code block with suggestions")
+	}
+}
+
+// TestFormatterSimpleMode teste le mode simple.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterSimpleMode(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 200)
+	diagnostics := allErrorCodesDiagnostics(file)
+
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, true)
+	f.Format(fset, diagnostics)
+
+	output := buf.String()
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) != len(diagnostics) {
+		t.Errorf("Expected %d lines, got %d", len(diagnostics), len(lines))
+	}
+	// Each line should have format: file:line:column: [CODE] message
+	for _, line := range lines {
+		if !strings.Contains(line, "test.go:") {
+			t.Errorf("Expected line to contain filename, got: %s", line)
+		}
+	}
+}
+
+// TestFormatterMessageWithoutCode teste les messages sans code.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterMessageWithoutCode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("edge.go", 1, 100)
 
-	t.Run("message_without_code", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, true, false)
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false)
 
-		diagnostics := []analysis.Diagnostic{
-			{Pos: file.Pos(10), Message: "Error without code format"},
-		}
+	diagnostics := []analysis.Diagnostic{
+		{Pos: file.Pos(10), Message: "Error without code format"},
+	}
 
-		f.Format(fset, diagnostics)
-		output := buf.String()
+	f.Format(fset, diagnostics)
+	output := buf.String()
 
-		if !strings.Contains(output, "UNKNOWN") {
-			t.Error("Expected UNKNOWN code for message without KTN- format")
-		}
-	})
+	if !strings.Contains(output, "UNKNOWN") {
+		t.Error("Expected UNKNOWN code for message without KTN- format")
+	}
+}
 
-	t.Run("message_without_closing_bracket", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, true, false)
+// TestFormatterMessageWithoutClosingBracket teste les messages mal formés.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterMessageWithoutClosingBracket(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("edge.go", 1, 100)
 
-		diagnostics := []analysis.Diagnostic{
-			{Pos: file.Pos(10), Message: "[KTN-TEST Error without closing bracket"},
-		}
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false)
 
-		f.Format(fset, diagnostics)
-		output := buf.String()
+	diagnostics := []analysis.Diagnostic{
+		{Pos: file.Pos(10), Message: "[KTN-TEST Error without closing bracket"},
+	}
 
-		if !strings.Contains(output, "UNKNOWN") {
-			t.Error("Expected UNKNOWN code for malformed message")
-		}
-	})
+	f.Format(fset, diagnostics)
+	output := buf.String()
 
-	t.Run("message_without_newline", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, true, false)
+	if !strings.Contains(output, "UNKNOWN") {
+		t.Error("Expected UNKNOWN code for malformed message")
+	}
+}
 
-		diagnostics := []analysis.Diagnostic{
-			{Pos: file.Pos(10), Message: "[KTN-TEST-001] Single line message without example"},
-		}
+// TestFormatterMessageWithoutNewline teste les messages sans exemple.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterMessageWithoutNewline(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("edge.go", 1, 100)
 
-		f.Format(fset, diagnostics)
-		output := buf.String()
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false)
 
-		if !strings.Contains(output, "Single line message") {
-			t.Error("Expected message to be extracted")
-		}
-	})
+	diagnostics := []analysis.Diagnostic{
+		{Pos: file.Pos(10), Message: "[KTN-TEST-001] Single line message without example"},
+	}
 
-	t.Run("success_with_colors", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, false, false) // with colors
+	f.Format(fset, diagnostics)
+	output := buf.String()
 
-		f.Format(nil, nil)
-		output := buf.String()
+	if !strings.Contains(output, "Single line message") {
+		t.Error("Expected message to be extracted")
+	}
+}
 
-		if !strings.Contains(output, "No issues found") {
-			t.Error("Expected success message")
-		}
-		if !strings.Contains(output, "\033[") {
-			t.Error("Expected ANSI codes for colored success message")
-		}
-	})
+// TestFormatterSuccessWithColors teste le succès avec couleurs.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterSuccessWithColors(t *testing.T) {
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, false, false) // with colors
 
-	t.Run("success_without_colors", func(t *testing.T) {
-		var buf bytes.Buffer
-		f := formatter.NewFormatter(&buf, false, true, false) // noColor
+	f.Format(nil, nil)
+	output := buf.String()
 
-		f.Format(nil, nil)
-		output := buf.String()
+	if !strings.Contains(output, "No issues found") {
+		t.Error("Expected success message")
+	}
+	if !strings.Contains(output, "\033[") {
+		t.Error("Expected ANSI codes for colored success message")
+	}
+}
 
-		if !strings.Contains(output, "No issues found") {
-			t.Error("Expected success message")
-		}
-		if strings.Contains(output, "\033[") {
-			t.Error("Should not contain ANSI codes with noColor=true")
-		}
-	})
+// TestFormatterSuccessWithoutColors teste le succès sans couleurs.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterSuccessWithoutColors(t *testing.T) {
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false) // noColor
+
+	f.Format(nil, nil)
+	output := buf.String()
+
+	if !strings.Contains(output, "No issues found") {
+		t.Error("Expected success message")
+	}
+	if strings.Contains(output, "\033[") {
+		t.Error("Should not contain ANSI codes with noColor=true")
+	}
 }
 
 // TestFormatterTypeExtraction tests type extraction from suggestions
