@@ -11,6 +11,9 @@ import (
 )
 
 // TestFuncAnalyzer_ValidCases vérifie que les fonctions correctement documentées passent.
+//
+// Params:
+//   - t: instance de test
 func TestFuncAnalyzer_ValidCases(t *testing.T) {
 	tests := []struct {
 		name string
@@ -130,6 +133,9 @@ func calculateTotalAmount(amount float64) float64 {
 }
 
 // TestFuncAnalyzer_ErrorCases vérifie que les violations sont bien détectées.
+//
+// Params:
+//   - t: instance de test
 func TestFuncAnalyzer_ErrorCases(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -237,6 +243,9 @@ func bad_naming() {
 
 
 // TestCheckParamsFormat teste la vérification du format des paramètres.
+//
+// Params:
+//   - t: instance de test
 func TestCheckParamsFormat(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -326,6 +335,9 @@ func calculate(x, y, z int) int {
 }
 
 // TestRealWorldExample teste un exemple réel du codebase.
+//
+// Params:
+//   - t: instance de test
 func TestRealWorldExample(t *testing.T) {
 	code := `package test
 
@@ -362,6 +374,9 @@ func checkGodocFormat(pass int, funcDecl string, funcName string, doc string) {
 }
 
 // BenchmarkFuncAnalyzer mesure les performances de l'analyzer.
+//
+// Params:
+//   - b: instance de benchmark
 func BenchmarkFuncAnalyzer(b *testing.B) {
 	code := `package test
 

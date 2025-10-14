@@ -307,6 +307,9 @@ const (
 }
 
 // TestConstAnalyzer_EdgeCases tests edge cases for better coverage
+//
+// Params:
+//   - t: instance de test
 func TestConstAnalyzer_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -452,6 +455,9 @@ const (
 }
 
 // TestPlugin tests the plugin interface functions
+//
+// Params:
+//   - t: instance de test
 func TestPlugin(t *testing.T) {
 	// Test New function
 	plugin, err := analyzer.New(nil)

@@ -265,6 +265,9 @@ func TestFormatter_Format_SimpleMode_Sorting(t *testing.T) {
 }
 
 // TestFormatter_AllErrorCodes tests all KTN error codes for complete coverage
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_AllErrorCodes(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 200)
@@ -370,6 +373,9 @@ func TestFormatter_AllErrorCodes(t *testing.T) {
 }
 
 // TestFormatter_EdgeCases tests edge cases for extractors
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_EdgeCases(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("edge.go", 1, 100)
@@ -454,6 +460,9 @@ func TestFormatter_EdgeCases(t *testing.T) {
 }
 
 // TestFormatter_TypeExtraction tests type extraction from suggestions
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_TypeExtraction(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("types.go", 1, 300)
