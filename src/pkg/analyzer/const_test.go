@@ -15,77 +15,18 @@ import (
 // Params:
 //   - t: instance de test
 func TestConstAnalyzerKTNCONST001(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "ungrouped const should trigger KTN-CONST-001",
-			code: `package test
+	runConstTest(t, "ungrouped", `package test
 const MaxConnections int = 100
-`,
-			wantDiag: true,
-			wantMsg:  "KTN-CONST-001",
-		},
-		{
-			name: "grouped const should not trigger KTN-CONST-001",
-			code: `package test
+`, true, "KTN-CONST-001")
+
+	runConstTest(t, "grouped", `package test
 // Connection limits
 // These constants define connection limits
 const (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
-`,
-			wantDiag: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var diagnostics []analysis.Diagnostic
-			pass := &analysis.Pass{
-				Analyzer: analyzer.ConstAnalyzer,
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					diagnostics = append(diagnostics, diag)
-				},
-			}
-
-			_, err = analyzer.ConstAnalyzer.Run(pass)
-			if err != nil {
-				t.Fatalf("analyzer failed: %v", err)
-			}
-
-			if tt.wantDiag && len(diagnostics) == 0 {
-				t.Errorf("expected diagnostic but got none")
-			}
-			if !tt.wantDiag && len(diagnostics) > 0 {
-				t.Errorf("expected no diagnostic but got %d: %v", len(diagnostics), diagnostics)
-			}
-			if tt.wantDiag && len(diagnostics) > 0 {
-				found := false
-				for _, d := range diagnostics {
-					if contains(d.Message, tt.wantMsg) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("expected message containing %q but got: %v", tt.wantMsg, diagnostics)
-				}
-			}
-		})
-	}
+`, false, "")
 }
 
 // TestConstAnalyzerKTNCONST002 teste ConstAnalyzer KTN CONST 002.
@@ -93,76 +34,20 @@ const (
 // Params:
 //   - t: instance de test
 func TestConstAnalyzerKTNCONST002(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "group without group comment should trigger KTN-CONST-002",
-			code: `package test
+	runConstTest(t, "no group comment", `package test
 const (
 	MaxConnections int = 100
 )
-`,
-			wantDiag: true,
-			wantMsg:  "KTN-CONST-002",
-		},
-		{
-			name: "group with group comment should not trigger KTN-CONST-002",
-			code: `package test
+`, true, "KTN-CONST-002")
+
+	runConstTest(t, "with group comment", `package test
 // Connection limits
 // These constants define connection limits
 const (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-CONST-002",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var diagnostics []analysis.Diagnostic
-			pass := &analysis.Pass{
-				Analyzer: analyzer.ConstAnalyzer,
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					diagnostics = append(diagnostics, diag)
-				},
-			}
-
-			_, err = analyzer.ConstAnalyzer.Run(pass)
-			if err != nil {
-				t.Fatalf("analyzer failed: %v", err)
-			}
-
-			hasExpectedDiag := false
-			for _, d := range diagnostics {
-				if contains(d.Message, tt.wantMsg) {
-					hasExpectedDiag = true
-					break
-				}
-			}
-
-			if tt.wantDiag && !hasExpectedDiag {
-				t.Errorf("expected diagnostic %q but got none", tt.wantMsg)
-			}
-			if !tt.wantDiag && hasExpectedDiag {
-				t.Errorf("expected no diagnostic %q but got one", tt.wantMsg)
-			}
-		})
-	}
+`, false, "")
 }
 
 // TestConstAnalyzerKTNCONST003 teste ConstAnalyzer KTN CONST 003.
@@ -170,77 +55,22 @@ const (
 // Params:
 //   - t: instance de test
 func TestConstAnalyzerKTNCONST003(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "const without individual comment should trigger KTN-CONST-003",
-			code: `package test
+	runConstTest(t, "no individual comment", `package test
 // Connection limits
 // These constants define connection limits
 const (
 	MaxConnections int = 100
 )
-`,
-			wantDiag: true,
-			wantMsg:  "KTN-CONST-003",
-		},
-		{
-			name: "const with individual comment should not trigger KTN-CONST-003",
-			code: `package test
+`, true, "KTN-CONST-003")
+
+	runConstTest(t, "with individual comment", `package test
 // Connection limits
 // These constants define connection limits
 const (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
-`,
-			wantDiag: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var diagnostics []analysis.Diagnostic
-			pass := &analysis.Pass{
-				Analyzer: analyzer.ConstAnalyzer,
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					diagnostics = append(diagnostics, diag)
-				},
-			}
-
-			_, err = analyzer.ConstAnalyzer.Run(pass)
-			if err != nil {
-				t.Fatalf("analyzer failed: %v", err)
-			}
-
-			hasExpectedDiag := false
-			for _, d := range diagnostics {
-				if contains(d.Message, tt.wantMsg) {
-					hasExpectedDiag = true
-					break
-				}
-			}
-
-			if tt.wantDiag && !hasExpectedDiag {
-				t.Errorf("expected diagnostic %q but got none", tt.wantMsg)
-			}
-			if !tt.wantDiag && hasExpectedDiag {
-				t.Errorf("expected no diagnostic %q but got one", tt.wantMsg)
-			}
-		})
-	}
+`, false, "")
 }
 
 // TestConstAnalyzerKTNCONST004 teste ConstAnalyzer KTN CONST 004.
@@ -248,226 +78,144 @@ const (
 // Params:
 //   - t: instance de test
 func TestConstAnalyzerKTNCONST004(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "const without explicit type should trigger KTN-CONST-004",
-			code: `package test
+	runConstTest(t, "no explicit type", `package test
 // Connection limits
 // These constants define connection limits
 const (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections = 100
 )
-`,
-			wantDiag: true,
-			wantMsg:  "KTN-CONST-004",
-		},
-		{
-			name: "const with explicit type should not trigger KTN-CONST-004",
-			code: `package test
+`, true, "KTN-CONST-004")
+
+	runConstTest(t, "with explicit type", `package test
 // Connection limits
 // These constants define connection limits
 const (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
-`,
-			wantDiag: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var diagnostics []analysis.Diagnostic
-			pass := &analysis.Pass{
-				Analyzer: analyzer.ConstAnalyzer,
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					diagnostics = append(diagnostics, diag)
-				},
-			}
-
-			_, err = analyzer.ConstAnalyzer.Run(pass)
-			if err != nil {
-				t.Fatalf("analyzer failed: %v", err)
-			}
-
-			hasExpectedDiag := false
-			for _, d := range diagnostics {
-				if contains(d.Message, tt.wantMsg) {
-					hasExpectedDiag = true
-					break
-				}
-			}
-
-			if tt.wantDiag && !hasExpectedDiag {
-				t.Errorf("expected diagnostic %q but got none", tt.wantMsg)
-			}
-			if !tt.wantDiag && hasExpectedDiag {
-				t.Errorf("expected no diagnostic %q but got one", tt.wantMsg)
-			}
-		})
-	}
+`, false, "")
 }
 
-// TestConstAnalyzerEdgeCases tests edge cases for better coverage
+// runConstTest exécute un test pour le ConstAnalyzer.
 //
 // Params:
 //   - t: instance de test
-func TestConstAnalyzerEdgeCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "multiple consts on one line",
-			code: `package test
-// Network
-// Network constants
-const (
-	// Host and Port
-	Host, Port string = "localhost", "8080"
-)
-`,
-			wantDiag: false,
+//   - name: nom du test
+//   - code: code source à tester
+//   - wantDiag: true si on attend un diagnostic
+//   - wantMsg: message attendu dans le diagnostic
+func runConstTest(t *testing.T, name, code string, wantDiag bool, wantMsg string) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: analyzer.ConstAnalyzer,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(diag analysis.Diagnostic) {
+			diagnostics = append(diagnostics, diag)
 		},
-		{
-			name: "const with uint8 type",
-			code: `package test
+	}
+
+	_, err = analyzer.ConstAnalyzer.Run(pass)
+	if err != nil {
+		t.Fatalf("analyzer failed: %v", err)
+	}
+
+	hasExpectedDiag := false
+	for _, d := range diagnostics {
+		if wantMsg != "" && contains(d.Message, wantMsg) {
+			hasExpectedDiag = true
+			break
+		}
+	}
+
+	if wantDiag && !hasExpectedDiag {
+		t.Errorf("expected diagnostic %q but got none", wantMsg)
+	}
+	if !wantDiag && len(diagnostics) > 0 {
+		t.Errorf("expected no diagnostic but got: %v", diagnostics)
+	}
+}
+
+// TestConstAnalyzerNumericTypes teste les types numériques.
+//
+// Params:
+//   - t: instance de test
+func TestConstAnalyzerNumericTypes(t *testing.T) {
+	runConstTest(t, "uint8", `package test
 // Bytes
 // Byte constants
 const (
 	// MaxByte is max byte value
 	MaxByte uint8 = 255
-)
-`,
-			wantDiag: false,
-		},
-		{
-			name: "const with float32 type",
-			code: `package test
+)`, false, "")
+
+	runConstTest(t, "float32", `package test
 // Floats
 // Float constants
 const (
 	// DefaultRatio is the ratio
 	DefaultRatio float32 = 1.5
-)
-`,
-			wantDiag: false,
-		},
-		{
-			name: "const with complex64 type",
-			code: `package test
+)`, false, "")
+
+	runConstTest(t, "complex64", `package test
 // Complex numbers
 // Complex constants
 const (
 	// ImaginaryUnit is i
 	ImaginaryUnit complex64 = 1i
-)
-`,
-			wantDiag: false,
-		},
-		{
-			name: "const with rune type",
-			code: `package test
+)`, false, "")
+
+	runConstTest(t, "rune", `package test
 // Characters
 // Character constants
 const (
 	// NewLine is newline char
 	NewLine rune = '\n'
-)
-`,
-			wantDiag: false,
-		},
-		{
-			name: "const with byte type",
-			code: `package test
+)`, false, "")
+
+	runConstTest(t, "byte", `package test
 // Bytes
 // Byte constants
 const (
 	// NullByte is null
 	NullByte byte = 0
-)
-`,
-			wantDiag: false,
-		},
-		{
-			name: "underscore const should be skipped",
-			code: `package test
+)`, false, "")
+}
+
+// TestConstAnalyzerSpecialCases teste les cas spéciaux.
+//
+// Params:
+//   - t: instance de test
+func TestConstAnalyzerSpecialCases(t *testing.T) {
+	runConstTest(t, "multiple consts", `package test
+// Network
+// Network constants
+const (
+	// Host and Port
+	Host, Port string = "localhost", "8080"
+)`, false, "")
+
+	runConstTest(t, "underscore const", `package test
 // Ignored
 // Ignored constants
 const (
 	_ int = 999
-)
-`,
-			wantDiag: false,
-		},
-		{
-			name: "const with line comment only",
-			code: `package test
+)`, false, "")
+
+	runConstTest(t, "line comment only", `package test
 // Config
 // Configuration
 const (
 	MaxSize int = 1024 // Maximum size
-)
-`,
-			wantDiag: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var diagnostics []analysis.Diagnostic
-			pass := &analysis.Pass{
-				Analyzer: analyzer.ConstAnalyzer,
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					diagnostics = append(diagnostics, diag)
-				},
-			}
-
-			_, err = analyzer.ConstAnalyzer.Run(pass)
-			if err != nil {
-				t.Fatalf("analyzer failed: %v", err)
-			}
-
-			hasExpectedDiag := false
-			for _, d := range diagnostics {
-				if tt.wantMsg != "" && contains(d.Message, tt.wantMsg) {
-					hasExpectedDiag = true
-					break
-				}
-			}
-
-			if tt.wantDiag && !hasExpectedDiag {
-				t.Errorf("expected diagnostic %q but got none. Got: %v", tt.wantMsg, diagnostics)
-			}
-			if !tt.wantDiag && hasExpectedDiag {
-				t.Errorf("expected no diagnostic %q but got one. Got: %v", tt.wantMsg, diagnostics)
-			}
-		})
-	}
+)`, false, "")
 }
 
 // TestPlugin tests the plugin interface functions

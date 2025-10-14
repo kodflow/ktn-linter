@@ -374,28 +374,16 @@ func updateHTTPCode() {
 // Params:
 //   - t: instance de test
 func TestVarAnalyzerKTNVAR009(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "variable in ALL_CAPS should trigger KTN-VAR-009",
-			code: `package test
+	runVarTest(t, "ALL_CAPS", `package test
 // Buffer configuration
 // These variables configure buffers
 var (
 	// MAX_BUFFER_SIZE is the max buffer size
 	MAX_BUFFER_SIZE int = 1024
 )
-`,
-			wantDiag: true,
-			wantMsg:  "KTN-VAR-009",
-		},
-		{
-			name: "variable with initialism HTTPOK should not trigger KTN-VAR-009",
-			code: `package test
+`, true, "KTN-VAR-009")
+
+	runVarTest(t, "initialism", `package test
 // HTTP codes
 // These variables contain HTTP codes
 var (
@@ -406,12 +394,9 @@ var (
 func updateHTTPCode() {
 	HTTPOK = 201
 }
-`,
-			wantDiag: false,
-		},
-		{
-			name: "variable with MixedCaps should not trigger KTN-VAR-009",
-			code: `package test
+`, false, "")
+
+	runVarTest(t, "MixedCaps", `package test
 // Buffer configuration
 // These variables configure buffers
 var (
@@ -422,79 +407,56 @@ var (
 func updateBuffer() {
 	MaxBufferSize = 2048
 }
-`,
-			wantDiag: false,
-		},
-	}
-
-	runVarTests(t, tests)
+`, false, "")
 }
 
-// TestVarAnalyzerEdgeCases teste les cas limites pour une meilleure couverture.
+// TestVarAnalyzerSpecialValues teste les valeurs spéciales.
 //
 // Params:
 //   - t: instance de test
-func TestVarAnalyzerEdgeCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		wantDiag bool
-		wantMsg  string
-	}{
-		{
-			name: "underscore variable should be skipped",
-			code: `package test
+func TestVarAnalyzerSpecialValues(t *testing.T) {
+	runVarTest(t, "underscore", `package test
 // Utilities
 // Utility variables
 var (
 	_ int = 123
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR",
-		},
-		{
-			name: "variable with composite literal value",
-			code: `package test
+`, false, "")
+
+	runVarTest(t, "composite literal", `package test
 // Config values
 // Configuration
 var (
 	// Config is the configuration
 	Config []string = []string{"a", "b"}
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR-005",
-		},
-		{
-			name: "variable with function call value",
-			code: `package test
+`, false, "")
+
+	runVarTest(t, "function call", `package test
 // Init values
 // Initialization
 var (
 	// Value from function
 	Value int = getValue()
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR-005",
-		},
-		{
-			name: "constant-like name with unsupported type",
-			code: `package test
+`, false, "")
+
+	runVarTest(t, "constant-like unsupported type", `package test
 // Constants
 // Math constants
 var (
 	// Pi is mathematical constant
 	Pi []int = []int{3}
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR-005",
-		},
-		{
-			name: "variable with short MixedCaps name",
-			code: `package test
+`, false, "")
+}
+
+// TestVarAnalyzerNamingEdgeCases teste les cas limites du nommage.
+//
+// Params:
+//   - t: instance de test
+func TestVarAnalyzerNamingEdgeCases(t *testing.T) {
+	runVarTest(t, "short MixedCaps", `package test
 // Test values
 // Testing
 var (
@@ -505,50 +467,86 @@ var (
 func updateAx() {
 	Ax = 2
 }
-`,
-			wantDiag: false,
-		},
-		{
-			name: "channel with line comment instead of doc comment",
-			code: `package test
-// Channels
-// Channel variables
-var (
-	Ch chan int = make(chan int, 10) // buffered channel
-)
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR-007",
-		},
-		{
-			name: "variable starting with initialism",
-			code: `package test
+`, false, "")
+
+	runVarTest(t, "initialism start", `package test
 // HTTP variables
 // HTTP related
 var (
 	// HTTPServer is the server
 	HTTPServer string = "localhost"
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR-009",
-		},
-		{
-			name: "variable with mixed initialism and caps",
-			code: `package test
+`, false, "")
+
+	runVarTest(t, "mixed initialism", `package test
 // API variables
 // API configuration
 var (
 	// APIEndpoint is the endpoint
 	APIEndpoint string = "https://api.example.com"
 )
-`,
-			wantDiag: false,
-			wantMsg:  "KTN-VAR-009",
+`, false, "")
+}
+
+// TestVarAnalyzerChannelComments teste les commentaires de canaux.
+//
+// Params:
+//   - t: instance de test
+func TestVarAnalyzerChannelComments(t *testing.T) {
+	runVarTest(t, "line comment", `package test
+// Channels
+// Channel variables
+var (
+	Ch chan int = make(chan int, 10) // buffered channel
+)
+`, false, "")
+}
+
+// runVarTest exécute un test pour le VarAnalyzer.
+//
+// Params:
+//   - t: instance de test
+//   - name: nom du test
+//   - code: code source à tester
+//   - wantDiag: true si on attend un diagnostic
+//   - wantMsg: message attendu dans le diagnostic
+func runVarTest(t *testing.T, name, code string, wantDiag bool, wantMsg string) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: analyzer.VarAnalyzer,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(diag analysis.Diagnostic) {
+			diagnostics = append(diagnostics, diag)
 		},
 	}
 
-	runVarTests(t, tests)
+	_, err = analyzer.VarAnalyzer.Run(pass)
+	if err != nil {
+		t.Fatalf("analyzer failed: %v", err)
+	}
+
+	hasExpectedDiag := false
+	for _, d := range diagnostics {
+		if wantMsg != "" && contains(d.Message, wantMsg) {
+			hasExpectedDiag = true
+			break
+		}
+	}
+
+	if wantDiag && !hasExpectedDiag {
+		t.Errorf("expected diagnostic %q but got none", wantMsg)
+	}
+	if !wantDiag && len(diagnostics) > 0 {
+		t.Errorf("expected no diagnostic but got: %v", diagnostics)
+	}
 }
 
 // runVarTests est une fonction helper pour exécuter les tests du VarAnalyzer.
@@ -563,42 +561,6 @@ func runVarTests(t *testing.T, tests []struct {
 	wantMsg  string
 }) {
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var diagnostics []analysis.Diagnostic
-			pass := &analysis.Pass{
-				Analyzer: analyzer.VarAnalyzer,
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report: func(diag analysis.Diagnostic) {
-					diagnostics = append(diagnostics, diag)
-				},
-			}
-
-			_, err = analyzer.VarAnalyzer.Run(pass)
-			if err != nil {
-				t.Fatalf("analyzer failed: %v", err)
-			}
-
-			hasExpectedDiag := false
-			for _, d := range diagnostics {
-				if contains(d.Message, tt.wantMsg) {
-					hasExpectedDiag = true
-					break
-				}
-			}
-
-			if tt.wantDiag && !hasExpectedDiag {
-				t.Errorf("expected diagnostic %q but got none. Got: %v", tt.wantMsg, diagnostics)
-			}
-			if !tt.wantDiag && hasExpectedDiag {
-				t.Errorf("expected no diagnostic %q but got one. Got: %v", tt.wantMsg, diagnostics)
-			}
-		})
+		runVarTest(t, tt.name, tt.code, tt.wantDiag, tt.wantMsg)
 	}
 }
