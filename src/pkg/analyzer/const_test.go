@@ -10,11 +10,11 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestConstAnalyzer_KTN_CONST_001 teste ConstAnalyzer KTN CONST 001.
+// TestConstAnalyzerKTNCONST001 teste ConstAnalyzer KTN CONST 001.
 //
 // Params:
 //   - t: instance de test
-func TestConstAnalyzer_KTN_CONST_001(t *testing.T) {
+func TestConstAnalyzerKTNCONST001(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -88,11 +88,11 @@ const (
 	}
 }
 
-// TestConstAnalyzer_KTN_CONST_002 teste ConstAnalyzer KTN CONST 002.
+// TestConstAnalyzerKTNCONST002 teste ConstAnalyzer KTN CONST 002.
 //
 // Params:
 //   - t: instance de test
-func TestConstAnalyzer_KTN_CONST_002(t *testing.T) {
+func TestConstAnalyzerKTNCONST002(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -165,11 +165,11 @@ const (
 	}
 }
 
-// TestConstAnalyzer_KTN_CONST_003 teste ConstAnalyzer KTN CONST 003.
+// TestConstAnalyzerKTNCONST003 teste ConstAnalyzer KTN CONST 003.
 //
 // Params:
 //   - t: instance de test
-func TestConstAnalyzer_KTN_CONST_003(t *testing.T) {
+func TestConstAnalyzerKTNCONST003(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -243,11 +243,11 @@ const (
 	}
 }
 
-// TestConstAnalyzer_KTN_CONST_004 teste ConstAnalyzer KTN CONST 004.
+// TestConstAnalyzerKTNCONST004 teste ConstAnalyzer KTN CONST 004.
 //
 // Params:
 //   - t: instance de test
-func TestConstAnalyzer_KTN_CONST_004(t *testing.T) {
+func TestConstAnalyzerKTNCONST004(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -322,11 +322,11 @@ const (
 	}
 }
 
-// TestConstAnalyzer_EdgeCases tests edge cases for better coverage
+// TestConstAnalyzerEdgeCases tests edge cases for better coverage
 //
 // Params:
 //   - t: instance de test
-func TestConstAnalyzer_EdgeCases(t *testing.T) {
+func TestConstAnalyzerEdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string

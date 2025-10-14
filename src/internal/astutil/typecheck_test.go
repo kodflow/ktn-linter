@@ -130,11 +130,11 @@ func TestIsLiteralValue(t *testing.T) {
 	}
 }
 
-// TestIsConstCompatibleType_NilExpr teste le comportement avec une expression nil.
+// TestIsConstCompatibleTypeNilExpr teste le comportement avec une expression nil.
 //
 // Params:
 //   - t: instance de test
-func TestIsConstCompatibleType_NilExpr(t *testing.T) {
+func TestIsConstCompatibleTypeNilExpr(t *testing.T) {
 	// Test avec une expression nil
 	result := astutil.IsConstCompatibleType(nil)
 	if result != false {
@@ -142,11 +142,11 @@ func TestIsConstCompatibleType_NilExpr(t *testing.T) {
 	}
 }
 
-// TestIsLiteralValue_NilExpr teste le comportement avec une expression nil.
+// TestIsLiteralValueNilExpr teste le comportement avec une expression nil.
 //
 // Params:
 //   - t: instance de test
-func TestIsLiteralValue_NilExpr(t *testing.T) {
+func TestIsLiteralValueNilExpr(t *testing.T) {
 	// Test avec une expression nil
 	result := astutil.IsLiteralValue(nil)
 	if result != false {

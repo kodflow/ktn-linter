@@ -101,11 +101,11 @@ func TestExprToString(t *testing.T) {
 	}
 }
 
-// TestExprToString_Unknown teste la gestion des types non supportés.
+// TestExprToStringUnknown teste la gestion des types non supportés.
 //
 // Params:
 //   - t: instance de test
-func TestExprToString_Unknown(t *testing.T) {
+func TestExprToStringUnknown(t *testing.T) {
 	// Test avec un type non supporté (struct type)
 	code := "var x struct { name string }"
 	fset := token.NewFileSet()
@@ -174,11 +174,11 @@ func TestGetTypeString(t *testing.T) {
 	}
 }
 
-// TestGetTypeString_Const teste l'extraction de types pour les constantes.
+// TestGetTypeStringConst teste l'extraction de types pour les constantes.
 //
 // Params:
 //   - t: instance de test
-func TestGetTypeString_Const(t *testing.T) {
+func TestGetTypeStringConst(t *testing.T) {
 	// Test avec une constante
 	tests := []struct {
 		name     string

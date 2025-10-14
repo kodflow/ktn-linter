@@ -40,11 +40,11 @@ func TestNewFormatter(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_Success teste Formatter Format Success.
+// TestFormatterFormatSuccess teste Formatter Format Success.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_Success(t *testing.T) {
+func TestFormatterFormatSuccess(t *testing.T) {
 	var buf bytes.Buffer
 	f := formatter.NewFormatter(&buf, false, false, false)
 
@@ -56,11 +56,11 @@ func TestFormatter_Format_Success(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_HumanMode teste Formatter Format HumanMode.
+// TestFormatterFormatHumanMode teste Formatter Format HumanMode.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_HumanMode(t *testing.T) {
+func TestFormatterFormatHumanMode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
 
@@ -88,11 +88,11 @@ func TestFormatter_Format_HumanMode(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_AIMode teste Formatter Format AIMode.
+// TestFormatterFormatAIMode teste Formatter Format AIMode.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_AIMode(t *testing.T) {
+func TestFormatterFormatAIMode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
 
@@ -120,11 +120,11 @@ func TestFormatter_Format_AIMode(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_SimpleMode teste Formatter Format SimpleMode.
+// TestFormatterFormatSimpleMode teste Formatter Format SimpleMode.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_SimpleMode(t *testing.T) {
+func TestFormatterFormatSimpleMode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
 
@@ -153,11 +153,11 @@ func TestFormatter_Format_SimpleMode(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_MultipleDiagnostics teste Formatter Format MultipleDiagnostics.
+// TestFormatterFormatMultipleDiagnostics teste Formatter Format MultipleDiagnostics.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_MultipleDiagnostics(t *testing.T) {
+func TestFormatterFormatMultipleDiagnostics(t *testing.T) {
 	fset := token.NewFileSet()
 	file1 := fset.AddFile("file1.go", 1, 100)
 	file2 := fset.AddFile("file2.go", 102, 200)
@@ -189,11 +189,11 @@ func TestFormatter_Format_MultipleDiagnostics(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_ColorsDisabled teste Formatter Format ColorsDisabled.
+// TestFormatterFormatColorsDisabled teste Formatter Format ColorsDisabled.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_ColorsDisabled(t *testing.T) {
+func TestFormatterFormatColorsDisabled(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
 
@@ -217,11 +217,11 @@ func TestFormatter_Format_ColorsDisabled(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_WithColors teste Formatter Format WithColors.
+// TestFormatterFormatWithColors teste Formatter Format WithColors.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_WithColors(t *testing.T) {
+func TestFormatterFormatWithColors(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
 
@@ -245,11 +245,11 @@ func TestFormatter_Format_WithColors(t *testing.T) {
 	}
 }
 
-// TestFormatter_Format_SimpleMode_Sorting teste Formatter Format SimpleMode Sorting.
+// TestFormatterFormatSimpleModeSorting teste Formatter Format SimpleMode Sorting.
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_Format_SimpleMode_Sorting(t *testing.T) {
+func TestFormatterFormatSimpleModeSorting(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
 
@@ -300,11 +300,11 @@ func TestFormatter_Format_SimpleMode_Sorting(t *testing.T) {
 	}
 }
 
-// TestFormatter_AllErrorCodes tests all KTN error codes for complete coverage
+// TestFormatterAllErrorCodes tests all KTN error codes for complete coverage
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_AllErrorCodes(t *testing.T) {
+func TestFormatterAllErrorCodes(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 200)
 
@@ -408,11 +408,11 @@ func TestFormatter_AllErrorCodes(t *testing.T) {
 	})
 }
 
-// TestFormatter_EdgeCases tests edge cases for extractors
+// TestFormatterEdgeCases tests edge cases for extractors
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_EdgeCases(t *testing.T) {
+func TestFormatterEdgeCases(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("edge.go", 1, 100)
 
@@ -495,11 +495,11 @@ func TestFormatter_EdgeCases(t *testing.T) {
 	})
 }
 
-// TestFormatter_TypeExtraction tests type extraction from suggestions
+// TestFormatterTypeExtraction tests type extraction from suggestions
 //
 // Params:
 //   - t: instance de test
-func TestFormatter_TypeExtraction(t *testing.T) {
+func TestFormatterTypeExtraction(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("types.go", 1, 300)
 

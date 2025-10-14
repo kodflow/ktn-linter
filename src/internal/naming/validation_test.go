@@ -131,11 +131,11 @@ func TestIsValidInitialism(t *testing.T) {
 	}
 }
 
-// TestIsValidInitialism_AllInitialisms teste IsValidInitialism AllInitialisms.
+// TestIsValidInitialismAllInitialisms teste IsValidInitialism AllInitialisms.
 //
 // Params:
 //   - t: instance de test
-func TestIsValidInitialism_AllInitialisms(t *testing.T) {
+func TestIsValidInitialismAllInitialisms(t *testing.T) {
 	// Test tous les initialismes de la liste pour s'assurer qu'ils sont reconnus
 	initialisms := []string{
 		"HTTP", "HTTPS", "URL", "URI", "ID", "API", "JSON", "XML", "HTML",
@@ -154,11 +154,11 @@ func TestIsValidInitialism_AllInitialisms(t *testing.T) {
 	}
 }
 
-// TestIsValidInitialism_CombinationsWithMixedCaps teste IsValidInitialism CombinationsWithMixedCaps.
+// TestIsValidInitialismCombinationsWithMixedCaps teste IsValidInitialism CombinationsWithMixedCaps.
 //
 // Params:
 //   - t: instance de test
-func TestIsValidInitialism_CombinationsWithMixedCaps(t *testing.T) {
+func TestIsValidInitialismCombinationsWithMixedCaps(t *testing.T) {
 	// Test des combinaisons courantes avec MixedCaps
 	tests := []struct {
 		name     string
@@ -188,11 +188,11 @@ func TestIsValidInitialism_CombinationsWithMixedCaps(t *testing.T) {
 	}
 }
 
-// TestIsAllCaps_Unicode teste IsAllCaps Unicode.
+// TestIsAllCapsUnicode teste IsAllCaps Unicode.
 //
 // Params:
 //   - t: instance de test
-func TestIsAllCaps_Unicode(t *testing.T) {
+func TestIsAllCapsUnicode(t *testing.T) {
 	// Test avec des caractères Unicode
 	tests := []struct {
 		name     string

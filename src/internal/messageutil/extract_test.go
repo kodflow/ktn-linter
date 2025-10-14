@@ -278,11 +278,11 @@ func TestExtractType(t *testing.T) {
 	}
 }
 
-// TestExtractCode_EdgeCases teste ExtractCode EdgeCases.
+// TestExtractCodeEdgeCases teste ExtractCode EdgeCases.
 //
 // Params:
 //   - t: instance de test
-func TestExtractCode_EdgeCases(t *testing.T) {
+func TestExtractCodeEdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
 		message  string
@@ -320,11 +320,11 @@ func TestExtractCode_EdgeCases(t *testing.T) {
 	}
 }
 
-// TestExtractMessage_EdgeCases teste ExtractMessage EdgeCases.
+// TestExtractMessageEdgeCases teste ExtractMessage EdgeCases.
 //
 // Params:
 //   - t: instance de test
-func TestExtractMessage_EdgeCases(t *testing.T) {
+func TestExtractMessageEdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
 		message  string

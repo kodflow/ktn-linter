@@ -12,11 +12,11 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestInterfaceAnalyzer_MissingInterfacesFile teste la détection de l'absence de interfaces.go.
+// TestInterfaceAnalyzerMissingInterfacesFile teste la détection de l'absence de interfaces.go.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_MissingInterfacesFile(t *testing.T) {
+func TestInterfaceAnalyzerMissingInterfacesFile(t *testing.T) {
 	code := `package myservice
 
 type MyService struct {
@@ -57,11 +57,11 @@ func (s *MyService) DoSomething() error {
 	}
 }
 
-// TestInterfaceAnalyzer_PublicStruct teste la détection de structs publiques.
+// TestInterfaceAnalyzerPublicStruct teste la détection de structs publiques.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_PublicStruct(t *testing.T) {
+func TestInterfaceAnalyzerPublicStruct(t *testing.T) {
 	tests := []struct {
 		name        string
 		code        string
@@ -151,11 +151,11 @@ type myServiceImpl struct {
 	}
 }
 
-// TestInterfaceAnalyzer_InterfaceInWrongFile teste la détection d'interfaces mal placées.
+// TestInterfaceAnalyzerInterfaceInWrongFile teste la détection d'interfaces mal placées.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_InterfaceInWrongFile(t *testing.T) {
+func TestInterfaceAnalyzerInterfaceInWrongFile(t *testing.T) {
 	code := `package myservice
 
 type MyService interface {
@@ -195,11 +195,11 @@ type MyService interface {
 	}
 }
 
-// TestInterfaceAnalyzer_MissingConstructor teste la détection de constructeurs manquants.
+// TestInterfaceAnalyzerMissingConstructor teste la détection de constructeurs manquants.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_MissingConstructor(t *testing.T) {
+func TestInterfaceAnalyzerMissingConstructor(t *testing.T) {
 	tests := []struct {
 		name         string
 		interfaceCode string
@@ -290,11 +290,11 @@ type MyMarker interface {}
 	}
 }
 
-// TestInterfaceAnalyzer_CompliantPackage teste un package conforme.
+// TestInterfaceAnalyzerCompliantPackage teste un package conforme.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_CompliantPackage(t *testing.T) {
+func TestInterfaceAnalyzerCompliantPackage(t *testing.T) {
 	interfacesCode := `package myservice
 
 // MyService définit le contrat du service.
@@ -366,11 +366,11 @@ func (r *repositoryImpl) Load(id string) (string, error) {
 	}
 }
 
-// TestInterfaceAnalyzer_ExemptedPackages teste les packages exemptés.
+// TestInterfaceAnalyzerExemptedPackages teste les packages exemptés.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_ExemptedPackages(t *testing.T) {
+func TestInterfaceAnalyzerExemptedPackages(t *testing.T) {
 	tests := []struct {
 		pkgName     string
 		shouldCheck bool
@@ -417,11 +417,11 @@ type MyService struct {
 	}
 }
 
-// TestInterfaceAnalyzer_RealWorldScenarios teste des scénarios réels.
+// TestInterfaceAnalyzerRealWorldScenarios teste des scénarios réels.
 //
 // Params:
 //   - t: instance de test
-func TestInterfaceAnalyzer_RealWorldScenarios(t *testing.T) {
+func TestInterfaceAnalyzerRealWorldScenarios(t *testing.T) {
 	t.Run("HTTP Handler Pattern", func(t *testing.T) {
 		interfacesCode := `package handler
 

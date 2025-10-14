@@ -10,11 +10,11 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestFuncAnalyzer_ValidCases vérifie que les fonctions correctement documentées passent.
+// TestFuncAnalyzerValidCases vérifie que les fonctions correctement documentées passent.
 //
 // Params:
 //   - t: instance de test
-func TestFuncAnalyzer_ValidCases(t *testing.T) {
+func TestFuncAnalyzerValidCases(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
@@ -132,11 +132,11 @@ func calculateTotalAmount(amount float64) float64 {
 	}
 }
 
-// TestFuncAnalyzer_ErrorCases vérifie que les violations sont bien détectées.
+// TestFuncAnalyzerErrorCases vérifie que les violations sont bien détectées.
 //
 // Params:
 //   - t: instance de test
-func TestFuncAnalyzer_ErrorCases(t *testing.T) {
+func TestFuncAnalyzerErrorCases(t *testing.T) {
 	tests := []struct {
 		name          string
 		code          string
