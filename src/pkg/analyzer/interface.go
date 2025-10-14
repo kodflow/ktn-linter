@@ -40,9 +40,9 @@ type publicStruct struct {
 
 // publicInterface représente une interface publique trouvée.
 type publicInterface struct {
-	name       string
-	pos        token.Pos
-	fileName   string
+	name        string
+	pos         token.Pos
+	fileName    string
 	methodCount int
 }
 
@@ -97,12 +97,12 @@ func runInterfaceAnalyzer(pass *analysis.Pass) (interface{}, error) {
 //   - *packageInfo: les informations collectées
 func collectPackageInfo(pass *analysis.Pass) *packageInfo {
 	info := &packageInfo{
-		name:          pass.Pkg.Name(),
-		path:          pass.Pkg.Path(),
-		publicStructs: []publicStruct{},
+		name:             pass.Pkg.Name(),
+		path:             pass.Pkg.Path(),
+		publicStructs:    []publicStruct{},
 		publicInterfaces: []publicInterface{},
-		privateStructs: []privateStruct{},
-		constructors:  make(map[string]bool),
+		privateStructs:   []privateStruct{},
+		constructors:     make(map[string]bool),
 	}
 
 	for _, file := range pass.Files {

@@ -138,9 +138,9 @@ func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 //   - funcName: le nom de la fonction
 func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	complexity := calculateCyclomaticComplexity(funcDecl)
-	if complexity >= 10 {
+	if complexity > 10 {
 		pass.Reportf(funcDecl.Name.Pos(),
-			"[KTN-FUNC-007] Fonction '%s' a une complexité cyclomatique trop élevée (%d >= 10).\nRéduisez la complexité en extrayant des sous-fonctions ou en simplifiant la logique.",
+			"[KTN-FUNC-007] Fonction '%s' a une complexité cyclomatique trop élevée (%d > 10).\nRéduisez la complexité en extrayant des sous-fonctions ou en simplifiant la logique.",
 			funcName, complexity)
 	}
 }
