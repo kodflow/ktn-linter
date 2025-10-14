@@ -143,35 +143,58 @@ func analyzeTypeDecl(genDecl *ast.GenDecl, fileName string, info *packageInfo) {
 			continue
 		}
 
-		name := typeSpec.Name.Name
-		isPublic := unicode.IsUpper(rune(name[0]))
-
-		switch typeSpec.Type.(type) {
+		switch t := typeSpec.Type.(type) {
 		case *ast.InterfaceType:
-			if isPublic {
-				methodCount := countInterfaceMethods(typeSpec.Type.(*ast.InterfaceType))
-				info.publicInterfaces = append(info.publicInterfaces, publicInterface{
-					name:        name,
-					pos:         typeSpec.Pos(),
-					fileName:    fileName,
-					methodCount: methodCount,
-				})
-			}
+			recordInterface(typeSpec, t, fileName, info)
 		case *ast.StructType:
-			if isPublic {
-				info.publicStructs = append(info.publicStructs, publicStruct{
-					name:     name,
-					pos:      typeSpec.Pos(),
-					fileName: fileName,
-				})
-			} else {
-				info.privateStructs = append(info.privateStructs, privateStruct{
-					name:     name,
-					pos:      typeSpec.Pos(),
-					fileName: fileName,
-				})
-			}
+			recordStruct(typeSpec, fileName, info)
 		}
+	}
+}
+
+// recordInterface enregistre une interface trouvée.
+//
+// Params:
+//   - typeSpec: la spécification de type
+//   - iface: le type interface
+//   - fileName: le nom du fichier
+//   - info: les informations du package
+func recordInterface(typeSpec *ast.TypeSpec, iface *ast.InterfaceType, fileName string, info *packageInfo) {
+	name := typeSpec.Name.Name
+	isPublic := unicode.IsUpper(rune(name[0]))
+
+	if isPublic {
+		info.publicInterfaces = append(info.publicInterfaces, publicInterface{
+			name:        name,
+			pos:         typeSpec.Pos(),
+			fileName:    fileName,
+			methodCount: countInterfaceMethods(iface),
+		})
+	}
+}
+
+// recordStruct enregistre une struct trouvée.
+//
+// Params:
+//   - typeSpec: la spécification de type
+//   - fileName: le nom du fichier
+//   - info: les informations du package
+func recordStruct(typeSpec *ast.TypeSpec, fileName string, info *packageInfo) {
+	name := typeSpec.Name.Name
+	isPublic := unicode.IsUpper(rune(name[0]))
+
+	if isPublic {
+		info.publicStructs = append(info.publicStructs, publicStruct{
+			name:     name,
+			pos:      typeSpec.Pos(),
+			fileName: fileName,
+		})
+	} else {
+		info.privateStructs = append(info.privateStructs, privateStruct{
+			name:     name,
+			pos:      typeSpec.Pos(),
+			fileName: fileName,
+		})
 	}
 }
 

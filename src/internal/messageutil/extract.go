@@ -93,22 +93,33 @@ func ExtractConstName(message string) string {
 // Returns:
 //   - string: le type Go trouvé, ou "int" par défaut si aucun type n'est trouvé
 func ExtractType(suggestion string) string {
-	// Chercher après le nom de constante
 	words := strings.Fields(suggestion)
 	for i, word := range words {
-		// Chercher des types Go connus
-		if word == "bool" || word == "string" || word == "int" ||
-			word == "int8" || word == "int16" || word == "int32" || word == "int64" ||
-			word == "uint" || word == "uint8" || word == "uint16" || word == "uint32" || word == "uint64" ||
-			word == "float32" || word == "float64" ||
-			word == "byte" || word == "rune" ||
-			word == "complex64" || word == "complex128" {
+		if isGoType(word) {
 			return word
 		}
-		// Si on trouve "<type>", deviner le type
 		if word == "<type>" && i > 0 {
 			return "int"
 		}
 	}
 	return "int"
+}
+
+// isGoType vérifie si un mot est un type Go connu.
+//
+// Params:
+//   - word: le mot à vérifier
+//
+// Returns:
+//   - bool: true si c'est un type Go standard
+func isGoType(word string) bool {
+	goTypes := map[string]bool{
+		"bool": true, "string": true, "int": true,
+		"int8": true, "int16": true, "int32": true, "int64": true,
+		"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
+		"float32": true, "float64": true,
+		"byte": true, "rune": true,
+		"complex64": true, "complex128": true,
+	}
+	return goTypes[word]
 }

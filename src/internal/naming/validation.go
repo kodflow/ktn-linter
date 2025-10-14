@@ -89,6 +89,24 @@ func HasGetterPrefix(name string) bool {
 	return false
 }
 
+// getInitialismsMap retourne le map des initialismes incorrects vers corrects.
+//
+// Returns:
+//   - map[string]string: map des initialismes avec forme incorrecte -> forme correcte
+func getInitialismsMap() map[string]string {
+	return map[string]string{
+		"Http": "HTTP", "Https": "HTTPS", "Url": "URL", "Uri": "URI",
+		"Id": "ID", "Api": "API", "Json": "JSON", "Xml": "XML",
+		"Html": "HTML", "Sql": "SQL", "Tls": "TLS", "Ssl": "SSL",
+		"Tcp": "TCP", "Udp": "UDP", "Ip": "IP", "Dns": "DNS",
+		"Ssh": "SSH", "Ftp": "FTP", "Ok": "OK", "Eof": "EOF",
+		"Uid": "UID", "Uuid": "UUID", "Ascii": "ASCII", "Utf": "UTF",
+		"Cpu": "CPU", "Ram": "RAM", "Io": "IO", "Db": "DB",
+		"Rpc": "RPC", "Cdn": "CDN", "Aws": "AWS", "Gcp": "GCP",
+		"Ttl": "TTL", "Acl": "ACL", "Cors": "CORS", "Csrf": "CSRF",
+	}
+}
+
 // FixInitialisms trouve les initialismes incorrects dans un nom.
 //
 // Params:
@@ -97,63 +115,51 @@ func HasGetterPrefix(name string) bool {
 // Returns:
 //   - []string: une liste de corrections suggérées (maximum 1 suggestion avec toutes les corrections). Exemples: "HttpServer" -> ["HTTPServer"], "UrlParser" -> ["URLParser"]
 func FixInitialisms(name string) []string {
-	// Liste des initialismes Go courants avec leur forme correcte
-	initialismsMap := map[string]string{
-		"Http":  "HTTP",
-		"Https": "HTTPS",
-		"Url":   "URL",
-		"Uri":   "URI",
-		"Id":    "ID",
-		"Api":   "API",
-		"Json":  "JSON",
-		"Xml":   "XML",
-		"Html":  "HTML",
-		"Sql":   "SQL",
-		"Tls":   "TLS",
-		"Ssl":   "SSL",
-		"Tcp":   "TCP",
-		"Udp":   "UDP",
-		"Ip":    "IP",
-		"Dns":   "DNS",
-		"Ssh":   "SSH",
-		"Ftp":   "FTP",
-		"Ok":    "OK",
-		"Eof":   "EOF",
-		"Uid":   "UID",
-		"Uuid":  "UUID",
-		"Ascii": "ASCII",
-		"Utf":   "UTF",
-		"Cpu":   "CPU",
-		"Ram":   "RAM",
-		"Io":    "IO",
-		"Db":    "DB",
-		"Rpc":   "RPC",
-		"Cdn":   "CDN",
-		"Aws":   "AWS",
-		"Gcp":   "GCP",
-		"Ttl":   "TTL",
-		"Acl":   "ACL",
-		"Cors":  "CORS",
-		"Csrf":  "CSRF",
-	}
-
 	fixed := name
 	hasChanges := false
 
-	// Chercher et remplacer tous les initialismes incorrects dans une seule passe
-	for incorrect, correct := range initialismsMap {
+	for incorrect, correct := range getInitialismsMap() {
 		if strings.Contains(fixed, incorrect) {
 			fixed = strings.ReplaceAll(fixed, incorrect, correct)
 			hasChanges = true
 		}
 	}
 
-	// Si des changements ont été faits, retourner la version corrigée
 	if hasChanges && fixed != name {
 		return []string{fixed}
 	}
-
 	return []string{}
+}
+
+// getKnownInitialisms retourne la liste des initialismes Go courants.
+//
+// Returns:
+//   - []string: liste des initialismes valides selon Effective Go
+func getKnownInitialisms() []string {
+	return []string{
+		"HTTP", "HTTPS", "URL", "URI", "ID", "API", "JSON", "XML", "HTML",
+		"SQL", "TLS", "SSL", "TCP", "UDP", "IP", "DNS", "SSH", "FTP",
+		"OK", "EOF", "UID", "UUID", "ASCII", "UTF", "CPU", "RAM", "IO",
+		"DB", "RPC", "CDN", "AWS", "GCP", "TTL", "ACL", "CORS", "CSRF",
+	}
+}
+
+// tryMatchInitialismPrefix tente de matcher un initialisme au début de la chaîne.
+//
+// Params:
+//   - remaining: la chaîne à analyser
+//   - initialisms: la liste des initialismes à tester
+//
+// Returns:
+//   - string: la chaîne restante après le match
+//   - bool: true si un match a été trouvé
+func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, bool) {
+	for _, init := range initialisms {
+		if strings.HasPrefix(remaining, init) {
+			return remaining[len(init):], true
+		}
+	}
+	return remaining, false
 }
 
 // IsValidInitialism vérifie si le nom est composé uniquement d'initialismes Go valides.
@@ -164,41 +170,24 @@ func FixInitialisms(name string) []string {
 // Returns:
 //   - bool: true si composé uniquement d'initialismes valides. Exemples valides: HTTP, HTTPS, URL, HTTPOK, URLID, APIURL, HTTPSPort. Exemples invalides: MAX_BUFFER, HTTP_OK (contiennent des underscores). Cette fonction suit les conventions Go pour les initialismes courants (voir Effective Go et le guide de style de la communauté Go)
 func IsValidInitialism(name string) bool {
-	// Liste des initialismes Go courants (voir Effective Go)
-	initialisisms := []string{
-		"HTTP", "HTTPS", "URL", "URI", "ID", "API", "JSON", "XML", "HTML",
-		"SQL", "TLS", "SSL", "TCP", "UDP", "IP", "DNS", "SSH", "FTP",
-		"OK", "EOF", "UID", "UUID", "ASCII", "UTF", "CPU", "RAM", "IO",
-		"DB", "RPC", "CDN", "AWS", "GCP", "TTL", "ACL", "CORS", "CSRF",
-	}
-
 	// Si le nom contient un underscore, c'est invalide (viole KTN-VAR-008 / KTN-CONST-008)
 	if strings.Contains(name, "_") {
 		return false
 	}
 
 	// Essayer de décomposer le nom en initialismes connus
+	initialisms := getKnownInitialisms()
 	remaining := name
 	matched := false
 
 	for len(remaining) > 0 {
-		foundMatch := false
-		// Essayer de matcher le début avec un initialisme
-		for _, init := range initialisisms {
-			if strings.HasPrefix(remaining, init) {
-				remaining = remaining[len(init):]
-				foundMatch = true
-				matched = true
-				break
-			}
-		}
-
-		// Si on n'a pas trouvé de match et qu'il reste des caractères
-		if !foundMatch {
+		newRemaining, foundMatch := tryMatchInitialismPrefix(remaining, initialisms)
+		if foundMatch {
+			remaining = newRemaining
+			matched = true
+		} else {
 			// Vérifier si le reste est en MixedCaps (ex: HTTPServer, URLParser)
 			if remaining != "" && unicode.IsUpper(rune(remaining[0])) {
-				// C'est peut-être une combinaison initialism+nom (HTTPOK, HTTPNotFound)
-				// On accepte si au moins un initialisme a été trouvé
 				return matched
 			}
 			return false
