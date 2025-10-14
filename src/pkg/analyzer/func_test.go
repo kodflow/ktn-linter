@@ -1,4 +1,4 @@
-package analyzer
+package analyzer_test
 
 import (
 	"go/ast"
@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/src/pkg/analyzer"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -120,7 +121,7 @@ func calculateTotalAmount(amount float64) float64 {
 				},
 			}
 
-			_, err = FuncAnalyzer.Run(pass)
+			_, err = analyzer.FuncAnalyzer.Run(pass)
 			if err != nil {
 				t.Errorf("Analyzer returned error: %v", err)
 			}
@@ -222,7 +223,7 @@ func bad_naming() {
 				},
 			}
 
-			_, err = FuncAnalyzer.Run(pass)
+			_, err = analyzer.FuncAnalyzer.Run(pass)
 			if err != nil {
 				t.Errorf("Analyzer returned error: %v", err)
 			}
@@ -234,63 +235,6 @@ func bad_naming() {
 	}
 }
 
-// TestExtractSection teste la fonction extractSection.
-func TestExtractSection(t *testing.T) {
-	tests := []struct {
-		name        string
-		doc         string
-		sectionName string
-		expected    string
-	}{
-		{
-			name: "Section Params simple",
-			doc: `calculateSum calcule la somme.
-
-Params:
-  - a: premier nombre
-  - b: second nombre
-
-Returns:
-  - int: la somme`,
-			sectionName: "Params:",
-			expected:    "  - a: premier nombre\n  - b: second nombre",
-		},
-		{
-			name: "Section Returns",
-			doc: `getValue retourne une valeur.
-
-Returns:
-  - string: la valeur`,
-			sectionName: "Returns:",
-			expected:    "  - string: la valeur",
-		},
-		{
-			name: "Section avec mot dans description",
-			doc: `checkGodocFormat vérifie le format strict avec sections Params: et Returns:.
-
-Params:
-  - pass: la passe d'analyse
-  - doc: le texte`,
-			sectionName: "Params:",
-			expected:    "  - pass: la passe d'analyse\n  - doc: le texte",
-		},
-		{
-			name:        "Section absente",
-			doc:         "simple description sans sections",
-			sectionName: "Params:",
-			expected:    "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := extractSection(tt.doc, tt.sectionName)
-			if result != tt.expected {
-				t.Errorf("extractSection() = %q, want %q", result, tt.expected)
-			}
-		})
-	}
-}
 
 // TestCheckParamsFormat teste la vérification du format des paramètres.
 func TestCheckParamsFormat(t *testing.T) {
@@ -367,7 +311,7 @@ func calculate(x, y, z int) int {
 				},
 			}
 
-			_, err = FuncAnalyzer.Run(pass)
+			_, err = analyzer.FuncAnalyzer.Run(pass)
 			if err != nil {
 				t.Errorf("Analyzer returned error: %v", err)
 			}
@@ -411,7 +355,7 @@ func checkGodocFormat(pass int, funcDecl string, funcName string, doc string) {
 		},
 	}
 
-	_, err = FuncAnalyzer.Run(pass)
+	_, err = analyzer.FuncAnalyzer.Run(pass)
 	if err != nil {
 		t.Errorf("Analyzer returned error: %v", err)
 	}
@@ -444,6 +388,6 @@ func calculateSum(a int, b int) int {
 			Files:  []*ast.File{file},
 			Report: func(diag analysis.Diagnostic) {},
 		}
-		FuncAnalyzer.Run(pass)
+		analyzer.FuncAnalyzer.Run(pass)
 	}
 }

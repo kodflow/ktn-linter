@@ -1,4 +1,4 @@
-package analyzer
+package analyzer_test
 
 import (
 	"go/ast"
@@ -6,6 +6,8 @@ import (
 	"go/token"
 	"go/types"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/src/pkg/analyzer"
 
 	"golang.org/x/tools/go/analysis"
 )
@@ -42,7 +44,7 @@ func (s *MyService) DoSomething() error {
 		},
 	}
 
-	_, err = InterfaceAnalyzer.Run(pass)
+	_, err = analyzer.InterfaceAnalyzer.Run(pass)
 	if err != nil {
 		t.Errorf("Analyzer returned error: %v", err)
 	}
@@ -122,14 +124,14 @@ type myServiceImpl struct {
 				Pkg:   types.NewPackage("example.com/myservice", "myservice"),
 				Report: func(diag analysis.Diagnostic) {
 					// Ignorer INTERFACE-001
-					if !contains(diag.Message, "KTN-INTERFACE-001") {
+					if !containsInterface(diag.Message, "KTN-INTERFACE-001") {
 						foundError = true
 						t.Logf("Found error: %s", diag.Message)
 					}
 				},
 			}
 
-			_, err = InterfaceAnalyzer.Run(pass)
+			_, err = analyzer.InterfaceAnalyzer.Run(pass)
 			if err != nil {
 				t.Errorf("Analyzer returned error: %v", err)
 			}
@@ -167,14 +169,14 @@ type MyService interface {
 		Files: []*ast.File{interfacesFile, file},
 		Pkg:   types.NewPackage("example.com/myservice", "myservice"),
 		Report: func(diag analysis.Diagnostic) {
-			if contains(diag.Message, "KTN-INTERFACE-005") {
+			if containsInterface(diag.Message, "KTN-INTERFACE-005") {
 				foundError = true
 				t.Logf("Found expected error: %s", diag.Message)
 			}
 		},
 	}
 
-	_, err = InterfaceAnalyzer.Run(pass)
+	_, err = analyzer.InterfaceAnalyzer.Run(pass)
 	if err != nil {
 		t.Errorf("Analyzer returned error: %v", err)
 	}
@@ -255,14 +257,14 @@ type MyMarker interface {}
 				Files: []*ast.File{interfacesFile, implFile},
 				Pkg:   types.NewPackage("example.com/myservice", "myservice"),
 				Report: func(diag analysis.Diagnostic) {
-					if contains(diag.Message, "KTN-INTERFACE-006") {
+					if containsInterface(diag.Message, "KTN-INTERFACE-006") {
 						foundWarning = true
 						t.Logf("Found warning: %s", diag.Message)
 					}
 				},
 			}
 
-			_, err := InterfaceAnalyzer.Run(pass)
+			_, err := analyzer.InterfaceAnalyzer.Run(pass)
 			if err != nil {
 				t.Errorf("Analyzer returned error: %v", err)
 			}
@@ -339,7 +341,7 @@ func (r *repositoryImpl) Load(id string) (string, error) {
 		},
 	}
 
-	_, err := InterfaceAnalyzer.Run(pass)
+	_, err := analyzer.InterfaceAnalyzer.Run(pass)
 	if err != nil {
 		t.Errorf("Analyzer returned error: %v", err)
 	}
@@ -383,7 +385,7 @@ type MyService struct {
 				},
 			}
 
-			_, err := InterfaceAnalyzer.Run(pass)
+			_, err := analyzer.InterfaceAnalyzer.Run(pass)
 			if err != nil {
 				t.Errorf("Analyzer returned error: %v", err)
 			}
@@ -464,7 +466,7 @@ func (u *userServiceImpl) CreateUser(user *UserData) error {
 			},
 		}
 
-		_, err := InterfaceAnalyzer.Run(pass)
+		_, err := analyzer.InterfaceAnalyzer.Run(pass)
 		if err != nil {
 			t.Errorf("Analyzer returned error: %v", err)
 		}
@@ -477,11 +479,11 @@ func (u *userServiceImpl) CreateUser(user *UserData) error {
 
 // Helper function
 
-func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && containsHelper(s, substr)
+func containsInterface(s, substr string) bool {
+	return len(s) > 0 && len(substr) > 0 && containsInterfaceHelper(s, substr)
 }
 
-func containsHelper(s, substr string) bool {
+func containsInterfaceHelper(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
 			return true

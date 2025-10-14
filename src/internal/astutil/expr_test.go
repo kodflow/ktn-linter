@@ -1,10 +1,12 @@
-package astutil
+package astutil_test
 
 import (
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/src/internal/astutil"
 )
 
 func TestExprToString(t *testing.T) {
@@ -87,7 +89,7 @@ func TestExprToString(t *testing.T) {
 			decl := file.Decls[0].(*ast.GenDecl)
 			spec := decl.Specs[0].(*ast.ValueSpec)
 
-			result := ExprToString(spec.Type)
+			result := astutil.ExprToString(spec.Type)
 			if result != tt.expected {
 				t.Errorf("ExprToString() = %q, want %q", result, tt.expected)
 			}
@@ -107,7 +109,7 @@ func TestExprToString_Unknown(t *testing.T) {
 	decl := file.Decls[0].(*ast.GenDecl)
 	spec := decl.Specs[0].(*ast.ValueSpec)
 
-	result := ExprToString(spec.Type)
+	result := astutil.ExprToString(spec.Type)
 	if result != "unknown" {
 		t.Errorf("ExprToString() for unsupported type = %q, want %q", result, "unknown")
 	}
@@ -152,7 +154,7 @@ func TestGetTypeString(t *testing.T) {
 			decl := file.Decls[0].(*ast.GenDecl)
 			spec := decl.Specs[0].(*ast.ValueSpec)
 
-			result := GetTypeString(spec)
+			result := astutil.GetTypeString(spec)
 			if result != tt.expected {
 				t.Errorf("GetTypeString() = %q, want %q", result, tt.expected)
 			}
@@ -190,7 +192,7 @@ func TestGetTypeString_Const(t *testing.T) {
 			decl := file.Decls[0].(*ast.GenDecl)
 			spec := decl.Specs[0].(*ast.ValueSpec)
 
-			result := GetTypeString(spec)
+			result := astutil.GetTypeString(spec)
 			if result != tt.expected {
 				t.Errorf("GetTypeString() = %q, want %q", result, tt.expected)
 			}

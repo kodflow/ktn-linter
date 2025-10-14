@@ -1,10 +1,12 @@
-package astutil
+package astutil_test
 
 import (
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/src/internal/astutil"
 )
 
 func TestIsConstCompatibleType(t *testing.T) {
@@ -54,9 +56,9 @@ func TestIsConstCompatibleType(t *testing.T) {
 			decl := file.Decls[0].(*ast.GenDecl)
 			spec := decl.Specs[0].(*ast.ValueSpec)
 
-			result := IsConstCompatibleType(spec.Type)
+			result := astutil.IsConstCompatibleType(spec.Type)
 			if result != tt.expected {
-				t.Errorf("IsConstCompatibleType(%s) = %v, want %v", tt.name, result, tt.expected)
+				t.Errorf("astutil.IsConstCompatibleType(%s) = %v, want %v", tt.name, result, tt.expected)
 			}
 		})
 	}
@@ -112,9 +114,9 @@ func TestIsLiteralValue(t *testing.T) {
 				t.Fatalf("Failed to find variable spec in code: %s", tt.code)
 			}
 
-			result := IsLiteralValue(spec.Values[0])
+			result := astutil.IsLiteralValue(spec.Values[0])
 			if result != tt.expected {
-				t.Errorf("IsLiteralValue(%s) = %v, want %v", tt.name, result, tt.expected)
+				t.Errorf("astutil.IsLiteralValue(%s) = %v, want %v", tt.name, result, tt.expected)
 			}
 		})
 	}
@@ -122,16 +124,16 @@ func TestIsLiteralValue(t *testing.T) {
 
 func TestIsConstCompatibleType_NilExpr(t *testing.T) {
 	// Test avec une expression nil
-	result := IsConstCompatibleType(nil)
+	result := astutil.IsConstCompatibleType(nil)
 	if result != false {
-		t.Errorf("IsConstCompatibleType(nil) = %v, want false", result)
+		t.Errorf("astutil.IsConstCompatibleType(nil) = %v, want false", result)
 	}
 }
 
 func TestIsLiteralValue_NilExpr(t *testing.T) {
 	// Test avec une expression nil
-	result := IsLiteralValue(nil)
+	result := astutil.IsLiteralValue(nil)
 	if result != false {
-		t.Errorf("IsLiteralValue(nil) = %v, want false", result)
+		t.Errorf("astutil.IsLiteralValue(nil) = %v, want false", result)
 	}
 }

@@ -1,7 +1,9 @@
-package naming
+package naming_test
 
 import (
 	"testing"
+
+	"github.com/kodflow/ktn-linter/src/internal/naming"
 )
 
 func TestIsAllCaps(t *testing.T) {
@@ -40,9 +42,9 @@ func TestIsAllCaps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsAllCaps(tt.input)
+			result := naming.IsAllCaps(tt.input)
 			if result != tt.expected {
-				t.Errorf("IsAllCaps(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("naming.IsAllCaps(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -113,9 +115,9 @@ func TestIsValidInitialism(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsValidInitialism(tt.input)
+			result := naming.IsValidInitialism(tt.input)
 			if result != tt.expected {
-				t.Errorf("IsValidInitialism(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("naming.IsValidInitialism(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -132,9 +134,9 @@ func TestIsValidInitialism_AllInitialisms(t *testing.T) {
 
 	for _, init := range initialisms {
 		t.Run("initialism_"+init, func(t *testing.T) {
-			result := IsValidInitialism(init)
+			result := naming.IsValidInitialism(init)
 			if !result {
-				t.Errorf("IsValidInitialism(%q) = false, want true (should be valid initialism)", init)
+				t.Errorf("naming.IsValidInitialism(%q) = false, want true (should be valid initialism)", init)
 			}
 		})
 	}
@@ -162,9 +164,9 @@ func TestIsValidInitialism_CombinationsWithMixedCaps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsValidInitialism(tt.input)
+			result := naming.IsValidInitialism(tt.input)
 			if result != tt.expected {
-				t.Errorf("IsValidInitialism(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("naming.IsValidInitialism(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -186,9 +188,9 @@ func TestIsAllCaps_Unicode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsAllCaps(tt.input)
+			result := naming.IsAllCaps(tt.input)
 			if result != tt.expected {
-				t.Errorf("IsAllCaps(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("naming.IsAllCaps(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -231,9 +233,9 @@ func TestIsMixedCaps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsMixedCaps(tt.input)
+			result := naming.IsMixedCaps(tt.input)
 			if result != tt.expected {
-				t.Errorf("IsMixedCaps(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("naming.IsMixedCaps(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -277,9 +279,9 @@ func TestHasGetterPrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := HasGetterPrefix(tt.input)
+			result := naming.HasGetterPrefix(tt.input)
 			if result != tt.expected {
-				t.Errorf("HasGetterPrefix(%q) = %v, want %v", tt.input, result, tt.expected)
+				t.Errorf("naming.HasGetterPrefix(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -315,10 +317,10 @@ func TestFixInitialisms(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := FixInitialisms(tt.input)
+			result := naming.FixInitialisms(tt.input)
 			// Comparer les longueurs
 			if len(result) != len(tt.expected) {
-				t.Errorf("FixInitialisms(%q) returned %d suggestions, want %d", tt.input, len(result), len(tt.expected))
+				t.Errorf("naming.FixInitialisms(%q) returned %d suggestions, want %d", tt.input, len(result), len(tt.expected))
 				return
 			}
 			// Comparer le contenu (si attendu non vide)
@@ -331,7 +333,7 @@ func TestFixInitialisms(t *testing.T) {
 					}
 				}
 				if !found {
-					t.Errorf("FixInitialisms(%q) = %v, want %v", tt.input, result, tt.expected)
+					t.Errorf("naming.FixInitialisms(%q) = %v, want %v", tt.input, result, tt.expected)
 				}
 			}
 		})

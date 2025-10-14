@@ -1,7 +1,9 @@
-package messageutil
+package messageutil_test
 
 import (
 	"testing"
+
+	"github.com/kodflow/ktn-linter/src/internal/messageutil"
 )
 
 func TestExtractCode(t *testing.T) {
@@ -49,9 +51,9 @@ func TestExtractCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractCode(tt.message)
+			result := messageutil.ExtractCode(tt.message)
 			if result != tt.expected {
-				t.Errorf("ExtractCode(%q) = %q, want %q", tt.message, result, tt.expected)
+				t.Errorf("messageutil.ExtractCode(%q) = %q, want %q", tt.message, result, tt.expected)
 			}
 		})
 	}
@@ -92,9 +94,9 @@ func TestExtractMessage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractMessage(tt.message)
+			result := messageutil.ExtractMessage(tt.message)
 			if result != tt.expected {
-				t.Errorf("ExtractMessage(%q) = %q, want %q", tt.message, result, tt.expected)
+				t.Errorf("messageutil.ExtractMessage(%q) = %q, want %q", tt.message, result, tt.expected)
 			}
 		})
 	}
@@ -147,9 +149,9 @@ Exemple:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractSuggestion(tt.message)
+			result := messageutil.ExtractSuggestion(tt.message)
 			if result != tt.expected {
-				t.Errorf("ExtractSuggestion() = %q, want %q", result, tt.expected)
+				t.Errorf("messageutil.ExtractSuggestion() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
@@ -195,9 +197,9 @@ func TestExtractConstName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractConstName(tt.message)
+			result := messageutil.ExtractConstName(tt.message)
 			if result != tt.expected {
-				t.Errorf("ExtractConstName(%q) = %q, want %q", tt.message, result, tt.expected)
+				t.Errorf("messageutil.ExtractConstName(%q) = %q, want %q", tt.message, result, tt.expected)
 			}
 		})
 	}
@@ -248,9 +250,9 @@ func TestExtractType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractType(tt.suggestion)
+			result := messageutil.ExtractType(tt.suggestion)
 			if result != tt.expected {
-				t.Errorf("ExtractType(%q) = %q, want %q", tt.suggestion, result, tt.expected)
+				t.Errorf("messageutil.ExtractType(%q) = %q, want %q", tt.suggestion, result, tt.expected)
 			}
 		})
 	}
@@ -286,9 +288,9 @@ func TestExtractCode_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractCode(tt.message)
+			result := messageutil.ExtractCode(tt.message)
 			if result != tt.expected {
-				t.Errorf("ExtractCode(%q) = %q, want %q", tt.message, result, tt.expected)
+				t.Errorf("messageutil.ExtractCode(%q) = %q, want %q", tt.message, result, tt.expected)
 			}
 		})
 	}
@@ -314,9 +316,9 @@ func TestExtractMessage_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractMessage(tt.message)
+			result := messageutil.ExtractMessage(tt.message)
 			if result != tt.expected {
-				t.Errorf("ExtractMessage(%q) = %q, want %q", tt.message, result, tt.expected)
+				t.Errorf("messageutil.ExtractMessage(%q) = %q, want %q", tt.message, result, tt.expected)
 			}
 		})
 	}
