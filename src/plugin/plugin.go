@@ -14,6 +14,7 @@ func (*AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 		analyzer.ConstAnalyzer,
 		analyzer.VarAnalyzer,
 		analyzer.FuncAnalyzer,
+		analyzer.InterfaceAnalyzer,
 	}
 }
 

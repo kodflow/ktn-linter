@@ -30,6 +30,7 @@ func (p *Plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 		ConstAnalyzer,
 		VarAnalyzer,
 		FuncAnalyzer,
+		InterfaceAnalyzer,
 	}, nil
 }
 
