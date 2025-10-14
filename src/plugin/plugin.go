@@ -1,4 +1,4 @@
-package main
+package plugin
 
 import (
 	"github.com/kodflow/ktn-linter/src/pkg/analyzer"

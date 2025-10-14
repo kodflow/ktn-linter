@@ -34,6 +34,10 @@ var (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
+
+func updateConfig() {
+	MaxConnections = 200
+}
 `,
 			wantDiag: false,
 		},
@@ -105,6 +109,10 @@ var (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
+
+func updateConfig() {
+	MaxConnections = 200
+}
 `,
 			wantDiag: false,
 		},
@@ -142,6 +150,10 @@ var (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
+
+func updateConfig() {
+	MaxConnections = 200
+}
 `,
 			wantDiag: false,
 		},
@@ -179,6 +191,10 @@ var (
 	// MaxConnections defines the maximum number of connections
 	MaxConnections int = 100
 )
+
+func updateConfig() {
+	MaxConnections = 200
+}
 `,
 			wantDiag: false,
 		},
@@ -218,6 +234,11 @@ var (
 	// Port is the port number
 	Port int = 8080
 )
+
+func updateNetwork() {
+	HostName = "example.com"
+	Port = 9090
+}
 `,
 			wantDiag: false,
 		},
@@ -304,6 +325,10 @@ var (
 	// HTTPOK represents code 200
 	HTTPOK int = 200
 )
+
+func updateHTTPCode() {
+	HTTPOK = 201
+}
 `,
 			wantDiag: false,
 		},
@@ -341,6 +366,10 @@ var (
 	// HTTPOK represents code 200
 	HTTPOK int = 200
 )
+
+func updateHTTPCode() {
+	HTTPOK = 201
+}
 `,
 			wantDiag: false,
 		},
@@ -353,6 +382,10 @@ var (
 	// MaxBufferSize is the max buffer size
 	MaxBufferSize int = 1024
 )
+
+func updateBuffer() {
+	MaxBufferSize = 2048
+}
 `,
 			wantDiag: false,
 		},
@@ -429,6 +462,10 @@ var (
 	// Ax is a test var
 	Ax int = 1
 )
+
+func updateAx() {
+	Ax = 2
+}
 `,
 			wantDiag: false,
 		},

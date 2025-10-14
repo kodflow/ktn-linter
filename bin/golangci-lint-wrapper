@@ -1,6 +1,25 @@
 #!/bin/bash
 # Wrapper pour KTN-Linter uniquement (pas de golangci-lint)
 
+# Logging pour débugger VSCode
+LOG_FILE="/tmp/ktn-linter-wrapper.log"
+echo "=== $(date) ===" >> "$LOG_FILE"
+echo "Arguments reçus: $@" >> "$LOG_FILE"
+echo "PWD: $(pwd)" >> "$LOG_FILE"
+
+# Gérer les commandes golangci-lint que VSCode pourrait envoyer
+if [[ "$1" == "version" ]] || [[ "$1" == "--version" ]] || [[ "$1" == "-v" ]]; then
+    echo "Version check demandé" >> "$LOG_FILE"
+    echo "golangci-lint (ktn-linter wrapper) version 1.0.0"
+    exit 0
+fi
+
+# Ignorer la commande "run" si présente (golangci-lint run ...)
+if [[ "$1" == "run" ]]; then
+    echo "Commande 'run' ignorée, shift des arguments" >> "$LOG_FILE"
+    shift
+fi
+
 # Détecter si on analyse un fichier spécifique ou un pattern
 FILE_ARG=""
 PATTERN_ARG=""
@@ -26,12 +45,15 @@ done
 
 # Exécuter ktn-linter
 if [[ -n "$FILE_ARG" ]]; then
-    /workspace/builds/ktn-linter -simple "$FILE_ARG" 2>&1 || true
+    echo "Mode: fichier spécifique - $FILE_ARG" >> "$LOG_FILE"
+    GOFLAGS="-buildvcs=false" /workspace/builds/ktn-linter -simple "$FILE_ARG" 2>&1 | tee -a "$LOG_FILE" || true
 elif [[ -n "$PATTERN_ARG" ]]; then
-    /workspace/builds/ktn-linter -simple "$PATTERN_ARG" 2>&1 || true
+    echo "Mode: pattern - $PATTERN_ARG" >> "$LOG_FILE"
+    GOFLAGS="-buildvcs=false" /workspace/builds/ktn-linter -simple "$PATTERN_ARG" 2>&1 | tee -a "$LOG_FILE" || true
 else
     # Par défaut, analyser tout
-    /workspace/builds/ktn-linter -simple ./... 2>&1 || true
+    echo "Mode: tout le workspace" >> "$LOG_FILE"
+    GOFLAGS="-buildvcs=false" /workspace/builds/ktn-linter -simple ./... 2>&1 | tee -a "$LOG_FILE" || true
 fi
 
 # Retourner 0 pour ne pas bloquer l'extension Go

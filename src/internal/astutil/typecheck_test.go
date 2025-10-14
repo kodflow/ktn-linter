@@ -120,49 +120,6 @@ func TestIsLiteralValue(t *testing.T) {
 	}
 }
 
-func TestLooksLikeConstantName(t *testing.T) {
-	tests := []struct {
-		name     string
-		varName  string
-		expected bool
-	}{
-		// Noms de constantes mathématiques connues
-		{name: "Pi", varName: "Pi", expected: true},
-		{name: "E", varName: "E", expected: true},
-		{name: "Euler", varName: "Euler", expected: true},
-		{name: "EulerNumber", varName: "EulerNumber", expected: true},
-		{name: "GoldenRatio", varName: "GoldenRatio", expected: true},
-		{name: "Phi", varName: "Phi", expected: true},
-		{name: "Tau", varName: "Tau", expected: true},
-		{name: "SpeedOfLight", varName: "SpeedOfLight", expected: true},
-		{name: "PlanckConstant", varName: "PlanckConstant", expected: true},
-		{name: "AvogadroNumber", varName: "AvogadroNumber", expected: true},
-		{name: "BoltzmannConst", varName: "BoltzmannConst", expected: true},
-		{name: "GravityConst", varName: "GravityConst", expected: true},
-
-		// Noms contenant des indicateurs de constante
-		{name: "with constant", varName: "SomeConstant", expected: true},
-		{name: "with golden ratio", varName: "MyGoldenRatio", expected: true},
-
-		// Noms ordinaires de variables
-		{name: "counter", varName: "counter", expected: false},
-		{name: "maxValue", varName: "maxValue", expected: false},
-		{name: "userName", varName: "userName", expected: false},
-		{name: "buffer", varName: "buffer", expected: false},
-		{name: "config", varName: "config", expected: false},
-		{name: "httpClient", varName: "httpClient", expected: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := LooksLikeConstantName(tt.varName)
-			if result != tt.expected {
-				t.Errorf("LooksLikeConstantName(%q) = %v, want %v", tt.varName, result, tt.expected)
-			}
-		})
-	}
-}
-
 func TestIsConstCompatibleType_NilExpr(t *testing.T) {
 	// Test avec une expression nil
 	result := IsConstCompatibleType(nil)
@@ -176,13 +133,5 @@ func TestIsLiteralValue_NilExpr(t *testing.T) {
 	result := IsLiteralValue(nil)
 	if result != false {
 		t.Errorf("IsLiteralValue(nil) = %v, want false", result)
-	}
-}
-
-func TestLooksLikeConstantName_Empty(t *testing.T) {
-	// Test avec un nom vide
-	result := LooksLikeConstantName("")
-	if result != false {
-		t.Errorf("LooksLikeConstantName(\"\") = %v, want false", result)
 	}
 }

@@ -16,66 +16,69 @@ var ConstAnalyzer = &analysis.Analyzer{
 	Run:  runConstAnalyzer,
 }
 
+// runConstAnalyzer vérifie que toutes les constantes respectent les règles KTN
+// Retourne nil, nil car aucun résultat n'est nécessaire pour cet analyseur
 func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
-	// Pour détecter les constantes non groupées, on doit parcourir toutes les déclarations
 	for _, file := range pass.Files {
-		// Map pour suivre les commentaires avant chaque déclaration
-		comments := make(map[token.Pos]*ast.CommentGroup)
-		for _, cg := range file.Comments {
-			if len(cg.List) > 0 {
-				comments[cg.End()] = cg
-			}
-		}
-
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.CONST {
-				continue
-			}
-
-			// KTN-CONST-001: Vérifier si c'est une constante non groupée
-			if genDecl.Lparen == token.NoPos {
-				// Constante déclarée sans ()
-				for _, spec := range genDecl.Specs {
-					valueSpec := spec.(*ast.ValueSpec)
-					for _, name := range valueSpec.Names {
-						pass.Reportf(name.Pos(),
-							"[KTN-CONST-001] Constante '%s' déclarée individuellement. Regroupez les constantes dans un bloc const ().\nExemple:\n  const (\n      %s %s = ...\n  )",
-							name.Name, name.Name, astutil.GetTypeString(valueSpec))
-					}
-				}
-				continue
-			}
-
-			// C'est un groupe de constantes const ()
-			// KTN-CONST-002: Vérifier le commentaire de groupe
-			hasGroupComment := false
-			if genDecl.Doc != nil && len(genDecl.Doc.List) > 0 {
-				hasGroupComment = true
-			}
-
-			if !hasGroupComment {
-				pass.Reportf(genDecl.Pos(),
-					"[KTN-CONST-002] Groupe de constantes sans commentaire de groupe.\nAjoutez un commentaire avant le bloc const () pour décrire l'ensemble.\nExemple:\n  // Description du groupe de constantes\n  const (...)")
-			}
-
-			// Vérifier chaque constante dans le groupe
-			for _, spec := range genDecl.Specs {
-				valueSpec := spec.(*ast.ValueSpec)
-				// Vérifier si le commentaire de la constante est le même que le commentaire de groupe
-				// (cela arrive quand il n'y a qu'un seul commentaire pour le groupe ET la première constante)
-				isGroupCommentOnly := hasGroupComment &&
-					valueSpec.Doc != nil &&
-					genDecl.Doc != nil &&
-					valueSpec.Doc.Pos() == genDecl.Doc.Pos()
-				checkConstSpec(pass, valueSpec, isGroupCommentOnly)
-			}
-		}
+		checkConstDeclarations(pass, file)
 	}
-
 	return nil, nil
 }
 
+// checkConstDeclarations parcourt et vérifie toutes les déclarations de constantes
+func checkConstDeclarations(pass *analysis.Pass, file *ast.File) {
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.CONST {
+			continue
+		}
+
+		if genDecl.Lparen == token.NoPos {
+			reportUngroupedConst(pass, genDecl)
+			continue
+		}
+
+		checkConstGroup(pass, genDecl)
+	}
+}
+
+// reportUngroupedConst signale une constante non groupée
+func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+		for _, name := range valueSpec.Names {
+			pass.Reportf(name.Pos(),
+				"[KTN-CONST-001] Constante '%s' déclarée individuellement. Regroupez les constantes dans un bloc const ().\nExemple:\n  const (\n      %s %s = ...\n  )",
+				name.Name, name.Name, astutil.GetTypeString(valueSpec))
+		}
+	}
+}
+
+// checkConstGroup vérifie un groupe de constantes
+func checkConstGroup(pass *analysis.Pass, genDecl *ast.GenDecl) {
+	hasGroupComment := false
+	if genDecl.Doc != nil && len(genDecl.Doc.List) > 0 {
+		hasGroupComment = true
+	}
+
+	if !hasGroupComment {
+		pass.Reportf(genDecl.Pos(),
+			"[KTN-CONST-002] Groupe de constantes sans commentaire de groupe.\nAjoutez un commentaire avant le bloc const () pour décrire l'ensemble.\nExemple:\n  // Description du groupe de constantes\n  const (...)")
+	}
+
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+		isGroupCommentOnly := hasGroupComment &&
+			valueSpec.Doc != nil &&
+			genDecl.Doc != nil &&
+			valueSpec.Doc.Pos() == genDecl.Doc.Pos()
+		checkConstSpec(pass, valueSpec, isGroupCommentOnly)
+	}
+}
+
+// checkConstSpec vérifie une spécification de constante individuelle
+// Les paramètres pass, spec et isFirstWithGroupComment contrôlent la validation
+// Le paramètre isFirstWithGroupComment indique si la constante partage le commentaire de groupe
 func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool) {
 	for _, name := range spec.Names {
 		if name.Name == "_" {
@@ -83,18 +86,7 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 		}
 
 		// KTN-CONST-003: Vérifier le commentaire individuel
-		hasComment := false
-		if spec.Doc != nil && len(spec.Doc.List) > 0 {
-			// Si c'est la première constante d'un groupe avec commentaire de groupe,
-			// on ignore le commentaire de groupe qui lui est attaché
-			if !isFirstWithGroupComment {
-				hasComment = true
-			}
-		} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
-			hasComment = true
-		}
-
-		if !hasComment {
+		if !hasIndividualComment(spec, isFirstWithGroupComment) {
 			pass.Reportf(name.Pos(),
 				"[KTN-CONST-003] Constante '%s' sans commentaire individuel.\nChaque constante doit avoir un commentaire explicatif.\nExemple:\n  // %s décrit son rôle\n  %s %s = ...",
 				name.Name, name.Name, name.Name, astutil.GetTypeString(spec))
@@ -107,4 +99,16 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 				name.Name, name.Name)
 		}
 	}
+}
+
+// hasIndividualComment vérifie si une constante a un commentaire individuel
+func hasIndividualComment(spec *ast.ValueSpec, isFirstWithGroupComment bool) bool {
+	if spec.Doc != nil && len(spec.Doc.List) > 0 {
+		if !isFirstWithGroupComment {
+			return true
+		}
+	} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
+		return true
+	}
+	return false
 }

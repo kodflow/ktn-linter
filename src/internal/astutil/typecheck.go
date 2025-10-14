@@ -2,7 +2,6 @@ package astutil
 
 import (
 	"go/ast"
-	"strings"
 )
 
 // IsConstCompatibleType vérifie si le type est compatible avec const
@@ -33,39 +32,5 @@ func IsLiteralValue(expr ast.Expr) bool {
 	case *ast.Ident: // true, false, nil
 		return true
 	}
-	return false
-}
-
-// LooksLikeConstantName vérifie si le nom ressemble à une constante mathématique ou scientifique
-// Ne signale que les cas évidents (Pi, E, Euler, etc.) pour éviter les faux positifs
-func LooksLikeConstantName(name string) bool {
-	// Liste de noms connus de constantes mathématiques/scientifiques
-	knownConstants := map[string]bool{
-		"Pi":             true,
-		"E":              true,
-		"Euler":          true,
-		"EulerNumber":    true,
-		"GoldenRatio":    true,
-		"Phi":            true,
-		"Tau":            true,
-		"SpeedOfLight":   true,
-		"PlanckConstant": true,
-		"AvogadroNumber": true,
-		"BoltzmannConst": true,
-		"GravityConst":   true,
-	}
-
-	// Vérifier si c'est un nom connu
-	if knownConstants[name] {
-		return true
-	}
-
-	// Vérifier si le nom contient des indicateurs de constante mathématique
-	nameLower := strings.ToLower(name)
-	if strings.Contains(nameLower, "constant") ||
-		strings.Contains(nameLower, "ratio") && strings.Contains(nameLower, "golden") {
-		return true
-	}
-
 	return false
 }

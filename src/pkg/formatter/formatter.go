@@ -12,17 +12,27 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/messageutil"
 )
 
-// Colors ANSI
+// Codes de couleurs ANSI pour le formatage terminal
+// Ces constantes définissent les séquences d'échappement pour colorer la sortie
 const (
-	Red     = "\033[31m"
-	Green   = "\033[32m"
-	Yellow  = "\033[33m"
-	Blue    = "\033[34m"
-	Magenta = "\033[35m"
-	Cyan    = "\033[36m"
-	Gray    = "\033[90m"
-	Bold    = "\033[1m"
-	Reset   = "\033[0m"
+	// Red applique la couleur rouge
+	Red string = "\033[31m"
+	// Green applique la couleur verte
+	Green string = "\033[32m"
+	// Yellow applique la couleur jaune
+	Yellow string = "\033[33m"
+	// Blue applique la couleur bleue
+	Blue string = "\033[34m"
+	// Magenta applique la couleur magenta
+	Magenta string = "\033[35m"
+	// Cyan applique la couleur cyan
+	Cyan string = "\033[36m"
+	// Gray applique la couleur grise
+	Gray string = "\033[90m"
+	// Bold applique le style gras
+	Bold string = "\033[1m"
+	// Reset réinitialise tous les styles et couleurs
+	Reset string = "\033[0m"
 )
 
 // DiagnosticGroup regroupe les diagnostics par fichier
@@ -39,7 +49,9 @@ type Formatter struct {
 	simpleMode bool
 }
 
-// NewFormatter crée un nouveau formatter
+// NewFormatter crée un nouveau formatter avec les options spécifiées
+// Les paramètres w, aiMode, noColor et simpleMode configurent le comportement de sortie
+// Retourne un formatter prêt à utiliser pour afficher les diagnostics
 func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) *Formatter {
 	return &Formatter{
 		writer:     w,

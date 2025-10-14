@@ -18,165 +18,269 @@ var VarAnalyzer = &analysis.Analyzer{
 	Run:  runVarAnalyzer,
 }
 
+// runVarAnalyzer vérifie que toutes les variables respectent les règles KTN
+// Retourne nil, nil car aucun résultat n'est nécessaire pour cet analyseur
 func runVarAnalyzer(pass *analysis.Pass) (interface{}, error) {
+	// Phase 1 : Collecter toutes les variables package-level et leurs assignations
+	packageVars := make(map[*ast.Ident]*ast.ValueSpec)
+	reassignedVars := make(map[string]bool)
+
 	for _, file := range pass.Files {
-		// Map pour suivre les commentaires avant chaque déclaration
-		comments := make(map[token.Pos]*ast.CommentGroup)
-		for _, cg := range file.Comments {
-			if len(cg.List) > 0 {
-				comments[cg.End()] = cg
-			}
-		}
-
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.VAR {
-				continue
-			}
-
-			// KTN-VAR-001: Vérifier si c'est une variable non groupée
-			if genDecl.Lparen == token.NoPos {
-				// Variable déclarée sans ()
-				for _, spec := range genDecl.Specs {
-					valueSpec := spec.(*ast.ValueSpec)
-					for _, name := range valueSpec.Names {
-						pass.Reportf(name.Pos(),
-							"[KTN-VAR-001] Variable '%s' déclarée individuellement. Regroupez les variables dans un bloc var ().\nExemple:\n  var (\n      %s %s = ...\n  )",
-							name.Name, name.Name, astutil.GetTypeString(valueSpec))
-					}
-				}
-				continue
-			}
-
-			// C'est un groupe de variables var ()
-			// KTN-VAR-002: Vérifier le commentaire de groupe
-			hasGroupComment := false
-			if genDecl.Doc != nil && len(genDecl.Doc.List) > 0 {
-				hasGroupComment = true
-			}
-
-			if !hasGroupComment {
-				pass.Reportf(genDecl.Pos(),
-					"[KTN-VAR-002] Groupe de variables sans commentaire de groupe.\nAjoutez un commentaire avant le bloc var () pour décrire l'ensemble.\nExemple:\n  // Description du groupe de variables\n  var (...)")
-			}
-
-			// Vérifier chaque variable dans le groupe
-			for _, spec := range genDecl.Specs {
-				valueSpec := spec.(*ast.ValueSpec)
-				// Vérifier si le commentaire de la variable est le même que le commentaire de groupe
-				isGroupCommentOnly := hasGroupComment &&
-					valueSpec.Doc != nil &&
-					genDecl.Doc != nil &&
-					valueSpec.Doc.Pos() == genDecl.Doc.Pos()
-				checkVarSpec(pass, valueSpec, isGroupCommentOnly)
-			}
-		}
+		collectPackageVars(file, packageVars)
+		collectReassignments(file, reassignedVars)
 	}
 
+	// Phase 2 : Vérifier les déclarations avec l'info des réassignations
+	for _, file := range pass.Files {
+		checkVarDeclarations(pass, file, reassignedVars)
+	}
 	return nil, nil
 }
 
-func checkVarSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool) {
-	// KTN-VAR-006: Vérifier les déclarations multiples sur une ligne
-	if len(spec.Names) > 1 {
-		pass.Reportf(spec.Pos(),
-			"[KTN-VAR-006] Déclaration de plusieurs variables sur une ligne.\nDéclarez chaque variable sur sa propre ligne pour plus de clarté.\nExemple:\n  var (\n      %s %s = ...\n      %s %s = ...\n  )",
-			spec.Names[0].Name, astutil.GetTypeString(spec),
-			spec.Names[1].Name, astutil.GetTypeString(spec))
+// collectPackageVars collecte toutes les variables déclarées au niveau package
+func collectPackageVars(file *ast.File, packageVars map[*ast.Ident]*ast.ValueSpec) {
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR {
+			continue
+		}
+
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+			for _, name := range valueSpec.Names {
+				packageVars[name] = valueSpec
+			}
+		}
 	}
+}
+
+// collectReassignments parcourt le fichier pour trouver toutes les réassignations
+func collectReassignments(file *ast.File, reassignedVars map[string]bool) {
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Chercher les assignations (=, pas :=)
+		assignStmt, ok := n.(*ast.AssignStmt)
+		if !ok || assignStmt.Tok != token.ASSIGN {
+			return true
+		}
+
+		// Marquer toutes les variables du côté gauche comme réassignées
+		for _, lhs := range assignStmt.Lhs {
+			if ident, ok := lhs.(*ast.Ident); ok {
+				reassignedVars[ident.Name] = true
+			}
+		}
+
+		return true
+	})
+}
+
+// checkVarDeclarations parcourt et vérifie toutes les déclarations de variables
+func checkVarDeclarations(pass *analysis.Pass, file *ast.File, reassignedVars map[string]bool) {
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR {
+			continue
+		}
+
+		if genDecl.Lparen == token.NoPos {
+			reportUngroupedVar(pass, genDecl)
+			continue
+		}
+
+		checkVarGroup(pass, genDecl, reassignedVars)
+	}
+}
+
+// reportUngroupedVar signale une variable non groupée
+func reportUngroupedVar(pass *analysis.Pass, genDecl *ast.GenDecl) {
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+		for _, name := range valueSpec.Names {
+			pass.Reportf(name.Pos(),
+				"[KTN-VAR-001] Variable '%s' déclarée individuellement. Regroupez les variables dans un bloc var ().\nExemple:\n  var (\n      %s %s = ...\n  )",
+				name.Name, name.Name, astutil.GetTypeString(valueSpec))
+		}
+	}
+}
+
+// checkVarGroup vérifie un groupe de variables
+func checkVarGroup(pass *analysis.Pass, genDecl *ast.GenDecl, reassignedVars map[string]bool) {
+	hasGroupComment := false
+	if genDecl.Doc != nil && len(genDecl.Doc.List) > 0 {
+		hasGroupComment = true
+	}
+
+	if !hasGroupComment {
+		pass.Reportf(genDecl.Pos(),
+			"[KTN-VAR-002] Groupe de variables sans commentaire de groupe.\nAjoutez un commentaire avant le bloc var () pour décrire l'ensemble.\nExemple:\n  // Description du groupe de variables\n  var (...)")
+	}
+
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+		isGroupCommentOnly := hasGroupComment &&
+			valueSpec.Doc != nil &&
+			genDecl.Doc != nil &&
+			valueSpec.Doc.Pos() == genDecl.Doc.Pos()
+		checkVarSpec(pass, valueSpec, isGroupCommentOnly, reassignedVars)
+	}
+}
+
+// checkVarSpec vérifie une spécification de variable individuelle
+// Les paramètres pass, spec, isFirstWithGroupComment et reassignedVars contrôlent la validation
+func checkVarSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool, reassignedVars map[string]bool) {
+	checkMultipleDeclarations(pass, spec)
 
 	for _, name := range spec.Names {
 		if name.Name == "_" {
 			continue
 		}
 
-		// KTN-VAR-008: Vérifier les underscores dans le nom (sauf _)
-		if strings.Contains(name.Name, "_") {
-			pass.Reportf(name.Pos(),
-				"[KTN-VAR-008] Variable '%s' contient un underscore.\nUtilisez la convention MixedCaps (exemple: myVariable, MaxCount).",
-				name.Name)
+		checkVarNaming(pass, name)
+		checkVarComment(pass, name, spec, isFirstWithGroupComment)
+		checkVarType(pass, name, spec)
+		checkChannelBuffer(pass, name, spec)
+		checkIfShouldBeConst(pass, name, spec, reassignedVars)
+	}
+}
+
+// checkMultipleDeclarations vérifie les déclarations multiples sur une ligne
+func checkMultipleDeclarations(pass *analysis.Pass, spec *ast.ValueSpec) {
+	if len(spec.Names) > 1 {
+		pass.Reportf(spec.Pos(),
+			"[KTN-VAR-006] Déclaration de plusieurs variables sur une ligne.\nDéclarez chaque variable sur sa propre ligne pour plus de clarté.\nExemple:\n  var (\n      %s %s = ...\n      %s %s = ...\n  )",
+			spec.Names[0].Name, astutil.GetTypeString(spec),
+			spec.Names[1].Name, astutil.GetTypeString(spec))
+	}
+}
+
+// checkVarNaming vérifie le nommage de la variable
+func checkVarNaming(pass *analysis.Pass, name *ast.Ident) {
+	if strings.Contains(name.Name, "_") {
+		pass.Reportf(name.Pos(),
+			"[KTN-VAR-008] Variable '%s' contient un underscore.\nUtilisez la convention MixedCaps (exemple: myVariable, MaxCount).",
+			name.Name)
+	}
+
+	if naming.IsAllCaps(name.Name) && !naming.IsValidInitialism(name.Name) {
+		pass.Reportf(name.Pos(),
+			"[KTN-VAR-009] Variable '%s' est en ALL_CAPS.\nUtilisez la convention MixedCaps (exemple: maxRetries au lieu de MAX_RETRIES).\nNote: Les initialismes Go valides (HTTP, URL, ID, etc.) sont autorisés.",
+			name.Name)
+	}
+}
+
+// checkVarComment vérifie le commentaire de la variable
+// Les paramètres pass, name, spec et isFirstWithGroupComment contrôlent la validation
+func checkVarComment(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec, isFirstWithGroupComment bool) {
+	if !hasIndividualVarComment(spec, isFirstWithGroupComment) {
+		pass.Reportf(name.Pos(),
+			"[KTN-VAR-003] Variable '%s' sans commentaire individuel.\nChaque variable doit avoir un commentaire explicatif.\nExemple:\n  // %s décrit son rôle\n  %s %s = ...",
+			name.Name, name.Name, name.Name, astutil.GetTypeString(spec))
+	}
+}
+
+// hasIndividualVarComment vérifie si une variable a un commentaire individuel
+func hasIndividualVarComment(spec *ast.ValueSpec, isFirstWithGroupComment bool) bool {
+	if spec.Doc != nil && len(spec.Doc.List) > 0 {
+		if !isFirstWithGroupComment {
+			return true
 		}
+	} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
+		return true
+	}
+	return false
+}
 
-		// KTN-VAR-009: Vérifier si le nom est en ALL_CAPS (mais autoriser initialismes Go)
-		if naming.IsAllCaps(name.Name) && !naming.IsValidInitialism(name.Name) {
-			pass.Reportf(name.Pos(),
-				"[KTN-VAR-009] Variable '%s' est en ALL_CAPS.\nUtilisez la convention MixedCaps (exemple: maxRetries au lieu de MAX_RETRIES).\nNote: Les initialismes Go valides (HTTP, URL, ID, etc.) sont autorisés.",
-				name.Name)
-		}
+// checkVarType vérifie le type explicite de la variable
+// Les paramètres pass, name et spec contrôlent la validation du type
+func checkVarType(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec) {
+	if spec.Type == nil {
+		pass.Reportf(name.Pos(),
+			"[KTN-VAR-004] Variable '%s' sans type explicite.\nSpécifiez toujours le type : bool, string, int, []string, map[string]int, etc.\nExemple:\n  %s int = ...",
+			name.Name, name.Name)
+	}
+}
 
-		// KTN-VAR-003: Vérifier le commentaire individuel
-		hasComment := false
-		if spec.Doc != nil && len(spec.Doc.List) > 0 {
-			if !isFirstWithGroupComment {
-				hasComment = true
-			}
-		} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
-			hasComment = true
-		}
+// checkChannelBuffer vérifie les channels sans buffer size explicite
+// Les paramètres pass, name et spec contrôlent la validation du buffer
+func checkChannelBuffer(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec) {
+	if !isMakeChannelWithoutBuffer(spec) {
+		return
+	}
 
-		if !hasComment {
-			pass.Reportf(name.Pos(),
-				"[KTN-VAR-003] Variable '%s' sans commentaire individuel.\nChaque variable doit avoir un commentaire explicatif.\nExemple:\n  // %s décrit son rôle\n  %s %s = ...",
-				name.Name, name.Name, name.Name, astutil.GetTypeString(spec))
-		}
+	if isUnbufferedIntentional(spec) {
+		return
+	}
 
-		// KTN-VAR-004: Vérifier le type explicite
-		if spec.Type == nil {
-			pass.Reportf(name.Pos(),
-				"[KTN-VAR-004] Variable '%s' sans type explicite.\nSpécifiez toujours le type : bool, string, int, []string, map[string]int, etc.\nExemple:\n  %s int = ...",
-				name.Name, name.Name)
-		}
+	pass.Reportf(name.Pos(),
+		"[KTN-VAR-007] Channel '%s' déclaré sans buffer size explicite.\nSpécifiez toujours la taille du buffer : make(chan T, 0) pour unbuffered, make(chan T, N) pour buffered.\nOu mentionnez 'unbuffered' dans le commentaire si intentionnel.\nExemple:\n  %s = make(%s, 0)",
+		name.Name, name.Name, astutil.ExprToString(spec.Type))
+}
 
-		// KTN-VAR-007: Vérifier les channels sans buffer size explicite
-		if spec.Type != nil {
-			if chanType, ok := spec.Type.(*ast.ChanType); ok {
-				if chanType.Value != nil {
-					// C'est un channel, vérifier si un buffer size est spécifié
-					// On vérifie si une valeur est fournie et si c'est make()
-					if len(spec.Values) > 0 {
-						if callExpr, ok := spec.Values[0].(*ast.CallExpr); ok {
-							if ident, ok := callExpr.Fun.(*ast.Ident); ok && ident.Name == "make" {
-								// make() appelé, vérifier le nombre d'arguments
-								// make(chan T) = pas de buffer (potentiel problème)
-								// make(chan T, size) = buffer explicite (OK)
-								// MAIS: si le commentaire mentionne "unbuffered", c'est OK
-								if len(callExpr.Args) < 2 {
-									// Vérifier si le commentaire mentionne "unbuffered"
-									commentText := ""
-									if spec.Doc != nil {
-										for _, c := range spec.Doc.List {
-											commentText += c.Text + " "
-										}
-									}
-									if spec.Comment != nil {
-										for _, c := range spec.Comment.List {
-											commentText += c.Text + " "
-										}
-									}
+// isMakeChannelWithoutBuffer vérifie si c'est un channel déclaré avec make sans buffer
+func isMakeChannelWithoutBuffer(spec *ast.ValueSpec) bool {
+	if spec.Type == nil {
+		return false
+	}
 
-									// Si "unbuffered" n'est pas mentionné, signaler l'erreur
-									if !strings.Contains(strings.ToLower(commentText), "unbuffered") {
-										pass.Reportf(name.Pos(),
-											"[KTN-VAR-007] Channel '%s' déclaré sans buffer size explicite.\nSpécifiez toujours la taille du buffer : make(chan T, 0) pour unbuffered, make(chan T, N) pour buffered.\nOu mentionnez 'unbuffered' dans le commentaire si intentionnel.\nExemple:\n  %s = make(%s, 0)",
-											name.Name, name.Name, astutil.ExprToString(spec.Type))
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+	chanType, ok := spec.Type.(*ast.ChanType)
+	if !ok || chanType.Value == nil {
+		return false
+	}
 
-		// KTN-VAR-005: Vérifier si la variable devrait être une constante
-		// Règle très conservatrice : ne signaler que les cas évidents de constantes
-		// mathématiques ou valeurs scientifiques immuables (Pi, E, Euler, etc.)
-		if len(spec.Values) > 0 && spec.Type != nil {
-			if astutil.IsConstCompatibleType(spec.Type) && astutil.IsLiteralValue(spec.Values[0]) && astutil.LooksLikeConstantName(name.Name) {
-				pass.Reportf(name.Pos(),
-					"[KTN-VAR-005] Variable '%s' avec valeur littérale semble être une constante immuable.\nSi la valeur ne change jamais (ex: Pi, constantes mathématiques), utilisez 'const' au lieu de 'var'.\nExemple:\n  const %s %s = ...",
-					name.Name, name.Name, astutil.GetTypeString(spec))
-			}
+	if len(spec.Values) == 0 {
+		return false
+	}
+
+	callExpr, ok := spec.Values[0].(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+
+	ident, ok := callExpr.Fun.(*ast.Ident)
+	return ok && ident.Name == "make" && len(callExpr.Args) < 2
+}
+
+// isUnbufferedIntentional vérifie si unbuffered est mentionné dans le commentaire
+func isUnbufferedIntentional(spec *ast.ValueSpec) bool {
+	commentText := ""
+	if spec.Doc != nil {
+		for _, c := range spec.Doc.List {
+			commentText += c.Text + " "
 		}
 	}
+	if spec.Comment != nil {
+		for _, c := range spec.Comment.List {
+			commentText += c.Text + " "
+		}
+	}
+	return strings.Contains(strings.ToLower(commentText), "unbuffered")
+}
+
+// checkIfShouldBeConst vérifie si la variable devrait être une constante
+// Les paramètres pass, name, spec et reassignedVars contrôlent la validation
+func checkIfShouldBeConst(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec, reassignedVars map[string]bool) {
+	// Ignorer si pas de valeur initiale ou pas de type
+	if len(spec.Values) == 0 || spec.Type == nil {
+		return
+	}
+
+	// Ignorer si le type n'est pas compatible avec const
+	if !astutil.IsConstCompatibleType(spec.Type) {
+		return
+	}
+
+	// Ignorer si la valeur n'est pas littérale
+	if !astutil.IsLiteralValue(spec.Values[0]) {
+		return
+	}
+
+	// Vérifier si la variable est jamais réassignée
+	if reassignedVars[name.Name] {
+		return
+	}
+
+	// Si la variable n'est jamais réassignée et a une valeur littérale, suggérer const
+	pass.Reportf(name.Pos(),
+		"[KTN-VAR-005] Variable '%s' jamais réassignée avec valeur littérale.\nCette variable se comporte comme une constante. Utilisez 'const' au lieu de 'var' pour indiquer l'intention d'immuabilité.\nExemple:\n  const %s %s = ...",
+		name.Name, name.Name, astutil.GetTypeString(spec))
 }

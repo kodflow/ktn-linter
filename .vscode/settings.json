@@ -3,13 +3,16 @@
   "go.lintTool": "golangci-lint",
   "go.lintOnSave": "workspace",
   "go.useLanguageServer": true,
-  "go.lintFlags": [
-    "--fast"
-  ],
+  "go.buildOnSave": "package",
+  "go.vetOnSave": "off",
+  "go.lintFlags": [],
   "go.alternateTools": {
     "golangci-lint": "${workspaceFolder}/bin/golangci-lint-wrapper"
   },
-  // Désactiver les diagnostics "unused" et autres dans les fichiers de test
+  // Activer les diagnostics du linter
+  "go.toolsManagement.autoUpdate": false,
+  "go.toolsManagement.checkForUpdates": "off",
+  // Désactiver les diagnostics "unused" et autres dans gopls
   "gopls": {
     "analyses": {
       "unusedparams": false,
@@ -19,10 +22,23 @@
       "useany": false
     }
   },
-  // Désactiver complètement gopls pour les fichiers de test
+  // Configuration pour les fichiers Go
   "[go]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
-    }
+    },
+    "editor.formatOnSave": true
+  },
+  // Build flags pour Go
+  "go.buildFlags": ["-buildvcs=false"],
+  "go.buildTags": "",
+  // Build automatique du linter au save
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "src/(cmd|pkg|internal)/.*\\.go$",
+        "cmd": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./src/cmd/ktn-linter"
+      }
+    ]
   }
 }
