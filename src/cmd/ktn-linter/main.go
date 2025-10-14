@@ -15,13 +15,13 @@ import (
 // Options de ligne de commande pour configurer le comportement du linter
 var (
 	// aiMode active le format de sortie optimisé pour les IA
-	aiMode bool = false
+	aiMode bool
 	// noColor désactive les couleurs dans la sortie
-	noColor bool = false
+	noColor bool
 	// simple active le format une-ligne pour l'intégration IDE
-	simple bool = false
+	simple bool
 	// verbose active les logs détaillés
-	verbose bool = false
+	verbose bool
 )
 
 // diagWithFset associe un diagnostic avec son FileSet
@@ -68,8 +68,13 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "  ktn-linter -ai ./...\n")
 }
 
-// loadPackages charge les packages Go depuis les patterns fournis
-// Retourne la liste des packages chargés ou quitte en cas d'erreur
+// loadPackages charge les packages Go depuis les patterns fournis.
+//
+// Params:
+//   - patterns: les patterns de packages à charger
+//
+// Returns:
+//   - []*packages.Package: la liste des packages chargés ou quitte en cas d'erreur
 func loadPackages(patterns []string) []*packages.Package {
 	cfg := &packages.Config{
 		Mode:  packages.NeedName | packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
@@ -86,7 +91,10 @@ func loadPackages(patterns []string) []*packages.Package {
 	return pkgs
 }
 
-// checkLoadErrors vérifie et affiche les erreurs de chargement
+// checkLoadErrors vérifie et affiche les erreurs de chargement.
+//
+// Params:
+//   - pkgs: la liste des packages à vérifier
 func checkLoadErrors(pkgs []*packages.Package) {
 	var hasLoadErrors bool
 	for _, pkg := range pkgs {
@@ -100,8 +108,13 @@ func checkLoadErrors(pkgs []*packages.Package) {
 	}
 }
 
-// runAnalyzers exécute tous les analyseurs sur les packages
-// Retourne la liste des diagnostics trouvés avec leurs FileSets
+// runAnalyzers exécute tous les analyseurs sur les packages.
+//
+// Params:
+//   - pkgs: la liste des packages à analyser
+//
+// Returns:
+//   - []diagWithFset: la liste des diagnostics trouvés avec leurs FileSets
 func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	analyzers := []*analysis.Analyzer{
 		analyzer.ConstAnalyzer,
@@ -131,7 +144,16 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	return allDiagnostics
 }
 
-// createAnalysisPass crée une passe d'analyse pour un analyseur
+// createAnalysisPass crée une passe d'analyse pour un analyseur.
+//
+// Params:
+//   - a: l'analyseur à exécuter
+//   - pkg: le package à analyser
+//   - fset: le FileSet pour les positions
+//   - diagnostics: le pointeur vers la liste des diagnostics collectés
+//
+// Returns:
+//   - *analysis.Pass: la passe d'analyse configurée
 func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet, diagnostics *[]diagWithFset) *analysis.Pass {
 	return &analysis.Pass{
 		Analyzer:  a,
@@ -148,7 +170,10 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 	}
 }
 
-// formatAndDisplay formate et affiche les diagnostics
+// formatAndDisplay formate et affiche les diagnostics.
+//
+// Params:
+//   - diagnostics: la liste des diagnostics à formater et afficher
 func formatAndDisplay(diagnostics []diagWithFset) {
 	fmt := formatter.NewFormatter(os.Stdout, aiMode, noColor, simple)
 
@@ -162,7 +187,13 @@ func formatAndDisplay(diagnostics []diagWithFset) {
 	fmt.Format(firstFset, diags)
 }
 
-// extractDiagnostics extrait la liste des diagnostics depuis diagWithFset
+// extractDiagnostics extrait la liste des diagnostics depuis diagWithFset.
+//
+// Params:
+//   - diagnostics: la liste des diagWithFset à extraire
+//
+// Returns:
+//   - []analysis.Diagnostic: la liste des diagnostics extraits
 func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	diags := make([]analysis.Diagnostic, len(diagnostics))
 	for i, d := range diagnostics {

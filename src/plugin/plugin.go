@@ -17,7 +17,14 @@ func (*AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 	}
 }
 
-// New creates a new instance of the plugin
+// New creates a new instance of the plugin.
+//
+// Params:
+//   - conf: la configuration du plugin (non utilisée actuellement)
+//
+// Returns:
+//   - []*analysis.Analyzer: la liste des analyseurs fournis par le plugin
+//   - error: toujours nil dans l'implémentation actuelle
 func New(conf interface{}) ([]*analysis.Analyzer, error) {
 	return (&AnalyzerPlugin{}).GetAnalyzers(), nil
 }

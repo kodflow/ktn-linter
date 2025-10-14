@@ -49,9 +49,16 @@ type Formatter struct {
 	simpleMode bool
 }
 
-// NewFormatter crée un nouveau formatter avec les options spécifiées
-// Les paramètres w, aiMode, noColor et simpleMode configurent le comportement de sortie
-// Retourne un formatter prêt à utiliser pour afficher les diagnostics
+// NewFormatter crée un nouveau formatter avec les options spécifiées.
+//
+// Params:
+//   - w: le writer où écrire la sortie
+//   - aiMode: true pour activer le mode optimisé pour l'IA
+//   - noColor: true pour désactiver les couleurs
+//   - simpleMode: true pour activer le format simple une-ligne
+//
+// Returns:
+//   - *Formatter: un formatter prêt à utiliser pour afficher les diagnostics
 func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) *Formatter {
 	return &Formatter{
 		writer:     w,

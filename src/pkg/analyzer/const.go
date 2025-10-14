@@ -9,15 +9,24 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/astutil"
 )
 
-// ConstAnalyzer vérifie que les constantes respectent les règles KTN
-var ConstAnalyzer = &analysis.Analyzer{
-	Name: "ktnconst",
-	Doc:  "Vérifie que les constantes sont regroupées, documentées et typées explicitement",
-	Run:  runConstAnalyzer,
-}
+// Analyzers
+var (
+	// ConstAnalyzer vérifie que les constantes respectent les règles KTN
+	ConstAnalyzer *analysis.Analyzer = &analysis.Analyzer{
+		Name: "ktnconst",
+		Doc:  "Vérifie que les constantes sont regroupées, documentées et typées explicitement",
+		Run:  runConstAnalyzer,
+	}
+)
 
-// runConstAnalyzer vérifie que toutes les constantes respectent les règles KTN
-// Retourne nil, nil car aucun résultat n'est nécessaire pour cet analyseur
+// runConstAnalyzer vérifie que toutes les constantes respectent les règles KTN.
+//
+// Params:
+//   - pass: la passe d'analyse contenant les fichiers à vérifier
+//
+// Returns:
+//   - interface{}: toujours nil car aucun résultat n'est nécessaire
+//   - error: toujours nil, les erreurs sont rapportées via pass.Reportf
 func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		checkConstDeclarations(pass, file)
@@ -25,7 +34,11 @@ func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-// checkConstDeclarations parcourt et vérifie toutes les déclarations de constantes
+// checkConstDeclarations parcourt et vérifie toutes les déclarations de constantes.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - file: le fichier AST à analyser
 func checkConstDeclarations(pass *analysis.Pass, file *ast.File) {
 	for _, decl := range file.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
@@ -42,7 +55,11 @@ func checkConstDeclarations(pass *analysis.Pass, file *ast.File) {
 	}
 }
 
-// reportUngroupedConst signale une constante non groupée
+// reportUngroupedConst signale une constante non groupée.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - genDecl: la déclaration générale contenant la constante non groupée
 func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	for _, spec := range genDecl.Specs {
 		valueSpec := spec.(*ast.ValueSpec)
@@ -54,7 +71,11 @@ func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	}
 }
 
-// checkConstGroup vérifie un groupe de constantes
+// checkConstGroup vérifie un groupe de constantes.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - genDecl: la déclaration de groupe const() à vérifier
 func checkConstGroup(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	hasGroupComment := false
 	if genDecl.Doc != nil && len(genDecl.Doc.List) > 0 {
@@ -76,9 +97,12 @@ func checkConstGroup(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	}
 }
 
-// checkConstSpec vérifie une spécification de constante individuelle
-// Les paramètres pass, spec et isFirstWithGroupComment contrôlent la validation
-// Le paramètre isFirstWithGroupComment indique si la constante partage le commentaire de groupe
+// checkConstSpec vérifie une spécification de constante individuelle.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - spec: la spécification de constante à vérifier
+//   - isFirstWithGroupComment: true si la constante partage le commentaire de groupe
 func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool) {
 	for _, name := range spec.Names {
 		if name.Name == "_" {
@@ -101,7 +125,14 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 	}
 }
 
-// hasIndividualComment vérifie si une constante a un commentaire individuel
+// hasIndividualComment vérifie si une constante a un commentaire individuel.
+//
+// Params:
+//   - spec: la spécification de constante à vérifier
+//   - isFirstWithGroupComment: true si la constante partage le commentaire de groupe
+//
+// Returns:
+//   - bool: true si un commentaire individuel existe
 func hasIndividualComment(spec *ast.ValueSpec, isFirstWithGroupComment bool) bool {
 	if spec.Doc != nil && len(spec.Doc.List) > 0 {
 		if !isFirstWithGroupComment {

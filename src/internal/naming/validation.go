@@ -6,8 +6,13 @@ import (
 	"unicode"
 )
 
-// IsAllCaps vérifie si une chaîne est entièrement en majuscules
-// Retourne true si au moins une lettre est présente et toutes sont en majuscules
+// IsAllCaps vérifie si une chaîne est entièrement en majuscules.
+//
+// Params:
+//   - s: la chaîne à vérifier
+//
+// Returns:
+//   - bool: true si au moins une lettre est présente et toutes sont en majuscules
 func IsAllCaps(s string) bool {
 	if len(s) == 0 {
 		return false
@@ -24,10 +29,13 @@ func IsAllCaps(s string) bool {
 	return hasLetter
 }
 
-// IsMixedCaps vérifie si un nom suit la convention MixedCaps/mixedCaps
-// Retourne true si le nom est valide (pas de snake_case, pas de ALL_CAPS sauf initialismes)
-// Exemples valides: ParseHTTPRequest, calculateTotal, HTTPServer, UserID
-// Exemples invalides: parse_http_request, Calculate_Total, PARSE_REQUEST
+// IsMixedCaps vérifie si un nom suit la convention MixedCaps/mixedCaps.
+//
+// Params:
+//   - name: le nom à valider
+//
+// Returns:
+//   - bool: true si valide (pas de snake_case, pas de ALL_CAPS sauf initialismes). Exemples valides: ParseHTTPRequest, calculateTotal, HTTPServer, UserID. Exemples invalides: parse_http_request, Calculate_Total, PARSE_REQUEST
 func IsMixedCaps(name string) bool {
 	// Vide invalide
 	if len(name) == 0 {
@@ -48,10 +56,13 @@ func IsMixedCaps(name string) bool {
 	return true
 }
 
-// HasGetterPrefix vérifie si un nom de fonction a un préfixe "Get" inutile
-// Retourne true si le nom commence par "Get" et ce n'est pas une exception
-// Exemples à signaler: GetUserName, GetEmail, GetHTTPClient
-// Exceptions acceptées: GetOrCreate, GetAndSet (verbe composé)
+// HasGetterPrefix vérifie si un nom de fonction a un préfixe "Get" inutile.
+//
+// Params:
+//   - name: le nom de fonction à vérifier
+//
+// Returns:
+//   - bool: true si le nom commence par "Get" et ce n'est pas une exception. Exemples à signaler: GetUserName, GetEmail, GetHTTPClient. Exceptions acceptées: GetOrCreate, GetAndSet (verbe composé)
 func HasGetterPrefix(name string) bool {
 	if !strings.HasPrefix(name, "Get") {
 		return false
@@ -78,9 +89,13 @@ func HasGetterPrefix(name string) bool {
 	return false
 }
 
-// FixInitialisms trouve les initialismes incorrects dans un nom
-// Retourne une liste de corrections suggérées (maximum 1 suggestion avec toutes les corrections)
-// Exemples: "HttpServer" -> ["HTTPServer"], "UrlParser" -> ["URLParser"]
+// FixInitialisms trouve les initialismes incorrects dans un nom.
+//
+// Params:
+//   - name: le nom contenant potentiellement des initialismes incorrects
+//
+// Returns:
+//   - []string: une liste de corrections suggérées (maximum 1 suggestion avec toutes les corrections). Exemples: "HttpServer" -> ["HTTPServer"], "UrlParser" -> ["URLParser"]
 func FixInitialisms(name string) []string {
 	// Liste des initialismes Go courants avec leur forme correcte
 	initialismsMap := map[string]string{
@@ -141,12 +156,13 @@ func FixInitialisms(name string) []string {
 	return []string{}
 }
 
-// IsValidInitialism vérifie si le nom est composé uniquement d'initialismes Go valides
-// Exemples valides: HTTP, HTTPS, URL, HTTPOK, URLID, APIURL, HTTPSPort
-// Exemples invalides: MAX_BUFFER, HTTP_OK (contiennent des underscores)
+// IsValidInitialism vérifie si le nom est composé uniquement d'initialismes Go valides.
 //
-// Cette fonction suit les conventions Go pour les initialismes courants
-// (voir Effective Go et le guide de style de la communauté Go)
+// Params:
+//   - name: le nom à vérifier
+//
+// Returns:
+//   - bool: true si composé uniquement d'initialismes valides. Exemples valides: HTTP, HTTPS, URL, HTTPOK, URLID, APIURL, HTTPSPort. Exemples invalides: MAX_BUFFER, HTTP_OK (contiennent des underscores). Cette fonction suit les conventions Go pour les initialismes courants (voir Effective Go et le guide de style de la communauté Go)
 func IsValidInitialism(name string) bool {
 	// Liste des initialismes Go courants (voir Effective Go)
 	initialisisms := []string{

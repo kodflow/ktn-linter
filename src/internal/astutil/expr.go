@@ -5,8 +5,13 @@ import (
 	"go/ast"
 )
 
-// ExprToString convertit une expression AST en sa représentation textuelle
-// Gère les identifiants, sélecteurs, tableaux, maps, pointeurs, etc.
+// ExprToString convertit une expression AST en sa représentation textuelle.
+//
+// Params:
+//   - expr: l'expression AST à convertir
+//
+// Returns:
+//   - string: la représentation textuelle (gère identifiants, sélecteurs, tableaux, maps, pointeurs, etc.)
 func ExprToString(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.Ident:
@@ -34,8 +39,13 @@ func ExprToString(expr ast.Expr) string {
 	}
 }
 
-// GetTypeString extrait la représentation textuelle du type d'une ValueSpec
-// Si le type n'est pas spécifié, retourne "<type>"
+// GetTypeString extrait la représentation textuelle du type d'une ValueSpec.
+//
+// Params:
+//   - spec: la ValueSpec dont on veut extraire le type
+//
+// Returns:
+//   - string: la représentation textuelle du type, ou "<type>" si non spécifié
 func GetTypeString(spec *ast.ValueSpec) string {
 	if spec.Type != nil {
 		return ExprToString(spec.Type)

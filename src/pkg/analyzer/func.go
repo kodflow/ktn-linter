@@ -10,15 +10,24 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/naming"
 )
 
-// FuncAnalyzer vérifie que les fonctions respectent les règles KTN
-var FuncAnalyzer = &analysis.Analyzer{
-	Name: "ktnfunc",
-	Doc:  "Vérifie que les fonctions natives sont bien nommées, documentées et respectent les limites de complexité",
-	Run:  runFuncAnalyzer,
-}
+// Analyzers
+var (
+	// FuncAnalyzer vérifie que les fonctions respectent les règles KTN
+	FuncAnalyzer *analysis.Analyzer = &analysis.Analyzer{
+		Name: "ktnfunc",
+		Doc:  "Vérifie que les fonctions natives sont bien nommées, documentées et respectent les limites de complexité",
+		Run:  runFuncAnalyzer,
+	}
+)
 
-// runFuncAnalyzer vérifie que toutes les fonctions respectent les règles KTN
-// Retourne nil, nil car aucun résultat n'est nécessaire pour cet analyseur
+// runFuncAnalyzer vérifie que toutes les fonctions respectent les règles KTN.
+//
+// Params:
+//   - pass: la passe d'analyse contenant les fichiers à vérifier
+//
+// Returns:
+//   - any: toujours nil car aucun résultat n'est nécessaire
+//   - error: toujours nil, les erreurs sont rapportées via pass.Reportf
 func runFuncAnalyzer(pass *analysis.Pass) (any, error) {
 	for _, file := range pass.Files {
 		for _, decl := range file.Decls {
@@ -39,8 +48,12 @@ func runFuncAnalyzer(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// checkFunction vérifie toutes les règles pour une fonction
-// Les paramètres pass, file et funcDecl contrôlent la validation
+// checkFunction vérifie toutes les règles pour une fonction.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - file: le fichier AST contenant la fonction
+//   - funcDecl: la déclaration de fonction à vérifier
 func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) {
 	funcName := funcDecl.Name.Name
 	checkFuncNaming(pass, funcDecl, funcName)
@@ -53,8 +66,12 @@ func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) 
 	// checkFuncReturnComments(pass, funcDecl, funcName)
 }
 
-// checkFuncNaming vérifie le nommage de la fonction
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncNaming vérifie le nommage de la fonction.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
 func checkFuncNaming(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	if !naming.IsMixedCaps(funcName) {
 		pass.Reportf(funcDecl.Name.Pos(),
@@ -63,8 +80,12 @@ func checkFuncNaming(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 	}
 }
 
-// checkFuncDocumentation vérifie la documentation de la fonction
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncDocumentation vérifie la documentation de la fonction.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
 func checkFuncDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	if funcDecl.Doc == nil || len(funcDecl.Doc.List) == 0 {
 		pass.Reportf(funcDecl.Name.Pos(),
@@ -75,8 +96,12 @@ func checkFuncDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNam
 	}
 }
 
-// checkFuncParams vérifie le nombre de paramètres
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncParams vérifie le nombre de paramètres.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
 func checkFuncParams(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	if funcDecl.Type.Params == nil {
 		return
@@ -90,8 +115,12 @@ func checkFuncParams(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 	}
 }
 
-// checkFuncLength vérifie la longueur de la fonction
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncLength vérifie la longueur de la fonction.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
 func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	funcLength := calculateFuncLength(pass.Fset, funcDecl)
 	if funcLength > 35 {
@@ -101,8 +130,12 @@ func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 	}
 }
 
-// checkFuncComplexity vérifie la complexité cyclomatique
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncComplexity vérifie la complexité cyclomatique.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
 func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	complexity := calculateCyclomaticComplexity(funcDecl)
 	if complexity >= 10 {
@@ -112,8 +145,12 @@ func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName s
 	}
 }
 
-// checkGodocQuality vérifie la qualité du commentaire godoc avec format strict
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkGodocQuality vérifie la qualité du commentaire godoc avec format strict.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
 func checkGodocQuality(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	doc := funcDecl.Doc.Text()
 
@@ -130,7 +167,13 @@ func checkGodocQuality(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName str
 	checkGodocFormat(pass, funcDecl, funcName, doc)
 }
 
-// checkGodocFormat vérifie le format strict avec sections Params: et Returns:
+// checkGodocFormat vérifie le format strict avec sections Params: et Returns:.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
+//   - doc: le texte du commentaire godoc
 func checkGodocFormat(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, doc string) {
 	hasParams := funcDecl.Type.Params != nil && countParams(funcDecl.Type.Params) > 0
 	hasReturns := funcDecl.Type.Results != nil && funcDecl.Type.Results.NumFields() > 0
@@ -163,7 +206,13 @@ func checkGodocFormat(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName stri
 	}
 }
 
-// checkParamsFormat vérifie que chaque paramètre est documenté dans la section Params:
+// checkParamsFormat vérifie que chaque paramètre est documenté dans la section Params:.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
+//   - doc: le texte du commentaire godoc
 func checkParamsFormat(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, doc string) {
 	paramNames := extractParamNames(funcDecl.Type.Params)
 
@@ -172,8 +221,17 @@ func checkParamsFormat(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName str
 
 	undocumented := []string{}
 	for _, pname := range paramNames {
-		// Vérifier si le paramètre est mentionné dans la section Params avec le format "  - pname:"
-		if !strings.Contains(paramsSection, "- "+pname+":") {
+		// Vérifier si le paramètre est mentionné dans la section Params
+		// On accepte les espaces optionnels devant le tiret: "  - pname:" ou "- pname:"
+		found := false
+		for _, line := range strings.Split(paramsSection, "\n") {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "- "+pname+":") {
+				found = true
+				break
+			}
+		}
+		if !found {
 			undocumented = append(undocumented, pname)
 		}
 	}
@@ -186,7 +244,14 @@ func checkParamsFormat(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName str
 	}
 }
 
-// extractSection extrait une section du doc (ex: "Params:" ou "Returns:")
+// extractSection extrait une section du doc (ex: "Params:" ou "Returns:").
+//
+// Params:
+//   - doc: le texte du commentaire godoc complet
+//   - sectionName: le nom de la section à extraire (ex: "Params:" ou "Returns:")
+//
+// Returns:
+//   - string: le contenu de la section extraite
 func extractSection(doc, sectionName string) string {
 	lines := strings.Split(doc, "\n")
 	inSection := false
@@ -194,7 +259,8 @@ func extractSection(doc, sectionName string) string {
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.Contains(trimmed, sectionName) {
+		// Vérifier si c'est exactement la ligne de section (pas juste qu'elle contient le mot)
+		if trimmed == sectionName {
 			inSection = true
 			continue
 		}
@@ -213,7 +279,13 @@ func extractSection(doc, sectionName string) string {
 	return strings.Join(sectionLines, "\n")
 }
 
-// buildParamsExample construit un exemple de section Params: pour l'erreur
+// buildParamsExample construit un exemple de section Params: pour l'erreur.
+//
+// Params:
+//   - params: la liste des paramètres de la fonction
+//
+// Returns:
+//   - string: l'exemple formaté de section Params: avec tous les paramètres
 func buildParamsExample(params *ast.FieldList) string {
 	paramNames := extractParamNames(params)
 	var examples []string
@@ -223,7 +295,13 @@ func buildParamsExample(params *ast.FieldList) string {
 	return strings.Join(examples, "\n")
 }
 
-// buildReturnsExample construit un exemple de section Returns: pour l'erreur
+// buildReturnsExample construit un exemple de section Returns: pour l'erreur.
+//
+// Params:
+//   - results: la liste des valeurs de retour de la fonction
+//
+// Returns:
+//   - string: l'exemple formaté de section Returns: avec tous les retours
 func buildReturnsExample(results *ast.FieldList) string {
 	numReturns := results.NumFields()
 	var examples []string
@@ -233,7 +311,13 @@ func buildReturnsExample(results *ast.FieldList) string {
 	return strings.Join(examples, "\n")
 }
 
-// hasAnyNamedReturns vérifie si des retours sont nommés
+// hasAnyNamedReturns vérifie si des retours sont nommés.
+//
+// Params:
+//   - results: la liste des valeurs de retour à vérifier
+//
+// Returns:
+//   - bool: true si au moins un retour est nommé, false sinon
 func hasAnyNamedReturns(results *ast.FieldList) bool {
 	for _, field := range results.List {
 		if len(field.Names) > 0 {
@@ -243,7 +327,13 @@ func hasAnyNamedReturns(results *ast.FieldList) bool {
 	return false
 }
 
-// countParams compte le nombre total de paramètres
+// countParams compte le nombre total de paramètres.
+//
+// Params:
+//   - params: la liste des paramètres à compter
+//
+// Returns:
+//   - int: le nombre total de paramètres (gère les déclarations groupées)
 func countParams(params *ast.FieldList) int {
 	count := 0
 	for _, field := range params.List {
@@ -257,7 +347,13 @@ func countParams(params *ast.FieldList) int {
 	return count
 }
 
-// extractParamNames extrait les noms de tous les paramètres
+// extractParamNames extrait les noms de tous les paramètres.
+//
+// Params:
+//   - params: la liste des paramètres dont extraire les noms
+//
+// Returns:
+//   - []string: la liste des noms de paramètres (ignore les underscores)
 func extractParamNames(params *ast.FieldList) []string {
 	var names []string
 	for _, field := range params.List {
@@ -270,7 +366,14 @@ func extractParamNames(params *ast.FieldList) []string {
 	return names
 }
 
-// calculateFuncLength calcule le nombre de lignes de code d'une fonction
+// calculateFuncLength calcule le nombre de lignes de code d'une fonction.
+//
+// Params:
+//   - fset: le FileSet pour obtenir les positions dans le code source
+//   - funcDecl: la déclaration de fonction à mesurer
+//
+// Returns:
+//   - int: le nombre de lignes de code (excluant les accolades de début/fin)
 func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
 	if funcDecl.Body == nil {
 		return 0
@@ -283,8 +386,14 @@ func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
 	return end - start - 1
 }
 
-// calculateCyclomaticComplexity calcule la complexité cyclomatique d'une fonction
+// calculateCyclomaticComplexity calcule la complexité cyclomatique d'une fonction.
 // Complexité = 1 + nombre de points de décision (if, for, case, &&, ||, etc.)
+//
+// Params:
+//   - funcDecl: la déclaration de fonction à analyser
+//
+// Returns:
+//   - int: la complexité cyclomatique (minimum 1 pour une fonction sans branchement)
 func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 	if funcDecl.Body == nil {
 		return 1
@@ -299,7 +408,13 @@ func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 	return complexity
 }
 
-// getNodeComplexity retourne la complexité ajoutée par un nœud AST
+// getNodeComplexity retourne la complexité ajoutée par un nœud AST.
+//
+// Params:
+//   - n: le nœud AST à évaluer
+//
+// Returns:
+//   - int: la complexité ajoutée (1 pour if/for/case/&&/||, 0 sinon)
 func getNodeComplexity(n ast.Node) int {
 	switch stmt := n.(type) {
 	case *ast.IfStmt:
@@ -322,8 +437,12 @@ func getNodeComplexity(n ast.Node) int {
 	return 0
 }
 
-// checkFuncInternalComments vérifie que les commentaires internes respectent la complexité
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncInternalComments vérifie que les commentaires internes respectent la complexité.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction à vérifier
+//   - funcName: le nom de la fonction
 func checkFuncInternalComments(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	// Ignorer les fonctions sans body
 	if funcDecl.Body == nil {
@@ -353,8 +472,12 @@ func checkFuncInternalComments(pass *analysis.Pass, funcDecl *ast.FuncDecl, func
 	}
 }
 
-// checkFuncReturnComments vérifie que chaque return a un commentaire
-// Les paramètres pass, funcDecl et funcName contrôlent la validation
+// checkFuncReturnComments vérifie que chaque return a un commentaire.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - funcDecl: la déclaration de fonction à vérifier
+//   - funcName: le nom de la fonction
 func checkFuncReturnComments(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	// Ignorer les fonctions sans body
 	if funcDecl.Body == nil {
@@ -380,7 +503,14 @@ func checkFuncReturnComments(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNa
 	}
 }
 
-// countInternalComments compte les commentaires internes dans le body d'une fonction
+// countInternalComments compte les commentaires internes dans le body d'une fonction.
+//
+// Params:
+//   - fset: le FileSet pour accéder aux positions (non utilisé actuellement)
+//   - body: le corps de la fonction à analyser
+//
+// Returns:
+//   - int: estimation du nombre de commentaires internes
 func countInternalComments(fset *token.FileSet, body *ast.BlockStmt) int {
 	count := 0
 
@@ -407,7 +537,13 @@ func countInternalComments(fset *token.FileSet, body *ast.BlockStmt) int {
 	return count / 3
 }
 
-// collectReturnStatements collecte tous les returns dans le body
+// collectReturnStatements collecte tous les returns dans le body.
+//
+// Params:
+//   - body: le corps de la fonction à analyser
+//
+// Returns:
+//   - []*ast.ReturnStmt: la liste de toutes les instructions return trouvées
 func collectReturnStatements(body *ast.BlockStmt) []*ast.ReturnStmt {
 	var returns []*ast.ReturnStmt
 
@@ -421,7 +557,15 @@ func collectReturnStatements(body *ast.BlockStmt) []*ast.ReturnStmt {
 	return returns
 }
 
-// hasCommentBeforeReturn vérifie si un return a un commentaire juste avant
+// hasCommentBeforeReturn vérifie si un return a un commentaire juste avant.
+//
+// Params:
+//   - fset: le FileSet pour accéder aux positions
+//   - body: le corps de la fonction contenant le return
+//   - ret: l'instruction return à vérifier
+//
+// Returns:
+//   - bool: true si un commentaire précède le return
 func hasCommentBeforeReturn(fset *token.FileSet, body *ast.BlockStmt, ret *ast.ReturnStmt) bool {
 	// Pour l'instant, implémentation simplifiée
 	// On considère qu'un return est OK s'il fait partie du dernier statement

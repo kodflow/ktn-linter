@@ -4,8 +4,13 @@ import (
 	"go/ast"
 )
 
-// IsConstCompatibleType vérifie si le type est compatible avec const
-// Retourne true pour les types de base : bool, string, int*, uint*, float*, complex*, byte, rune
+// IsConstCompatibleType vérifie si le type est compatible avec const.
+//
+// Params:
+//   - expr: l'expression représentant le type à vérifier
+//
+// Returns:
+//   - bool: true pour les types de base (bool, string, int*, uint*, float*, complex*, byte, rune)
 func IsConstCompatibleType(expr ast.Expr) bool {
 	switch e := expr.(type) {
 	case *ast.Ident:
@@ -23,8 +28,13 @@ func IsConstCompatibleType(expr ast.Expr) bool {
 	return false
 }
 
-// IsLiteralValue vérifie si l'expression est une valeur littérale
-// Retourne true pour les BasicLit (nombres, strings) et Ident (true, false, nil)
+// IsLiteralValue vérifie si l'expression est une valeur littérale.
+//
+// Params:
+//   - expr: l'expression à vérifier
+//
+// Returns:
+//   - bool: true pour les BasicLit (nombres, strings) et Ident (true, false, nil)
 func IsLiteralValue(expr ast.Expr) bool {
 	switch expr.(type) {
 	case *ast.BasicLit: // true, false, 123, "string", 3.14, etc.
