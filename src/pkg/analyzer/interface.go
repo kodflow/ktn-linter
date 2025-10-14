@@ -261,22 +261,58 @@ func isExemptedPackage(pkgName string) bool {
 //   - info: les informations du package
 func checkInterfacesFileExists(pass *analysis.Pass, info *packageInfo) {
 	if !info.hasInterfacesFile {
-		// Trouver la première position dans le package pour le diagnostic
-		if len(pass.Files) > 0 {
-			pass.Reportf(pass.Files[0].Package,
-				"[KTN-INTERFACE-001] Package '%s' sans fichier interfaces.go.\n"+
-					"Créez interfaces.go pour définir les interfaces publiques du package.\n"+
-					"Exemple:\n"+
-					"  // interfaces.go\n"+
-					"  package %s\n"+
-					"\n"+
-					"  // MyService définit le contrat du service.\n"+
-					"  type MyService interface {\n"+
-					"      DoSomething(input string) (string, error)\n"+
-					"  }",
-				info.name, info.name)
+		// Exception: pas besoin d'interfaces.go si le package ne contient que des fonctions
+		// (pas de structs avec méthodes à mocker)
+		if needsInterfacesFile(info) {
+			// Trouver la première position dans le package pour le diagnostic
+			if len(pass.Files) > 0 {
+				pass.Reportf(pass.Files[0].Package,
+					"[KTN-INTERFACE-001] Package '%s' sans fichier interfaces.go.\n"+
+						"Créez interfaces.go pour définir les interfaces publiques du package.\n"+
+						"Exemple:\n"+
+						"  // interfaces.go\n"+
+						"  package %s\n"+
+						"\n"+
+						"  // MyService définit le contrat du service.\n"+
+						"  type MyService interface {\n"+
+						"      DoSomething(input string) (string, error)\n"+
+						"  }",
+					info.name, info.name)
+			}
 		}
 	}
+}
+
+// needsInterfacesFile détermine si un package a besoin d'un fichier interfaces.go.
+//
+// Params:
+//   - info: les informations du package
+//
+// Returns:
+//   - bool: true si le package a besoin d'interfaces.go
+func needsInterfacesFile(info *packageInfo) bool {
+	// Si le package a des structs publiques, il devrait avoir interfaces.go
+	if len(info.publicStructs) > 0 {
+		// Vérifier si ce sont des types autorisés (Config, Data, etc.)
+		for _, ps := range info.publicStructs {
+			if !isAllowedPublicType(ps.name) {
+				return true
+			}
+		}
+	}
+
+	// Si le package a des structs privées (implémentations), il devrait avoir interfaces.go
+	if len(info.privateStructs) > 0 {
+		return true
+	}
+
+	// Si le package a déjà des interfaces publiques définies ailleurs, il devrait avoir interfaces.go
+	if len(info.publicInterfaces) > 0 {
+		return true
+	}
+
+	// Sinon, le package ne contient que des fonctions simples, pas besoin d'interfaces.go
+	return false
 }
 
 // checkNoPublicStructs vérifie qu'il n'y a pas de structs publiques.
