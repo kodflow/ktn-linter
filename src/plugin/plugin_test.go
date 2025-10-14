@@ -39,8 +39,8 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestAnalyzerPlugin_GetAnalyzers(t *testing.T) {
-	plugin := &AnalyzerPlugin{}
+func TestGetAnalyzers(t *testing.T) {
+	plugin := &analyzerPlugin{}
 	analyzers := plugin.GetAnalyzers()
 
 	if analyzers == nil {
@@ -66,8 +66,8 @@ func TestAnalyzerPlugin_GetAnalyzers(t *testing.T) {
 	}
 }
 
-func TestAnalyzerPlugin_Integration(t *testing.T) {
-	plugin := &AnalyzerPlugin{}
+func TestIntegration(t *testing.T) {
+	plugin := &analyzerPlugin{}
 	analyzers := plugin.GetAnalyzers()
 
 	// Test that analyzers can be used

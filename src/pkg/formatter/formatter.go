@@ -35,14 +35,14 @@ const (
 	Reset string = "\033[0m"
 )
 
-// DiagnosticGroup regroupe les diagnostics par fichier
-type DiagnosticGroup struct {
+// DiagnosticGroupData regroupe les diagnostics par fichier (DTO)
+type DiagnosticGroupData struct {
 	Filename    string
 	Diagnostics []analysis.Diagnostic
 }
 
-// Formatter gère le formatage des diagnostics
-type Formatter struct {
+// formatterImpl implémente l'interface Formatter
+type formatterImpl struct {
 	writer     io.Writer
 	aiMode     bool
 	noColor    bool
@@ -58,9 +58,9 @@ type Formatter struct {
 //   - simpleMode: true pour activer le format simple une-ligne
 //
 // Returns:
-//   - *Formatter: un formatter prêt à utiliser pour afficher les diagnostics
-func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) *Formatter {
-	return &Formatter{
+//   - Formatter: un formatter prêt à utiliser pour afficher les diagnostics
+func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Formatter {
+	return &formatterImpl{
 		writer:     w,
 		aiMode:     aiMode,
 		noColor:    noColor,
@@ -69,7 +69,7 @@ func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) *Form
 }
 
 // Format affiche les diagnostics de manière lisible
-func (f *Formatter) Format(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
+func (f *formatterImpl) Format(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	if len(diagnostics) == 0 {
 		f.printSuccess()
 		return
@@ -89,7 +89,7 @@ func (f *Formatter) Format(fset *token.FileSet, diagnostics []analysis.Diagnosti
 }
 
 // formatForHuman affiche pour un humain avec couleurs et structure
-func (f *Formatter) formatForHuman(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
+func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	groups := f.groupByFile(fset, diagnostics)
 
 	f.printHeader(len(diagnostics))
@@ -109,7 +109,7 @@ func (f *Formatter) formatForHuman(fset *token.FileSet, diagnostics []analysis.D
 }
 
 // formatForAI affiche un format optimisé pour l'IA
-func (f *Formatter) formatForAI(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
+func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	fmt.Fprintf(f.writer, "# KTN-Linter Report (AI Mode)\n\n")
 	fmt.Fprintf(f.writer, "Total issues found: %d\n\n", len(diagnostics))
 
@@ -145,7 +145,7 @@ func (f *Formatter) formatForAI(fset *token.FileSet, diagnostics []analysis.Diag
 }
 
 // formatSimple affiche un format simple une ligne par erreur (pour IDE)
-func (f *Formatter) formatSimple(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
+func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	// Trier les diagnostics par position
 	sorted := make([]analysis.Diagnostic, len(diagnostics))
 	copy(sorted, diagnostics)
@@ -173,7 +173,7 @@ func (f *Formatter) formatSimple(fset *token.FileSet, diagnostics []analysis.Dia
 	}
 }
 
-func (f *Formatter) groupByFile(fset *token.FileSet, diagnostics []analysis.Diagnostic) []DiagnosticGroup {
+func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.Diagnostic) []DiagnosticGroupData {
 	fileMap := make(map[string][]analysis.Diagnostic)
 
 	for _, diag := range diagnostics {
@@ -182,13 +182,13 @@ func (f *Formatter) groupByFile(fset *token.FileSet, diagnostics []analysis.Diag
 		fileMap[filename] = append(fileMap[filename], diag)
 	}
 
-	var groups []DiagnosticGroup
+	var groups []DiagnosticGroupData
 	for filename, diags := range fileMap {
 		// Trier par ligne
 		sort.Slice(diags, func(i, j int) bool {
 			return fset.Position(diags[i].Pos).Line < fset.Position(diags[j].Pos).Line
 		})
-		groups = append(groups, DiagnosticGroup{
+		groups = append(groups, DiagnosticGroupData{
 			Filename:    filename,
 			Diagnostics: diags,
 		})
@@ -202,7 +202,7 @@ func (f *Formatter) groupByFile(fset *token.FileSet, diagnostics []analysis.Diag
 	return groups
 }
 
-func (f *Formatter) printHeader(count int) {
+func (f *formatterImpl) printHeader(count int) {
 	if f.noColor {
 		fmt.Fprintf(f.writer, "\n╔════════════════════════════════════════════════════════════╗\n")
 		fmt.Fprintf(f.writer, "║  KTN-LINTER REPORT - %d issue(s) found                     ║\n", count)
@@ -214,7 +214,7 @@ func (f *Formatter) printHeader(count int) {
 	}
 }
 
-func (f *Formatter) printFileHeader(filename string, count int) {
+func (f *formatterImpl) printFileHeader(filename string, count int) {
 	if f.noColor {
 		fmt.Fprintf(f.writer, "📁 File: %s (%d issues)\n", filename, count)
 		fmt.Fprintf(f.writer, "────────────────────────────────────────────────────────────\n")
@@ -225,7 +225,7 @@ func (f *Formatter) printFileHeader(filename string, count int) {
 	}
 }
 
-func (f *Formatter) printDiagnostic(num int, pos token.Position, diag analysis.Diagnostic) {
+func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analysis.Diagnostic) {
 	code := messageutil.ExtractCode(diag.Message)
 	message := messageutil.ExtractMessage(diag.Message)
 	suggestion := messageutil.ExtractSuggestion(diag.Message)
@@ -265,7 +265,7 @@ func (f *Formatter) printDiagnostic(num int, pos token.Position, diag analysis.D
 	}
 }
 
-func (f *Formatter) printSuccess() {
+func (f *formatterImpl) printSuccess() {
 	if f.noColor {
 		fmt.Fprintf(f.writer, "\n✅ No issues found! Code is compliant.\n\n")
 	} else {
@@ -273,7 +273,7 @@ func (f *Formatter) printSuccess() {
 	}
 }
 
-func (f *Formatter) printSummary(count int) {
+func (f *formatterImpl) printSummary(count int) {
 	if f.noColor {
 		fmt.Fprintf(f.writer, "════════════════════════════════════════════════════════════\n")
 		fmt.Fprintf(f.writer, "Total: %d issue(s) to fix\n", count)
@@ -286,7 +286,7 @@ func (f *Formatter) printSummary(count int) {
 	}
 }
 
-func (f *Formatter) indentCode(code string, indent string) string {
+func (f *formatterImpl) indentCode(code string, indent string) string {
 	lines := strings.Split(code, "\n")
 	var result []string
 	for _, line := range lines {
@@ -297,7 +297,7 @@ func (f *Formatter) indentCode(code string, indent string) string {
 	return strings.Join(result, "\n")
 }
 
-func (f *Formatter) getCodeColor(code string) string {
+func (f *formatterImpl) getCodeColor(code string) string {
 	if f.noColor {
 		return ""
 	}
@@ -317,7 +317,7 @@ func (f *Formatter) getCodeColor(code string) string {
 }
 
 // generateExample crée un exemple avant/après concret
-func (f *Formatter) generateExample(code, message, suggestion string) string {
+func (f *formatterImpl) generateExample(code, message, suggestion string) string {
 	var before, after string
 
 	switch code {

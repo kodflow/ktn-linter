@@ -5,11 +5,11 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// AnalyzerPlugin implements the golangci-lint plugin interface
-type AnalyzerPlugin struct{}
+// analyzerPlugin implements the golangci-lint plugin interface
+type analyzerPlugin struct{}
 
 // GetAnalyzers returns all custom analyzers for golangci-lint
-func (*AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
+func (*analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 	return []*analysis.Analyzer{
 		analyzer.ConstAnalyzer,
 		analyzer.VarAnalyzer,
@@ -27,5 +27,5 @@ func (*AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 //   - []*analysis.Analyzer: la liste des analyseurs fournis par le plugin
 //   - error: toujours nil dans l'implémentation actuelle
 func New(conf interface{}) ([]*analysis.Analyzer, error) {
-	return (&AnalyzerPlugin{}).GetAnalyzers(), nil
+	return (&analyzerPlugin{}).GetAnalyzers(), nil
 }

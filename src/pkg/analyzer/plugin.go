@@ -5,8 +5,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Plugin implements the golangci-lint module plugin interface
-type Plugin struct{}
+// plugin implements the golangci-lint module plugin interface
+type plugin struct{}
 
 // New creates a new instance of the plugin.
 //
@@ -17,7 +17,7 @@ type Plugin struct{}
 //   - register.LinterPlugin: l'instance du plugin créée
 //   - error: toujours nil dans l'implémentation actuelle
 func New(settings any) (register.LinterPlugin, error) {
-	return &Plugin{}, nil
+	return &plugin{}, nil
 }
 
 // BuildAnalyzers returns all analyzers provided by this plugin.
@@ -25,7 +25,7 @@ func New(settings any) (register.LinterPlugin, error) {
 // Returns:
 //   - []*analysis.Analyzer: la liste des analyseurs fournis par ce plugin
 //   - error: toujours nil dans l'implémentation actuelle
-func (p *Plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
+func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 	return []*analysis.Analyzer{
 		ConstAnalyzer,
 		VarAnalyzer,
@@ -38,6 +38,6 @@ func (p *Plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 //
 // Returns:
 //   - string: le mode de chargement (LoadModeSyntax)
-func (p *Plugin) GetLoadMode() string {
+func (p *plugin) GetLoadMode() string {
 	return register.LoadModeSyntax
 }
