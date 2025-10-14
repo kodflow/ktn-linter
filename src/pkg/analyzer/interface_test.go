@@ -498,12 +498,26 @@ func (u *userServiceImpl) CreateUser(user *UserData) error {
 	})
 }
 
-// Helper function
-
+// containsInterface vérifie si une chaîne contient une sous-chaîne.
+//
+// Params:
+//   - s: la chaîne à analyser
+//   - substr: la sous-chaîne recherchée
+//
+// Returns:
+//   - bool: true si substr est trouvé dans s
 func containsInterface(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && containsInterfaceHelper(s, substr)
 }
 
+// containsInterfaceHelper est une fonction helper pour rechercher une sous-chaîne.
+//
+// Params:
+//   - s: la chaîne à analyser
+//   - substr: la sous-chaîne recherchée
+//
+// Returns:
+//   - bool: true si substr est trouvé dans s
 func containsInterfaceHelper(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {

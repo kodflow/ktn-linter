@@ -8,6 +8,10 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestNew teste New.
+//
+// Params:
+//   - t: instance de test
 func TestNew(t *testing.T) {
 	analyzers, err := plugin.New(nil)
 	if err != nil {
@@ -41,6 +45,10 @@ func TestNew(t *testing.T) {
 	}
 }
 
+// TestGetAnalyzers teste GetAnalyzers.
+//
+// Params:
+//   - t: instance de test
 func TestGetAnalyzers(t *testing.T) {
 	analyzers, err := plugin.New(nil)
 	if err != nil {
@@ -70,6 +78,10 @@ func TestGetAnalyzers(t *testing.T) {
 	}
 }
 
+// TestIntegration teste Integration.
+//
+// Params:
+//   - t: instance de test
 func TestIntegration(t *testing.T) {
 	analyzers, err := plugin.New(nil)
 	if err != nil {

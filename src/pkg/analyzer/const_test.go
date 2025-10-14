@@ -10,6 +10,10 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestConstAnalyzer_KTN_CONST_001 teste ConstAnalyzer KTN CONST 001.
+//
+// Params:
+//   - t: instance de test
 func TestConstAnalyzer_KTN_CONST_001(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -84,6 +88,10 @@ const (
 	}
 }
 
+// TestConstAnalyzer_KTN_CONST_002 teste ConstAnalyzer KTN CONST 002.
+//
+// Params:
+//   - t: instance de test
 func TestConstAnalyzer_KTN_CONST_002(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -157,6 +165,10 @@ const (
 	}
 }
 
+// TestConstAnalyzer_KTN_CONST_003 teste ConstAnalyzer KTN CONST 003.
+//
+// Params:
+//   - t: instance de test
 func TestConstAnalyzer_KTN_CONST_003(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -231,6 +243,10 @@ const (
 	}
 }
 
+// TestConstAnalyzer_KTN_CONST_004 teste ConstAnalyzer KTN CONST 004.
+//
+// Params:
+//   - t: instance de test
 func TestConstAnalyzer_KTN_CONST_004(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -496,13 +512,28 @@ func TestPlugin(t *testing.T) {
 	}
 }
 
-// Helper function
+// contains vérifie si une chaîne contient une sous-chaîne.
+//
+// Params:
+//   - s: la chaîne à analyser
+//   - substr: la sous-chaîne recherchée
+//
+// Returns:
+//   - bool: true si substr est trouvé dans s
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
 		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
 		 stringContains(s, substr)))
 }
 
+// stringContains est une fonction helper pour rechercher une sous-chaîne.
+//
+// Params:
+//   - s: la chaîne à analyser
+//   - substr: la sous-chaîne recherchée
+//
+// Returns:
+//   - bool: true si substr est trouvé dans s
 func stringContains(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {

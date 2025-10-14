@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/naming"
 )
 
+// TestIsAllCaps teste IsAllCaps.
+//
+// Params:
+//   - t: instance de test
 func TestIsAllCaps(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -50,6 +54,10 @@ func TestIsAllCaps(t *testing.T) {
 	}
 }
 
+// TestIsValidInitialism teste IsValidInitialism.
+//
+// Params:
+//   - t: instance de test
 func TestIsValidInitialism(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -123,6 +131,10 @@ func TestIsValidInitialism(t *testing.T) {
 	}
 }
 
+// TestIsValidInitialism_AllInitialisms teste IsValidInitialism AllInitialisms.
+//
+// Params:
+//   - t: instance de test
 func TestIsValidInitialism_AllInitialisms(t *testing.T) {
 	// Test tous les initialismes de la liste pour s'assurer qu'ils sont reconnus
 	initialisms := []string{
@@ -142,6 +154,10 @@ func TestIsValidInitialism_AllInitialisms(t *testing.T) {
 	}
 }
 
+// TestIsValidInitialism_CombinationsWithMixedCaps teste IsValidInitialism CombinationsWithMixedCaps.
+//
+// Params:
+//   - t: instance de test
 func TestIsValidInitialism_CombinationsWithMixedCaps(t *testing.T) {
 	// Test des combinaisons courantes avec MixedCaps
 	tests := []struct {
@@ -172,6 +188,10 @@ func TestIsValidInitialism_CombinationsWithMixedCaps(t *testing.T) {
 	}
 }
 
+// TestIsAllCaps_Unicode teste IsAllCaps Unicode.
+//
+// Params:
+//   - t: instance de test
 func TestIsAllCaps_Unicode(t *testing.T) {
 	// Test avec des caractères Unicode
 	tests := []struct {
@@ -196,6 +216,10 @@ func TestIsAllCaps_Unicode(t *testing.T) {
 	}
 }
 
+// TestIsMixedCaps teste IsMixedCaps.
+//
+// Params:
+//   - t: instance de test
 func TestIsMixedCaps(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -241,6 +265,10 @@ func TestIsMixedCaps(t *testing.T) {
 	}
 }
 
+// TestHasGetterPrefix teste HasGetterPrefix.
+//
+// Params:
+//   - t: instance de test
 func TestHasGetterPrefix(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -287,6 +315,10 @@ func TestHasGetterPrefix(t *testing.T) {
 	}
 }
 
+// TestFixInitialisms teste FixInitialisms.
+//
+// Params:
+//   - t: instance de test
 func TestFixInitialisms(t *testing.T) {
 	tests := []struct {
 		name     string

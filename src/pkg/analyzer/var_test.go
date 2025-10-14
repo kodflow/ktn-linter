@@ -10,6 +10,10 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestVarAnalyzer_KTN_VAR_001 teste VarAnalyzer KTN VAR 001.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_001(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -46,6 +50,10 @@ func updateConfig() {
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_002 teste VarAnalyzer KTN VAR 002.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_002(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -81,6 +89,10 @@ var (
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_003 teste VarAnalyzer KTN VAR 003.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_003(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -121,6 +133,10 @@ func updateConfig() {
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_004 teste VarAnalyzer KTN VAR 004.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_004(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -162,6 +178,10 @@ func updateConfig() {
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_005 teste VarAnalyzer KTN VAR 005.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_005(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -203,6 +223,10 @@ func updateConfig() {
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_006 teste VarAnalyzer KTN VAR 006.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_006(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -247,6 +271,10 @@ func updateNetwork() {
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_007 teste VarAnalyzer KTN VAR 007.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_007(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -296,6 +324,10 @@ var (
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_008 teste VarAnalyzer KTN VAR 008.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_008(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -337,6 +369,10 @@ func updateHTTPCode() {
 	runVarTests(t, tests)
 }
 
+// TestVarAnalyzer_KTN_VAR_009 teste VarAnalyzer KTN VAR 009.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_KTN_VAR_009(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -394,7 +430,10 @@ func updateBuffer() {
 	runVarTests(t, tests)
 }
 
-// Test edge cases for better coverage
+// TestVarAnalyzer_EdgeCases teste les cas limites pour une meilleure couverture.
+//
+// Params:
+//   - t: instance de test
 func TestVarAnalyzer_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -512,7 +551,11 @@ var (
 	runVarTests(t, tests)
 }
 
-// Helper function to run var analyzer tests
+// runVarTests est une fonction helper pour exécuter les tests du VarAnalyzer.
+//
+// Params:
+//   - t: instance de test
+//   - tests: slice de cas de test à exécuter
 func runVarTests(t *testing.T, tests []struct {
 	name     string
 	code     string

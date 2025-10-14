@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/messageutil"
 )
 
+// TestExtractCode teste ExtractCode.
+//
+// Params:
+//   - t: instance de test
 func TestExtractCode(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -59,6 +63,10 @@ func TestExtractCode(t *testing.T) {
 	}
 }
 
+// TestExtractMessage teste ExtractMessage.
+//
+// Params:
+//   - t: instance de test
 func TestExtractMessage(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -102,6 +110,10 @@ func TestExtractMessage(t *testing.T) {
 	}
 }
 
+// TestExtractSuggestion teste ExtractSuggestion.
+//
+// Params:
+//   - t: instance de test
 func TestExtractSuggestion(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -157,6 +169,10 @@ Exemple:
 	}
 }
 
+// TestExtractConstName teste ExtractConstName.
+//
+// Params:
+//   - t: instance de test
 func TestExtractConstName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -205,6 +221,10 @@ func TestExtractConstName(t *testing.T) {
 	}
 }
 
+// TestExtractType teste ExtractType.
+//
+// Params:
+//   - t: instance de test
 func TestExtractType(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -258,6 +278,10 @@ func TestExtractType(t *testing.T) {
 	}
 }
 
+// TestExtractCode_EdgeCases teste ExtractCode EdgeCases.
+//
+// Params:
+//   - t: instance de test
 func TestExtractCode_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -296,6 +320,10 @@ func TestExtractCode_EdgeCases(t *testing.T) {
 	}
 }
 
+// TestExtractMessage_EdgeCases teste ExtractMessage EdgeCases.
+//
+// Params:
+//   - t: instance de test
 func TestExtractMessage_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name     string

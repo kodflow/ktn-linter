@@ -9,6 +9,10 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/astutil"
 )
 
+// TestExprToString teste la conversion d'expressions AST en chaînes de caractères.
+//
+// Params:
+//   - t: instance de test
 func TestExprToString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -97,6 +101,10 @@ func TestExprToString(t *testing.T) {
 	}
 }
 
+// TestExprToString_Unknown teste la gestion des types non supportés.
+//
+// Params:
+//   - t: instance de test
 func TestExprToString_Unknown(t *testing.T) {
 	// Test avec un type non supporté (struct type)
 	code := "var x struct { name string }"
@@ -115,6 +123,10 @@ func TestExprToString_Unknown(t *testing.T) {
 	}
 }
 
+// TestGetTypeString teste l'extraction de chaînes de type depuis ValueSpec.
+//
+// Params:
+//   - t: instance de test
 func TestGetTypeString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -162,6 +174,10 @@ func TestGetTypeString(t *testing.T) {
 	}
 }
 
+// TestGetTypeString_Const teste l'extraction de types pour les constantes.
+//
+// Params:
+//   - t: instance de test
 func TestGetTypeString_Const(t *testing.T) {
 	// Test avec une constante
 	tests := []struct {

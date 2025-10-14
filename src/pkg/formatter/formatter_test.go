@@ -11,6 +11,10 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestNewFormatter teste NewFormatter.
+//
+// Params:
+//   - t: instance de test
 func TestNewFormatter(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -36,6 +40,10 @@ func TestNewFormatter(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_Success teste Formatter Format Success.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_Success(t *testing.T) {
 	var buf bytes.Buffer
 	f := formatter.NewFormatter(&buf, false, false, false)
@@ -48,6 +56,10 @@ func TestFormatter_Format_Success(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_HumanMode teste Formatter Format HumanMode.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_HumanMode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
@@ -76,6 +88,10 @@ func TestFormatter_Format_HumanMode(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_AIMode teste Formatter Format AIMode.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_AIMode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
@@ -104,6 +120,10 @@ func TestFormatter_Format_AIMode(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_SimpleMode teste Formatter Format SimpleMode.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_SimpleMode(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
@@ -133,6 +153,10 @@ func TestFormatter_Format_SimpleMode(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_MultipleDiagnostics teste Formatter Format MultipleDiagnostics.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_MultipleDiagnostics(t *testing.T) {
 	fset := token.NewFileSet()
 	file1 := fset.AddFile("file1.go", 1, 100)
@@ -165,6 +189,10 @@ func TestFormatter_Format_MultipleDiagnostics(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_ColorsDisabled teste Formatter Format ColorsDisabled.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_ColorsDisabled(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
@@ -189,6 +217,10 @@ func TestFormatter_Format_ColorsDisabled(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_WithColors teste Formatter Format WithColors.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_WithColors(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)
@@ -213,6 +245,10 @@ func TestFormatter_Format_WithColors(t *testing.T) {
 	}
 }
 
+// TestFormatter_Format_SimpleMode_Sorting teste Formatter Format SimpleMode Sorting.
+//
+// Params:
+//   - t: instance de test
 func TestFormatter_Format_SimpleMode_Sorting(t *testing.T) {
 	fset := token.NewFileSet()
 	file := fset.AddFile("test.go", 1, 100)

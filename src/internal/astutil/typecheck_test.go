@@ -9,6 +9,10 @@ import (
 	"github.com/kodflow/ktn-linter/src/internal/astutil"
 )
 
+// TestIsConstCompatibleType teste la vérification de compatibilité des types avec const.
+//
+// Params:
+//   - t: instance de test
 func TestIsConstCompatibleType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -64,6 +68,10 @@ func TestIsConstCompatibleType(t *testing.T) {
 	}
 }
 
+// TestIsLiteralValue teste la détection de valeurs littérales.
+//
+// Params:
+//   - t: instance de test
 func TestIsLiteralValue(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -122,6 +130,10 @@ func TestIsLiteralValue(t *testing.T) {
 	}
 }
 
+// TestIsConstCompatibleType_NilExpr teste le comportement avec une expression nil.
+//
+// Params:
+//   - t: instance de test
 func TestIsConstCompatibleType_NilExpr(t *testing.T) {
 	// Test avec une expression nil
 	result := astutil.IsConstCompatibleType(nil)
@@ -130,6 +142,10 @@ func TestIsConstCompatibleType_NilExpr(t *testing.T) {
 	}
 }
 
+// TestIsLiteralValue_NilExpr teste le comportement avec une expression nil.
+//
+// Params:
+//   - t: instance de test
 func TestIsLiteralValue_NilExpr(t *testing.T) {
 	// Test avec une expression nil
 	result := astutil.IsLiteralValue(nil)
