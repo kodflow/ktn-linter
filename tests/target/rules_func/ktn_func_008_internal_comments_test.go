@@ -1,6 +1,10 @@
 package rules_func_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_func"
+)
 
 func TestComplexCalculationWithInternalComments(t *testing.T) {
 	tests := []struct {
@@ -31,13 +35,13 @@ func TestComplexCalculationWithInternalComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := complexCalculationWithInternalComments(tt.value)
+			got, err := rules_func.ComplexCalculationWithInternalComments(tt.value)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("complexCalculationWithInternalComments() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ComplexCalculationWithInternalComments() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("complexCalculationWithInternalComments() = %v, want %v", got, tt.want)
+				t.Errorf("ComplexCalculationWithInternalComments() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -68,14 +72,14 @@ func TestProcessDataWithComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := processDataWithComments(tt.data)
+			got := rules_func.ProcessDataWithComments(tt.data)
 			if len(got) != len(tt.want) {
-				t.Errorf("processDataWithComments() length = %v, want %v", len(got), len(tt.want))
+				t.Errorf("ProcessDataWithComments() length = %v, want %v", len(got), len(tt.want))
 				return
 			}
 			for i := range got {
 				if got[i] != tt.want[i] {
-					t.Errorf("processDataWithComments()[%d] = %v, want %v", i, got[i], tt.want[i])
+					t.Errorf("ProcessDataWithComments()[%d] = %v, want %v", i, got[i], tt.want[i])
 				}
 			}
 		})

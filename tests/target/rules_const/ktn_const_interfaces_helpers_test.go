@@ -1,6 +1,10 @@
 package rules_const_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_const"
+)
 
 // TestInterfaces teste le fichier interfaces.go.
 //

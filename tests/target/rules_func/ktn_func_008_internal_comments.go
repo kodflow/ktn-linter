@@ -2,7 +2,7 @@ package rules_func
 
 import "errors"
 
-// complexCalculationWithInternalComments effectue un calcul complexe avec commentaires internes.
+// ComplexCalculationWithInternalComments effectue un calcul complexe avec commentaires internes.
 //
 // Params:
 //   - value: la valeur d'entrée
@@ -10,7 +10,7 @@ import "errors"
 // Returns:
 //   - int: le résultat du calcul
 //   - error: une erreur si la valeur est invalide
-func complexCalculationWithInternalComments(value int) (int, error) {
+func ComplexCalculationWithInternalComments(value int) (int, error) {
 	// Validation: rejet des valeurs négatives
 	if value < 0 {
 		return 0, errors.New("value must be non-negative")
@@ -50,14 +50,14 @@ func complexCalculationWithInternalComments(value int) (int, error) {
 	return result, nil
 }
 
-// processDataWithComments traite des données avec explications claires.
+// ProcessDataWithComments traite des données avec explications claires.
 //
 // Params:
 //   - data: les données à traiter
 //
 // Returns:
 //   - []int: les données traitées
-func processDataWithComments(data []int) []int {
+func ProcessDataWithComments(data []int) []int {
 	processed := make([]int, 0, len(data))
 
 	// Filtrage et transformation selon des règles métier

@@ -1,6 +1,10 @@
 package rules_var_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_var"
+)
 
 // TestVar007 teste le fichier package_level_KTN-VAR-007.go.
 //

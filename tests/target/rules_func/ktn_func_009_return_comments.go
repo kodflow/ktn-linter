@@ -2,7 +2,7 @@ package rules_func
 
 import "errors"
 
-// findMaxValueWithReturnComments trouve le maximum avec commentaires sur les returns.
+// FindMaxValueWithReturnComments trouve le maximum avec commentaires sur les returns.
 //
 // Params:
 //   - values: la liste de valeurs
@@ -10,7 +10,7 @@ import "errors"
 // Returns:
 //   - int: la valeur maximale
 //   - bool: true si au moins une valeur existe
-func findMaxValueWithReturnComments(values []int) (int, bool) {
+func FindMaxValueWithReturnComments(values []int) (int, bool) {
 	if len(values) == 0 {
 		// Retourne valeur par défaut si la liste est vide
 		return 0, false
@@ -27,14 +27,14 @@ func findMaxValueWithReturnComments(values []int) (int, bool) {
 	return max, true
 }
 
-// validateInputWithReturnComments vérifie la validité avec commentaires.
+// ValidateInputWithReturnComments vérifie la validité avec commentaires.
 //
 // Params:
 //   - value: la valeur à vérifier
 //
 // Returns:
 //   - error: une erreur si invalide
-func validateInputWithReturnComments(value int) error {
+func ValidateInputWithReturnComments(value int) error {
 	if value < 0 {
 		// Retourne erreur si la valeur est négative
 		return errors.New("value cannot be negative")
@@ -49,7 +49,7 @@ func validateInputWithReturnComments(value int) error {
 	return nil
 }
 
-// divideNumbersWithReturnComments effectue une division.
+// DivideNumbersWithReturnComments effectue une division.
 //
 // Params:
 //   - a: le numérateur
@@ -58,7 +58,7 @@ func validateInputWithReturnComments(value int) error {
 // Returns:
 //   - float64: le résultat de la division
 //   - error: une erreur si le dénominateur est zéro
-func divideNumbersWithReturnComments(a, b int) (float64, error) {
+func DivideNumbersWithReturnComments(a, b int) (float64, error) {
 	if b == 0 {
 		// Retourne erreur car division par zéro impossible
 		return 0, errors.New("division by zero")
@@ -68,7 +68,7 @@ func divideNumbersWithReturnComments(a, b int) (float64, error) {
 	return float64(a) / float64(b), nil
 }
 
-// processWithMultipleExitsWithComments a plusieurs points de sortie commentés.
+// ProcessWithMultipleExitsWithComments a plusieurs points de sortie commentés.
 //
 // Params:
 //   - value: la valeur à traiter
@@ -76,7 +76,7 @@ func divideNumbersWithReturnComments(a, b int) (float64, error) {
 // Returns:
 //   - string: le résultat du traitement
 //   - error: une erreur si le traitement échoue
-func processWithMultipleExitsWithComments(value int) (string, error) {
+func ProcessWithMultipleExitsWithComments(value int) (string, error) {
 	if value < 0 {
 		// Retourne erreur pour valeur négative
 		return "", errors.New("negative value")

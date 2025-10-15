@@ -1,6 +1,8 @@
 package rules_func_test
 
 import (
+	"github.com/kodflow/ktn-linter/tests/target/rules_func"
+
 	"testing"
 )
 
@@ -33,12 +35,12 @@ func TestFindMaxValueWithReturnComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotMax, gotFound := findMaxValueWithReturnComments(tt.values)
+			gotMax, gotFound := rules_func.FindMaxValueWithReturnComments(tt.values)
 			if gotMax != tt.wantMax {
-				t.Errorf("findMaxValueWithReturnComments() max = %v, want %v", gotMax, tt.wantMax)
+				t.Errorf("rules_func.FindMaxValueWithReturnComments() max = %v, want %v", gotMax, tt.wantMax)
 			}
 			if gotFound != tt.wantFound {
-				t.Errorf("findMaxValueWithReturnComments() found = %v, want %v", gotFound, tt.wantFound)
+				t.Errorf("rules_func.FindMaxValueWithReturnComments() found = %v, want %v", gotFound, tt.wantFound)
 			}
 		})
 	}
@@ -79,9 +81,9 @@ func TestValidateInputWithReturnComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateInputWithReturnComments(tt.value)
+			err := rules_func.ValidateInputWithReturnComments(tt.value)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("validateInputWithReturnComments() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("rules_func.ValidateInputWithReturnComments() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -120,13 +122,13 @@ func TestDivideNumbersWithReturnComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := divideNumbersWithReturnComments(tt.a, tt.b)
+			got, err := rules_func.DivideNumbersWithReturnComments(tt.a, tt.b)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("divideNumbersWithReturnComments() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("rules_func.DivideNumbersWithReturnComments() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("divideNumbersWithReturnComments() = %v, want %v", got, tt.want)
+				t.Errorf("rules_func.DivideNumbersWithReturnComments() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -173,13 +175,13 @@ func TestProcessWithMultipleExitsWithComments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := processWithMultipleExitsWithComments(tt.value)
+			got, err := rules_func.ProcessWithMultipleExitsWithComments(tt.value)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("processWithMultipleExitsWithComments() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("rules_func.ProcessWithMultipleExitsWithComments() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("processWithMultipleExitsWithComments() = %v, want %v", got, tt.want)
+				t.Errorf("rules_func.ProcessWithMultipleExitsWithComments() = %v, want %v", got, tt.want)
 			}
 		})
 	}

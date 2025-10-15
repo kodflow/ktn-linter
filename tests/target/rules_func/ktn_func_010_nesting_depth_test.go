@@ -1,6 +1,10 @@
 package rules_func_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_func"
+)
 
 func TestDeeplyNestedGood(t *testing.T) {
 	tests := []struct {
@@ -27,9 +31,9 @@ func TestDeeplyNestedGood(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := deeplyNestedGood(tt.value)
+			got := rules_func.DeeplyNestedGood(tt.value)
 			if got != tt.want {
-				t.Errorf("deeplyNestedGood() = %v, want %v", got, tt.want)
+				t.Errorf("rules_func.DeeplyNestedGood() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -64,9 +68,9 @@ func TestExtremelyNestedGood(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extremelyNestedGood(tt.x, tt.y)
+			got := rules_func.ExtremelyNestedGood(tt.x, tt.y)
 			if got != tt.want {
-				t.Errorf("extremelyNestedGood() = %v, want %v", got, tt.want)
+				t.Errorf("rules_func.ExtremelyNestedGood() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -102,14 +106,14 @@ func TestComplexNestedGood(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := complexNestedGood(tt.values)
+			got := rules_func.ComplexNestedGood(tt.values)
 			if len(got) != len(tt.want) {
-				t.Errorf("complexNestedGood() length = %v, want %v", len(got), len(tt.want))
+				t.Errorf("rules_func.ComplexNestedGood() length = %v, want %v", len(got), len(tt.want))
 				return
 			}
 			for i := range got {
 				if got[i] != tt.want[i] {
-					t.Errorf("complexNestedGood()[%d] = %v, want %v", i, got[i], tt.want[i])
+					t.Errorf("rules_func.ComplexNestedGood()[%d] = %v, want %v", i, got[i], tt.want[i])
 				}
 			}
 		})

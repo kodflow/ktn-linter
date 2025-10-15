@@ -1,19 +1,19 @@
 package rules_func
 
-// goodFunctionName respecte toutes les règles.
+// GoodFunctionName respecte toutes les règles.
 //
 // Params:
 //   - cfg: configuration avec les paramètres
 //
 // Returns:
 //   - int: résultat du calcul
-func goodFunctionName(cfg MultiParamConfig) int {
+func GoodFunctionName(cfg MultiParamConfig) int {
 	result := 0
 
 	// Calcul basé sur les multiples de 2, 3, 5, 7
 	for i := 0; i < 10; i++ {
-		if shouldProcess(i) {
-			result += sumConfig(cfg)
+		if ShouldProcess(i) {
+			result += SumConfig(cfg)
 		}
 	}
 
@@ -36,14 +36,14 @@ type MultiParamConfig struct {
 	F int
 }
 
-// shouldProcess vérifie si i doit être traité.
+// ShouldProcess vérifie si i doit être traité.
 //
 // Params:
 //   - i: valeur à vérifier
 //
 // Returns:
 //   - bool: true si le traitement est nécessaire
-func shouldProcess(i int) bool {
+func ShouldProcess(i int) bool {
 	if i%2 != 0 {
 		return false
 	}
@@ -57,13 +57,13 @@ func shouldProcess(i int) bool {
 	return i%7 == 0
 }
 
-// sumConfig additionne tous les champs de la configuration.
+// SumConfig additionne tous les champs de la configuration.
 //
 // Params:
 //   - cfg: configuration
 //
 // Returns:
 //   - int: somme des valeurs
-func sumConfig(cfg MultiParamConfig) int {
+func SumConfig(cfg MultiParamConfig) int {
 	return cfg.A + cfg.B + cfg.C + cfg.D + cfg.E + cfg.F
 }

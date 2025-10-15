@@ -1,6 +1,10 @@
 package rules_var_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_var"
+)
 
 // TestInterfaces teste le fichier interfaces.go.
 //

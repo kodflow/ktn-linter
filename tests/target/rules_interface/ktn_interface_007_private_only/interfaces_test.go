@@ -1,9 +1,13 @@
 package goodinterfaces_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_interface/ktn_interface_007_private_only"
+)
 
 func TestServiceInterface(t *testing.T) {
-	svc := NewService("test")
+	svc := goodinterfaces.NewService("test")
 
 	tests := []struct {
 		name    string
@@ -38,7 +42,7 @@ func TestServiceInterface(t *testing.T) {
 }
 
 func TestHelperInterface(t *testing.T) {
-	helper := NewHelper()
+	helper := goodinterfaces.NewHelper()
 
 	msg := helper.Help()
 	if msg == "" {

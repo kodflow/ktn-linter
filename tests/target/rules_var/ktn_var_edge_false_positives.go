@@ -9,11 +9,11 @@ var (
 	// computedValue est calculé via une fonction (OK car appel fonction).
 	computedValue int = len("hello")
 
-	// validHTTPCode utilise l'initialisme HTTP correctement.
-	validHTTPCode int = 200
+	// ValidHTTPCode utilise l'initialisme HTTP correctement.
+	ValidHTTPCode int = 200
 
-	// maxHTTPRetries utilise HTTP en majuscules (initialisme valide).
-	maxHTTPRetries int = 5
+	// MaxHTTPRetries utilise HTTP en majuscules (initialisme valide).
+	MaxHTTPRetries int = 5
 )
 
 const (

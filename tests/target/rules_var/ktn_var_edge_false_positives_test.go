@@ -1,27 +1,31 @@
 package rules_var_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kodflow/ktn-linter/tests/target/rules_var"
+)
 
 func TestValidHTTPCode(t *testing.T) {
-	if validHTTPCode != 200 {
-		t.Errorf("validHTTPCode = %v, want 200", validHTTPCode)
+	if rules_var.ValidHTTPCode != 200 {
+		t.Errorf("rules_var.ValidHTTPCode = %v, want 200", rules_var.ValidHTTPCode)
 	}
 }
 
 func TestMaxHTTPRetries(t *testing.T) {
-	if maxHTTPRetries != 5 {
-		t.Errorf("maxHTTPRetries = %v, want 5", maxHTTPRetries)
+	if rules_var.MaxHTTPRetries != 5 {
+		t.Errorf("rules_var.MaxHTTPRetries = %v, want 5", rules_var.MaxHTTPRetries)
 	}
 }
 
 func TestMaxRetriesLiteral(t *testing.T) {
-	if MaxRetriesLiteral != 3 {
-		t.Errorf("MaxRetriesLiteral = %v, want 3", MaxRetriesLiteral)
+	if rules_var.MaxRetriesLiteral != 3 {
+		t.Errorf("rules_var.MaxRetriesLiteral = %v, want 3", rules_var.MaxRetriesLiteral)
 	}
 }
 
 func TestMaxTimeout(t *testing.T) {
-	if MaxTimeout != 30 {
-		t.Errorf("MaxTimeout = %v, want 30", MaxTimeout)
+	if rules_var.MaxTimeout != 30 {
+		t.Errorf("rules_var.MaxTimeout = %v, want 30", rules_var.MaxTimeout)
 	}
 }

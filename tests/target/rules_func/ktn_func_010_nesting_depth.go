@@ -1,13 +1,13 @@
 package rules_func
 
-// deeplyNestedGood a une profondeur d'imbrication acceptable (max 3 niveaux).
+// DeeplyNestedGood a une profondeur d'imbrication acceptable (max 3 niveaux).
 //
 // Params:
 //   - value: la valeur d'entrée
 //
 // Returns:
 //   - int: le résultat du calcul
-func deeplyNestedGood(value int) int {
+func DeeplyNestedGood(value int) int {
 	result := 0
 
 	for i := 0; i < value; i++ { // Niveau 1
@@ -37,7 +37,7 @@ func processInnerLoop(i int) int {
 	return sum
 }
 
-// extremelyNestedGood limite l'imbrication avec extraction de fonctions.
+// ExtremelyNestedGood limite l'imbrication avec extraction de fonctions.
 //
 // Params:
 //   - x: première valeur
@@ -45,7 +45,7 @@ func processInnerLoop(i int) int {
 //
 // Returns:
 //   - int: le résultat
-func extremelyNestedGood(x, y int) int {
+func ExtremelyNestedGood(x, y int) int {
 	count := 0
 
 	for i := 0; i < x; i++ { // Niveau 1
@@ -77,14 +77,14 @@ func countInner(y int) int {
 	return count
 }
 
-// complexNestedGood utilise des fonctions helper pour limiter l'imbrication.
+// ComplexNestedGood utilise des fonctions helper pour limiter l'imbrication.
 //
 // Params:
 //   - values: liste de valeurs
 //
 // Returns:
 //   - []int: valeurs filtrées
-func complexNestedGood(values []int) []int {
+func ComplexNestedGood(values []int) []int {
 	result := make([]int, 0)
 
 	for _, v := range values { // Niveau 1
