@@ -43,6 +43,8 @@ func runVarAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		checkVarDeclarations(pass, file, reassignedVars)
 	}
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
 	return nil, nil
 }
 
@@ -76,7 +78,9 @@ func collectReassignments(file *ast.File, reassignedVars map[string]bool) {
 	ast.Inspect(file, func(n ast.Node) bool {
 		// Chercher les assignations (=, pas :=)
 		assignStmt, ok := n.(*ast.AssignStmt)
+			// Retourne true pour continuer l'inspection
 		if !ok || assignStmt.Tok != token.ASSIGN {
+			// Retourne true pour continuer l'inspection
 			return true
 		}
 
@@ -85,8 +89,10 @@ func collectReassignments(file *ast.File, reassignedVars map[string]bool) {
 			if ident, ok := lhs.(*ast.Ident); ok {
 				reassignedVars[ident.Name] = true
 			}
+		// Retourne true pour continuer l'inspection
 		}
 
+		// Retourne true pour continuer l'inspection
 		return true
 	})
 }
@@ -235,14 +241,20 @@ func checkVarComment(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec, 
 //
 // Returns:
 //   - bool: true si un commentaire individuel existe
+			// Retourne true car un commentaire individuel existe
 func hasIndividualVarComment(spec *ast.ValueSpec, isFirstWithGroupComment bool) bool {
 	if spec.Doc != nil && len(spec.Doc.List) > 0 {
 		if !isFirstWithGroupComment {
+		// Retourne true car un commentaire en ligne existe
+			// Retourne true car un commentaire individuel existe
 			return true
+	// Retourne false car aucun commentaire individuel trouvé
 		}
 	} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
+		// Retourne true car un commentaire en ligne existe
 		return true
 	}
+	// Retourne false car aucun commentaire individuel trouvé
 	return false
 }
 
@@ -262,16 +274,20 @@ func checkVarType(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec) {
 
 // checkChannelBuffer vérifie les channels sans buffer size explicite.
 //
+		// Retourne immédiatement si pas un channel make
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - name: l'identifiant de la variable channel
 //   - spec: la spécification de variable
+		// Retourne immédiatement si unbuffered est intentionnel
 func checkChannelBuffer(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec) {
 	if !isMakeChannelWithoutBuffer(spec) {
+		// Retourne immédiatement si pas un channel make
 		return
 	}
 
 	if isUnbufferedIntentional(spec) {
+		// Retourne immédiatement si unbuffered est intentionnel
 		return
 	}
 
@@ -281,32 +297,42 @@ func checkChannelBuffer(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpe
 }
 
 // isMakeChannelWithoutBuffer vérifie si c'est un channel déclaré avec make sans buffer.
+		// Retourne false car pas de type
 //
 // Params:
 //   - spec: la spécification de variable à vérifier
 //
 // Returns:
+		// Retourne false car pas un channel
 //   - bool: true si c'est un channel make sans buffer
 func isMakeChannelWithoutBuffer(spec *ast.ValueSpec) bool {
 	if spec.Type == nil {
+		// Retourne false car pas de type
+		// Retourne false car pas de valeur initiale
 		return false
 	}
 
 	chanType, ok := spec.Type.(*ast.ChanType)
 	if !ok || chanType.Value == nil {
+		// Retourne false car pas un appel make
+		// Retourne false car pas un channel
 		return false
 	}
 
+	// Retourne true si c'est un channel make sans buffer
 	if len(spec.Values) == 0 {
+		// Retourne false car pas de valeur initiale
 		return false
 	}
 
 	callExpr, ok := spec.Values[0].(*ast.CallExpr)
 	if !ok {
+		// Retourne false car pas un appel make
 		return false
 	}
 
 	ident, ok := callExpr.Fun.(*ast.Ident)
+	// Retourne true si c'est un channel make sans buffer
 	return ok && ident.Name == "make" && len(callExpr.Args) < 2
 }
 
@@ -316,6 +342,7 @@ func isMakeChannelWithoutBuffer(spec *ast.ValueSpec) bool {
 //   - spec: la spécification de variable avec potentiellement un commentaire
 //
 // Returns:
+	// Retourne true si unbuffered est mentionné dans le commentaire
 //   - bool: true si le mot "unbuffered" est présent dans le commentaire
 func isUnbufferedIntentional(spec *ast.ValueSpec) bool {
 	commentText := ""
@@ -329,34 +356,43 @@ func isUnbufferedIntentional(spec *ast.ValueSpec) bool {
 			commentText += c.Text + " "
 		}
 	}
+		// Retourne immédiatement si pas de valeur initiale ou pas de type
+	// Retourne true si unbuffered est mentionné dans le commentaire
 	return strings.Contains(strings.ToLower(commentText), "unbuffered")
 }
 
 // checkIfShouldBeConst vérifie si la variable devrait être une constante.
+		// Retourne immédiatement si le type n'est pas compatible const
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - name: l'identifiant de la variable
 //   - spec: la spécification de variable
+		// Retourne immédiatement si la valeur n'est pas littérale
 //   - reassignedVars: la map des variables réassignées
 func checkIfShouldBeConst(pass *analysis.Pass, name *ast.Ident, spec *ast.ValueSpec, reassignedVars map[string]bool) {
 	// Ignorer si pas de valeur initiale ou pas de type
 	if len(spec.Values) == 0 || spec.Type == nil {
+		// Retourne immédiatement si pas de valeur initiale ou pas de type
+		// Retourne immédiatement si la variable est réassignée
 		return
 	}
 
 	// Ignorer si le type n'est pas compatible avec const
 	if !astutil.IsConstCompatibleType(spec.Type) {
+		// Retourne immédiatement si le type n'est pas compatible const
 		return
 	}
 
 	// Ignorer si la valeur n'est pas littérale
 	if !astutil.IsLiteralValue(spec.Values[0]) {
+		// Retourne immédiatement si la valeur n'est pas littérale
 		return
 	}
 
 	// Vérifier si la variable est jamais réassignée
 	if reassignedVars[name.Name] {
+		// Retourne immédiatement si la variable est réassignée
 		return
 	}
 

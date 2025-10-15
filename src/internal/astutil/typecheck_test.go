@@ -84,9 +84,11 @@ func findLastVarSpec(file *ast.File) *ast.ValueSpec {
 
 		vs, ok := genDecl.Specs[0].(*ast.ValueSpec)
 		if ok && len(vs.Values) > 0 {
+			// Retourne la ValueSpec trouvée avec une valeur
 			return vs
 		}
 	}
+	// Retourne nil car aucune ValueSpec avec valeur n'a été trouvée
 	return nil
 }
 

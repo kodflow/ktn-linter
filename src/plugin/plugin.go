@@ -28,5 +28,6 @@ func (*analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 //   - []*analysis.Analyzer: la liste des analyseurs fournis par le plugin
 //   - error: toujours nil dans l'implémentation actuelle
 func New(conf interface{}) ([]*analysis.Analyzer, error) {
+	// Retourne la liste des analyseurs fournis par le plugin
 	return (&analyzerPlugin{}).GetAnalyzers(), nil
 }

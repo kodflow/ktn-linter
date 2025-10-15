@@ -88,6 +88,7 @@ func loadPackages(patterns []string) []*packages.Package {
 	}
 
 	checkLoadErrors(pkgs)
+	// Retourne les packages chargés avec succès
 	return pkgs
 }
 
@@ -143,6 +144,7 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		}
 	}
 
+	// Retourne tous les diagnostics collectés depuis tous les packages
 	return allDiagnostics
 }
 
@@ -157,6 +159,7 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 // Returns:
 //   - *analysis.Pass: la passe d'analyse configurée
 func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet, diagnostics *[]diagWithFset) *analysis.Pass {
+	// Retourne une passe d'analyse configurée avec le callback Report
 	return &analysis.Pass{
 		Analyzer:  a,
 		Fset:      fset,
@@ -181,6 +184,7 @@ func formatAndDisplay(diagnostics []diagWithFset) {
 
 	if len(diagnostics) == 0 {
 		fmt.Format(nil, nil)
+		// Retourne car il n'y a aucun diagnostic à afficher
 		return
 	}
 
@@ -201,5 +205,6 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	for i, d := range diagnostics {
 		diags[i] = d.diag
 	}
+	// Retourne la liste des diagnostics extraits
 	return diags
 }

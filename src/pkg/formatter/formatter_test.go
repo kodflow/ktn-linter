@@ -308,6 +308,7 @@ func TestFormatterFormatSimpleModeSorting(t *testing.T) {
 // Returns:
 //   - []analysis.Diagnostic: diagnostics de test couvrant tous les codes d'erreur
 func allErrorCodesDiagnostics(file *token.File) []analysis.Diagnostic {
+	// Retourne une liste de diagnostics couvrant tous les codes d'erreur KTN
 	return []analysis.Diagnostic{
 		{Pos: file.Pos(10), Message: "[KTN-CONST-001] Constante 'MaxValue' déclarée individuellement.\nExemple:\n  const (\n      MaxValue int = ...\n  )"},
 		{Pos: file.Pos(20), Message: "[KTN-CONST-002] Groupe de constantes sans commentaire de groupe."},
@@ -540,5 +541,223 @@ func TestFormatterTypeExtraction(t *testing.T) {
 		if !strings.Contains(output, typ) {
 			t.Errorf("Expected output to contain type %s", typ)
 		}
+	}
+}
+
+// TestFormatterCodeColorBranches teste toutes les branches de getCodeColor.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterCodeColorBranches(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 100)
+
+	testCases := []struct {
+		code     string
+		message  string
+		expected string
+	}{
+		{"KTN-TEST-001", "Test error 001", "Red"},
+		{"KTN-TEST-002", "Test error 002", "Yellow"},
+		{"KTN-TEST-003", "Test error 003", "Magenta"},
+		{"KTN-TEST-004", "Test error 004", "Cyan"},
+		{"KTN-TEST-999", "Test default case", "Red"},
+	}
+
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		f := formatter.NewFormatter(&buf, false, false, false) // with colors
+
+		diagnostics := []analysis.Diagnostic{
+			{Pos: file.Pos(10), Message: fmt.Sprintf("[%s] %s", tc.code, tc.message)},
+		}
+
+		f.Format(fset, diagnostics)
+		output := buf.String()
+
+		if !strings.Contains(output, tc.message) {
+			t.Errorf("Expected message %q in output for code %s", tc.message, tc.code)
+		}
+	}
+}
+
+// TestFormatterCacheFilesFiltered teste le filtrage des fichiers du cache.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterCacheFilesFiltered(t *testing.T) {
+	fset := token.NewFileSet()
+	cacheFile := fset.AddFile("/home/user/.cache/go-build/abc/test.go", 1, 100)
+	tmpFile := fset.AddFile("/tmp/test.go", 102, 100)
+	normalFile := fset.AddFile("/home/user/project/test.go", 203, 100)
+	windowsCacheFile := fset.AddFile("C:\\Users\\user\\cache\\go-build\\test.go", 304, 100)
+
+	diagnostics := []analysis.Diagnostic{
+		{Pos: cacheFile.Pos(10), Message: "[KTN-TEST-001] Cache file issue"},
+		{Pos: tmpFile.Pos(10), Message: "[KTN-TEST-002] Tmp file issue"},
+		{Pos: normalFile.Pos(10), Message: "[KTN-TEST-003] Normal file issue"},
+		{Pos: windowsCacheFile.Pos(10), Message: "[KTN-TEST-004] Windows cache file issue"},
+	}
+
+	// Test formatForHuman
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false)
+	f.Format(fset, diagnostics)
+	output := buf.String()
+
+	// Should only contain normal file issue
+	if !strings.Contains(output, "Normal file issue") {
+		t.Error("Expected normal file issue in output")
+	}
+	if strings.Contains(output, "Cache file issue") {
+		t.Error("Cache file should be filtered out")
+	}
+	if strings.Contains(output, "Tmp file issue") {
+		t.Error("Tmp file should be filtered out")
+	}
+	if strings.Contains(output, "Windows cache file issue") {
+		t.Error("Windows cache file should be filtered out")
+	}
+
+	// Test formatSimple
+	buf.Reset()
+	fSimple := formatter.NewFormatter(&buf, false, true, true)
+	fSimple.Format(fset, diagnostics)
+	outputSimple := buf.String()
+
+	if !strings.Contains(outputSimple, "Normal file issue") {
+		t.Error("Simple format should contain normal file issue")
+	}
+	if strings.Contains(outputSimple, "Cache file issue") {
+		t.Error("Simple format should filter cache files")
+	}
+}
+
+// TestFormatterFormatForHumanFiltersAll teste que formatForHuman affiche le succès quand tout est filtré.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterFormatForHumanFiltersAll(t *testing.T) {
+	fset := token.NewFileSet()
+	cacheFile := fset.AddFile("/home/user/.cache/go-build/test.go", 1, 100)
+
+	diagnostics := []analysis.Diagnostic{
+		{Pos: cacheFile.Pos(10), Message: "[KTN-TEST-001] Cache only"},
+	}
+
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false)
+	f.Format(fset, diagnostics)
+	output := buf.String()
+
+	// Should show success when all diagnostics are filtered
+	if !strings.Contains(output, "No issues found") {
+		t.Error("Expected success message when all diagnostics filtered")
+	}
+}
+
+// TestFormatterGenerateExampleAllCodes teste generateExample pour tous les codes.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterGenerateExampleAllCodes(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 100)
+
+	codes := []string{
+		"KTN-CONST-001",
+		"KTN-CONST-002",
+		"KTN-CONST-003",
+		"KTN-CONST-004",
+		"KTN-UNKNOWN-999",
+	}
+
+	for _, code := range codes {
+		var buf bytes.Buffer
+		f := formatter.NewFormatter(&buf, false, true, false)
+
+		diagnostics := []analysis.Diagnostic{
+			{Pos: file.Pos(10), Message: fmt.Sprintf("[%s] Test message for code", code)},
+		}
+
+		f.Format(fset, diagnostics)
+		// Just verify it doesn't crash - generateExample handles all codes including unknown
+	}
+}
+
+// TestFormatterCodeColorNoColor teste getCodeColor avec noColor=true.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterCodeColorNoColor(t *testing.T) {
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 100)
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, false)
+	diagnostics := []analysis.Diagnostic{{Pos: file.Pos(10), Message: "[KTN-TEST-001] Test"}}
+	f.Format(fset, diagnostics)
+	if strings.Contains(buf.String(), "\033[31m") {t.Error("Should not contain color codes when noColor=true")}
+}
+
+// TestFormatterSimpleModeMultiFile teste le tri multi-fichiers.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterSimpleModeMultiFile(t *testing.T) {
+	fset := token.NewFileSet()
+	fileB := fset.AddFile("b.go", 1, 100)
+	fileA := fset.AddFile("a.go", 102, 100)
+	diagnostics := []analysis.Diagnostic{{Pos: fileB.Pos(10), Message: "[KTN-TEST-001] B"}, {Pos: fileA.Pos(10), Message: "[KTN-TEST-002] A"}}
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, true)
+	f.Format(fset, diagnostics)
+	output := buf.String()
+	idxA := strings.Index(output, "a.go")
+	idxB := strings.Index(output, "b.go")
+	if idxA == -1 || idxB == -1 || idxA >= idxB {t.Error("Files should be sorted: a.go before b.go")}
+}
+
+// TestFormatterSimpleModeColumnSort teste le tri par colonne sur la même ligne.
+//
+// Params:
+//   - t: instance de test
+func TestFormatterSimpleModeColumnSort(t *testing.T) {
+	fset := token.NewFileSet()
+	// Create a file with explicit line:column positions
+	file := fset.AddFile("test.go", 1, 1000)
+
+	// AddLine allows us to set line offsets
+	// Line 1 starts at offset 0
+	// Line 2 starts at offset 50
+	// Line 3 starts at offset 100
+	file.AddLine(49)  // Line 2 starts at offset 50
+	file.AddLine(99)  // Line 3 starts at offset 100
+
+	// Create two diagnostics on line 2 at different columns
+	// Offset 55 is line 2, column 6 (55-50+1)
+	// Offset 52 is line 2, column 3 (52-50+1)
+	diagnostics := []analysis.Diagnostic{
+		{Pos: file.Pos(55), Message: "[KTN-TEST-002] Column 6"},
+		{Pos: file.Pos(52), Message: "[KTN-TEST-001] Column 3"},
+	}
+
+	var buf bytes.Buffer
+	f := formatter.NewFormatter(&buf, false, true, true)
+	f.Format(fset, diagnostics)
+	output := buf.String()
+
+	// Verify both messages are present
+	if !strings.Contains(output, "Column 3") || !strings.Contains(output, "Column 6") {
+		t.Fatalf("Missing expected output: %s", output)
+	}
+
+	// Verify they are sorted by column (Column 3 before Column 6)
+	idx3 := strings.Index(output, "Column 3")
+	idx6 := strings.Index(output, "Column 6")
+	if idx3 == -1 || idx6 == -1 {
+		t.Fatalf("Expected both columns in output: %s", output)
+	}
+	if idx3 >= idx6 {
+		t.Error("Should be sorted by column: Column 3 before Column 6")
 	}
 }

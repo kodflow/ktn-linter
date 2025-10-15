@@ -31,6 +31,7 @@ func runConstAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		checkConstDeclarations(pass, file)
 	}
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
 	return nil, nil
 }
 
@@ -136,10 +137,13 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 func hasIndividualComment(spec *ast.ValueSpec, isFirstWithGroupComment bool) bool {
 	if spec.Doc != nil && len(spec.Doc.List) > 0 {
 		if !isFirstWithGroupComment {
+			// Retourne true car un commentaire individuel existe
 			return true
 		}
 	} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
+		// Retourne true car un commentaire en ligne existe
 		return true
 	}
+	// Retourne false car aucun commentaire individuel n'a été trouvé
 	return false
 }

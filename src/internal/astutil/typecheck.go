@@ -22,9 +22,11 @@ func IsConstCompatibleType(expr ast.Expr) bool {
 			"float32", "float64",
 			"complex64", "complex128",
 			"byte", "rune":
+			// Retourne true car c'est un type primitif compatible avec const
 			return true
 		}
 	}
+	// Retourne false car le type n'est pas un type primitif ou n'est pas compatible avec const
 	return false
 }
 
@@ -38,9 +40,12 @@ func IsConstCompatibleType(expr ast.Expr) bool {
 func IsLiteralValue(expr ast.Expr) bool {
 	switch expr.(type) {
 	case *ast.BasicLit: // true, false, 123, "string", 3.14, etc.
+		// Retourne true car c'est un littéral de base (nombre, string, etc.)
 		return true
 	case *ast.Ident: // true, false, nil
+		// Retourne true car c'est un identifiant (peut être true/false/nil)
 		return true
 	}
+	// Retourne false car l'expression n'est pas une valeur littérale
 	return false
 }

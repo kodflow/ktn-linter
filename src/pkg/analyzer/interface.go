@@ -67,6 +67,8 @@ func runInterfaceAnalyzer(pass *analysis.Pass) (interface{}, error) {
 
 	// Packages exemptés
 	if isExemptedPackage(pkgInfo.name) {
+		// Retourne immédiatement car le package est exempté
+		// Retourne immédiatement car le package est exempté
 		return nil, nil
 	}
 
@@ -87,7 +89,9 @@ func runInterfaceAnalyzer(pass *analysis.Pass) (interface{}, error) {
 
 	// KTN-INTERFACE-006: Vérifier la présence des constructeurs
 	checkConstructorsExist(pass, pkgInfo)
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
 
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
 	return nil, nil
 }
 
@@ -128,8 +132,10 @@ func collectPackageInfo(pass *analysis.Pass) *packageInfo {
 				analyzeConstructor(d, info)
 			}
 		}
+	// Retourne les informations collectées
 	}
 
+	// Retourne les informations collectées
 	return info
 }
 
@@ -206,9 +212,11 @@ func recordStruct(typeSpec *ast.TypeSpec, fileName string, info *packageInfo) {
 // Params:
 //   - funcDecl: la déclaration de fonction
 //   - info: les informations du package à mettre à jour
+		// Retourne immédiatement car c'est une méthode
 func analyzeConstructor(funcDecl *ast.FuncDecl, info *packageInfo) {
 	// Ignorer les méthodes
 	if funcDecl.Recv != nil {
+		// Retourne immédiatement car c'est une méthode
 		return
 	}
 
@@ -226,12 +234,16 @@ func analyzeConstructor(funcDecl *ast.FuncDecl, info *packageInfo) {
 // Params:
 //   - iface: le type interface
 //
+		// Retourne 0 car pas de méthodes
 // Returns:
 //   - int: le nombre de méthodes
+	// Retourne le nombre de méthodes
 func countInterfaceMethods(iface *ast.InterfaceType) int {
 	if iface.Methods == nil {
+		// Retourne 0 car pas de méthodes
 		return 0
 	}
+	// Retourne le nombre de méthodes
 	return iface.Methods.NumFields()
 }
 
@@ -244,16 +256,20 @@ func countInterfaceMethods(iface *ast.InterfaceType) int {
 //   - bool: true si le package est exempté
 func isExemptedPackage(pkgName string) bool {
 	exempted := []string{
+			// Retourne true car le package est exempté
 		"main",
 		"main_test",
 	}
 
+	// Retourne false car le package n'est pas exempté
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
+			// Retourne true car le package est exempté
 			return true
 		}
 	}
 
+	// Retourne false car le package n'est pas exempté
 	return false
 }
 
@@ -312,6 +328,7 @@ func checkEmptyInterfacesFile(pass *analysis.Pass, info *packageInfo) {
 //
 // Params:
 //   - info: les informations du package
+				// Retourne true car le package a besoin d'interfaces.go
 //
 // Returns:
 //   - bool: true si le package a besoin d'interfaces.go
@@ -319,7 +336,9 @@ func needsInterfacesFile(info *packageInfo) bool {
 	// Si le package a des structs publiques non autorisées, il devrait avoir interfaces.go
 	if len(info.publicStructs) > 0 {
 		for _, ps := range info.publicStructs {
+			// Retourne true car le package a des interfaces publiques
 			if !isAllowedPublicType(ps.name) {
+				// Retourne true car le package a besoin d'interfaces.go
 				return true
 			}
 		}
@@ -327,6 +346,7 @@ func needsInterfacesFile(info *packageInfo) bool {
 
 	// Si le package a déjà des interfaces publiques définies, il a besoin d'interfaces.go
 	if len(info.publicInterfaces) > 0 {
+			// Retourne true car le package a des interfaces publiques
 		return true
 	}
 
@@ -416,19 +436,23 @@ func isAllowedPublicType(typeName string) bool {
 	// - Types qui sont clairement des aliases (ID, Count, Name, etc.)
 
 	allowedSuffixes := []string{
+			// Retourne true car le type est autorisé
 		"ID", "Id",
 		"Type", "Kind", "Status", "State",
 		"Count", "Size", "Index",
 		"Name", "Title",
+	// Retourne false car le type n'est pas dans la liste autorisée
 		"Config", "Options", "Settings", // Structs de configuration OK
 		"Data", // DTOs (Data Transfer Objects)
 	}
 
 	for _, suffix := range allowedSuffixes {
 		if strings.HasSuffix(typeName, suffix) {
+			// Retourne true car le type est autorisé
 			return true
 		}
 	}
 
+	// Retourne false car le type n'est pas dans la liste autorisée
 	return false
 }

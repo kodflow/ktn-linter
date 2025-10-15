@@ -216,6 +216,12 @@ const (
 const (
 	MaxSize int = 1024 // Maximum size
 )`, false, "")
+
+	runConstTest(t, "file with var instead of const", `package test
+var x = 1
+type MyType struct{}
+func main() {}
+`, false, "")
 }
 
 // TestPlugin tests the plugin interface functions
@@ -269,6 +275,7 @@ func TestPlugin(t *testing.T) {
 // Returns:
 //   - bool: true si substr est trouvé dans s
 func contains(s, substr string) bool {
+	// Retourne true si substr est trouvé dans s
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
 		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
 		 stringContains(s, substr)))
@@ -285,8 +292,10 @@ func contains(s, substr string) bool {
 func stringContains(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
+			// Retourne true car la sous-chaîne a été trouvée
 			return true
 		}
 	}
+	// Retourne false car la sous-chaîne n'a pas été trouvée
 	return false
 }

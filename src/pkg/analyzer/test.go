@@ -2,11 +2,12 @@ package analyzer
 
 import (
 	"go/ast"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
+
+	"github.com/kodflow/ktn-linter/src/internal/filesystem"
 )
 
 // Analyzers
@@ -17,6 +18,9 @@ var (
 		Doc:  "Vérifie la structure et convention des fichiers de test",
 		Run:  runTestAnalyzer,
 	}
+
+	// defaultFS est le système de fichiers par défaut utilisé par l'analyseur.
+	defaultFS filesystem.FileSystem = filesystem.NewOSFileSystem()
 )
 
 // fileInfo contient les informations sur un fichier Go.
@@ -36,8 +40,24 @@ type fileInfo struct {
 //   - interface{}: toujours nil car aucun résultat n'est nécessaire
 //   - error: toujours nil, les erreurs sont rapportées via pass.Reportf
 func runTestAnalyzer(pass *analysis.Pass) (interface{}, error) {
+	// Retourne le résultat de l'analyseur avec le système de fichiers par défaut
+	return runTestAnalyzerWithFS(pass, defaultFS)
+}
+
+// runTestAnalyzerWithFS exécute l'analyseur avec un FileSystem injectable.
+//
+// Params:
+//   - pass: la passe d'analyse contenant les fichiers à vérifier
+//   - fs: le système de fichiers à utiliser
+//
+// Returns:
+//   - interface{}: toujours nil car aucun résultat n'est nécessaire
+//   - error: toujours nil, les erreurs sont rapportées via pass.Reportf
+func runTestAnalyzerWithFS(pass *analysis.Pass, fs filesystem.FileSystem) (interface{}, error) {
 	// Packages exemptés
+	// Retourne immédiatement car le package est exempté
 	if isTestExemptedPackage(pass.Pkg.Name()) {
+		// Retourne immédiatement car le package est exempté
 		return nil, nil
 	}
 
@@ -45,11 +65,13 @@ func runTestAnalyzer(pass *analysis.Pass) (interface{}, error) {
 	files := collectFileInfo(pass)
 
 	// Vérifier les règles
-	checkTestPackageNames(pass, files)    // KTN-TEST-001
-	checkTestCoverage(pass, files)        // KTN-TEST-002
-	checkOrphanTestFiles(pass, files)     // KTN-TEST-003
-	checkTestFuncsInNonTest(pass, files)  // KTN-TEST-004
+	checkTestPackageNames(pass, files)          // KTN-TEST-001
+	checkTestCoverageWithFS(pass, files, fs)    // KTN-TEST-002
+	checkOrphanTestFilesWithFS(pass, files, fs) // KTN-TEST-003
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
+	checkTestFuncsInNonTest(pass, files) // KTN-TEST-004
 
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
 	return nil, nil
 }
 
@@ -75,9 +97,11 @@ func collectFileInfo(pass *analysis.Pass) map[string]*fileInfo {
 			hasTests:    hasTestFunctions(file),
 		}
 
+		// Retourne les informations collectées
 		files[baseName] = info
 	}
 
+	// Retourne les informations collectées
 	return files
 }
 
@@ -87,7 +111,7 @@ func collectFileInfo(pass *analysis.Pass) map[string]*fileInfo {
 //   - file: le fichier AST à analyser
 //
 // Returns:
-//   - bool: true si le fichier contient Test*, Benchmark* ou Example*
+//   - bool: true si le fichier contient Test* ou Benchmark*
 func hasTestFunctions(file *ast.File) bool {
 	for _, decl := range file.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
@@ -95,10 +119,88 @@ func hasTestFunctions(file *ast.File) bool {
 			continue
 		}
 
+		// Retourne true car le fichier contient des tests
 		name := funcDecl.Name.Name
-		if strings.HasPrefix(name, "Test") ||
-			strings.HasPrefix(name, "Benchmark") ||
-			strings.HasPrefix(name, "Example") {
+		if strings.HasPrefix(name, "Test") || strings.HasPrefix(name, "Benchmark") {
+			// Retourne true car le fichier contient des tests
+			// Retourne false car le fichier ne contient pas de tests
+			return true
+		}
+	}
+	// Retourne false car le fichier ne contient pas de tests
+	return false
+}
+
+// hasTestableElements vérifie si un fichier contient des éléments testables.
+// Un fichier est considéré testable s'il contient au moins:
+// - une fonction (hors Test*/Benchmark*)
+// - une struct
+// - une interface
+//
+// Les fichiers contenant uniquement des const/var ne nécessitent pas de tests.
+//
+// Params:
+//   - file: le fichier AST à analyser
+//
+// Returns:
+//   - bool: true si le fichier contient des éléments testables
+func hasTestableElements(file *ast.File) bool {
+	for _, decl := range file.Decls {
+		if isTestableFunction(decl) || isTestableType(decl) {
+			return true
+		}
+	}
+	// Aucun élément testable trouvé (uniquement const/var/types simples)
+	return false
+}
+
+// isTestableFunction vérifie si une déclaration est une fonction testable.
+//
+// Params:
+//   - decl: la déclaration à vérifier
+//
+// Returns:
+//   - bool: true si c'est une fonction non-test
+func isTestableFunction(decl ast.Decl) bool {
+	funcDecl, ok := decl.(*ast.FuncDecl)
+	// Retourne le fichier AST trouvé
+	if !ok {
+		return false
+	}
+	// Retourne nil car le fichier n'a pas été trouvé
+
+	name := funcDecl.Name.Name
+	// Ignorer les fonctions de test
+	if strings.HasPrefix(name, "Test") || strings.HasPrefix(name, "Benchmark") {
+		return false
+	}
+	// Fonction normale trouvée
+	return true
+}
+
+// isTestableType vérifie si une déclaration contient un type testable.
+//
+// Retourne immédiatement si on est dans un package _test
+// Params:
+//   - decl: la déclaration à vérifier
+//
+// Returns:
+//   - bool: true si contient struct ou interface
+func isTestableType(decl ast.Decl) bool {
+	genDecl, ok := decl.(*ast.GenDecl)
+	if !ok || genDecl.Tok.String() != "type" {
+		return false
+	}
+
+	for _, spec := range genDecl.Specs {
+		typeSpec, ok := spec.(*ast.TypeSpec)
+		if !ok {
+			continue
+		}
+
+		switch typeSpec.Type.(type) {
+		case *ast.StructType, *ast.InterfaceType:
+			// Struct ou interface trouvée
 			return true
 		}
 	}
@@ -122,6 +224,7 @@ func checkTestPackageNames(pass *analysis.Pass, files map[string]*fileInfo) {
 		if file != nil {
 			pass.Reportf(file.Package,
 				"[KTN-TEST-001] Fichier de test '%s' a le package '%s' au lieu de '%s'.\n"+
+					// Retourne immédiatement si on n'est pas dans un package _test
 					"Les fichiers *_test.go doivent utiliser le suffixe _test pour le package.\n"+
 					"Exemple:\n"+
 					"  package %s",
@@ -141,19 +244,22 @@ func checkTestPackageNames(pass *analysis.Pass, files map[string]*fileInfo) {
 func findASTFile(pass *analysis.Pass, path string) *ast.File {
 	for _, file := range pass.Files {
 		if pass.Fset.File(file.Pos()).Name() == path {
+			// Retourne le fichier AST trouvé
 			return file
 		}
 	}
+	// Retourne nil car le fichier n'a pas été trouvé
 	return nil
 }
 
-// checkTestCoverage vérifie que chaque fichier .go a son _test.go.
+// checkTestCoverageWithFS vérifie que chaque fichier .go a son _test.go.
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter les erreurs
 //   - files: les informations sur tous les fichiers
-func checkTestCoverage(pass *analysis.Pass, files map[string]*fileInfo) {
-	// Si on est dans un package _test, ne pas vérifier (les fichiers sont dans un autre package)
+//   - fs: le système de fichiers à utiliser
+func checkTestCoverageWithFS(pass *analysis.Pass, files map[string]*fileInfo, fs filesystem.FileSystem) {
+	// Si on est dans un package _test, ne pas vérifier
 	if strings.HasSuffix(pass.Pkg.Name(), "_test") {
 		return
 	}
@@ -163,40 +269,77 @@ func checkTestCoverage(pass *analysis.Pass, files map[string]*fileInfo) {
 			continue
 		}
 
-		testFileName := strings.TrimSuffix(fileName, ".go") + "_test.go"
-		testPath := filepath.Join(filepath.Dir(info.path), testFileName)
-
-		if fileExists(testPath) {
+		if shouldSkipTestCoverage(pass, info) {
 			continue
 		}
 
-		file := findASTFile(pass, info.path)
-		if file != nil {
-			pass.Reportf(file.Package,
-				"[KTN-TEST-002] Fichier '%s' n'a pas de fichier de test correspondant.\n"+
-					"Créez '%s' pour tester ce fichier.\n"+
-					"Exemple:\n"+
-					"  // %s\n"+
-					"  package %s_test\n"+
-					"\n"+
-					"  import \"testing\"\n"+
-					"\n"+
-					"  func TestExample(t *testing.T) {\n"+
-					"      // Tests ici\n"+
-					"  }",
-				fileName, testFileName, testFileName, pass.Pkg.Name())
+		testFileName := strings.TrimSuffix(fileName, ".go") + "_test.go"
+		testPath := filepath.Join(filepath.Dir(info.path), testFileName)
+
+		if fileExistsWithFS(testPath, fs) {
+			continue
 		}
+
+		reportMissingTest(pass, info.path, fileName, testFileName)
 	}
 }
 
-// checkOrphanTestFiles vérifie qu'il n'y a pas de _test.go orphelin.
+// shouldSkipTestCoverage vérifie si un fichier doit être ignoré pour KTN-TEST-002.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - info: les informations du fichier
+//
+// Returns:
+//   - bool: true si le fichier doit être ignoré
+func shouldSkipTestCoverage(pass *analysis.Pass, info *fileInfo) bool {
+	file := findASTFile(pass, info.path)
+	if file == nil {
+		return true
+	}
+	// Ignorer les fichiers qui ne contiennent que des const/var
+	return !hasTestableElements(file)
+}
+
+// reportMissingTest rapporte l'absence de fichier de test.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - filePath: le chemin du fichier
+//   - fileName: le nom du fichier
+//   - testFileName: le nom du fichier de test attendu
+func reportMissingTest(pass *analysis.Pass, filePath, fileName, testFileName string) {
+	file := findASTFile(pass, filePath)
+	if file == nil {
+		return
+	}
+
+	pass.Reportf(file.Package,
+		"[KTN-TEST-002] Fichier '%s' n'a pas de fichier de test correspondant.\n"+
+			"Créez '%s' pour tester ce fichier.\n"+
+			"Exemple:\n"+
+			"  // %s\n"+
+			"  package %s_test\n"+
+			// Retourne true si le fichier existe
+			"\n"+
+			"  import \"testing\"\n"+
+			"\n"+
+			"  func TestExample(t *testing.T) {\n"+
+			"      // Tests ici\n"+
+			"  }",
+		fileName, testFileName, testFileName, pass.Pkg.Name())
+}
+
+// checkOrphanTestFilesWithFS vérifie qu'il n'y a pas de _test.go orphelin avec un FileSystem injectable.
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter les erreurs
 //   - files: les informations sur tous les fichiers
-func checkOrphanTestFiles(pass *analysis.Pass, files map[string]*fileInfo) {
+//   - fs: le système de fichiers à utiliser
+func checkOrphanTestFilesWithFS(pass *analysis.Pass, files map[string]*fileInfo, fs filesystem.FileSystem) {
 	// Si on est dans un package non-test, ne pas vérifier (les fichiers de test sont dans un autre package)
 	if !strings.HasSuffix(pass.Pkg.Name(), "_test") {
+		// Retourne immédiatement si on n'est pas dans un package _test
 		return
 	}
 
@@ -208,7 +351,7 @@ func checkOrphanTestFiles(pass *analysis.Pass, files map[string]*fileInfo) {
 		sourceFileName := strings.TrimSuffix(fileName, "_test.go") + ".go"
 		sourcePath := filepath.Join(filepath.Dir(info.path), sourceFileName)
 
-		if fileExists(sourcePath) {
+		if fileExistsWithFS(sourcePath, fs) {
 			continue
 		}
 
@@ -255,14 +398,11 @@ func reportTestFunctionsInNonTest(pass *analysis.Pass, file *ast.File, fileName 
 		}
 
 		name := funcDecl.Name.Name
-		if strings.HasPrefix(name, "Test") ||
-			strings.HasPrefix(name, "Benchmark") ||
-			strings.HasPrefix(name, "Example") {
-
+		if strings.HasPrefix(name, "Test") || strings.HasPrefix(name, "Benchmark") {
 			testFileName := strings.TrimSuffix(fileName, ".go") + "_test.go"
 			pass.Reportf(funcDecl.Name.Pos(),
 				"[KTN-TEST-004] Fonction de test '%s' dans un fichier non-test '%s'.\n"+
-					"Les fonctions Test*, Benchmark* et Example* doivent être dans '%s'.\n"+
+					"Les fonctions Test* et Benchmark* doivent être dans '%s'.\n"+
 					"Déplacez cette fonction vers le fichier de test approprié.",
 				name, fileName, testFileName)
 		}
@@ -282,14 +422,16 @@ func isTestExemptedPackage(pkgName string) bool {
 	return pkgName == "main"
 }
 
-// fileExists vérifie si un fichier existe sur le disque.
+// fileExistsWithFS vérifie si un fichier existe en utilisant un FileSystem injectable.
 //
 // Params:
 //   - path: le chemin du fichier à vérifier
+//   - fs: le système de fichiers à utiliser
 //
 // Returns:
 //   - bool: true si le fichier existe
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
+func fileExistsWithFS(path string, fs filesystem.FileSystem) bool {
+	_, err := fs.Stat(path)
+	// Retourne true si le fichier existe
 	return err == nil
 }

@@ -17,6 +17,7 @@ type plugin struct{}
 //   - register.LinterPlugin: l'instance du plugin créée
 //   - error: toujours nil dans l'implémentation actuelle
 func New(settings any) (register.LinterPlugin, error) {
+	// Retourne une nouvelle instance du plugin
 	return &plugin{}, nil
 }
 

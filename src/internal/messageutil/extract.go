@@ -16,9 +16,11 @@ import (
 func ExtractCode(message string) string {
 	if idx := strings.Index(message, "[KTN-"); idx != -1 {
 		if end := strings.Index(message[idx:], "]"); end != -1 {
+			// Retourne le code KTN extrait entre [ et ]
 			return message[idx+1 : idx+end]
 		}
 	}
+	// Retourne "UNKNOWN" car aucun code KTN n'a été trouvé dans le message
 	return "UNKNOWN"
 }
 
@@ -34,10 +36,13 @@ func ExtractMessage(message string) string {
 		msg := strings.TrimSpace(message[idx+1:])
 		// Extraire seulement la première ligne (le message principal)
 		if newline := strings.Index(msg, "\n"); newline != -1 {
+			// Retourne uniquement la première ligne du message
 			return msg[:newline]
 		}
+		// Retourne le message complet car il ne contient qu'une seule ligne
 		return msg
 	}
+	// Retourne le message original car aucun ']' n'a été trouvé
 	return message
 }
 
@@ -60,8 +65,10 @@ func ExtractSuggestion(message string) string {
 				cleaned = append(cleaned, line)
 			}
 		}
+		// Retourne les lignes nettoyées de l'exemple de code
 		return strings.Join(cleaned, "\n")
 	}
+	// Retourne une chaîne vide car aucun exemple n'a été trouvé
 	return ""
 }
 
@@ -76,12 +83,15 @@ func ExtractConstName(message string) string {
 	// Chercher entre quotes simples
 	start := strings.Index(message, "'")
 	if start == -1 {
+		// Retourne "MyConst" par défaut car aucune quote ouvrante n'a été trouvée
 		return "MyConst"
 	}
 	end := strings.Index(message[start+1:], "'")
 	if end == -1 {
+		// Retourne "MyConst" par défaut car aucune quote fermante n'a été trouvée
 		return "MyConst"
 	}
+	// Retourne le nom extrait entre les deux quotes simples
 	return message[start+1 : start+1+end]
 }
 
@@ -96,12 +106,15 @@ func ExtractType(suggestion string) string {
 	words := strings.Fields(suggestion)
 	for i, word := range words {
 		if isGoType(word) {
+			// Retourne le type Go trouvé dans la suggestion
 			return word
 		}
 		if word == "<type>" && i > 0 {
+			// Retourne "int" par défaut lorsque <type> est rencontré
 			return "int"
 		}
 	}
+	// Retourne "int" par défaut car aucun type Go n'a été trouvé
 	return "int"
 }
 
@@ -121,5 +134,6 @@ func isGoType(word string) bool {
 		"byte": true, "rune": true,
 		"complex64": true, "complex128": true,
 	}
+	// Retourne true si le mot correspond à un type Go primitif
 	return goTypes[word]
 }

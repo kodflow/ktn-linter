@@ -326,9 +326,11 @@ func TestHasGetterPrefix(t *testing.T) {
 func containsSuggestion(results []string, expected string) bool {
 	for _, r := range results {
 		if r == expected {
+			// Retourne true car la suggestion attendue a été trouvée
 			return true
 		}
 	}
+	// Retourne false car la suggestion n'a pas été trouvée
 	return false
 }
 
@@ -369,6 +371,7 @@ func TestFixInitialisms(t *testing.T) {
 			result := naming.FixInitialisms(tt.input)
 			if len(result) != len(tt.expected) {
 				t.Errorf("naming.FixInitialisms(%q) returned %d suggestions, want %d", tt.input, len(result), len(tt.expected))
+				// Retourne car le nombre de suggestions ne correspond pas
 				return
 			}
 

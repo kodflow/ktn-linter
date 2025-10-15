@@ -60,6 +60,7 @@ type formatterImpl struct {
 // Returns:
 //   - Formatter: un formatter prêt à utiliser pour afficher les diagnostics
 func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Formatter {
+	// Retourne un formatter configuré avec les options spécifiées
 	return &formatterImpl{
 		writer:     w,
 		aiMode:     aiMode,

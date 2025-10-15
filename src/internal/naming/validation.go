@@ -15,6 +15,7 @@ import (
 //   - bool: true si au moins une lettre est présente et toutes sont en majuscules
 func IsAllCaps(s string) bool {
 	if len(s) == 0 {
+		// Retourne false car une chaîne vide n'est pas ALL_CAPS
 		return false
 	}
 	hasLetter := false
@@ -22,10 +23,12 @@ func IsAllCaps(s string) bool {
 		if unicode.IsLetter(r) {
 			hasLetter = true
 			if !unicode.IsUpper(r) {
+				// Retourne false car une lettre minuscule a été trouvée
 				return false
 			}
 		}
 	}
+	// Retourne true si au moins une lettre en majuscule a été trouvée
 	return hasLetter
 }
 
@@ -39,20 +42,24 @@ func IsAllCaps(s string) bool {
 func IsMixedCaps(name string) bool {
 	// Vide invalide
 	if len(name) == 0 {
+		// Retourne false car un nom vide est invalide
 		return false
 	}
 
 	// Contient underscore = invalide (sauf initialismes sans underscore)
 	if strings.Contains(name, "_") {
+		// Retourne false car le nom contient un underscore (snake_case)
 		return false
 	}
 
 	// Si tout est en majuscules, vérifier si c'est un initialisme valide
 	if IsAllCaps(name) {
+		// Retourne le résultat de la validation d'initialisme
 		return IsValidInitialism(name)
 	}
 
 	// Sinon, c'est valide si ça ne contient pas d'underscore
+	// Retourne true car le nom est en MixedCaps sans underscore
 	return true
 }
 
@@ -65,6 +72,7 @@ func IsMixedCaps(name string) bool {
 //   - bool: true si le nom commence par "Get" et ce n'est pas une exception. Exemples à signaler: GetUserName, GetEmail, GetHTTPClient. Exceptions acceptées: GetOrCreate, GetAndSet (verbe composé)
 func HasGetterPrefix(name string) bool {
 	if !strings.HasPrefix(name, "Get") {
+		// Retourne false car le nom ne commence pas par Get
 		return false
 	}
 
@@ -77,15 +85,18 @@ func HasGetterPrefix(name string) bool {
 
 	for _, ex := range exceptions {
 		if name == ex || strings.HasPrefix(name, ex) {
+			// Retourne false car c'est une exception autorisée (verbe composé)
 			return false
 		}
 	}
 
 	// Si ça commence par Get suivi d'une majuscule, c'est un getter
 	if len(name) > 3 && unicode.IsUpper(rune(name[3])) {
+		// Retourne true car c'est un getter inutile (ex: GetUserName)
 		return true
 	}
 
+	// Retourne false car Get n'est pas suivi d'une majuscule
 	return false
 }
 
@@ -94,6 +105,7 @@ func HasGetterPrefix(name string) bool {
 // Returns:
 //   - map[string]string: map des initialismes avec forme incorrecte -> forme correcte
 func getInitialismsMap() map[string]string {
+	// Retourne le map des initialismes incorrects vers leur forme correcte
 	return map[string]string{
 		"Http": "HTTP", "Https": "HTTPS", "Url": "URL", "Uri": "URI",
 		"Id": "ID", "Api": "API", "Json": "JSON", "Xml": "XML",
@@ -126,8 +138,10 @@ func FixInitialisms(name string) []string {
 	}
 
 	if hasChanges && fixed != name {
+		// Retourne une suggestion avec tous les initialismes corrigés
 		return []string{fixed}
 	}
+	// Retourne une liste vide car aucune correction n'est nécessaire
 	return []string{}
 }
 
@@ -136,6 +150,7 @@ func FixInitialisms(name string) []string {
 // Returns:
 //   - []string: liste des initialismes valides selon Effective Go
 func getKnownInitialisms() []string {
+	// Retourne la liste complète des initialismes reconnus par Go
 	return []string{
 		"HTTP", "HTTPS", "URL", "URI", "ID", "API", "JSON", "XML", "HTML",
 		"SQL", "TLS", "SSL", "TCP", "UDP", "IP", "DNS", "SSH", "FTP",
@@ -156,9 +171,11 @@ func getKnownInitialisms() []string {
 func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, bool) {
 	for _, init := range initialisms {
 		if strings.HasPrefix(remaining, init) {
+			// Retourne la chaîne restante et true car un initialisme a été trouvé
 			return remaining[len(init):], true
 		}
 	}
+	// Retourne la chaîne inchangée et false car aucun initialisme ne correspond
 	return remaining, false
 }
 
@@ -172,6 +189,7 @@ func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, b
 func IsValidInitialism(name string) bool {
 	// Si le nom contient un underscore, c'est invalide (viole KTN-VAR-008 / KTN-CONST-008)
 	if strings.Contains(name, "_") {
+		// Retourne false car les underscores violent les conventions Go
 		return false
 	}
 
@@ -188,11 +206,14 @@ func IsValidInitialism(name string) bool {
 		} else {
 			// Vérifier si le reste est en MixedCaps (ex: HTTPServer, URLParser)
 			if remaining != "" && unicode.IsUpper(rune(remaining[0])) {
+				// Retourne true si au moins un initialisme a été trouvé avant le MixedCaps
 				return matched
 			}
+			// Retourne false car le reste n'est pas un initialisme valide
 			return false
 		}
 	}
 
+	// Retourne true si tout le nom a été décomposé en initialismes valides
 	return matched
 }

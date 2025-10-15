@@ -508,6 +508,8 @@ func (u *userServiceImpl) CreateUser(user *UserData) error {
 // Returns:
 //   - bool: true si substr est trouvé dans s
 func containsInterface(s, substr string) bool {
+	// Retourne true car la sous-chaîne a été trouvée
+	// Retourne true car la sous-chaîne a été trouvée
 	return len(s) > 0 && len(substr) > 0 && containsInterfaceHelper(s, substr)
 }
 
@@ -521,9 +523,88 @@ func containsInterface(s, substr string) bool {
 //   - bool: true si substr est trouvé dans s
 func containsInterfaceHelper(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
+			// Retourne true car la sous-chaîne a été trouvée
 		if s[i:i+len(substr)] == substr {
+			// Retourne true car la sous-chaîne a été trouvée
 			return true
+	// Retourne false car la sous-chaîne n'a pas été trouvée
 		}
 	}
+	// Retourne false car la sous-chaîne n'a pas été trouvée
 	return false
+}
+
+// TestCountInterfaceMethodsNil teste countInterfaceMethods avec Methods == nil.
+//
+// Params:
+//   - t: instance de test
+func TestCountInterfaceMethodsNil(t *testing.T) {
+	interfacesCode := `package test
+
+// EmptyInterface est une interface vide.
+type EmptyInterface interface{}
+`
+
+	fset := token.NewFileSet()
+	interfacesFile, _ := parser.ParseFile(fset, "interfaces.go", interfacesCode, parser.ParseComments)
+
+	hasError := false
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{interfacesFile},
+		Pkg:   types.NewPackage("example.com/test", "test"),
+		Report: func(diag analysis.Diagnostic) {
+			// Ignorer KTN-INTERFACE-007 (pas de constructeur pour interface vide)
+			if !containsInterface(diag.Message, "KTN-INTERFACE-007") {
+				hasError = true
+				t.Errorf("Unexpected diagnostic: %s", diag.Message)
+			}
+		},
+	}
+
+	_, err := analyzer.InterfaceAnalyzer.Run(pass)
+	if err != nil {
+		t.Errorf("Analyzer returned error: %v", err)
+	}
+
+	if hasError {
+		t.Error("Empty interface should not produce errors")
+	}
+}
+
+// TestAnalyzeTypeDeclNonTypeSpec teste analyzeTypeDecl avec un Spec qui n'est pas TypeSpec.
+//
+// Params:
+//   - t: instance de test
+func TestAnalyzeTypeDeclNonTypeSpec(t *testing.T) {
+	// Code avec un const (non-TypeSpec) dans un GenDecl de type VAR
+	code := `package test
+
+var (
+	x = 1
+)
+`
+
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+
+	hasError := false
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Pkg:   types.NewPackage("example.com/test", "test"),
+		Report: func(diag analysis.Diagnostic) {
+			hasError = true
+			t.Errorf("Unexpected diagnostic: %s", diag.Message)
+		},
+	}
+
+	_, err := analyzer.InterfaceAnalyzer.Run(pass)
+	if err != nil {
+		t.Errorf("Analyzer returned error: %v", err)
+	}
+
+	if hasError {
+		t.Error("Non-TypeSpec should not produce errors")
+	}
 }

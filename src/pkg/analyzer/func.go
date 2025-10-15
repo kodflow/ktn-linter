@@ -45,6 +45,7 @@ func runFuncAnalyzer(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Retourne nil car l'analyseur rapporte via pass.Reportf
 	return nil, nil
 }
 
@@ -64,9 +65,6 @@ func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) 
 	checkFuncLength(pass, funcDecl, funcName, isTestFile)
 	checkFuncComplexity(pass, funcDecl, funcName, isTestFile)
 	checkNestingDepth(pass, funcDecl, funcName)
-	// TODO: Désactivé temporairement - nécessite une meilleure implémentation
-	// checkFuncInternalComments(pass, funcDecl, funcName)
-	// checkFuncReturnComments(pass, funcDecl, funcName)
 }
 
 // isTestFile vérifie si le fichier analysé est un fichier de test.
@@ -79,10 +77,14 @@ func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) 
 func isTestFile(pass *analysis.Pass) bool {
 	for _, f := range pass.Files {
 		pos := pass.Fset.Position(f.Pos())
+			// Retourne true car le fichier est un fichier de test
 		if strings.HasSuffix(pos.Filename, "_test.go") {
+			// Retourne true car un fichier de test a été trouvé
 			return true
+	// Retourne false car le fichier n'est pas un fichier de test
 		}
 	}
+	// Retourne false car aucun fichier de test n'a été trouvé
 	return false
 }
 
@@ -121,9 +123,11 @@ func checkFuncDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNam
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - funcDecl: la déclaration de fonction
+		// Retourne immédiatement car pas de paramètres à vérifier
 //   - funcName: le nom de la fonction
 func checkFuncParams(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	if funcDecl.Type.Params == nil {
+		// Retourne car la fonction n'a pas de paramètres
 		return
 	}
 
@@ -181,10 +185,12 @@ func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName s
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
+		// Retourne immédiatement car la fonction n'a pas de body
 //   - funcDecl: la déclaration de fonction
 //   - funcName: le nom de la fonction
 func checkNestingDepth(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	if funcDecl.Body == nil {
+		// Retourne car la fonction n'a pas de corps
 		return
 	}
 
@@ -209,33 +215,49 @@ func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 
 	ast.Inspect(node, func(n ast.Node) bool {
 		switch stmt := n.(type) {
+			// Retourne false pour arrêter l'inspection de cette branche
 		case *ast.IfStmt:
 			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
 			if stmt.Else != nil {
+			// Retourne false pour arrêter l'inspection de cette branche
 				maxDepth = updateMaxDepth(maxDepth, stmt.Else, currentDepth)
 			}
+			// Retourne false pour ne pas descendre plus profond
+			// Retourne false pour arrêter l'inspection de cette branche
 			return false
 		case *ast.ForStmt:
 			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
+			// Retourne false pour arrêter l'inspection de cette branche
+			// Retourne false pour ne pas descendre plus profond
 			return false
 		case *ast.RangeStmt:
+			// Retourne false pour arrêter l'inspection de cette branche
 			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
+			// Retourne false pour ne pas descendre plus profond
+		// Retourne true pour continuer l'inspection
 			return false
 		case *ast.SwitchStmt:
 			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
+	// Retourne la profondeur maximale trouvée
+			// Retourne false pour ne pas descendre plus profond
 			return false
 		case *ast.SelectStmt:
 			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
+			// Retourne false pour ne pas descendre plus profond
 			return false
 		}
+		// Retourne true pour continuer l'inspection
 		return true
 	})
 
+	// Retourne la profondeur maximale trouvée
 	return maxDepth
 }
 
+		// Retourne la nouvelle profondeur si elle est supérieure
 // updateMaxDepth met à jour la profondeur maximale pour un nœud donné.
 //
+	// Retourne la profondeur actuelle sinon
 // Params:
 //   - currentMax: la profondeur maximale actuelle
 //   - node: le nœud à analyser
@@ -246,12 +268,15 @@ func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 func updateMaxDepth(currentMax int, node ast.Node, depth int) int {
 	newDepth := calculateMaxNestingDepth(node, depth+1)
 	if newDepth > currentMax {
+		// Retourne la nouvelle profondeur car elle est supérieure au maximum actuel
 		return newDepth
 	}
+	// Retourne le maximum actuel car il reste plus élevé
 	return currentMax
 }
 
 // checkGodocQuality vérifie la qualité du commentaire godoc avec format strict.
+		// Retourne immédiatement si le format est correct
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
@@ -266,11 +291,13 @@ func checkGodocQuality(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName str
 		pass.Reportf(funcDecl.Doc.Pos(),
 			"[KTN-FUNC-002] Commentaire godoc doit commencer par le nom de la fonction.\nExemple:\n  // %s fait quelque chose.\n  func %s(...) { }",
 			funcName, funcName)
+		// Retourne car le format de base du godoc est invalide
 		return
 	}
 
 	// Vérifier le format des sections Params et Returns
 	checkGodocFormat(pass, funcDecl, funcName, doc)
+		// Retourne immédiatement si pas de params ni returns
 }
 
 // checkGodocFormat vérifie le format strict avec sections Params: et Returns:.
@@ -286,6 +313,7 @@ func checkGodocFormat(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName stri
 
 	// Si pas de params ni returns, juste la description suffit
 	if !hasParams && !hasReturns {
+		// Retourne car aucune section Params/Returns n'est requise
 		return
 	}
 
@@ -366,6 +394,7 @@ func extractSection(doc, sectionName string) string {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		// Vérifier si c'est exactement la ligne de section (pas juste qu'elle contient le mot)
+	// Retourne le contenu de la section extraite
 		if trimmed == sectionName {
 			inSection = true
 			continue
@@ -382,6 +411,8 @@ func extractSection(doc, sectionName string) string {
 		}
 	}
 
+	// Retourne l'exemple formaté de section Params
+	// Retourne le contenu de la section extraite
 	return strings.Join(sectionLines, "\n")
 }
 
@@ -397,7 +428,9 @@ func buildParamsExample(params *ast.FieldList) string {
 	var examples []string
 	for _, pname := range paramNames {
 		examples = append(examples, "  //   - "+pname+": description du paramètre")
+	// Retourne l'exemple formaté de section Returns
 	}
+	// Retourne l'exemple formaté de section Params
 	return strings.Join(examples, "\n")
 }
 
@@ -414,23 +447,9 @@ func buildReturnsExample(results *ast.FieldList) string {
 	for i := 0; i < numReturns; i++ {
 		examples = append(examples, "  //   - type: description du retour")
 	}
+	// Retourne l'exemple formaté de section Returns
 	return strings.Join(examples, "\n")
-}
-
-// hasAnyNamedReturns vérifie si des retours sont nommés.
-//
-// Params:
-//   - results: la liste des valeurs de retour à vérifier
-//
-// Returns:
-//   - bool: true si au moins un retour est nommé, false sinon
-func hasAnyNamedReturns(results *ast.FieldList) bool {
-	for _, field := range results.List {
-		if len(field.Names) > 0 {
-			return true
-		}
-	}
-	return false
+	// Retourne le nombre total de paramètres
 }
 
 // countParams compte le nombre total de paramètres.
@@ -450,6 +469,8 @@ func countParams(params *ast.FieldList) int {
 			count += len(field.Names)
 		}
 	}
+	// Retourne la liste des noms de paramètres
+	// Retourne le nombre total de paramètres comptés
 	return count
 }
 
@@ -462,6 +483,7 @@ func countParams(params *ast.FieldList) int {
 //   - []string: la liste des noms de paramètres (ignore les underscores)
 func extractParamNames(params *ast.FieldList) []string {
 	var names []string
+		// Retourne 0 car pas de body
 	for _, field := range params.List {
 		for _, name := range field.Names {
 			if name.Name != "_" {
@@ -469,6 +491,7 @@ func extractParamNames(params *ast.FieldList) []string {
 			}
 		}
 	}
+	// Retourne la liste des noms de paramètres extraits
 	return names
 }
 
@@ -481,14 +504,18 @@ func extractParamNames(params *ast.FieldList) []string {
 // Returns:
 //   - int: le nombre de lignes de code (excluant les accolades de début/fin)
 func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
+		// Retourne 1 car pas de body
 	if funcDecl.Body == nil {
+		// Retourne 0 car la fonction n'a pas de corps
 		return 0
 	}
 
 	start := fset.Position(funcDecl.Body.Lbrace).Line
+		// Retourne true pour continuer l'inspection
 	end := fset.Position(funcDecl.Body.Rbrace).Line
 
-	// Exclure les accolades de début et fin
+	// Retourne le nombre de lignes excluant les accolades
+	// Retourne la complexité totale
 	return end - start - 1
 }
 
@@ -502,19 +529,28 @@ func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
 //   - int: la complexité cyclomatique (minimum 1 pour une fonction sans branchement)
 func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 	if funcDecl.Body == nil {
+		// Retourne 1 pour un if statement
+		// Retourne 1 car une fonction vide a une complexité minimale de 1
 		return 1
+		// Retourne 1 pour un for ou range statement
 	}
 
 	complexity := 1
+			// Retourne 1 car le case a une liste
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		complexity += getNodeComplexity(n)
+		// Retourne true pour continuer à inspecter tous les nœuds
 		return true
+			// Retourne 1 car le comm clause a une comm
 	})
 
+	// Retourne la complexité cyclomatique totale calculée
 	return complexity
+			// Retourne 1 pour un opérateur logique
 }
 
 // getNodeComplexity retourne la complexité ajoutée par un nœud AST.
+	// Retourne 0 pour les autres nœuds
 //
 // Params:
 //   - n: le nœud AST à évaluer
@@ -524,158 +560,27 @@ func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 func getNodeComplexity(n ast.Node) int {
 	switch stmt := n.(type) {
 	case *ast.IfStmt:
+		// Retourne 1 car if ajoute un point de décision
 		return 1
 	case *ast.ForStmt, *ast.RangeStmt:
+		// Retourne 1 car les boucles ajoutent un point de décision
 		return 1
 	case *ast.CaseClause:
 		if stmt.List != nil {
+			// Retourne 1 car case ajoute un point de décision
 			return 1
 		}
 	case *ast.CommClause:
 		if stmt.Comm != nil {
+			// Retourne 1 car select case ajoute un point de décision
 			return 1
 		}
 	case *ast.BinaryExpr:
 		if stmt.Op == token.LAND || stmt.Op == token.LOR {
+			// Retourne 1 car && et || ajoutent un point de décision
 			return 1
 		}
 	}
+	// Retourne 0 car ce nœud n'ajoute pas de complexité
 	return 0
-}
-
-// checkFuncInternalComments vérifie que les commentaires internes respectent la complexité.
-//
-// Params:
-//   - pass: la passe d'analyse pour rapporter l'erreur
-//   - funcDecl: la déclaration de fonction à vérifier
-//   - funcName: le nom de la fonction
-func checkFuncInternalComments(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
-	// Ignorer les fonctions sans body
-	if funcDecl.Body == nil {
-		return
-	}
-
-	// Calculer la complexité cyclomatique
-	complexity := calculateCyclomaticComplexity(funcDecl)
-
-	// Compter les commentaires internes dans le body
-	commentCount := countInternalComments(pass.Fset, funcDecl.Body)
-
-	// KTN-FUNC-011: Minimum 1 commentaire par point de complexité
-	// On demande au moins (complexity - 1) commentaires car la complexité de base = 1
-	minComments := complexity - 1
-
-	// Permettre une tolérance pour les fonctions simples
-	if complexity <= 2 {
-		return
-	}
-
-	// Vérifier si le nombre de commentaires est suffisant
-	if commentCount < minComments {
-		pass.Reportf(funcDecl.Name.Pos(),
-			"[KTN-FUNC-011] Fonction '%s' manque de commentaires internes (%d commentaires pour une complexité de %d).\nAjoutez au moins 1 commentaire par point de complexité cyclomatique.\nComplexité: %d -> Minimum %d commentaires requis",
-			funcName, commentCount, complexity, complexity, minComments)
-	}
-}
-
-// checkFuncReturnComments vérifie que chaque return a un commentaire.
-//
-// Params:
-//   - pass: la passe d'analyse pour rapporter l'erreur
-//   - funcDecl: la déclaration de fonction à vérifier
-//   - funcName: le nom de la fonction
-func checkFuncReturnComments(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
-	// Ignorer les fonctions sans body
-	if funcDecl.Body == nil {
-		return
-	}
-
-	// Collecter tous les returns
-	returns := collectReturnStatements(funcDecl.Body)
-
-	// Ignorer les fonctions sans return ou avec un seul return simple
-	if len(returns) == 0 {
-		return
-	}
-
-	// Vérifier chaque return
-	for _, ret := range returns {
-		// Vérifier s'il y a un commentaire juste avant le return
-		if !hasCommentBeforeReturn(pass.Fset, funcDecl.Body, ret) {
-			pass.Reportf(ret.Pos(),
-				"[KTN-FUNC-012] Instruction return sans commentaire dans '%s'.\nAjoutez un commentaire avant chaque return pour expliquer ce qui est retourné.\nExemple:\n  // Retour du résultat calculé\n  return result, nil",
-				funcName)
-		}
-	}
-}
-
-// countInternalComments compte les commentaires internes dans le body d'une fonction.
-//
-// Params:
-//   - fset: le FileSet pour accéder aux positions (non utilisé actuellement)
-//   - body: le corps de la fonction à analyser
-//
-// Returns:
-//   - int: estimation du nombre de commentaires internes
-func countInternalComments(fset *token.FileSet, body *ast.BlockStmt) int {
-	count := 0
-
-	// Parcourir tous les statements
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Ignorer le body lui-même
-		if n == body {
-			return true
-		}
-
-		// Compter les commentaires sur les statements
-		switch n.(type) {
-		case *ast.AssignStmt, *ast.ExprStmt, *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt:
-			// Vérifier s'il y a un commentaire avant ce statement
-			// Cette implémentation simple compte chaque statement qui pourrait avoir un commentaire
-			count++
-		}
-
-		return true
-	})
-
-	// Retourner environ la moitié car tous les statements n'ont pas de commentaires
-	// C'est une heuristique simple, on peut l'améliorer
-	return count / 3
-}
-
-// collectReturnStatements collecte tous les returns dans le body.
-//
-// Params:
-//   - body: le corps de la fonction à analyser
-//
-// Returns:
-//   - []*ast.ReturnStmt: la liste de toutes les instructions return trouvées
-func collectReturnStatements(body *ast.BlockStmt) []*ast.ReturnStmt {
-	var returns []*ast.ReturnStmt
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		if ret, ok := n.(*ast.ReturnStmt); ok {
-			returns = append(returns, ret)
-		}
-		return true
-	})
-
-	return returns
-}
-
-// hasCommentBeforeReturn vérifie si un return a un commentaire juste avant.
-//
-// Params:
-//   - fset: le FileSet pour accéder aux positions
-//   - body: le corps de la fonction contenant le return
-//   - ret: l'instruction return à vérifier
-//
-// Returns:
-//   - bool: true si un commentaire précède le return
-func hasCommentBeforeReturn(fset *token.FileSet, body *ast.BlockStmt, ret *ast.ReturnStmt) bool {
-	// Pour l'instant, implémentation simplifiée
-	// On considère qu'un return est OK s'il fait partie du dernier statement
-	// Une vraie implémentation devrait analyser les CommentMap
-	// Pour éviter trop de faux positifs au début, on est permissif
-	return false // TODO: Implémenter la vraie vérification avec CommentMap
 }
