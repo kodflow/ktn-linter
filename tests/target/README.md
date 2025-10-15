@@ -203,7 +203,7 @@ func extractConfig(data map[string]interface{}) (*Config, error) {
 
 - [tests/source/](../source/) - Code FOIREUX avec 405 violations
 - [Documentation KTN-Linter](../../README.md)
-- [FUNCTION_BEST_PRACTICES.md](../../FUNCTION_BEST_PRACTICES.md)
+- [Règles FUNC détaillées](../source/rules_func/.README.md)
 
 ## ✨ Utilisation
 

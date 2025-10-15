@@ -142,7 +142,6 @@ make install-tools   # Installer golangci-lint
 │   ├── settings.json            # Config VSCode + wrapper
 │   └── extensions.json          # Extension Go recommandée
 ├── .golangci.yml                # Config minimale (wrapper uniquement)
-├── FUNCTION_BEST_PRACTICES.md   # Documentation bonnes pratiques fonctions
 ├── go.mod
 ├── Makefile
 └── README.md
