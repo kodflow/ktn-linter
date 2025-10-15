@@ -2,8 +2,6 @@ package rules_func_test
 
 import (
 	"testing"
-
-	"github.com/kodflow/ktn-linter/tests/target/rules_func"
 )
 
 // TestInterfaces teste le fichier interfaces.go.

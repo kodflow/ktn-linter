@@ -2,8 +2,6 @@ package rules_func_test
 
 import (
 	"testing"
-
-	"github.com/kodflow/ktn-linter/tests/target/rules_func"
 )
 
 // TestFunc003 teste le fichier package_level_KTN-FUNC-003.go.

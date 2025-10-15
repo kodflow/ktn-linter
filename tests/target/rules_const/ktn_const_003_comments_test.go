@@ -2,8 +2,6 @@ package rules_const_test
 
 import (
 	"testing"
-
-	"github.com/kodflow/ktn-linter/tests/target/rules_const"
 )
 
 // TestConst003 teste le fichier package_level_KTN-CONST-003.go.
