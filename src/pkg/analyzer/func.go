@@ -212,52 +212,58 @@ func checkNestingDepth(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName str
 //   - int: la profondeur maximale trouvée
 func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 	maxDepth := currentDepth
-
 	ast.Inspect(node, func(n ast.Node) bool {
-		switch stmt := n.(type) {
-			// Retourne false pour arrêter l'inspection de cette branche
-		case *ast.IfStmt:
-			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
-			if stmt.Else != nil {
-			// Retourne false pour arrêter l'inspection de cette branche
-				maxDepth = updateMaxDepth(maxDepth, stmt.Else, currentDepth)
-			}
-			// Retourne false pour ne pas descendre plus profond
-			// Retourne false pour arrêter l'inspection de cette branche
-			return false
-		case *ast.ForStmt:
-			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
-			// Retourne false pour arrêter l'inspection de cette branche
-			// Retourne false pour ne pas descendre plus profond
-			return false
-		case *ast.RangeStmt:
-			// Retourne false pour arrêter l'inspection de cette branche
-			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
-			// Retourne false pour ne pas descendre plus profond
-		// Retourne true pour continuer l'inspection
-			return false
-		case *ast.SwitchStmt:
-			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
-	// Retourne la profondeur maximale trouvée
-			// Retourne false pour ne pas descendre plus profond
-			return false
-		case *ast.SelectStmt:
-			maxDepth = updateMaxDepth(maxDepth, stmt.Body, currentDepth)
-			// Retourne false pour ne pas descendre plus profond
-			return false
-		}
-		// Retourne true pour continuer l'inspection
-		return true
+		maxDepth = inspectNestingNode(n, maxDepth, currentDepth)
+		return shouldContinueInspection(n)
 	})
-
-	// Retourne la profondeur maximale trouvée
 	return maxDepth
 }
 
-		// Retourne la nouvelle profondeur si elle est supérieure
+// inspectNestingNode met à jour la profondeur max pour un nœud d'imbrication.
+//
+// Params:
+//   - n: le nœud à inspecter
+//   - currentMax: profondeur maximale actuelle
+//   - depth: profondeur courante
+//
+// Returns:
+//   - int: nouvelle profondeur maximale
+func inspectNestingNode(n ast.Node, currentMax, depth int) int {
+	switch stmt := n.(type) {
+	case *ast.IfStmt:
+		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
+		if stmt.Else != nil {
+			currentMax = updateMaxDepth(currentMax, stmt.Else, depth)
+		}
+	case *ast.ForStmt:
+		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
+	case *ast.RangeStmt:
+		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
+	case *ast.SwitchStmt:
+		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
+	case *ast.SelectStmt:
+		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
+	}
+	return currentMax
+}
+
+// shouldContinueInspection détermine si l'inspection doit continuer.
+//
+// Params:
+//   - n: le nœud à vérifier
+//
+// Returns:
+//   - bool: false pour les structures imbriquées, true sinon
+func shouldContinueInspection(n ast.Node) bool {
+	switch n.(type) {
+	case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.SwitchStmt, *ast.SelectStmt:
+		return false
+	}
+	return true
+}
+
 // updateMaxDepth met à jour la profondeur maximale pour un nœud donné.
 //
-	// Retourne la profondeur actuelle sinon
 // Params:
 //   - currentMax: la profondeur maximale actuelle
 //   - node: le nœud à analyser
@@ -268,10 +274,8 @@ func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 func updateMaxDepth(currentMax int, node ast.Node, depth int) int {
 	newDepth := calculateMaxNestingDepth(node, depth+1)
 	if newDepth > currentMax {
-		// Retourne la nouvelle profondeur car elle est supérieure au maximum actuel
 		return newDepth
 	}
-	// Retourne le maximum actuel car il reste plus élevé
 	return currentMax
 }
 
