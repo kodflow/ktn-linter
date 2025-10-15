@@ -1,13 +1,14 @@
 package rules_var
 
 // DataEntry représente une entrée de données.
-type DataEntry struct {
+type dataEntry struct {
 	// Name nom de l'entrée
 	Name string
 	// Value valeur numérique
 	Value int
 }
 
+// Variables du package.
 var (
 	// NestedMapGood déclaration de map imbriqué avec type explicite.
 	NestedMapGood map[string]map[string][]int = map[string]map[string][]int{
@@ -17,7 +18,7 @@ var (
 	}
 
 	// SliceOfStructsGood déclaration de slice de structs avec type explicite.
-	SliceOfStructsGood []DataEntry = []DataEntry{
+	SliceOfStructsGood []dataEntry = []dataEntry{
 		{"first", 1},
 		{"second", 2},
 	}

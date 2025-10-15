@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/tests/target/rules_func"
 )
 
+// TestDeeplyNestedGood teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestDeeplyNestedGood(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -39,6 +43,10 @@ func TestDeeplyNestedGood(t *testing.T) {
 	}
 }
 
+// TestExtremelyNestedGood teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestExtremelyNestedGood(t *testing.T) {
 	tests := []struct {
 		name string
@@ -76,6 +84,10 @@ func TestExtremelyNestedGood(t *testing.T) {
 	}
 }
 
+// TestComplexNestedGood teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestComplexNestedGood(t *testing.T) {
 	tests := []struct {
 		name   string

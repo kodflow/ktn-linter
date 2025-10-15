@@ -72,6 +72,23 @@ func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	}
 }
 
+// groupContainsIota vérifie si un groupe de constantes utilise iota.
+//
+// Params:
+//   - genDecl: la déclaration de groupe const() à analyser
+//
+// Returns:
+//   - bool: true si au moins une constante du groupe utilise iota
+func groupContainsIota(genDecl *ast.GenDecl) bool {
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+		if usesIota(valueSpec) {
+			return true
+		}
+	}
+	return false
+}
+
 // checkConstGroup vérifie un groupe de constantes.
 //
 // Params:
@@ -88,13 +105,16 @@ func checkConstGroup(pass *analysis.Pass, genDecl *ast.GenDecl) {
 			"[KTN-CONST-002] Groupe de constantes sans commentaire de groupe.\nAjoutez un commentaire avant le bloc const () pour décrire l'ensemble.\nExemple:\n  // Description du groupe de constantes\n  const (...)")
 	}
 
+	// Détecter si le groupe utilise iota
+	groupUsesIota := groupContainsIota(genDecl)
+
 	for _, spec := range genDecl.Specs {
 		valueSpec := spec.(*ast.ValueSpec)
 		isGroupCommentOnly := hasGroupComment &&
 			valueSpec.Doc != nil &&
 			genDecl.Doc != nil &&
 			valueSpec.Doc.Pos() == genDecl.Doc.Pos()
-		checkConstSpec(pass, valueSpec, isGroupCommentOnly)
+		checkConstSpec(pass, valueSpec, isGroupCommentOnly, groupUsesIota)
 	}
 }
 
@@ -104,7 +124,8 @@ func checkConstGroup(pass *analysis.Pass, genDecl *ast.GenDecl) {
 //   - pass: la passe d'analyse pour rapporter les erreurs
 //   - spec: la spécification de constante à vérifier
 //   - isFirstWithGroupComment: true si la constante partage le commentaire de groupe
-func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool) {
+//   - groupUsesIota: true si le groupe de constantes utilise iota
+func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupComment bool, groupUsesIota bool) {
 	for _, name := range spec.Names {
 		if name.Name == "_" {
 			continue
@@ -117,13 +138,59 @@ func checkConstSpec(pass *analysis.Pass, spec *ast.ValueSpec, isFirstWithGroupCo
 				name.Name, name.Name, name.Name, astutil.GetTypeString(spec))
 		}
 
-		// KTN-CONST-004: Vérifier le type explicite
-		if spec.Type == nil {
+		// KTN-CONST-004: Vérifier le type explicite (exception pour iota)
+		if spec.Type == nil && !groupUsesIota {
 			pass.Reportf(name.Pos(),
 				"[KTN-CONST-004] Constante '%s' sans type explicite.\nSpécifiez toujours le type : bool, string, int, int8, uint, float64, etc.\nExemple:\n  %s int = ...",
 				name.Name, name.Name)
 		}
 	}
+}
+
+// usesIota vérifie si une constante utilise iota directement.
+//
+// Params:
+//   - spec: la spécification de constante à vérifier
+//
+// Returns:
+//   - bool: true si la constante utilise iota explicitement
+func usesIota(spec *ast.ValueSpec) bool {
+	// Vérifier si l'expression contient iota
+	for _, value := range spec.Values {
+		if containsIota(value) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// containsIota vérifie récursivement si une expression contient iota.
+//
+// Params:
+//   - expr: l'expression à analyser
+//
+// Returns:
+//   - bool: true si iota est trouvé dans l'expression
+func containsIota(expr ast.Expr) bool {
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return e.Name == "iota"
+	case *ast.BinaryExpr:
+		return containsIota(e.X) || containsIota(e.Y)
+	case *ast.UnaryExpr:
+		return containsIota(e.X)
+	case *ast.ParenExpr:
+		return containsIota(e.X)
+	case *ast.CallExpr:
+		for _, arg := range e.Args {
+			if containsIota(arg) {
+				return true
+			}
+		}
+		return false
+	}
+	return false
 }
 
 // hasIndividualComment vérifie si une constante a un commentaire individuel.

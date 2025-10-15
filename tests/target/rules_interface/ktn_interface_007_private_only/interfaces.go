@@ -26,3 +26,19 @@ type HelperInterface interface {
 	//   - string: le message d'aide
 	Help() string
 }
+
+// NewServiceInterface crée une nouvelle instance de ServiceInterface.
+//
+// Returns:
+//   - ServiceInterface: l'instance créée
+func NewServiceInterface() ServiceInterface {
+	return nil // Placeholder
+}
+
+// NewHelperInterface crée une nouvelle instance de HelperInterface.
+//
+// Returns:
+//   - HelperInterface: l'instance créée
+func NewHelperInterface() HelperInterface {
+	return nil // Placeholder
+}

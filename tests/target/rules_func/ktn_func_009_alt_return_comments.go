@@ -1,6 +1,6 @@
 package rules_func
 
-// findMaxWithComments trouve le maximum avec commentaires sur tous les returns.
+// FindMaxWithComments trouve le maximum avec commentaires sur tous les returns.
 //
 // Params:
 //   - values: la liste de valeurs
@@ -8,7 +8,7 @@ package rules_func
 // Returns:
 //   - int: la valeur maximale
 //   - bool: true si au moins une valeur existe
-func findMaxWithComments(values []int) (int, bool) {
+func FindMaxWithComments(values []int) (int, bool) {
 	if len(values) == 0 {
 		// Retourne 0 et false car la liste est vide
 		return 0, false
@@ -25,14 +25,14 @@ func findMaxWithComments(values []int) (int, bool) {
 	return max, true
 }
 
-// isValidWithComments vérifie la validité avec commentaires sur tous les returns.
+// IsValidWithComments vérifie la validité avec commentaires sur tous les returns.
 //
 // Params:
 //   - value: la valeur à vérifier
 //
 // Returns:
 //   - bool: true si valide
-func isValidWithComments(value int) bool {
+func IsValidWithComments(value int) bool {
 	if value < 0 {
 		// Retourne false car la valeur est négative
 		return false

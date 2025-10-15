@@ -23,6 +23,10 @@ func OpenResource(name string) error {
 	return nil
 }
 
+// closeResource ferme une ressource.
+//
+// Params:
+//   - name: nom de la ressource à fermer
 func closeResource(name string) {
 	fmt.Println("closing", name)
 }
@@ -44,6 +48,7 @@ func ProcessWithRecover() (err error) {
 	return nil
 }
 
+// riskyOperation exécute une opération risquée.
 func riskyOperation() {
 	panic("something went wrong")
 }
@@ -75,6 +80,13 @@ func ProcessFiles(files []string) error {
 	return nil
 }
 
+// processFile traite un fichier.
+//
+// Params:
+//   - name: nom du fichier à traiter
+//
+// Returns:
+//   - error: erreur si le traitement échoue
 func processFile(name string) error {
 	f := openFile(name)
 	// Defer dans la fonction de traitement individuel (évite l'accumulation)
@@ -82,16 +94,27 @@ func processFile(name string) error {
 	return nil
 }
 
-func openFile(name string) *File {
-	return &File{name: name}
+// openFile ouvre un fichier.
+//
+// Params:
+//   - name: nom du fichier à ouvrir
+//
+// Returns:
+//   - *file: pointeur vers le fichier ouvert
+func openFile(name string) *file {
+	return &file{name: name}
 }
 
-func closeFile(f *File) {
+// closeFile ferme un fichier.
+//
+// Params:
+//   - f: pointeur vers le fichier à fermer
+func closeFile(f *file) {
 	fmt.Println("closing", f.name)
 }
 
-// File représente un fichier ouvert.
-type File struct {
+// file représente un fichier ouvert.
+type file struct {
 	name string
 }
 

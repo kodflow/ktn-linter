@@ -21,33 +21,62 @@ func ComplexCalculationWithInternalComments(value int) (int, error) {
 	// Calcul basé sur des règles métier spécifiques
 	// Les multiples de 2, 3, 5, 7 ont des traitements différents
 	for i := 0; i < value; i++ {
-		if i%2 == 0 {
-			// Traitement des nombres pairs
-			if i%3 == 0 {
-				if i%5 == 0 {
-					// Bonus pour les multiples de 30 (2*3*5)
-					result += i * 2
-				} else {
-					// Multiples de 6 seulement
-					result += i
-				}
-			} else {
-				// Pairs non multiples de 3
-				result -= i
-			}
-		} else {
-			// Traitement des nombres impairs
-			if i%7 == 0 {
-				// Bonus triple pour les multiples de 7
-				result += i * 3
-			} else {
-				// Impairs standards: pénalité double
-				result -= i * 2
-			}
-		}
+		result += calculateValueContribution(i)
 	}
 
 	return result, nil
+}
+
+// calculateValueContribution calcule la contribution d'une valeur au résultat.
+//
+// Params:
+//   - i: la valeur à évaluer
+//
+// Returns:
+//   - int: la contribution au résultat
+func calculateValueContribution(i int) int {
+	if i%2 == 0 {
+		return calculateEvenContribution(i)
+	}
+	return calculateOddContribution(i)
+}
+
+// calculateEvenContribution calcule la contribution pour les nombres pairs.
+//
+// Params:
+//   - i: la valeur paire
+//
+// Returns:
+//   - int: la contribution
+func calculateEvenContribution(i int) int {
+	// Traitement des nombres pairs
+	if i%3 == 0 && i%5 == 0 {
+		// Bonus pour les multiples de 30 (2*3*5)
+		return i * 2
+	}
+	if i%3 == 0 {
+		// Multiples de 6 seulement
+		return i
+	}
+	// Pairs non multiples de 3
+	return -i
+}
+
+// calculateOddContribution calcule la contribution pour les nombres impairs.
+//
+// Params:
+//   - i: la valeur impaire
+//
+// Returns:
+//   - int: la contribution
+func calculateOddContribution(i int) int {
+	// Traitement des nombres impairs
+	if i%7 == 0 {
+		// Bonus triple pour les multiples de 7
+		return i * 3
+	}
+	// Impairs standards: pénalité double
+	return -i * 2
 }
 
 // ProcessDataWithComments traite des données avec explications claires.
@@ -62,23 +91,40 @@ func ProcessDataWithComments(data []int) []int {
 
 	// Filtrage et transformation selon des règles métier
 	for _, v := range data {
-		// Ignorer les valeurs négatives ou nulles
-		if v > 0 {
-			if v%10 == 0 {
-				// Doubler les multiples de 10
-				processed = append(processed, v*2)
-			} else if v%5 == 0 {
-				// Ajouter 10 aux multiples de 5
-				processed = append(processed, v+10)
-			} else if v%2 == 0 {
-				// Diviser par 2 les nombres pairs
-				processed = append(processed, v/2)
-			} else {
-				// Conserver les impairs non multiples de 5
-				processed = append(processed, v)
-			}
+		if transformed, ok := transformValue(v); ok {
+			processed = append(processed, transformed)
 		}
 	}
 
 	return processed
+}
+
+// transformValue transforme une valeur selon les règles métier.
+//
+// Params:
+//   - v: la valeur à transformer
+//
+// Returns:
+//   - int: la valeur transformée
+//   - bool: true si la valeur doit être incluse
+func transformValue(v int) (int, bool) {
+	// Ignorer les valeurs négatives ou nulles
+	if v <= 0 {
+		return 0, false
+	}
+
+	if v%10 == 0 {
+		// Doubler les multiples de 10
+		return v * 2, true
+	}
+	if v%5 == 0 {
+		// Ajouter 10 aux multiples de 5
+		return v + 10, true
+	}
+	if v%2 == 0 {
+		// Diviser par 2 les nombres pairs
+		return v / 2, true
+	}
+	// Conserver les impairs non multiples de 5
+	return v, true
 }

@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+// TestFindMaxValueWithReturnComments teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestFindMaxValueWithReturnComments(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -46,6 +50,10 @@ func TestFindMaxValueWithReturnComments(t *testing.T) {
 	}
 }
 
+// TestValidateInputWithReturnComments teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestValidateInputWithReturnComments(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -89,6 +97,10 @@ func TestValidateInputWithReturnComments(t *testing.T) {
 	}
 }
 
+// TestDivideNumbersWithReturnComments teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestDivideNumbersWithReturnComments(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -134,6 +146,10 @@ func TestDivideNumbersWithReturnComments(t *testing.T) {
 	}
 }
 
+// TestProcessWithMultipleExitsWithComments teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestProcessWithMultipleExitsWithComments(t *testing.T) {
 	tests := []struct {
 		name    string

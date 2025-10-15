@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/tests/target/rules_test/KTN-TEST-002-with-function"
 )
 
+// TestProcessData vérifie que ProcessData traite correctement les données.
+//
+// Params:
+//   - t: contexte de test
 func TestProcessData(t *testing.T) {
 	result := withfunction.ProcessData("test")
 	expected := "processed: test"

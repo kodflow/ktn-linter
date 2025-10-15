@@ -1,31 +1,31 @@
 package rules_const
 
-// Configuration correctement groupée et documentée.
+// Configuration correctement groupée et documentée avec types explicites.
 const (
 	// MaxRetries nombre maximum de tentatives.
-	MaxRetries = 3
+	MaxRetries int = 3
 	// DefaultValue valeur par défaut du système.
-	DefaultValue = "test"
+	DefaultValue string = "test"
 	// APIKey clé d'authentification API.
-	APIKey = "secret"
+	APIKey string = "secret"
 	// MinTimeout timeout minimum en secondes.
-	MinTimeout = 10
+	MinTimeout int = 10
 	// HTTPStatusCode code de statut HTTP par défaut.
-	HTTPStatusCode = 200
+	HTTPStatusCode int = 200
 	// HTMLParser nom du parser HTML utilisé.
-	HTMLParser = "parser"
+	HTMLParser string = "parser"
 	// URLEndpoint point d'entrée de l'API.
-	URLEndpoint = "/api/test"
+	URLEndpoint string = "/api/test"
 )
 
-// Configuration de la base de données (groupée).
+// Configuration de la base de données (groupée avec types explicites).
 const (
 	// DatabaseHost adresse du serveur de base de données.
-	DatabaseHost = "localhost"
+	DatabaseHost string = "localhost"
 	// DatabasePort port du serveur de base de données.
-	DatabasePort = 5432
+	DatabasePort int = 5432
 	// DatabaseName nom de la base de données.
-	DatabaseName = "mydb"
+	DatabaseName string = "mydb"
 )
 
 // Configuration de l'application (types organisés).

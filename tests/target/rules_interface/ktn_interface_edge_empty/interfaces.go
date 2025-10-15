@@ -49,3 +49,11 @@ type Container[T any] interface {
 	//   - []T: tous les éléments du conteneur
 	GetAll() []T
 }
+
+// NewContainer crée une nouvelle instance de Container.
+//
+// Returns:
+//   - Container[T]: l'instance créée
+func NewContainer[T any]() Container[T] {
+	return NewStringContainer().(Container[T]) // Placeholder avec cast
+}

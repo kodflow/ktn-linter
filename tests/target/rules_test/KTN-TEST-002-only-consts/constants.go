@@ -1,5 +1,6 @@
 package onlyconsts
 
+// Configuration constants for service behavior.
 const (
 	// MaxRetries nombre maximum de tentatives
 	MaxRetries int = 3

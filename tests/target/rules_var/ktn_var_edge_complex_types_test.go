@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/tests/target/rules_var"
 )
 
+// TestNestedMapGood teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestNestedMapGood(t *testing.T) {
 	if rules_var.NestedMapGood == nil {
 		t.Error("NestedMapGood is nil")
@@ -15,6 +19,10 @@ func TestNestedMapGood(t *testing.T) {
 	}
 }
 
+// TestSliceOfStructsGood teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestSliceOfStructsGood(t *testing.T) {
 	if rules_var.SliceOfStructsGood == nil {
 		t.Error("SliceOfStructsGood is nil")
@@ -24,6 +32,10 @@ func TestSliceOfStructsGood(t *testing.T) {
 	}
 }
 
+// TestChannelMapGood teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestChannelMapGood(t *testing.T) {
 	if rules_var.ChannelMapGood == nil {
 		t.Error("ChannelMapGood is nil")

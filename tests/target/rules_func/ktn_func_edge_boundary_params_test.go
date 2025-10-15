@@ -7,6 +7,9 @@ import (
 )
 
 // TestFiveParamsIsOk teste la fonction avec 5 paramètres.
+//
+// Params:
+//   - t: contexte de test
 func TestFiveParamsIsOk(t *testing.T) {
 	result := rules_func.FiveParamsIsOk(1, 2, 3, 4, 5)
 	expected := 15
@@ -16,6 +19,9 @@ func TestFiveParamsIsOk(t *testing.T) {
 }
 
 // TestSixParamsWithConfig teste la fonction avec struct de config.
+//
+// Params:
+//   - t: contexte de test
 func TestSixParamsWithConfig(t *testing.T) {
 	cfg := rules_func.SixParamsConfig{
 		A: 1,

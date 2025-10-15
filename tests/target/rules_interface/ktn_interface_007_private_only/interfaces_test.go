@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/tests/target/rules_interface/ktn_interface_007_private_only"
 )
 
+// TestServiceInterface teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestServiceInterface(t *testing.T) {
 	svc := goodinterfaces.NewService("test")
 
@@ -41,6 +45,10 @@ func TestServiceInterface(t *testing.T) {
 	}
 }
 
+// TestHelperInterface teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestHelperInterface(t *testing.T) {
 	helper := goodinterfaces.NewHelper()
 

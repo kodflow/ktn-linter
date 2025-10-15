@@ -78,19 +78,32 @@ func ApplyMultiplier(multiplier int, values ...float64) []float64 {
 
 	// Filtrage et transformation des valeurs
 	for _, v := range values {
-		// Traitement des valeurs positives
-		if v > 0 {
-			// Traitement des valeurs < 100
-			if v < 100 {
-				// Application du multiplicateur si > 1
-				if multiplier > 1 {
-					result = append(result, v*float64(multiplier))
-				} else {
-					result = append(result, v)
-				}
-			}
+		if processed, ok := processValueWithMultiplier(v, multiplier); ok {
+			result = append(result, processed)
 		}
 	}
 
 	return result
+}
+
+// processValueWithMultiplier traite une valeur avec le multiplicateur.
+//
+// Params:
+//   - v: la valeur à traiter
+//   - multiplier: facteur de multiplication
+//
+// Returns:
+//   - float64: la valeur traitée
+//   - bool: true si la valeur doit être incluse
+func processValueWithMultiplier(v float64, multiplier int) (float64, bool) {
+	// Filtrer les valeurs négatives ou nulles
+	if v <= 0 || v >= 100 {
+		return 0, false
+	}
+
+	// Application du multiplicateur si > 1
+	if multiplier > 1 {
+		return v * float64(multiplier), true
+	}
+	return v, true
 }

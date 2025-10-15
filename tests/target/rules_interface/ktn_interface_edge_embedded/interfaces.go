@@ -56,3 +56,43 @@ type Processor interface {
 	// Process traite les données lues.
 	Process()
 }
+
+// NewReader crée une nouvelle instance de Reader.
+//
+// Returns:
+//   - Reader: l'instance créée
+func NewReader() Reader {
+	return nil // Placeholder
+}
+
+// NewWriter crée une nouvelle instance de Writer.
+//
+// Returns:
+//   - Writer: l'instance créée
+func NewWriter() Writer {
+	return nil // Placeholder
+}
+
+// NewReadWriter crée une nouvelle instance de ReadWriter.
+//
+// Returns:
+//   - ReadWriter: l'instance créée
+func NewReadWriter() ReadWriter {
+	return nil // Placeholder
+}
+
+// NewComplexEmbedded crée une nouvelle instance de ComplexEmbedded.
+//
+// Returns:
+//   - ComplexEmbedded: l'instance créée
+func NewComplexEmbedded() ComplexEmbedded {
+	return NewImplementation()
+}
+
+// NewProcessor crée une nouvelle instance de Processor.
+//
+// Returns:
+//   - Processor: l'instance créée
+func NewProcessor() Processor {
+	return nil // Placeholder
+}

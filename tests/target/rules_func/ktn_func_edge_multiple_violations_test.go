@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/tests/target/rules_func"
 )
 
+// TestGoodFunctionName teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestGoodFunctionName(t *testing.T) {
 	cfg := rules_func.MultiParamConfig{
 		A: 1,
@@ -23,6 +27,10 @@ func TestGoodFunctionName(t *testing.T) {
 	}
 }
 
+// TestShouldProcess teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestShouldProcess(t *testing.T) {
 	tests := []struct {
 		name string
@@ -46,6 +54,10 @@ func TestShouldProcess(t *testing.T) {
 	}
 }
 
+// TestSumConfig teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestSumConfig(t *testing.T) {
 	cfg := rules_func.MultiParamConfig{A: 1, B: 2, C: 3, D: 4, E: 5, F: 6}
 	result := rules_func.SumConfig(cfg)

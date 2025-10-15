@@ -3,7 +3,7 @@ package goodempty
 import "fmt"
 
 // CacheImpl implémente l'interface Cache avec types concrets.
-type CacheImpl struct {
+type cacheImpl struct {
 	data map[string]string
 }
 
@@ -15,7 +15,7 @@ type CacheImpl struct {
 // Returns:
 //   - string: valeur associée à la clé
 //   - bool: true si la clé existe
-func (c *CacheImpl) Get(key string) (string, bool) {
+func (c *cacheImpl) Get(key string) (string, bool) {
 	val, exists := c.data[key]
 	return val, exists
 }
@@ -25,7 +25,7 @@ func (c *CacheImpl) Get(key string) (string, bool) {
 // Params:
 //   - key: clé de la valeur
 //   - value: valeur à stocker
-func (c *CacheImpl) Set(key string, value string) {
+func (c *cacheImpl) Set(key string, value string) {
 	c.data[key] = value
 }
 
@@ -34,13 +34,13 @@ func (c *CacheImpl) Set(key string, value string) {
 // Returns:
 //   - Cache: nouvelle instance de cache
 func NewCache() Cache {
-	return &CacheImpl{
+	return &cacheImpl{
 		data: make(map[string]string),
 	}
 }
 
 // ProcessorImpl implémente l'interface Processor.
-type ProcessorImpl struct{}
+type processorImpl struct{}
 
 // Process traite les données et retourne le résultat.
 //
@@ -49,7 +49,7 @@ type ProcessorImpl struct{}
 //
 // Returns:
 //   - string: résultat du traitement
-func (p *ProcessorImpl) Process(data string) string {
+func (p *processorImpl) Process(data string) string {
 	fmt.Println(data)
 	return data
 }
@@ -59,11 +59,11 @@ func (p *ProcessorImpl) Process(data string) string {
 // Returns:
 //   - Processor: nouvelle instance de processeur
 func NewProcessor() Processor {
-	return &ProcessorImpl{}
+	return &processorImpl{}
 }
 
 // StringContainer implémente Container pour les strings.
-type StringContainer struct {
+type stringContainer struct {
 	items []string
 }
 
@@ -71,7 +71,7 @@ type StringContainer struct {
 //
 // Params:
 //   - item: élément à ajouter
-func (sc *StringContainer) Add(item string) {
+func (sc *stringContainer) Add(item string) {
 	sc.items = append(sc.items, item)
 }
 
@@ -79,7 +79,7 @@ func (sc *StringContainer) Add(item string) {
 //
 // Returns:
 //   - []string: tous les éléments du conteneur
-func (sc *StringContainer) GetAll() []string {
+func (sc *stringContainer) GetAll() []string {
 	return sc.items
 }
 
@@ -88,7 +88,7 @@ func (sc *StringContainer) GetAll() []string {
 // Returns:
 //   - Container[string]: nouvelle instance de conteneur
 func NewStringContainer() Container[string] {
-	return &StringContainer{
+	return &stringContainer{
 		items: make([]string, 0),
 	}
 }

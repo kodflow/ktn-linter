@@ -2,8 +2,8 @@ package rules_func
 
 // Méthodes sur types correctement documentées.
 
-// User représente un utilisateur du système.
-type User struct {
+// user représente un utilisateur du système.
+type user struct {
 	name  string
 	email string
 	age   int
@@ -13,7 +13,7 @@ type User struct {
 //
 // Returns:
 //   - string: le nom de l'utilisateur
-func (u *User) GetName() string {
+func (u *user) GetName() string {
 	return u.name
 }
 
@@ -21,7 +21,7 @@ func (u *User) GetName() string {
 //
 // Params:
 //   - newAge: le nouvel âge à assigner
-func (u *User) SetAge(newAge int) {
+func (u *user) SetAge(newAge int) {
 	u.age = newAge
 }
 
@@ -29,7 +29,7 @@ func (u *User) SetAge(newAge int) {
 //
 // Returns:
 //   - bool: true si l'utilisateur est valide, false sinon
-func (u *User) Validate() bool {
+func (u *user) Validate() bool {
 	// Vérification du nom non vide
 	if u.name == "" {
 		return false
@@ -45,8 +45,8 @@ func (u *User) Validate() bool {
 	return true
 }
 
-// Calculator effectue des calculs et stocke le résultat.
-type Calculator struct {
+// calculator effectue des calculs et stocke le résultat.
+type calculator struct {
 	result float64
 }
 
@@ -54,7 +54,7 @@ type Calculator struct {
 //
 // Params:
 //   - config: configuration contenant les valeurs à additionner
-func (c *Calculator) Add(config AddConfig) {
+func (c *calculator) Add(config AddConfig) {
 	c.result = config.A + config.B + config.C + config.D + config.E + config.F
 }
 
@@ -67,7 +67,7 @@ type AddConfig struct {
 //
 // Returns:
 //   - float64: le résultat stocké
-func (c *Calculator) GetResult() float64 {
+func (c *calculator) GetResult() float64 {
 	return c.result
 }
 
@@ -78,7 +78,7 @@ func (c *Calculator) GetResult() float64 {
 //
 // Returns:
 //   - float64: le résultat du calcul
-func (c *Calculator) Calculate(x float64) float64 {
+func (c *calculator) Calculate(x float64) float64 {
 	// Étape 1: transformation initiale
 	result := transformInitial(x)
 	// Étape 2: application des opérations
@@ -87,14 +87,35 @@ func (c *Calculator) Calculate(x float64) float64 {
 	return normalizeResult(result)
 }
 
+// transformInitial transforme la valeur initiale.
+//
+// Params:
+//   - x: valeur à transformer
+//
+// Returns:
+//   - float64: valeur transformée
 func transformInitial(x float64) float64 {
 	return (x*2 + 10) * 3
 }
 
+// applyOperations applique les opérations.
+//
+// Params:
+//   - x: valeur d'entrée
+//
+// Returns:
+//   - float64: résultat des opérations
 func applyOperations(x float64) float64 {
 	return ((x - 5) / 2) + 100
 }
 
+// normalizeResult normalise le résultat.
+//
+// Params:
+//   - x: valeur à normaliser
+//
+// Returns:
+//   - float64: valeur normalisée
 func normalizeResult(x float64) float64 {
 	return (x * 0.5) - 25 + 3.14
 }

@@ -1,7 +1,7 @@
 package goodembedded
 
 // Implementation implémente ComplexEmbedded avec toutes les méthodes requises.
-type Implementation struct {
+type implementation struct {
 	data []byte
 }
 
@@ -13,7 +13,7 @@ type Implementation struct {
 // Returns:
 //   - n: nombre de bytes lus
 //   - err: erreur éventuelle
-func (i *Implementation) Read(p []byte) (n int, err error) {
+func (i *implementation) Read(p []byte) (n int, err error) {
 	return 0, nil
 }
 
@@ -25,7 +25,7 @@ func (i *Implementation) Read(p []byte) (n int, err error) {
 // Returns:
 //   - n: nombre de bytes écrits
 //   - err: erreur éventuelle
-func (i *Implementation) Write(p []byte) (n int, err error) {
+func (i *implementation) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
@@ -33,7 +33,7 @@ func (i *Implementation) Write(p []byte) (n int, err error) {
 //
 // Returns:
 //   - error: erreur si la fermeture échoue
-func (i *Implementation) Close() error {
+func (i *implementation) Close() error {
 	return nil
 }
 
@@ -41,7 +41,7 @@ func (i *Implementation) Close() error {
 //
 // Returns:
 //   - error: erreur si l'opération échoue
-func (i *Implementation) CustomMethod() error {
+func (i *implementation) CustomMethod() error {
 	return nil
 }
 
@@ -50,5 +50,5 @@ func (i *Implementation) CustomMethod() error {
 // Returns:
 //   - ComplexEmbedded: l'interface implémentée
 func NewImplementation() ComplexEmbedded {
-	return &Implementation{}
+	return &implementation{}
 }

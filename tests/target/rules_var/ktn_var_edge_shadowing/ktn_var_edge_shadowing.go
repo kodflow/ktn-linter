@@ -4,11 +4,20 @@ import "fmt"
 
 // Variables correctement nommées et utilisées sans shadowing problématique.
 
-var (
+// Constantes du package.
+const (
 	// GlobalValue valeur globale accessible partout.
 	GlobalValue int = 100
+	// Counter compteur global pour les boucles.
+	Counter int = 0
+)
+
+// Variables du package.
+var (
 	// Result résultat du traitement.
 	Result string
+	// Err erreur globale si nécessaire.
+	Err error
 )
 
 // ProcessData traite les données sans shadowing.
@@ -32,9 +41,6 @@ func ProcessData() string {
 	return localResult
 }
 
-// Counter compteur global pour les boucles.
-var Counter int = 0
-
 // LoopWithoutShadow traite une boucle sans shadowing.
 func LoopWithoutShadow() {
 	for i := 0; i < 10; i++ {
@@ -43,9 +49,6 @@ func LoopWithoutShadow() {
 		fmt.Println(doubledValue)
 	}
 }
-
-// Err erreur globale si nécessaire.
-var Err error
 
 // GoodErrorHandling gère les erreurs correctement sans shadowing.
 //
@@ -70,10 +73,23 @@ func GoodErrorHandling() error {
 	return nil
 }
 
+// readData lit les données.
+//
+// Returns:
+//   - string: les données lues
+//   - error: erreur si la lecture échoue
 func readData() (string, error) {
 	return "data", nil
 }
 
+// processResult traite le résultat.
+//
+// Params:
+//   - data: données à traiter
+//
+// Returns:
+//   - string: résultat du traitement
+//   - error: erreur si le traitement échoue
 func processResult(data string) (string, error) {
 	return data, nil
 }

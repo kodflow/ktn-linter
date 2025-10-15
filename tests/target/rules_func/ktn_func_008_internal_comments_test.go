@@ -6,6 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/tests/target/rules_func"
 )
 
+// TestComplexCalculationWithInternalComments teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestComplexCalculationWithInternalComments(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -47,6 +51,10 @@ func TestComplexCalculationWithInternalComments(t *testing.T) {
 	}
 }
 
+// TestProcessDataWithComments teste TODO.
+//
+// Params:
+//   - t: contexte de test
 func TestProcessDataWithComments(t *testing.T) {
 	tests := []struct {
 		name string

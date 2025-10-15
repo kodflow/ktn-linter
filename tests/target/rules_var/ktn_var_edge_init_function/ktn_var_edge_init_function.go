@@ -4,6 +4,7 @@ import "os"
 
 // Variables correctement documentées et initialisées avec init().
 
+// Variables du package.
 var (
 	// ConfigPath chemin du fichier de configuration, initialisé depuis l'environnement.
 	ConfigPath string
@@ -11,11 +12,11 @@ var (
 	UserSettings map[string]int
 	// APIURL URL de l'API externe.
 	APIURL string
+	// GlobalCounter compteur global initialisé à zéro dans init().
+	GlobalCounter int
 )
 
-// GlobalCounter compteur global initialisé à zéro dans init().
-var GlobalCounter int
-
+// init initialise le package.
 func init() {
 	// Initialisation des variables de configuration depuis l'environnement
 	ConfigPath = os.Getenv("CONFIG_PATH")
@@ -25,6 +26,7 @@ func init() {
 }
 
 // Variables de services initialisées au démarrage.
+// Variables du package.
 var (
 	// ServiceRegistry liste des services enregistrés.
 	ServiceRegistry []string
@@ -32,6 +34,7 @@ var (
 	IsInitialized bool
 )
 
+// init initialise le package.
 func init() {
 	// Enregistrement des services par défaut
 	ServiceRegistry = []string{"service1", "service2"}

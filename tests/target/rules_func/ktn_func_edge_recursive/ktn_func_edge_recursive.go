@@ -41,8 +41,8 @@ func Fibonacci(n int) int {
 //   - target: la valeur recherchée
 //
 // Returns:
-//   - *Node: le nœud trouvé ou nil si non trouvé
-func TreeSearch(node *Node, target int) *Node {
+//   - *node: le nœud trouvé ou nil si non trouvé
+func TreeSearch(node *node, target int) *node {
 	// Cas de base: arbre vide
 	if node == nil {
 		return nil
@@ -63,13 +63,13 @@ func TreeSearch(node *Node, target int) *Node {
 }
 
 // Node représente un nœud d'arbre binaire.
-type Node struct {
+type node struct {
 	// Value valeur stockée dans le nœud.
 	Value int
 	// Left enfant gauche.
-	Left *Node
+	Left *node
 	// Right enfant droit.
-	Right *Node
+	Right *node
 }
 
 // MutuallyRecursive1 première fonction d'une paire mutuellement récursive.

@@ -1,10 +1,10 @@
 package rules_func
 
-// complexFunctionWithComments est une fonction complexe avec commentaires internes.
+// ComplexFunctionWithComments est une fonction complexe avec commentaires internes.
 //
 // Returns:
 //   - int: résultat du calcul
-func complexFunctionWithComments() int {
+func ComplexFunctionWithComments() int {
 	// Initialiser le résultat
 	result := 0
 
@@ -12,29 +12,49 @@ func complexFunctionWithComments() int {
 	for i := 0; i < 100; i++ {
 		// Traiter les nombres pairs
 		if i%2 == 0 {
-			// Vérifier si divisible par 3
-			if i%3 == 0 {
-				// Cas spécial: divisible par 5
-				if i%5 == 0 {
-					result += i * 2
-				} else {
-					result += i
-				}
-			} else {
-				result -= i
-			}
+			result = processEvenNumber(i, result)
 		} else {
-			// Traiter les nombres impairs
-			if i%7 == 0 {
-				// Divisible par 7: multiplier par 3
-				result += i * 3
-			} else {
-				// Autres impairs: soustraire le double
-				result -= i * 2
-			}
+			result = processOddNumber(i, result)
 		}
 	}
 
 	// Retourne le résultat calculé
 	return result
+}
+
+// processEvenNumber traite un nombre pair.
+//
+// Params:
+//   - i: le nombre à traiter
+//   - result: le résultat accumulé
+//
+// Returns:
+//   - int: le nouveau résultat
+func processEvenNumber(i int, result int) int {
+	// Vérifier si divisible par 3
+	if i%3 == 0 {
+		// Cas spécial: divisible par 5
+		if i%5 == 0 {
+			return result + i*2
+		}
+		return result + i
+	}
+	return result - i
+}
+
+// processOddNumber traite un nombre impair.
+//
+// Params:
+//   - i: le nombre à traiter
+//   - result: le résultat accumulé
+//
+// Returns:
+//   - int: le nouveau résultat
+func processOddNumber(i int, result int) int {
+	// Divisible par 7: multiplier par 3
+	if i%7 == 0 {
+		return result + i*3
+	}
+	// Autres impairs: soustraire le double
+	return result - i*2
 }
