@@ -50,11 +50,19 @@ credentials.json
 *.dylib
 *.test
 *.out
+*_coverage*.out
+*_cov*.out
+coverage*.out
 coverage.txt
 coverage.html
 go.work
 go.work.sum
 vendor/
+
+# Scripts temporaires
+fix_*.py
+fix_*.txt
+fix_*.sh
 
 # Node.js / JavaScript / TypeScript
 node_modules/
