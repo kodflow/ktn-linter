@@ -13,9 +13,15 @@ KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kod
 - **Sans couleurs** (`-no-color`) : Pour CI/CD et logs
 
 **Règles implémentées :**
-- ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite (32 tests isolés)
-- ✅ **Variables (package-level)** : Regroupement, documentation, typage et nommage (51 tests isolés)
-- ✅ **Fonctions (natives)** : Nommage, documentation stricte, complexité < 10, longueur < 35 lignes (9 tests isolés)
+- ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite
+- ✅ **Variables (package-level)** : Regroupement, documentation, typage et nommage
+- ✅ **Fonctions (natives)** : Nommage, documentation stricte, complexité, longueur, profondeur
+- ✅ **Interfaces** : Design interface-first, constructeurs obligatoires, fichiers dédiés
+- ✅ **Tests** : Package naming, couverture fichiers, documentation complète
+
+**Tests de validation :**
+- 🎯 **tests/target/** : 0 violation - Code PARFAIT conforme à toutes les règles
+- 🔴 **tests/source/** : 405 violations - Catalogue complet d'anti-patterns
 
 ---
 
@@ -119,14 +125,19 @@ make install-tools   # Installer golangci-lint
 │   │   └── messageutil/         # Extraction messages
 │   └── plugin/                  # Plugin module (pour future intégration)
 ├── tests/
-│   ├── source/                  # Code avec erreurs isolées (UNIQUEMENT)
-│   │   ├── rules_const/         # Tests CONST (32 erreurs isolées)
-│   │   ├── rules_var/           # Tests VAR (51 erreurs isolées)
-│   │   └── rules_func/          # Tests FUNC (9 erreurs isolées)
-│   └── target/                  # Code parfait (UNIQUEMENT)
-│       ├── rules_const/         # Exemples parfaits CONST (0 erreur)
-│       ├── rules_var/           # Exemples parfaits VAR (0 erreur)
-│       └── rules_func/          # Exemples parfaits FUNC (0 erreur)
+│   ├── source/                  # Code avec 405 violations - Anti-patterns
+│   │   ├── README.md            # Guide des anti-patterns
+│   │   ├── rules_const/         # Constantes mal déclarées
+│   │   ├── rules_var/           # Variables anarchiques
+│   │   ├── rules_func/          # Fonctions catastrophiques
+│   │   ├── rules_interface/     # Design anti-patterns
+│   │   └── rules_test/          # Tests inadéquats
+│   └── target/                  # Code avec 0 violation - Perfection
+│       ├── rules_const/         # Constantes parfaites
+│       ├── rules_var/           # Variables optimales
+│       ├── rules_func/          # Fonctions exemplaires
+│       ├── rules_interface/     # Interface-first design
+│       └── rules_test/          # Tests complets
 ├── .vscode/
 │   ├── settings.json            # Config VSCode + wrapper
 │   └── extensions.json          # Extension Go recommandée
@@ -138,10 +149,13 @@ make install-tools   # Installer golangci-lint
 ```
 
 **Architecture des tests :**
-- **Principe** : "Tout parfait SAUF l'erreur testée"
-- **source/** : Code avec erreurs isolées (chaque test = 1 seule erreur)
-- **target/** : Code parfait à 100% (aucune erreur détectée)
-- **Isolation** : Chaque cas de test ne déclenche QUE l'erreur spécifique testée
+- **Dualité parfaite** :
+  - `tests/target/` : Code PARFAIT avec 0 violation (référence de qualité)
+  - `tests/source/` : Code FOIREUX avec 405 violations (ce qu'il NE FAUT PAS faire)
+- **Couverture complète** : Tous les scénarios, edge cases et anti-patterns
+- **Validation bidirectionnelle** :
+  - target/ prouve que le bon code passe ✅
+  - source/ prouve que le mauvais code est détecté ❌
 
 ---
 
@@ -185,8 +199,32 @@ Documentation complète : [tests/source/rules_var/.README.md](./tests/source/rul
 | `KTN-FUNC-005` | Trop de paramètres (> 5) |
 | `KTN-FUNC-006` | Fonction trop longue (> 35 lignes) |
 | `KTN-FUNC-007` | Complexité cyclomatique trop élevée (≥ 10) |
+| `KTN-FUNC-008` | Commentaires internes manquants |
+| `KTN-FUNC-009` | Commentaires sur returns manquants |
+| `KTN-FUNC-010` | Profondeur d'imbrication trop élevée (> 3) |
 
 Documentation complète : [tests/source/rules_func/.README.md](./tests/source/rules_func/.README.md)
+
+### Interfaces (KTN-INTERFACE-XXX)
+
+| Code | Description |
+|------|-------------|
+| `KTN-INTERFACE-001` | Package sans fichier interfaces.go |
+| `KTN-INTERFACE-002` | Type public défini comme struct au lieu d'interface |
+| `KTN-INTERFACE-003` | Commentaire godoc incomplet sur interface |
+| `KTN-INTERFACE-004` | Commentaire godoc incomplet sur méthode |
+| `KTN-INTERFACE-005` | Interface vide ou avec interface{} |
+| `KTN-INTERFACE-006` | Interface sans constructeur New* |
+| `KTN-INTERFACE-007` | Package n'exportant que des types privés |
+
+### Tests (KTN-TEST-XXX)
+
+| Code | Description |
+|------|-------------|
+| `KTN-TEST-001` | Fichier de test avec package incorrect (doit être package_test) |
+| `KTN-TEST-002` | Fichier sans fichier de test correspondant |
+| `KTN-TEST-003` | Fichier de test sans fichier source correspondant |
+| `KTN-TEST-004` | Fonction de test dans fichier non-test |
 
 ---
 
