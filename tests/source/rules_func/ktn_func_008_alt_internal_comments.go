@@ -1,10 +1,7 @@
 package rules_func
 
-// complexFunctionWithoutComments est une fonction complexe sans commentaires internes.
-//
-// Returns:
-//   - int: résultat du calcul
-func complexFunctionWithoutComments() int {
+// complexFunctionWithComments fonction sans doc complète (violation)
+func complexFunctionWithComments() int {
 	result := 0
 
 	for i := 0; i < 100; i++ {
@@ -27,6 +24,5 @@ func complexFunctionWithoutComments() int {
 		}
 	}
 
-	// Retourne le résultat calculé
 	return result
 }
