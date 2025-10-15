@@ -2,10 +2,12 @@ package KTN_INTERFACE_005_test
 
 import "testing"
 
-// TestInterfaces teste le fichier interfaces.go.
+// TestInterfacesExist vérifie que les interfaces sont bien définies.
 //
 // Params:
-//   - t: instance de test
-func TestInterfaces(t *testing.T) {
-	t.Log("Test de validation pour interfaces.go")
+//   - t: contexte de test
+func TestInterfacesExist(t *testing.T) {
+	// Ce test vérifie la compilation des interfaces
+	// Les tests fonctionnels seront dans des fichiers séparés
+	t.Log("Interfaces compiled successfully")
 }

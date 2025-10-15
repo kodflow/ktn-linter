@@ -293,6 +293,12 @@ func checkTestCoverageWithFS(pass *analysis.Pass, files map[string]*fileInfo, fs
 // Returns:
 //   - bool: true si le fichier doit être ignoré
 func shouldSkipTestCoverage(pass *analysis.Pass, info *fileInfo) bool {
+	// Ignorer mock.go (fichier de mocks réutilisables avec build tag test)
+	baseName := filepath.Base(info.path)
+	if baseName == "mock.go" {
+		return true
+	}
+
 	file := findASTFile(pass, info.path)
 	if file == nil {
 		return true

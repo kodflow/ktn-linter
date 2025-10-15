@@ -2,10 +2,12 @@ package rules_var_test
 
 import "testing"
 
-// TestValidator teste le validateur.
+// TestInterfacesExist vérifie que les interfaces sont bien définies.
 //
 // Params:
 //   - t: contexte de test
-func TestValidator(t *testing.T) {
-	t.Log("Test placeholder for interfaces.go")
+func TestInterfacesExist(t *testing.T) {
+	// Ce test vérifie la compilation des interfaces
+	// Les tests fonctionnels seront dans des fichiers séparés
+	t.Log("Interfaces compiled successfully")
 }

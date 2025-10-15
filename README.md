@@ -21,7 +21,7 @@ KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kod
 
 **Tests de validation :**
 - 🎯 **tests/target/** : 0 violation - Code PARFAIT conforme à toutes les règles
-- 🔴 **tests/source/** : 405 violations - Catalogue complet d'anti-patterns
+- 🔴 **tests/source/** : 424 violations - Catalogue complet d'anti-patterns
 
 ---
 
@@ -302,10 +302,12 @@ Design **interface-first** : types publics = interfaces, implémentations privé
 | `KTN-INTERFACE-005` | Interface vide ou interface{} | Définir méthodes concrètes |
 | `KTN-INTERFACE-006` | Interface sans constructeur New* | Créer `NewXxx()` |
 | `KTN-INTERFACE-007` | Package sans types publics | Exposer au moins une interface |
+| `KTN-INTERFACE-008` | **interfaces.go contient des structs** | **Uniquement interfaces dans interfaces.go** |
+| `KTN-MOCK-001` | **mock.go manquant alors que interfaces existent** | **Créer mock.go avec build tag** |
 
-**Pattern obligatoire :**
+**Pattern obligatoire (KTN-INTERFACE-008) :**
 ```go
-// interfaces.go
+// interfaces.go - UNIQUEMENT des interfaces (KTN-INTERFACE-008)
 package myservice
 
 // Service définit l'interface du service.
@@ -337,18 +339,53 @@ func NewService(db Database) Service {
 func (s *service) Process(data string) error {
     return s.db.Save(data)
 }
+
+// mock.go - Mocks réutilisables (KTN-MOCK-001)
+//go:build test
+// +build test
+
+package myservice
+
+// MockService mock réutilisable de Service.
+type MockService struct {
+    ProcessFunc    func(data string) error
+    GetStatusFunc  func() string
+}
+
+func (m *MockService) Process(data string) error {
+    if m.ProcessFunc != nil {
+        return m.ProcessFunc(data)
+    }
+    return nil
+}
+
+func (m *MockService) GetStatus() string {
+    if m.GetStatusFunc != nil {
+        return m.GetStatusFunc()
+    }
+    return ""
+}
+
+var _ Service = (*MockService)(nil)
 ```
 
+**Nouvelles règles strictes (depuis v1.1) :**
+- ✅ **KTN-INTERFACE-008** : `interfaces.go` ne contient **QUE** des interfaces (pas de structs)
+- ✅ **KTN-MOCK-001** : `mock.go` **obligatoire** si `interfaces.go` a des interfaces
+- ✅ **mock.go avec `//go:build test`** pour exclure du build production
+- ✅ Mocks réutilisables dans **tous les packages** de test
+
 **Bénéfices :**
-- ✅ **Testabilité** : Interfaces mockables
+- ✅ **Testabilité** : Interfaces mockables + mocks centralisés
 - ✅ **Découplage** : Dépendances sur contrats, pas implémentations
 - ✅ **Flexibilité** : Implémentations interchangeables
+- ✅ **Maintenabilité** : Un seul fichier mock.go par package
 
 ---
 
 ### 🧪 Tests (KTN-TEST-XXX)
 
-Tests avec **package_test**, fichiers dédiés et documentation complète.
+Tests avec **package_test**, fichiers dédiés, **mocks réutilisables** et documentation complète.
 
 | Code | Description | Solution |
 |------|-------------|----------|
@@ -357,27 +394,77 @@ Tests avec **package_test**, fichiers dédiés et documentation complète.
 | `KTN-TEST-003` | Test sans fichier source | Créer fichier source ou déplacer test |
 | `KTN-TEST-004` | Fonction test hors fichier `*_test.go` | Déplacer vers `*_test.go` |
 
-**Pattern obligatoire :**
-```go
-// user_test.go
-package mypackage_test
+**Architecture de tests :**
+```
+package myservice/
+  ├── interfaces.go      # Interfaces publiques UNIQUEMENT
+  ├── impl.go           # Implémentations privées
+  ├── mock.go           # Mocks réutilisables (build tag test)
+  ├── service_test.go   # Tests (package myservice_test)
+  └── helper_test.go    # Tests helpers (package myservice_test)
+```
 
-import "testing"
+**Fichier mock.go (mocks réutilisables) :**
+```go
+//go:build test
+// +build test
+
+package myservice
+
+// MockService est un mock réutilisable de Service.
+type MockService struct {
+    ProcessFunc    func(data string) error
+    GetStatusFunc  func() string
+}
+
+// Process implémente Service.Process.
+func (m *MockService) Process(data string) error {
+    if m.ProcessFunc != nil {
+        return m.ProcessFunc(data)
+    }
+    return nil
+}
+
+// GetStatus implémente Service.GetStatus.
+func (m *MockService) GetStatus() string {
+    if m.GetStatusFunc != nil {
+        return m.GetStatusFunc()
+    }
+    return ""
+}
+
+// Vérification à la compilation
+var _ Service = (*MockService)(nil)
+```
+
+**Utilisation dans les tests :**
+```go
+// service_test.go
+package myservice_test
+
+import (
+    "testing"
+    "myproject/myservice"
+)
 
 // TestCreateUser vérifie la création d'utilisateur.
 //
 // Params:
 //   - t: contexte de test
-func TestCreateUser(t *testing.T) {
-    // Arrange
-    user := &User{Name: "John"}
+func TestProcessWithMock(t *testing.T) {
+    // Arrange - utiliser le mock depuis mock.go
+    mock := &myservice.MockService{
+        ProcessFunc: func(data string) error {
+            return nil
+        },
+    }
 
     // Act
-    err := CreateUser(user)
+    err := mock.Process("test data")
 
     // Assert
     if err != nil {
-        t.Errorf("CreateUser() error = %v", err)
+        t.Errorf("Process() error = %v", err)
     }
 }
 ```
@@ -385,7 +472,10 @@ func TestCreateUser(t *testing.T) {
 **Règles :**
 - ✅ Package `xxx_test` pour isolation
 - ✅ Un fichier `*_test.go` par fichier source
+- ✅ **`mock.go` avec build tag `//go:build test`** pour mocks réutilisables
+- ✅ **Exception : `mock.go` n'a pas besoin de `mock_test.go`**
 - ✅ Godoc avec section Params sur tous les tests
+- ✅ Mocks exportés (struct Mock*) utilisables depuis tous les packages
 
 ---
 
