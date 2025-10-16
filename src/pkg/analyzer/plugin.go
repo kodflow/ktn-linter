@@ -35,14 +35,15 @@ func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 		StructAnalyzer,
 		InterfaceAnalyzer,
 		AllocAnalyzer,
+		PoolAnalyzer,
 	}, nil
 }
 
 // GetLoadMode returns the load mode for the analyzers.
 //
 // Returns:
-//   - string: le mode de chargement (LoadModeSyntax)
+//   - string: le mode de chargement (LoadModeTypesInfo)
 func (p *plugin) GetLoadMode() string {
-	// Retourne LoadModeSyntax car les analyseurs n'ont besoin que de l'AST
-	return register.LoadModeSyntax
+	// Retourne LoadModeTypesInfo car certains analyseurs (pool) ont besoin des types
+	return register.LoadModeTypesInfo
 }
