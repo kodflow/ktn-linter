@@ -122,15 +122,21 @@ func GoodMakePreallocated() []int {
 
 // User est une struct de test.
 type User struct {
-	ID   int
+	// ID est l'identifiant unique de l'utilisateur.
+	ID int
+	// Name est le nom de l'utilisateur.
 	Name string
-	Age  int
+	// Age est l'âge de l'utilisateur.
+	Age int
 }
 
 // Config est une struct de configuration.
 type Config struct {
-	Host    string
-	Port    int
+	// Host est l'adresse du serveur.
+	Host string
+	// Port est le port du serveur.
+	Port int
+	// Timeout est le délai d'attente en secondes.
 	Timeout int
 }
 

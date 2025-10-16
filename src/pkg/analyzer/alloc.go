@@ -96,38 +96,58 @@ func checkNewUsage(pass *analysis.Pass, callExpr *ast.CallExpr) {
 
 	// KTN-ALLOC-001 : Interdire new() avec slice/map/chan
 	if isReferenceType(arg) {
-		typeName := getTypeName(arg)
-		pass.Reportf(callExpr.Pos(),
-			"[KTN-ALLOC-001] Utilisation de new() avec un type référence (%s) interdite.\n"+
-				"new() retourne un pointeur vers nil pour les types référence, ce qui cause des panics.\n"+
-				"Utilisez make() à la place.\n"+
-				"Exemple:\n"+
-				"  // ❌ INTERDIT\n"+
-				"  m := new(%s)  // *%s avec nil map/slice/chan\n"+
-				"  (*m)[\"key\"] = value  // 💥 PANIC\n"+
-				"\n"+
-				"  // ✅ CORRECT\n"+
-				"  m := make(%s)\n"+
-				"  m[\"key\"] = value  // ✅ Fonctionne",
-			typeName, typeName, typeName, typeName)
+		reportReferenceTypeViolation(pass, callExpr, arg)
 		// Retourne car la violation a été rapportée
 		return
 	}
 
 	// KTN-ALLOC-004 : Préférer &struct{} à new(struct)
 	if isStructType(arg) {
-		typeName := getTypeName(arg)
-		pass.Reportf(callExpr.Pos(),
-			"[KTN-ALLOC-004] Utilisez le composite literal &%s{} au lieu de new(%s).\n"+
-				"En Go idiomatique, on préfère les composite literals pour les structs.\n"+
-				"Exemple:\n"+
-				"  // ❌ NON-IDIOMATIQUE\n"+
-				"  p := new(%s)\n"+
-				"\n"+
-				"  // ✅ IDIOMATIQUE GO\n"+
-				"  p := &%s{}",
-			typeName, typeName, typeName, typeName)
+		reportStructTypeViolation(pass, callExpr, arg)
 	}
+}
+
+// reportReferenceTypeViolation rapporte une violation KTN-ALLOC-001.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - callExpr: l'appel à new()
+//   - arg: l'argument de type référence
+func reportReferenceTypeViolation(pass *analysis.Pass, callExpr *ast.CallExpr, arg ast.Expr) {
+	typeName := getTypeName(arg)
+	pass.Reportf(callExpr.Pos(),
+		"[KTN-ALLOC-001] Utilisation de new() avec un type référence (%s) interdite.\n"+
+			"new() retourne un pointeur vers nil pour les types référence, ce qui cause des panics.\n"+
+			"Utilisez make() à la place.\n"+
+			"Exemple:\n"+
+			"  // ❌ INTERDIT\n"+
+			"  m := new(%s)  // *%s avec nil map/slice/chan\n"+
+			"  (*m)[\"key\"] = value  // 💥 PANIC\n"+
+			"\n"+
+			"  // ✅ CORRECT\n"+
+			"  m := make(%s)\n"+
+			"  m[\"key\"] = value  // ✅ Fonctionne",
+		typeName, typeName, typeName, typeName)
+}
+
+// reportStructTypeViolation rapporte une violation KTN-ALLOC-004.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - callExpr: l'appel à new()
+//   - arg: l'argument de type struct
+func reportStructTypeViolation(pass *analysis.Pass, callExpr *ast.CallExpr, arg ast.Expr) {
+	typeName := getTypeName(arg)
+	pass.Reportf(callExpr.Pos(),
+		"[KTN-ALLOC-004] Utilisez le composite literal &%s{} au lieu de new(%s).\n"+
+			"En Go idiomatique, on préfère les composite literals pour les structs.\n"+
+			"Exemple:\n"+
+			"  // ❌ NON-IDIOMATIQUE\n"+
+			"  p := new(%s)\n"+
+			"\n"+
+			"  // ✅ IDIOMATIQUE GO\n"+
+			"  p := &%s{}",
+		typeName, typeName, typeName, typeName)
 }
 
 // checkMakeUsage vérifie l'utilisation de make() pour les slices.
@@ -170,67 +190,102 @@ func checkMakeUsage(pass *analysis.Pass, callExpr *ast.CallExpr) {
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - funcDecl: la déclaration de fonction à analyser
 func checkMakeAppendPattern(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
-	// Map pour tracker les variables créées avec make([]T, 0)
 	makeSliceVars := make(map[string]token.Pos)
 
-	// Parcourir tous les statements de la fonction
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Détecter les assignations avec make([]T, 0)
-		assignStmt, ok := n.(*ast.AssignStmt)
-		if ok && len(assignStmt.Lhs) == 1 && len(assignStmt.Rhs) == 1 {
-			// Vérifier si le RHS est un make()
-			if isMakeSliceZero(assignStmt.Rhs[0]) {
-				// Récupérer le nom de la variable
-				if ident, ok := assignStmt.Lhs[0].(*ast.Ident); ok {
-					makeSliceVars[ident.Name] = assignStmt.Pos()
-				}
-			}
-		}
-
-		// Détecter les appels à append() sur ces variables
-		callExpr, ok := n.(*ast.CallExpr)
-		if !ok {
-			// Retourne true pour continuer l'inspection
-			return true
-		}
-
-		ident, ok := callExpr.Fun.(*ast.Ident)
-		if !ok || ident.Name != "append" {
-			// Retourne true pour continuer l'inspection
-			return true
-		}
-
-		// Vérifier si append() utilise une variable trackée
-		if len(callExpr.Args) > 0 {
-			if firstArg, ok := callExpr.Args[0].(*ast.Ident); ok {
-				if makePos, found := makeSliceVars[firstArg.Name]; found {
-					// KTN-ALLOC-002 : make([]T, 0) suivi d'append
-					pass.Reportf(makePos,
-						"[KTN-ALLOC-002] Slice '%s' créé avec make([]T, 0) puis utilisé avec append().\n"+
-							"Cela force des réallocations coûteuses à chaque append.\n"+
-							"Si la taille est connue, spécifiez la capacité.\n"+
-							"Exemple:\n"+
-							"  // ❌ INEFFICACE\n"+
-							"  items := make([]Item, 0)\n"+
-							"  for _, v := range source {\n"+
-							"      items = append(items, v)  // Réallocation O(log n)\n"+
-							"  }\n"+
-							"\n"+
-							"  // ✅ OPTIMISÉ\n"+
-							"  items := make([]Item, 0, len(source))  // Préallocation\n"+
-							"  for _, v := range source {\n"+
-							"      items = append(items, v)  // Pas de réallocation\n"+
-							"  }",
-						firstArg.Name)
-					// Supprimer pour éviter les rapports multiples
-					delete(makeSliceVars, firstArg.Name)
-				}
-			}
-		}
-
+		trackMakeSliceZeroAssignment(n, makeSliceVars)
+		checkAppendOnTrackedSlice(pass, n, makeSliceVars)
 		// Retourne true pour continuer l'inspection
 		return true
 	})
+}
+
+// trackMakeSliceZeroAssignment détecte et enregistre les assignations make([]T, 0).
+//
+// Params:
+//   - n: le nœud AST à analyser
+//   - makeSliceVars: map des variables trackées avec leur position
+func trackMakeSliceZeroAssignment(n ast.Node, makeSliceVars map[string]token.Pos) {
+	assignStmt, ok := n.(*ast.AssignStmt)
+	if !ok || len(assignStmt.Lhs) != 1 || len(assignStmt.Rhs) != 1 {
+		// Retourne car ce n'est pas une assignation simple
+		return
+	}
+
+	if !isMakeSliceZero(assignStmt.Rhs[0]) {
+		// Retourne car ce n'est pas make([]T, 0)
+		return
+	}
+
+	if ident, ok := assignStmt.Lhs[0].(*ast.Ident); ok {
+		makeSliceVars[ident.Name] = assignStmt.Pos()
+	}
+}
+
+// checkAppendOnTrackedSlice vérifie si append() est appelé sur un slice tracké.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - n: le nœud AST à analyser
+//   - makeSliceVars: map des variables trackées
+func checkAppendOnTrackedSlice(pass *analysis.Pass, n ast.Node, makeSliceVars map[string]token.Pos) {
+	callExpr, ok := n.(*ast.CallExpr)
+	if !ok {
+		// Retourne car ce n'est pas un appel de fonction
+		return
+	}
+
+	ident, ok := callExpr.Fun.(*ast.Ident)
+	if !ok || ident.Name != "append" {
+		// Retourne car ce n'est pas append()
+		return
+	}
+
+	if len(callExpr.Args) == 0 {
+		// Retourne car append() sans arguments
+		return
+	}
+
+	firstArg, ok := callExpr.Args[0].(*ast.Ident)
+	if !ok {
+		// Retourne car le premier argument n'est pas un identifiant
+		return
+	}
+
+	makePos, found := makeSliceVars[firstArg.Name]
+	if !found {
+		// Retourne car la variable n'est pas trackée
+		return
+	}
+
+	reportMakeAppendViolation(pass, makePos, firstArg.Name)
+	delete(makeSliceVars, firstArg.Name)
+}
+
+// reportMakeAppendViolation rapporte une violation KTN-ALLOC-002.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - pos: position du make()
+//   - sliceName: nom du slice
+func reportMakeAppendViolation(pass *analysis.Pass, pos token.Pos, sliceName string) {
+	pass.Reportf(pos,
+		"[KTN-ALLOC-002] Slice '%s' créé avec make([]T, 0) puis utilisé avec append().\n"+
+			"Cela force des réallocations coûteuses à chaque append.\n"+
+			"Si la taille est connue, spécifiez la capacité.\n"+
+			"Exemple:\n"+
+			"  // ❌ INEFFICACE\n"+
+			"  items := make([]Item, 0)\n"+
+			"  for _, v := range source {\n"+
+			"      items = append(items, v)  // Réallocation O(log n)\n"+
+			"  }\n"+
+			"\n"+
+			"  // ✅ OPTIMISÉ\n"+
+			"  items := make([]Item, 0, len(source))  // Préallocation\n"+
+			"  for _, v := range source {\n"+
+			"      items = append(items, v)  // Pas de réallocation\n"+
+			"  }",
+		sliceName)
 }
 
 // isReferenceType vérifie si un type est un type référence (slice/map/chan).

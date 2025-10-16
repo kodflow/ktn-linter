@@ -89,7 +89,7 @@ func countInner(y int) int {
 // Returns:
 //   - []int: valeurs filtrées
 func ComplexNestedGood(values []int) []int {
-	result := make([]int, 0)
+	result := make([]int, 0, len(values))
 
 	for _, v := range values { // Niveau 1
 		if v > 0 { // Niveau 2
