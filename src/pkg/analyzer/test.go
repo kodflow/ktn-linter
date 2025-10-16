@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"go/ast"
+	"go/token"
 	"path/filepath"
 	"strings"
 
@@ -293,8 +294,9 @@ func checkTestCoverageWithFS(pass *analysis.Pass, files map[string]*fileInfo, fs
 // Returns:
 //   - bool: true si le fichier doit être ignoré
 func shouldSkipTestCoverage(pass *analysis.Pass, info *fileInfo) bool {
-	// Ignorer mock.go (fichier de mocks réutilisables avec build tag test)
 	baseName := filepath.Base(info.path)
+
+	// Ignorer mock.go (fichier de mocks réutilisables avec build tag test)
 	if baseName == "mock.go" {
 		return true
 	}
@@ -303,8 +305,75 @@ func shouldSkipTestCoverage(pass *analysis.Pass, info *fileInfo) bool {
 	if file == nil {
 		return true
 	}
+
+	// Ignorer interfaces.go SI ET SEULEMENT SI il contient uniquement des interfaces
+	if baseName == "interfaces.go" && containsOnlyInterfaces(file) {
+		return true
+	}
+
 	// Ignorer les fichiers qui ne contiennent que des const/var
 	return !hasTestableElements(file)
+}
+
+// containsOnlyInterfaces vérifie si un fichier contient uniquement des interfaces.
+//
+// Params:
+//   - file: le fichier AST à analyser
+//
+// Returns:
+//   - bool: true si le fichier contient uniquement des interfaces (pas de struct, pas de fonctions)
+func containsOnlyInterfaces(file *ast.File) bool {
+	hasInterface := false
+
+	for _, decl := range file.Decls {
+		if isFunctionDecl(decl) {
+			return false
+		}
+
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.TYPE {
+			continue
+		}
+
+		for _, spec := range genDecl.Specs {
+			typeSpec, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				continue
+			}
+
+			if isInterfaceType(typeSpec) {
+				hasInterface = true
+			} else {
+				return false
+			}
+		}
+	}
+
+	return hasInterface
+}
+
+// isFunctionDecl vérifie si une déclaration est une fonction.
+//
+// Params:
+//   - decl: la déclaration à vérifier
+//
+// Returns:
+//   - bool: true si c'est une fonction
+func isFunctionDecl(decl ast.Decl) bool {
+	_, isFunc := decl.(*ast.FuncDecl)
+	return isFunc
+}
+
+// isInterfaceType vérifie si un typeSpec est une interface.
+//
+// Params:
+//   - typeSpec: la spécification de type
+//
+// Returns:
+//   - bool: true si c'est une interface
+func isInterfaceType(typeSpec *ast.TypeSpec) bool {
+	_, isInterface := typeSpec.Type.(*ast.InterfaceType)
+	return isInterface
 }
 
 // reportMissingTest rapporte l'absence de fichier de test.

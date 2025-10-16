@@ -3,5 +3,21 @@
 
 package rules_var
 
-// Mock placeholder pour rules_var
-// Les mocks spécifiques seront ajoutés selon les besoins des tests
+// MockValidator est le mock de Validator.
+type MockValidator struct {
+	ValidateFunc func(value interface{}) error
+}
+
+// Validate implémente l'interface Validator.
+//
+// Params:
+//   - value: la valeur à valider
+//
+// Returns:
+//   - error: l'erreur de validation
+func (m *MockValidator) Validate(value interface{}) error {
+	if m.ValidateFunc != nil {
+		return m.ValidateFunc(value)
+	}
+	return nil
+}

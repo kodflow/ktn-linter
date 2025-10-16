@@ -59,3 +59,79 @@ func ToInternalFileInfo(fi fileInfoForTest) *fileInfo {
 		hasTests:    fi.HasTests,
 	}
 }
+
+// ContainsOnlyInterfacesForTest expose containsOnlyInterfaces pour les tests.
+//
+// Params:
+//   - file: le fichier AST à analyser
+//
+// Returns:
+//   - bool: true si le fichier contient uniquement des interfaces
+func ContainsOnlyInterfacesForTest(file *ast.File) bool {
+	return containsOnlyInterfaces(file)
+}
+
+// IsFunctionDeclForTest expose isFunctionDecl pour les tests.
+//
+// Params:
+//   - decl: la déclaration à vérifier
+//
+// Returns:
+//   - bool: true si c'est une fonction
+func IsFunctionDeclForTest(decl ast.Decl) bool {
+	return isFunctionDecl(decl)
+}
+
+// IsInterfaceTypeForTest expose isInterfaceType pour les tests.
+//
+// Params:
+//   - typeSpec: la spécification de type
+//
+// Returns:
+//   - bool: true si c'est une interface
+func IsInterfaceTypeForTest(typeSpec *ast.TypeSpec) bool {
+	return isInterfaceType(typeSpec)
+}
+
+// IsTestableTypeForTest expose isTestableType pour les tests.
+//
+// Params:
+//   - decl: la déclaration à vérifier
+//
+// Returns:
+//   - bool: true si contient struct ou interface
+func IsTestableTypeForTest(decl ast.Decl) bool {
+	return isTestableType(decl)
+}
+
+// HasTestableElementsForTest expose hasTestableElements pour les tests.
+//
+// Params:
+//   - file: le fichier AST à analyser
+//
+// Returns:
+//   - bool: true si le fichier contient des éléments testables
+func HasTestableElementsForTest(file *ast.File) bool {
+	return hasTestableElements(file)
+}
+
+// ShouldSkipTestCoverageForTest expose shouldSkipTestCoverage pour les tests via un wrapper.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - path: le chemin du fichier
+//   - isTest: si c'est un fichier de test
+//   - pkgName: nom du package
+//   - hasTests: si le fichier contient des tests
+//
+// Returns:
+//   - bool: true si le fichier doit être ignoré
+func ShouldSkipTestCoverageForTest(pass *analysis.Pass, path string, isTest bool, pkgName string, hasTests bool) bool {
+	info := &fileInfo{
+		path:        path,
+		isTest:      isTest,
+		packageName: pkgName,
+		hasTests:    hasTests,
+	}
+	return shouldSkipTestCoverage(pass, info)
+}

@@ -552,4 +552,3 @@ func Foo() {}
 		t.Error("Expected nil for non-existent file")
 	}
 }
-

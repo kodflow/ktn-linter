@@ -3,5 +3,29 @@
 
 package rules_func
 
-// Mock placeholder pour rules_func
-// Les mocks spécifiques seront ajoutés selon les besoins des tests
+// MockResourceManager est le mock de ResourceManager.
+type MockResourceManager struct {
+	OpenFunc  func(name string) error
+	CloseFunc func()
+}
+
+// Open implémente l'interface ResourceManager.
+//
+// Params:
+//   - name: nom de la ressource à ouvrir
+//
+// Returns:
+//   - error: erreur éventuelle
+func (m *MockResourceManager) Open(name string) error {
+	if m.OpenFunc != nil {
+		return m.OpenFunc(name)
+	}
+	return nil
+}
+
+// Close implémente l'interface ResourceManager.
+func (m *MockResourceManager) Close() {
+	if m.CloseFunc != nil {
+		m.CloseFunc()
+	}
+}
