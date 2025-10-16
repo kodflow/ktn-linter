@@ -3,17 +3,24 @@ package rules_pool_good
 
 import "sync"
 
-var bufferPool = sync.Pool{
-	New: func() interface{} {
-		return make([]byte, 1024)
-	},
-}
+// Pools de ressources
+//
+// Ces pools permettent de réutiliser les objets pour réduire les allocations.
+var (
+	// bufferPool est un pool de buffers de 1024 bytes.
+	bufferPool sync.Pool = sync.Pool{
+		New: func() interface{} {
+			return make([]byte, 1024)
+		},
+	}
 
-var objectPool = &sync.Pool{
-	New: func() interface{} {
-		return &DataObject{}
-	},
-}
+	// objectPool est un pool d'objets DataObject.
+	objectPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &DataObject{}
+		},
+	}
+)
 
 // DataObject est une struct de test.
 type DataObject struct {
@@ -66,18 +73,25 @@ func GoodDeferInGoroutine() {
 }
 
 // GoodDeferWithReturn utilise defer avant return.
+//
+// Params:
+//   - condition: condition de retour anticipé
 func GoodDeferWithReturn(condition bool) {
 	buf := bufferPool.Get().([]byte)
 	defer bufferPool.Put(buf) // ✅ Correct : protège tous les returns
 
 	if condition {
-		return // defer s'exécutera quand même
+		// Retourne tôt si condition vraie, defer s'exécutera quand même
+		return
 	}
 
 	processBuffer(buf)
 }
 
 // GoodDeferWithPanic utilise defer qui protège contre panic.
+//
+// Params:
+//   - index: index à accéder dans le buffer
 func GoodDeferWithPanic(index int) {
 	buf := bufferPool.Get().([]byte)
 	defer bufferPool.Put(buf) // ✅ Correct : protège même si panic
@@ -86,6 +100,9 @@ func GoodDeferWithPanic(index int) {
 }
 
 // GoodLoopWithDefer utilise defer dans boucle (attention : coût).
+//
+// Params:
+//   - n: nombre d'itérations
 func GoodLoopWithDefer(n int) {
 	for i := 0; i < n; i++ {
 		func() {
@@ -98,6 +115,9 @@ func GoodLoopWithDefer(n int) {
 }
 
 // GoodDeferInCondition utilise defer dans condition.
+//
+// Params:
+//   - condition: condition pour traitement
 func GoodDeferInCondition(condition bool) {
 	if condition {
 		buf := bufferPool.Get().([]byte)
@@ -108,6 +128,9 @@ func GoodDeferInCondition(condition bool) {
 }
 
 // GoodDeferInSwitch utilise defer dans switch.
+//
+// Params:
+//   - choice: choix de traitement
 func GoodDeferInSwitch(choice int) {
 	switch choice {
 	case 1:
@@ -122,21 +145,34 @@ func GoodDeferInSwitch(choice int) {
 }
 
 // GoodDeferWithError utilise defer avant erreur potentielle.
+//
+// Returns:
+//   - error: erreur de traitement
 func GoodDeferWithError() error {
 	buf := bufferPool.Get().([]byte)
 	defer bufferPool.Put(buf) // ✅ Correct : protège même si erreur
 
 	_ = buf
+	// Retourne l'erreur de traitement
 	return processWithError()
 }
 
+// processBuffer traite un buffer en remplissant avec des valeurs.
+//
+// Params:
+//   - buf: buffer à traiter
 func processBuffer(buf []byte) {
 	for i := 0; i < len(buf); i++ {
 		buf[i] = byte(i % 256)
 	}
 }
 
+// processWithError simule un traitement avec erreur potentielle.
+//
+// Returns:
+//   - error: toujours nil dans ce cas
 func processWithError() error {
+	// Retourne nil car pas d'erreur
 	return nil
 }
 
@@ -247,6 +283,7 @@ func GoodMixedParams(id int, cfg *LargeConfig, name string) {
 // Returns:
 //   - *LargeConfig: configuration par pointeur
 func GoodReturnLargeStruct() *LargeConfig {
+	// Retourne une nouvelle configuration avec valeurs par défaut
 	return &LargeConfig{
 		Host: "localhost",
 		Port: 8080,
@@ -297,6 +334,7 @@ func GoodProcessNestedStructs(n *NestedStruct) {
 // Returns:
 //   - func(*LargeConfig): closure avec pointeur
 func GoodClosureWithLargeStruct() func(*LargeConfig) {
+	// Retourne une closure qui accepte un pointeur vers LargeConfig
 	return func(cfg *LargeConfig) {
 		_ = cfg.Host
 	}
