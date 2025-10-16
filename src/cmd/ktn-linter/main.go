@@ -121,6 +121,7 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		analyzer.ConstAnalyzer,
 		analyzer.VarAnalyzer,
 		analyzer.FuncAnalyzer,
+		analyzer.StructAnalyzer,
 		analyzer.InterfaceAnalyzer,
 		analyzer.InterfaceStrictAnalyzer,
 		analyzer.TestAnalyzer,

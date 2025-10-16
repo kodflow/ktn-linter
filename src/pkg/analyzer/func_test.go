@@ -497,9 +497,9 @@ func TestFuncAnalyzerEdgeCases(t *testing.T) {
 // externalFunc est définie ailleurs.
 func externalFunc()`)
 
-	runFuncAnalyzerValidTest(t, "Method with receiver (ignored)", `package test
+	runFuncAnalyzerValidTest(t, "Method with receiver (analyzed)", `package test
 type MyType struct{}
-// Method est une méthode, elle devrait être ignorée par FuncAnalyzer.
+// Method est une méthode documentée.
 func (m *MyType) Method() { x := 1; x++ }`)
 
 	runFuncAnalyzerValidTest(t, "Unnamed params", `package test
@@ -692,4 +692,206 @@ func calculateSum(a int, b int) int {
 		}
 		analyzer.FuncAnalyzer.Run(pass)
 	}
+}
+
+// TestReturnComments teste la règle KTN-FUNC-008.
+//
+// Params:
+//   - t: instance de test
+func TestReturnComments(t *testing.T) {
+	testReturnCommentsValid(t)
+	testReturnCommentsInvalid(t)
+	testReturnCommentsEdgeCases(t)
+}
+
+// testReturnCommentsValid teste les cas valides avec commentaires.
+//
+// Params:
+//   - t: instance de test
+func testReturnCommentsValid(t *testing.T) {
+	runFuncAnalyzerValidTest(t, "Single return with comment", `package test
+
+// getValue retourne une valeur.
+//
+// Returns:
+//   - string: la valeur
+func getValue() string {
+	// Retourne "test" comme valeur
+	return "test"
+}
+`)
+
+	runFuncAnalyzerValidTest(t, "Multiple returns with comments", `package test
+
+// Process traite une valeur.
+//
+// Params:
+//   - err: l'erreur potentielle
+//
+// Returns:
+//   - error: l'erreur rencontrée
+func Process(err error) error {
+	if err != nil {
+		// Erreur de traitement
+		return err
+	}
+	// Succès
+	return nil
+}
+`)
+
+	runFuncAnalyzerValidTest(t, "Return in nested blocks", `package test
+
+// checkValue vérifie une valeur.
+//
+// Params:
+//   - x: la valeur à vérifier
+//
+// Returns:
+//   - bool: le résultat de la vérification
+func checkValue(x int) bool {
+	if x > 0 {
+		if x < 10 {
+			// Retourne true car la valeur est dans la plage valide
+			return true
+		}
+	}
+	// Retourne false car la valeur est hors plage
+	return false
+}
+`)
+
+	runFuncAnalyzerValidTest(t, "Return with multi-line comment", `package test
+
+// getData récupère des données.
+//
+// Returns:
+//   - string: les données
+func getData() string {
+	// Retourne les données formatées
+	// avec des informations supplémentaires
+	return "data"
+}
+`)
+}
+
+// testReturnCommentsInvalid teste les cas invalides sans commentaires.
+//
+// Params:
+//   - t: instance de test
+func testReturnCommentsInvalid(t *testing.T) {
+	runFuncAnalyzerErrorTest(t, "Return without comment", `package test
+
+// getValue retourne une valeur.
+//
+// Returns:
+//   - string: la valeur
+func getValue() string {
+	return "test"
+}
+`, "KTN-FUNC-008")
+
+	runFuncAnalyzerErrorTest(t, "Multiple returns, one without comment", `package test
+
+// Process traite une valeur.
+//
+// Params:
+//   - err: l'erreur potentielle
+//
+// Returns:
+//   - error: l'erreur rencontrée
+func Process(err error) error {
+	if err != nil {
+		// Erreur de traitement
+		return err
+	}
+	return nil
+}
+`, "KTN-FUNC-008")
+
+	runFuncAnalyzerErrorTest(t, "All returns without comments", `package test
+
+// check vérifie une condition.
+//
+// Params:
+//   - x: valeur à vérifier
+//
+// Returns:
+//   - bool: le résultat
+func check(x int) bool {
+	if x > 0 {
+		return true
+	}
+	return false
+}
+`, "KTN-FUNC-008")
+}
+
+// testReturnCommentsEdgeCases teste les cas limites.
+//
+// Params:
+//   - t: instance de test
+func testReturnCommentsEdgeCases(t *testing.T) {
+	runFuncAnalyzerValidTest(t, "Function without body (no return type)", `package test
+
+// externalFunc est définie ailleurs.
+func externalFunc()`)
+
+	runFuncAnalyzerValidTest(t, "Function without return", `package test
+
+// doSomething fait quelque chose.
+func doSomething() {
+	x := 1
+	x++
+}
+`)
+
+	runFuncAnalyzerValidTest(t, "Return with inline comment same line", `package test
+
+// getValue retourne une valeur.
+//
+// Returns:
+//   - int: la valeur
+func getValue() int {
+	// Retourne 42 car c'est la réponse universelle
+	return 42
+}
+`)
+
+	runFuncAnalyzerErrorTest(t, "Return with comment too far above", `package test
+
+// getValue retourne une valeur.
+//
+// Returns:
+//   - int: la valeur
+func getValue() int {
+	// Commentaire ici
+
+	return 42
+}
+`, "KTN-FUNC-008")
+
+	runFuncAnalyzerValidTest(t, "Switch with returns", `package test
+
+// getType retourne un type.
+//
+// Params:
+//   - x: la valeur à tester
+//
+// Returns:
+//   - string: le type
+func getType(x int) string {
+	switch {
+	case x > 0:
+		// Retourne "positive" car x est positif
+		return "positive"
+	case x < 0:
+		// Retourne "negative" car x est négatif
+		return "negative"
+	default:
+		// Retourne "zero" car x est nul
+		return "zero"
+	}
+}
+`)
 }

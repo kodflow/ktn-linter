@@ -16,6 +16,7 @@ KTN-Linter vérifie automatiquement que votre code Go respecte les standards Kod
 - ✅ **Constantes (package-level)** : Regroupement, documentation et typage explicite
 - ✅ **Variables (package-level)** : Regroupement, documentation, typage et nommage
 - ✅ **Fonctions (natives)** : Nommage, documentation stricte, complexité, longueur, profondeur
+- ✅ **Structures** : Nommage MixedCaps, documentation, limitation champs
 - ✅ **Interfaces** : Design interface-first, constructeurs obligatoires, fichiers dédiés
 - ✅ **Tests** : Package naming, couverture fichiers, documentation complète
 
@@ -125,17 +126,19 @@ make install-tools   # Installer golangci-lint
 │   │   └── messageutil/         # Extraction messages
 │   └── plugin/                  # Plugin module (pour future intégration)
 ├── tests/
-│   ├── source/                  # Code avec 405 violations - Anti-patterns
+│   ├── source/                  # Code avec violations - Anti-patterns
 │   │   ├── README.md            # Guide des anti-patterns
 │   │   ├── rules_const/         # Constantes mal déclarées
 │   │   ├── rules_var/           # Variables anarchiques
 │   │   ├── rules_func/          # Fonctions catastrophiques
+│   │   ├── rules_struct/        # Structures incorrectes
 │   │   ├── rules_interface/     # Design anti-patterns
 │   │   └── rules_test/          # Tests inadéquats
 │   └── target/                  # Code avec 0 violation - Perfection
 │       ├── rules_const/         # Constantes parfaites
 │       ├── rules_var/           # Variables optimales
 │       ├── rules_func/          # Fonctions exemplaires
+│       ├── rules_struct/        # Structures conformes
 │       ├── rules_interface/     # Interface-first design
 │       └── rules_test/          # Tests complets
 ├── .vscode/
@@ -243,13 +246,12 @@ Les fonctions doivent respecter des standards stricts de **nommage**, **document
 |------|-------------|-------|
 | `KTN-FUNC-001` | Nom pas en MixedCaps/mixedCaps | ❌ snake_case interdit |
 | `KTN-FUNC-002` | Fonction sans godoc | Toutes (exportées ET privées) |
-| `KTN-FUNC-003` | Paramètres non documentés | Si > 2 params |
-| `KTN-FUNC-004` | Retours non documentés | Si > 1 retour |
+| `KTN-FUNC-003` | Paramètres non documentés | Si > 0 params |
+| `KTN-FUNC-004` | Retours non documentés | Si > 0 retours |
 | `KTN-FUNC-005` | Trop de paramètres | > 5 paramètres |
 | `KTN-FUNC-006` | Fonction trop longue | > 35 lignes |
 | `KTN-FUNC-007` | Complexité cyclomatique trop élevée | ≥ 10 |
-| `KTN-FUNC-008` | Commentaires internes manquants | Logique complexe |
-| `KTN-FUNC-009` | Commentaires sur returns manquants | Returns multiples |
+| `KTN-FUNC-008` | Return sans commentaire explicatif | Tous les returns |
 | `KTN-FUNC-010` | Profondeur d'imbrication trop élevée | > 3 niveaux |
 
 **Format godoc obligatoire (avec Params/Returns) :**
@@ -266,6 +268,7 @@ Les fonctions doivent respecter des standards stricts de **nommage**, **document
 func ProcessUser(user *User, options ProcessOptions) (*Result, error) {
     // Validation des données
     if err := validateUser(user); err != nil {
+        // Erreur de validation (KTN-FUNC-008 : commentaire obligatoire)
         return nil, err
     }
 
@@ -275,7 +278,29 @@ func ProcessUser(user *User, options ProcessOptions) (*Result, error) {
         User:   user,
     }
 
+    // Succès (KTN-FUNC-008 : commentaire obligatoire)
     return result, nil
+}
+```
+
+**KTN-FUNC-008 : Commentaires sur returns (NOUVEAU) :**
+```go
+// ❌ INTERDIT - Returns sans commentaires
+func Process() error {
+    if err != nil {
+        return err    // ❌ Pas de commentaire
+    }
+    return nil        // ❌ Pas de commentaire
+}
+
+// ✅ REQUIS - Tous les returns commentés
+func Process() error {
+    if err != nil {
+        // Erreur de traitement
+        return err
+    }
+    // Succès
+    return nil
 }
 ```
 
@@ -286,6 +311,88 @@ func ProcessUser(user *User, options ProcessOptions) (*Result, error) {
 - **Profondeur ≤ 3** : Utiliser early returns et helpers
 
 Documentation complète : [tests/source/rules_func/.README.md](./tests/source/rules_func/.README.md)
+
+---
+
+### 🏗️ Structures (KTN-STRUCT-XXX)
+
+Les structures doivent respecter le **nommage MixedCaps**, être **documentées** et avoir un **nombre raisonnable de champs**.
+
+| Code | Description | Seuil |
+|------|-------------|-------|
+| `KTN-STRUCT-001` | Nom pas en MixedCaps/mixedCaps | ❌ snake_case interdit |
+| `KTN-STRUCT-002` | Struct sans godoc | Toutes les structs |
+| `KTN-STRUCT-003` | Champs exportés non documentés | Tous les champs exportés |
+| `KTN-STRUCT-004` | Trop de champs | > 15 champs |
+
+**Exemple complet conforme :**
+```go
+// UserConfig contient la configuration utilisateur pour l'application.
+type UserConfig struct {
+    // Host est l'hôte du serveur
+    Host string
+    // Port est le port d'écoute
+    Port int
+    // Timeout est le délai d'expiration en secondes
+    Timeout int
+
+    // Champs privés n'ont pas besoin de commentaires
+    internalState bool
+}
+
+// Struct privée (mixedCaps)
+type privateConfig struct {
+    apiKey string
+    secret string
+}
+```
+
+**KTN-STRUCT-004 : Décomposition des structs larges :**
+```go
+// ❌ INTERDIT - Trop de champs (>15)
+type ComplexUser struct {
+    ID, Username, Email, FirstName, LastName string
+    PhoneNumber, Address, City, ZipCode, Country string
+    BirthDate string
+    CreatedAt, UpdatedAt, LastLoginAt int64
+    IsActive, IsVerified bool
+    Roles, Permissions []string
+    // ... 18 champs total > 15
+}
+
+// ✅ REQUIS - Décomposer en sous-structs
+type UserBasicInfo struct {
+    // ID est l'identifiant unique
+    ID string
+    // Username est le nom d'utilisateur
+    Username string
+    // Email est l'adresse email
+    Email string
+}
+
+type UserContactInfo struct {
+    // PhoneNumber est le numéro de téléphone
+    PhoneNumber string
+    // Address est l'adresse complète
+    Address string
+}
+
+// User représente un utilisateur complet.
+type User struct {
+    // BasicInfo contient les informations de base
+    BasicInfo UserBasicInfo
+    // ContactInfo contient les informations de contact
+    ContactInfo UserContactInfo
+}
+```
+
+**Points clés :**
+- ✅ **MixedCaps** pour structs exportées, **mixedCaps** pour privées
+- ✅ **Godoc obligatoire** sur toutes les structs
+- ✅ **Commentaires sur champs exportés** uniquement
+- ✅ **Maximum 15 champs** : décomposer si plus
+
+Documentation complète : [tests/source/rules_struct/.KTN-STRUCT.md](./tests/source/rules_struct/.KTN-STRUCT.md)
 
 ---
 

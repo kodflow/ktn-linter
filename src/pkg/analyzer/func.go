@@ -36,11 +36,7 @@ func runFuncAnalyzer(pass *analysis.Pass) (any, error) {
 				continue
 			}
 
-			// Ignorer les méthodes (fonctions avec receiver)
-			if funcDecl.Recv != nil {
-				continue
-			}
-
+			// Analyser toutes les fonctions ET méthodes
 			checkFunction(pass, file, funcDecl)
 		}
 	}
@@ -65,6 +61,7 @@ func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) 
 	checkFuncLength(pass, funcDecl, funcName, isTestFile)
 	checkFuncComplexity(pass, funcDecl, funcName, isTestFile)
 	checkNestingDepth(pass, funcDecl, funcName)
+	checkReturnComments(pass, file, funcDecl, funcName)
 }
 
 // isTestFile vérifie si le fichier analysé est un fichier de test.
@@ -587,4 +584,75 @@ func getNodeComplexity(n ast.Node) int {
 	}
 	// Retourne 0 car ce nœud n'ajoute pas de complexité
 	return 0
+}
+
+// checkReturnComments vérifie que tous les return statements ont des commentaires.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter l'erreur
+//   - file: le fichier AST contenant la fonction
+//   - funcDecl: la déclaration de fonction
+//   - funcName: le nom de la fonction
+func checkReturnComments(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl, funcName string) {
+	if funcDecl.Body == nil {
+		// Retourne car la fonction n'a pas de corps
+		return
+	}
+
+	// Parcourir tous les statements et vérifier les return
+	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
+		returnStmt, ok := n.(*ast.ReturnStmt)
+		if !ok {
+			// Retourne true pour continuer l'inspection
+			return true
+		}
+
+		// Vérifier si le return a un commentaire juste au-dessus
+		if !hasCommentAbove(file, pass.Fset, returnStmt) {
+			pass.Reportf(returnStmt.Pos(),
+				"[KTN-FUNC-008] Return statement sans commentaire explicatif.\n"+
+					"Tout return doit avoir un commentaire juste au-dessus expliquant ce qui est retourné.\n"+
+					"Exemple:\n"+
+					"  // Erreur de traitement\n"+
+					"  return err\n"+
+					"\n"+
+					"  // Succès\n"+
+					"  return nil")
+		}
+		// Retourne true pour continuer l'inspection
+		return true
+	})
+}
+
+// hasCommentAbove vérifie si un return statement a un commentaire juste au-dessus.
+//
+// Params:
+//   - file: le fichier AST contenant le return
+//   - fset: le FileSet pour obtenir les positions
+//   - returnStmt: le statement return à vérifier
+//
+// Returns:
+//   - bool: true si un commentaire existe juste au-dessus du return
+func hasCommentAbove(file *ast.File, fset *token.FileSet, returnStmt *ast.ReturnStmt) bool {
+	returnLine := fset.Position(returnStmt.Pos()).Line
+
+	// Parcourir tous les groupes de commentaires du fichier
+	for _, commentGroup := range file.Comments {
+		if commentGroup == nil || len(commentGroup.List) == 0 {
+			continue
+		}
+
+		// Vérifier la dernière ligne du groupe de commentaires
+		lastComment := commentGroup.List[len(commentGroup.List)-1]
+		commentEndLine := fset.Position(lastComment.End()).Line
+
+		// Le commentaire doit être juste au-dessus du return (ligne précédente)
+		if commentEndLine == returnLine-1 {
+			// Retourne true car un commentaire existe juste au-dessus
+			return true
+		}
+	}
+
+	// Retourne false car aucun commentaire n'a été trouvé juste au-dessus
+	return false
 }
