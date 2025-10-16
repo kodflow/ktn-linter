@@ -62,14 +62,18 @@ func GoodDeferMultiple() {
 	copy(buf1, buf2)
 }
 
-// GoodDeferInGoroutine utilise defer dans goroutine.
+// GoodDeferInGoroutine utilise defer dans goroutine avec synchronisation.
 func GoodDeferInGoroutine() {
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		buf := bufferPool.Get().([]byte)
 		defer bufferPool.Put(buf) // ✅ Correct
 
 		buf[0] = 1
 	}()
+	wg.Wait()
 }
 
 // GoodDeferWithReturn utilise defer avant return.
@@ -347,14 +351,18 @@ func GoodDeferWithLargeStruct() {
 	}(&LargeConfig{})
 }
 
-// GoodGoRoutineWithLargeStruct lance goroutine avec pointeur.
+// GoodGoRoutineWithLargeStruct lance goroutine avec pointeur et synchronisation.
 //
 // Params:
 //   - cfg: configuration par pointeur
 func GoodGoRoutineWithLargeStruct(cfg *LargeConfig) {
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func(c *LargeConfig) {
+		defer wg.Done()
 		_ = c.Host
 	}(cfg)
+	wg.Wait()
 }
 
 // GoodNoPoolUsage ne fait pas d'allocation pool (pas de règle).

@@ -76,8 +76,8 @@ func ProcessFiles(files []string) error {
 	// Approche correcte: traiter chaque fichier dans une fonction séparée
 	for _, file := range files {
 		if err := processFile(file); err != nil {
-			// Retourne l'erreur si le traitement du fichier échoue
-			return err
+			// Retourne l'erreur wrappée avec contexte du fichier
+			return fmt.Errorf("failed to process file %s: %w", file, err)
 		}
 	}
 	// Retourne nil car tous les fichiers ont été traités avec succès

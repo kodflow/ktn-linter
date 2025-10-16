@@ -36,6 +36,8 @@ func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 		InterfaceAnalyzer,
 		AllocAnalyzer,
 		PoolAnalyzer,
+		ErrorAnalyzer,
+		GoroutineAnalyzer,
 	}, nil
 }
 

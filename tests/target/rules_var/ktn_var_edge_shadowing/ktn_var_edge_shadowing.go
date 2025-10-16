@@ -61,15 +61,15 @@ func GoodErrorHandling() error {
 	// Utilisation de variable locale distincte
 	data, localErr := readData()
 	if localErr != nil {
-		// Retourne l'erreur de lecture
-		return localErr
+		// Retourne l'erreur wrappée avec contexte
+		return fmt.Errorf("failed to read data: %w", localErr)
 	}
 
 	// Réutilisation de la même variable locale
 	result, localErr := processResult(data)
 	if localErr != nil {
-		// Retourne l'erreur de traitement
-		return localErr
+		// Retourne l'erreur wrappée avec contexte
+		return fmt.Errorf("failed to process result: %w", localErr)
 	}
 
 	fmt.Println(result)
