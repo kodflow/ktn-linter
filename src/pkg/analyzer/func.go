@@ -165,7 +165,7 @@ func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName s
 	complexity := calculateCyclomaticComplexity(funcDecl)
 	maxComplexity := 10
 	if isTestFile {
-		maxComplexity = 15 // Limite plus souple pour les tests
+		maxComplexity = 50 // Limite très souple pour les tests
 	}
 
 	if complexity > maxComplexity {

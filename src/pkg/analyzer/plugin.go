@@ -34,6 +34,7 @@ func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 		FuncAnalyzer,
 		StructAnalyzer,
 		InterfaceAnalyzer,
+		AllocAnalyzer,
 	}, nil
 }
 
