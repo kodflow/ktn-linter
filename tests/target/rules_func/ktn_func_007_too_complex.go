@@ -17,13 +17,17 @@ import (
 //   - error: une erreur si la validation échoue
 func ValidateInputF007Good(input string) error {
 	if input == "" {
+		// Retourne une erreur car l'input est vide
 		return errors.New("input vide")
 	}
 	if len(input) < 3 {
+		// Retourne une erreur car l'input est trop court
 		return errors.New("input trop court")
 	}
 	if len(input) > 100 {
+		// Retourne une erreur car l'input est trop long
 		return errors.New("input trop long")
 	}
+	// Retourne nil car l'input est valide
 	return nil
 }

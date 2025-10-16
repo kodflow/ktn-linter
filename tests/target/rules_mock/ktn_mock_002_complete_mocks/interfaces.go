@@ -10,6 +10,7 @@ type Service interface {
 // Returns:
 //   - Service: nouvelle instance
 func NewService() Service {
+	// Retourne nil comme placeholder
 	return nil
 }
 
@@ -24,5 +25,6 @@ type Repository interface {
 // Returns:
 //   - Repository: nouvelle instance
 func NewRepository() Repository {
+	// Retourne nil comme placeholder
 	return nil
 }

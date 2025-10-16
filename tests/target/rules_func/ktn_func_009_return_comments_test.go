@@ -137,6 +137,7 @@ func TestDivideNumbersWithReturnComments(t *testing.T) {
 			got, err := rules_func.DivideNumbersWithReturnComments(tt.a, tt.b)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("rules_func.DivideNumbersWithReturnComments() error = %v, wantErr %v", err, tt.wantErr)
+				// Retourne pour arrêter l'exécution du test
 				return
 			}
 			if got != tt.want {
@@ -194,6 +195,7 @@ func TestProcessWithMultipleExitsWithComments(t *testing.T) {
 			got, err := rules_func.ProcessWithMultipleExitsWithComments(tt.value)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("rules_func.ProcessWithMultipleExitsWithComments() error = %v, wantErr %v", err, tt.wantErr)
+				// Retourne pour arrêter l'exécution du test
 				return
 			}
 			if got != tt.want {

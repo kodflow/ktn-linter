@@ -35,10 +35,13 @@ func processEvenNumber(i int, result int) int {
 	if i%3 == 0 {
 		// Cas spécial: divisible par 5
 		if i%5 == 0 {
+			// Retourne le résultat avec le nombre multiplié par 2
 			return result + i*2
 		}
+		// Retourne le résultat avec le nombre ajouté
 		return result + i
 	}
+	// Retourne le résultat avec le nombre soustrait
 	return result - i
 }
 
@@ -53,8 +56,10 @@ func processEvenNumber(i int, result int) int {
 func processOddNumber(i int, result int) int {
 	// Divisible par 7: multiplier par 3
 	if i%7 == 0 {
+		// Retourne le résultat avec le nombre multiplié par 3
 		return result + i*3
 	}
 	// Autres impairs: soustraire le double
+	// Retourne le résultat avec le double du nombre soustrait
 	return result - i*2
 }

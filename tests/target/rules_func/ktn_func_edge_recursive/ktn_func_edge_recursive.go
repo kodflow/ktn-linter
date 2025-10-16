@@ -12,9 +12,11 @@ package rules_func
 func Factorial(n int) int {
 	// Cas de base: factorielle de 0 ou 1 est 1
 	if n <= 1 {
+		// Retourne 1 car c'est le cas de base
 		return 1
 	}
 	// Cas récursif: n! = n * (n-1)!
+	// Retourne n multiplié par la factorielle de n-1
 	return n * Factorial(n-1)
 }
 
@@ -28,9 +30,11 @@ func Factorial(n int) int {
 func Fibonacci(n int) int {
 	// Cas de base: F(0) = 0, F(1) = 1
 	if n <= 1 {
+		// Retourne n car c'est le cas de base
 		return n
 	}
 	// Cas récursif: F(n) = F(n-1) + F(n-2)
+	// Retourne la somme des deux nombres de Fibonacci précédents
 	return Fibonacci(n-1) + Fibonacci(n-2)
 }
 
@@ -45,20 +49,24 @@ func Fibonacci(n int) int {
 func TreeSearch(node *node, target int) *node {
 	// Cas de base: arbre vide
 	if node == nil {
+		// Retourne nil car l'arbre est vide
 		return nil
 	}
 
 	// Cas de base: nœud trouvé
 	if node.Value == target {
+		// Retourne le nœud trouvé
 		return node
 	}
 
 	// Recherche récursive dans le sous-arbre gauche
 	if left := TreeSearch(node.Left, target); left != nil {
+		// Retourne le nœud trouvé dans le sous-arbre gauche
 		return left
 	}
 
 	// Recherche récursive dans le sous-arbre droit
+	// Retourne le résultat de la recherche dans le sous-arbre droit
 	return TreeSearch(node.Right, target)
 }
 
@@ -82,9 +90,11 @@ type node struct {
 func MutuallyRecursive1(n int) int {
 	// Cas de base
 	if n == 0 {
+		// Retourne 0 car c'est le cas de base
 		return 0
 	}
 	// Appel mutuel vers MutuallyRecursive2
+	// Retourne le résultat de l'appel mutuel
 	return MutuallyRecursive2(n - 1)
 }
 
@@ -98,8 +108,10 @@ func MutuallyRecursive1(n int) int {
 func MutuallyRecursive2(n int) int {
 	// Cas de base
 	if n == 0 {
+		// Retourne 1 car c'est le cas de base
 		return 1
 	}
 	// Appel mutuel vers MutuallyRecursive1
+	// Retourne le résultat de l'appel mutuel
 	return MutuallyRecursive1(n - 1)
 }

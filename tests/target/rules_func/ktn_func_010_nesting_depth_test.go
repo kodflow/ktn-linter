@@ -121,6 +121,7 @@ func TestComplexNestedGood(t *testing.T) {
 			got := rules_func.ComplexNestedGood(tt.values)
 			if len(got) != len(tt.want) {
 				t.Errorf("rules_func.ComplexNestedGood() length = %v, want %v", len(got), len(tt.want))
+				// Retourne pour arrêter l'exécution du test
 				return
 			}
 			for i := range got {

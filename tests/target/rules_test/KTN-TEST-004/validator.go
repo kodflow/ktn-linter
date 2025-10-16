@@ -15,6 +15,7 @@ type Validator struct {
 // Returns:
 //   - *Validator: nouvelle instance
 func NewValidator() *Validator {
+	// Retourne une nouvelle instance du validateur
 	return &Validator{
 		emailRegex: regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`),
 	}
@@ -28,6 +29,7 @@ func NewValidator() *Validator {
 // Returns:
 //   - bool: true si valide
 func (v *Validator) ValidateEmail(email string) bool {
+	// Retourne true si l'email correspond au pattern
 	return v.emailRegex.MatchString(email)
 }
 

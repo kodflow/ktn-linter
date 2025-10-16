@@ -27,6 +27,7 @@ func New(settings any) (register.LinterPlugin, error) {
 //   - []*analysis.Analyzer: la liste des analyseurs fournis par ce plugin
 //   - error: toujours nil dans l'implémentation actuelle
 func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
+	// Retourne la liste complète des analyseurs KTN pour l'intégration golangci-lint
 	return []*analysis.Analyzer{
 		ConstAnalyzer,
 		VarAnalyzer,
@@ -41,5 +42,6 @@ func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 // Returns:
 //   - string: le mode de chargement (LoadModeSyntax)
 func (p *plugin) GetLoadMode() string {
+	// Retourne LoadModeSyntax car les analyseurs n'ont besoin que de l'AST
 	return register.LoadModeSyntax
 }

@@ -17,6 +17,7 @@ func GoodFunctionName(cfg MultiParamConfig) int {
 		}
 	}
 
+	// Retourne le résultat accumulé
 	return result
 }
 
@@ -45,15 +46,19 @@ type MultiParamConfig struct {
 //   - bool: true si le traitement est nécessaire
 func ShouldProcess(i int) bool {
 	if i%2 != 0 {
+		// Retourne false car i n'est pas un multiple de 2
 		return false
 	}
 	if i%3 != 0 {
+		// Retourne false car i n'est pas un multiple de 3
 		return false
 	}
 	if i%5 != 0 {
+		// Retourne false car i n'est pas un multiple de 5
 		return false
 	}
 	// Retourne true pour les multiples de 210 (2*3*5*7)
+	// Retourne le résultat du test de divisibilité par 7
 	return i%7 == 0
 }
 
@@ -65,5 +70,6 @@ func ShouldProcess(i int) bool {
 // Returns:
 //   - int: somme des valeurs
 func SumConfig(cfg MultiParamConfig) int {
+	// Retourne la somme de tous les champs de la configuration
 	return cfg.A + cfg.B + cfg.C + cfg.D + cfg.E + cfg.F
 }

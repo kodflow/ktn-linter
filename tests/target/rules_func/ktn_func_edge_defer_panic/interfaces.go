@@ -12,5 +12,6 @@ type ResourceManager interface {
 // Returns:
 //   - ResourceManager: instance du gestionnaire
 func NewResourceManager() ResourceManager {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }

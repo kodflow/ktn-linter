@@ -14,6 +14,7 @@ type Helper struct{}
 // Returns:
 //   - string: la chaîne formatée
 func (h *Helper) Format(input string) string {
+	// Retourne la chaîne encadrée par des crochets
 	return "[" + input + "]"
 }
 

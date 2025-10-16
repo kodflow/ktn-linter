@@ -17,8 +17,10 @@ import (
 //   - error: une erreur si l'orderID est invalide
 func ProcessOrderF002Good(orderID int) error {
 	if orderID <= 0 {
+		// Retourne une erreur car l'orderID est invalide
 		return errors.New("orderID invalide")
 	}
+	// Retourne nil car la commande est valide
 	return nil
 }
 
@@ -30,5 +32,6 @@ func ProcessOrderF002Good(orderID int) error {
 // Returns:
 //   - bool: true si l'email est valide, false sinon
 func ValidateEmailF002Good(email string) bool {
+	// Retourne true si l'email n'est pas vide
 	return len(email) > 0
 }

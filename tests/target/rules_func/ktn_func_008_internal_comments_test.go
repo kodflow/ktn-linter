@@ -42,6 +42,7 @@ func TestComplexCalculationWithInternalComments(t *testing.T) {
 			got, err := rules_func.ComplexCalculationWithInternalComments(tt.value)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ComplexCalculationWithInternalComments() error = %v, wantErr %v", err, tt.wantErr)
+				// Retourne pour arrêter l'exécution du test
 				return
 			}
 			if got != tt.want {
@@ -83,6 +84,7 @@ func TestProcessDataWithComments(t *testing.T) {
 			got := rules_func.ProcessDataWithComments(tt.data)
 			if len(got) != len(tt.want) {
 				t.Errorf("ProcessDataWithComments() length = %v, want %v", len(got), len(tt.want))
+				// Retourne pour arrêter l'exécution du test
 				return
 			}
 			for i := range got {

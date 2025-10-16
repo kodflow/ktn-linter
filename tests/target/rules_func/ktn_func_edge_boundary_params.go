@@ -12,6 +12,7 @@ package rules_func
 // Returns:
 //   - int: résultat
 func FiveParamsIsOk(a, b, c, d, e int) int {
+	// Retourne la somme des cinq paramètres
 	return a + b + c + d + e
 }
 
@@ -23,6 +24,7 @@ func FiveParamsIsOk(a, b, c, d, e int) int {
 // Returns:
 //   - int: résultat
 func SixParamsWithConfig(cfg SixParamsConfig) int {
+	// Retourne la somme de tous les champs de la configuration
 	return cfg.A + cfg.B + cfg.C + cfg.D + cfg.E + cfg.F
 }
 

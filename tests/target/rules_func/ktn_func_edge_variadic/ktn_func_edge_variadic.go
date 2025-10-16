@@ -16,6 +16,7 @@ func Sum(nums ...int) int {
 	for _, n := range nums {
 		total += n
 	}
+	// Retourne la somme totale
 	return total
 }
 
@@ -41,6 +42,7 @@ func ProcessItems(prefix string, items ...string) []string {
 	for i, item := range items {
 		result[i] = prefix + item
 	}
+	// Retourne la liste des éléments préfixés
 	return result
 }
 
@@ -57,12 +59,20 @@ func MergeAndProcess(config MergeConfig, extra ...int) int {
 	for _, e := range extra {
 		total += e
 	}
+	// Retourne la somme totale
 	return total
 }
 
 // MergeConfig configuration pour MergeAndProcess.
 type MergeConfig struct {
-	A, B, C, D int
+	// A est la première valeur de base
+	A int
+	// B est la deuxième valeur de base
+	B int
+	// C est la troisième valeur de base
+	C int
+	// D est la quatrième valeur de base
+	D int
 }
 
 // ApplyMultiplier applique un multiplicateur à des valeurs variables.
@@ -83,6 +93,7 @@ func ApplyMultiplier(multiplier int, values ...float64) []float64 {
 		}
 	}
 
+	// Retourne la liste des valeurs multipliées
 	return result
 }
 
@@ -98,12 +109,15 @@ func ApplyMultiplier(multiplier int, values ...float64) []float64 {
 func processValueWithMultiplier(v float64, multiplier int) (float64, bool) {
 	// Filtrer les valeurs négatives ou nulles
 	if v <= 0 || v >= 100 {
+		// Retourne 0 et false pour exclure la valeur
 		return 0, false
 	}
 
 	// Application du multiplicateur si > 1
 	if multiplier > 1 {
+		// Retourne la valeur multipliée et true
 		return v * float64(multiplier), true
 	}
+	// Retourne la valeur inchangée et true
 	return v, true
 }

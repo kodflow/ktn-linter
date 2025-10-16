@@ -20,7 +20,9 @@ import (
 //   - error: une erreur si l'utilisateur n'existe pas ou si le contexte expire
 func FetchUserDataF004Good(ctx context.Context, userID int) (string, error) {
 	if userID <= 0 {
+		// Retourne une chaîne vide et une erreur car l'userID est invalide
 		return "", errors.New("userID invalide")
 	}
+	// Retourne les données utilisateur et nil pour l'erreur
 	return "user data", nil
 }

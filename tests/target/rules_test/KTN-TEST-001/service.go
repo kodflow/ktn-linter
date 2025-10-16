@@ -13,6 +13,7 @@ type UserServiceData struct {
 // Returns:
 //   - *UserServiceData: nouvelle instance
 func NewUserServiceData() *UserServiceData {
+	// Retourne une nouvelle instance du service
 	return &UserServiceData{
 		users: make(map[string]string),
 	}
@@ -37,5 +38,6 @@ func (s *UserServiceData) AddUser(id string, name string) {
 //   - bool: true si trouvé
 func (s *UserServiceData) GetUser(id string) (string, bool) {
 	name, exists := s.users[id]
+	// Retourne le nom et l'indicateur d'existence
 	return name, exists
 }

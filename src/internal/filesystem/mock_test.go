@@ -35,8 +35,10 @@ func NewMockFileSystem(files map[string]bool) filesystem.FileSystem {
 //   - error: erreur si le fichier n'existe pas
 func (m *mockFileSystem) Stat(name string) (os.FileInfo, error) {
 	if exists, ok := m.files[name]; ok && exists {
+		// Retourne les informations du fichier simulé
 		return &mockFileInfo{name: name}, nil
 	}
+	// Fichier non trouvé dans le mock
 	return nil, errors.New("file does not exist")
 }
 
@@ -50,6 +52,7 @@ type mockFileInfo struct {
 // Returns:
 //   - string: le nom du fichier
 func (m *mockFileInfo) Name() string {
+	// Retourne le nom stocké
 	return m.name
 }
 
@@ -58,6 +61,7 @@ func (m *mockFileInfo) Name() string {
 // Returns:
 //   - int64: la taille du fichier
 func (m *mockFileInfo) Size() int64 {
+	// Taille simulée fixe
 	return 0
 }
 
@@ -66,6 +70,7 @@ func (m *mockFileInfo) Size() int64 {
 // Returns:
 //   - os.FileMode: le mode du fichier
 func (m *mockFileInfo) Mode() os.FileMode {
+	// Mode simulé fixe (rw-r--r--)
 	return 0644
 }
 
@@ -74,6 +79,7 @@ func (m *mockFileInfo) Mode() os.FileMode {
 // Returns:
 //   - time.Time: le temps de modification
 func (m *mockFileInfo) ModTime() time.Time {
+	// Retourne l'epoch Unix comme temps simulé
 	return time.Unix(0, 0)
 }
 
@@ -82,6 +88,7 @@ func (m *mockFileInfo) ModTime() time.Time {
 // Returns:
 //   - bool: false car c'est un fichier
 func (m *mockFileInfo) IsDir() bool {
+	// Simule toujours un fichier, jamais un répertoire
 	return false
 }
 
@@ -90,5 +97,6 @@ func (m *mockFileInfo) IsDir() bool {
 // Returns:
 //   - interface{}: nil
 func (m *mockFileInfo) Sys() interface{} {
+	// Pas d'informations système pour le mock
 	return nil
 }

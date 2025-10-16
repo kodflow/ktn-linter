@@ -11,5 +11,6 @@ type Validator interface {
 // Returns:
 //   - Validator: l'instance du validateur
 func NewValidator() Validator {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }

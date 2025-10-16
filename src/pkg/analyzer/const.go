@@ -83,9 +83,11 @@ func groupContainsIota(genDecl *ast.GenDecl) bool {
 	for _, spec := range genDecl.Specs {
 		valueSpec := spec.(*ast.ValueSpec)
 		if usesIota(valueSpec) {
+			// Retourne true car au moins une constante du groupe utilise iota
 			return true
 		}
 	}
+	// Retourne false car aucune constante du groupe n'utilise iota
 	return false
 }
 
@@ -158,10 +160,12 @@ func usesIota(spec *ast.ValueSpec) bool {
 	// Vérifier si l'expression contient iota
 	for _, value := range spec.Values {
 		if containsIota(value) {
+			// Retourne true car l'expression contient iota
 			return true
 		}
 	}
 
+	// Retourne false car aucune valeur ne contient iota
 	return false
 }
 
@@ -175,21 +179,28 @@ func usesIota(spec *ast.ValueSpec) bool {
 func containsIota(expr ast.Expr) bool {
 	switch e := expr.(type) {
 	case *ast.Ident:
+		// Retourne true si l'identifiant est iota, false sinon
 		return e.Name == "iota"
 	case *ast.BinaryExpr:
+		// Retourne true si iota est trouvé dans l'opérande gauche ou droite
 		return containsIota(e.X) || containsIota(e.Y)
 	case *ast.UnaryExpr:
+		// Retourne true si iota est trouvé dans l'opérande
 		return containsIota(e.X)
 	case *ast.ParenExpr:
+		// Retourne true si iota est trouvé dans l'expression entre parenthèses
 		return containsIota(e.X)
 	case *ast.CallExpr:
 		for _, arg := range e.Args {
 			if containsIota(arg) {
+				// Retourne true car iota est trouvé dans un argument de la fonction
 				return true
 			}
 		}
+		// Retourne false car iota n'est trouvé dans aucun argument
 		return false
 	}
+	// Retourne false car le type d'expression ne contient pas iota
 	return false
 }
 

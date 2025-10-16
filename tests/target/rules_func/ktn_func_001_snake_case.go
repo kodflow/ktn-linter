@@ -17,8 +17,10 @@ import (
 //   - error: une erreur si les données sont vides
 func ParseHTTPRequestF001Good(data string) error {
 	if data == "" {
+		// Retourne une erreur car les données sont vides
 		return errors.New("data vide")
 	}
+	// Retourne nil car les données sont valides
 	return nil
 }
 
@@ -34,5 +36,6 @@ func CalculateTotalF001Good(values []int) int {
 	for _, v := range values {
 		total += v
 	}
+	// Retourne la somme totale calculée
 	return total
 }

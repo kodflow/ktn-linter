@@ -15,6 +15,7 @@ type cacheManagerImplI006Good struct {
 //   - bool: true si la clé existe
 func (c *cacheManagerImplI006Good) GetI006Good(key string) (string, bool) {
 	val, ok := c.data[key]
+	// Retourne la valeur et l'indicateur d'existence
 	return val, ok
 }
 
@@ -32,6 +33,7 @@ func (c *cacheManagerImplI006Good) SetI006Good(key string, value string) {
 // Returns:
 //   - CacheManagerI006Good: une nouvelle instance
 func NewCacheManagerI006Good() CacheManagerI006Good {
+	// Retourne une nouvelle instance du gestionnaire de cache
 	return &cacheManagerImplI006Good{
 		data: make(map[string]string),
 	}
@@ -66,5 +68,6 @@ func (l *loggerImplI006Good) ErrorI006Good(msg string) {
 // Returns:
 //   - LoggerI006Good: une nouvelle instance
 func NewLoggerI006Good(prefix string) LoggerI006Good {
+	// Retourne une nouvelle instance du logger
 	return &loggerImplI006Good{prefix: prefix}
 }

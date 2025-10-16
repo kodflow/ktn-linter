@@ -29,5 +29,6 @@ func ProcessOrderF006Good(ctx context.Context, orderID int) error {
 	// Étape 3: Confirmation
 	_ = "confirmation"
 
+	// Retourne nil car le traitement est terminé avec succès
 	return nil
 }

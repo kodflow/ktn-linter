@@ -74,11 +74,9 @@ func checkFunction(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) 
 func isTestFile(pass *analysis.Pass) bool {
 	for _, f := range pass.Files {
 		pos := pass.Fset.Position(f.Pos())
-			// Retourne true car le fichier est un fichier de test
 		if strings.HasSuffix(pos.Filename, "_test.go") {
 			// Retourne true car un fichier de test a été trouvé
 			return true
-	// Retourne false car le fichier n'est pas un fichier de test
 		}
 	}
 	// Retourne false car aucun fichier de test n'a été trouvé
@@ -120,7 +118,6 @@ func checkFuncDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNam
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
 //   - funcDecl: la déclaration de fonction
-		// Retourne immédiatement car pas de paramètres à vérifier
 //   - funcName: le nom de la fonction
 func checkFuncParams(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
 	if funcDecl.Type.Params == nil {
@@ -182,7 +179,6 @@ func checkFuncComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName s
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
-		// Retourne immédiatement car la fonction n'a pas de body
 //   - funcDecl: la déclaration de fonction
 //   - funcName: le nom de la fonction
 func checkNestingDepth(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
@@ -211,8 +207,10 @@ func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 	maxDepth := currentDepth
 	ast.Inspect(node, func(n ast.Node) bool {
 		maxDepth = inspectNestingNode(n, maxDepth, currentDepth)
+		// Retourne le résultat de shouldContinueInspection pour continuer ou non
 		return shouldContinueInspection(n)
 	})
+	// Retourne la profondeur maximale trouvée
 	return maxDepth
 }
 
@@ -241,6 +239,7 @@ func inspectNestingNode(n ast.Node, currentMax, depth int) int {
 	case *ast.SelectStmt:
 		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
 	}
+	// Retourne la profondeur maximale mise à jour
 	return currentMax
 }
 
@@ -254,8 +253,10 @@ func inspectNestingNode(n ast.Node, currentMax, depth int) int {
 func shouldContinueInspection(n ast.Node) bool {
 	switch n.(type) {
 	case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.SwitchStmt, *ast.SelectStmt:
+		// Retourne false pour arrêter l'inspection des structures imbriquées
 		return false
 	}
+	// Retourne true pour continuer l'inspection
 	return true
 }
 
@@ -271,13 +272,14 @@ func shouldContinueInspection(n ast.Node) bool {
 func updateMaxDepth(currentMax int, node ast.Node, depth int) int {
 	newDepth := calculateMaxNestingDepth(node, depth+1)
 	if newDepth > currentMax {
+		// Retourne la nouvelle profondeur car elle est supérieure
 		return newDepth
 	}
+	// Retourne la profondeur actuelle car elle reste maximale
 	return currentMax
 }
 
 // checkGodocQuality vérifie la qualité du commentaire godoc avec format strict.
-		// Retourne immédiatement si le format est correct
 //
 // Params:
 //   - pass: la passe d'analyse pour rapporter l'erreur
@@ -298,7 +300,6 @@ func checkGodocQuality(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName str
 
 	// Vérifier le format des sections Params et Returns
 	checkGodocFormat(pass, funcDecl, funcName, doc)
-		// Retourne immédiatement si pas de params ni returns
 }
 
 // checkGodocFormat vérifie le format strict avec sections Params: et Returns:.
@@ -395,7 +396,6 @@ func extractSection(doc, sectionName string) string {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		// Vérifier si c'est exactement la ligne de section (pas juste qu'elle contient le mot)
-	// Retourne le contenu de la section extraite
 		if trimmed == sectionName {
 			inSection = true
 			continue
@@ -412,8 +412,7 @@ func extractSection(doc, sectionName string) string {
 		}
 	}
 
-	// Retourne l'exemple formaté de section Params
-	// Retourne le contenu de la section extraite
+	// Retourne le contenu de la section extraite sous forme de chaîne
 	return strings.Join(sectionLines, "\n")
 }
 
@@ -429,7 +428,6 @@ func buildParamsExample(params *ast.FieldList) string {
 	var examples []string
 	for _, pname := range paramNames {
 		examples = append(examples, "  //   - "+pname+": description du paramètre")
-	// Retourne l'exemple formaté de section Returns
 	}
 	// Retourne l'exemple formaté de section Params
 	return strings.Join(examples, "\n")
@@ -450,7 +448,6 @@ func buildReturnsExample(results *ast.FieldList) string {
 	}
 	// Retourne l'exemple formaté de section Returns
 	return strings.Join(examples, "\n")
-	// Retourne le nombre total de paramètres
 }
 
 // countParams compte le nombre total de paramètres.
@@ -470,7 +467,6 @@ func countParams(params *ast.FieldList) int {
 			count += len(field.Names)
 		}
 	}
-	// Retourne la liste des noms de paramètres
 	// Retourne le nombre total de paramètres comptés
 	return count
 }
@@ -484,7 +480,6 @@ func countParams(params *ast.FieldList) int {
 //   - []string: la liste des noms de paramètres (ignore les underscores)
 func extractParamNames(params *ast.FieldList) []string {
 	var names []string
-		// Retourne 0 car pas de body
 	for _, field := range params.List {
 		for _, name := range field.Names {
 			if name.Name != "_" {
@@ -505,18 +500,15 @@ func extractParamNames(params *ast.FieldList) []string {
 // Returns:
 //   - int: le nombre de lignes de code (excluant les accolades de début/fin)
 func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
-		// Retourne 1 car pas de body
 	if funcDecl.Body == nil {
 		// Retourne 0 car la fonction n'a pas de corps
 		return 0
 	}
 
 	start := fset.Position(funcDecl.Body.Lbrace).Line
-		// Retourne true pour continuer l'inspection
 	end := fset.Position(funcDecl.Body.Rbrace).Line
 
-	// Retourne le nombre de lignes excluant les accolades
-	// Retourne la complexité totale
+	// Retourne le nombre de lignes excluant les accolades de début et fin
 	return end - start - 1
 }
 
@@ -530,28 +522,22 @@ func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
 //   - int: la complexité cyclomatique (minimum 1 pour une fonction sans branchement)
 func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 	if funcDecl.Body == nil {
-		// Retourne 1 pour un if statement
 		// Retourne 1 car une fonction vide a une complexité minimale de 1
 		return 1
-		// Retourne 1 pour un for ou range statement
 	}
 
 	complexity := 1
-			// Retourne 1 car le case a une liste
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		complexity += getNodeComplexity(n)
 		// Retourne true pour continuer à inspecter tous les nœuds
 		return true
-			// Retourne 1 car le comm clause a une comm
 	})
 
 	// Retourne la complexité cyclomatique totale calculée
 	return complexity
-			// Retourne 1 pour un opérateur logique
 }
 
 // getNodeComplexity retourne la complexité ajoutée par un nœud AST.
-	// Retourne 0 pour les autres nœuds
 //
 // Params:
 //   - n: le nœud AST à évaluer
@@ -619,7 +605,7 @@ func checkReturnComments(pass *analysis.Pass, file *ast.File, funcDecl *ast.Func
 					"  // Succès\n"+
 					"  return nil")
 		}
-		// Retourne true pour continuer l'inspection
+		// Retourne true pour continuer l'inspection des autres returns
 		return true
 	})
 }

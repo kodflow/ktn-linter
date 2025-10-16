@@ -287,6 +287,14 @@ type mockFileSystem struct {
 	files map[string]bool
 }
 
+// Stat simule os.Stat pour les tests.
+//
+// Params:
+//   - name: le chemin du fichier
+//
+// Returns:
+//   - os.FileInfo: toujours nil
+//   - error: toujours os.ErrNotExist
 func (m *mockFileSystem) Stat(name string) (os.FileInfo, error) {
 	// Retourne nil pour simuler qu'un fichier n'existe pas
 	return nil, os.ErrNotExist
@@ -466,10 +474,12 @@ func findTypeSpec(file *ast.File, typeName string) *ast.TypeSpec {
 		for _, spec := range genDecl.Specs {
 			ts, ok := spec.(*ast.TypeSpec)
 			if ok && ts.Name.Name == typeName {
+				// Retourne la spécification de type trouvée
 				return ts
 			}
 		}
 	}
+	// Retourne nil si aucune spécification trouvée
 	return nil
 }
 

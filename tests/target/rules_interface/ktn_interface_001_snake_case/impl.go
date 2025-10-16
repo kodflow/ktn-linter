@@ -14,6 +14,7 @@ type userServiceImplI001Good struct {
 //   - string: le nom de l'utilisateur
 //   - error: une erreur si l'opération échoue
 func (s *userServiceImplI001Good) GetUser(id string) (string, error) {
+	// Retourne le nom de l'utilisateur et nil pour l'erreur
 	return "user-" + id, nil
 }
 
@@ -25,5 +26,6 @@ func (s *userServiceImplI001Good) GetUser(id string) (string, error) {
 // Returns:
 //   - UserServiceI001Good: une nouvelle instance de l'interface
 func NewUserServiceI001Good(db string) UserServiceI001Good {
+	// Retourne une nouvelle instance du service
 	return &userServiceImplI001Good{db: db}
 }

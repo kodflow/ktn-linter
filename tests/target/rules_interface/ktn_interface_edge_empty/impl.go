@@ -17,6 +17,7 @@ type cacheImpl struct {
 //   - bool: true si la clé existe
 func (c *cacheImpl) Get(key string) (string, bool) {
 	val, exists := c.data[key]
+	// Retourne la valeur et l'indicateur d'existence
 	return val, exists
 }
 
@@ -34,6 +35,7 @@ func (c *cacheImpl) Set(key string, value string) {
 // Returns:
 //   - Cache: nouvelle instance de cache
 func NewCache() Cache {
+	// Retourne une nouvelle instance du cache
 	return &cacheImpl{
 		data: make(map[string]string),
 	}
@@ -51,6 +53,7 @@ type processorImpl struct{}
 //   - string: résultat du traitement
 func (p *processorImpl) Process(data string) string {
 	fmt.Println(data)
+	// Retourne les données traitées
 	return data
 }
 
@@ -59,6 +62,7 @@ func (p *processorImpl) Process(data string) string {
 // Returns:
 //   - Processor: nouvelle instance de processeur
 func NewProcessor() Processor {
+	// Retourne une nouvelle instance du processeur
 	return &processorImpl{}
 }
 
@@ -80,6 +84,7 @@ func (sc *stringContainer) Add(item string) {
 // Returns:
 //   - []string: tous les éléments du conteneur
 func (sc *stringContainer) GetAll() []string {
+	// Retourne tous les éléments du conteneur
 	return sc.items
 }
 
@@ -88,6 +93,7 @@ func (sc *stringContainer) GetAll() []string {
 // Returns:
 //   - Container[string]: nouvelle instance de conteneur
 func NewStringContainer() Container[string] {
+	// Retourne une nouvelle instance du conteneur de strings
 	return &stringContainer{
 		items: make([]string, 0),
 	}

@@ -212,3 +212,4 @@ bin/*
 !.gitkeep
 /.env
 .env
+test_gcflags

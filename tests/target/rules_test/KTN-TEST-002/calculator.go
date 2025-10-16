@@ -15,6 +15,7 @@ type CalculatorData struct{}
 // Returns:
 //   - int: résultat de l'addition
 func (c *CalculatorData) Add(a int, b int) int {
+	// Retourne la somme des deux nombres
 	return a + b
 }
 
@@ -27,6 +28,7 @@ func (c *CalculatorData) Add(a int, b int) int {
 // Returns:
 //   - int: résultat de la multiplication
 func (c *CalculatorData) Multiply(a int, b int) int {
+	// Retourne le produit des deux nombres
 	return a * b
 }
 

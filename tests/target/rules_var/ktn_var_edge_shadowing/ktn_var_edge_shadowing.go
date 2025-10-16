@@ -38,6 +38,7 @@ func ProcessData() string {
 	}
 
 	fmt.Println(localValue, localResult)
+	// Retourne le résultat local
 	return localResult
 }
 
@@ -60,16 +61,19 @@ func GoodErrorHandling() error {
 	// Utilisation de variable locale distincte
 	data, localErr := readData()
 	if localErr != nil {
+		// Retourne l'erreur de lecture
 		return localErr
 	}
 
 	// Réutilisation de la même variable locale
 	result, localErr := processResult(data)
 	if localErr != nil {
+		// Retourne l'erreur de traitement
 		return localErr
 	}
 
 	fmt.Println(result)
+	// Retourne nil car le traitement est terminé avec succès
 	return nil
 }
 
@@ -79,6 +83,7 @@ func GoodErrorHandling() error {
 //   - string: les données lues
 //   - error: erreur si la lecture échoue
 func readData() (string, error) {
+	// Retourne les données lues et nil pour l'erreur
 	return "data", nil
 }
 
@@ -91,5 +96,6 @@ func readData() (string, error) {
 //   - string: résultat du traitement
 //   - error: erreur si le traitement échoue
 func processResult(data string) (string, error) {
+	// Retourne les données traitées et nil pour l'erreur
 	return data, nil
 }

@@ -280,6 +280,15 @@ func isExemptedPackage(pkgName string) bool {
 //   - info: les informations du package
 func checkInterfacesFileExists(pass *analysis.Pass, info *packageInfo) {
 	if !info.hasInterfacesFile {
+		// Exception: ignorer tests/target/ (fixtures de test)
+		if len(pass.Files) > 0 {
+			firstFile := pass.Fset.File(pass.Files[0].Pos()).Name()
+			if strings.Contains(firstFile, "/tests/target/") || strings.Contains(firstFile, "\\tests\\target\\") {
+				// Package dans tests/target/, exempté
+				return
+			}
+		}
+
 		// Exception: pas besoin d'interfaces.go si le package ne contient que des fonctions
 		// (pas de structs avec méthodes à mocker)
 		if needsInterfacesFile(info) {
@@ -361,6 +370,18 @@ func needsInterfacesFile(info *packageInfo) bool {
 //   - info: les informations du package
 func checkNoPublicStructs(pass *analysis.Pass, info *packageInfo) {
 	for _, ps := range info.publicStructs {
+		// Exception: ignorer les structs dans les fichiers _test.go
+		// (structs de test, mocks inline, etc.)
+		baseName := filepath.Base(ps.fileName)
+		if strings.HasSuffix(baseName, "_test.go") {
+			continue
+		}
+
+		// Exception: ignorer les structs dans tests/target/ (fixtures de test)
+		if strings.Contains(ps.fileName, "/tests/target/") || strings.Contains(ps.fileName, "\\tests\\target\\") {
+			continue
+		}
+
 		// Vérifier si c'est un type natif autorisé
 		if isAllowedPublicType(ps.name) {
 			continue

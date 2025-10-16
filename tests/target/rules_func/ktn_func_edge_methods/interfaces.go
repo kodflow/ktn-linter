@@ -13,6 +13,7 @@ type UserManager interface {
 // Returns:
 //   - UserManager: instance du gestionnaire
 func NewUserManager() UserManager {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }
 
@@ -28,5 +29,6 @@ type Calc interface {
 // Returns:
 //   - Calc: instance du calculateur
 func NewCalc() Calc {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }

@@ -34,6 +34,7 @@ var (
 //   - interface{}: toujours nil
 //   - error: toujours nil, les erreurs sont rapportées via pass.Reportf
 func runInterfaceStrictAnalyzer(pass *analysis.Pass) (interface{}, error) {
+	// Délègue à la version testable avec le filesystem par défaut
 	return runInterfaceStrictAnalyzerWithFS(pass, interfaceDefaultFS)
 }
 
@@ -48,11 +49,13 @@ func runInterfaceStrictAnalyzer(pass *analysis.Pass) (interface{}, error) {
 //   - error: toujours nil
 func runInterfaceStrictAnalyzerWithFS(pass *analysis.Pass, fs filesystem.FileSystem) (interface{}, error) {
 	if isInterfaceExemptedPackage(pass.Pkg.Name()) {
+		// Retourne car le package est exempté des règles interface strictes
 		return nil, nil
 	}
 
 	interfacesFile, interfacesPath := findInterfacesFile(pass)
 	if interfacesFile == nil {
+		// Retourne car aucun fichier interfaces.go n'a été trouvé
 		return nil, nil
 	}
 
@@ -68,6 +71,7 @@ func runInterfaceStrictAnalyzerWithFS(pass *analysis.Pass, fs filesystem.FileSys
 		checkMockCompleteness(pass, interfacesFile, interfacesPath, fs)
 	}
 
+	// Retourne nil car l'analyse est terminée
 	return nil, nil
 }
 
@@ -87,9 +91,11 @@ func findInterfacesFile(pass *analysis.Pass) (*ast.File, string) {
 		}
 		path := filePos.Name()
 		if filepath.Base(path) == "interfaces.go" {
+			// Retourne le fichier interfaces.go trouvé
 			return file, path
 		}
 	}
+	// Retourne nil car aucun fichier interfaces.go n'a été trouvé
 	return nil, ""
 }
 
@@ -131,6 +137,7 @@ func analyzeInterfacesFile(file *ast.File) (bool, bool, token.Pos) {
 		}
 	}
 
+	// Retourne les résultats de l'analyse du fichier interfaces.go
 	return hasInterfaces, hasNonInterfaces, firstNonInterface
 }
 
@@ -196,19 +203,22 @@ func checkMockCompleteness(pass *analysis.Pass, interfacesFile *ast.File, interf
 	// Vérifier que mock.go existe
 	_, err := fs.Stat(mockPath)
 	if err != nil {
-		return // KTN-MOCK-001 déjà rapporté par checkMockFileExists
+		// Retourne car KTN-MOCK-001 déjà rapporté par checkMockFileExists
+		return
 	}
 
 	// Collecter toutes les interfaces de interfaces.go
 	interfaces := extractInterfaceNames(interfacesFile)
 	if len(interfaces) == 0 {
+		// Retourne car aucune interface à vérifier
 		return
 	}
 
 	// Parser le fichier mock.go depuis le filesystem
 	mockFile, err := parseMockFile(mockPath)
 	if err != nil {
-		return // Erreur de parsing, on ne rapporte pas
+		// Retourne car erreur de parsing, on ne rapporte pas
+		return
 	}
 
 	// Collecter tous les mocks (structs commençant par "Mock")
@@ -251,6 +261,7 @@ func extractInterfaceNames(file *ast.File) []string {
 		}
 	}
 
+	// Retourne la liste des noms d'interfaces extraits
 	return interfaces
 }
 
@@ -264,6 +275,7 @@ func extractInterfaceNames(file *ast.File) []string {
 //   - error: erreur de parsing
 func parseMockFile(mockPath string) (*ast.File, error) {
 	fset := token.NewFileSet()
+	// Retourne le fichier parsé et l'erreur éventuelle
 	return parser.ParseFile(fset, mockPath, nil, parser.ParseComments)
 }
 
@@ -286,6 +298,7 @@ func extractMockNames(file *ast.File) []string {
 		mocks = extractMocksFromGenDecl(genDecl, mocks)
 	}
 
+	// Retourne la liste des noms de mocks extraits
 	return mocks
 }
 
@@ -308,6 +321,7 @@ func extractMocksFromGenDecl(genDecl *ast.GenDecl, mocks []string) []string {
 			mocks = append(mocks, typeSpec.Name.Name)
 		}
 	}
+	// Retourne la liste mise à jour des mocks
 	return mocks
 }
 
@@ -320,6 +334,7 @@ func extractMocksFromGenDecl(genDecl *ast.GenDecl, mocks []string) []string {
 //   - bool: true si c'est un struct commençant par "Mock"
 func isMockStruct(typeSpec *ast.TypeSpec) bool {
 	_, isStruct := typeSpec.Type.(*ast.StructType)
+	// Retourne true si c'est un struct dont le nom commence par Mock
 	return isStruct && strings.HasPrefix(typeSpec.Name.Name, "Mock")
 }
 
@@ -334,9 +349,11 @@ func isMockStruct(typeSpec *ast.TypeSpec) bool {
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
+			// Retourne true car l'élément a été trouvé
 			return true
 		}
 	}
+	// Retourne false car l'élément n'a pas été trouvé
 	return false
 }
 
@@ -368,5 +385,6 @@ func reportMissingMock(pass *analysis.Pass, interfaceName, expectedMockName stri
 // Returns:
 //   - bool: true si le package est exempté
 func isInterfaceExemptedPackage(pkgName string) bool {
+	// Retourne true si le package est main ou un package de test
 	return pkgName == "main" || strings.HasSuffix(pkgName, "_test")
 }

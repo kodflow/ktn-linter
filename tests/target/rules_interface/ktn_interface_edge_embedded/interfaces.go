@@ -62,6 +62,7 @@ type Processor interface {
 // Returns:
 //   - Reader: l'instance créée
 func NewReader() Reader {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }
 
@@ -70,6 +71,7 @@ func NewReader() Reader {
 // Returns:
 //   - Writer: l'instance créée
 func NewWriter() Writer {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }
 
@@ -78,6 +80,7 @@ func NewWriter() Writer {
 // Returns:
 //   - ReadWriter: l'instance créée
 func NewReadWriter() ReadWriter {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }
 
@@ -86,6 +89,7 @@ func NewReadWriter() ReadWriter {
 // Returns:
 //   - ComplexEmbedded: l'instance créée
 func NewComplexEmbedded() ComplexEmbedded {
+	// Retourne une nouvelle instance via NewImplementation
 	return NewImplementation()
 }
 
@@ -94,5 +98,6 @@ func NewComplexEmbedded() ComplexEmbedded {
 // Returns:
 //   - Processor: l'instance créée
 func NewProcessor() Processor {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }

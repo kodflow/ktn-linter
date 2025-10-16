@@ -13,6 +13,7 @@ type paymentProcessorImplI005Good struct {
 // Returns:
 //   - error: une erreur si l'opération échoue
 func (p *paymentProcessorImplI005Good) ProcessPaymentI005Good(amount float64) error {
+	// Retourne nil car le paiement est traité avec succès
 	return nil
 }
 
@@ -24,6 +25,7 @@ func (p *paymentProcessorImplI005Good) ProcessPaymentI005Good(amount float64) er
 // Returns:
 //   - PaymentProcessorI005Good: une nouvelle instance
 func NewPaymentProcessorI005Good(gateway string) PaymentProcessorI005Good {
+	// Retourne une nouvelle instance du processeur de paiement
 	return &paymentProcessorImplI005Good{gateway: gateway}
 }
 
@@ -42,6 +44,7 @@ type emailSenderImplI005Good struct {
 // Returns:
 //   - error: une erreur si l'opération échoue
 func (e *emailSenderImplI005Good) SendEmailI005Good(to string, subject string, body string) error {
+	// Retourne nil car l'email est envoyé avec succès
 	return nil
 }
 
@@ -53,5 +56,6 @@ func (e *emailSenderImplI005Good) SendEmailI005Good(to string, subject string, b
 // Returns:
 //   - EmailSenderI005Good: une nouvelle instance
 func NewEmailSenderI005Good(smtpServer string) EmailSenderI005Good {
+	// Retourne une nouvelle instance de l'expéditeur d'emails
 	return &emailSenderImplI005Good{smtpServer: smtpServer}
 }

@@ -13,6 +13,7 @@ import "errors"
 func ComplexCalculationWithInternalComments(value int) (int, error) {
 	// Validation: rejet des valeurs négatives
 	if value < 0 {
+		// Retourne 0 et une erreur car la valeur est négative
 		return 0, errors.New("value must be non-negative")
 	}
 
@@ -24,6 +25,7 @@ func ComplexCalculationWithInternalComments(value int) (int, error) {
 		result += calculateValueContribution(i)
 	}
 
+	// Retourne le résultat calculé et nil pour l'erreur
 	return result, nil
 }
 
@@ -36,8 +38,10 @@ func ComplexCalculationWithInternalComments(value int) (int, error) {
 //   - int: la contribution au résultat
 func calculateValueContribution(i int) int {
 	if i%2 == 0 {
+		// Retourne la contribution pour les nombres pairs
 		return calculateEvenContribution(i)
 	}
+	// Retourne la contribution pour les nombres impairs
 	return calculateOddContribution(i)
 }
 
@@ -52,13 +56,16 @@ func calculateEvenContribution(i int) int {
 	// Traitement des nombres pairs
 	if i%3 == 0 && i%5 == 0 {
 		// Bonus pour les multiples de 30 (2*3*5)
+		// Retourne le nombre multiplié par 2
 		return i * 2
 	}
 	if i%3 == 0 {
 		// Multiples de 6 seulement
+		// Retourne le nombre tel quel
 		return i
 	}
 	// Pairs non multiples de 3
+	// Retourne le nombre en négatif
 	return -i
 }
 
@@ -73,9 +80,11 @@ func calculateOddContribution(i int) int {
 	// Traitement des nombres impairs
 	if i%7 == 0 {
 		// Bonus triple pour les multiples de 7
+		// Retourne le nombre multiplié par 3
 		return i * 3
 	}
 	// Impairs standards: pénalité double
+	// Retourne le double du nombre en négatif
 	return -i * 2
 }
 
@@ -96,6 +105,7 @@ func ProcessDataWithComments(data []int) []int {
 		}
 	}
 
+	// Retourne les données traitées
 	return processed
 }
 
@@ -110,21 +120,26 @@ func ProcessDataWithComments(data []int) []int {
 func transformValue(v int) (int, bool) {
 	// Ignorer les valeurs négatives ou nulles
 	if v <= 0 {
+		// Retourne 0 et false pour ignorer la valeur
 		return 0, false
 	}
 
 	if v%10 == 0 {
 		// Doubler les multiples de 10
+		// Retourne le double de la valeur et true
 		return v * 2, true
 	}
 	if v%5 == 0 {
 		// Ajouter 10 aux multiples de 5
+		// Retourne la valeur augmentée de 10 et true
 		return v + 10, true
 	}
 	if v%2 == 0 {
 		// Diviser par 2 les nombres pairs
+		// Retourne la moitié de la valeur et true
 		return v / 2, true
 	}
 	// Conserver les impairs non multiples de 5
+	// Retourne la valeur inchangée et true
 	return v, true
 }

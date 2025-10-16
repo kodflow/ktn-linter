@@ -20,6 +20,7 @@ func OpenResource(name string) error {
 		panic("empty resource name")
 	}
 
+	// Retourne nil car la ressource est ouverte avec succès
 	return nil
 }
 
@@ -45,6 +46,7 @@ func ProcessWithRecover() (err error) {
 
 	// Opération qui peut paniquer
 	riskyOperation()
+	// Retourne nil car aucune erreur n'est survenue
 	return nil
 }
 
@@ -74,9 +76,11 @@ func ProcessFiles(files []string) error {
 	// Approche correcte: traiter chaque fichier dans une fonction séparée
 	for _, file := range files {
 		if err := processFile(file); err != nil {
+			// Retourne l'erreur si le traitement du fichier échoue
 			return err
 		}
 	}
+	// Retourne nil car tous les fichiers ont été traités avec succès
 	return nil
 }
 
@@ -91,6 +95,7 @@ func processFile(name string) error {
 	f := openFile(name)
 	// Defer dans la fonction de traitement individuel (évite l'accumulation)
 	defer closeFile(f)
+	// Retourne nil car le traitement est terminé avec succès
 	return nil
 }
 
@@ -102,6 +107,7 @@ func processFile(name string) error {
 // Returns:
 //   - *file: pointeur vers le fichier ouvert
 func openFile(name string) *file {
+	// Retourne un pointeur vers le fichier ouvert
 	return &file{name: name}
 }
 
@@ -144,5 +150,6 @@ func HandlePanic(shouldPanic bool) error {
 		panic("intentional panic")
 	}
 
+	// Retourne nil car aucune erreur n'est survenue
 	return nil
 }

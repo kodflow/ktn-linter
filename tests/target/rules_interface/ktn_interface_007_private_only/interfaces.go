@@ -32,6 +32,7 @@ type HelperInterface interface {
 // Returns:
 //   - ServiceInterface: l'instance créée
 func NewServiceInterface() ServiceInterface {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }
 
@@ -40,5 +41,6 @@ func NewServiceInterface() ServiceInterface {
 // Returns:
 //   - HelperInterface: l'instance créée
 func NewHelperInterface() HelperInterface {
+	// Retourne nil comme placeholder
 	return nil // Placeholder
 }

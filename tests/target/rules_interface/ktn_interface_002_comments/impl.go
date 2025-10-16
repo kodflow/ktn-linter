@@ -14,6 +14,7 @@ type userServiceImplI002Good struct {
 // Returns:
 //   - error: une erreur si l'opération échoue
 func (s *userServiceImplI002Good) ProcessI002Good(data string) error {
+	// Retourne nil car le traitement est terminé avec succès
 	return nil
 }
 
@@ -26,6 +27,7 @@ func (s *userServiceImplI002Good) ProcessI002Good(data string) error {
 // Returns:
 //   - UserServiceI002Good: nouvelle instance
 func NewUserServiceI002Good(db string, cacheDir string) UserServiceI002Good {
+	// Retourne une nouvelle instance du service
 	return &userServiceImplI002Good{db: db, cacheDir: cacheDir}
 }
 
@@ -43,6 +45,7 @@ type orderManagerImplI002Good struct {
 //   - error: une erreur si l'opération échoue
 func (o *orderManagerImplI002Good) CreateOrderI002Good(order string) error {
 	o.orders = append(o.orders, order)
+	// Retourne nil car la commande est créée avec succès
 	return nil
 }
 
@@ -51,5 +54,6 @@ func (o *orderManagerImplI002Good) CreateOrderI002Good(order string) error {
 // Returns:
 //   - OrderManagerI002Good: nouvelle instance
 func NewOrderManagerI002Good() OrderManagerI002Good {
+	// Retourne une nouvelle instance du gestionnaire de commandes
 	return &orderManagerImplI002Good{orders: []string{}}
 }

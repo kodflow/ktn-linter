@@ -121,5 +121,11 @@ func updateConfigV004Good() {
 	warningCountV004Good = 5
 }
 
+// ContextV004GoodData représente le contexte global de l'application.
 type ContextV004GoodData struct{}
-type UserV004GoodData struct{ Name string }
+
+// UserV004GoodData représente les informations d'un utilisateur.
+type UserV004GoodData struct{
+	// Name est le nom de l'utilisateur
+	Name string
+}

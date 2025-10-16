@@ -8,8 +8,12 @@ import (
 // analyzerPlugin implements the golangci-lint plugin interface
 type analyzerPlugin struct{}
 
-// GetAnalyzers returns all custom analyzers for golangci-lint
+// GetAnalyzers returns all custom analyzers for golangci-lint.
+//
+// Returns:
+//   - []*analysis.Analyzer: la liste de tous les analyseurs personnalisés
 func (*analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
+	// Retourne la liste complète des analyseurs disponibles
 	return []*analysis.Analyzer{
 		analyzer.ConstAnalyzer,
 		analyzer.VarAnalyzer,

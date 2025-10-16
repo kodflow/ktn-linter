@@ -10,6 +10,7 @@ type osFileSystem struct{}
 // Returns:
 //   - FileSystem: l'implémentation du système de fichiers
 func NewFileSystem() FileSystem {
+	// Retourne une nouvelle instance du système de fichiers OS
 	return &osFileSystem{}
 }
 
@@ -18,6 +19,7 @@ func NewFileSystem() FileSystem {
 // Returns:
 //   - FileSystem: l'implémentation réelle du système de fichiers
 func NewOSFileSystem() FileSystem {
+	// Retourne une nouvelle instance du système de fichiers OS
 	return &osFileSystem{}
 }
 
@@ -30,5 +32,6 @@ func NewOSFileSystem() FileSystem {
 //   - os.FileInfo: les informations du fichier
 //   - error: erreur si le fichier n'existe pas
 func (fs *osFileSystem) Stat(name string) (os.FileInfo, error) {
+	// Délègue à la fonction os.Stat standard
 	return os.Stat(name)
 }

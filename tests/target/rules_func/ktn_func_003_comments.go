@@ -20,7 +20,9 @@ import (
 //   - error: une erreur si les données sont invalides
 func CreateUserF003Good(name string, email string, age int) (int, error) {
 	if name == "" {
+		// Retourne 0 et une erreur car le nom est requis
 		return 0, errors.New("name requis")
 	}
+	// Retourne l'ID de l'utilisateur créé et nil pour l'erreur
 	return 1, nil
 }

@@ -8,5 +8,6 @@ package withfunction
 // Returns:
 //   - string: résultat
 func ProcessData(data string) string {
+	// Retourne les données traitées avec préfixe
 	return "processed: " + data
 }

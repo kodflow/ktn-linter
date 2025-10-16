@@ -18,7 +18,7 @@ import (
 //   - interface{}: toujours nil car aucun résultat n'est nécessaire
 //   - error: toujours nil, les erreurs sont rapportées via pass.Reportf
 func RunTestAnalyzerWithFS(pass *analysis.Pass, fs filesystem.FileSystem) (interface{}, error) {
-	// Retourne le résultat de l'exécution
+	// Délègue à l'implémentation interne
 	return runTestAnalyzerWithFS(pass, fs)
 }
 
@@ -31,15 +31,19 @@ func RunTestAnalyzerWithFS(pass *analysis.Pass, fs filesystem.FileSystem) (inter
 // Returns:
 //   - *ast.File: le fichier AST trouvé ou nil
 func FindASTFileForTest(pass *analysis.Pass, path string) *ast.File {
-	// Retourne le fichier AST trouvé ou nil
+	// Délègue à l'implémentation interne
 	return findASTFile(pass, path)
 }
 
 // fileInfoForTest expose le type fileInfo pour les tests (type privé).
 type fileInfoForTest struct {
+	// Path est le chemin du fichier
 	Path        string
+	// IsTest indique si c'est un fichier de test
 	IsTest      bool
+	// PackageName est le nom du package
 	PackageName string
+	// HasTests indique si le fichier contient des tests
 	HasTests    bool
 }
 
@@ -51,7 +55,7 @@ type fileInfoForTest struct {
 // Returns:
 //   - *fileInfo: une nouvelle instance de fileInfo avec les mêmes valeurs
 func ToInternalFileInfo(fi fileInfoForTest) *fileInfo {
-	// Retourne une fileInfo pour utilisation interne
+	// Convertit et retourne une instance de fileInfo interne
 	return &fileInfo{
 		path:        fi.Path,
 		isTest:      fi.IsTest,
@@ -68,6 +72,7 @@ func ToInternalFileInfo(fi fileInfoForTest) *fileInfo {
 // Returns:
 //   - bool: true si le fichier contient uniquement des interfaces
 func ContainsOnlyInterfacesForTest(file *ast.File) bool {
+	// Délègue à l'implémentation interne
 	return containsOnlyInterfaces(file)
 }
 
@@ -79,6 +84,7 @@ func ContainsOnlyInterfacesForTest(file *ast.File) bool {
 // Returns:
 //   - bool: true si c'est une fonction
 func IsFunctionDeclForTest(decl ast.Decl) bool {
+	// Délègue à l'implémentation interne
 	return isFunctionDecl(decl)
 }
 
@@ -90,6 +96,7 @@ func IsFunctionDeclForTest(decl ast.Decl) bool {
 // Returns:
 //   - bool: true si c'est une interface
 func IsInterfaceTypeForTest(typeSpec *ast.TypeSpec) bool {
+	// Délègue à l'implémentation interne
 	return isInterfaceType(typeSpec)
 }
 
@@ -101,6 +108,7 @@ func IsInterfaceTypeForTest(typeSpec *ast.TypeSpec) bool {
 // Returns:
 //   - bool: true si contient struct ou interface
 func IsTestableTypeForTest(decl ast.Decl) bool {
+	// Délègue à l'implémentation interne
 	return isTestableType(decl)
 }
 
@@ -112,6 +120,7 @@ func IsTestableTypeForTest(decl ast.Decl) bool {
 // Returns:
 //   - bool: true si le fichier contient des éléments testables
 func HasTestableElementsForTest(file *ast.File) bool {
+	// Délègue à l'implémentation interne
 	return hasTestableElements(file)
 }
 
@@ -133,5 +142,6 @@ func ShouldSkipTestCoverageForTest(pass *analysis.Pass, path string, isTest bool
 		packageName: pkgName,
 		hasTests:    hasTests,
 	}
+	// Délègue à l'implémentation interne avec une fileInfo construite
 	return shouldSkipTestCoverage(pass, info)
 }

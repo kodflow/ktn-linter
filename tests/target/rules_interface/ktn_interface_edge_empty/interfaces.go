@@ -55,5 +55,6 @@ type Container[T any] interface {
 // Returns:
 //   - Container[T]: l'instance créée
 func NewContainer[T any]() Container[T] {
+	// Retourne une instance de conteneur via cast placeholder
 	return NewStringContainer().(Container[T]) // Placeholder avec cast
 }

@@ -30,29 +30,51 @@ var (
 func runStructAnalyzer(pass *analysis.Pass) (any, error) {
 	for _, file := range pass.Files {
 		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.TYPE {
-				continue
-			}
-
-			for _, spec := range genDecl.Specs {
-				typeSpec, ok := spec.(*ast.TypeSpec)
-				if !ok {
-					continue
-				}
-
-				structType, ok := typeSpec.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-
-				checkStruct(pass, typeSpec, structType, genDecl)
-			}
+			processDeclaration(pass, decl)
 		}
 	}
 
 	// Retourne nil car l'analyseur rapporte via pass.Reportf
 	return nil, nil
+}
+
+// processDeclaration traite une déclaration et vérifie les structs.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - decl: la déclaration à traiter
+func processDeclaration(pass *analysis.Pass, decl ast.Decl) {
+	genDecl, ok := decl.(*ast.GenDecl)
+	if !ok || genDecl.Tok != token.TYPE {
+		// Retourne car ce n'est pas une déclaration de type
+		return
+	}
+
+	for _, spec := range genDecl.Specs {
+		processTypeSpec(pass, spec, genDecl)
+	}
+}
+
+// processTypeSpec traite une spécification de type et vérifie si c'est une struct.
+//
+// Params:
+//   - pass: la passe d'analyse pour rapporter les erreurs
+//   - spec: la spécification à traiter
+//   - genDecl: la déclaration générale parent
+func processTypeSpec(pass *analysis.Pass, spec ast.Spec, genDecl *ast.GenDecl) {
+	typeSpec, ok := spec.(*ast.TypeSpec)
+	if !ok {
+		// Retourne car ce n'est pas une spécification de type
+		return
+	}
+
+	structType, ok := typeSpec.Type.(*ast.StructType)
+	if !ok {
+		// Retourne car ce n'est pas une struct
+		return
+	}
+
+	checkStruct(pass, typeSpec, structType, genDecl)
 }
 
 // checkStruct vérifie toutes les règles pour une struct.

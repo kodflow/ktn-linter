@@ -14,6 +14,7 @@ type implementation struct {
 //   - n: nombre de bytes lus
 //   - err: erreur éventuelle
 func (i *implementation) Read(p []byte) (n int, err error) {
+	// Retourne 0 bytes lus et nil pour l'erreur
 	return 0, nil
 }
 
@@ -26,6 +27,7 @@ func (i *implementation) Read(p []byte) (n int, err error) {
 //   - n: nombre de bytes écrits
 //   - err: erreur éventuelle
 func (i *implementation) Write(p []byte) (n int, err error) {
+	// Retourne le nombre de bytes écrits et nil pour l'erreur
 	return len(p), nil
 }
 
@@ -34,6 +36,7 @@ func (i *implementation) Write(p []byte) (n int, err error) {
 // Returns:
 //   - error: erreur si la fermeture échoue
 func (i *implementation) Close() error {
+	// Retourne nil car la fermeture est réussie
 	return nil
 }
 
@@ -42,6 +45,7 @@ func (i *implementation) Close() error {
 // Returns:
 //   - error: erreur si l'opération échoue
 func (i *implementation) CustomMethod() error {
+	// Retourne nil car l'opération est terminée avec succès
 	return nil
 }
 
@@ -50,5 +54,6 @@ func (i *implementation) CustomMethod() error {
 // Returns:
 //   - ComplexEmbedded: l'interface implémentée
 func NewImplementation() ComplexEmbedded {
+	// Retourne une nouvelle instance de l'implémentation
 	return &implementation{}
 }

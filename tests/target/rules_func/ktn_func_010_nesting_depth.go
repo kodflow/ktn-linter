@@ -17,6 +17,7 @@ func DeeplyNestedGood(value int) int {
 		}
 	}
 
+	// Retourne le résultat accumulé
 	return result
 }
 
@@ -34,6 +35,7 @@ func processInnerLoop(i int) int {
 			sum += i + j
 		}
 	}
+	// Retourne la somme calculée
 	return sum
 }
 
@@ -55,6 +57,7 @@ func ExtremelyNestedGood(x, y int) int {
 		}
 	}
 
+	// Retourne le compteur total
 	return count
 }
 
@@ -74,6 +77,7 @@ func countInner(y int) int {
 			}
 		}
 	}
+	// Retourne le nombre d'itérations
 	return count
 }
 
@@ -96,6 +100,7 @@ func ComplexNestedGood(values []int) []int {
 		}
 	}
 
+	// Retourne les valeurs filtrées
 	return result
 }
 
@@ -111,12 +116,15 @@ func processValue(v int) (int, bool) {
 	switch v % 3 {
 	case 0:
 		if v < 100 {
+			// Retourne la valeur telle quelle et true
 			return v, true
 		}
 	case 1:
 		if v > 10 {
+			// Retourne le double de la valeur et true
 			return v * 2, true
 		}
 	}
+	// Retourne 0 et false car la valeur ne correspond à aucune condition
 	return 0, false
 }

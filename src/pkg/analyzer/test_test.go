@@ -288,8 +288,10 @@ func NewMockFileSystemForTests(files map[string]bool) filesystem.FileSystem {
 //   - error: erreur si le fichier n'existe pas
 func (m *mockFileSystemForTests) Stat(name string) (os.FileInfo, error) {
 	if exists, ok := m.files[name]; ok && exists {
+		// Retourne les informations du fichier simulé car il existe
 		return &mockFileInfoForTests{name: name}, nil
 	}
+	// Retourne une erreur car le fichier n'existe pas
 	return nil, errors.New("file does not exist")
 }
 
