@@ -63,7 +63,10 @@ func checkConstDeclarations(pass *analysis.Pass, file *ast.File) {
 //   - genDecl: la déclaration générale contenant la constante non groupée
 func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
 		for _, name := range valueSpec.Names {
 			pass.Reportf(name.Pos(),
 				"[KTN-CONST-001] Constante '%s' déclarée individuellement. Regroupez les constantes dans un bloc const ().\nExemple:\n  const (\n      %s %s = ...\n  )",
@@ -81,7 +84,10 @@ func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
 //   - bool: true si au moins une constante du groupe utilise iota
 func groupContainsIota(genDecl *ast.GenDecl) bool {
 	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
 		if usesIota(valueSpec) {
 			// Retourne true car au moins une constante du groupe utilise iota
 			return true
@@ -111,7 +117,10 @@ func checkConstGroup(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	groupUsesIota := groupContainsIota(genDecl)
 
 	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
 		isGroupCommentOnly := hasGroupComment &&
 			valueSpec.Doc != nil &&
 			genDecl.Doc != nil &&

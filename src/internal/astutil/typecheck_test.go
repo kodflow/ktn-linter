@@ -50,6 +50,7 @@ func TestIsConstCompatibleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
@@ -120,6 +121,7 @@ func TestIsLiteralValue(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			src := "package test\nvar s string\nvar y int\n" + tt.code

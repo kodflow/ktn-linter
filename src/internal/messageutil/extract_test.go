@@ -54,6 +54,7 @@ func TestExtractCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractCode(tt.message)
 			if result != tt.expected {
@@ -101,6 +102,7 @@ func TestExtractMessage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractMessage(tt.message)
 			if result != tt.expected {
@@ -160,6 +162,7 @@ Exemple:
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractSuggestion(tt.message)
 			if result != tt.expected {
@@ -212,6 +215,7 @@ func TestExtractConstName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractConstName(tt.message)
 			if result != tt.expected {
@@ -269,6 +273,7 @@ func TestExtractType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractType(tt.suggestion)
 			if result != tt.expected {
@@ -311,6 +316,7 @@ func TestExtractCodeEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractCode(tt.message)
 			if result != tt.expected {
@@ -343,6 +349,7 @@ func TestExtractMessageEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := messageutil.ExtractMessage(tt.message)
 			if result != tt.expected {

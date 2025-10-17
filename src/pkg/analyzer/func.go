@@ -83,6 +83,32 @@ func isTestFile(pass *analysis.Pass) bool {
 	return false
 }
 
+// isTargetTestFile vérifie si le fichier analysé est dans tests/.
+//
+// Les fichiers dans tests/** sont des exemples de bonnes/mauvaises pratiques,
+// ils ne doivent pas être flagués pour documentation manquante (FUNC-002, FUNC-008).
+//
+// Params:
+//   - pass: la passe d'analyse
+//
+// Returns:
+//   - bool: true si c'est un fichier dans tests/
+func isTargetTestFile(pass *analysis.Pass) bool {
+	for _, f := range pass.Files {
+		pos := pass.Fset.Position(f.Pos())
+		// Normaliser les séparateurs de chemin (/ et \)
+		normalizedPath := strings.ReplaceAll(pos.Filename, "\\", "/")
+		if strings.Contains(normalizedPath, "tests/target/") ||
+			strings.Contains(normalizedPath, "tests/bad_usage/") ||
+			strings.Contains(normalizedPath, "tests/good_usage/") {
+			// Retourne true car le fichier est dans tests/
+			return true
+		}
+	}
+	// Retourne false car le fichier n'est pas dans tests/
+	return false
+}
+
 // checkFuncNaming vérifie le nommage de la fonction.
 //
 // Params:
@@ -104,6 +130,12 @@ func checkFuncNaming(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName strin
 //   - funcDecl: la déclaration de fonction
 //   - funcName: le nom de la fonction
 func checkFuncDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
+	// Ignorer les règles de documentation pour tests/target/**
+	if isTargetTestFile(pass) {
+		// Retourne car les fichiers d'exemple ne nécessitent pas de documentation
+		return
+	}
+
 	if funcDecl.Doc == nil || len(funcDecl.Doc.List) == 0 {
 		pass.Reportf(funcDecl.Name.Pos(),
 			"[KTN-FUNC-002] Fonction '%s' sans commentaire godoc.\nToute fonction doit avoir un commentaire godoc.\nExemple:\n  // %s fait quelque chose...\n  func %s(...) { }",
@@ -580,6 +612,12 @@ func getNodeComplexity(n ast.Node) int {
 //   - funcDecl: la déclaration de fonction
 //   - funcName: le nom de la fonction
 func checkReturnComments(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl, funcName string) {
+	// Ignorer les règles de documentation pour tests/target/**
+	if isTargetTestFile(pass) {
+		// Retourne car les fichiers d'exemple ne nécessitent pas de commentaires return
+		return
+	}
+
 	if funcDecl.Body == nil {
 		// Retourne car la fonction n'a pas de corps
 		return

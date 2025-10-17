@@ -292,8 +292,10 @@ func checkTestCoverageWithFS(pass *analysis.Pass, files map[string]*fileInfo, fs
 func shouldSkipTestCoverage(pass *analysis.Pass, info *fileInfo) bool {
 	baseName := filepath.Base(info.path)
 
-	// Ignorer les fixtures de test dans tests/target/ (exemples de code conforme)
-	if strings.Contains(info.path, "/tests/target/") || strings.Contains(info.path, "\\tests\\target\\") {
+	// Ignorer les fixtures de test dans tests/ (exemples de code conforme)
+	if strings.Contains(info.path, "/tests/target/") || strings.Contains(info.path, "\\tests\\target\\") ||
+		strings.Contains(info.path, "/tests/bad_usage/") || strings.Contains(info.path, "\\tests\\bad_usage\\") ||
+		strings.Contains(info.path, "/tests/good_usage/") || strings.Contains(info.path, "\\tests\\good_usage\\") {
 		// Fichier fixture de test exempté
 		return true
 	}

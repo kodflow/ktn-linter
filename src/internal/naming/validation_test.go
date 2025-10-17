@@ -45,6 +45,7 @@ func TestIsAllCaps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.IsAllCaps(tt.input)
 			if result != tt.expected {
@@ -122,6 +123,7 @@ func TestIsValidInitialism(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.IsValidInitialism(tt.input)
 			if result != tt.expected {
@@ -179,6 +181,7 @@ func TestIsValidInitialismCombinationsWithMixedCaps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.IsValidInitialism(tt.input)
 			if result != tt.expected {
@@ -207,6 +210,7 @@ func TestIsAllCapsUnicode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.IsAllCaps(tt.input)
 			if result != tt.expected {
@@ -256,6 +260,7 @@ func TestIsMixedCaps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.IsMixedCaps(tt.input)
 			if result != tt.expected {
@@ -306,6 +311,7 @@ func TestHasGetterPrefix(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.HasGetterPrefix(tt.input)
 			if result != tt.expected {
@@ -367,6 +373,7 @@ func TestFixInitialisms(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable for closure
 		t.Run(tt.name, func(t *testing.T) {
 			result := naming.FixInitialisms(tt.input)
 			if len(result) != len(tt.expected) {

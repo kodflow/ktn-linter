@@ -129,6 +129,16 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		analyzer.PoolAnalyzer,
 		analyzer.ErrorAnalyzer,
 		analyzer.GoroutineAnalyzer,
+		analyzer.ControlFlowAnalyzer,
+		analyzer.LoopAnalyzer,
+		analyzer.TypeOpsAnalyzer,
+		analyzer.BuiltinOpsAnalyzer,
+		analyzer.DataStructuresAnalyzer,
+		analyzer.DeclarationAnalyzer,
+		analyzer.ChannelOpsAnalyzer,
+		analyzer.ComparisonAnalyzer,
+		analyzer.PackageOpsAnalyzer,
+		analyzer.ReturnStmtAnalyzer,
 	}
 
 	var allDiagnostics []diagWithFset

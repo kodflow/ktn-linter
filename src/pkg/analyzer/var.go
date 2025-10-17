@@ -61,7 +61,10 @@ func collectPackageVars(file *ast.File, packageVars map[*ast.Ident]*ast.ValueSpe
 		}
 
 		for _, spec := range genDecl.Specs {
-			valueSpec := spec.(*ast.ValueSpec)
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
 			for _, name := range valueSpec.Names {
 				packageVars[name] = valueSpec
 			}
@@ -126,7 +129,10 @@ func checkVarDeclarations(pass *analysis.Pass, file *ast.File, reassignedVars ma
 //   - genDecl: la déclaration générale contenant la variable non groupée
 func reportUngroupedVar(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
 		for _, name := range valueSpec.Names {
 			pass.Reportf(name.Pos(),
 				"[KTN-VAR-001] Variable '%s' déclarée individuellement. Regroupez les variables dans un bloc var ().\nExemple:\n  var (\n      %s %s = ...\n  )",
@@ -153,7 +159,10 @@ func checkVarGroup(pass *analysis.Pass, genDecl *ast.GenDecl, reassignedVars map
 	}
 
 	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
 		isGroupCommentOnly := hasGroupComment &&
 			valueSpec.Doc != nil &&
 			genDecl.Doc != nil &&

@@ -106,7 +106,7 @@ func findInterfacesFile(pass *analysis.Pass) (*ast.File, string) {
 //
 // Returns:
 //   - bool: true si contient des interfaces
-//   - bool: true si contient des non-interfaces (structs, etc.)
+//   - bool: true si contient des non-interfaces (structs, fonctions, etc.)
 //   - token.Pos: position du premier type non-interface
 func analyzeInterfacesFile(file *ast.File) (bool, bool, token.Pos) {
 	hasInterfaces := false
@@ -114,26 +114,35 @@ func analyzeInterfacesFile(file *ast.File) (bool, bool, token.Pos) {
 	var firstNonInterface token.Pos
 
 	for _, decl := range file.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
-		if !ok || genDecl.Tok != token.TYPE {
-			continue
-		}
-
-		for _, spec := range genDecl.Specs {
-			typeSpec, ok := spec.(*ast.TypeSpec)
-			if !ok {
+		switch d := decl.(type) {
+		case *ast.GenDecl:
+			if d.Tok != token.TYPE {
 				continue
 			}
 
-			switch typeSpec.Type.(type) {
-			case *ast.InterfaceType:
-				hasInterfaces = true
-			case *ast.StructType:
-				if !hasNonInterfaces {
-					firstNonInterface = typeSpec.Pos()
+			for _, spec := range d.Specs {
+				typeSpec, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
 				}
-				hasNonInterfaces = true
+
+				switch typeSpec.Type.(type) {
+				case *ast.InterfaceType:
+					hasInterfaces = true
+				case *ast.StructType:
+					if !hasNonInterfaces {
+						firstNonInterface = typeSpec.Pos()
+					}
+					hasNonInterfaces = true
+				}
 			}
+
+		case *ast.FuncDecl:
+			// Les fonctions (constructeurs, helpers, etc.) ne doivent pas être dans interfaces.go
+			if !hasNonInterfaces {
+				firstNonInterface = d.Pos()
+			}
+			hasNonInterfaces = true
 		}
 	}
 
@@ -148,18 +157,19 @@ func analyzeInterfacesFile(file *ast.File) (bool, bool, token.Pos) {
 //   - pos: la position du premier type non-interface
 func reportNonInterfaceTypes(pass *analysis.Pass, pos token.Pos) {
 	pass.Reportf(pos,
-		"[KTN-INTERFACE-008] Le fichier 'interfaces.go' contient des types non-interface (struct, alias, etc.).\n"+
-			"Ce fichier doit contenir UNIQUEMENT des interfaces.\n"+
-			"Déplacez les implémentations (struct) vers impl.go ou un autre fichier.\n"+
+		"[KTN-INTERFACE-008] Le fichier 'interfaces.go' contient des éléments non-interface (struct, fonction, alias, etc.).\n"+
+			"Ce fichier doit contenir UNIQUEMENT des définitions d'interfaces.\n"+
+			"Déplacez les implémentations (struct), constructeurs (func New*) et autres logiques métier vers impl.go ou un autre fichier.\n"+
 			"Exemple:\n"+
 			"  // interfaces.go - UNIQUEMENT interfaces\n"+
 			"  type Service interface {\n"+
 			"      Process() error\n"+
 			"  }\n"+
 			"\n"+
-			"  // impl.go - implémentations\n"+
+			"  // impl.go - implémentations et constructeurs\n"+
 			"  type service struct {}\n"+
-			"  func (s *service) Process() error { return nil }")
+			"  func (s *service) Process() error { return nil }\n"+
+			"  func NewService() Service { return &service{} }")
 }
 
 // checkMockFileExists vérifie que mock.go existe si interfaces.go contient des interfaces.

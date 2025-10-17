@@ -356,19 +356,6 @@ func isSliceType(expr ast.Expr) bool {
 	return ok && arrayType.Len == nil
 }
 
-// isZeroLiteral vérifie si une expression est le littéral 0.
-//
-// Params:
-//   - expr: l'expression à vérifier
-//
-// Returns:
-//   - bool: true si c'est le littéral 0
-func isZeroLiteral(expr ast.Expr) bool {
-	basicLit, ok := expr.(*ast.BasicLit)
-	// Retourne true si c'est le littéral "0"
-	return ok && basicLit.Kind == token.INT && basicLit.Value == "0"
-}
-
 // isMakeSliceZero vérifie si une expression est make([]T, 0) ou make([]T, 0, 0).
 //
 // Params:
