@@ -14,7 +14,7 @@ import (
 //   - ch: channel pour communiquer l'erreur
 func GoodErrorInGoroutine(ch chan error) {
 	go func() {
-		err := riskyOperation()
+		err := riskyOperationCtx()
 		if err != nil {
 			ch <- fmt.Errorf("goroutine failed: %w", err) // ✅ Correct
 		}
@@ -29,7 +29,7 @@ func GoodErrorInGoroutine(ch chan error) {
 func GoodMultipleGoroutinesWithErrors(ch chan error, count int) {
 	for i := 0; i < count; i++ {
 		go func(id int) {
-			err := processTask(id)
+			err := processTaskCtx(id)
 			if err != nil {
 				ch <- fmt.Errorf("goroutine %d: %w", id, err) // ✅ Correct
 			}
@@ -304,53 +304,53 @@ type ErrorProvider interface {
 	GetError() error
 }
 
-// riskyOperation simule une opération risquée.
+// riskyOperationCtx simule une opération risquée.
 //
 // Returns:
 //   - error: erreur
-func riskyOperation() error {
+func riskyOperationCtx() error {
 	return errors.New("risky operation failed")
 }
 
-// processTask simule le traitement d'une tâche.
+// processTaskCtx simule le traitement d'une tâche.
 //
 // Params:
 //   - id: identifiant
 //
 // Returns:
 //   - error: erreur
-func processTask(id int) error {
+func processTaskCtx(id int) error {
 	return fmt.Errorf("task %d failed", id)
 }
 
-// validate simule une validation.
+// validateCtx simule une validation.
 //
 // Params:
 //   - data: données à valider
 //
 // Returns:
 //   - error: erreur
-func validate(data string) error {
+func validateCtx(data string) error {
 	return errors.New("validation failed")
 }
 
-// deepOperation simule une opération profonde.
+// deepOperationCtx simule une opération profonde.
 //
 // Returns:
 //   - error: erreur
-func deepOperation() error {
+func deepOperationCtx() error {
 	return errors.New("deep operation failed")
 }
 
-// performOperation simule une opération.
+// performOperationCtx simule une opération.
 //
 // Returns:
 //   - error: erreur
-func performOperation() error {
+func performOperationCtx() error {
 	return errors.New("operation failed")
 }
 
-// fetchData simule une récupération de données.
+// fetchDataCtx simule une récupération de données.
 //
 // Params:
 //   - id: identifiant
@@ -358,36 +358,36 @@ func performOperation() error {
 // Returns:
 //   - []byte: données
 //   - error: erreur
-func fetchData(id int) ([]byte, error) {
+func fetchDataCtx(id int) ([]byte, error) {
 	return nil, errors.New("fetch failed")
 }
 
-// dangerousOperation simule une opération dangereuse.
+// dangerousOperationCtx simule une opération dangereuse.
 //
 // Returns:
 //   - error: erreur
-func dangerousOperation() error {
+func dangerousOperationCtx() error {
 	return errors.New("danger")
 }
 
-// panickyFunction simule une fonction qui panique.
-func panickyFunction() {
+// panickyFunctionCtx simule une fonction qui panique.
+func panickyFunctionCtx() {
 	panic("something went wrong")
 }
 
-// initializeSystem simule l'initialisation du système.
+// initializeSystemCtx simule l'initialisation du système.
 //
 // Returns:
 //   - string: résultat
 //   - error: erreur
-func initializeSystem() (string, error) {
+func initializeSystemCtx() (string, error) {
 	return "initialized", nil
 }
 
-// doWork simule du travail.
+// doWorkCtx simule du travail.
 //
 // Returns:
 //   - error: erreur
-func doWork() error {
+func doWorkCtx() error {
 	return errors.New("work failed")
 }
