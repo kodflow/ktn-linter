@@ -1,16 +1,14 @@
 package switch005
 
 func BadSingleCase(x int) {
-	// want `\[KTN-CONTROL-SWITCH-005\] Switch avec un seul case`
-	switch x {
+	switch x { // want `\[KTN-CONTROL-SWITCH-005\] Switch avec un seul case`
 	case 1:
 		process()
 	}
 }
 
 func BadSingleCaseString(s string) {
-	// want `\[KTN-CONTROL-SWITCH-005\] Switch avec un seul case`
-	switch s {
+	switch s { // want `\[KTN-CONTROL-SWITCH-005\] Switch avec un seul case`
 	case "test":
 		process()
 	}

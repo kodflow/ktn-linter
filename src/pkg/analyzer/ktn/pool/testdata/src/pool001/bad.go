@@ -9,15 +9,13 @@ var bufferPool = sync.Pool{
 }
 
 func BadPoolGetWithoutDefer() {
-	// want `\[KTN-POOL-001\] Variable 'buf' obtenue via pool\.Get\(\) sans defer pool\.Put\(\)`
-	buf := bufferPool.Get().([]byte)
+	buf := bufferPool.Get().([]byte) // want `\[KTN-POOL-001\] Variable 'buf' obtenue via pool\.Get\(\) sans defer pool\.Put\(\)`
 	process(buf)
 	// Oubli de retourner au pool
 }
 
 func BadPoolGetNoReturn() {
-	// want `\[KTN-POOL-001\] Variable 'data' obtenue via pool\.Get\(\) sans defer pool\.Put\(\)`
-	data := bufferPool.Get().([]byte)
+	data := bufferPool.Get().([]byte) // want `\[KTN-POOL-001\] Variable 'data' obtenue via pool\.Get\(\) sans defer pool\.Put\(\)`
 	// Utilisation sans retour
 	_ = data
 }

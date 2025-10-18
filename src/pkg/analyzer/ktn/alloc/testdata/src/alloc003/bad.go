@@ -1,4 +1,4 @@
-package alloc004
+package alloc003
 
 type User struct {
 	Name string
@@ -11,14 +11,12 @@ type Config struct {
 }
 
 func BadNewStruct() {
-	// want `\[KTN-ALLOC-004\] Utilisez le composite literal &User\{\} au lieu de new\(User\)`
-	u := new(User)
+	u := new(User) // want `\[KTN-ALLOC-003\] Utilisez le composite literal &User\{\} au lieu de new\(User\)`
 	_ = u
 }
 
 func BadNewStructConfig() {
-	// want `\[KTN-ALLOC-004\] Utilisez le composite literal &Config\{\} au lieu de new\(Config\)`
-	c := new(Config)
+	c := new(Config) // want `\[KTN-ALLOC-003\] Utilisez le composite literal &Config\{\} au lieu de new\(Config\)`
 	_ = c
 }
 

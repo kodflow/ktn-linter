@@ -1,27 +1,21 @@
-package chan002
+package chan001
 
 func BadReceiverCloses(ch chan int) {
-	// want `\[KTN-OPS-CHAN-002\] close\(\) appelé par le receiver`
 	for v := range ch {
 		process(v)
 	}
-	close(ch)
+	close(ch) // want `\[KTN-CHAN-001\] close\(\) appelé par le receiver`
 }
 
 func BadReceiverClosesAfterReceive(ch chan string) {
 	val := <-ch
 	_ = val
-	// want `\[KTN-OPS-CHAN-002\] close\(\) appelé par le receiver`
-	close(ch)
+	close(ch) // want `\[KTN-CHAN-001\] close\(\) appelé par le receiver`
 }
 
-func GoodSenderCloses() {
-	ch := make(chan int)
-	go func() {
-		ch <- 42
-		close(ch)
-	}()
-	<-ch
+func GoodSenderOnlyCloses(ch chan int) {
+	ch <- 42
+	close(ch)
 }
 
 func process(v int) {}

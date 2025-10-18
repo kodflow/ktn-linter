@@ -1,24 +1,21 @@
 package if004
 
 func BadDoubleNegation(x bool) bool {
-	// want `\[KTN-CONTROL-IF-004\] Expression if simplifiable`
-	if x == true {
+	if x == true { // want `\[KTN-CONTROL-IF-004\] Expression if simplifiable`
 		return true
 	}
 	return false
 }
 
 func BadBoolComparison(enabled bool) bool {
-	// want `\[KTN-CONTROL-IF-004\] Expression if simplifiable`
-	if enabled == true {
+	if enabled == true { // want `\[KTN-CONTROL-IF-004\] Expression if simplifiable`
 		return true
 	}
 	return false
 }
 
 func BadFalseComparison(disabled bool) bool {
-	// want `\[KTN-CONTROL-IF-004\] Expression if simplifiable`
-	if disabled == false {
+	if disabled == false { // want `\[KTN-CONTROL-IF-004\] Expression if simplifiable`
 		return true
 	}
 	return false

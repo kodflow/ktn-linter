@@ -1,10 +1,8 @@
 package package004
 
 import (
-	// want `\[KTN-PKG-004\] Dot import de "fmt"`
-	. "fmt"
-	// want `\[KTN-PKG-004\] Dot import de "strings"`
-	. "strings"
+	. "fmt" // want `\[KTN-PKG-001\] Dot import de "fmt"`
+	. "strings" // want `\[KTN-PKG-001\] Dot import de "strings"`
 )
 
 func BadDotImport() {

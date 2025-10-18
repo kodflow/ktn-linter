@@ -2,16 +2,14 @@ package for001
 
 func BadUnderscoreForIndex() {
 	items := []int{1, 2, 3}
-	// want `\[KTN-CONTROL-FOR-001\] Utilisation de _ inutile dans for range`
-	for _ = range items {
+	for _ = range items { // want `\[KTN-CONTROL-FOR-001\] Utilisation de _ inutile dans for range`
 		process()
 	}
 }
 
 func BadUnderscoreForValue() {
 	items := []string{"a", "b", "c"}
-	// want `\[KTN-CONTROL-FOR-001\] Utilisation de _ inutile dans for range`
-	for _, _ = range items {
+	for _, _ = range items { // want `\[KTN-CONTROL-FOR-001\] Utilisation de _ inutile dans for range`
 		process()
 	}
 }

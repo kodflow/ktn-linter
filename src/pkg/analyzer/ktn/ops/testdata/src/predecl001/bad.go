@@ -1,20 +1,20 @@
-package predecl002
+package predecl001
+
+// L'analyzer détecte uniquement les déclarations var/const/type
+// pas les short variable declarations (:=)
 
 func BadShadowError() {
-	// want `\[KTN-OPS-PREDECL-002\] Shadowing de l'identifiant prédéclaré 'error'`
-	error := "custom error"
+	var error = "custom error" // want `\[KTN-PREDECL-001\] Shadowing de l'identifiant prédéclaré 'error'`
 	_ = error
 }
 
 func BadShadowLen() {
-	// want `\[KTN-OPS-PREDECL-002\] Shadowing de l'identifiant prédéclaré 'len'`
-	len := 10
+	var len = 10 // want `\[KTN-PREDECL-001\] Shadowing de l'identifiant prédéclaré 'len'`
 	_ = len
 }
 
 func BadShadowTrue() {
-	// want `\[KTN-OPS-PREDECL-002\] Shadowing de l'identifiant prédéclaré 'true'`
-	true := false
+	var true = false // want `\[KTN-PREDECL-001\] Shadowing de l'identifiant prédéclaré 'true'`
 	_ = true
 }
 

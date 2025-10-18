@@ -1,20 +1,17 @@
 package alloc001
 
 func BadNewWithSlice() {
-	// want `\[KTN-ALLOC-001\] Utilisation de new\(\) avec un type référence`
-	s := new([]int)
+	s := new([]int) // want `\[KTN-ALLOC-001\] Utilisation de new\(\) avec un type référence`
 	_ = s
 }
 
 func BadNewWithMap() {
-	// want `\[KTN-ALLOC-001\] Utilisation de new\(\) avec un type référence`
-	m := new(map[string]int)
+	m := new(map[string]int) // want `\[KTN-ALLOC-001\] Utilisation de new\(\) avec un type référence`
 	_ = m
 }
 
 func BadNewWithChan() {
-	// want `\[KTN-ALLOC-001\] Utilisation de new\(\) avec un type référence`
-	ch := new(chan int)
+	ch := new(chan int) // want `\[KTN-ALLOC-001\] Utilisation de new\(\) avec un type référence`
 	_ = ch
 }
 

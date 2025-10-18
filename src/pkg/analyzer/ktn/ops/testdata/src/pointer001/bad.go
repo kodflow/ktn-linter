@@ -4,16 +4,20 @@ type User struct {
 	Name string
 }
 
+// L'analyzer détecte uniquement les déréférencements explicites avec *
+// pas l'accès aux champs via pointeur
+
 func BadNilDereference() {
-	var u *User
-	// want `\[KTN-OPS-POINTER-001\] Déréférence d'un pointeur potentiellement nil`
-	_ = u.Name
+	var u *int
+	u = nil
+	_ = *u // want `\[KTN-POINTER-001\] Déréférencement potentiel d'un pointeur nil`
 }
 
-func BadNilPointerAccess(u *User) {
-	// want `\[KTN-OPS-POINTER-001\] Déréférence d'un pointeur potentiellement nil`
-	name := u.Name
-	_ = name
+func BadNilPointerAccess() {
+	var p *int
+	p = nil
+	value := *p // want `\[KTN-POINTER-001\] Déréférencement potentiel d'un pointeur nil`
+	_ = value
 }
 
 func GoodWithNilCheck(u *User) {

@@ -4,8 +4,7 @@ func BadCaptureInClosure() {
 	items := []int{1, 2, 3}
 	var funcs []func()
 	for _, item := range items {
-		// want `\[KTN-CONTROL-RANGE-003\] Variable de range capturée dans une closure`
-		funcs = append(funcs, func() {
+		funcs = append(funcs, func() { // want `\[KTN-CONTROL-RANGE-003\] Variable de range capturée dans une closure`
 			process(item) // item est capturé
 		})
 	}
@@ -14,8 +13,7 @@ func BadCaptureInClosure() {
 func BadCaptureInGoroutine() {
 	values := []string{"a", "b", "c"}
 	for _, v := range values {
-		// want `\[KTN-CONTROL-RANGE-003\] Variable de range capturée dans une closure`
-		go func() {
+		go func() { // want `\[KTN-CONTROL-RANGE-003\] Variable de range capturée dans une closure`
 			process(v) // v est capturé
 		}()
 	}

@@ -1,16 +1,14 @@
 package comp001
 
 func BadRedundantTrue(x bool) bool {
-	// want `\[KTN-OPS-COMP-001\] Comparaison redondante`
-	if x == true {
+	if x == true { // want `\[KTN-COMP-001\] Comparaison booléenne redondante`
 		return true
 	}
 	return false
 }
 
 func BadRedundantFalse(x bool) bool {
-	// want `\[KTN-OPS-COMP-001\] Comparaison redondante`
-	if x == false {
+	if x == false { // want `\[KTN-COMP-001\] Comparaison booléenne redondante`
 		return false
 	}
 	return true

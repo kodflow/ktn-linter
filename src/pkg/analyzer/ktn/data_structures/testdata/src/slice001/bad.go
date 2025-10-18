@@ -1,15 +1,14 @@
 package slice001
 
-func BadSliceIndexWithoutCheck(items []int) int {
-	// want `\[KTN-DS-SLICE-001\] Index de slice sans vérification de bounds`
-	return items[0]
+func BadSliceIndexWithoutCheck(items []int, idx int) int {
+	return items[idx] // want `\[KTN-SLICE-001\] Indexation du slice`
 }
 
 func BadSliceIndexMultiple(data []string) {
-	// want `\[KTN-DS-SLICE-001\] Index de slice sans vérification de bounds`
-	first := data[0]
-	// want `\[KTN-DS-SLICE-001\] Index de slice sans vérification de bounds`
-	second := data[1]
+	i := 0
+	j := 1
+	first := data[i] // want `\[KTN-SLICE-001\] Indexation du slice`
+	second := data[j] // want `\[KTN-SLICE-001\] Indexation du slice`
 	_, _ = first, second
 }
 

@@ -6,16 +6,14 @@ func BadDeferInLoop() {
 	files := []string{"a.txt", "b.txt", "c.txt"}
 	for _, f := range files {
 		file, _ := os.Open(f)
-		// want `\[KTN-CONTROL-DEFER-001\] defer dans une boucle`
-		defer file.Close()
+		defer file.Close() // want `\[KTN-CONTROL-DEFER-001\] defer dans une boucle`
 	}
 }
 
 func BadDeferInForLoop() {
 	for i := 0; i < 10; i++ {
 		file, _ := os.Open("test.txt")
-		// want `\[KTN-CONTROL-DEFER-001\] defer dans une boucle`
-		defer file.Close()
+		defer file.Close() // want `\[KTN-CONTROL-DEFER-001\] defer dans une boucle`
 	}
 }
 

@@ -9,18 +9,15 @@ type User struct {
 	Age  int
 }
 
-// want `\[KTN-METHOD-001\] Méthode 'Increment' avec receiver non-pointeur mais modifie le receiver`
-func (c Counter) Increment() {
+func (c Counter) Increment() { // want `\[KTN-METHOD-001\] Méthode 'Increment' avec receiver non-pointeur mais modifie le receiver`
 	c.value++ // Modifie la copie, pas l'original
 }
 
-// want `\[KTN-METHOD-001\] Méthode 'SetName' avec receiver non-pointeur mais modifie le receiver`
-func (u User) SetName(name string) {
+func (u User) SetName(name string) { // want `\[KTN-METHOD-001\] Méthode 'SetName' avec receiver non-pointeur mais modifie le receiver`
 	u.Name = name // Modifie la copie
 }
 
-// want `\[KTN-METHOD-001\] Méthode 'SetAge' avec receiver non-pointeur mais modifie le receiver`
-func (u User) SetAge(age int) {
+func (u User) SetAge(age int) { // want `\[KTN-METHOD-001\] Méthode 'SetAge' avec receiver non-pointeur mais modifie le receiver`
 	u.Age = age // Modifie la copie
 }
 

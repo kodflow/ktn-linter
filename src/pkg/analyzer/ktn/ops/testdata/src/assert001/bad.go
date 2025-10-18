@@ -1,14 +1,12 @@
 package assert001
 
 func BadTypeAssertionNoOk(i interface{}) {
-	// want `\[KTN-OPS-ASSERT-001\] Type assertion sans vérification ok`
-	s := i.(string)
+	s := i.(string) // want `\[KTN-ASSERT-001\] Assertion de type sans vérification`
 	_ = s
 }
 
 func BadTypeAssertionMultiple(data interface{}) {
-	// want `\[KTN-OPS-ASSERT-001\] Type assertion sans vérification ok`
-	num := data.(int)
+	num := data.(int) // want `\[KTN-ASSERT-001\] Assertion de type sans vérification`
 	_ = num
 }
 

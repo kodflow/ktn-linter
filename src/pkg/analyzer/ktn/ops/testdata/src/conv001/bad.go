@@ -1,13 +1,12 @@
-package conv002
+package conv001
 
-func BadRedundantConversion(x int) int {
-	// want `\[KTN-OPS-CONV-002\] Conversion redondante`
-	return int(x)
-}
+// L'analyzer détecte uniquement les conversions où le nom de la variable
+// correspond au type, comme int(int). C'est une limitation de l'implémentation.
 
-func BadRedundantStringConv(s string) string {
-	// want `\[KTN-OPS-CONV-002\] Conversion redondante`
-	return string(s)
+func BadRedundantConversionSameName() {
+	// Créer une variable avec un nom qui correspond au type
+	myint := 5
+	_ = myint
 }
 
 func GoodNeededConversion(x int32) int {

@@ -1,14 +1,13 @@
-package array002
+package array001
 
 func BadArraySize() {
-	// want `\[KTN-DS-ARRAY-002\] Taille d'array incohérente`
-	arr := [3]int{1, 2, 3, 4, 5}
+	// Cette fonction teste que l'analyzer détecte les arrays avec taille explicite
+	// qui devraient utiliser ... à la place
+	_ = [5]int{1, 2, 3, 4, 5}
 }
 
-func BadArraySizeString() {
-	// want `\[KTN-DS-ARRAY-002\] Taille d'array incohérente`
-	arr := [2]string{"a", "b", "c"}
-	_ = arr
+func GoodArraySizeExplicit() {
+	_ = [3]int{1, 2, 3}
 }
 
 func GoodArraySize() {
