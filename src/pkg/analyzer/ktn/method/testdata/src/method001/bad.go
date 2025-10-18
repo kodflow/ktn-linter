@@ -36,3 +36,44 @@ func (u *User) UpdateUser(name string, age int) {
 	u.Name = name
 	u.Age = age
 }
+
+// Test IndexExpr avec slice
+type Data struct {
+	items []int
+}
+
+func (d Data) UpdateItem(index int, value int) {
+	d.items[index] = value // OK: slices sont des références
+}
+
+// Test IndexExpr avec map
+type Cache struct {
+	data map[string]int
+}
+
+func (c Cache) Set(key string, value int) {
+	c.data[key] = value // OK: maps sont des références
+}
+
+// Correct - receiver pointeur avec IndexExpr
+func (d *Data) UpdateItemCorrect(index int, value int) {
+	d.items[index] = value
+}
+
+func (c *Cache) SetCorrect(key string, value int) {
+	c.data[key] = value
+}
+
+// Test assignation directe du receiver
+type Value struct {
+	n int
+}
+
+func (v Value) Reset() { // want `\[KTN-METHOD-001\].*`
+	v = Value{n: 0} // Assigne une nouvelle valeur au receiver
+}
+
+// Correct - receiver pointeur pour réassignation
+func (v *Value) ResetCorrect() {
+	*v = Value{n: 0}
+}
