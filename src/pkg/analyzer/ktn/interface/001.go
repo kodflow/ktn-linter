@@ -13,20 +13,21 @@ import (
 var Rule001 = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_001",
 	Doc:  "Vérifie la présence du fichier interfaces.go",
-	Run:  runRule001,
+	Run:  RunRule001,
 }
 
-func runRule001(pass *analysis.Pass) (any, error) {
+// RunRule001 exécute la règle 001.
+func RunRule001(pass *analysis.Pass) (any, error) {
 	// Collecter les informations du package
-	pkgInfo := collectPackageInfo(pass)
+	pkgInfo := CollectPackageInfo(pass)
 
 	// Packages exemptés
-	if isExemptedPackage(pkgInfo.name) {
+	if IsExemptedPackage(pkgInfo.Name) {
 		return nil, nil
 	}
 
 	// Vérifier la présence de interfaces.go
-	if !pkgInfo.hasInterfacesFile {
+	if !pkgInfo.HasInterfacesFile {
 		// Exception: ignorer tests/target/ (fixtures de test)
 		if len(pass.Files) > 0 {
 			firstFile := pass.Fset.File(pass.Files[0].Pos()).Name()
@@ -36,7 +37,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		}
 
 		// Exception: pas besoin d'interfaces.go si le package ne contient que des fonctions
-		if needsInterfacesFile(pkgInfo) {
+		if NeedsInterfacesFile(pkgInfo) {
 			if len(pass.Files) > 0 {
 				pass.Reportf(pass.Files[0].Package,
 					"[KTN_INTERFACE_001] Package '%s' sans fichier interfaces.go.\n"+
@@ -49,7 +50,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 						"  type MyService interface {\n"+
 						"      DoSomething(input string) (string, error)\n"+
 						"  }",
-					pkgInfo.name, pkgInfo.name)
+					pkgInfo.Name, pkgInfo.Name)
 			}
 		}
 	}
@@ -57,27 +58,31 @@ func runRule001(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-type packageInfo struct {
-	name              string
-	hasInterfacesFile bool
-	publicStructs     []publicStruct
-	publicInterfaces  []publicInterface
+// PackageInfo contient les informations collectées sur un package.
+type PackageInfo struct {
+	Name              string
+	HasInterfacesFile bool
+	PublicStructs     []PublicStruct
+	PublicInterfaces  []PublicInterface
 }
 
-type publicStruct struct {
-	name     string
-	fileName string
+// PublicStruct représente une structure publique dans un package.
+type PublicStruct struct {
+	Name     string
+	FileName string
 }
 
-type publicInterface struct {
-	name string
+// PublicInterface représente une interface publique dans un package.
+type PublicInterface struct {
+	Name string
 }
 
-func collectPackageInfo(pass *analysis.Pass) *packageInfo {
-	info := &packageInfo{
-		name:             pass.Pkg.Name(),
-		publicStructs:    []publicStruct{},
-		publicInterfaces: []publicInterface{},
+// CollectPackageInfo collecte les informations sur un package.
+func CollectPackageInfo(pass *analysis.Pass) *PackageInfo {
+	info := &PackageInfo{
+		Name:             pass.Pkg.Name(),
+		PublicStructs:    []PublicStruct{},
+		PublicInterfaces: []PublicInterface{},
 	}
 
 	for _, file := range pass.Files {
@@ -85,7 +90,7 @@ func collectPackageInfo(pass *analysis.Pass) *packageInfo {
 		baseName := filepath.Base(fileName)
 
 		if baseName == "interfaces.go" {
-			info.hasInterfacesFile = true
+			info.HasInterfacesFile = true
 		}
 
 		for _, decl := range file.Decls {
@@ -109,11 +114,11 @@ func collectPackageInfo(pass *analysis.Pass) *packageInfo {
 
 				switch typeSpec.Type.(type) {
 				case *ast.InterfaceType:
-					info.publicInterfaces = append(info.publicInterfaces, publicInterface{name: name})
+					info.PublicInterfaces = append(info.PublicInterfaces, PublicInterface{Name: name})
 				case *ast.StructType:
-					info.publicStructs = append(info.publicStructs, publicStruct{
-						name:     name,
-						fileName: fileName,
+					info.PublicStructs = append(info.PublicStructs, PublicStruct{
+						Name:     name,
+						FileName: fileName,
 					})
 				}
 			}
@@ -123,7 +128,8 @@ func collectPackageInfo(pass *analysis.Pass) *packageInfo {
 	return info
 }
 
-func isExemptedPackage(pkgName string) bool {
+// IsExemptedPackage vérifie si un package est exempté.
+func IsExemptedPackage(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
@@ -133,23 +139,25 @@ func isExemptedPackage(pkgName string) bool {
 	return false
 }
 
-func needsInterfacesFile(info *packageInfo) bool {
-	if len(info.publicStructs) > 0 {
-		for _, ps := range info.publicStructs {
-			if !isAllowedPublicType(ps.name) {
+// NeedsInterfacesFile détermine si un package a besoin d'un fichier interfaces.go.
+func NeedsInterfacesFile(info *PackageInfo) bool {
+	if len(info.PublicStructs) > 0 {
+		for _, ps := range info.PublicStructs {
+			if !IsAllowedPublicType(ps.Name) {
 				return true
 			}
 		}
 	}
 
-	if len(info.publicInterfaces) > 0 {
+	if len(info.PublicInterfaces) > 0 {
 		return true
 	}
 
 	return false
 }
 
-func isAllowedPublicType(typeName string) bool {
+// IsAllowedPublicType vérifie si un type public est autorisé.
+func IsAllowedPublicType(typeName string) bool {
 	allowedSuffixes := []string{
 		"ID", "Id",
 		"Type", "Kind", "Status", "State",

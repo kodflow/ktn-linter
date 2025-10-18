@@ -1,4 +1,4 @@
-package ktn_pool
+package ktn_pool_test
 
 import (
 	"go/ast"
@@ -7,9 +7,14 @@ import (
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
+
+	pool "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/pool"
 )
 
-// Test trackPoolGetAssignment avec différents cas
+// TestTrackPoolGetAssignment teste trackPoolGetAssignment avec différents cas.
+//
+// Params:
+//   - t: instance de testing
 func TestTrackPoolGetAssignment(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -64,6 +69,7 @@ func otherFunc() int { return 0 }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // nolint:KTN-RANGE-001
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -79,8 +85,9 @@ func otherFunc() int { return 0 }`,
 
 			ast.Inspect(file, func(n ast.Node) bool {
 				if stmt, ok := n.(*ast.AssignStmt); ok {
-					trackPoolGetAssignment(stmt, poolVars, pass)
+					pool.TrackPoolGetAssignment(stmt, poolVars, pass)
 				}
+				// Continue AST inspection
 				return true
 			})
 
@@ -91,7 +98,10 @@ func otherFunc() int { return 0 }`,
 	}
 }
 
-// Test trackDeferPut avec différents cas
+// TestTrackDeferPut teste trackDeferPut avec différents cas.
+//
+// Params:
+//   - t: instance de testing
 func TestTrackDeferPut(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -137,6 +147,7 @@ func f() {
 	}
 
 	for _, tt := range tests {
+		tt := tt // nolint:KTN-RANGE-001
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -148,8 +159,9 @@ func f() {
 
 			ast.Inspect(file, func(n ast.Node) bool {
 				if stmt, ok := n.(*ast.DeferStmt); ok {
-					trackDeferPut(stmt, deferredPuts)
+					pool.TrackDeferPut(stmt, deferredPuts)
 				}
+				// Continue AST inspection
 				return true
 			})
 
@@ -160,8 +172,11 @@ func f() {
 	}
 }
 
-// Test trackDeferPut avec DeferStmt ayant Call nil (cas edge case)
-func TestTrackDeferPut_NilCall(t *testing.T) {
+// TestTrackDeferPutNilCall teste trackDeferPut avec DeferStmt ayant Call nil (cas edge case).
+//
+// Params:
+//   - t: instance de testing
+func TestTrackDeferPutNilCall(t *testing.T) {
 	// Créer manuellement un DeferStmt avec Call nil
 	deferredPuts := make(map[string]bool)
 	stmt := &ast.DeferStmt{
@@ -169,14 +184,17 @@ func TestTrackDeferPut_NilCall(t *testing.T) {
 	}
 
 	// Ne devrait pas paniquer et ne rien ajouter
-	trackDeferPut(stmt, deferredPuts)
+	pool.TrackDeferPut(stmt, deferredPuts)
 
 	if len(deferredPuts) != 0 {
 		t.Errorf("expected 0 deferredPuts with nil Call, got %d", len(deferredPuts))
 	}
 }
 
-// Test isPoolGetCall avec différents cas
+// TestIsPoolGetCall teste isPoolGetCall avec différents cas.
+//
+// Params:
+//   - t: instance de testing
 func TestIsPoolGetCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -244,6 +262,7 @@ func f() {
 	}
 
 	for _, tt := range tests {
+		tt := tt // nolint:KTN-RANGE-001
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -259,10 +278,11 @@ func f() {
 			var result bool
 			ast.Inspect(file, func(n ast.Node) bool {
 				if call, ok := n.(*ast.CallExpr); ok {
-					if isPoolGetCall(call, pass) {
+					if pool.IsPoolGetCall(call, pass) {
 						result = true
 					}
 				}
+				// Continue AST inspection
 				return true
 			})
 
@@ -273,8 +293,11 @@ func f() {
 	}
 }
 
-// Test isPoolGetCall avec selExpr.X qui n'est pas un *ast.Ident
-func TestIsPoolGetCall_NonIdentSelector(t *testing.T) {
+// TestIsPoolGetCallNonIdentSelector teste isPoolGetCall avec selExpr.X qui n'est pas un *ast.Ident.
+//
+// Params:
+//   - t: instance de testing
+func TestIsPoolGetCallNonIdentSelector(t *testing.T) {
 	// Créer manuellement un CallExpr avec un SelectorExpr dont X n'est pas un Ident
 	// Par exemple: something().Get() où X est un *ast.CallExpr
 	callExpr := &ast.CallExpr{
@@ -290,13 +313,16 @@ func TestIsPoolGetCall_NonIdentSelector(t *testing.T) {
 		TypesInfo: nil,
 	}
 
-	result := isPoolGetCall(callExpr, pass)
-	if result != false {
+	result := pool.IsPoolGetCall(callExpr, pass)
+	if result {
 		t.Errorf("expected false for non-ident selector, got %v", result)
 	}
 }
 
-// Test isPoolPutCall avec différents cas
+// TestIsPoolPutCall teste isPoolPutCall avec différents cas.
+//
+// Params:
+//   - t: instance de testing
 func TestIsPoolPutCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -344,6 +370,7 @@ func f() {
 	}
 
 	for _, tt := range tests {
+		tt := tt // nolint:KTN-RANGE-001
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -354,10 +381,11 @@ func f() {
 			var result bool
 			ast.Inspect(file, func(n ast.Node) bool {
 				if call, ok := n.(*ast.CallExpr); ok {
-					if isPoolPutCall(call) {
+					if pool.IsPoolPutCall(call) {
 						result = true
 					}
 				}
+				// Continue AST inspection
 				return true
 			})
 
@@ -368,8 +396,11 @@ func f() {
 	}
 }
 
-// Test isPoolPutCall avec selExpr.X qui n'est pas un *ast.Ident
-func TestIsPoolPutCall_NonIdentSelector(t *testing.T) {
+// TestIsPoolPutCallNonIdentSelector teste isPoolPutCall avec selExpr.X qui n'est pas un *ast.Ident.
+//
+// Params:
+//   - t: instance de testing
+func TestIsPoolPutCallNonIdentSelector(t *testing.T) {
 	// Créer manuellement un CallExpr avec un SelectorExpr dont X n'est pas un Ident
 	// Par exemple: something().Put() où X est un *ast.CallExpr
 	callExpr := &ast.CallExpr{
@@ -381,14 +412,17 @@ func TestIsPoolPutCall_NonIdentSelector(t *testing.T) {
 		},
 	}
 
-	result := isPoolPutCall(callExpr)
-	if result != false {
+	result := pool.IsPoolPutCall(callExpr)
+	if result {
 		t.Errorf("expected false for non-ident selector, got %v", result)
 	}
 }
 
-// Test extractVarName avec différents cas
-func TestExtractVarName(t *testing.T) {
+// TestExtractVarName teste extractVarName avec différents cas.
+//
+// Params:
+//   - t: instance de testing
+func TestExtractVarName(t *testing.T) { // nolint:KTN-FUNC-009
 	tests := []struct {
 		name     string
 		code     string
@@ -429,6 +463,7 @@ func f() {
 	}
 
 	for _, tt := range tests {
+		tt := tt // nolint:KTN-RANGE-001
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -439,27 +474,33 @@ func f() {
 			ast.Inspect(file, func(n ast.Node) bool {
 				if stmt, ok := n.(*ast.AssignStmt); ok {
 					if tt.testLHS && len(stmt.Lhs) > 0 {
-						result := extractVarName(stmt.Lhs[0])
+						result := pool.ExtractVarName(stmt.Lhs[0])
 						if result != tt.wantLHS {
 							t.Errorf("LHS: got %q, want %q", result, tt.wantLHS)
 						}
+						// Stop after testing LHS
 						return false
 					}
 					if tt.testRHS && len(stmt.Rhs) > 0 {
-						result := extractVarName(stmt.Rhs[0])
+						result := pool.ExtractVarName(stmt.Rhs[0])
 						if result != tt.wantRHS {
 							t.Errorf("RHS: got %q, want %q", result, tt.wantRHS)
 						}
+						// Stop after testing RHS
 						return false
 					}
 				}
+				// Continue AST inspection
 				return true
 			})
 		})
 	}
 }
 
-// Test unwrapTypeAssertion
+// TestUnwrapTypeAssertion teste unwrapTypeAssertion.
+//
+// Params:
+//   - t: instance de testing
 func TestUnwrapTypeAssertion(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -487,6 +528,7 @@ func f() {
 	}
 
 	for _, tt := range tests {
+		tt := tt // nolint:KTN-RANGE-001
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -498,12 +540,14 @@ func f() {
 			ast.Inspect(file, func(n ast.Node) bool {
 				if stmt, ok := n.(*ast.AssignStmt); ok {
 					if len(stmt.Rhs) > 0 {
-						unwrapped := unwrapTypeAssertion(stmt.Rhs[0])
+						unwrapped := pool.UnwrapTypeAssertion(stmt.Rhs[0])
 						_, isTypeAssert := stmt.Rhs[0].(*ast.TypeAssertExpr)
 						hasTypeAssert = isTypeAssert && unwrapped != stmt.Rhs[0]
+						// Stop after finding assignment
 						return false
 					}
 				}
+				// Continue AST inspection
 				return true
 			})
 

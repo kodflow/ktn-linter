@@ -13,12 +13,13 @@ import (
 var Rule005 = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_005",
 	Doc:  "Vérifie que interfaces.go n'est pas vide",
-	Run:  runRule005,
+	Run:  RunRule005,
 }
 
-func runRule005(pass *analysis.Pass) (any, error) {
+// RunRule005 exécute la règle 005.
+func RunRule005(pass *analysis.Pass) (any, error) {
 	// Packages exemptés
-	if isExemptedPackage005(pass.Pkg.Name()) {
+	if IsExemptedPackage005(pass.Pkg.Name()) {
 		return nil, nil
 	}
 
@@ -74,7 +75,8 @@ func runRule005(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-func isExemptedPackage005(pkgName string) bool {
+// IsExemptedPackage005 vérifie si un package est exempté pour Rule005.
+func IsExemptedPackage005(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {

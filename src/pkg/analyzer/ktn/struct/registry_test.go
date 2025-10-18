@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// TestGetRules tests the GetRules function.
 func TestGetRules(t *testing.T) {
 	rules := GetRules()
 	if rules == nil {
@@ -14,6 +15,7 @@ func TestGetRules(t *testing.T) {
 	}
 }
 
+// TestAllRulesNotNil tests that all rules are properly initialized.
 func TestAllRulesNotNil(t *testing.T) {
 	if AllRules == nil {
 		t.Fatal("AllRules should not be nil")

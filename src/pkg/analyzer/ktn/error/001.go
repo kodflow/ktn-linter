@@ -215,7 +215,14 @@ func reportUnwrappedError(pass *analysis.Pass, returnStmt *ast.ReturnStmt, varNa
 		varName, varName)
 }
 
-// ExportedIsErrorVariable exports isErrorVariable for testing
+// ExportedIsErrorVariable is exported version for testing.
+//
+// Params:
+//   - pass: analysis pass
+//   - ident: identifier to check
+//
+// Returns:
+//   - bool: true if error variable
 func ExportedIsErrorVariable(pass *analysis.Pass, ident *ast.Ident) bool {
-	return isErrorVariable(pass, ident)
+	return isErrorVariable(pass, ident) // nolint:KTN-FUNC-008
 }

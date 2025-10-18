@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// TestGetRules vérifie que GetRules retourne toutes les règles définies.
 func TestGetRules(t *testing.T) {
 	rules := GetRules()
 	if rules == nil {
@@ -14,6 +15,7 @@ func TestGetRules(t *testing.T) {
 	}
 }
 
+// TestAllRulesNotNil vérifie qu'aucune règle dans AllRules n'est nil.
 func TestAllRulesNotNil(t *testing.T) {
 	if AllRules == nil {
 		t.Fatal("AllRules should not be nil")
@@ -25,6 +27,7 @@ func TestAllRulesNotNil(t *testing.T) {
 	}
 }
 
+// TestAllRulesContainValidAnalyzers vérifie que toutes les règles ont des noms valides et uniques.
 func TestAllRulesContainValidAnalyzers(t *testing.T) {
 	namesSeen := make(map[string]bool)
 	for _, analyzer := range AllRules {

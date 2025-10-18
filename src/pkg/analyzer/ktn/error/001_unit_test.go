@@ -12,7 +12,10 @@ import (
 	ktn_error "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/error"
 )
 
-// TestRule001_Unit_NilPassTypesInfo teste le comportement avec pass.TypesInfo == nil
+// TestRule001_Unit_NilPassTypesInfo tests behavior when pass.TypesInfo is nil.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_NilPassTypesInfo(t *testing.T) {
 	src := `package test
 func badUnwrappedError() error {
@@ -43,7 +46,10 @@ func badUnwrappedError() error {
 	}
 }
 
-// TestRule001_Unit_FunctionWithoutError teste une fonction qui ne retourne pas error
+// TestRule001_Unit_FunctionWithoutError tests functions that don't return error.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_FunctionWithoutError(t *testing.T) {
 	src := `package test
 func noError() string {
@@ -77,7 +83,10 @@ func noReturnType() {
 	}
 }
 
-// TestRule001_Unit_NonErrorReturn teste des returns qui ne sont pas des erreurs
+// TestRule001_Unit_NonErrorReturn tests return statements that are not errors.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_NonErrorReturn(t *testing.T) {
 	src := `package test
 import "errors"
@@ -114,7 +123,10 @@ func mixedReturn() (string, error) {
 	}
 }
 
-// TestRule001_Unit_FunctionWithoutResults teste une fonction sans résultats
+// TestRule001_Unit_FunctionWithoutResults tests functions without return values.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_FunctionWithoutResults(t *testing.T) {
 	src := `package test
 func noResults() {
@@ -149,7 +161,10 @@ func (m *MyType) method() {
 	}
 }
 
-// TestRule001_Unit_ReturnLiterals teste des returns avec des littéraux
+// TestRule001_Unit_ReturnLiterals tests return statements with literals.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_ReturnLiterals(t *testing.T) {
 	src := `package test
 import "errors"
@@ -188,7 +203,10 @@ func doSomething() error {
 	}
 }
 
-// TestRule001_Unit_ComplexScenarios teste des scénarios complexes
+// TestRule001_Unit_ComplexScenarios tests complex scenarios with multiple returns.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_ComplexScenarios(t *testing.T) {
 	src := `package test
 import "errors"
@@ -240,7 +258,10 @@ func earlyReturn() error {
 	}
 }
 
-// TestRule001_Unit_UndefinedIdentifier teste le cas d'un identifiant sans objet
+// TestRule001_Unit_UndefinedIdentifier tests case of undefined identifier.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_Unit_UndefinedIdentifier(t *testing.T) {
 	src := `package test
 
@@ -271,7 +292,10 @@ func undefinedReturn() error {
 	}
 }
 
-// TestIsErrorVariable_NilTypesInfo teste isErrorVariable avec TypesInfo == nil
+// TestIsErrorVariable_NilTypesInfo tests isErrorVariable with nil TypesInfo.
+//
+// Params:
+//   - t: testing instance
 func TestIsErrorVariable_NilTypesInfo(t *testing.T) {
 	src := `package test
 func test() error {
@@ -316,7 +340,10 @@ func test() error {
 	}
 }
 
-// TestIsErrorVariable_NilObject teste isErrorVariable avec obj == nil
+// TestIsErrorVariable_NilObject tests isErrorVariable when object is nil.
+//
+// Params:
+//   - t: testing instance
 func TestIsErrorVariable_NilObject(t *testing.T) {
 	src := `package test
 func test() error {

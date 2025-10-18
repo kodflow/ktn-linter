@@ -1,4 +1,4 @@
-package ktn_interface
+package ktn_interface_test
 
 import (
 	"go/ast"
@@ -8,91 +8,93 @@ import (
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
+
+	ktn_interface "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/interface"
 )
 
-// TestNeedsInterfacesFile teste les différents cas de needsInterfacesFile
+// TestNeedsInterfacesFile teste les différents cas de needsInterfacesFile.
 func TestNeedsInterfacesFile(t *testing.T) {
 	tests := []struct {
 		name     string
-		info     *packageInfo
+		info     *ktn_interface.PackageInfo
 		expected bool
 	}{
 		{
 			name: "package avec struct publique non autorisée",
-			info: &packageInfo{
-				publicStructs: []publicStruct{
-					{name: "MyService", fileName: "service.go"},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs: []ktn_interface.PublicStruct{
+					{Name: "MyService", FileName: "service.go"},
 				},
-				publicInterfaces: []publicInterface{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: true,
 		},
 		{
 			name: "package avec struct publique autorisée (Config)",
-			info: &packageInfo{
-				publicStructs: []publicStruct{
-					{name: "MyConfig", fileName: "config.go"},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs: []ktn_interface.PublicStruct{
+					{Name: "MyConfig", FileName: "config.go"},
 				},
-				publicInterfaces: []publicInterface{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: false,
 		},
 		{
 			name: "package avec struct publique autorisée (ID)",
-			info: &packageInfo{
-				publicStructs: []publicStruct{
-					{name: "UserID", fileName: "types.go"},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs: []ktn_interface.PublicStruct{
+					{Name: "UserID", FileName: "types.go"},
 				},
-				publicInterfaces: []publicInterface{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: false,
 		},
 		{
 			name: "package avec struct publique autorisée (Type)",
-			info: &packageInfo{
-				publicStructs: []publicStruct{
-					{name: "ErrorType", fileName: "types.go"},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs: []ktn_interface.PublicStruct{
+					{Name: "ErrorType", FileName: "types.go"},
 				},
-				publicInterfaces: []publicInterface{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: false,
 		},
 		{
 			name: "package avec interface publique",
-			info: &packageInfo{
-				publicStructs:    []publicStruct{},
-				publicInterfaces: []publicInterface{{name: "MyInterface"}},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs:    []ktn_interface.PublicStruct{},
+				PublicInterfaces: []ktn_interface.PublicInterface{{Name: "MyInterface"}},
 			},
 			expected: true,
 		},
 		{
 			name: "package sans types publics",
-			info: &packageInfo{
-				publicStructs:    []publicStruct{},
-				publicInterfaces: []publicInterface{},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs:    []ktn_interface.PublicStruct{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: false,
 		},
 		{
 			name: "package avec multiple structs dont une non autorisée",
-			info: &packageInfo{
-				publicStructs: []publicStruct{
-					{name: "MyConfig", fileName: "config.go"},
-					{name: "MyService", fileName: "service.go"},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs: []ktn_interface.PublicStruct{
+					{Name: "MyConfig", FileName: "config.go"},
+					{Name: "MyService", FileName: "service.go"},
 				},
-				publicInterfaces: []publicInterface{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: true,
 		},
 		{
 			name: "package avec structs toutes autorisées",
-			info: &packageInfo{
-				publicStructs: []publicStruct{
-					{name: "MyConfig", fileName: "config.go"},
-					{name: "UserID", fileName: "types.go"},
-					{name: "ErrorType", fileName: "types.go"},
+			info: &ktn_interface.PackageInfo{
+				PublicStructs: []ktn_interface.PublicStruct{
+					{Name: "MyConfig", FileName: "config.go"},
+					{Name: "UserID", FileName: "types.go"},
+					{Name: "ErrorType", FileName: "types.go"},
 				},
-				publicInterfaces: []publicInterface{},
+				PublicInterfaces: []ktn_interface.PublicInterface{},
 			},
 			expected: false,
 		},
@@ -100,15 +102,15 @@ func TestNeedsInterfacesFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := needsInterfacesFile(tt.info)
+			got := ktn_interface.NeedsInterfacesFile(tt.info)
 			if got != tt.expected {
-				t.Errorf("needsInterfacesFile() = %v, want %v", got, tt.expected)
+				t.Errorf("ktn_interface.NeedsInterfacesFile() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestIsAllowedPublicType teste tous les suffixes autorisés
+// TestIsAllowedPublicType teste tous les suffixes autorisés.
 func TestIsAllowedPublicType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -141,15 +143,15 @@ func TestIsAllowedPublicType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isAllowedPublicType(tt.typeName)
+			got := ktn_interface.IsAllowedPublicType(tt.typeName)
 			if got != tt.expected {
-				t.Errorf("isAllowedPublicType(%q) = %v, want %v", tt.typeName, got, tt.expected)
+				t.Errorf("ktn_interface.IsAllowedPublicType(%q) = %v, want %v", tt.typeName, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestIsExemptedPackage teste tous les packages exemptés
+// TestIsExemptedPackage teste tous les packages exemptés.
 func TestIsExemptedPackage(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -165,15 +167,15 @@ func TestIsExemptedPackage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isExemptedPackage(tt.pkgName)
+			got := ktn_interface.IsExemptedPackage(tt.pkgName)
 			if got != tt.expected {
-				t.Errorf("isExemptedPackage(%q) = %v, want %v", tt.pkgName, got, tt.expected)
+				t.Errorf("ktn_interface.IsExemptedPackage(%q) = %v, want %v", tt.pkgName, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestIsExemptedPackage002 teste tous les packages exemptés pour Rule002
+// TestIsExemptedPackage002 teste tous les packages exemptés pour Rule002.
 func TestIsExemptedPackage002(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -188,15 +190,15 @@ func TestIsExemptedPackage002(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isExemptedPackage002(tt.pkgName)
+			got := ktn_interface.IsExemptedPackage002(tt.pkgName)
 			if got != tt.expected {
-				t.Errorf("isExemptedPackage002(%q) = %v, want %v", tt.pkgName, got, tt.expected)
+				t.Errorf("ktn_interface.IsExemptedPackage002(%q) = %v, want %v", tt.pkgName, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestIsExemptedPackage003 teste tous les packages exemptés pour Rule003
+// TestIsExemptedPackage003 teste tous les packages exemptés pour Rule003.
 func TestIsExemptedPackage003(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -211,15 +213,15 @@ func TestIsExemptedPackage003(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isExemptedPackage003(tt.pkgName)
+			got := ktn_interface.IsExemptedPackage003(tt.pkgName)
 			if got != tt.expected {
-				t.Errorf("isExemptedPackage003(%q) = %v, want %v", tt.pkgName, got, tt.expected)
+				t.Errorf("ktn_interface.IsExemptedPackage003(%q) = %v, want %v", tt.pkgName, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestIsExemptedPackage004 teste tous les packages exemptés pour Rule004
+// TestIsExemptedPackage004 teste tous les packages exemptés pour Rule004.
 func TestIsExemptedPackage004(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -234,15 +236,15 @@ func TestIsExemptedPackage004(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isExemptedPackage004(tt.pkgName)
+			got := ktn_interface.IsExemptedPackage004(tt.pkgName)
 			if got != tt.expected {
-				t.Errorf("isExemptedPackage004(%q) = %v, want %v", tt.pkgName, got, tt.expected)
+				t.Errorf("ktn_interface.IsExemptedPackage004(%q) = %v, want %v", tt.pkgName, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestIsExemptedPackage005 teste tous les packages exemptés pour Rule005
+// TestIsExemptedPackage005 teste tous les packages exemptés pour Rule005.
 func TestIsExemptedPackage005(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -257,22 +259,22 @@ func TestIsExemptedPackage005(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isExemptedPackage005(tt.pkgName)
+			got := ktn_interface.IsExemptedPackage005(tt.pkgName)
 			if got != tt.expected {
-				t.Errorf("isExemptedPackage005(%q) = %v, want %v", tt.pkgName, got, tt.expected)
+				t.Errorf("ktn_interface.IsExemptedPackage005(%q) = %v, want %v", tt.pkgName, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestCollectPackageInfo teste la collecte d'informations de package
+// TestCollectPackageInfo teste la collecte d'informations de package.
 func TestCollectPackageInfo(t *testing.T) {
 	tests := []struct {
-		name                     string
-		src                      string
+		name                      string
+		src                       string
 		expectedHasInterfacesFile bool
-		expectedPublicStructs    int
-		expectedPublicInterfaces int
+		expectedPublicStructs     int
+		expectedPublicInterfaces  int
 	}{
 		{
 			name: "package with interfaces.go and public struct",
@@ -322,21 +324,21 @@ type privateInterface interface {
 				Pkg:   types.NewPackage("test", "test"),
 			}
 
-			info := collectPackageInfo(pass)
+			info := ktn_interface.CollectPackageInfo(pass)
 
-			if len(info.publicStructs) != tt.expectedPublicStructs {
-				t.Errorf("expected %d public structs, got %d", tt.expectedPublicStructs, len(info.publicStructs))
+			if len(info.PublicStructs) != tt.expectedPublicStructs {
+				t.Errorf("expected %d public structs, got %d", tt.expectedPublicStructs, len(info.PublicStructs))
 			}
 
-			if len(info.publicInterfaces) != tt.expectedPublicInterfaces {
-				t.Errorf("expected %d public interfaces, got %d", tt.expectedPublicInterfaces, len(info.publicInterfaces))
+			if len(info.PublicInterfaces) != tt.expectedPublicInterfaces {
+				t.Errorf("expected %d public interfaces, got %d", tt.expectedPublicInterfaces, len(info.PublicInterfaces))
 			}
 		})
 	}
 }
 
-// TestRunRule001_EdgeCases teste les cas edge de runRule001
-func TestRunRule001_EdgeCases(t *testing.T) {
+// TestRunRule001EdgeCases teste les cas edge de RunRule001.
+func TestRunRule001EdgeCases(t *testing.T) {
 	t.Run("exempted package", func(t *testing.T) {
 		fset := token.NewFileSet()
 		file, _ := parser.ParseFile(fset, "test.go", "package main", parser.ParseComments)
@@ -348,7 +350,7 @@ func TestRunRule001_EdgeCases(t *testing.T) {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for main package") },
 		}
 
-		_, err := runRule001(pass)
+		_, err := ktn_interface.RunRule001(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -370,15 +372,15 @@ func privateFunction() {}
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for function-only package") },
 		}
 
-		_, err := runRule001(pass)
+		_, err := ktn_interface.RunRule001(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
 
-// TestRunRule002_EdgeCases teste les cas edge de runRule002
-func TestRunRule002_EdgeCases(t *testing.T) {
+// TestRunRule002EdgeCases teste les cas edge de RunRule002.
+func TestRunRule002EdgeCases(t *testing.T) {
 	t.Run("exempted package", func(t *testing.T) {
 		fset := token.NewFileSet()
 		file, _ := parser.ParseFile(fset, "test.go", "package main", parser.ParseComments)
@@ -390,7 +392,7 @@ func TestRunRule002_EdgeCases(t *testing.T) {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for main package") },
 		}
 
-		_, err := runRule002(pass)
+		_, err := ktn_interface.RunRule002(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -413,15 +415,15 @@ type UserID struct {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for allowed type") },
 		}
 
-		_, err := runRule002(pass)
+		_, err := ktn_interface.RunRule002(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
 
-// TestRunRule003_EdgeCases teste les cas edge de runRule003
-func TestRunRule003_EdgeCases(t *testing.T) {
+// TestRunRule003EdgeCases teste les cas edge de RunRule003.
+func TestRunRule003EdgeCases(t *testing.T) {
 	t.Run("exempted package", func(t *testing.T) {
 		fset := token.NewFileSet()
 		file, _ := parser.ParseFile(fset, "test.go", "package main", parser.ParseComments)
@@ -433,7 +435,7 @@ func TestRunRule003_EdgeCases(t *testing.T) {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for main package") },
 		}
 
-		_, err := runRule003(pass)
+		_, err := ktn_interface.RunRule003(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -456,15 +458,15 @@ type PublicInterface interface {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for interfaces.go") },
 		}
 
-		_, err := runRule003(pass)
+		_, err := ktn_interface.RunRule003(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
 
-// TestRunRule004_EdgeCases teste les cas edge de runRule004
-func TestRunRule004_EdgeCases(t *testing.T) {
+// TestRunRule004EdgeCases teste les cas edge de RunRule004.
+func TestRunRule004EdgeCases(t *testing.T) {
 	t.Run("exempted package", func(t *testing.T) {
 		fset := token.NewFileSet()
 		file, _ := parser.ParseFile(fset, "test.go", "package main", parser.ParseComments)
@@ -476,7 +478,7 @@ func TestRunRule004_EdgeCases(t *testing.T) {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for main package") },
 		}
 
-		_, err := runRule004(pass)
+		_, err := ktn_interface.RunRule004(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -503,15 +505,15 @@ func NewService() Service {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report when constructor exists") },
 		}
 
-		_, err := runRule004(pass)
+		_, err := ktn_interface.RunRule004(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
 
-// TestRunRule005_EdgeCases teste les cas edge de runRule005
-func TestRunRule005_EdgeCases(t *testing.T) {
+// TestRunRule005EdgeCases teste les cas edge de RunRule005.
+func TestRunRule005EdgeCases(t *testing.T) {
 	t.Run("exempted package", func(t *testing.T) {
 		fset := token.NewFileSet()
 		file, _ := parser.ParseFile(fset, "test.go", "package main", parser.ParseComments)
@@ -523,7 +525,7 @@ func TestRunRule005_EdgeCases(t *testing.T) {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report for main package") },
 		}
 
-		_, err := runRule005(pass)
+		_, err := ktn_interface.RunRule005(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -546,7 +548,7 @@ type Service interface {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report when no interfaces.go exists") },
 		}
 
-		_, err := runRule005(pass)
+		_, err := ktn_interface.RunRule005(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -569,15 +571,15 @@ type Service interface {
 			Report: func(diag analysis.Diagnostic) { t.Error("should not report when interfaces.go has public interface") },
 		}
 
-		_, err := runRule005(pass)
+		_, err := ktn_interface.RunRule005(pass)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 }
 
-// TestRunRule001_WindowsPaths teste les chemins Windows
-func TestRunRule001_WindowsPaths(t *testing.T) {
+// TestRunRule001WindowsPaths teste les chemins Windows.
+func TestRunRule001WindowsPaths(t *testing.T) {
 	src := `package test
 
 type PublicService struct {
@@ -595,14 +597,14 @@ type PublicService struct {
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for tests/target path on Windows") },
 	}
 
-	_, err := runRule001(pass)
+	_, err := ktn_interface.RunRule001(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestRunRule002_WindowsPaths teste les chemins Windows pour Rule002
-func TestRunRule002_WindowsPaths(t *testing.T) {
+// TestRunRule002WindowsPaths teste les chemins Windows pour Rule002.
+func TestRunRule002WindowsPaths(t *testing.T) {
 	src := `package test
 
 type PublicService struct {
@@ -619,14 +621,14 @@ type PublicService struct {
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for tests/target path on Windows") },
 	}
 
-	_, err := runRule002(pass)
+	_, err := ktn_interface.RunRule002(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestRunRule002_TestFile teste les fichiers _test.go
-func TestRunRule002_TestFile(t *testing.T) {
+// TestRunRule002TestFile teste les fichiers _test.go.
+func TestRunRule002TestFile(t *testing.T) {
 	src := `package test
 
 type PublicHelper struct {
@@ -643,14 +645,14 @@ type PublicHelper struct {
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for _test.go files") },
 	}
 
-	_, err := runRule002(pass)
+	_, err := ktn_interface.RunRule002(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestCollectPackageInfo_NonTypeDecl teste les déclarations non-type
-func TestCollectPackageInfo_NonTypeDecl(t *testing.T) {
+// TestCollectPackageInfoNonTypeDecl teste les déclarations non-type.
+func TestCollectPackageInfoNonTypeDecl(t *testing.T) {
 	src := `package test
 
 const PublicConst = 42
@@ -667,19 +669,19 @@ func PublicFunc() {}
 		Pkg:   types.NewPackage("test", "test"),
 	}
 
-	info := collectPackageInfo(pass)
+	info := ktn_interface.CollectPackageInfo(pass)
 
-	if len(info.publicStructs) != 0 {
-		t.Errorf("expected 0 public structs, got %d", len(info.publicStructs))
+	if len(info.PublicStructs) != 0 {
+		t.Errorf("expected 0 public structs, got %d", len(info.PublicStructs))
 	}
 
-	if len(info.publicInterfaces) != 0 {
-		t.Errorf("expected 0 public interfaces, got %d", len(info.publicInterfaces))
+	if len(info.PublicInterfaces) != 0 {
+		t.Errorf("expected 0 public interfaces, got %d", len(info.PublicInterfaces))
 	}
 }
 
-// TestCollectPackageInfo_TypeAliases teste les alias de type
-func TestCollectPackageInfo_TypeAliases(t *testing.T) {
+// TestCollectPackageInfoTypeAliases teste les alias de type.
+func TestCollectPackageInfoTypeAliases(t *testing.T) {
 	src := `package test
 
 type PublicAlias = string
@@ -694,20 +696,20 @@ type PublicInt = int
 		Pkg:   types.NewPackage("test", "test"),
 	}
 
-	info := collectPackageInfo(pass)
+	info := ktn_interface.CollectPackageInfo(pass)
 
 	// Les alias ne sont ni des structs ni des interfaces
-	if len(info.publicStructs) != 0 {
-		t.Errorf("expected 0 public structs for aliases, got %d", len(info.publicStructs))
+	if len(info.PublicStructs) != 0 {
+		t.Errorf("expected 0 public structs for aliases, got %d", len(info.PublicStructs))
 	}
 
-	if len(info.publicInterfaces) != 0 {
-		t.Errorf("expected 0 public interfaces for aliases, got %d", len(info.publicInterfaces))
+	if len(info.PublicInterfaces) != 0 {
+		t.Errorf("expected 0 public interfaces for aliases, got %d", len(info.PublicInterfaces))
 	}
 }
 
-// TestRunRule003_PrivateInterface teste les interfaces privées
-func TestRunRule003_PrivateInterface(t *testing.T) {
+// TestRunRule003PrivateInterface teste les interfaces privées.
+func TestRunRule003PrivateInterface(t *testing.T) {
 	src := `package test
 
 type privateInterface interface {
@@ -724,14 +726,14 @@ type privateInterface interface {
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for private interface") },
 	}
 
-	_, err := runRule003(pass)
+	_, err := ktn_interface.RunRule003(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestRunRule004_EmptyInterfaceNoConstructor teste les interfaces vides
-func TestRunRule004_EmptyInterfaceNoConstructor(t *testing.T) {
+// TestRunRule004EmptyInterfaceNoConstructor teste les interfaces vides.
+func TestRunRule004EmptyInterfaceNoConstructor(t *testing.T) {
 	src := `package test
 
 type EmptyInterface interface{}
@@ -746,14 +748,14 @@ type EmptyInterface interface{}
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for empty interface") },
 	}
 
-	_, err := runRule004(pass)
+	_, err := ktn_interface.RunRule004(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestRunRule004_NilMethods teste les interfaces avec Methods nil
-func TestRunRule004_NilMethods(t *testing.T) {
+// TestRunRule004NilMethods teste les interfaces avec Methods nil.
+func TestRunRule004NilMethods(t *testing.T) {
 	src := `package test
 
 type MarkerInterface interface{}
@@ -768,14 +770,14 @@ type MarkerInterface interface{}
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for marker interface") },
 	}
 
-	_, err := runRule004(pass)
+	_, err := ktn_interface.RunRule004(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestRunRule005_PrivateInterfaceInInterfacesFile teste les interfaces privées dans interfaces.go
-func TestRunRule005_PrivateInterfaceInInterfacesFile(t *testing.T) {
+// TestRunRule005PrivateInterfaceInInterfacesFile teste les interfaces privées dans interfaces.go.
+func TestRunRule005PrivateInterfaceInInterfacesFile(t *testing.T) {
 	src := `package test
 
 type privateInterface interface {
@@ -795,7 +797,7 @@ type privateInterface interface {
 		},
 	}
 
-	_, err := runRule005(pass)
+	_, err := ktn_interface.RunRule005(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -805,8 +807,8 @@ type privateInterface interface {
 	}
 }
 
-// TestRunRule005_PrivateStructInInterfacesFile teste les structs privées dans interfaces.go
-func TestRunRule005_PrivateStructInInterfacesFile(t *testing.T) {
+// TestRunRule005PrivateStructInInterfacesFile teste les structs privées dans interfaces.go.
+func TestRunRule005PrivateStructInInterfacesFile(t *testing.T) {
 	src := `package test
 
 type privateStruct struct {
@@ -826,7 +828,7 @@ type privateStruct struct {
 		},
 	}
 
-	_, err := runRule005(pass)
+	_, err := ktn_interface.RunRule005(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -836,8 +838,8 @@ type privateStruct struct {
 	}
 }
 
-// TestRunRule002_NonStructType teste les types non-struct
-func TestRunRule002_NonStructType(t *testing.T) {
+// TestRunRule002NonStructType teste les types non-struct.
+func TestRunRule002NonStructType(t *testing.T) {
 	src := `package test
 
 type PublicAlias = string
@@ -853,14 +855,14 @@ type PublicFunc func() error
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for non-struct types") },
 	}
 
-	_, err := runRule002(pass)
+	_, err := ktn_interface.RunRule002(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestRunRule003_NonInterfaceType teste les types non-interface
-func TestRunRule003_NonInterfaceType(t *testing.T) {
+// TestRunRule003NonInterfaceType teste les types non-interface.
+func TestRunRule003NonInterfaceType(t *testing.T) {
 	src := `package test
 
 type PublicStruct struct {
@@ -879,14 +881,14 @@ type PublicAlias = string
 		Report: func(diag analysis.Diagnostic) { t.Error("should not report for non-interface types") },
 	}
 
-	_, err := runRule003(pass)
+	_, err := ktn_interface.RunRule003(pass)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-// TestCollectPackageInfo_InterfacesFile teste la détection du fichier interfaces.go
-func TestCollectPackageInfo_InterfacesFile(t *testing.T) {
+// TestCollectPackageInfoInterfacesFile teste la détection du fichier interfaces.go.
+func TestCollectPackageInfoInterfacesFile(t *testing.T) {
 	src := `package test
 
 type PublicInterface interface {
@@ -902,13 +904,13 @@ type PublicInterface interface {
 		Pkg:   types.NewPackage("test", "test"),
 	}
 
-	info := collectPackageInfo(pass)
+	info := ktn_interface.CollectPackageInfo(pass)
 
-	if !info.hasInterfacesFile {
+	if !info.HasInterfacesFile {
 		t.Error("should detect interfaces.go file")
 	}
 
-	if len(info.publicInterfaces) != 1 {
-		t.Errorf("expected 1 public interface, got %d", len(info.publicInterfaces))
+	if len(info.PublicInterfaces) != 1 {
+		t.Errorf("expected 1 public interface, got %d", len(info.PublicInterfaces))
 	}
 }

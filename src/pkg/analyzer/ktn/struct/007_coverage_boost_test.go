@@ -12,6 +12,8 @@ import (
 )
 
 // Test pour couvrir les branches GenDecl non-TYPE (IMPORT, CONST, VAR)
+// TestRule001_IgnoresNonTypeDeclInGenDecl tests Rule001 ignoring non-type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule001_IgnoresNonTypeDeclInGenDecl(t *testing.T) {
 	src := `package test
 
@@ -55,6 +57,8 @@ type ValidStruct struct {
 	}
 }
 
+// TestRule002_IgnoresNonTypeDeclInGenDecl tests Rule002 ignoring non-type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_IgnoresNonTypeDeclInGenDecl(t *testing.T) {
 	src := `package test
 
@@ -90,6 +94,8 @@ type ValidStruct struct {
 	}
 }
 
+// TestRule003_IgnoresNonTypeDeclInGenDecl tests Rule003 ignoring non-type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_IgnoresNonTypeDeclInGenDecl(t *testing.T) {
 	src := `package test
 
@@ -126,6 +132,8 @@ type ValidStruct struct {
 	}
 }
 
+// TestRule004_IgnoresNonTypeDeclInGenDecl tests Rule004 ignoring non-type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_IgnoresNonTypeDeclInGenDecl(t *testing.T) {
 	src := `package test
 
@@ -162,7 +170,8 @@ type ValidStruct struct {
 	}
 }
 
-// Test pour les TypeSpec qui ne sont pas des *ast.TypeSpec
+// TestRule001_IgnoresNonStructTypes tests Rule001 ignoring non-struct types.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule001_IgnoresNonStructTypes(t *testing.T) {
 	src := `package test
 
@@ -196,7 +205,8 @@ type (
 	}
 }
 
-// Test pour couvrir checkStructFieldCount avec struct fields nil
+// TestRule004_StructWithNilFieldsList tests Rule004 with nil fields list.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_StructWithNilFieldsList(t *testing.T) {
 	// Note: Ce cas est difficile à créer avec le parser Go standard
 	// car une struct valide a toujours un Fields non-nil

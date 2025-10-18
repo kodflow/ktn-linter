@@ -11,6 +11,8 @@ import (
 	ktn_struct "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/struct"
 )
 
+// TestRule002_EmptyFile tests Rule002 with an empty file.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_EmptyFile(t *testing.T) {
 	src := `package test`
 
@@ -34,6 +36,8 @@ func TestRule002_EmptyFile(t *testing.T) {
 	}
 }
 
+// TestRule002_NonStructType tests Rule002 with non-struct types.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_NonStructType(t *testing.T) {
 	src := `package test
 type MyInt int
@@ -62,6 +66,8 @@ type MyInterface interface {
 	}
 }
 
+// TestRule002_DocumentedStruct tests Rule002 with a documented struct.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_DocumentedStruct(t *testing.T) {
 	src := `package test
 // ValidStruct represents a valid struct.
@@ -90,6 +96,8 @@ type ValidStruct struct {
 	}
 }
 
+// TestRule002_UndocumentedStruct tests Rule002 with an undocumented struct.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_UndocumentedStruct(t *testing.T) {
 	src := `package test
 type UndocumentedStruct struct {

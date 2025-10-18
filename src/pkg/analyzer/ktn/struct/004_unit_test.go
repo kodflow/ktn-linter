@@ -11,6 +11,8 @@ import (
 	ktn_struct "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/struct"
 )
 
+// TestRule004_EmptyFile tests Rule004 with an empty file.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_EmptyFile(t *testing.T) {
 	src := `package test`
 
@@ -34,6 +36,8 @@ func TestRule004_EmptyFile(t *testing.T) {
 	}
 }
 
+// TestRule004_EmptyStruct tests Rule004 with an empty struct.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_EmptyStruct(t *testing.T) {
 	src := `package test
 // EmptyStruct has no fields.
@@ -61,6 +65,8 @@ type EmptyStruct struct {
 	}
 }
 
+// TestRule004_StructWithNilFields tests Rule004 with minimal fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_StructWithNilFields(t *testing.T) {
 	src := `package test
 // MinimalStruct is a minimal struct.
@@ -89,6 +95,8 @@ type MinimalStruct struct {
 	}
 }
 
+// TestRule004_StructWithEmbeddedField tests Rule004 with embedded fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_StructWithEmbeddedField(t *testing.T) {
 	src := `package test
 // EmbeddedStruct has an embedded field.
@@ -123,6 +131,8 @@ type EmbeddedStruct struct {
 	}
 }
 
+// TestRule004_StructWithExactly15Fields tests Rule004 with exactly 15 fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_StructWithExactly15Fields(t *testing.T) {
 	src := `package test
 // MaxFieldsStruct has exactly 15 fields.
@@ -165,6 +175,8 @@ type MaxFieldsStruct struct {
 	}
 }
 
+// TestRule004_StructWithTooManyFields tests Rule004 with too many fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_StructWithTooManyFields(t *testing.T) {
 	src := `package test
 // TooManyFieldsStruct has 16 fields.
@@ -213,6 +225,8 @@ type TooManyFieldsStruct struct {
 	}
 }
 
+// TestRule004_NonStructType tests Rule004 with non-struct types.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_NonStructType(t *testing.T) {
 	src := `package test
 type MyInt int
@@ -238,6 +252,8 @@ type MyInt int
 	}
 }
 
+// TestRule004_MultipleFieldsPerLine tests Rule004 with multiple fields per line.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_MultipleFieldsPerLine(t *testing.T) {
 	src := `package test
 // MultiFields has multiple fields declared on the same line.

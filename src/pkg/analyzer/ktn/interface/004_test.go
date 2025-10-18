@@ -8,12 +8,14 @@ import (
 	ktn_interface "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/interface"
 )
 
-func TestRule004_ConstructorsRequired(t *testing.T) {
+// TestRule004ConstructorsRequired teste la règle 004 avec des constructeurs requis.
+func TestRule004ConstructorsRequired(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule004, "interface004")
 }
 
-func TestRule004_EmptyInterface(t *testing.T) {
+// TestRule004EmptyInterface teste la règle 004 avec une interface vide.
+func TestRule004EmptyInterface(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule004, "interface004_empty_interface")
 }

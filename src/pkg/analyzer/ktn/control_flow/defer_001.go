@@ -83,7 +83,14 @@ func containsNode(block *ast.BlockStmt, target ast.Node) bool {
 	return found
 }
 
-// ContainsNodeExported est une version exportée pour les tests
+// ContainsNodeExported est une version exportée pour les tests.
+//
+// Params:
+//   - block: bloc d'instructions à analyser
+//   - target: nœud AST à rechercher
+//
+// Returns:
+//   - true si target est trouvé dans block
 func ContainsNodeExported(block *ast.BlockStmt, target ast.Node) bool {
 	return containsNode(block, target)
 }

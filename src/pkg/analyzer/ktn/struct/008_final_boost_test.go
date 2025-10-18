@@ -11,7 +11,8 @@ import (
 	ktn_struct "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/struct"
 )
 
-// Tests spécifiques pour atteindre 100% sur checkStructFieldCount
+// TestRule004_FieldsWithoutNames tests Rule004 with embedded fields without names.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_FieldsWithoutNames(t *testing.T) {
 	// Test avec champs embedded (sans nom)
 	src := `package test
@@ -52,6 +53,8 @@ type StructWithEmbedded struct {
 	}
 }
 
+// TestRule004_TooManyFieldsWithEmbedded tests Rule004 with too many fields including embedded.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_TooManyFieldsWithEmbedded(t *testing.T) {
 	// Test avec champs embedded qui font dépasser la limite
 	src := `package test
@@ -106,6 +109,8 @@ type TooBigWithEmbedded struct {
 	}
 }
 
+// TestRule004_MultipleEmbeddedFields tests Rule004 with multiple embedded fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_MultipleEmbeddedFields(t *testing.T) {
 	// Test avec plusieurs champs embedded
 	src := `package test
@@ -151,6 +156,8 @@ type MultipleEmbedded struct {
 	}
 }
 
+// TestRule003_FieldsWithoutNamesEmbedded tests Rule003 with embedded fields without names.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_FieldsWithoutNamesEmbedded(t *testing.T) {
 	// Test pour rule003 avec champs embedded
 	src := `package test
@@ -189,7 +196,8 @@ type StructWithEmbedded struct {
 	}
 }
 
-// Tests pour couvrir les boucles multiples files
+// TestAllRules_MultipleFilesInPass tests all rules with multiple files in a pass.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestAllRules_MultipleFilesInPass(t *testing.T) {
 	src1 := `package test
 

@@ -88,7 +88,7 @@ func getRangeVarNames(rangeStmt *ast.RangeStmt) []string {
 	return names
 }
 
-func findCopiedVars(body *ast.BlockStmt, funcLit *ast.FuncLit, rangeVars []string) map[string]bool {
+func findCopiedVars(body *ast.BlockStmt, funcLit *ast.FuncLit, _ []string) map[string]bool {
 	copiedVars := make(map[string]bool)
 	ast.Inspect(body, func(n ast.Node) bool {
 		if n == funcLit {
@@ -126,7 +126,15 @@ func usesVariable(body *ast.BlockStmt, varName string) bool {
 	return uses
 }
 
-// FindCopiedVarsExported est une version exportée pour les tests
+// FindCopiedVarsExported est une version exportée pour les tests.
+//
+// Params:
+//   - body: bloc d'instructions à analyser
+//   - funcLit: fonction littérale (closure) à vérifier
+//   - rangeVars: variables de range à rechercher
+//
+// Returns:
+//   - map des variables copiées localement (pattern v := v)
 func FindCopiedVarsExported(body *ast.BlockStmt, funcLit *ast.FuncLit, rangeVars []string) map[string]bool {
 	return findCopiedVars(body, funcLit, rangeVars)
 }

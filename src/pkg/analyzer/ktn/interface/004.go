@@ -12,12 +12,13 @@ import (
 var Rule004 = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_004",
 	Doc:  "Vérifie la présence des constructeurs pour les interfaces",
-	Run:  runRule004,
+	Run:  RunRule004,
 }
 
-func runRule004(pass *analysis.Pass) (any, error) {
+// RunRule004 exécute la règle 004.
+func RunRule004(pass *analysis.Pass) (any, error) {
 	// Packages exemptés
-	if isExemptedPackage004(pass.Pkg.Name()) {
+	if IsExemptedPackage004(pass.Pkg.Name()) {
 		return nil, nil
 	}
 
@@ -102,7 +103,8 @@ type interfaceInfo struct {
 	methodCount int
 }
 
-func isExemptedPackage004(pkgName string) bool {
+// IsExemptedPackage004 vérifie si un package est exempté pour Rule004.
+func IsExemptedPackage004(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {

@@ -10,7 +10,10 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestRule001_DirectCoverage teste directement Rule001 pour améliorer la couverture.
+// TestRule001_DirectCoverage tests Rule001 directly for coverage improvement.
+//
+// Params:
+//   - t: testing instance
 func TestRule001_DirectCoverage(t *testing.T) {
 	src := `package test
 

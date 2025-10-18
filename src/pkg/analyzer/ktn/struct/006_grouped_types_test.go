@@ -11,6 +11,8 @@ import (
 	ktn_struct "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/struct"
 )
 
+// TestRule001_GroupedTypeDeclarations tests Rule001 with grouped type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule001_GroupedTypeDeclarations(t *testing.T) {
 	src := `package test
 
@@ -68,6 +70,8 @@ type (
 	}
 }
 
+// TestRule002_GroupedTypeDeclarations tests Rule002 with grouped type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_GroupedTypeDeclarations(t *testing.T) {
 	src := `package test
 
@@ -112,6 +116,8 @@ type UndocumentedStruct2 struct {
 	}
 }
 
+// TestRule003_GroupedTypeDeclarations tests Rule003 with grouped type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_GroupedTypeDeclarations(t *testing.T) {
 	src := `package test
 
@@ -159,6 +165,8 @@ type BadStruct2 struct {
 	}
 }
 
+// TestRule004_GroupedTypeDeclarations tests Rule004 with grouped type declarations.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_GroupedTypeDeclarations(t *testing.T) {
 	src := `package test
 
@@ -216,6 +224,8 @@ type MyInt int
 	}
 }
 
+// TestRule001_MultipleFiles tests Rule001 with multiple files.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule001_MultipleFiles(t *testing.T) {
 	src1 := `package test
 

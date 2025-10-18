@@ -13,12 +13,13 @@ import (
 var Rule002 = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_002",
 	Doc:  "Vérifie qu'il n'y a pas de structs publiques",
-	Run:  runRule002,
+	Run:  RunRule002,
 }
 
-func runRule002(pass *analysis.Pass) (any, error) {
+// RunRule002 exécute la règle 002.
+func RunRule002(pass *analysis.Pass) (any, error) {
 	// Packages exemptés
-	if isExemptedPackage002(pass.Pkg.Name()) {
+	if IsExemptedPackage002(pass.Pkg.Name()) {
 		return nil, nil
 	}
 
@@ -85,7 +86,8 @@ func runRule002(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-func isExemptedPackage002(pkgName string) bool {
+// IsExemptedPackage002 vérifie si un package est exempté pour Rule002.
+func IsExemptedPackage002(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {

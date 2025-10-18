@@ -11,6 +11,8 @@ import (
 	ktn_struct "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/struct"
 )
 
+// TestRule003_EmptyFile tests Rule003 with an empty file.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_EmptyFile(t *testing.T) {
 	src := `package test`
 
@@ -34,6 +36,8 @@ func TestRule003_EmptyFile(t *testing.T) {
 	}
 }
 
+// TestRule003_EmptyStruct tests Rule003 with an empty struct.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_EmptyStruct(t *testing.T) {
 	src := `package test
 // EmptyStruct has no fields.
@@ -61,6 +65,8 @@ type EmptyStruct struct {
 	}
 }
 
+// TestRule003_PrivateFields tests Rule003 with private fields only.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_PrivateFields(t *testing.T) {
 	src := `package test
 // PrivateFields has only private fields.
@@ -90,6 +96,8 @@ type PrivateFields struct {
 	}
 }
 
+// TestRule003_DocumentedExportedFields tests Rule003 with documented exported fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_DocumentedExportedFields(t *testing.T) {
 	src := `package test
 // ValidStruct has documented exported fields.
@@ -122,6 +130,8 @@ type ValidStruct struct {
 	}
 }
 
+// TestRule003_UndocumentedExportedFields tests Rule003 with undocumented exported fields.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_UndocumentedExportedFields(t *testing.T) {
 	src := `package test
 // BadStruct has undocumented exported fields.
@@ -157,6 +167,8 @@ type BadStruct struct {
 	}
 }
 
+// TestRule003_NonStructType tests Rule003 with non-struct types.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_NonStructType(t *testing.T) {
 	src := `package test
 type MyInt int

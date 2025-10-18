@@ -13,6 +13,8 @@ import (
 
 // Tests pour couvrir les cas de boucles avec déclarations de type mixtes
 
+// TestRule001_MultipleTypeSpecsInOneDecl tests Rule001 with multiple type specs in one declaration.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule001_MultipleTypeSpecsInOneDecl(t *testing.T) {
 	src := `package test
 type (
@@ -54,6 +56,8 @@ type (
 	}
 }
 
+// TestRule002_MultipleTypeSpecsInOneDecl tests Rule002 with multiple type specs in one declaration.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule002_MultipleTypeSpecsInOneDecl(t *testing.T) {
 	src := `package test
 
@@ -94,6 +98,8 @@ type MyInt int
 	}
 }
 
+// TestRule003_MultipleTypeSpecsInOneDecl tests Rule003 with multiple type specs in one declaration.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule003_MultipleTypeSpecsInOneDecl(t *testing.T) {
 	src := `package test
 
@@ -136,6 +142,8 @@ type MyInt int
 	}
 }
 
+// TestRule004_MultipleTypeSpecsInOneDecl tests Rule004 with multiple type specs in one declaration.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_MultipleTypeSpecsInOneDecl(t *testing.T) {
 	src := `package test
 
@@ -193,6 +201,8 @@ type MyInt int
 	}
 }
 
+// TestRule004_StructWithMultipleFieldsPerDeclaration tests Rule004 with multiple fields per declaration.
+// nolint:KTN-FUNC-001 // Test naming convention
 func TestRule004_StructWithMultipleFieldsPerDeclaration(t *testing.T) {
 	src := `package test
 // MultiFields has multiple fields per line.

@@ -8,12 +8,14 @@ import (
 	ktn_interface "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/interface"
 )
 
-func TestRule002_NoPublicStructs(t *testing.T) {
+// TestRule002NoPublicStructs teste la règle 002 sans structures publiques.
+func TestRule002NoPublicStructs(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule002, "interface002")
 }
 
-func TestRule002_AllowedTypes(t *testing.T) {
+// TestRule002AllowedTypes teste la règle 002 avec des types autorisés.
+func TestRule002AllowedTypes(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule002, "interface002_allowed")
 }

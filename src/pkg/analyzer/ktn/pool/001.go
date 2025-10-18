@@ -51,9 +51,9 @@ func checkPoolGetWithoutDeferPut(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		switch stmt := n.(type) {
 		case *ast.AssignStmt:
-			trackPoolGetAssignment(stmt, poolVars, pass)
+			TrackPoolGetAssignment(stmt, poolVars, pass)
 		case *ast.DeferStmt:
-			trackDeferPut(stmt, deferredPuts)
+			TrackDeferPut(stmt, deferredPuts)
 		}
 		return true
 	})
@@ -66,72 +66,72 @@ func checkPoolGetWithoutDeferPut(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	}
 }
 
-// trackPoolGetAssignment détecte les assignations depuis pool.Get().
+// TrackPoolGetAssignment détecte les assignations depuis pool.Get().
 //
 // Params:
 //   - stmt: l'assignation à analyser
 //   - poolVars: map des variables pool trackées
 //   - pass: la passe d'analyse
-func trackPoolGetAssignment(stmt *ast.AssignStmt, poolVars map[string]ast.Expr, pass *analysis.Pass) {
+func TrackPoolGetAssignment(stmt *ast.AssignStmt, poolVars map[string]ast.Expr, pass *analysis.Pass) {
 	if len(stmt.Lhs) != 1 || len(stmt.Rhs) != 1 {
 		return
 	}
 
 	// Extraire l'expression sous-jacente (peut être un type assertion)
-	rhsExpr := unwrapTypeAssertion(stmt.Rhs[0])
+	rhsExpr := UnwrapTypeAssertion(stmt.Rhs[0])
 
 	// Vérifier si RHS est un appel à pool.Get()
-	if !isPoolGetCall(rhsExpr, pass) {
+	if !IsPoolGetCall(rhsExpr, pass) {
 		return
 	}
 
 	// Extraire le nom de la variable
-	varName := extractVarName(stmt.Lhs[0])
+	varName := ExtractVarName(stmt.Lhs[0])
 	if varName != "" {
 		poolVars[varName] = rhsExpr
 	}
 }
 
-// unwrapTypeAssertion extrait l'expression d'un type assertion.
+// UnwrapTypeAssertion extrait l'expression d'un type assertion.
 //
 // Params:
 //   - expr: l'expression (peut être TypeAssertExpr)
 //
 // Returns:
 //   - ast.Expr: l'expression sous-jacente
-func unwrapTypeAssertion(expr ast.Expr) ast.Expr {
+func UnwrapTypeAssertion(expr ast.Expr) ast.Expr {
 	if typeAssert, ok := expr.(*ast.TypeAssertExpr); ok {
 		return typeAssert.X
 	}
 	return expr
 }
 
-// trackDeferPut détecte les defer avec pool.Put().
+// TrackDeferPut détecte les defer avec pool.Put().
 //
 // Params:
 //   - stmt: le defer statement
 //   - deferredPuts: map des Put() différés
-func trackDeferPut(stmt *ast.DeferStmt, deferredPuts map[string]bool) {
+func TrackDeferPut(stmt *ast.DeferStmt, deferredPuts map[string]bool) {
 	callExpr := stmt.Call
 	if callExpr == nil {
 		return
 	}
 
 	// Vérifier si c'est pool.Put(var)
-	if !isPoolPutCall(callExpr) {
+	if !IsPoolPutCall(callExpr) {
 		return
 	}
 
 	// Extraire le nom de la variable passée à Put()
 	if len(callExpr.Args) > 0 {
-		varName := extractVarName(callExpr.Args[0])
+		varName := ExtractVarName(callExpr.Args[0])
 		if varName != "" {
 			deferredPuts[varName] = true
 		}
 	}
 }
 
-// isPoolGetCall vérifie si l'expression est un appel à pool.Get().
+// IsPoolGetCall vérifie si l'expression est un appel à pool.Get().
 //
 // Params:
 //   - expr: l'expression à vérifier
@@ -139,7 +139,7 @@ func trackDeferPut(stmt *ast.DeferStmt, deferredPuts map[string]bool) {
 //
 // Returns:
 //   - bool: true si c'est pool.Get()
-func isPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
+func IsPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
 	callExpr, ok := expr.(*ast.CallExpr)
 	if !ok {
 		return false
@@ -170,14 +170,14 @@ func isPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
 	return false
 }
 
-// isPoolPutCall vérifie si l'appel est pool.Put().
+// IsPoolPutCall vérifie si l'appel est pool.Put().
 //
 // Params:
 //   - callExpr: l'appel à vérifier
 //
 // Returns:
 //   - bool: true si c'est pool.Put()
-func isPoolPutCall(callExpr *ast.CallExpr) bool {
+func IsPoolPutCall(callExpr *ast.CallExpr) bool {
 	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
 	if !ok || selExpr.Sel.Name != "Put" {
 		return false
@@ -192,14 +192,14 @@ func isPoolPutCall(callExpr *ast.CallExpr) bool {
 	return false
 }
 
-// extractVarName extrait le nom de variable d'une expression.
+// ExtractVarName extrait le nom de variable d'une expression.
 //
 // Params:
 //   - expr: l'expression
 //
 // Returns:
 //   - string: le nom de la variable ou ""
-func extractVarName(expr ast.Expr) string {
+func ExtractVarName(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.Ident:
 		return e.Name

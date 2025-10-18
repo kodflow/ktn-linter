@@ -31,7 +31,7 @@ func test(x bool) bool {
 	pass := &analysis.Pass{
 		Fset:  fset,
 		Files: []*ast.File{file},
-		Report: func(diag analysis.Diagnostic) {
+		Report: func(_ analysis.Diagnostic) {
 			reported = true
 		},
 	}
@@ -69,7 +69,7 @@ func test(x bool) bool {
 	pass := &analysis.Pass{
 		Fset:  fset,
 		Files: []*ast.File{file},
-		Report: func(diag analysis.Diagnostic) {
+		Report: func(_ analysis.Diagnostic) {
 			reported = true
 		},
 	}
@@ -108,7 +108,7 @@ func test(x bool) bool {
 	pass := &analysis.Pass{
 		Fset:  fset,
 		Files: []*ast.File{file},
-		Report: func(diag analysis.Diagnostic) {
+		Report: func(_ analysis.Diagnostic) {
 			reported = true
 		},
 	}

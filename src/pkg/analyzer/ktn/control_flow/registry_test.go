@@ -21,6 +21,7 @@ func TestAllRulesNotNil(t *testing.T) {
 	for i, rule := range AllRules {
 		if rule == nil {
 			t.Errorf("AllRules[%d] is nil", i)
+			continue
 		}
 		if rule.Name == "" {
 			t.Errorf("AllRules[%d] has empty name", i)
