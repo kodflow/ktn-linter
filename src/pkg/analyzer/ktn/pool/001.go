@@ -1,0 +1,235 @@
+package ktn_pool
+
+import (
+	"go/ast"
+	"strings"
+
+	"golang.org/x/tools/go/analysis"
+)
+
+// Rule001 vérifie que pool.Get() est suivi d'un defer pool.Put().
+// KTN-POOL-001: Sans defer Put(), l'objet ne retourne jamais au pool, causant une fuite de ressources.
+var Rule001 = &analysis.Analyzer{
+	Name: "KTN_POOL_001",
+	Doc:  "Vérifier que pool.Get() est suivi de defer pool.Put()",
+	Run:  runRule001,
+}
+
+// runRule001 exécute l'analyse pour la règle POOL-001.
+//
+// Params:
+//   - pass: la passe d'analyse
+//
+// Returns:
+//   - any: toujours nil
+//   - error: toujours nil
+func runRule001(pass *analysis.Pass) (any, error) {
+	for _, file := range pass.Files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			funcDecl, ok := n.(*ast.FuncDecl)
+			if !ok || funcDecl.Body == nil {
+				return true
+			}
+
+			checkPoolGetWithoutDeferPut(pass, funcDecl)
+			return true
+		})
+	}
+	return nil, nil
+}
+
+// checkPoolGetWithoutDeferPut vérifie si Get() est utilisé sans defer Put().
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - funcDecl: la déclaration de fonction à analyser
+func checkPoolGetWithoutDeferPut(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
+	// Map pour tracker les variables issues de pool.Get()
+	poolVars := make(map[string]ast.Expr) // varName -> pool expression
+	deferredPuts := make(map[string]bool) // varName -> has defer Put
+
+	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
+		switch stmt := n.(type) {
+		case *ast.AssignStmt:
+			trackPoolGetAssignment(stmt, poolVars, pass)
+		case *ast.DeferStmt:
+			trackDeferPut(stmt, deferredPuts)
+		}
+		return true
+	})
+
+	// Vérifier les variables sans defer Put()
+	for varName, poolExpr := range poolVars {
+		if !deferredPuts[varName] {
+			reportMissingDeferPut(pass, poolExpr, varName)
+		}
+	}
+}
+
+// trackPoolGetAssignment détecte les assignations depuis pool.Get().
+//
+// Params:
+//   - stmt: l'assignation à analyser
+//   - poolVars: map des variables pool trackées
+//   - pass: la passe d'analyse
+func trackPoolGetAssignment(stmt *ast.AssignStmt, poolVars map[string]ast.Expr, pass *analysis.Pass) {
+	if len(stmt.Lhs) != 1 || len(stmt.Rhs) != 1 {
+		return
+	}
+
+	// Extraire l'expression sous-jacente (peut être un type assertion)
+	rhsExpr := unwrapTypeAssertion(stmt.Rhs[0])
+
+	// Vérifier si RHS est un appel à pool.Get()
+	if !isPoolGetCall(rhsExpr, pass) {
+		return
+	}
+
+	// Extraire le nom de la variable
+	varName := extractVarName(stmt.Lhs[0])
+	if varName != "" {
+		poolVars[varName] = rhsExpr
+	}
+}
+
+// unwrapTypeAssertion extrait l'expression d'un type assertion.
+//
+// Params:
+//   - expr: l'expression (peut être TypeAssertExpr)
+//
+// Returns:
+//   - ast.Expr: l'expression sous-jacente
+func unwrapTypeAssertion(expr ast.Expr) ast.Expr {
+	if typeAssert, ok := expr.(*ast.TypeAssertExpr); ok {
+		return typeAssert.X
+	}
+	return expr
+}
+
+// trackDeferPut détecte les defer avec pool.Put().
+//
+// Params:
+//   - stmt: le defer statement
+//   - deferredPuts: map des Put() différés
+func trackDeferPut(stmt *ast.DeferStmt, deferredPuts map[string]bool) {
+	callExpr := stmt.Call
+	if callExpr == nil {
+		return
+	}
+
+	// Vérifier si c'est pool.Put(var)
+	if !isPoolPutCall(callExpr) {
+		return
+	}
+
+	// Extraire le nom de la variable passée à Put()
+	if len(callExpr.Args) > 0 {
+		varName := extractVarName(callExpr.Args[0])
+		if varName != "" {
+			deferredPuts[varName] = true
+		}
+	}
+}
+
+// isPoolGetCall vérifie si l'expression est un appel à pool.Get().
+//
+// Params:
+//   - expr: l'expression à vérifier
+//   - pass: la passe d'analyse
+//
+// Returns:
+//   - bool: true si c'est pool.Get()
+func isPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
+	callExpr, ok := expr.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+
+	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+	if !ok || selExpr.Sel.Name != "Get" {
+		return false
+	}
+
+	// Vérifier le type de l'objet appelant
+	if pass.TypesInfo != nil {
+		if t := pass.TypesInfo.TypeOf(selExpr.X); t != nil {
+			// Vérifier si c'est sync.Pool ou *sync.Pool
+			typeStr := t.String()
+			if strings.Contains(typeStr, "sync.Pool") {
+				return true
+			}
+		}
+	}
+
+	// Fallback: vérifier le nom de la variable
+	if ident, ok := selExpr.X.(*ast.Ident); ok {
+		varName := strings.ToLower(ident.Name)
+		return strings.Contains(varName, "pool")
+	}
+
+	return false
+}
+
+// isPoolPutCall vérifie si l'appel est pool.Put().
+//
+// Params:
+//   - callExpr: l'appel à vérifier
+//
+// Returns:
+//   - bool: true si c'est pool.Put()
+func isPoolPutCall(callExpr *ast.CallExpr) bool {
+	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+	if !ok || selExpr.Sel.Name != "Put" {
+		return false
+	}
+
+	// Vérifier le nom de la variable
+	if ident, ok := selExpr.X.(*ast.Ident); ok {
+		varName := strings.ToLower(ident.Name)
+		return strings.Contains(varName, "pool")
+	}
+
+	return false
+}
+
+// extractVarName extrait le nom de variable d'une expression.
+//
+// Params:
+//   - expr: l'expression
+//
+// Returns:
+//   - string: le nom de la variable ou ""
+func extractVarName(expr ast.Expr) string {
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return e.Name
+	case *ast.CallExpr:
+		// Type assertion: buf := pool.Get().([]byte)
+		return ""
+	}
+	return ""
+}
+
+// reportMissingDeferPut rapporte une violation KTN-POOL-001.
+//
+// Params:
+//   - pass: la passe d'analyse
+//   - expr: l'expression pool.Get()
+//   - varName: le nom de la variable
+func reportMissingDeferPut(pass *analysis.Pass, expr ast.Expr, varName string) {
+	pass.Reportf(expr.Pos(),
+		"[KTN-POOL-001] Variable '%s' obtenue via pool.Get() sans defer pool.Put().\n"+
+			"Cela cause une fuite de ressources car l'objet ne retourne jamais au pool.\n"+
+			"Utilisez 'defer pool.Put(%s)' immédiatement après Get().\n"+
+			"Exemple:\n"+
+			"  // ❌ MAUVAIS - fuite mémoire\n"+
+			"  buf := bufferPool.Get().([]byte)\n"+
+			"  process(buf)\n"+
+			"  // buf n'est jamais retourné au pool\n"+
+			"\n"+
+			"  // ✅ CORRECT\n"+
+			"  buf := bufferPool.Get().([]byte)\n"+
+			"  defer bufferPool.Put(buf)\n"+
+			"  process(buf)",
+		varName, varName)
+}

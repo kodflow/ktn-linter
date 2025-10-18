@@ -1,0 +1,78 @@
+package ktn_interface
+
+import (
+	"go/ast"
+	"go/token"
+	"path/filepath"
+	"strings"
+	"unicode"
+
+	"golang.org/x/tools/go/analysis"
+)
+
+var Rule003 = &analysis.Analyzer{
+	Name: "KTN_INTERFACE_003",
+	Doc:  "Vérifie que les interfaces publiques sont dans interfaces.go",
+	Run:  runRule003,
+}
+
+func runRule003(pass *analysis.Pass) (any, error) {
+	// Packages exemptés
+	if isExemptedPackage003(pass.Pkg.Name()) {
+		return nil, nil
+	}
+
+	for _, file := range pass.Files {
+		fileName := pass.Fset.File(file.Pos()).Name()
+		baseName := filepath.Base(fileName)
+
+		// Ignorer interfaces.go lui-même
+		if baseName == "interfaces.go" {
+			continue
+		}
+
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			if !ok || genDecl.Tok != token.TYPE {
+				continue
+			}
+
+			for _, spec := range genDecl.Specs {
+				typeSpec, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+
+				name := typeSpec.Name.Name
+				isPublic := unicode.IsUpper(rune(name[0]))
+
+				if !isPublic {
+					continue
+				}
+
+				_, isInterface := typeSpec.Type.(*ast.InterfaceType)
+				if !isInterface {
+					continue
+				}
+
+				pass.Reportf(typeSpec.Pos(),
+					"[KTN_INTERFACE_003] Interface '%s' définie dans %s.\n"+
+						"Les interfaces publiques doivent être dans interfaces.go.\n"+
+						"Déplacez cette interface vers interfaces.go.",
+					name, baseName)
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+func isExemptedPackage003(pkgName string) bool {
+	exempted := []string{"main", "main_test"}
+	for _, exempt := range exempted {
+		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
+			return true
+		}
+	}
+	return false
+}

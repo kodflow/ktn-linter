@@ -7,7 +7,7 @@
   "go.vetOnSave": "off",
   "go.lintFlags": [],
   "go.alternateTools": {
-    "golangci-lint": "${workspaceFolder}/bin/golangci-lint-wrapper"
+    "golangci-lint": "${workspaceFolder}/src/bin/golangci-lint-wrapper"
   },
   // Activer les diagnostics du linter
   "go.toolsManagement.autoUpdate": false,
@@ -36,7 +36,7 @@
   "emeraldwalk.runonsave": {
     "commands": [
       {
-        "match": "src/(cmd|pkg|internal)/.*\\.go$",
+        "match": "src/(cmd|pkg)/.*\\.go$",
         "cmd": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./src/cmd/ktn-linter"
       }
     ]

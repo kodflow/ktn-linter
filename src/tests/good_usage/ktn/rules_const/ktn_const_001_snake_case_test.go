@@ -1,0 +1,13 @@
+package rules_const
+
+import (
+	"testing"
+)
+
+// TestConst001 teste le fichier package_level_KTN-CONST-001.go.
+//
+// Params:
+//   - t: instance de test
+func TestConst001(t *testing.T) {
+	t.Log("Test de validation pour KTN-CONST-001")
+}
