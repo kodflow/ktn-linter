@@ -27,3 +27,12 @@ func GoodSimplified(x bool) bool {
 func GoodNegation(x bool) bool {
 	return !x
 }
+
+// BadComplexCondition - condition complexe mais pattern simplifiable
+func BadComplexCondition(a, b bool) bool {
+	if a && b { // want `\[KTN-IF-004\].*`
+		return true
+	} else {
+		return false
+	}
+}
