@@ -14,7 +14,7 @@ import (
 //
 // Incorrect: fonction avec 15 points de décision
 // Correct: fonction avec moins de 10 points de décision, ou décomposée
-var Rule007 = &analysis.Analyzer{
+var Rule007 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_007",
 	Doc:  "Vérifie que la complexité cyclomatique reste sous 10 (50 pour tests)",
 	Run:  runRule007,
@@ -42,6 +42,7 @@ func runRule007(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -75,15 +76,18 @@ func checkComplexity(pass *analysis.Pass, funcDecl *ast.FuncDecl, isTestFile boo
 //   - int: la complexité cyclomatique
 func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 	if funcDecl.Body == nil {
+		// Early return from function.
 		return 1
 	}
 
 	complexity := 1
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		complexity += getNodeComplexity(n)
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return complexity
 }
 
@@ -97,21 +101,27 @@ func calculateCyclomaticComplexity(funcDecl *ast.FuncDecl) int {
 func getNodeComplexity(n ast.Node) int {
 	switch stmt := n.(type) {
 	case *ast.IfStmt:
+		// Early return from function.
 		return 1
 	case *ast.ForStmt, *ast.RangeStmt:
+		// Early return from function.
 		return 1
 	case *ast.CaseClause:
 		if stmt.List != nil {
+			// Early return from function.
 			return 1
 		}
 	case *ast.CommClause:
 		if stmt.Comm != nil {
+			// Early return from function.
 			return 1
 		}
 	case *ast.BinaryExpr:
 		if stmt.Op == token.LAND || stmt.Op == token.LOR {
+			// Early return from function.
 			return 1
 		}
 	}
+	// Early return from function.
 	return 0
 }

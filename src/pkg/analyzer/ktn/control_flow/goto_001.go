@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleGoto001 = &analysis.Analyzer{
+// RuleGoto001 analyzer for goto statements.
+var RuleGoto001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_GOTO_001",
 	Doc:  "Détecte l'utilisation non idiomatique de goto",
 	Run:  runRuleGoto001,
@@ -18,6 +19,7 @@ func runRuleGoto001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			branchStmt, ok := n.(*ast.BranchStmt)
 			if !ok || branchStmt.Tok != token.GOTO {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -37,8 +39,10 @@ func runRuleGoto001(pass *analysis.Pass) (any, error) {
 					"  defer close()\n"+
 					"  if err != nil { return err }\n"+
 					"  doWork()")
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }

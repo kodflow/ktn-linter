@@ -31,7 +31,10 @@ package rules_var
 // ERREURS : KTN-VAR-003 sur MinAgeV003, MaxAgeV003, defaultPriorityV003
 // Ces variables utilisent des entiers 8 bits (-128 à 127)
 var (
-	MinAgeV003          int8 = 18
-	MaxAgeV003          int8 = 120
+	// MinAgeV003 describes this variable.
+	MinAgeV003 int8 = 18
+	// MaxAgeV003 describes this variable.
+	MaxAgeV003 int8 = 120
+	// defaultPriorityV003 describes this variable.
 	defaultPriorityV003 int8 = 5
 )

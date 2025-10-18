@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleFor001 = &analysis.Analyzer{
+// RuleFor001 analyzer for for loops.
+var RuleFor001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FOR_001",
 	Doc:  "Détecte l'utilisation inutile de _ dans les range loops",
 	Run:  runRuleFor001,
@@ -17,6 +18,7 @@ func runRuleFor001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			rangeStmt, ok := n.(*ast.RangeStmt)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -37,6 +39,7 @@ func runRuleFor001(pass *analysis.Pass) (any, error) {
 									"\n"+
 									"  // ✅ CORRECT\n"+
 									"  for range items { doSomething() }")
+							// Continue traversing AST nodes.
 							return true
 						}
 					}
@@ -56,8 +59,10 @@ func runRuleFor001(pass *analysis.Pass) (any, error) {
 							"Note: `for _, v := range items` est CORRECT pour itérer sur les valeurs.")
 				}
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }

@@ -7,12 +7,14 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RulePredecl001 = &analysis.Analyzer{
+// RulePredecl001 analyzer for predeclared identifiers.
+var RulePredecl001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_PREDECL_002",
 	Doc:  "Détecte le shadowing d'identifiants prédéclarés",
 	Run:  runRulePredecl001,
 }
 
+// predeclaredIdentifiers contains all Go predeclared identifiers.
 var predeclaredIdentifiers = map[string]bool{
 	// Types
 	"bool": true, "byte": true, "complex64": true, "complex128": true,
@@ -33,10 +35,12 @@ func runRulePredecl001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			decl, ok := n.(*ast.GenDecl)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			if decl.Tok != token.TYPE && decl.Tok != token.VAR && decl.Tok != token.CONST {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -80,8 +84,10 @@ func runRulePredecl001(pass *analysis.Pass) (any, error) {
 					}
 				}
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }

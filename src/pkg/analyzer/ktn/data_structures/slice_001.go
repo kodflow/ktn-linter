@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleSlice001 = &analysis.Analyzer{
+// RuleSlice001 analyzer for slice usage.
+var RuleSlice001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_SLICE_001",
 	Doc:  "Détecte l'indexation de slice sans vérification de bounds",
 	Run:  runRuleSlice001,
@@ -17,22 +18,26 @@ func runRuleSlice001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			index, ok := n.(*ast.IndexExpr)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si l'index est un littéral (ignoré - peut être vérifié statiquement)
 			if _, ok := index.Index.(*ast.BasicLit); ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si l'index est une variable
 			indexIdent, ok := index.Index.(*ast.Ident)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si l'index vient d'un range (sûr)
 			if isIndexFromRange(file, indexIdent, index) {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -54,9 +59,11 @@ func runRuleSlice001(pass *analysis.Pass) (any, error) {
 						sliceIdent.Name, indexIdent.Name)
 				}
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -64,6 +71,7 @@ func isIndexFromRange(file *ast.File, indexIdent *ast.Ident, usage ast.Node) boo
 	fromRange := false
 	ast.Inspect(file, func(n ast.Node) bool {
 		if n == usage {
+			// Condition not met, return false.
 			return false
 		}
 		rangeStmt, ok := n.(*ast.RangeStmt)
@@ -71,12 +79,15 @@ func isIndexFromRange(file *ast.File, indexIdent *ast.Ident, usage ast.Node) boo
 			if keyIdent, ok := rangeStmt.Key.(*ast.Ident); ok {
 				if keyIdent.Name == indexIdent.Name {
 					fromRange = true
+					// Condition not met, return false.
 					return false
 				}
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return fromRange
 }
 
@@ -84,10 +95,12 @@ func isIndexChecked(file *ast.File, indexIdent *ast.Ident, usage ast.Node) bool 
 	checked := false
 	ast.Inspect(file, func(n ast.Node) bool {
 		if n == usage {
+			// Condition not met, return false.
 			return false
 		}
 		ifStmt, ok := n.(*ast.IfStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 		// Vérifier si la condition est index < len(...)
@@ -97,13 +110,16 @@ func isIndexChecked(file *ast.File, indexIdent *ast.Ident, usage ast.Node) bool 
 					if yCall, ok := binaryExpr.Y.(*ast.CallExpr); ok {
 						if yFunc, ok := yCall.Fun.(*ast.Ident); ok && yFunc.Name == "len" {
 							checked = true
+							// Condition not met, return false.
 							return false
 						}
 					}
 				}
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return checked
 }

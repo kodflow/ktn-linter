@@ -424,12 +424,12 @@ func TestIsPoolPutCallNonIdentSelector(t *testing.T) {
 //   - t: instance de testing
 func TestExtractVarName(t *testing.T) { // nolint:KTN-FUNC-009
 	tests := []struct {
-		name     string
-		code     string
-		testLHS  bool
-		testRHS  bool
-		wantLHS  string
-		wantRHS  string
+		name    string
+		code    string
+		testLHS bool
+		testRHS bool
+		wantLHS string
+		wantRHS string
 	}{
 		{
 			name: "simple identifier on LHS",

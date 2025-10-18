@@ -11,7 +11,7 @@ import (
 // Rule001 vérifie le nommage MixedCaps des structs.
 //
 // KTN-STRUCT-001: Nommage MixedCaps des structs
-var Rule001 = &analysis.Analyzer{
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_STRUCT_001",
 	Doc:  "Nommage MixedCaps des structs",
 	Run:  runRule001,
@@ -41,6 +41,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 

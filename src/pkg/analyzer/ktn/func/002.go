@@ -14,9 +14,10 @@ import (
 //
 // Incorrect: fonction sans commentaire ou commentaire mal formaté
 // Correct:
-//   // CalculateTotal calcule le total des éléments.
-//   func CalculateTotal() { }
-var Rule002 = &analysis.Analyzer{
+//
+//	// CalculateTotal calcule le total des éléments.
+//	func CalculateTotal() { }
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_002",
 	Doc:  "Vérifie que les fonctions ont un commentaire godoc",
 	Run:  runRule002,

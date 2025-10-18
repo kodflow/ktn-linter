@@ -11,5 +11,6 @@ func (i *implementation) help() {}
 // Returns:
 //   - privateHelper: une nouvelle instance
 func NewImplementation() privateHelper {
+	// Early return from function.
 	return &implementation{}
 }

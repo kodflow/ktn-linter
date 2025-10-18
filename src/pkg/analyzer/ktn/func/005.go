@@ -12,14 +12,16 @@ import (
 // Si nécessaire, utilisez une struct de configuration.
 //
 // Incorrect:
-//   func Process(a, b, c, d, e, f int) { } // 6 paramètres
+//
+//	func Process(a, b, c, d, e, f int) { } // 6 paramètres
 //
 // Correct:
-//   type ProcessConfig struct {
-//       A, B, C, D, E, F int
-//   }
-//   func Process(cfg ProcessConfig) { }
-var Rule005 = &analysis.Analyzer{
+//
+//	type ProcessConfig struct {
+//	    A, B, C, D, E, F int
+//	}
+//	func Process(cfg ProcessConfig) { }
+var Rule005 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_005",
 	Doc:  "Vérifie que les fonctions n'ont pas plus de 5 paramètres",
 	Run:  runRule005,
@@ -45,6 +47,7 @@ func runRule005(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -57,6 +60,7 @@ func checkParamsCount(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	funcName := funcDecl.Name.Name
 
 	if funcDecl.Type.Params == nil {
+		// Early return from function.
 		return
 	}
 

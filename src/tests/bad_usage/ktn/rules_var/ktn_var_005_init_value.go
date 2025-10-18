@@ -31,44 +31,44 @@ package rules_var
 //
 // ════════════════════════════════════════════════════════════════════════════
 
-// ❌ CAS INCORRECT 1 : Variable string jamais réassignée
-// ERREUR : KTN-VAR-005 (jamais réassignée, devrait être const)
+// ✅ CAS CORRECT 1 : Constantes string (corrigé)
+// CONFORME : KTN-VAR-005 (utilise const pour valeurs immuables)
 // Application configuration
-// Ces variables définissent la configuration de l'application
-var (
+// Ces constantes définissent la configuration de l'application
+const (
 	// AppVersionV005 est la version de l'application
 	AppVersionV005 string = "1.0.0"
 	// AppNameV005 est le nom de l'application
 	AppNameV005 string = "MyApp"
 )
 
-// ❌ CAS INCORRECT 2 : Variable int jamais réassignée
-// ERREUR : KTN-VAR-005 (jamais réassignée, devrait être const)
+// ✅ CAS CORRECT 2 : Constantes int (corrigé)
+// CONFORME : KTN-VAR-005 (utilise const pour valeurs immuables)
 // Retry configuration
-// Ces variables configurent les tentatives
-var (
+// Ces constantes configurent les tentatives
+const (
 	// MaxRetriesV005 définit le nombre maximum de tentatives
 	MaxRetriesV005 int = 3
 	// TimeoutSecondsV005 définit le timeout en secondes
 	TimeoutSecondsV005 int = 30
 )
 
-// ❌ CAS INCORRECT 3 : Variable float64 jamais réassignée
-// ERREUR : KTN-VAR-005 (jamais réassignée, devrait être const)
+// ✅ CAS CORRECT 3 : Constantes float64 (corrigé)
+// CONFORME : KTN-VAR-005 (utilise const pour valeurs immuables)
 // Mathematical constants
-// Ces variables représentent des valeurs mathématiques
-var (
+// Ces constantes représentent des valeurs mathématiques
+const (
 	// PiV005 représente la valeur de pi
 	PiV005 float64 = 3.14159265358979323846
 	// EulerV005 représente le nombre d'Euler
 	EulerV005 float64 = 2.71828182845904523536
 )
 
-// ❌ CAS INCORRECT 4 : Variable bool jamais réassignée
-// ERREUR : KTN-VAR-005 (jamais réassignée, devrait être const)
+// ✅ CAS CORRECT 4 : Constantes bool (corrigé)
+// CONFORME : KTN-VAR-005 (utilise const pour valeurs immuables)
 // Feature flags
-// Ces variables activent/désactivent les fonctionnalités
-var (
+// Ces constantes activent/désactivent les fonctionnalités
+const (
 	// DebugModeV005 active le mode debug
 	DebugModeV005 bool = false
 	// VerboseLoggingV005 active les logs verbeux

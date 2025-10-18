@@ -2,7 +2,6 @@ package ktninterface004
 
 import (
 	"testing"
-
 )
 
 // TestNewService vérifie que NewService crée une instance valide.

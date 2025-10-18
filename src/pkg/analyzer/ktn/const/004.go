@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule004 = &analysis.Analyzer{
+// Rule004 analyzer for KTN linter.
+var Rule004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_CONST_004",
 	Doc:  "Vérifie que les constantes ont un type explicite (exception pour iota)",
 	Run:  runRule004,
@@ -39,6 +40,7 @@ func runRule004(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -66,9 +68,11 @@ func groupContainsIota(genDecl *ast.GenDecl) bool {
 			continue
 		}
 		if usesIota(valueSpec) {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -76,9 +80,11 @@ func groupContainsIota(genDecl *ast.GenDecl) bool {
 func usesIota(spec *ast.ValueSpec) bool {
 	for _, value := range spec.Values {
 		if containsIota(value) {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -86,20 +92,27 @@ func usesIota(spec *ast.ValueSpec) bool {
 func containsIota(expr ast.Expr) bool {
 	switch e := expr.(type) {
 	case *ast.Ident:
+		// Early return from function.
 		return e.Name == "iota"
 	case *ast.BinaryExpr:
+		// Early return from function.
 		return containsIota(e.X) || containsIota(e.Y)
 	case *ast.UnaryExpr:
+		// Early return from function.
 		return containsIota(e.X)
 	case *ast.ParenExpr:
+		// Early return from function.
 		return containsIota(e.X)
 	case *ast.CallExpr:
 		for _, arg := range e.Args {
 			if containsIota(arg) {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
+		// Condition not met, return false.
 		return false
 	}
+	// Condition not met, return false.
 	return false
 }

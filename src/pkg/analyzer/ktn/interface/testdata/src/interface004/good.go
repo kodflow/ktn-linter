@@ -1,6 +1,7 @@
 package interface006
 
 // Bon : interface avec constructeur
+// Repository defines the interface.
 type Repository interface {
 	Save(data string) error
 	Load() (string, error)

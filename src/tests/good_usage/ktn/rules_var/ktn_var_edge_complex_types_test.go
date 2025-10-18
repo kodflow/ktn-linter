@@ -2,7 +2,6 @@ package rules_var
 
 import (
 	"testing"
-
 )
 
 // TestNestedMapGood teste TODO.

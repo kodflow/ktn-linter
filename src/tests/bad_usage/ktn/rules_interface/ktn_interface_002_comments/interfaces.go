@@ -47,6 +47,7 @@ type UserServiceI002 struct {
 // Returns:
 //   - error: une erreur si l'opération échoue
 func (s *UserServiceI002) ProcessI002(data string) error {
+	// Early return from function.
 	return nil
 }
 
@@ -64,5 +65,6 @@ type OrderManagerI002 struct {
 //   - error: une erreur si l'opération échoue
 func (o *OrderManagerI002) CreateOrderI002(order string) error {
 	o.Orders = append(o.Orders, order)
+	// Early return from function.
 	return nil
 }

@@ -18,8 +18,10 @@ type MockServiceInterface struct {
 //   - error: une erreur si le traitement échoue
 func (m *MockServiceInterface) Process(data string) error {
 	if m.ProcessFunc != nil {
+		// Early return from function.
 		return m.ProcessFunc(data)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -29,8 +31,10 @@ func (m *MockServiceInterface) Process(data string) error {
 //   - error: une erreur si la fermeture échoue
 func (m *MockServiceInterface) Close() error {
 	if m.CloseFunc != nil {
+		// Early return from function.
 		return m.CloseFunc()
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -45,7 +49,9 @@ type MockHelperInterface struct {
 //   - string: le message d'aide
 func (m *MockHelperInterface) Help() string {
 	if m.HelpFunc != nil {
+		// Early return from function.
 		return m.HelpFunc()
 	}
+	// Early return from function.
 	return ""
 }

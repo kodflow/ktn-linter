@@ -9,7 +9,7 @@ import (
 
 // Rule003 vérifie l'utilisation de new() avec des structs.
 // KTN-ALLOC-003: Préférer &struct{} à new(struct) pour un code idiomatique Go.
-var Rule003 = &analysis.Analyzer{
+var Rule003 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_ALLOC_003",
 	Doc:  "Préférer composite literals &T{} à new(T) pour les structs",
 	Run:  runRule003,
@@ -28,16 +28,19 @@ func runRule003(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			callExpr, ok := n.(*ast.CallExpr)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			ident, ok := callExpr.Fun.(*ast.Ident)
 			if !ok || ident.Name != "new" {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier que new() a exactement 1 argument
 			if len(callExpr.Args) != 1 {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -48,9 +51,11 @@ func runRule003(pass *analysis.Pass) (any, error) {
 				reportStructTypeViolation(pass, callExpr, arg)
 			}
 
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 

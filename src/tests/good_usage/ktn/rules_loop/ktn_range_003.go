@@ -87,6 +87,7 @@ func assignFunctionsGood(items []string) []func() {
 			processFuncGood(item) // ✅ chaque fonction a sa valeur
 		})
 	}
+	// Early return from function.
 	return funcs
 }
 

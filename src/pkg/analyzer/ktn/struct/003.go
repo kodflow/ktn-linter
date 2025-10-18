@@ -10,7 +10,7 @@ import (
 // Rule003 vérifie la documentation des champs exportés.
 //
 // KTN-STRUCT-003: Documentation des champs exportés
-var Rule003 = &analysis.Analyzer{
+var Rule003 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_STRUCT_003",
 	Doc:  "Documentation des champs exportés",
 	Run:  runRule003,
@@ -40,12 +40,14 @@ func runRule003(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
 func checkStructFields(pass *analysis.Pass, typeSpec *ast.TypeSpec, structType *ast.StructType) {
 	structName := typeSpec.Name.Name
 	if structType.Fields == nil || len(structType.Fields.List) == 0 {
+		// Early return from function.
 		return
 	}
 

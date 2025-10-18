@@ -12,16 +12,18 @@ import (
 // KTN-FUNC-008: Tout return doit avoir un commentaire explicatif juste au-dessus.
 //
 // Incorrect:
-//   if err != nil {
-//       return err
-//   }
+//
+//	if err != nil {
+//	    return err
+//	}
 //
 // Correct:
-//   if err != nil {
-//       // Erreur de traitement
-//       return err
-//   }
-var Rule008 = &analysis.Analyzer{
+//
+//	if err != nil {
+//	    // Erreur de traitement
+//	    return err
+//	}
+var Rule008 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_008",
 	Doc:  "Vérifie que tous les return statements ont des commentaires",
 	Run:  runRule008,
@@ -37,6 +39,7 @@ var Rule008 = &analysis.Analyzer{
 //   - error: toujours nil
 func runRule008(pass *analysis.Pass) (any, error) {
 	if isTargetTestFile(pass) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -51,6 +54,7 @@ func runRule008(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -62,12 +66,14 @@ func runRule008(pass *analysis.Pass) (any, error) {
 //   - funcDecl: la déclaration de fonction
 func checkReturnComments(pass *analysis.Pass, file *ast.File, funcDecl *ast.FuncDecl) {
 	if funcDecl.Body == nil {
+		// Early return from function.
 		return
 	}
 
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		returnStmt, ok := n.(*ast.ReturnStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 
@@ -82,6 +88,7 @@ func checkReturnComments(pass *analysis.Pass, file *ast.File, funcDecl *ast.Func
 					"  // Succès\n"+
 					"  return nil")
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 }
@@ -107,9 +114,11 @@ func hasCommentAbove(file *ast.File, fset *token.FileSet, returnStmt *ast.Return
 		commentEndLine := fset.Position(lastComment.End()).Line
 
 		if commentEndLine == returnLine-1 {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
 
+	// Condition not met, return false.
 	return false
 }

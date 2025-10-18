@@ -2,7 +2,6 @@ package onlyvars
 
 import (
 	"testing"
-
 )
 
 // TestServiceURLConfiguration teste la configuration de l'URL du service.

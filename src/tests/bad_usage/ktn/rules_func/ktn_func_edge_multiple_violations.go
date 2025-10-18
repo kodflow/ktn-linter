@@ -14,5 +14,6 @@ func bad_function_name(a, b, c, d, e, f int) int {
 			}
 		}
 	}
+	// Early return from function.
 	return result
 }

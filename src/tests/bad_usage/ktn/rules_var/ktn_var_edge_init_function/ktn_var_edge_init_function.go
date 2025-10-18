@@ -23,8 +23,10 @@ func init() {
 
 // Variable avec init complexe
 var (
+	// serviceRegistry describes this variable.
 	serviceRegistry []string
-	isInitialized   bool
+	// isInitialized describes this variable.
+	isInitialized bool
 )
 
 func init() {

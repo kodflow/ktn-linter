@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleComp001 = &analysis.Analyzer{
+// RuleComp001 analyzer for comparison operations.
+var RuleComp001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_COMP_001",
 	Doc:  "Détecte les comparaisons booléennes redondantes",
 	Run:  runRuleComp001,
@@ -18,11 +19,13 @@ func runRuleComp001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			binaryExpr, ok := n.(*ast.BinaryExpr)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si c'est == ou !=
 			if binaryExpr.Op != token.EQL && binaryExpr.Op != token.NEQ {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -31,6 +34,7 @@ func runRuleComp001(pass *analysis.Pass) (any, error) {
 			yBool := isBooleanLiteral(binaryExpr.Y)
 
 			if !xBool && !yBool {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -43,6 +47,7 @@ func runRuleComp001(pass *analysis.Pass) (any, error) {
 
 			boolIdent, ok := boolSide.(*ast.Ident)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -76,16 +81,20 @@ func runRuleComp001(pass *analysis.Pass) (any, error) {
 					"  if isValid { }\n"+
 					"  if !isValid { }",
 				boolValue, suggestion)
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
 func isBooleanLiteral(expr ast.Expr) bool {
 	ident, ok := expr.(*ast.Ident)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
+	// Early return from function.
 	return ident.Name == "true" || ident.Name == "false"
 }

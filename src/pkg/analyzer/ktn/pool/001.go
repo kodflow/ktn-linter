@@ -9,7 +9,7 @@ import (
 
 // Rule001 vérifie que pool.Get() est suivi d'un defer pool.Put().
 // KTN-POOL-001: Sans defer Put(), l'objet ne retourne jamais au pool, causant une fuite de ressources.
-var Rule001 = &analysis.Analyzer{
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_POOL_001",
 	Doc:  "Vérifier que pool.Get() est suivi de defer pool.Put()",
 	Run:  runRule001,
@@ -28,13 +28,16 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			funcDecl, ok := n.(*ast.FuncDecl)
 			if !ok || funcDecl.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			checkPoolGetWithoutDeferPut(pass, funcDecl)
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -55,6 +58,7 @@ func checkPoolGetWithoutDeferPut(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 		case *ast.DeferStmt:
 			TrackDeferPut(stmt, deferredPuts)
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 
@@ -74,6 +78,7 @@ func checkPoolGetWithoutDeferPut(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 //   - pass: la passe d'analyse
 func TrackPoolGetAssignment(stmt *ast.AssignStmt, poolVars map[string]ast.Expr, pass *analysis.Pass) {
 	if len(stmt.Lhs) != 1 || len(stmt.Rhs) != 1 {
+		// Early return from function.
 		return
 	}
 
@@ -82,6 +87,7 @@ func TrackPoolGetAssignment(stmt *ast.AssignStmt, poolVars map[string]ast.Expr, 
 
 	// Vérifier si RHS est un appel à pool.Get()
 	if !IsPoolGetCall(rhsExpr, pass) {
+		// Early return from function.
 		return
 	}
 
@@ -101,8 +107,10 @@ func TrackPoolGetAssignment(stmt *ast.AssignStmt, poolVars map[string]ast.Expr, 
 //   - ast.Expr: l'expression sous-jacente
 func UnwrapTypeAssertion(expr ast.Expr) ast.Expr {
 	if typeAssert, ok := expr.(*ast.TypeAssertExpr); ok {
+		// Early return from function.
 		return typeAssert.X
 	}
+	// Early return from function.
 	return expr
 }
 
@@ -114,11 +122,13 @@ func UnwrapTypeAssertion(expr ast.Expr) ast.Expr {
 func TrackDeferPut(stmt *ast.DeferStmt, deferredPuts map[string]bool) {
 	callExpr := stmt.Call
 	if callExpr == nil {
+		// Early return from function.
 		return
 	}
 
 	// Vérifier si c'est pool.Put(var)
 	if !IsPoolPutCall(callExpr) {
+		// Early return from function.
 		return
 	}
 
@@ -142,11 +152,13 @@ func TrackDeferPut(stmt *ast.DeferStmt, deferredPuts map[string]bool) {
 func IsPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
 	callExpr, ok := expr.(*ast.CallExpr)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
 	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
 	if !ok || selExpr.Sel.Name != "Get" {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -156,6 +168,7 @@ func IsPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
 			// Vérifier si c'est sync.Pool ou *sync.Pool
 			typeStr := t.String()
 			if strings.Contains(typeStr, "sync.Pool") {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
@@ -164,9 +177,11 @@ func IsPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
 	// Fallback: vérifier le nom de la variable
 	if ident, ok := selExpr.X.(*ast.Ident); ok {
 		varName := strings.ToLower(ident.Name)
+		// Early return from function.
 		return strings.Contains(varName, "pool")
 	}
 
+	// Condition not met, return false.
 	return false
 }
 
@@ -180,15 +195,18 @@ func IsPoolGetCall(expr ast.Expr, pass *analysis.Pass) bool {
 func IsPoolPutCall(callExpr *ast.CallExpr) bool {
 	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
 	if !ok || selExpr.Sel.Name != "Put" {
+		// Condition not met, return false.
 		return false
 	}
 
 	// Vérifier le nom de la variable
 	if ident, ok := selExpr.X.(*ast.Ident); ok {
 		varName := strings.ToLower(ident.Name)
+		// Early return from function.
 		return strings.Contains(varName, "pool")
 	}
 
+	// Condition not met, return false.
 	return false
 }
 
@@ -202,11 +220,13 @@ func IsPoolPutCall(callExpr *ast.CallExpr) bool {
 func ExtractVarName(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.Ident:
+		// Early return from function.
 		return e.Name
 	case *ast.CallExpr:
 		// Type assertion: buf := pool.Get().([]byte)
 		return ""
 	}
+	// Early return from function.
 	return ""
 }
 

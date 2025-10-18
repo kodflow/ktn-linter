@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule001 = &analysis.Analyzer{
+// Rule001 analyzer for KTN linter.
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_TEST_001",
 	Doc:  "Vérifie que les fichiers _test.go ont le bon package name",
 	Run:  runRule001,
@@ -16,6 +17,7 @@ var Rule001 = &analysis.Analyzer{
 func runRule001(pass *analysis.Pass) (any, error) {
 	// Package main exempté
 	if pass.Pkg.Name() == "main" {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -43,5 +45,6 @@ func runRule001(pass *analysis.Pass) (any, error) {
 			baseName, file.Name.Name, expectedPkg, expectedPkg)
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }

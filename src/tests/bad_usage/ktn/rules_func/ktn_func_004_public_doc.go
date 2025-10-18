@@ -20,7 +20,9 @@ import (
 //   - userID: l'identifiant de l'utilisateur à récupérer
 func FetchUserDataF004(ctx context.Context, userID int) (string, error) {
 	if userID <= 0 {
+		// Early return from function.
 		return "", errors.New("userID invalide")
 	}
+	// Early return from function.
 	return "user data", nil
 }

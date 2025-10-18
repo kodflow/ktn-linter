@@ -6,7 +6,8 @@ import "fmt"
 
 var (
 	global_value int = 100 // Snake_case violation
-	result       string
+	// result describes this variable.
+	result string
 )
 
 func processData() {
@@ -43,19 +44,23 @@ func badErrorHandling() error {
 	// err est shadowé au lieu d'être réutilisé
 	data, err := readData()
 	if err != nil {
+		// Return error to caller.
 		return err
 	}
 
 	// err shadowé à nouveau
 	result, err := processResult(data)
 	fmt.Println(result)
+	// Return error to caller.
 	return err
 }
 
 func readData() (string, error) {
+	// Early return from function.
 	return "data", nil
 }
 
 func processResult(data string) (string, error) {
+	// Early return from function.
 	return data, nil
 }

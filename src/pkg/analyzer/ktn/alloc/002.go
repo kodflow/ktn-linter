@@ -10,7 +10,7 @@ import (
 
 // Rule002 vérifie le pattern make([]T, 0) suivi d'append.
 // KTN-ALLOC-002: make([]T, 0) + append() force des réallocations coûteuses.
-var Rule002 = &analysis.Analyzer{
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_ALLOC_002",
 	Doc:  "Prévenir make([]T, 0) suivi d'append (préallouer la capacité)",
 	Run:  runRule002,
@@ -29,13 +29,16 @@ func runRule002(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			funcDecl, ok := n.(*ast.FuncDecl)
 			if !ok || funcDecl.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			checkMakeAppendPattern(pass, funcDecl)
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -50,6 +53,7 @@ func checkMakeAppendPattern(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		trackMakeSliceZeroAssignment(n, makeSliceVars)
 		checkAppendOnTrackedSlice(pass, n, makeSliceVars)
+		// Continue traversing AST nodes.
 		return true
 	})
 }
@@ -62,10 +66,12 @@ func checkMakeAppendPattern(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 func trackMakeSliceZeroAssignment(n ast.Node, makeSliceVars map[string]token.Pos) {
 	assignStmt, ok := n.(*ast.AssignStmt)
 	if !ok || len(assignStmt.Lhs) != 1 || len(assignStmt.Rhs) != 1 {
+		// Early return from function.
 		return
 	}
 
 	if !utils.IsMakeSliceZero(assignStmt.Rhs[0]) {
+		// Early return from function.
 		return
 	}
 
@@ -83,25 +89,30 @@ func trackMakeSliceZeroAssignment(n ast.Node, makeSliceVars map[string]token.Pos
 func checkAppendOnTrackedSlice(pass *analysis.Pass, n ast.Node, makeSliceVars map[string]token.Pos) {
 	callExpr, ok := n.(*ast.CallExpr)
 	if !ok {
+		// Early return from function.
 		return
 	}
 
 	ident, ok := callExpr.Fun.(*ast.Ident)
 	if !ok || ident.Name != "append" {
+		// Early return from function.
 		return
 	}
 
 	if len(callExpr.Args) == 0 {
+		// Early return from function.
 		return
 	}
 
 	firstArg, ok := callExpr.Args[0].(*ast.Ident)
 	if !ok {
+		// Early return from function.
 		return
 	}
 
 	makePos, found := makeSliceVars[firstArg.Name]
 	if !found {
+		// Early return from function.
 		return
 	}
 

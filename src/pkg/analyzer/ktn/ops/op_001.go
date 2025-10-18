@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleOp001 = &analysis.Analyzer{
+// RuleOp001 analyzer for operators.
+var RuleOp001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_OP_001",
 	Doc:  "Détecte la division ou modulo par zéro",
 	Run:  runRuleOp001,
@@ -18,11 +19,13 @@ func runRuleOp001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			binary, ok := n.(*ast.BinaryExpr)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si c'est division ou modulo
 			if binary.Op != token.QUO && binary.Op != token.REM {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -42,16 +45,20 @@ func runRuleOp001(pass *analysis.Pass) (any, error) {
 						"  }\n"+
 						"  result := x / divisor")
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
 func isZeroLiteral(expr ast.Expr) bool {
 	lit, ok := expr.(*ast.BasicLit)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
+	// Early return from function.
 	return lit.Value == "0" || lit.Value == "0.0"
 }

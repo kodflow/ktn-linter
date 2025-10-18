@@ -1,4 +1,9 @@
 package ktn_mock
+
 import "golang.org/x/tools/go/analysis"
+
+// AllRules contains all analyzer rules for this category.
 var AllRules = []*analysis.Analyzer{Rule001, Rule002}
-func GetRules() []*analysis.Analyzer {return AllRules}
+
+// GetRules returns all analyzer rules for this category.
+func GetRules() []*analysis.Analyzer { return AllRules }

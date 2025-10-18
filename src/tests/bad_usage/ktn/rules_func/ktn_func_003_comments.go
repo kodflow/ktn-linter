@@ -19,7 +19,9 @@ import (
 //   - error: une erreur si les données sont invalides
 func CreateUserF003(name string, email string, age int) (int, error) {
 	if name == "" {
+		// Early return from function.
 		return 0, errors.New("name requis")
 	}
+	// Early return from function.
 	return 1, nil
 }

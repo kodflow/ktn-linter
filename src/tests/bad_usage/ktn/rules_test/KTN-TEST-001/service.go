@@ -33,6 +33,7 @@ type UserService struct {
 // Returns:
 //   - *UserService: nouvelle instance
 func NewUserService() *UserService {
+	// Early return from function.
 	return &UserService{
 		users: make(map[string]string),
 	}
@@ -57,5 +58,6 @@ func (s *UserService) AddUser(id string, name string) {
 //   - bool: true si trouvé
 func (s *UserService) GetUser(id string) (string, bool) {
 	name, exists := s.users[id]
+	// Early return from function.
 	return name, exists
 }

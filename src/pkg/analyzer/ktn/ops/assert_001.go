@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleAssert001 = &analysis.Analyzer{
+// RuleAssert001 analyzer for type assertions.
+var RuleAssert001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_ASSERT_001",
 	Doc:  "Détecte les assertions de type sans vérification",
 	Run:  runRuleAssert001,
@@ -17,6 +18,7 @@ func runRuleAssert001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			typeAssert, ok := n.(*ast.TypeAssertExpr)
 			if !ok || typeAssert.Type == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -36,9 +38,11 @@ func runRuleAssert001(pass *analysis.Pass) (any, error) {
 						"      return errors.New(\"wrong type\")\n"+
 						"  }")
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -47,17 +51,21 @@ func isInSafeAssignment(file *ast.File, expr ast.Expr) bool {
 	ast.Inspect(file, func(n ast.Node) bool {
 		assignStmt, ok := n.(*ast.AssignStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 		for _, rhs := range assignStmt.Rhs {
 			if rhs == expr {
 				if len(assignStmt.Lhs) == 2 {
 					found = true
+					// Condition not met, return false.
 					return false
 				}
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return found
 }

@@ -10,6 +10,7 @@ package rules_alloc_good
 func GoodMakeMapComplex128() map[complex128]string {
 	m := make(map[complex128]string) // ✅ Correct : make() pour map
 	m[complex(1.0, 2.0)] = "complex"
+	// Early return from function.
 	return m
 }
 
@@ -20,6 +21,7 @@ func GoodMakeMapComplex128() map[complex128]string {
 func GoodMakeMapComplex64() map[string]complex64 {
 	coords := make(map[string]complex64, 10) // ✅ Correct : make() avec capacité
 	coords["point"] = complex64(complex(3.0, 4.0))
+	// Early return from function.
 	return coords
 }
 
@@ -30,6 +32,7 @@ func GoodMakeMapComplex64() map[string]complex64 {
 func GoodMakeSliceComplex() []complex128 {
 	numbers := make([]complex128, 0, 5) // ✅ Correct : make() avec capacité
 	numbers = append(numbers, complex(1, 2), complex(3, 4))
+	// Early return from function.
 	return numbers
 }
 
@@ -42,6 +45,7 @@ func GoodMakeChanComplex() chan complex64 {
 	go func() {
 		ch <- complex64(complex(5, 6))
 	}()
+	// Early return from function.
 	return ch
 }
 
@@ -63,6 +67,7 @@ type MyChan chan string
 func GoodMakeCustomMap() MyMap {
 	m := make(MyMap) // ✅ Correct : make() pour type custom
 	m["key"] = 42
+	// Early return from function.
 	return m
 }
 
@@ -73,6 +78,7 @@ func GoodMakeCustomMap() MyMap {
 func GoodMakeCustomSlice() MySlice {
 	s := make(MySlice, 0, 10) // ✅ Correct : make() avec capacité
 	s = append(s, 1, 2, 3)
+	// Early return from function.
 	return s
 }
 
@@ -85,6 +91,7 @@ func GoodMakeCustomChan() MyChan {
 	go func() {
 		ch <- "message"
 	}()
+	// Early return from function.
 	return ch
 }
 
@@ -97,6 +104,7 @@ func GoodMakeCustomChan() MyChan {
 func GoodMakeMapFunc() map[string]func() {
 	handlers := make(map[string]func(), 5) // ✅ Correct : make() pour map
 	handlers["start"] = func() {}
+	// Early return from function.
 	return handlers
 }
 
@@ -107,6 +115,7 @@ func GoodMakeMapFunc() map[string]func() {
 func GoodMakeSliceFunc() []func(int) string {
 	callbacks := make([]func(int) string, 0, 3) // ✅ Correct : make() avec capacité
 	callbacks = append(callbacks, func(n int) string { return "" })
+	// Early return from function.
 	return callbacks
 }
 
@@ -119,6 +128,7 @@ func GoodMakeChanFunc() chan func() {
 	go func() {
 		ch <- func() {}
 	}()
+	// Early return from function.
 	return ch
 }
 
@@ -143,6 +153,7 @@ type Processor interface {
 func GoodMakeMapInterface() map[string]Processor {
 	processors := make(map[string]Processor) // ✅ Correct : make() pour map
 	processors["main"] = nil
+	// Early return from function.
 	return processors
 }
 
@@ -153,6 +164,7 @@ func GoodMakeMapInterface() map[string]Processor {
 func GoodMakeSliceInterface() []Processor {
 	items := make([]Processor, 0, 10) // ✅ Correct : make() avec capacité
 	items = append(items, nil)
+	// Early return from function.
 	return items
 }
 
@@ -165,6 +177,7 @@ func GoodMakeChanInterface() chan Processor {
 	go func() {
 		ch <- nil
 	}()
+	// Early return from function.
 	return ch
 }
 
@@ -177,6 +190,7 @@ func GoodMakeChanInterface() chan Processor {
 func GoodMakeMapOfCustomSlices() map[string]MySlice {
 	data := make(map[string]MySlice, 5) // ✅ Correct : make() avec capacité
 	data["numbers"] = MySlice{1, 2, 3}
+	// Early return from function.
 	return data
 }
 
@@ -187,6 +201,7 @@ func GoodMakeMapOfCustomSlices() map[string]MySlice {
 func GoodMakeSliceOfCustomMaps() []MyMap {
 	configs := make([]MyMap, 0, 3) // ✅ Correct : make() avec capacité
 	configs = append(configs, MyMap{"key": 1})
+	// Early return from function.
 	return configs
 }
 
@@ -199,6 +214,7 @@ func GoodMakeChanOfCustomTypes() chan MySlice {
 	go func() {
 		ch <- MySlice{1, 2, 3}
 	}()
+	// Early return from function.
 	return ch
 }
 
@@ -211,6 +227,7 @@ func GoodMakeChanOfCustomTypes() chan MySlice {
 func GoodMakeMapRune() map[rune]int {
 	chars := make(map[rune]int, 26) // ✅ Correct : make() avec capacité
 	chars['a'] = 1
+	// Early return from function.
 	return chars
 }
 
@@ -221,6 +238,7 @@ func GoodMakeMapRune() map[rune]int {
 func GoodMakeSliceRune() []rune {
 	text := make([]rune, 0, 10) // ✅ Correct : make() avec capacité
 	text = append(text, 'h', 'e', 'l', 'l', 'o')
+	// Early return from function.
 	return text
 }
 
@@ -233,6 +251,7 @@ func GoodMakeChanByte() chan byte {
 	go func() {
 		ch <- byte('x')
 	}()
+	// Early return from function.
 	return ch
 }
 
@@ -246,6 +265,7 @@ func GoodMakeMapPointer() map[string]*int {
 	ptrs := make(map[string]*int, 5) // ✅ Correct : make() avec capacité
 	val := 42
 	ptrs["answer"] = &val
+	// Early return from function.
 	return ptrs
 }
 
@@ -257,6 +277,7 @@ func GoodMakeSlicePointer() []*int {
 	nums := make([]*int, 0, 10) // ✅ Correct : make() avec capacité
 	val := 42
 	nums = append(nums, &val)
+	// Early return from function.
 	return nums
 }
 
@@ -270,5 +291,6 @@ func GoodMakeChanPointer() chan *string {
 		msg := "hello"
 		ch <- &msg
 	}()
+	// Early return from function.
 	return ch
 }

@@ -10,20 +10,24 @@ import (
 func processFilesCorrectly(files []string) error {
 	for _, filename := range files {
 		if err := processOneFile(filename); err != nil {
+			// Early return from function.
 			return fmt.Errorf("failed to process file: %w", err)
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
 func processOneFile(filename string) error {
 	f, err := os.Open(filename)
 	if err != nil {
+		// Early return from function.
 		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer f.Close() // ✅ defer s'exécute à la fin de processOneFile (chaque itération)
 
 	fmt.Fprintf(f, "Processing: %s\n", filename)
+	// Early return from function.
 	return nil
 }
 
@@ -32,6 +36,7 @@ func processFilesManually(files []string) error {
 	for _, filename := range files {
 		f, err := os.Open(filename)
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("failed to open file: %w", err)
 		}
 
@@ -39,9 +44,11 @@ func processFilesManually(files []string) error {
 		f.Close() // ✅ fermeture immédiate, pas defer
 
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("failed to write to file: %w", err)
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -49,6 +56,7 @@ func processFilesManually(files []string) error {
 func processWithSingleResource() error {
 	logFile, err := os.Create("process.log")
 	if err != nil {
+		// Early return from function.
 		return fmt.Errorf("failed to create log file: %w", err)
 	}
 	defer logFile.Close() // ✅ defer hors boucle, une seule ressource
@@ -57,6 +65,7 @@ func processWithSingleResource() error {
 	for _, filename := range files {
 		fmt.Fprintf(logFile, "Processing %s\n", filename)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -91,9 +100,11 @@ func updateMultipleRecordsCorrectly(ids []int) {
 func processComplexWorkflow(items []string) error {
 	for _, item := range items {
 		if err := processItemWithCleanup(item); err != nil {
+			// Early return from function.
 			return fmt.Errorf("failed to process item: %w", err)
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -108,6 +119,7 @@ func processItemWithCleanup(item string) (err error) {
 func normalDeferUsage() error {
 	f, err := os.Open("single.txt")
 	if err != nil {
+		// Early return from function.
 		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer f.Close() // ✅ parfait: un fichier, un defer
@@ -121,12 +133,14 @@ type connectionGood struct{}
 
 func (c *connectionGood) Close() error { return nil }
 func acceptConnectionGood() (*connectionGood, error) {
+	// Early return from function.
 	return &connectionGood{}, nil
 }
 func getMutexGood() interface {
 	Lock()
 	Unlock()
 } {
+	// Early return from function.
 	return nil
 }
 func updateRecordGood(id int)                 {}

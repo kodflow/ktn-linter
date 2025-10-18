@@ -130,5 +130,7 @@ var (
 func getCurrentTimeV004() string    { return "" }
 func createLoggerV004() interface{} { return nil }
 
+// ContextV004 represents the struct.
+// UserV004 represents the struct.
 type ContextV004 struct{}
 type UserV004 struct{ Name string }

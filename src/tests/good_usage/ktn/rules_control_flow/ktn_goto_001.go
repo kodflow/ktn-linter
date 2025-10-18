@@ -7,14 +7,17 @@ func processWithDefer(data string) error {
 	defer doCleanupGood() // ✅ defer automatique
 
 	if data == "" {
+		// Early return from function.
 		return fmt.Errorf("empty data")
 	}
 
 	if err := validateGood(data); err != nil {
+		// Early return from function.
 		return fmt.Errorf("validation failed: %w", err)
 	}
 
 	processGood(data)
+	// Early return from function.
 	return nil
 }
 
@@ -23,15 +26,18 @@ func loadDataCorrectly(filename string) error {
 	f := openFileGood(filename)
 	if f == nil {
 		fmt.Println("Error occurred")
+		// Early return from function.
 		return fmt.Errorf("failed to open")
 	}
 
 	data := readDataGood(f)
 	if data == nil {
 		fmt.Println("Error occurred")
+		// Early return from function.
 		return fmt.Errorf("failed to read")
 	}
 
+	// Early return from function.
 	return nil
 }
 
@@ -39,9 +45,11 @@ func loadDataCorrectly(filename string) error {
 func findCorrectly(items []int, target int) bool {
 	for _, item := range items {
 		if item == target {
+			// Continue inspection/processing.
 			return true // ✅ return direct
 		}
 	}
+	// Stop inspection/processing.
 	return false
 }
 
@@ -62,6 +70,7 @@ func stateMachineCorrectly(state int) {
 func retryWithLoop(maxRetries int) {
 	for retries := 0; retries < maxRetries; retries++ {
 		if doWorkGood() {
+			// Early return from function.
 			return
 		}
 	}
@@ -81,11 +90,14 @@ func nestedIfCorrectly(a, b int) {
 // ✅ GOOD: fonction helper au lieu de goto
 func processSteps() error {
 	if err := stepOne(); err != nil {
+		// Early return from function.
 		return fmt.Errorf("step one failed: %w", err)
 	}
 	if err := stepTwo(); err != nil {
+		// Early return from function.
 		return fmt.Errorf("step two failed: %w", err)
 	}
+	// Early return from function.
 	return stepThree()
 }
 

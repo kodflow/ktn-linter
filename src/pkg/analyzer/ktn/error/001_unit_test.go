@@ -67,8 +67,8 @@ func noReturnType() {
 	}
 
 	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
+		Fset:  fset,
+		Files: []*ast.File{file},
 		TypesInfo: &types.Info{
 			Types: make(map[ast.Expr]types.TypeAndValue),
 			Uses:  make(map[*ast.Ident]types.Object),
@@ -108,8 +108,8 @@ func mixedReturn() (string, error) {
 
 	// Configuration minimale pour TypesInfo
 	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
+		Fset:  fset,
+		Files: []*ast.File{file},
 		TypesInfo: &types.Info{
 			Types: make(map[ast.Expr]types.TypeAndValue),
 			Uses:  make(map[*ast.Ident]types.Object),
@@ -146,8 +146,8 @@ func (m *MyType) method() {
 	}
 
 	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
+		Fset:  fset,
+		Files: []*ast.File{file},
 		TypesInfo: &types.Info{
 			Types: make(map[ast.Expr]types.TypeAndValue),
 			Uses:  make(map[*ast.Ident]types.Object),
@@ -188,8 +188,8 @@ func doSomething() error {
 	}
 
 	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
+		Fset:  fset,
+		Files: []*ast.File{file},
 		TypesInfo: &types.Info{
 			Types: make(map[ast.Expr]types.TypeAndValue),
 			Uses:  make(map[*ast.Ident]types.Object),
@@ -243,8 +243,8 @@ func earlyReturn() error {
 	}
 
 	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
+		Fset:  fset,
+		Files: []*ast.File{file},
 		TypesInfo: &types.Info{
 			Types: make(map[ast.Expr]types.TypeAndValue),
 			Uses:  make(map[*ast.Ident]types.Object),
@@ -277,8 +277,8 @@ func undefinedReturn() error {
 
 	// TypesInfo avec Uses vide pour simuler un identifiant non résolu
 	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
+		Fset:  fset,
+		Files: []*ast.File{file},
 		TypesInfo: &types.Info{
 			Types: make(map[ast.Expr]types.TypeAndValue),
 			Uses:  make(map[*ast.Ident]types.Object), // vide - pas d'objet pour undefinedVar

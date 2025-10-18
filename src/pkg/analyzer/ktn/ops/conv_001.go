@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleConv001 = &analysis.Analyzer{
+// RuleConv001 analyzer for type conversions.
+var RuleConv001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_CONV_002",
 	Doc:  "Détecte les conversions de type redondantes",
 	Run:  runRuleConv001,
@@ -17,12 +18,14 @@ func runRuleConv001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
 			if !ok || len(call.Args) != 1 {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si Fun est un type
 			typeIdent, ok := call.Fun.(*ast.Ident)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -44,8 +47,10 @@ func runRuleConv001(pass *analysis.Pass) (any, error) {
 						typeIdent.Name, argIdent.Name)
 				}
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }

@@ -1,5 +1,6 @@
 package pointer001
 
+// Data represents the struct.
 type Data struct {
 	Value int
 }

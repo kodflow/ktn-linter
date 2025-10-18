@@ -18,8 +18,10 @@ type MockResourceManager struct {
 //   - error: erreur éventuelle
 func (m *MockResourceManager) Open(name string) error {
 	if m.OpenFunc != nil {
+		// Early return from function.
 		return m.OpenFunc(name)
 	}
+	// Early return from function.
 	return nil
 }
 

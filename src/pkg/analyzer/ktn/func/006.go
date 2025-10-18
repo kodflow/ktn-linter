@@ -15,7 +15,7 @@ import (
 //
 // Incorrect: fonction de 50 lignes
 // Correct: fonction de 30 lignes, ou plusieurs fonctions plus petites
-var Rule006 = &analysis.Analyzer{
+var Rule006 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_006",
 	Doc:  "Vérifie que les fonctions ne dépassent pas 35 lignes (100 pour tests)",
 	Run:  runRule006,
@@ -43,6 +43,7 @@ func runRule006(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -77,12 +78,14 @@ func checkFuncLength(pass *analysis.Pass, funcDecl *ast.FuncDecl, isTestFile boo
 //   - int: le nombre de lignes
 func calculateFuncLength(fset *token.FileSet, funcDecl *ast.FuncDecl) int {
 	if funcDecl.Body == nil {
+		// Early return from function.
 		return 0
 	}
 
 	start := fset.Position(funcDecl.Body.Lbrace).Line
 	end := fset.Position(funcDecl.Body.Rbrace).Line
 
+	// Early return from function.
 	return end - start - 1
 }
 
@@ -97,8 +100,10 @@ func isTestFile(pass *analysis.Pass) bool {
 	for _, f := range pass.Files {
 		pos := pass.Fset.Position(f.Pos())
 		if strings.HasSuffix(pos.Filename, "_test.go") {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }

@@ -10,6 +10,7 @@ package rules_func
 //   - error: une erreur si la valeur est invalide
 func complexCalculationWithoutInternalComments(value int) (int, error) {
 	if value < 0 {
+		// Early return from function.
 		return 0, nil
 	}
 
@@ -35,6 +36,7 @@ func complexCalculationWithoutInternalComments(value int) (int, error) {
 		}
 	}
 
+	// Early return from function.
 	return result, nil
 }
 
@@ -62,5 +64,6 @@ func processDataWithoutComments(data []int) []int {
 		}
 	}
 
+	// Early return from function.
 	return processed
 }

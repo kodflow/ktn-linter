@@ -74,5 +74,6 @@ type paymentProcessorImplI005 struct {
 // Returns:
 //   - error: une erreur si l'opération échoue
 func (p *paymentProcessorImplI005) ProcessPaymentI005(amount float64) error {
+	// Early return from function.
 	return nil
 }

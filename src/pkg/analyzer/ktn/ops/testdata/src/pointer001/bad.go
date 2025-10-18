@@ -1,5 +1,6 @@
 package pointer001
 
+// User represents the struct.
 type User struct {
 	Name string
 }

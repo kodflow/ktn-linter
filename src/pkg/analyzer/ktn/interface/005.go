@@ -10,7 +10,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule005 = &analysis.Analyzer{
+// Rule005 analyzer for KTN linter.
+var Rule005 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_005",
 	Doc:  "Vérifie que interfaces.go n'est pas vide",
 	Run:  RunRule005,
@@ -20,6 +21,7 @@ var Rule005 = &analysis.Analyzer{
 func RunRule005(pass *analysis.Pass) (any, error) {
 	// Packages exemptés
 	if IsExemptedPackage005(pass.Pkg.Name()) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -72,6 +74,7 @@ func RunRule005(pass *analysis.Pass) (any, error) {
 			pass.Pkg.Name())
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -80,8 +83,10 @@ func IsExemptedPackage005(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }

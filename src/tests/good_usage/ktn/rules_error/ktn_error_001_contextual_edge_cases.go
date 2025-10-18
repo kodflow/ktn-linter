@@ -47,11 +47,14 @@ func GoodErrorInClosure() error {
 	processFunc := func() error {
 		err := validateCtx("data")
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("closure validation: %w", err) // ✅ Correct
 		}
+		// Early return from function.
 		return nil
 	}
 
+	// Early return from function.
 	return processFunc()
 }
 
@@ -64,16 +67,21 @@ func GoodErrorInNestedClosure() error {
 		inner := func() error {
 			err := deepOperationCtx()
 			if err != nil {
+				// Early return from function.
 				return fmt.Errorf("inner closure: %w", err) // ✅ Correct
 			}
+			// Early return from function.
 			return nil
 		}
 		err := inner()
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("outer closure: %w", err) // ✅ Correct
 		}
+		// Early return from function.
 		return nil
 	}
+	// Early return from function.
 	return outer()
 }
 
@@ -91,13 +99,16 @@ func GoodErrorInSelect(ch1, ch2 chan error) error {
 	select {
 	case err := <-ch1:
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("channel 1: %w", err) // ✅ Correct
 		}
 	case err := <-ch2:
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("channel 2: %w", err) // ✅ Correct
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -112,11 +123,14 @@ func GoodErrorInSelectWithDefault(errCh chan error) error {
 	select {
 	case err := <-errCh:
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("received error: %w", err) // ✅ Correct
 		}
 	default:
+		// Return error to caller.
 		return errors.New("no error received") // ✅ OK car nouvelle erreur
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -133,9 +147,11 @@ func GoodErrorFromTypeAssertion(v interface{}) error {
 	if errProvider, ok := v.(ErrorProvider); ok {
 		err := errProvider.GetError()
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("error provider: %w", err) // ✅ Correct
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -149,8 +165,10 @@ func GoodErrorFromTypeAssertion(v interface{}) error {
 func GoodErrorFromInterfaceMethod(provider ErrorProvider) error {
 	err := provider.GetError()
 	if err != nil {
+		// Early return from function.
 		return fmt.Errorf("interface method: %w", err) // ✅ Correct
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -165,14 +183,17 @@ func GoodErrorFromInterfaceMethod(provider ErrorProvider) error {
 func GoodMultipleNamedReturns() (result string, count int, err error) {
 	err = performOperationCtx()
 	if err != nil {
+		// Early return from function.
 		return "", 0, fmt.Errorf("operation: %w", err) // ✅ Correct
 	}
 
 	data, err := fetchDataCtx(42)
 	if err != nil {
+		// Early return from function.
 		return "", 0, fmt.Errorf("fetch data: %w", err) // ✅ Correct
 	}
 
+	// Early return from function.
 	return string(data), len(data), nil
 }
 
@@ -189,6 +210,7 @@ func GoodDeferWithNamedReturn() (err error) {
 		}
 	}()
 
+	// Early return from function.
 	return dangerousOperationCtx()
 }
 
@@ -210,6 +232,7 @@ func GoodErrorInRecover() (err error) {
 	}()
 
 	panickyFunctionCtx()
+	// Early return from function.
 	return nil
 }
 
@@ -226,9 +249,11 @@ func GoodErrorInVariadic(operations ...func() error) error {
 	for i, op := range operations {
 		err := op()
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("operation %d: %w", i, err) // ✅ Correct
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -248,15 +273,18 @@ func GoodErrorInMap(items []string, fn func(string) (string, error)) ([]string, 
 	for i, item := range items {
 		result, err := fn(item)
 		if err != nil {
+			// Early return from function.
 			return nil, fmt.Errorf("item %d (%s): %w", i, item, err) // ✅ Correct
 		}
 		results = append(results, result)
 	}
+	// Early return from function.
 	return results, nil
 }
 
 // ✅ Erreurs dans init() function (mieux: éviter erreurs dans init)
 
+// globalInitResult describes this variable.
 var globalInitResult string
 
 func init() {
@@ -283,13 +311,16 @@ func init() {
 func GoodErrorWithContextCancel(done <-chan struct{}) error {
 	select {
 	case <-done:
+		// Return error to caller.
 		return errors.New("context cancelled") // ✅ OK car nouvelle erreur
 	default:
 		err := doWorkCtx()
 		if err != nil {
+			// Early return from function.
 			return fmt.Errorf("work: %w", err) // ✅ Correct
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -309,6 +340,7 @@ type ErrorProvider interface {
 // Returns:
 //   - error: erreur
 func riskyOperationCtx() error {
+	// Return error to caller.
 	return errors.New("risky operation failed")
 }
 
@@ -320,6 +352,7 @@ func riskyOperationCtx() error {
 // Returns:
 //   - error: erreur
 func processTaskCtx(id int) error {
+	// Early return from function.
 	return fmt.Errorf("task %d failed", id)
 }
 
@@ -331,6 +364,7 @@ func processTaskCtx(id int) error {
 // Returns:
 //   - error: erreur
 func validateCtx(data string) error {
+	// Return error to caller.
 	return errors.New("validation failed")
 }
 
@@ -339,6 +373,7 @@ func validateCtx(data string) error {
 // Returns:
 //   - error: erreur
 func deepOperationCtx() error {
+	// Return error to caller.
 	return errors.New("deep operation failed")
 }
 
@@ -347,6 +382,7 @@ func deepOperationCtx() error {
 // Returns:
 //   - error: erreur
 func performOperationCtx() error {
+	// Return error to caller.
 	return errors.New("operation failed")
 }
 
@@ -359,6 +395,7 @@ func performOperationCtx() error {
 //   - []byte: données
 //   - error: erreur
 func fetchDataCtx(id int) ([]byte, error) {
+	// Return error if operation fails.
 	return nil, errors.New("fetch failed")
 }
 
@@ -367,6 +404,7 @@ func fetchDataCtx(id int) ([]byte, error) {
 // Returns:
 //   - error: erreur
 func dangerousOperationCtx() error {
+	// Return error to caller.
 	return errors.New("danger")
 }
 
@@ -381,6 +419,7 @@ func panickyFunctionCtx() {
 //   - string: résultat
 //   - error: erreur
 func initializeSystemCtx() (string, error) {
+	// Early return from function.
 	return "initialized", nil
 }
 
@@ -389,5 +428,6 @@ func initializeSystemCtx() (string, error) {
 // Returns:
 //   - error: erreur
 func doWorkCtx() error {
+	// Return error to caller.
 	return errors.New("work failed")
 }

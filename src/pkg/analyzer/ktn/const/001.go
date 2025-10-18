@@ -9,7 +9,8 @@ import (
 	"github.com/kodflow/ktn-linter/src/pkg/analyzer/utils"
 )
 
-var Rule001 = &analysis.Analyzer{
+// Rule001 analyzer for KTN linter.
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_CONST_001",
 	Doc:  "Vérifie que les constantes sont regroupées dans un bloc const()",
 	Run:  runRule001,
@@ -29,6 +30,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 

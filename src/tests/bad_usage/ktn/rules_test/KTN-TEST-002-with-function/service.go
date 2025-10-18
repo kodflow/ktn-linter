@@ -8,5 +8,6 @@ package withfunction
 // Returns:
 //   - string: résultat
 func ProcessData(data string) string {
+	// Early return from function.
 	return "processed: " + data
 }

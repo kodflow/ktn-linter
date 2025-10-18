@@ -9,7 +9,8 @@ import (
 	"github.com/kodflow/ktn-linter/src/pkg/analyzer/utils"
 )
 
-var Rule003 = &analysis.Analyzer{
+// Rule003 analyzer for KTN linter.
+var Rule003 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_CONST_003",
 	Doc:  "Vérifie que chaque constante a un commentaire individuel",
 	Run:  runRule003,
@@ -46,6 +47,7 @@ func runRule003(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -69,20 +71,24 @@ func checkConstIndividualComment(pass *analysis.Pass, spec *ast.ValueSpec, isGro
 func hasIndividualComment(spec *ast.ValueSpec, isFirstWithGroupComment bool) bool {
 	if spec.Doc != nil && len(spec.Doc.List) > 0 {
 		if !isFirstWithGroupComment {
+			// Continue traversing AST nodes.
 			return true
 		}
 	} else if spec.Comment != nil && len(spec.Comment.List) > 0 {
 		// Ignorer les commentaires de test (want)
 		for _, comment := range spec.Comment.List {
 			if !containsWantDirective(comment.Text) {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
 // containsWantDirective vérifie si un commentaire contient une directive de test
 func containsWantDirective(text string) bool {
+	// Early return from function.
 	return len(text) >= 7 && text[:7] == "// want"
 }

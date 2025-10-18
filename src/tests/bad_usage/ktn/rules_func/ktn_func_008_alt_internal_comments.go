@@ -24,5 +24,6 @@ func complexFunctionWithComments() int {
 		}
 	}
 
+	// Early return from function.
 	return result
 }

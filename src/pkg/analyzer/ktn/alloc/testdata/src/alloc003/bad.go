@@ -1,9 +1,11 @@
 package alloc003
 
+// User represents the struct.
 type User struct {
 	Name string
 	Age  int
 }
+// Config represents the struct.
 
 type Config struct {
 	Host string

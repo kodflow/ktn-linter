@@ -15,6 +15,7 @@ type cacheManagerImplI006 struct {
 //   - bool: true si la clé existe
 func (c *cacheManagerImplI006) GetI006(key string) (string, bool) {
 	val, ok := c.data[key]
+	// Early return from function.
 	return val, ok
 }
 

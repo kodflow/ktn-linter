@@ -21,8 +21,10 @@ type MockUserManager struct {
 //   - string: le nom de l'utilisateur
 func (m *MockUserManager) GetName() string {
 	if m.GetNameFunc != nil {
+		// Early return from function.
 		return m.GetNameFunc()
 	}
+	// Early return from function.
 	return ""
 }
 
@@ -42,8 +44,10 @@ func (m *MockUserManager) SetAge(age int) {
 //   - bool: true si valide
 func (m *MockUserManager) Validate() bool {
 	if m.ValidateFunc != nil {
+		// Early return from function.
 		return m.ValidateFunc()
 	}
+	// Stop inspection/processing.
 	return false
 }
 
@@ -70,8 +74,10 @@ func (m *MockCalc) Add(config AddConfig) {
 //   - float64: le résultat du calcul
 func (m *MockCalc) GetResult() float64 {
 	if m.GetResultFunc != nil {
+		// Early return from function.
 		return m.GetResultFunc()
 	}
+	// Early return from function.
 	return 0.0
 }
 
@@ -84,7 +90,9 @@ func (m *MockCalc) GetResult() float64 {
 //   - float64: le résultat du calcul
 func (m *MockCalc) Calculate(x float64) float64 {
 	if m.CalculateFunc != nil {
+		// Early return from function.
 		return m.CalculateFunc(x)
 	}
+	// Early return from function.
 	return 0.0
 }

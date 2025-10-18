@@ -110,5 +110,6 @@ func NewContainer[T any]() Container[T] {
 	if !ok {
 		panic("type assertion failed: expected Container[T]")
 	}
+	// Early return from function.
 	return result
 }

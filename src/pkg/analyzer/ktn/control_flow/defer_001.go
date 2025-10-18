@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleDefer001 = &analysis.Analyzer{
+// RuleDefer001 analyzer for defer statements.
+var RuleDefer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_DEFER_001",
 	Doc:  "Détecte les defer utilisés dans une boucle",
 	Run:  runRuleDefer001,
@@ -17,6 +18,7 @@ func runRuleDefer001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			deferStmt, ok := n.(*ast.DeferStmt)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -42,9 +44,11 @@ func runRuleDefer001(pass *analysis.Pass) (any, error) {
 						"      defer f.Close()  // Ferme à la fin de processFile\n"+
 						"  }")
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -55,31 +59,39 @@ func isInsideLoop(file *ast.File, target ast.Node) bool {
 		case *ast.ForStmt:
 			if loop.Body != nil && containsNode(loop.Body, target) {
 				inLoop = true
+				// Condition not met, return false.
 				return false
 			}
 		case *ast.RangeStmt:
 			if loop.Body != nil && containsNode(loop.Body, target) {
 				inLoop = true
+				// Condition not met, return false.
 				return false
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return inLoop
 }
 
 func containsNode(block *ast.BlockStmt, target ast.Node) bool {
 	if block == nil {
+		// Condition not met, return false.
 		return false
 	}
 	found := false
 	ast.Inspect(block, func(n ast.Node) bool {
 		if n == target {
 			found = true
+			// Condition not met, return false.
 			return false
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return found
 }
 
@@ -92,5 +104,6 @@ func containsNode(block *ast.BlockStmt, target ast.Node) bool {
 // Returns:
 //   - true si target est trouvé dans block
 func ContainsNodeExported(block *ast.BlockStmt, target ast.Node) bool {
+	// Early return from function.
 	return containsNode(block, target)
 }

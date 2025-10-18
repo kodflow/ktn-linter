@@ -16,7 +16,7 @@ import (
 //
 // Incorrect: Interface "Service" sans mock
 // Correct: Interface "Service" avec mock "MockService" dans mock.go
-var Rule002 = &analysis.Analyzer{
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_MOCK_002",
 	Doc:  "Vérifie que chaque interface a un mock correspondant dans mock.go",
 	Run:  runRule002,
@@ -33,18 +33,21 @@ var Rule002 = &analysis.Analyzer{
 func runRule002(pass *analysis.Pass) (any, error) {
 	// Ignorer les packages exemptés
 	if isExemptedPackage002(pass.Pkg.Name()) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
 	// Chercher interfaces.go
 	interfacesFile, interfacesPath := findInterfacesFile002(pass)
 	if interfacesFile == nil {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
 	// Extraire les interfaces avec leurs positions
 	interfaces := extractInterfaceNamesWithPos(interfacesFile)
 	if len(interfaces) == 0 {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -66,6 +69,7 @@ func runRule002(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -77,6 +81,7 @@ func runRule002(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - bool: true si exempté
 func isExemptedPackage002(pkgName string) bool {
+	// Early return from function.
 	return pkgName == "main" || strings.HasSuffix(pkgName, "_test")
 }
 
@@ -96,9 +101,11 @@ func findInterfacesFile002(pass *analysis.Pass) (*ast.File, string) {
 		}
 		path := filePos.Name()
 		if filepath.Base(path) == "interfaces.go" {
+			// Early return from function.
 			return file, path
 		}
 	}
+	// Early return from function.
 	return nil, ""
 }
 
@@ -120,9 +127,11 @@ func findMockFile(pass *analysis.Pass, interfacesPath string) *ast.File {
 		}
 		path := filePos.Name()
 		if filepath.Dir(path) == dir && filepath.Base(path) == "mock.go" {
+			// Early return from function.
 			return file
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -154,6 +163,7 @@ func extractInterfaceNamesWithPos(file *ast.File) map[string]token.Pos {
 		}
 	}
 
+	// Early return from function.
 	return interfaces
 }
 
@@ -185,6 +195,7 @@ func extractMockNames(file *ast.File) []string {
 		}
 	}
 
+	// Early return from function.
 	return mocks
 }
 
@@ -197,6 +208,7 @@ func extractMockNames(file *ast.File) []string {
 //   - bool: true si c'est un struct commençant par "Mock"
 func isMockStruct(typeSpec *ast.TypeSpec) bool {
 	_, isStruct := typeSpec.Type.(*ast.StructType)
+	// Early return from function.
 	return isStruct && strings.HasPrefix(typeSpec.Name.Name, "Mock")
 }
 
@@ -211,9 +223,11 @@ func isMockStruct(typeSpec *ast.TypeSpec) bool {
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 

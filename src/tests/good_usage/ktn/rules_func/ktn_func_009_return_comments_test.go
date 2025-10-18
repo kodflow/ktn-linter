@@ -1,7 +1,6 @@
 package rules_func
 
 import (
-
 	"testing"
 )
 

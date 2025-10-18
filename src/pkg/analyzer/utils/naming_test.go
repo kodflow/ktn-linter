@@ -112,10 +112,10 @@ func TestTryMatchInitialismPrefix(t *testing.T) {
 	initialisms := getKnownInitialisms()
 
 	tests := []struct {
-		name            string
-		input           string
+		name              string
+		input             string
 		expectedRemaining string
-		expectedMatch   bool
+		expectedMatch     bool
 	}{
 		{"match HTTP", "HTTPURL", "URL", true},
 		{"match URL", "URLID", "ID", true},

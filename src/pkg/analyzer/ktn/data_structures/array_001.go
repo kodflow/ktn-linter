@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleArray001 = &analysis.Analyzer{
+// RuleArray001 analyzer for array usage.
+var RuleArray001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_ARRAY_002",
 	Doc:  "Détecte les arrays avec taille incohérente",
 	Run:  runRuleArray001,
@@ -18,18 +19,21 @@ func runRuleArray001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			lit, ok := n.(*ast.CompositeLit)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si c'est un array (pas un slice)
 			arrayType, ok := lit.Type.(*ast.ArrayType)
 			if !ok || arrayType.Len == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Extraire la taille déclarée
 			declaredLen := getArraySize(arrayType)
 			if declaredLen == -1 {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -53,24 +57,30 @@ func runRuleArray001(pass *analysis.Pass) (any, error) {
 						"  arr := []int{1, 2, 3}",
 					declaredLen, actualLen)
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
 func getArraySize(arrayType *ast.ArrayType) int {
 	if arrayType.Len == nil {
+		// Early return from function.
 		return -1
 	}
 	basicLit, ok := arrayType.Len.(*ast.BasicLit)
 	if !ok {
+		// Early return from function.
 		return -1
 	}
 	var size int
 	_, err := fmt.Sscanf(basicLit.Value, "%d", &size)
 	if err != nil {
+		// Early return from function.
 		return -1
 	}
+	// Early return from function.
 	return size
 }

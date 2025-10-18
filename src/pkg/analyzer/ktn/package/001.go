@@ -13,17 +13,19 @@ import (
 // d'où viennent les identifiants.
 //
 // Incorrect:
-//   import . "fmt"
-//   func main() {
-//       Println("hello")  // D'où vient Println?
-//   }
+//
+//	import . "fmt"
+//	func main() {
+//	    Println("hello")  // D'où vient Println?
+//	}
 //
 // Correct:
-//   import "fmt"
-//   func main() {
-//       fmt.Println("hello")  // Clair: c'est fmt.Println
-//   }
-var Rule001 = &analysis.Analyzer{
+//
+//	import "fmt"
+//	func main() {
+//	    fmt.Println("hello")  // Clair: c'est fmt.Println
+//	}
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_PKG_001",
 	Doc:  "Vérifie l'absence de dot imports",
 	Run:  runRule001,
@@ -45,6 +47,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -55,6 +58,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 //   - imp: l'import spec
 func checkDotImport(pass *analysis.Pass, imp *ast.ImportSpec) {
 	if imp.Name == nil {
+		// Early return from function.
 		return
 	}
 

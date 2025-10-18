@@ -11,17 +11,19 @@ import (
 //
 // KTN-FUNC-003: La section Params: doit documenter tous les paramètres.
 // Format requis:
-//   // Params:
-//   //   - paramName: description du paramètre
+//
+//	// Params:
+//	//   - paramName: description du paramètre
 //
 // Correct:
-//   // CalculateTotal calcule le total.
-//   //
-//   // Params:
-//   //   - items: liste des éléments
-//   //   - tax: taux de taxe
-//   func CalculateTotal(items []int, tax float64) { }
-var Rule003 = &analysis.Analyzer{
+//
+//	// CalculateTotal calcule le total.
+//	//
+//	// Params:
+//	//   - items: liste des éléments
+//	//   - tax: taux de taxe
+//	func CalculateTotal(items []int, tax float64) { }
+var Rule003 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_003",
 	Doc:  "Vérifie le format strict de la section Params dans godoc",
 	Run:  runRule003,
@@ -37,6 +39,7 @@ var Rule003 = &analysis.Analyzer{
 //   - error: toujours nil
 func runRule003(pass *analysis.Pass) (any, error) {
 	if isTargetTestFile(pass) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -51,6 +54,7 @@ func runRule003(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -64,11 +68,13 @@ func checkParamsDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 
 	// Vérifier si la fonction a des paramètres
 	if funcDecl.Type.Params == nil || countParams(funcDecl.Type.Params) == 0 {
+		// Early return from function.
 		return
 	}
 
 	// Vérifier si la fonction a un godoc
 	if funcDecl.Doc == nil || len(funcDecl.Doc.List) == 0 {
+		// Early return from function.
 		return // Déjà géré par FUNC-002
 	}
 
@@ -80,6 +86,7 @@ func checkParamsDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 		pass.Reportf(funcDecl.Doc.Pos(),
 			"[KTN-FUNC-003] Commentaire godoc doit inclure une section 'Params:' avec format strict.\nExemple:\n  // %s description.\n  //\n  // Params:\n%s\n  func %s(...) { }",
 			funcName, exampleParams, funcName)
+		// Early return from function.
 		return
 	}
 
@@ -150,6 +157,7 @@ func extractSection(doc, sectionName string) string {
 		}
 	}
 
+	// Early return from function.
 	return strings.Join(sectionLines, "\n")
 }
 
@@ -166,6 +174,7 @@ func buildParamsExample(params *ast.FieldList) string {
 	for _, pname := range paramNames {
 		examples = append(examples, "  //   - "+pname+": description du paramètre")
 	}
+	// Early return from function.
 	return strings.Join(examples, "\n")
 }
 
@@ -185,6 +194,7 @@ func countParams(params *ast.FieldList) int {
 			count += len(field.Names)
 		}
 	}
+	// Early return from function.
 	return count
 }
 
@@ -204,5 +214,6 @@ func extractParamNames(params *ast.FieldList) []string {
 			}
 		}
 	}
+	// Early return from function.
 	return names
 }

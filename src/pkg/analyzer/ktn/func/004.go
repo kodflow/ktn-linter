@@ -11,17 +11,19 @@ import (
 //
 // KTN-FUNC-004: La section Returns: doit documenter tous les retours.
 // Format requis:
-//   // Returns:
-//   //   - type: description du retour
+//
+//	// Returns:
+//	//   - type: description du retour
 //
 // Correct:
-//   // CalculateTotal calcule le total.
-//   //
-//   // Returns:
-//   //   - float64: le total calculé
-//   //   - error: erreur éventuelle
-//   func CalculateTotal() (float64, error) { }
-var Rule004 = &analysis.Analyzer{
+//
+//	// CalculateTotal calcule le total.
+//	//
+//	// Returns:
+//	//   - float64: le total calculé
+//	//   - error: erreur éventuelle
+//	func CalculateTotal() (float64, error) { }
+var Rule004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_004",
 	Doc:  "Vérifie le format strict de la section Returns dans godoc",
 	Run:  runRule004,
@@ -43,6 +45,7 @@ func runRule004(pass *analysis.Pass) (any, error) {
 		if strings.Contains(normalizedPath, "tests/target/") ||
 			strings.Contains(normalizedPath, "tests/bad_usage/") ||
 			strings.Contains(normalizedPath, "tests/good_usage/") {
+			// Analysis completed successfully.
 			return nil, nil
 		}
 	}
@@ -58,6 +61,7 @@ func runRule004(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -71,11 +75,13 @@ func checkReturnsDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 
 	// Vérifier si la fonction a des retours
 	if funcDecl.Type.Results == nil || funcDecl.Type.Results.NumFields() == 0 {
+		// Early return from function.
 		return
 	}
 
 	// Vérifier si la fonction a un godoc
 	if funcDecl.Doc == nil || len(funcDecl.Doc.List) == 0 {
+		// Early return from function.
 		return // Déjà géré par FUNC-002
 	}
 
@@ -103,5 +109,6 @@ func buildReturnsExample(results *ast.FieldList) string {
 	for i := 0; i < numReturns; i++ {
 		examples = append(examples, "  //   - type: description du retour")
 	}
+	// Early return from function.
 	return strings.Join(examples, "\n")
 }

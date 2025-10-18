@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleMap001 = &analysis.Analyzer{
+// RuleMap001 analyzer for map usage.
+var RuleMap001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_MAP_001",
 	Doc:  "Détecte l'écriture dans une map sans vérification nil",
 	Run:  runRuleMap001,
@@ -17,6 +18,7 @@ func runRuleMap001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			assign, ok := n.(*ast.AssignStmt)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -52,9 +54,11 @@ func runRuleMap001(pass *analysis.Pass) (any, error) {
 					}
 				}
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -62,6 +66,7 @@ func isMapSafe(pass *analysis.Pass, file *ast.File, mapIdent *ast.Ident, usage a
 	checked := false
 	ast.Inspect(file, func(n ast.Node) bool {
 		if n == usage {
+			// Condition not met, return false.
 			return false
 		}
 		// Vérifier si map créée avec make()
@@ -73,6 +78,7 @@ func isMapSafe(pass *analysis.Pass, file *ast.File, mapIdent *ast.Ident, usage a
 						if callExpr, ok := assignStmt.Rhs[i].(*ast.CallExpr); ok {
 							if ident, ok := callExpr.Fun.(*ast.Ident); ok && ident.Name == "make" {
 								checked = true
+								// Condition not met, return false.
 								return false
 							}
 						}
@@ -80,7 +86,9 @@ func isMapSafe(pass *analysis.Pass, file *ast.File, mapIdent *ast.Ident, usage a
 				}
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return checked
 }

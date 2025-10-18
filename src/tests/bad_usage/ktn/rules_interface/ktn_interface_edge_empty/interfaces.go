@@ -23,6 +23,7 @@ type badContainer struct {
 
 // NewBadContainer constructeur qui retourne struct au lieu d'interface
 func NewBadContainer() *badContainer {
+	// Early return from function.
 	return &badContainer{
 		items: make([]interface{}, 0),
 	}

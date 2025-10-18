@@ -4,4 +4,5 @@ package test002
 type StringAlias string
 type IntAlias int
 
-const MyConst = "test"
+// MyConst is a test constant.
+const MyConst string = "test"

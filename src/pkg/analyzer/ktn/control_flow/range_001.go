@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleRange001 = &analysis.Analyzer{
+// RuleRange001 analyzer for range statements.
+var RuleRange001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_RANGE_003",
 	Doc:  "Détecte la capture de variable de range dans une closure",
 	Run:  runRuleRange001,
@@ -17,12 +18,14 @@ func runRuleRange001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			rangeStmt, ok := n.(*ast.RangeStmt)
 			if !ok || rangeStmt.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Récupérer les noms des variables de range
 			rangeVars := getRangeVarNames(rangeStmt)
 			if len(rangeVars) == 0 {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -30,6 +33,7 @@ func runRuleRange001(pass *analysis.Pass) (any, error) {
 			ast.Inspect(rangeStmt.Body, func(n ast.Node) bool {
 				funcLit, ok := n.(*ast.FuncLit)
 				if !ok {
+					// Continue traversing AST nodes.
 					return true
 				}
 
@@ -65,11 +69,14 @@ func runRuleRange001(pass *analysis.Pass) (any, error) {
 						}
 					}
 				}
+				// Continue traversing AST nodes.
 				return true
 			})
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -85,6 +92,7 @@ func getRangeVarNames(rangeStmt *ast.RangeStmt) []string {
 			names = append(names, valueIdent.Name)
 		}
 	}
+	// Early return from function.
 	return names
 }
 
@@ -92,10 +100,12 @@ func findCopiedVars(body *ast.BlockStmt, funcLit *ast.FuncLit, _ []string) map[s
 	copiedVars := make(map[string]bool)
 	ast.Inspect(body, func(n ast.Node) bool {
 		if n == funcLit {
+			// Condition not met, return false.
 			return false
 		}
 		assignStmt, ok := n.(*ast.AssignStmt)
 		if !ok || assignStmt.Tok.String() != ":=" {
+			// Continue traversing AST nodes.
 			return true
 		}
 		for i, lhs := range assignStmt.Lhs {
@@ -108,8 +118,10 @@ func findCopiedVars(body *ast.BlockStmt, funcLit *ast.FuncLit, _ []string) map[s
 				copiedVars[lhsIdent.Name] = true
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return copiedVars
 }
 
@@ -119,10 +131,13 @@ func usesVariable(body *ast.BlockStmt, varName string) bool {
 		ident, ok := n.(*ast.Ident)
 		if ok && ident.Name == varName {
 			uses = true
+			// Condition not met, return false.
 			return false
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return uses
 }
 
@@ -136,5 +151,6 @@ func usesVariable(body *ast.BlockStmt, varName string) bool {
 // Returns:
 //   - map des variables copiées localement (pattern v := v)
 func FindCopiedVarsExported(body *ast.BlockStmt, funcLit *ast.FuncLit, rangeVars []string) map[string]bool {
+	// Early return from function.
 	return findCopiedVars(body, funcLit, rangeVars)
 }

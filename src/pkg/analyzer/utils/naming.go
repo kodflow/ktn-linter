@@ -14,6 +14,7 @@ import (
 //   - bool: true si au moins une lettre est présente et toutes sont en majuscules
 func IsAllCaps(s string) bool {
 	if len(s) == 0 {
+		// Condition not met, return false.
 		return false
 	}
 	hasLetter := false
@@ -21,10 +22,12 @@ func IsAllCaps(s string) bool {
 		if unicode.IsLetter(r) {
 			hasLetter = true
 			if !unicode.IsUpper(r) {
+				// Condition not met, return false.
 				return false
 			}
 		}
 	}
+	// Early return from function.
 	return hasLetter
 }
 
@@ -37,17 +40,21 @@ func IsAllCaps(s string) bool {
 //   - bool: true si valide (pas de snake_case, pas de ALL_CAPS sauf initialismes)
 func IsMixedCaps(name string) bool {
 	if len(name) == 0 {
+		// Condition not met, return false.
 		return false
 	}
 
 	if strings.Contains(name, "_") {
+		// Condition not met, return false.
 		return false
 	}
 
 	if IsAllCaps(name) {
+		// Early return from function.
 		return IsValidInitialism(name)
 	}
 
+	// Continue traversing AST nodes.
 	return true
 }
 
@@ -56,6 +63,7 @@ func IsMixedCaps(name string) bool {
 // Returns:
 //   - []string: liste des initialismes valides
 func getKnownInitialisms() []string {
+	// Early return from function.
 	return []string{
 		"HTTP", "HTTPS", "URL", "URI", "ID", "API", "JSON", "XML", "HTML",
 		"SQL", "TLS", "SSL", "TCP", "UDP", "IP", "DNS", "SSH", "FTP",
@@ -76,9 +84,11 @@ func getKnownInitialisms() []string {
 func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, bool) {
 	for _, init := range initialisms {
 		if strings.HasPrefix(remaining, init) {
+			// Early return from function.
 			return remaining[len(init):], true
 		}
 	}
+	// Early return from function.
 	return remaining, false
 }
 
@@ -91,6 +101,7 @@ func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, b
 //   - bool: true si composé uniquement d'initialismes valides
 func IsValidInitialism(name string) bool {
 	if strings.Contains(name, "_") {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -105,11 +116,14 @@ func IsValidInitialism(name string) bool {
 			matched = true
 		} else {
 			if remaining != "" && unicode.IsUpper(rune(remaining[0])) {
+				// Early return from function.
 				return matched
 			}
+			// Condition not met, return false.
 			return false
 		}
 	}
 
+	// Early return from function.
 	return matched
 }

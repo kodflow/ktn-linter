@@ -21,6 +21,7 @@ import (
 func BadReadFile(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		// Return error if operation fails.
 		return nil, err // Viole KTN-ERROR-001
 	}
 	// Retourne les données lues
@@ -43,6 +44,7 @@ func BadProcessData(data []byte) (string, error) {
 
 	result, err := parseData(data)
 	if err != nil {
+		// Early return from function.
 		return "", err // Viole KTN-ERROR-001
 	}
 
@@ -66,11 +68,13 @@ func BadMultipleReturns(id int) (string, error) {
 
 	data, err := fetchData(id)
 	if err != nil {
+		// Early return from function.
 		return "", err // Viole KTN-ERROR-001
 	}
 
 	result, err := processResult(data)
 	if err != nil {
+		// Early return from function.
 		return "", err // Viole KTN-ERROR-001
 	}
 
@@ -88,16 +92,19 @@ func BadMultipleReturns(id int) (string, error) {
 func BadNestedCalls(input string) error {
 	err := validate(input)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 
 	err = process(input)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 
 	err = save(input)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 
@@ -116,6 +123,7 @@ func BadErrorInLoop(items []string) error {
 	for _, item := range items {
 		err := processItem(item)
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
 	}
@@ -135,6 +143,7 @@ func BadErrorFromInterface(r io.Reader) ([]byte, error) {
 	buf := make([]byte, 100)
 	n, err := r.Read(buf)
 	if err != nil && err != io.EOF {
+		// Return error if operation fails.
 		return nil, err // Viole KTN-ERROR-001
 	}
 	// Retourne les données lues
@@ -151,12 +160,14 @@ func BadErrorFromInterface(r io.Reader) ([]byte, error) {
 func BadChainedErrors(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 
@@ -180,11 +191,13 @@ func BadErrorWithAssignment(filename string) error {
 	var err error
 	err = validateFilename(filename)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 
 	err = checkFileExists(filename)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 
@@ -202,6 +215,7 @@ func BadErrorWithAssignment(filename string) error {
 func BadDeferredError(path string) (err error) {
 	file, err := os.Open(path)
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 	defer func() {
@@ -234,6 +248,7 @@ func BadSwitchError(operation string) error {
 	}
 
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
 

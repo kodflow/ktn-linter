@@ -17,8 +17,10 @@ type MockPaymentProcessorI005Good struct {
 //   - error: une erreur si l'opération échoue
 func (m *MockPaymentProcessorI005Good) ProcessPaymentI005Good(amount float64) error {
 	if m.ProcessPaymentI005GoodFunc != nil {
+		// Early return from function.
 		return m.ProcessPaymentI005GoodFunc(amount)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -38,7 +40,9 @@ type MockEmailSenderI005Good struct {
 //   - error: une erreur si l'opération échoue
 func (m *MockEmailSenderI005Good) SendEmailI005Good(to string, subject string, body string) error {
 	if m.SendEmailI005GoodFunc != nil {
+		// Early return from function.
 		return m.SendEmailI005GoodFunc(to, subject, body)
 	}
+	// Early return from function.
 	return nil
 }

@@ -14,8 +14,10 @@ import (
 
 func ProcessOrderF002(orderID int) error {
 	if orderID <= 0 {
+		// Return error to caller.
 		return errors.New("orderID invalide")
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -23,5 +25,6 @@ func ProcessOrderF002(orderID int) error {
 // ERREUR ATTENDUE: KTN-FUNC-002 sur ValidateEmailF002
 
 func ValidateEmailF002(email string) bool {
+	// Early return from function.
 	return len(email) > 0
 }

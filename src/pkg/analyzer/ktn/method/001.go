@@ -12,15 +12,17 @@ import (
 // Un receiver non-pointeur reçoit une copie, donc les modifications ne sont pas visibles.
 //
 // Incorrect:
-//   func (s MyStruct) SetValue(v int) {
-//       s.value = v  // Modifie la copie!
-//   }
+//
+//	func (s MyStruct) SetValue(v int) {
+//	    s.value = v  // Modifie la copie!
+//	}
 //
 // Correct:
-//   func (s *MyStruct) SetValue(v int) {
-//       s.value = v  // Modifie l'original
-//   }
-var Rule001 = &analysis.Analyzer{
+//
+//	func (s *MyStruct) SetValue(v int) {
+//	    s.value = v  // Modifie l'original
+//	}
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_METHOD_001",
 	Doc:  "Vérifie que les méthodes qui modifient le receiver utilisent un receiver pointeur",
 	Run:  runRule001,
@@ -46,6 +48,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -56,6 +59,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 //   - funcDecl: la déclaration de fonction (méthode)
 func checkMethodPointerReceiver(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
+		// Early return from function.
 		return
 	}
 
@@ -64,6 +68,7 @@ func checkMethodPointerReceiver(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 
 	// Vérifier si c'est un pointeur
 	if _, isPointer := recvType.(*ast.StarExpr); isPointer {
+		// Early return from function.
 		return
 	}
 
@@ -82,6 +87,7 @@ func checkMethodPointerReceiver(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 //   - bool: true si le receiver est modifié
 func methodModifiesReceiver(funcDecl *ast.FuncDecl) bool {
 	if funcDecl.Body == nil {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -91,6 +97,7 @@ func methodModifiesReceiver(funcDecl *ast.FuncDecl) bool {
 	}
 
 	if receiverName == "" {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -103,6 +110,7 @@ func methodModifiesReceiver(funcDecl *ast.FuncDecl) bool {
 			for _, lhs := range stmt.Lhs {
 				if refersToReceiver(lhs, receiverName) {
 					modifies = true
+					// Condition not met, return false.
 					return false
 				}
 			}
@@ -110,13 +118,16 @@ func methodModifiesReceiver(funcDecl *ast.FuncDecl) bool {
 			// Vérifier si c'est une incrémentation/décrémentation du receiver
 			if refersToReceiver(stmt.X, receiverName) {
 				modifies = true
+				// Condition not met, return false.
 				return false
 			}
 		}
 
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return modifies
 }
 
@@ -136,14 +147,17 @@ func refersToReceiver(expr ast.Expr, receiverName string) bool {
 	case *ast.SelectorExpr:
 		// Assignation à un champ du receiver
 		if ident, ok := e.X.(*ast.Ident); ok {
+			// Early return from function.
 			return ident.Name == receiverName
 		}
 	case *ast.IndexExpr:
 		// Assignation à un élément d'un slice/map du receiver
 		if ident, ok := e.X.(*ast.Ident); ok {
+			// Early return from function.
 			return ident.Name == receiverName
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -157,12 +171,15 @@ func refersToReceiver(expr ast.Expr, receiverName string) bool {
 func getReceiverName(field *ast.Field) string {
 	switch t := field.Type.(type) {
 	case *ast.Ident:
+		// Early return from function.
 		return t.Name
 	case *ast.StarExpr:
 		if ident, ok := t.X.(*ast.Ident); ok {
+			// Early return from function.
 			return ident.Name
 		}
 	}
+	// Early return from function.
 	return "receiver"
 }
 

@@ -5,16 +5,19 @@ package rules_func
 
 // Fonction SANS AUCUN GODOC - GRAVE !
 func ProcessWithoutDoc(data string) error {
+	// Early return from function.
 	return nil
 }
 
 // Fonction sans godoc du tout
 func AnotherBadFunction(x int, y int) int {
+	// Early return from function.
 	return x + y
 }
 
 // IncompleteDoc manque la section Params et Returns
 func IncompleteDoc(name string, age int) (string, error) {
+	// Early return from function.
 	return name, nil
 }
 
@@ -23,6 +26,7 @@ func IncompleteDoc(name string, age int) (string, error) {
 // Returns:
 //   - string: le résultat
 func NoParams(input string, count int) string {
+	// Early return from function.
 	return input
 }
 
@@ -31,14 +35,17 @@ func NoParams(input string, count int) string {
 // Params:
 //   - data: les données
 func NoReturns(data []byte) error {
+	// Early return from function.
 	return nil
 }
 
 func totallyUndocumented(a, b, c int) (int, int, error) {
+	// Early return from function.
 	return a + b, c, nil
 }
 
 // privateWithoutDoc fonction privée sans documentation
 func privateWithoutDoc(x float64) float64 {
+	// Early return from function.
 	return x * 2
 }

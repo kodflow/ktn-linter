@@ -10,6 +10,7 @@ var (
 	// bufferPool est un pool de buffers de 1024 bytes.
 	bufferPool sync.Pool = sync.Pool{
 		New: func() interface{} {
+			// Early return from function.
 			return make([]byte, 1024)
 		},
 	}
@@ -17,6 +18,7 @@ var (
 	// objectPool est un pool d'objets dataObject.
 	objectPool *sync.Pool = &sync.Pool{
 		New: func() interface{} {
+			// Early return from function.
 			return &dataObject{}
 		},
 	}

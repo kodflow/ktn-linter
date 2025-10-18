@@ -13,6 +13,7 @@ type UserService struct {
 
 // GetUser méthode sur struct public
 func (u *UserService) GetUser(id int) string {
+	// Early return from function.
 	return "user"
 }
 
@@ -23,6 +24,7 @@ type OrderProcessor struct {
 
 // Process méthode
 func (o *OrderProcessor) Process(order string) error {
+	// Early return from function.
 	return nil
 }
 
@@ -34,6 +36,7 @@ type PaymentGateway struct {
 
 // Charge méthode
 func (p *PaymentGateway) Charge(amount float64) error {
+	// Early return from function.
 	return nil
 }
 
@@ -44,6 +47,7 @@ type CacheManager struct {
 
 // Get méthode
 func (c *CacheManager) Get(key string) string {
+	// Early return from function.
 	return c.data[key]
 }
 
@@ -59,5 +63,6 @@ type EmailSender struct {
 
 // Send méthode
 func (e *EmailSender) Send(to, subject, body string) error {
+	// Early return from function.
 	return nil
 }

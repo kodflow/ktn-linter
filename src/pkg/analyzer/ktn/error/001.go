@@ -13,15 +13,17 @@ import (
 // Cela préserve la chaîne d'erreurs et améliore le debugging en production.
 //
 // Incorrect:
-//   if err != nil {
-//       return err  // Perd le contexte
-//   }
+//
+//	if err != nil {
+//	    return err  // Perd le contexte
+//	}
 //
 // Correct:
-//   if err != nil {
-//       return fmt.Errorf("failed to process user %s: %w", userID, err)
-//   }
-var Rule001 = &analysis.Analyzer{
+//
+//	if err != nil {
+//	    return fmt.Errorf("failed to process user %s: %w", userID, err)
+//	}
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_ERROR_001",
 	Doc:  "Vérifie que les erreurs sont wrappées avec du contexte",
 	Run:  runRule001,
@@ -39,6 +41,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 	for _, file := range pass.Files {
 		checkErrorWrapping(pass, file)
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -51,14 +54,17 @@ func checkErrorWrapping(pass *analysis.Pass, file *ast.File) {
 	ast.Inspect(file, func(n ast.Node) bool {
 		funcDecl, ok := n.(*ast.FuncDecl)
 		if !ok || funcDecl.Body == nil {
+			// Continue traversing AST nodes.
 			return true
 		}
 
 		if !functionReturnsError(pass, funcDecl) {
+			// Continue traversing AST nodes.
 			return true
 		}
 
 		checkReturnStatements(pass, funcDecl)
+		// Continue traversing AST nodes.
 		return true
 	})
 }
@@ -73,6 +79,7 @@ func checkErrorWrapping(pass *analysis.Pass, file *ast.File) {
 //   - bool: true si la fonction retourne error
 func functionReturnsError(pass *analysis.Pass, funcDecl *ast.FuncDecl) bool {
 	if funcDecl.Type == nil || funcDecl.Type.Results == nil {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -80,15 +87,18 @@ func functionReturnsError(pass *analysis.Pass, funcDecl *ast.FuncDecl) bool {
 		if pass.TypesInfo != nil {
 			resultType := pass.TypesInfo.TypeOf(result.Type)
 			if resultType != nil && resultType.String() == "error" {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
 
 		if ident, ok := result.Type.(*ast.Ident); ok && ident.Name == "error" {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
 
+	// Condition not met, return false.
 	return false
 }
 
@@ -101,10 +111,12 @@ func checkReturnStatements(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		returnStmt, ok := n.(*ast.ReturnStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 
 		checkUnwrappedError(pass, returnStmt)
+		// Continue traversing AST nodes.
 		return true
 	})
 }
@@ -144,6 +156,7 @@ func checkUnwrappedError(pass *analysis.Pass, returnStmt *ast.ReturnStmt) {
 //   - bool: true si c'est nil
 func isNilIdent(expr ast.Expr) bool {
 	ident, ok := expr.(*ast.Ident)
+	// Early return from function.
 	return ok && ident.Name == "nil"
 }
 
@@ -157,14 +170,17 @@ func isNilIdent(expr ast.Expr) bool {
 //   - bool: true si c'est un error
 func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 	if pass.TypesInfo == nil {
+		// Condition not met, return false.
 		return false
 	}
 
 	exprType := pass.TypesInfo.TypeOf(expr)
 	if exprType == nil {
+		// Condition not met, return false.
 		return false
 	}
 
+	// Early return from function.
 	return exprType.String() == "error"
 }
 
@@ -178,15 +194,18 @@ func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 //   - bool: true si c'est une variable d'erreur
 func isErrorVariable(pass *analysis.Pass, ident *ast.Ident) bool {
 	if pass.TypesInfo == nil {
+		// Condition not met, return false.
 		return false
 	}
 
 	obj := pass.TypesInfo.Uses[ident]
 	if obj == nil {
+		// Condition not met, return false.
 		return false
 	}
 
 	_, ok := obj.(*types.Var)
+	// Early return from function.
 	return ok
 }
 
@@ -224,5 +243,6 @@ func reportUnwrappedError(pass *analysis.Pass, returnStmt *ast.ReturnStmt, varNa
 // Returns:
 //   - bool: true if error variable
 func ExportedIsErrorVariable(pass *analysis.Pass, ident *ast.Ident) bool {
+	// Early return from function.
 	return isErrorVariable(pass, ident) // nolint:KTN-FUNC-008
 }

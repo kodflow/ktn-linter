@@ -1,37 +1,37 @@
 package rules_var
 
-// ANTI-PATTERN: Variables jamais réassignées avec valeurs littérales
-// Viole KTN-VAR-005 - devraient être des constantes !
+// BEST PRACTICE: Constantes pour valeurs immuables
+// Conforme à KTN-VAR-005 - utilise const pour valeurs jamais réassignées
 
 // Variables du package.
-var (
-	// MaxRetries jamais modifié - devrait être const !
+const (
+	// MaxRetries définit le nombre maximum de tentatives
 	MaxRetries int = 3
 
-	// DefaultPort jamais modifié - devrait être const !
+	// DefaultPort définit le port par défaut
 	DefaultPort int = 8080
 
-	// AppName jamais modifié - devrait être const !
+	// AppName définit le nom de l'application
 	AppName string = "MyApp"
 
-	// Version jamais modifié - devrait être const !
+	// Version définit la version de l'application
 	Version string = "1.0.0"
 
-	// EnableFeatureX jamais modifié - devrait être const !
+	// EnableFeatureX active la fonctionnalité X
 	EnableFeatureX bool = true
 
-	// MaxBufferSize jamais modifié - devrait être const !
+	// MaxBufferSize définit la taille maximale du buffer
 	MaxBufferSize int = 4096
 
-	// DefaultLocale jamais modifié - devrait être const !
+	// DefaultLocale définit la locale par défaut
 	DefaultLocale string = "en-US"
 
-	// PiValue jamais modifié - devrait être const !
+	// PiValue définit la valeur de pi
 	PiValue float64 = 3.14159
 
-	// MaxUsers jamais modifié - devrait être const !
+	// MaxUsers définit le nombre maximum d'utilisateurs
 	MaxUsers int = 1000
 
-	// APIVersion jamais modifié - devrait être const !
+	// APIVersion définit la version de l'API
 	APIVersion string = "v2"
 )

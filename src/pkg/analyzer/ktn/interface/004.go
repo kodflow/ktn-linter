@@ -9,7 +9,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule004 = &analysis.Analyzer{
+// Rule004 analyzer for KTN linter.
+var Rule004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_004",
 	Doc:  "Vérifie la présence des constructeurs pour les interfaces",
 	Run:  RunRule004,
@@ -19,6 +20,7 @@ var Rule004 = &analysis.Analyzer{
 func RunRule004(pass *analysis.Pass) (any, error) {
 	// Packages exemptés
 	if IsExemptedPackage004(pass.Pkg.Name()) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -94,6 +96,7 @@ func RunRule004(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -108,8 +111,10 @@ func IsExemptedPackage004(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }

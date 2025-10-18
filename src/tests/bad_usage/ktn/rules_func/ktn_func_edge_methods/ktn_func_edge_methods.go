@@ -2,6 +2,7 @@ package badfuncmethods
 
 // Violations avec méthodes sur types
 
+// User represents the struct.
 type User struct {
 	name  string
 	email string
@@ -10,6 +11,7 @@ type User struct {
 
 // getName sans documentation
 func (u *User) getName() string {
+	// Early return from function.
 	return u.name
 }
 
@@ -21,16 +23,22 @@ func (u *User) setAge(newAge int) {
 // validate méthode complexe sans doc
 func (u *User) validate() bool {
 	if u.name == "" {
+		// Stop inspection/processing.
 		return false
 	}
 	if u.email == "" {
+		// Stop inspection/processing.
 		return false
 	}
 	if u.age < 0 || u.age > 150 {
+		// Stop inspection/processing.
 		return false
 	}
+	// Continue inspection/processing.
 	return true
 }
+
+// Calculator represents the struct.
 
 type Calculator struct {
 	result float64
@@ -43,6 +51,7 @@ func (c *Calculator) add(a, b, d, e, f, g float64) {
 
 // getResult receiver par valeur au lieu de pointeur
 func (c Calculator) getResult() float64 {
+	// Early return from function.
 	return c.result
 }
 
@@ -84,5 +93,6 @@ func (c *Calculator) complexCalculation(x float64) float64 {
 	temp34 := temp33 * 2.5
 	temp35 := temp34 + 40
 	temp36 := temp35 / 6
+	// Early return from function.
 	return temp36
 }

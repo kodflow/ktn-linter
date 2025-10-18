@@ -67,6 +67,7 @@ type MyString string
 type MyFloat float64
 
 // Déclarations groupées
+// GroupedGood represents the struct.
 type (
 	// GroupedGood utilise MixedCaps.
 	GroupedGood struct {

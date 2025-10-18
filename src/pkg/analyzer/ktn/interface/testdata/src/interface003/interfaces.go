@@ -1,11 +1,13 @@
 package interface005
 
 // Bon : interface publique dans interfaces.go
+// Repository defines the interface.
 type Repository interface {
 	Save(data string) error
 	Load() (string, error)
 }
 
+// Cache defines the interface.
 // Bon : autre interface publique dans interfaces.go
 type Cache interface {
 	Get(key string) (string, bool)

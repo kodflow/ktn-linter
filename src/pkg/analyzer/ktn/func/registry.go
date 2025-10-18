@@ -22,5 +22,6 @@ var AllRules = []*analysis.Analyzer{
 // Returns:
 //   - []*analysis.Analyzer: la liste de toutes les règles KTN-FUNC
 func GetRules() []*analysis.Analyzer {
+	// Early return from function.
 	return AllRules
 }

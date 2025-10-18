@@ -16,7 +16,7 @@ import (
 //
 // Incorrect: calculate_total, Calculate_Total
 // Correct: calculateTotal, CalculateTotal
-var Rule001 = &analysis.Analyzer{
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_001",
 	Doc:  "Vérifie que les fonctions utilisent la convention MixedCaps",
 	Run:  runRule001,
@@ -42,6 +42,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 

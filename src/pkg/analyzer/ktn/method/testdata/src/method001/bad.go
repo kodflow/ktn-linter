@@ -1,8 +1,10 @@
 package method001
 
+// Counter represents the struct.
 type Counter struct {
 	value int
 }
+// User represents the struct.
 
 type User struct {
 	Name string
@@ -36,6 +38,7 @@ func (u *User) UpdateUser(name string, age int) {
 	u.Name = name
 	u.Age = age
 }
+// Data represents the struct.
 
 // Test IndexExpr avec slice
 type Data struct {
@@ -44,6 +47,7 @@ type Data struct {
 
 func (d Data) UpdateItem(index int, value int) {
 	d.items[index] = value // OK: slices sont des références
+// Cache represents the struct.
 }
 
 // Test IndexExpr avec map
@@ -61,6 +65,7 @@ func (d *Data) UpdateItemCorrect(index int, value int) {
 }
 
 func (c *Cache) SetCorrect(key string, value int) {
+// Value represents the struct.
 	c.data[key] = value
 }
 

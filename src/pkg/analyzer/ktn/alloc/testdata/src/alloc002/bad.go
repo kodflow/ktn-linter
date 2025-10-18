@@ -1,5 +1,6 @@
 package alloc002
 
+// Item represents the struct.
 type Item struct {
 	ID   int
 	Name string

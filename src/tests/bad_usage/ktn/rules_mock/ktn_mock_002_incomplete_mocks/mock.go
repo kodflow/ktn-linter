@@ -14,8 +14,10 @@ type MockService struct {
 //   - error: erreur éventuelle
 func (m *MockService) Process() error {
 	if m.ProcessFunc != nil {
+		// Early return from function.
 		return m.ProcessFunc()
 	}
+	// Early return from function.
 	return nil
 }
 

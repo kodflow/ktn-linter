@@ -8,10 +8,13 @@ func correctFallthroughInSwitch(x int) string {
 		fallthrough // ✅ OK: dans un case de switch
 	case 2:
 		doTwoFall()
+		// Early return from function.
 		return "one or two"
 	case 3:
+		// Early return from function.
 		return "three"
 	default:
+		// Early return from function.
 		return "other"
 	}
 }
@@ -43,8 +46,10 @@ func classifyScore(score int) string {
 		fallthrough
 	case score >= 70:
 		awardBronze()
+		// Early return from function.
 		return "medal awarded"
 	default:
+		// Early return from function.
 		return "no medal"
 	}
 }
@@ -53,12 +58,16 @@ func classifyScore(score int) string {
 func simpleSwitch(x int) string {
 	switch x {
 	case 1:
+		// Early return from function.
 		return "one"
 	case 2:
+		// Early return from function.
 		return "two"
 	case 3:
+		// Early return from function.
 		return "three"
 	default:
+		// Early return from function.
 		return "other"
 	}
 }

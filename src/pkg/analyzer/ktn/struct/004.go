@@ -10,7 +10,7 @@ import (
 // Rule004 vérifie le nombre de champs dans une struct.
 //
 // KTN-STRUCT-004: Maximum 15 champs par struct
-var Rule004 = &analysis.Analyzer{
+var Rule004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_STRUCT_004",
 	Doc:  "Maximum 15 champs par struct",
 	Run:  runRule004,
@@ -40,12 +40,14 @@ func runRule004(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
 func checkStructFieldCount(pass *analysis.Pass, typeSpec *ast.TypeSpec, structType *ast.StructType) {
 	structName := typeSpec.Name.Name
 	if structType.Fields == nil {
+		// Early return from function.
 		return
 	}
 

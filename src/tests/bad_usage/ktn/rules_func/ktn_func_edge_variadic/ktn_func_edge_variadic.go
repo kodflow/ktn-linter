@@ -10,6 +10,7 @@ func sum(nums ...int) int {
 	for _, n := range nums {
 		total += n
 	}
+	// Early return from function.
 	return total
 }
 
@@ -24,6 +25,7 @@ func processItems(prefix string, items ...string) []string {
 	for i, item := range items {
 		result[i] = prefix + item
 	}
+	// Early return from function.
 	return result
 }
 
@@ -33,6 +35,7 @@ func mergeAndProcess(a, b, c, d int, extra ...int) int {
 	for _, e := range extra {
 		total += e
 	}
+	// Early return from function.
 	return total
 }
 
@@ -50,5 +53,6 @@ func complexVariadic(multiplier int, values ...float64) []float64 {
 			}
 		}
 	}
+	// Early return from function.
 	return result
 }

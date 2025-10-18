@@ -10,6 +10,7 @@ package rules_test
 // Returns:
 //   - string: résultat
 func PublicFunction() string {
+	// Early return from function.
 	return "no tests for this!"
 }
 
@@ -21,6 +22,7 @@ func PublicFunction() string {
 // Returns:
 //   - int: résultat
 func AnotherFunction(x int) int {
+	// Early return from function.
 	return x * 2
 }
 
@@ -34,5 +36,6 @@ type UntestableCode struct {
 // Returns:
 //   - error: erreur potentielle
 func (u *UntestableCode) Process() error {
+	// Early return from function.
 	return nil
 }

@@ -10,7 +10,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule002 = &analysis.Analyzer{
+// Rule002 analyzer for KTN linter.
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_TEST_002",
 	Doc:  "Vérifie que chaque fichier .go a son _test.go",
 	Run:  runRule002,
@@ -19,11 +20,13 @@ var Rule002 = &analysis.Analyzer{
 func runRule002(pass *analysis.Pass) (any, error) {
 	// Package main exempté
 	if pass.Pkg.Name() == "main" {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
 	// Package de test exempté
 	if strings.HasSuffix(pass.Pkg.Name(), "_test") {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -79,6 +82,7 @@ func runRule002(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -88,6 +92,7 @@ func containsOnlyInterfaces002(file *ast.File) bool {
 	for _, decl := range file.Decls {
 		_, isFunc := decl.(*ast.FuncDecl)
 		if isFunc {
+			// Condition not met, return false.
 			return false
 		}
 
@@ -106,39 +111,47 @@ func containsOnlyInterfaces002(file *ast.File) bool {
 			if isInterface {
 				hasInterface = true
 			} else {
+				// Condition not met, return false.
 				return false
 			}
 		}
 	}
 
+	// Early return from function.
 	return hasInterface
 }
 
 func hasTestableElements002(file *ast.File) bool {
 	for _, decl := range file.Decls {
 		if isTestableFunction002(decl) || isTestableType002(decl) {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
 func isTestableFunction002(decl ast.Decl) bool {
 	funcDecl, ok := decl.(*ast.FuncDecl)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
 	name := funcDecl.Name.Name
 	if strings.HasPrefix(name, "Test") || strings.HasPrefix(name, "Benchmark") {
+		// Condition not met, return false.
 		return false
 	}
+	// Continue traversing AST nodes.
 	return true
 }
 
 func isTestableType002(decl ast.Decl) bool {
 	genDecl, ok := decl.(*ast.GenDecl)
 	if !ok || genDecl.Tok.String() != "type" {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -150,8 +163,10 @@ func isTestableType002(decl ast.Decl) bool {
 
 		switch typeSpec.Type.(type) {
 		case *ast.StructType, *ast.InterfaceType:
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }

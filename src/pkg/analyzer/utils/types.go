@@ -16,8 +16,10 @@ import (
 func IsZeroLiteral(expr ast.Expr) bool {
 	basicLit, ok := expr.(*ast.BasicLit)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
+	// Early return from function.
 	return basicLit.Kind == token.INT && basicLit.Value == "0"
 }
 
@@ -34,8 +36,10 @@ func IsReferenceType(expr ast.Expr) bool {
 		// Slice (ArrayType sans longueur)
 		return t.Len == nil
 	case *ast.MapType:
+		// Continue traversing AST nodes.
 		return true
 	case *ast.ChanType:
+		// Continue traversing AST nodes.
 		return true
 	case *ast.Ident:
 		// Vérifier les types natifs par nom
@@ -43,6 +47,7 @@ func IsReferenceType(expr ast.Expr) bool {
 			strings.Contains(t.Name, "chan") ||
 			strings.Contains(t.Name, "slice")
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -56,6 +61,7 @@ func IsReferenceType(expr ast.Expr) bool {
 func IsStructType(expr ast.Expr) bool {
 	switch expr.(type) {
 	case *ast.StructType:
+		// Continue traversing AST nodes.
 		return true
 	case *ast.Ident:
 		// Identifiant (type nommé) - potentiellement une struct
@@ -64,6 +70,7 @@ func IsStructType(expr ast.Expr) bool {
 		// Type importé (ex: pkg.MyStruct)
 		return true
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -76,6 +83,7 @@ func IsStructType(expr ast.Expr) bool {
 //   - bool: true si c'est un slice
 func IsSliceType(expr ast.Expr) bool {
 	arrayType, ok := expr.(*ast.ArrayType)
+	// Early return from function.
 	return ok && arrayType.Len == nil
 }
 
@@ -90,23 +98,30 @@ func GetTypeName(expr ast.Expr) string {
 	switch t := expr.(type) {
 	case *ast.ArrayType:
 		elemType := GetTypeName(t.Elt)
+		// Early return from function.
 		return "[]" + elemType
 	case *ast.MapType:
 		keyType := GetTypeName(t.Key)
 		valueType := GetTypeName(t.Value)
+		// Early return from function.
 		return "map[" + keyType + "]" + valueType
 	case *ast.ChanType:
 		elemType := GetTypeName(t.Value)
+		// Early return from function.
 		return "chan " + elemType
 	case *ast.Ident:
+		// Early return from function.
 		return t.Name
 	case *ast.SelectorExpr:
 		pkg := GetTypeName(t.X)
+		// Early return from function.
 		return pkg + "." + t.Sel.Name
 	case *ast.StarExpr:
 		base := GetTypeName(t.X)
+		// Early return from function.
 		return "*" + base
 	}
+	// Early return from function.
 	return "T"
 }
 
@@ -120,17 +135,20 @@ func GetTypeName(expr ast.Expr) string {
 func IsMakeSliceZero(expr ast.Expr) bool {
 	callExpr, ok := expr.(*ast.CallExpr)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
 	// Vérifier si c'est make()
 	ident, ok := callExpr.Fun.(*ast.Ident)
 	if !ok || ident.Name != "make" {
+		// Condition not met, return false.
 		return false
 	}
 
 	// Vérifier si c'est un slice
 	if len(callExpr.Args) < 1 || !IsSliceType(callExpr.Args[0]) {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -143,5 +161,6 @@ func IsMakeSliceZero(expr ast.Expr) bool {
 		return IsZeroLiteral(callExpr.Args[1]) && IsZeroLiteral(callExpr.Args[2])
 	}
 
+	// Condition not met, return false.
 	return false
 }

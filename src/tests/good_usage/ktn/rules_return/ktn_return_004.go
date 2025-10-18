@@ -11,14 +11,17 @@ func complexProcessGood() (int, error) {
 	}
 	// ... encore plus de code ...
 	if !someConditionGood() {
+		// Early return from function.
 		return 0, nil
 	}
+	// Early return from function.
 	return result, nil // ✅ explicite et clair!
 }
 
 // ✅ GOOD: naked return OK dans fonction courte
 func shortFunc() (x int) {
 	x = 42
+	// Early return from function.
 	return // ✅ OK: fonction courte
 }
 

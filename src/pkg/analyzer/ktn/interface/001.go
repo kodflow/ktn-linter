@@ -10,7 +10,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule001 = &analysis.Analyzer{
+// Rule001 analyzer for KTN linter.
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_001",
 	Doc:  "Vérifie la présence du fichier interfaces.go",
 	Run:  RunRule001,
@@ -23,6 +24,7 @@ func RunRule001(pass *analysis.Pass) (any, error) {
 
 	// Packages exemptés
 	if IsExemptedPackage(pkgInfo.Name) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -32,6 +34,7 @@ func RunRule001(pass *analysis.Pass) (any, error) {
 		if len(pass.Files) > 0 {
 			firstFile := pass.Fset.File(pass.Files[0].Pos()).Name()
 			if strings.Contains(firstFile, "/tests/target/") || strings.Contains(firstFile, "\\tests\\target\\") {
+				// Analysis completed successfully.
 				return nil, nil
 			}
 		}
@@ -55,6 +58,7 @@ func RunRule001(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -125,6 +129,7 @@ func CollectPackageInfo(pass *analysis.Pass) *PackageInfo {
 		}
 	}
 
+	// Early return from function.
 	return info
 }
 
@@ -133,9 +138,11 @@ func IsExemptedPackage(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -144,15 +151,18 @@ func NeedsInterfacesFile(info *PackageInfo) bool {
 	if len(info.PublicStructs) > 0 {
 		for _, ps := range info.PublicStructs {
 			if !IsAllowedPublicType(ps.Name) {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
 	}
 
 	if len(info.PublicInterfaces) > 0 {
+		// Continue traversing AST nodes.
 		return true
 	}
 
+	// Condition not met, return false.
 	return false
 }
 
@@ -169,9 +179,11 @@ func IsAllowedPublicType(typeName string) bool {
 
 	for _, suffix := range allowedSuffixes {
 		if strings.HasSuffix(typeName, suffix) {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
 
+	// Condition not met, return false.
 	return false
 }

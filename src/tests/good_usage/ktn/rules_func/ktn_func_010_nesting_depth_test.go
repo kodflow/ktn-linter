@@ -2,7 +2,6 @@ package rules_func
 
 import (
 	"testing"
-
 )
 
 // TestDeeplyNestedGood teste TODO.

@@ -13,6 +13,7 @@ package rules_func
 // Returns:
 //   - int: résultat
 func sixParamsIsBad(a, b, c, d, e, f int) int {
+	// Early return from function.
 	return a + b + c + d + e + f
 }
 
@@ -30,5 +31,6 @@ func sixParamsIsBad(a, b, c, d, e, f int) int {
 // Returns:
 //   - int: résultat
 func sevenParamsIsWorse(a, b, c, d, e, f, g int) int {
+	// Early return from function.
 	return a + b + c + d + e + f + g
 }

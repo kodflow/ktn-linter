@@ -12,6 +12,7 @@ func openResource(name string) error {
 		panic("empty resource name")
 	}
 
+	// Early return from function.
 	return nil
 }
 
@@ -29,6 +30,7 @@ func processWithRecover() (err error) {
 
 	// Code qui peut paniquer
 	riskyOperation()
+	// Early return from function.
 	return nil
 }
 
@@ -54,6 +56,7 @@ func deferInLoop(files []string) {
 }
 
 func openFile(name string) *File {
+	// Early return from function.
 	return &File{name: name}
 }
 
@@ -61,6 +64,7 @@ func closeFile(f *File) {
 	fmt.Println("closing", f.name)
 }
 
+// File represents the struct.
 type File struct {
 	name string
 }
@@ -81,5 +85,6 @@ func complexDeferLogic(shouldPanic bool) error {
 		panic("intentional panic")
 	}
 
+	// Early return from function.
 	return nil
 }

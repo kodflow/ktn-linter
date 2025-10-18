@@ -14,6 +14,7 @@ var (
 
 type Alias = string
 
+// Config represents the struct.
 type Config struct {
 	Name  string
 	Value int

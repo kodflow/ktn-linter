@@ -17,8 +17,10 @@ type MockUserServiceI002Good struct {
 //   - error: une erreur si l'opération échoue
 func (m *MockUserServiceI002Good) ProcessI002Good(data string) error {
 	if m.ProcessI002GoodFunc != nil {
+		// Early return from function.
 		return m.ProcessI002GoodFunc(data)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -36,7 +38,9 @@ type MockOrderManagerI002Good struct {
 //   - error: une erreur si l'opération échoue
 func (m *MockOrderManagerI002Good) CreateOrderI002Good(order string) error {
 	if m.CreateOrderI002GoodFunc != nil {
+		// Early return from function.
 		return m.CreateOrderI002GoodFunc(order)
 	}
+	// Early return from function.
 	return nil
 }

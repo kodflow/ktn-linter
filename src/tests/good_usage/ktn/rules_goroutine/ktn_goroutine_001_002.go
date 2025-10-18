@@ -229,6 +229,7 @@ func pipelineStage1(input []int) <-chan string {
 			out <- fmt.Sprintf("%d", num)
 		}
 	}()
+	// Early return from function.
 	return out
 }
 
@@ -247,6 +248,7 @@ func pipelineStage2(in <-chan string) <-chan string {
 			out <- "processed-" + s
 		}
 	}()
+	// Early return from function.
 	return out
 }
 

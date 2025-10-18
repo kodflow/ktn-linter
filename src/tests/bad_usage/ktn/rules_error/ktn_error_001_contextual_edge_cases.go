@@ -47,11 +47,14 @@ func BadErrorInClosure() error {
 	processFunc := func() error {
 		err := validateCtx("data")
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
+		// Early return from function.
 		return nil
 	}
 
+	// Early return from function.
 	return processFunc()
 }
 
@@ -64,12 +67,16 @@ func BadErrorInNestedClosure() error {
 		inner := func() error {
 			err := deepOperation()
 			if err != nil {
+				// Return error to caller.
 				return err // Viole KTN-ERROR-001
 			}
+			// Early return from function.
 			return nil
 		}
+		// Early return from function.
 		return inner()
 	}
+	// Early return from function.
 	return outer()
 }
 
@@ -87,13 +94,16 @@ func BadErrorInSelect(ch1, ch2 chan error) error {
 	select {
 	case err := <-ch1:
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
 	case err := <-ch2:
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -107,8 +117,10 @@ func BadErrorInSelect(ch1, ch2 chan error) error {
 func BadErrorInSelectWithDefault(errCh chan error) error {
 	select {
 	case err := <-errCh:
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	default:
+		// Return error to caller.
 		return errors.New("no error received")
 	}
 }
@@ -126,9 +138,11 @@ func BadErrorFromTypeAssertion(v interface{}) error {
 	if errProvider, ok := v.(ErrorProvider); ok {
 		err := errProvider.GetError()
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -142,8 +156,10 @@ func BadErrorFromTypeAssertion(v interface{}) error {
 func BadErrorFromInterfaceMethod(provider ErrorProvider) error {
 	err := provider.GetError()
 	if err != nil {
+		// Return error to caller.
 		return err // Viole KTN-ERROR-001
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -158,14 +174,17 @@ func BadErrorFromInterfaceMethod(provider ErrorProvider) error {
 func BadMultipleNamedReturns() (result string, count int, err error) {
 	err = performOperation()
 	if err != nil {
+		// Early return from function.
 		return "", 0, err // Viole KTN-ERROR-001
 	}
 
 	data, err := fetchDataCtx(42)
 	if err != nil {
+		// Early return from function.
 		return "", 0, err // Viole KTN-ERROR-001
 	}
 
+	// Early return from function.
 	return string(data), len(data), nil
 }
 
@@ -183,6 +202,7 @@ func BadDeferWithNamedReturn() (err error) {
 		}
 	}()
 
+	// Early return from function.
 	return dangerousOperation()
 }
 
@@ -204,6 +224,7 @@ func BadErrorInRecover() (err error) {
 	}()
 
 	panickyFunction()
+	// Early return from function.
 	return nil
 }
 
@@ -220,9 +241,11 @@ func BadErrorInVariadic(operations ...func() error) error {
 	for _, op := range operations {
 		err := op()
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -242,10 +265,12 @@ func BadErrorInMap(items []string, fn func(string) (string, error)) ([]string, e
 	for _, item := range items {
 		result, err := fn(item)
 		if err != nil {
+			// Return error if operation fails.
 			return nil, err // Viole KTN-ERROR-001
 		}
 		results = append(results, result)
 	}
+	// Early return from function.
 	return results, nil
 }
 
@@ -273,13 +298,16 @@ func init() {
 func BadErrorWithContextCancel(done <-chan struct{}) error {
 	select {
 	case <-done:
+		// Return error to caller.
 		return errors.New("cancelled") // Pourrait être wrappé si vient d'ailleurs
 	default:
 		err := doWork()
 		if err != nil {
+			// Return error to caller.
 			return err // Viole KTN-ERROR-001
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -299,6 +327,7 @@ type ErrorProvider interface {
 // Returns:
 //   - error: erreur
 func riskyOperation() error {
+	// Return error to caller.
 	return errors.New("risky operation failed")
 }
 
@@ -310,6 +339,7 @@ func riskyOperation() error {
 // Returns:
 //   - error: erreur
 func processTask(id int) error {
+	// Early return from function.
 	return fmt.Errorf("task %d failed", id)
 }
 
@@ -321,6 +351,7 @@ func processTask(id int) error {
 // Returns:
 //   - error: erreur
 func validateCtx(data string) error {
+	// Return error to caller.
 	return errors.New("validation failed")
 }
 
@@ -329,6 +360,7 @@ func validateCtx(data string) error {
 // Returns:
 //   - error: erreur
 func deepOperation() error {
+	// Return error to caller.
 	return errors.New("deep operation failed")
 }
 
@@ -337,6 +369,7 @@ func deepOperation() error {
 // Returns:
 //   - error: erreur
 func performOperation() error {
+	// Return error to caller.
 	return errors.New("operation failed")
 }
 
@@ -349,6 +382,7 @@ func performOperation() error {
 //   - []byte: données
 //   - error: erreur
 func fetchDataCtx(id int) ([]byte, error) {
+	// Return error if operation fails.
 	return nil, errors.New("fetch failed")
 }
 
@@ -357,6 +391,7 @@ func fetchDataCtx(id int) ([]byte, error) {
 // Returns:
 //   - error: erreur
 func dangerousOperation() error {
+	// Return error to caller.
 	return errors.New("danger")
 }
 
@@ -370,6 +405,7 @@ func panickyFunction() {
 // Returns:
 //   - error: erreur
 func initializeSystem() error {
+	// Return error to caller.
 	return errors.New("init failed")
 }
 
@@ -378,5 +414,6 @@ func initializeSystem() error {
 // Returns:
 //   - error: erreur
 func doWork() error {
+	// Return error to caller.
 	return errors.New("work failed")
 }

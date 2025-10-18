@@ -4,6 +4,7 @@ package test002_branches // want `\[KTN_TEST_002\] Fichier 'interfaces_var.go' n
 // Ce fichier teste que la présence de var + interface nécessite un test
 var GlobalVar = 10
 
+// Service defines the interface.
 type Service interface {
 	Method() error
 }

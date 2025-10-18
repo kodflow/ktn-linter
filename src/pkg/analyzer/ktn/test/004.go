@@ -8,7 +8,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule004 = &analysis.Analyzer{
+// Rule004 analyzer for KTN linter.
+var Rule004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_TEST_004",
 	Doc:  "Vérifie que les fichiers .go ne contiennent pas de tests",
 	Run:  runRule004,
@@ -42,5 +43,6 @@ func runRule004(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }

@@ -9,7 +9,7 @@ import (
 
 // Rule001 vérifie que new() n'est pas utilisé avec des types référence (slice/map/chan).
 // KTN-ALLOC-001: new() retourne un pointeur vers nil pour les types référence, causant des panics.
-var Rule001 = &analysis.Analyzer{
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_ALLOC_001",
 	Doc:  "Interdiction de new() avec slice/map/chan (utiliser make() à la place)",
 	Run:  runRule001,
@@ -28,16 +28,19 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			callExpr, ok := n.(*ast.CallExpr)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			ident, ok := callExpr.Fun.(*ast.Ident)
 			if !ok || ident.Name != "new" {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier que new() a exactement 1 argument
 			if len(callExpr.Args) != 1 {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -48,9 +51,11 @@ func runRule001(pass *analysis.Pass) (any, error) {
 				reportReferenceTypeViolation(pass, callExpr, arg)
 			}
 
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 

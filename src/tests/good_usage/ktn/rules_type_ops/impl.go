@@ -13,5 +13,6 @@ func (m *myImplementation) Do() {
 // Returns:
 //   - MyInterfaceGood: nouvelle instance
 func NewMyInterfaceGood() MyInterfaceGood {
+	// Early return from function.
 	return &myImplementation{}
 }

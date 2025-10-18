@@ -17,7 +17,9 @@ type MockValidator struct {
 //   - error: l'erreur de validation
 func (m *MockValidator) Validate(value interface{}) error {
 	if m.ValidateFunc != nil {
+		// Early return from function.
 		return m.ValidateFunc(value)
 	}
+	// Early return from function.
 	return nil
 }

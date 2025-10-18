@@ -2,6 +2,7 @@ package goroutine001
 
 import "sync"
 
+// Request represents the struct.
 type Request struct {
 	ID int
 }

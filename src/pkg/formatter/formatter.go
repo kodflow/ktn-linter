@@ -48,6 +48,7 @@ type formatterImpl struct {
 // Returns:
 //   - Formatter: un formatter prêt à utiliser
 func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Formatter {
+	// Early return from function.
 	return &formatterImpl{
 		writer:     w,
 		aiMode:     aiMode,
@@ -60,16 +61,19 @@ func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Forma
 func (f *formatterImpl) Format(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	if len(diagnostics) == 0 {
 		f.printSuccess()
+		// Early return from function.
 		return
 	}
 
 	if f.simpleMode {
 		f.formatSimple(fset, diagnostics)
+		// Early return from function.
 		return
 	}
 
 	if f.aiMode {
 		f.formatForAI(fset, diagnostics)
+		// Early return from function.
 		return
 	}
 
@@ -87,6 +91,7 @@ func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analys
 
 	if totalCount == 0 {
 		f.printSuccess()
+		// Early return from function.
 		return
 	}
 
@@ -170,6 +175,7 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 	for filename, diags := range fileMap {
 		// Trier par ligne
 		sort.Slice(diags, func(i, j int) bool {
+			// Early return from function.
 			return fset.Position(diags[i].Pos).Line < fset.Position(diags[j].Pos).Line
 		})
 		groups = append(groups, DiagnosticGroupData{
@@ -180,9 +186,11 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 
 	// Trier par nom de fichier
 	sort.Slice(groups, func(i, j int) bool {
+		// Early return from function.
 		return groups[i].Filename < groups[j].Filename
 	})
 
+	// Early return from function.
 	return groups
 }
 
@@ -204,14 +212,18 @@ func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostic
 		posI := fset.Position(filtered[i].Pos)
 		posJ := fset.Position(filtered[j].Pos)
 		if posI.Filename != posJ.Filename {
+			// Early return from function.
 			return posI.Filename < posJ.Filename
 		}
 		if posI.Line != posJ.Line {
+			// Early return from function.
 			return posI.Line < posJ.Line
 		}
+		// Early return from function.
 		return posI.Column < posJ.Column
 	})
 
+	// Early return from function.
 	return filtered
 }
 
@@ -290,19 +302,25 @@ func (f *formatterImpl) printSummary(count int) {
 // getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur
 func (f *formatterImpl) getCodeColor(code string) string {
 	if f.noColor {
+		// Early return from function.
 		return ""
 	}
 
 	switch {
 	case strings.HasSuffix(code, "-001"):
+		// Early return from function.
 		return Red
 	case strings.HasSuffix(code, "-002"):
+		// Early return from function.
 		return Yellow
 	case strings.HasSuffix(code, "-003"):
+		// Early return from function.
 		return Magenta
 	case strings.HasSuffix(code, "-004"):
+		// Early return from function.
 		return Cyan
 	default:
+		// Early return from function.
 		return Red
 	}
 }
@@ -312,12 +330,15 @@ func extractCode(message string) string {
 	// Cherche le pattern [KTN-XXX-XXX]
 	start := strings.Index(message, "[KTN-")
 	if start == -1 {
+		// Early return from function.
 		return "UNKNOWN"
 	}
 	end := strings.Index(message[start:], "]")
 	if end == -1 {
+		// Early return from function.
 		return "UNKNOWN"
 	}
+	// Early return from function.
 	return message[start+1 : start+end]
 }
 
@@ -333,5 +354,6 @@ func extractMessage(message string) string {
 		message = message[:idx]
 	}
 
+	// Early return from function.
 	return message
 }

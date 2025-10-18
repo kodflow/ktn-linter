@@ -3,9 +3,10 @@ package struct003
 import "fmt"
 
 // Variables et constantes (pas d'erreur)
-var globalVar = 42
+var globalVar int = 42
 
-const globalConst = "test"
+// globalConst is a test constant.
+const globalConst string = "test"
 
 // CORRECT: Champs exportés documentés
 

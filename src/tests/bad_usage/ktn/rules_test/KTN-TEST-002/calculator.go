@@ -34,6 +34,7 @@ type Calculator struct{}
 // Returns:
 //   - int: résultat de l'addition
 func (c *Calculator) Add(a int, b int) int {
+	// Early return from function.
 	return a + b
 }
 
@@ -46,6 +47,7 @@ func (c *Calculator) Add(a int, b int) int {
 // Returns:
 //   - int: résultat de la multiplication
 func (c *Calculator) Multiply(a int, b int) int {
+	// Early return from function.
 	return a * b
 }
 

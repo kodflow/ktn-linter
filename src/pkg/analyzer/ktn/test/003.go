@@ -8,7 +8,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule003 = &analysis.Analyzer{
+// Rule003 analyzer for KTN linter.
+var Rule003 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_TEST_003",
 	Doc:  "Vérifie qu'il n'y a pas de _test.go orphelin",
 	Run:  runRule003,
@@ -17,6 +18,7 @@ var Rule003 = &analysis.Analyzer{
 func runRule003(pass *analysis.Pass) (any, error) {
 	// Si on est dans un package non-test, ne pas vérifier
 	if !strings.HasSuffix(pass.Pkg.Name(), "_test") {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -41,5 +43,6 @@ func runRule003(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }

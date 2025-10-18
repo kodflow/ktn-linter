@@ -10,6 +10,7 @@ func (s *serviceImpl) DoSomething() string {
 }
 
 // Exception : types de données publics autorisés
+// UserConfig represents the struct.
 type UserConfig struct {
 	Name string
 	Age  int

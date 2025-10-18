@@ -18,7 +18,9 @@ type MockUserServiceI001Good struct {
 //   - error: une erreur si l'opération échoue
 func (m *MockUserServiceI001Good) GetUser(id string) (string, error) {
 	if m.GetUserFunc != nil {
+		// Early return from function.
 		return m.GetUserFunc(id)
 	}
+	// Early return from function.
 	return "", nil
 }

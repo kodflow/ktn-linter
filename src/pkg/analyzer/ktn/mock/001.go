@@ -16,7 +16,7 @@ import (
 //
 // Incorrect: interfaces.go avec interfaces mais pas de mock.go
 // Correct: interfaces.go avec interfaces ET mock.go avec mocks
-var Rule001 = &analysis.Analyzer{
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_MOCK_001",
 	Doc:  "Vérifie que mock.go existe si interfaces.go contient des interfaces",
 	Run:  runRule001,
@@ -33,23 +33,27 @@ var Rule001 = &analysis.Analyzer{
 func runRule001(pass *analysis.Pass) (any, error) {
 	// Ignorer les packages exemptés
 	if isExemptedPackage(pass.Pkg.Name()) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
 	// Chercher interfaces.go
 	interfacesFile, interfacesPath := findInterfacesFile(pass)
 	if interfacesFile == nil {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
 	// Vérifier si interfaces.go contient des interfaces
 	if !hasInterfaces(interfacesFile) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
 	// Vérifier que mock.go existe
 	checkMockFileExists(pass, interfacesPath)
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -61,6 +65,7 @@ func runRule001(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - bool: true si exempté
 func isExemptedPackage(pkgName string) bool {
+	// Early return from function.
 	return pkgName == "main" || strings.HasSuffix(pkgName, "_test")
 }
 
@@ -80,9 +85,11 @@ func findInterfacesFile(pass *analysis.Pass) (*ast.File, string) {
 		}
 		path := filePos.Name()
 		if filepath.Base(path) == "interfaces.go" {
+			// Early return from function.
 			return file, path
 		}
 	}
+	// Early return from function.
 	return nil, ""
 }
 
@@ -107,10 +114,12 @@ func hasInterfaces(file *ast.File) bool {
 			}
 
 			if _, isInterface := typeSpec.Type.(*ast.InterfaceType); isInterface {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 

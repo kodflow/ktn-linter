@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RulePointer001 = &analysis.Analyzer{
+// RulePointer001 analyzer for pointer operations.
+var RulePointer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_POINTER_001",
 	Doc:  "Détecte le déréférencement potentiel d'un pointeur nil",
 	Run:  runRulePointer001,
@@ -17,12 +18,14 @@ func runRulePointer001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			unary, ok := n.(*ast.UnaryExpr)
 			if !ok || unary.Op.String() != "*" {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si c'est *new(...) - sûr
 			if call, ok := unary.X.(*ast.CallExpr); ok {
 				if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "new" {
+					// Continue traversing AST nodes.
 					return true
 				}
 			}
@@ -47,9 +50,11 @@ func runRulePointer001(pass *analysis.Pass) (any, error) {
 						ident.Name)
 				}
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -57,10 +62,12 @@ func isRecentlyAssignedNil(file *ast.File, ident *ast.Ident, deref ast.Node) boo
 	nilAssigned := false
 	ast.Inspect(file, func(n ast.Node) bool {
 		if n == deref {
+			// Condition not met, return false.
 			return false
 		}
 		assignStmt, ok := n.(*ast.AssignStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 		for i, lhs := range assignStmt.Lhs {
@@ -72,7 +79,9 @@ func isRecentlyAssignedNil(file *ast.File, ident *ast.Ident, deref ast.Node) boo
 				}
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return nilAssigned
 }

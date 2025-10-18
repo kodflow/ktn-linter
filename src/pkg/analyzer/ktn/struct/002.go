@@ -10,7 +10,7 @@ import (
 // Rule002 vérifie la documentation godoc des structs.
 //
 // KTN-STRUCT-002: Documentation godoc des structs
-var Rule002 = &analysis.Analyzer{
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_STRUCT_002",
 	Doc:  "Documentation godoc des structs",
 	Run:  runRule002,
@@ -40,6 +40,7 @@ func runRule002(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 

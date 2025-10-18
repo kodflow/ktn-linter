@@ -22,23 +22,29 @@ import (
 //   - error: une erreur si la validation échoue
 func ValidateComplexInputF007(input string, level int) error {
 	if input == "" {
+		// Return error to caller.
 		return errors.New("vide")
 	}
 	if level > 0 && len(input) < 3 {
+		// Return error to caller.
 		return errors.New("court")
 	}
 	if level > 1 && len(input) > 100 {
+		// Return error to caller.
 		return errors.New("long")
 	}
 	if level > 2 && input[0] == ' ' {
+		// Return error to caller.
 		return errors.New("espace début")
 	}
 	if level > 3 && input[len(input)-1] == ' ' {
+		// Return error to caller.
 		return errors.New("espace fin")
 	}
 	if level > 4 {
 		for _, c := range input {
 			if c == '\n' {
+				// Return error to caller.
 				return errors.New("newline")
 			}
 		}
@@ -46,9 +52,11 @@ func ValidateComplexInputF007(input string, level int) error {
 	if level > 5 {
 		for _, c := range input {
 			if c == '\t' {
+				// Return error to caller.
 				return errors.New("tab")
 			}
 		}
 	}
+	// Early return from function.
 	return nil
 }

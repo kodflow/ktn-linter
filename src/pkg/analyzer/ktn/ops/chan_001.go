@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleChan001 = &analysis.Analyzer{
+// RuleChan001 analyzer for channel operations.
+var RuleChan001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_CHAN_002",
 	Doc:  "Détecte close() appelé par le receiver",
 	Run:  runRuleChan001,
@@ -17,18 +18,21 @@ func runRuleChan001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			callExpr, ok := n.(*ast.CallExpr)
 			if !ok {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Vérifier si c'est un appel à close()
 			ident, ok := callExpr.Fun.(*ast.Ident)
 			if !ok || ident.Name != "close" || len(callExpr.Args) == 0 {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			// Trouver la fonction englobante
 			funcDecl := findEnclosingFunc(file, callExpr)
 			if funcDecl == nil || funcDecl.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -55,9 +59,11 @@ func runRuleChan001(pass *analysis.Pass) (any, error) {
 						"      for v := range ch { process(v) }  // ✅ Détecte fermeture\n"+
 						"  }")
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -67,32 +73,40 @@ func findEnclosingFunc(file *ast.File, target ast.Node) *ast.FuncDecl {
 		if funcDecl, ok := n.(*ast.FuncDecl); ok {
 			if funcDecl.Body != nil && containsNodeInBlock(funcDecl.Body, target) {
 				enclosing = funcDecl
+				// Condition not met, return false.
 				return false
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return enclosing
 }
 
 func containsNodeInBlock(block *ast.BlockStmt, target ast.Node) bool {
 	if block == nil {
+		// Condition not met, return false.
 		return false
 	}
 	found := false
 	ast.Inspect(block, func(n ast.Node) bool {
 		if n == target {
 			found = true
+			// Condition not met, return false.
 			return false
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return found
 }
 
 func functionReceivesFromChannel(funcDecl *ast.FuncDecl, chanExpr ast.Expr) bool {
 	chanName := extractChannelName(chanExpr)
 	if chanName == "" {
+		// Condition not met, return false.
 		return false
 	}
 
@@ -103,6 +117,7 @@ func functionReceivesFromChannel(funcDecl *ast.FuncDecl, chanExpr ast.Expr) bool
 			if unaryExpr.Op.String() == "<-" {
 				if extractChannelName(unaryExpr.X) == chanName {
 					receives = true
+					// Condition not met, return false.
 					return false
 				}
 			}
@@ -111,22 +126,28 @@ func functionReceivesFromChannel(funcDecl *ast.FuncDecl, chanExpr ast.Expr) bool
 		if rangeStmt, ok := n.(*ast.RangeStmt); ok {
 			if extractChannelName(rangeStmt.X) == chanName {
 				receives = true
+				// Condition not met, return false.
 				return false
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return receives
 }
 
 func extractChannelName(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.Ident:
+		// Early return from function.
 		return e.Name
 	case *ast.SelectorExpr:
 		if x, ok := e.X.(*ast.Ident); ok {
+			// Early return from function.
 			return x.Name + "." + e.Sel.Name
 		}
 	}
+	// Early return from function.
 	return ""
 }

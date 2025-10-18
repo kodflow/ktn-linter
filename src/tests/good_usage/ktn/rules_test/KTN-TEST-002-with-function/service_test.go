@@ -2,7 +2,6 @@ package withfunction
 
 import (
 	"testing"
-
 )
 
 // TestProcessData vérifie que ProcessData traite correctement les données.

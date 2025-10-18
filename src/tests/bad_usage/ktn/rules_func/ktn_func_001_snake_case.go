@@ -21,8 +21,10 @@ import (
 //   - error: une erreur si les données sont vides
 func parse_http_requestF001(data string) error {
 	if data == "" {
+		// Return error to caller.
 		return errors.New("data vide")
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -41,5 +43,6 @@ func Calculate_TotalF001(values []int) int {
 	for _, v := range values {
 		total += v
 	}
+	// Early return from function.
 	return total
 }

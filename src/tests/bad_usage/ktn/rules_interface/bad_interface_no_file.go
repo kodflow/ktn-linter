@@ -12,6 +12,7 @@ type SomeStruct struct {
 
 // DoSomething fait quelque chose
 func (s *SomeStruct) DoSomething() error {
+	// Early return from function.
 	return nil
 }
 

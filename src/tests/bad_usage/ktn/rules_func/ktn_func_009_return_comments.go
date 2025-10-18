@@ -12,6 +12,7 @@ import "errors"
 //   - bool: true si au moins une valeur existe
 func findMaxValueWithoutReturnComments(values []int) (int, bool) {
 	if len(values) == 0 {
+		// Early return from function.
 		return 0, false
 	}
 
@@ -22,6 +23,7 @@ func findMaxValueWithoutReturnComments(values []int) (int, bool) {
 		}
 	}
 
+	// Early return from function.
 	return max, true
 }
 
@@ -34,13 +36,16 @@ func findMaxValueWithoutReturnComments(values []int) (int, bool) {
 //   - error: une erreur si invalide
 func validateInputWithoutReturnComments(value int) error {
 	if value < 0 {
+		// Return error to caller.
 		return errors.New("value cannot be negative")
 	}
 
 	if value > 100 {
+		// Return error to caller.
 		return errors.New("value cannot exceed 100")
 	}
 
+	// Early return from function.
 	return nil
 }
 
@@ -55,9 +60,11 @@ func validateInputWithoutReturnComments(value int) error {
 //   - error: une erreur si le dénominateur est zéro
 func divideNumbersWithoutReturnComments(a, b int) (float64, error) {
 	if b == 0 {
+		// Early return from function.
 		return 0, errors.New("division by zero")
 	}
 
+	// Early return from function.
 	return float64(a) / float64(b), nil
 }
 
@@ -71,20 +78,25 @@ func divideNumbersWithoutReturnComments(a, b int) (float64, error) {
 //   - error: une erreur si le traitement échoue
 func processWithMultipleExitsWithoutComments(value int) (string, error) {
 	if value < 0 {
+		// Early return from function.
 		return "", errors.New("negative value")
 	}
 
 	if value == 0 {
+		// Early return from function.
 		return "zero", nil
 	}
 
 	if value < 10 {
+		// Early return from function.
 		return "small", nil
 	}
 
 	if value < 100 {
+		// Early return from function.
 		return "medium", nil
 	}
 
+	// Early return from function.
 	return "large", nil
 }

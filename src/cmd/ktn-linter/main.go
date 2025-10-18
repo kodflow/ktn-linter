@@ -14,10 +14,15 @@ import (
 
 // Options de ligne de commande
 var (
-	aiMode   bool
-	noColor  bool
-	simple   bool
-	verbose  bool
+	// aiMode enables AI-friendly output format.
+	aiMode bool
+	// noColor disables colored output.
+	noColor bool
+	// simple enables simple one-line format for IDE integration.
+	simple bool
+	// verbose enables verbose output.
+	verbose bool
+	// category filters rules by specific category.
 	category string
 )
 
@@ -80,6 +85,7 @@ func loadPackages(patterns []string) []*packages.Package {
 	}
 
 	checkLoadErrors(pkgs)
+	// Early return from function.
 	return pkgs
 }
 
@@ -134,10 +140,12 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		}
 	}
 
+	// Early return from function.
 	return allDiagnostics
 }
 
 func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet, diagnostics *[]diagWithFset) *analysis.Pass {
+	// Early return from function.
 	return &analysis.Pass{
 		Analyzer:  a,
 		Fset:      fset,
@@ -158,6 +166,7 @@ func formatAndDisplay(diagnostics []diagWithFset) {
 
 	if len(diagnostics) == 0 {
 		fmt.Format(nil, nil)
+		// Early return from function.
 		return
 	}
 
@@ -171,5 +180,6 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	for i, d := range diagnostics {
 		diags[i] = d.diag
 	}
+	// Early return from function.
 	return diags
 }

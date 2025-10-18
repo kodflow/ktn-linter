@@ -15,9 +15,9 @@ func TestIsZeroLiteral(t *testing.T) {
 	}{
 		{"zero literal", "0", true},
 		{"non-zero literal", "5", false},
-		{"float zero", "0.0", false}, // FLOAT type, not INT
-		{"string", `"0"`, false},     // STRING type, not INT
-		{"hex zero", "0x0", false},   // INT but value "0x0", not "0"
+		{"float zero", "0.0", false},  // FLOAT type, not INT
+		{"string", `"0"`, false},      // STRING type, not INT
+		{"hex zero", "0x0", false},    // INT but value "0x0", not "0"
 		{"ident not lit", "x", false}, // Not a BasicLit
 	}
 

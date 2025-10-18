@@ -8,7 +8,7 @@ import (
 
 // Rule002 vérifie que les goroutines ont un mécanisme de synchronisation.
 // KTN-GOROUTINE-002: Sans sync.WaitGroup, context.Context ou channel, la goroutine peut leak.
-var Rule002 = &analysis.Analyzer{
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_GOROUTINE_002",
 	Doc:  "Détecter les goroutines sans mécanisme de synchronisation",
 	Run:  runRule002,
@@ -27,13 +27,16 @@ func runRule002(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			funcDecl, ok := n.(*ast.FuncDecl)
 			if !ok || funcDecl.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			checkGoroutineSynchronization(pass, funcDecl)
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -50,6 +53,7 @@ func checkGoroutineSynchronization(pass *analysis.Pass, funcDecl *ast.FuncDecl) 
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		goStmt, ok := n.(*ast.GoStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 
@@ -58,6 +62,7 @@ func checkGoroutineSynchronization(pass *analysis.Pass, funcDecl *ast.FuncDecl) 
 			reportGoroutineWithoutSync(pass, goStmt)
 		}
 
+		// Continue traversing AST nodes.
 		return true
 	})
 }
@@ -77,17 +82,21 @@ func detectWaitGroupInFunc(body *ast.BlockStmt) bool {
 		case *ast.ValueSpec:
 			if isWaitGroupTypeCheck(decl.Type) {
 				hasWaitGroup = true
+				// Condition not met, return false.
 				return false
 			}
 		case *ast.CallExpr:
 			if isWaitGroupMethodCheck(decl.Fun) {
 				hasWaitGroup = true
+				// Condition not met, return false.
 				return false
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return hasWaitGroup
 }
 
@@ -100,15 +109,18 @@ func detectWaitGroupInFunc(body *ast.BlockStmt) bool {
 //   - bool: true si sync.WaitGroup
 func isWaitGroupTypeCheck(typeExpr ast.Expr) bool {
 	if typeExpr == nil {
+		// Condition not met, return false.
 		return false
 	}
 
 	sel, ok := typeExpr.(*ast.SelectorExpr)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
 	x, ok := sel.X.(*ast.Ident)
+	// Early return from function.
 	return ok && x.Name == "sync" && sel.Sel.Name == "WaitGroup"
 }
 
@@ -122,9 +134,11 @@ func isWaitGroupTypeCheck(typeExpr ast.Expr) bool {
 func isWaitGroupMethodCheck(fun ast.Expr) bool {
 	sel, ok := fun.(*ast.SelectorExpr)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
+	// Early return from function.
 	return sel.Sel.Name == "Add" || sel.Sel.Name == "Wait"
 }
 
@@ -137,17 +151,20 @@ func isWaitGroupMethodCheck(fun ast.Expr) bool {
 //   - bool: true si context trouvé
 func hasContextParam(funcDecl *ast.FuncDecl) bool {
 	if funcDecl.Type == nil || funcDecl.Type.Params == nil {
+		// Condition not met, return false.
 		return false
 	}
 
 	for _, param := range funcDecl.Type.Params.List {
 		if sel, ok := param.Type.(*ast.SelectorExpr); ok {
 			if x, ok := sel.X.(*ast.Ident); ok && x.Name == "context" && sel.Sel.Name == "Context" {
+				// Continue traversing AST nodes.
 				return true
 			}
 		}
 	}
 
+	// Condition not met, return false.
 	return false
 }
 
@@ -161,9 +178,11 @@ func hasContextParam(funcDecl *ast.FuncDecl) bool {
 func hasChannelSync(goStmt *ast.GoStmt) bool {
 	funcBody := extractGoroutineFuncBody(goStmt)
 	if funcBody == nil {
+		// Condition not met, return false.
 		return false
 	}
 
+	// Early return from function.
 	return inspectForChannelOps(funcBody)
 }
 
@@ -177,9 +196,11 @@ func hasChannelSync(goStmt *ast.GoStmt) bool {
 func extractGoroutineFuncBody(goStmt *ast.GoStmt) *ast.BlockStmt {
 	funcLit, ok := goStmt.Call.Fun.(*ast.FuncLit)
 	if !ok {
+		// Early return from function.
 		return nil
 	}
 
+	// Early return from function.
 	return funcLit.Body
 }
 
@@ -197,19 +218,24 @@ func inspectForChannelOps(body *ast.BlockStmt) bool {
 		switch stmt := n.(type) {
 		case *ast.SendStmt:
 			hasChannel = true
+			// Condition not met, return false.
 			return false
 		case *ast.UnaryExpr:
 			if stmt.Op.String() == "<-" {
 				hasChannel = true
+				// Condition not met, return false.
 				return false
 			}
 		case *ast.SelectStmt:
 			hasChannel = true
+			// Condition not met, return false.
 			return false
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return hasChannel
 }
 

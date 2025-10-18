@@ -4,7 +4,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule006 = &analysis.Analyzer{
+// Rule006 analyzer for KTN linter.
+var Rule006 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_006",
 	Doc:  "Règle INTERFACE-006 (réservée pour usage futur)",
 	Run:  runRule006,

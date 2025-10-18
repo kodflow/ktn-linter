@@ -84,6 +84,7 @@ func GetAllRules() []*analysis.Analyzer {
 	all = append(all, AllRules.DataStructures...)
 	all = append(all, AllRules.Ops...)
 
+	// Early return from function.
 	return all
 }
 
@@ -97,38 +98,55 @@ func GetAllRules() []*analysis.Analyzer {
 func GetRulesByCategory(category string) []*analysis.Analyzer {
 	switch category {
 	case "func":
+		// Early return from function.
 		return AllRules.Func
 	case "var":
+		// Early return from function.
 		return AllRules.Var
 	case "struct":
+		// Early return from function.
 		return AllRules.Struct
 	case "interface":
+		// Early return from function.
 		return AllRules.Interface
 	case "const":
+		// Early return from function.
 		return AllRules.Const
 	case "error":
+		// Early return from function.
 		return AllRules.Error
 	case "test":
+		// Early return from function.
 		return AllRules.Test
 	case "alloc":
+		// Early return from function.
 		return AllRules.Alloc
 	case "goroutine":
+		// Early return from function.
 		return AllRules.Goroutine
 	case "pool":
+		// Early return from function.
 		return AllRules.Pool
 	case "mock":
+		// Early return from function.
 		return AllRules.Mock
 	case "method":
+		// Early return from function.
 		return AllRules.Method
 	case "package":
+		// Early return from function.
 		return AllRules.Package
 	case "control_flow":
+		// Early return from function.
 		return AllRules.ControlFlow
 	case "data_structures":
+		// Early return from function.
 		return AllRules.DataStructures
 	case "ops":
+		// Early return from function.
 		return AllRules.Ops
 	default:
+		// Early return from function.
 		return nil
 	}
 }

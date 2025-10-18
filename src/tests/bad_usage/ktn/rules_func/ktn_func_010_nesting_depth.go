@@ -20,6 +20,7 @@ func deeplyNestedBad(value int) int {
 		}
 	}
 
+	// Early return from function.
 	return result
 }
 
@@ -46,6 +47,7 @@ func extremelyNestedBad(x, y int) int {
 		}
 	}
 
+	// Early return from function.
 	return count
 }
 
@@ -74,5 +76,6 @@ func complexNestedBad(values []int) []int {
 		}
 	}
 
+	// Early return from function.
 	return result
 }

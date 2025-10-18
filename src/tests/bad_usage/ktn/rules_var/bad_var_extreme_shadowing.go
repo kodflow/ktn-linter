@@ -57,6 +57,7 @@ func ErrorShadowingHell() error {
 		}
 	}
 
+	// Return error to caller.
 	return err
 }
 

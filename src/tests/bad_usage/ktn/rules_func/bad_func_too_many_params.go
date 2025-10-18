@@ -11,15 +11,18 @@ func ProcessUserDataBad(name string, email string, age int, country string, city
 
 // CreateOrderBad a 10 paramètres - CATASTROPHIQUE !
 func CreateOrderBad(userId int, productId int, quantity int, price float64, tax float64, shipping float64, discount float64, currency string, paymentMethod string, notes string) error {
+	// Early return from function.
 	return nil
 }
 
 // SendEmailBad a 7 paramètres
 func SendEmailBad(to string, from string, subject string, body string, cc string, bcc string, attachments []string) error {
+	// Early return from function.
 	return nil
 }
 
 // GenerateReportBad a 9 paramètres
 func GenerateReportBad(startDate string, endDate string, format string, includeCharts bool, includeTables bool, timezone string, locale string, currency string, decimals int) ([]byte, error) {
+	// Return nil to indicate successful analysis.
 	return nil, nil
 }

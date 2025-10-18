@@ -18,8 +18,10 @@ type MockReader struct {
 //   - err: erreur éventuelle
 func (m *MockReader) Read(p []byte) (n int, err error) {
 	if m.ReadFunc != nil {
+		// Early return from function.
 		return m.ReadFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 
@@ -38,8 +40,10 @@ type MockWriter struct {
 //   - err: erreur éventuelle
 func (m *MockWriter) Write(p []byte) (n int, err error) {
 	if m.WriteFunc != nil {
+		// Early return from function.
 		return m.WriteFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 
@@ -59,8 +63,10 @@ type MockReadWriter struct {
 //   - err: erreur éventuelle
 func (m *MockReadWriter) Read(p []byte) (n int, err error) {
 	if m.ReadFunc != nil {
+		// Early return from function.
 		return m.ReadFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 
@@ -74,8 +80,10 @@ func (m *MockReadWriter) Read(p []byte) (n int, err error) {
 //   - err: erreur éventuelle
 func (m *MockReadWriter) Write(p []byte) (n int, err error) {
 	if m.WriteFunc != nil {
+		// Early return from function.
 		return m.WriteFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 
@@ -97,8 +105,10 @@ type MockComplexEmbedded struct {
 //   - err: erreur éventuelle
 func (m *MockComplexEmbedded) Read(p []byte) (n int, err error) {
 	if m.ReadFunc != nil {
+		// Early return from function.
 		return m.ReadFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 
@@ -112,8 +122,10 @@ func (m *MockComplexEmbedded) Read(p []byte) (n int, err error) {
 //   - err: erreur éventuelle
 func (m *MockComplexEmbedded) Write(p []byte) (n int, err error) {
 	if m.WriteFunc != nil {
+		// Early return from function.
 		return m.WriteFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 
@@ -123,8 +135,10 @@ func (m *MockComplexEmbedded) Write(p []byte) (n int, err error) {
 //   - error: erreur si l'opération échoue
 func (m *MockComplexEmbedded) Close() error {
 	if m.CloseFunc != nil {
+		// Early return from function.
 		return m.CloseFunc()
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -134,8 +148,10 @@ func (m *MockComplexEmbedded) Close() error {
 //   - error: erreur si l'opération échoue
 func (m *MockComplexEmbedded) CustomMethod() error {
 	if m.CustomMethodFunc != nil {
+		// Early return from function.
 		return m.CustomMethodFunc()
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -155,8 +171,10 @@ type MockProcessor struct {
 //   - err: erreur éventuelle
 func (m *MockProcessor) Read(p []byte) (n int, err error) {
 	if m.ReadFunc != nil {
+		// Early return from function.
 		return m.ReadFunc(p)
 	}
+	// Early return from function.
 	return 0, nil
 }
 

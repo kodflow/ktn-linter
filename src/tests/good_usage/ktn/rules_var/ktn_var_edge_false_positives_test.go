@@ -2,7 +2,6 @@ package rules_var
 
 import (
 	"testing"
-
 )
 
 // TestValidHTTPCode teste TODO.

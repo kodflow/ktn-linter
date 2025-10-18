@@ -49,6 +49,7 @@ type userServiceI001 struct {
 //   - string: le nom de l'utilisateur
 //   - error: une erreur si l'opération échoue
 func (s *userServiceI001) GetUser(id string) (string, error) {
+	// Early return from function.
 	return "user-" + id, nil
 }
 
@@ -60,5 +61,6 @@ func (s *userServiceI001) GetUser(id string) (string, error) {
 // Returns:
 //   - *userServiceI001: une nouvelle instance
 func NewUserServiceI001(db string) *userServiceI001 {
+	// Early return from function.
 	return &userServiceI001{db: db}
 }

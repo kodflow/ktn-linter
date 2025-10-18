@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule002 = &analysis.Analyzer{
+// Rule002 analyzer for KTN linter.
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_CONST_002",
 	Doc:  "Vérifie que les groupes de constantes ont un commentaire de groupe",
 	Run:  runRule002,
@@ -35,5 +36,6 @@ func runRule002(pass *analysis.Pass) (any, error) {
 			}
 		}
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }

@@ -22,6 +22,7 @@ func ProcessDataWithExtremeNesting(data map[string]interface{}) error {
 			}
 		}
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -33,6 +34,7 @@ func ValidationNightmare(value interface{}) bool {
 				for i, c := range str { // Niveau 4
 					if c >= 'a' && c <= 'z' { // Niveau 5
 						if i%2 == 0 { // Niveau 6
+							// Continue inspection/processing.
 							return true
 						}
 					}
@@ -40,6 +42,7 @@ func ValidationNightmare(value interface{}) bool {
 			}
 		}
 	}
+	// Stop inspection/processing.
 	return false
 }
 
@@ -63,5 +66,6 @@ func NestedLoopHell(matrix [][][]int) int {
 			}
 		}
 	}
+	// Early return from function.
 	return count
 }

@@ -14,8 +14,10 @@ type MockService struct {
 //   - error: erreur éventuelle
 func (m *MockService) Process() error {
 	if m.ProcessFunc != nil {
+		// Early return from function.
 		return m.ProcessFunc()
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -34,8 +36,10 @@ type MockRepository struct {
 //   - error: erreur éventuelle
 func (m *MockRepository) Save(data string) error {
 	if m.SaveFunc != nil {
+		// Early return from function.
 		return m.SaveFunc(data)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -45,7 +49,9 @@ func (m *MockRepository) Save(data string) error {
 //   - string: données chargées
 func (m *MockRepository) Load() string {
 	if m.LoadFunc != nil {
+		// Early return from function.
 		return m.LoadFunc()
 	}
+	// Early return from function.
 	return ""
 }

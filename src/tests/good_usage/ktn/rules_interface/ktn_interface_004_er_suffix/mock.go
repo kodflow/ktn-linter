@@ -19,8 +19,10 @@ type MockCacheManagerI006Good struct {
 //   - bool: true si la clé existe
 func (m *MockCacheManagerI006Good) GetI006Good(key string) (string, bool) {
 	if m.GetI006GoodFunc != nil {
+		// Early return from function.
 		return m.GetI006GoodFunc(key)
 	}
+	// Early return from function.
 	return "", false
 }
 

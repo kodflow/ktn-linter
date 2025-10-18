@@ -2,7 +2,6 @@ package goodinterfaces
 
 import (
 	"testing"
-
 )
 
 // TestNewService teste TODO.

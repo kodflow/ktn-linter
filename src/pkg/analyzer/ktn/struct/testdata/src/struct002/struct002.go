@@ -32,19 +32,24 @@ type MinimalStruct struct {
 
 // BAD: Structs sans documentation godoc
 
+// BadNoDoc represents the struct.
 type BadNoDoc struct { // want "KTN-STRUCT-002.*commentaire godoc"
 	Field string
 }
+// AnotherBadStruct represents the struct.
 
 type AnotherBadStruct struct { // want "KTN-STRUCT-002.*commentaire godoc"
 	ID   int
 	Name string
+// ThirdBadStruct represents the struct.
 }
 
 type ThirdBadStruct struct { // want "KTN-STRUCT-002.*commentaire godoc"
+// FourthBadStruct represents the struct.
 	Value float64
 }
 
+// FifthBadStruct represents the struct.
 type FourthBadStruct struct { // want "KTN-STRUCT-002.*commentaire godoc"
 	Data string
 }
@@ -68,6 +73,7 @@ func MyFunc() {
 	fmt.Println("test")
 }
 
+// GroupedBad represents the struct.
 // GroupedGood est documenté.
 type GroupedGood struct {
 	Value int

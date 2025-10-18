@@ -14,5 +14,6 @@ func (c *counterGood) SetValue(v int) {
 
 // ✅ GOOD: receiver non-pointeur OK si pas de modification
 func (c counterGood) Get() int {
+	// Early return from function.
 	return c.count // ✅ OK: lecture seule
 }

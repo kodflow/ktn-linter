@@ -118,13 +118,20 @@ var (
 
 // Numeric values
 var (
-	smallInt8       int8       = 1
-	largeInt64      int64      = 999999
-	defaultUint     uint       = 100
-	preciseFloat32  float32    = 0.001
+	// smallInt8 describes this variable.
+	smallInt8 int8 = 1
+	// largeInt64 describes this variable.
+	largeInt64 int64 = 999999
+	// defaultUint describes this variable.
+	defaultUint uint = 100
+	// preciseFloat32 describes this variable.
+	preciseFloat32 float32 = 0.001
+	// phaseComplex128 describes this variable.
 	phaseComplex128 complex128 = 0.707 + 0.707i
-	controlByte     byte       = 0x1F
-	escapeRune      rune       = '\\'
+	// controlByte describes this variable.
+	controlByte byte = 0x1F
+	// escapeRune describes this variable.
+	escapeRune rune = '\\'
 )
 
 // ❌ CAS INCORRECT : Déclaration sans valeur initiale pour types numériques (KTN-VAR-004)
@@ -132,13 +139,20 @@ var (
 
 // counters est un groupe de compteurs sans initialisation
 var (
-	globalInt8Counter   int8
-	globalInt32Counter  int32
-	globalInt64Counter  int64
-	globalUintCounter   uint
+	// globalInt8Counter describes this variable.
+	globalInt8Counter int8
+	// globalInt32Counter describes this variable.
+	globalInt32Counter int32
+	// globalInt64Counter describes this variable.
+	globalInt64Counter int64
+	// globalUintCounter describes this variable.
+	globalUintCounter uint
+	// globalUint64Counter describes this variable.
 	globalUint64Counter uint64
-	globalFloat32Sum    float32
-	globalComplex64Val  complex64
+	// globalFloat32Sum describes this variable.
+	globalFloat32Sum float32
+	// globalComplex64Val describes this variable.
+	globalComplex64Val complex64
 )
 
 // ❌ CAS INCORRECT : Multiple déclarations pour types similaires (KTN-VAR-007)

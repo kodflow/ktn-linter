@@ -6,6 +6,7 @@ func sumValuesGood(numbers []int) int {
 	for num := range numbers { // ✅ pas de _ inutile
 		sum += numbers[num]
 	}
+	// Early return from function.
 	return sum
 }
 
@@ -16,6 +17,7 @@ func sumValuesDirectGood(numbers []int) int {
 		// En fait, pour avoir que la valeur dans un slice, il FAUT utiliser _
 		sum += num
 	}
+	// Early return from function.
 	return sum
 }
 
@@ -80,6 +82,7 @@ func countRunesGood(s string) int {
 			count++
 		}
 	}
+	// Early return from function.
 	return count
 }
 
@@ -89,6 +92,7 @@ func sumWithClassicFor(numbers []int) int {
 	for i := 0; i < len(numbers); i++ { // ✅ for classique OK aussi
 		sum += numbers[i]
 	}
+	// Early return from function.
 	return sum
 }
 

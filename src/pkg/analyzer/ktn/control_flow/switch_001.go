@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleSwitch001 = &analysis.Analyzer{
+// RuleSwitch001 analyzer for switch statements.
+var RuleSwitch001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_SWITCH_005",
 	Doc:  "Détecte les switch avec un seul case",
 	Run:  runRuleSwitch001,
@@ -17,6 +18,7 @@ func runRuleSwitch001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			switchStmt, ok := n.(*ast.SwitchStmt)
 			if !ok || switchStmt.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -51,8 +53,10 @@ func runRuleSwitch001(pass *analysis.Pass) (any, error) {
 						"      doDefault()\n"+
 						"  }")
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }

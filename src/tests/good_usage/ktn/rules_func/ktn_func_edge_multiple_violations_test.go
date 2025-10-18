@@ -2,7 +2,6 @@ package rules_func
 
 import (
 	"testing"
-
 )
 
 // TestGoodFunctionName teste TODO.

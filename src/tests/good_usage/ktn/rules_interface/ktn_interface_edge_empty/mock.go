@@ -17,8 +17,10 @@ type MockProcessor struct {
 //   - string: résultat du traitement
 func (m *MockProcessor) Process(data string) string {
 	if m.ProcessFunc != nil {
+		// Early return from function.
 		return m.ProcessFunc(data)
 	}
+	// Early return from function.
 	return ""
 }
 
@@ -38,8 +40,10 @@ type MockCache struct {
 //   - bool: true si la clé existe
 func (m *MockCache) Get(key string) (string, bool) {
 	if m.GetFunc != nil {
+		// Early return from function.
 		return m.GetFunc(key)
 	}
+	// Early return from function.
 	return "", false
 }
 
@@ -76,7 +80,9 @@ func (m *MockContainer[T]) Add(item T) {
 //   - []T: tous les éléments du conteneur
 func (m *MockContainer[T]) GetAll() []T {
 	if m.GetAllFunc != nil {
+		// Early return from function.
 		return m.GetAllFunc()
 	}
+	// Early return from function.
 	return nil
 }

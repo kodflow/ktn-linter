@@ -10,7 +10,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var Rule002 = &analysis.Analyzer{
+// Rule002 analyzer for KTN linter.
+var Rule002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_INTERFACE_002",
 	Doc:  "Vérifie qu'il n'y a pas de structs publiques",
 	Run:  RunRule002,
@@ -20,6 +21,7 @@ var Rule002 = &analysis.Analyzer{
 func RunRule002(pass *analysis.Pass) (any, error) {
 	// Packages exemptés
 	if IsExemptedPackage002(pass.Pkg.Name()) {
+		// Analysis completed successfully.
 		return nil, nil
 	}
 
@@ -83,6 +85,7 @@ func RunRule002(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -91,9 +94,11 @@ func IsExemptedPackage002(pkgName string) bool {
 	exempted := []string{"main", "main_test"}
 	for _, exempt := range exempted {
 		if pkgName == exempt || strings.HasSuffix(pkgName, "_test") {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
+	// Condition not met, return false.
 	return false
 }
 
@@ -109,9 +114,11 @@ func isAllowedPublicType002(typeName string) bool {
 
 	for _, suffix := range allowedSuffixes {
 		if strings.HasSuffix(typeName, suffix) {
+			// Continue traversing AST nodes.
 			return true
 		}
 	}
 
+	// Condition not met, return false.
 	return false
 }

@@ -6,7 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleReturn001 = &analysis.Analyzer{
+// RuleReturn001 analyzer for return statements.
+var RuleReturn001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_RETURN_004",
 	Doc:  "Détecte les naked returns dans des fonctions longues",
 	Run:  runRuleReturn001,
@@ -17,6 +18,7 @@ func runRuleReturn001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			funcDecl, ok := n.(*ast.FuncDecl)
 			if !ok || funcDecl.Type == nil || funcDecl.Type.Results == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -30,6 +32,7 @@ func runRuleReturn001(pass *analysis.Pass) (any, error) {
 			}
 
 			if !hasNamedReturns || funcDecl.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -37,6 +40,7 @@ func runRuleReturn001(pass *analysis.Pass) (any, error) {
 			ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 				returnStmt, ok := n.(*ast.ReturnStmt)
 				if !ok {
+					// Continue traversing AST nodes.
 					return true
 				}
 
@@ -65,16 +69,20 @@ func runRuleReturn001(pass *analysis.Pass) (any, error) {
 							funcDecl.Name.Name)
 					}
 				}
+				// Continue traversing AST nodes.
 				return true
 			})
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
 func isFunctionLong(funcDecl *ast.FuncDecl) bool {
 	if funcDecl.Body == nil {
+		// Condition not met, return false.
 		return false
 	}
 	statementCount := 0
@@ -85,7 +93,9 @@ func isFunctionLong(funcDecl *ast.FuncDecl) bool {
 			*ast.SwitchStmt, *ast.SelectStmt, *ast.DeferStmt:
 			statementCount++
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return statementCount > 10
 }

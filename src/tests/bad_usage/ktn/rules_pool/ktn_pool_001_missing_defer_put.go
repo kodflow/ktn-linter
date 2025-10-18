@@ -3,14 +3,18 @@ package rules_pool_bad
 
 import "sync"
 
+// bufferPool manages buffer allocation and reuse.
 var bufferPool = sync.Pool{
 	New: func() interface{} {
+		// Early return from function.
 		return make([]byte, 1024)
 	},
 }
 
+// objectPool manages object allocation and reuse.
 var objectPool = &sync.Pool{
 	New: func() interface{} {
+		// Early return from function.
 		return &DataObject{}
 	},
 }
@@ -110,6 +114,7 @@ func processBuffer(buf []byte) {
 // BadNestedGet obtient un buffer dans une fonction imbriquée.
 func BadNestedGet() {
 	helper := func() []byte {
+		// Early return from function.
 		return bufferPool.Get().([]byte) // Viole KTN-POOL-001
 	}
 	buf := helper()
@@ -149,6 +154,7 @@ func BadGetBeforeError() error {
 }
 
 func processWithError() error {
+	// Early return from function.
 	return nil
 }
 

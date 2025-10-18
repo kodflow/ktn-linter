@@ -61,5 +61,6 @@ func ProcessLargeOrderF006(ctx context.Context, orderID int) error {
 	// Étape 12
 	_ = "step 12"
 
+	// Early return from function.
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 
 // Rule001 vérifie que les goroutines lancées dans des boucles ont une synchronisation appropriée.
 // KTN-GOROUTINE-001: Goroutines illimitées dans une boucle causent des fuites mémoire.
-var Rule001 = &analysis.Analyzer{
+var Rule001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_GOROUTINE_001",
 	Doc:  "Détecter les goroutines lancées dans une boucle sans limitation",
 	Run:  runRule001,
@@ -27,13 +27,16 @@ func runRule001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			funcDecl, ok := n.(*ast.FuncDecl)
 			if !ok || funcDecl.Body == nil {
+				// Continue traversing AST nodes.
 				return true
 			}
 
 			checkGoroutinesInFunction(pass, funcDecl)
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -49,6 +52,7 @@ func checkGoroutinesInFunction(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		goStmt, ok := n.(*ast.GoStmt)
 		if !ok {
+			// Continue traversing AST nodes.
 			return true
 		}
 
@@ -58,6 +62,7 @@ func checkGoroutinesInFunction(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 			reportGoroutineInLoop(pass, goStmt)
 		}
 
+		// Continue traversing AST nodes.
 		return true
 	})
 }
@@ -78,17 +83,21 @@ func isInsideLoop(body *ast.BlockStmt, goStmt *ast.GoStmt) bool {
 		case *ast.ForStmt:
 			if containsGoStmt(loop.Body, goStmt) {
 				insideLoop = true
+				// Condition not met, return false.
 				return false
 			}
 		case *ast.RangeStmt:
 			if containsGoStmt(loop.Body, goStmt) {
 				insideLoop = true
+				// Condition not met, return false.
 				return false
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return insideLoop
 }
 
@@ -106,11 +115,14 @@ func containsGoStmt(block *ast.BlockStmt, target *ast.GoStmt) bool {
 	ast.Inspect(block, func(n ast.Node) bool {
 		if n == target {
 			found = true
+			// Condition not met, return false.
 			return false
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return found
 }
 
@@ -129,17 +141,21 @@ func detectWaitGroup(body *ast.BlockStmt) bool {
 		case *ast.ValueSpec:
 			if isWaitGroupType(decl.Type) {
 				hasWaitGroup = true
+				// Condition not met, return false.
 				return false
 			}
 		case *ast.CallExpr:
 			if isWaitGroupMethod(decl.Fun) {
 				hasWaitGroup = true
+				// Condition not met, return false.
 				return false
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
 
+	// Early return from function.
 	return hasWaitGroup
 }
 
@@ -152,15 +168,18 @@ func detectWaitGroup(body *ast.BlockStmt) bool {
 //   - bool: true si sync.WaitGroup
 func isWaitGroupType(typeExpr ast.Expr) bool {
 	if typeExpr == nil {
+		// Condition not met, return false.
 		return false
 	}
 
 	sel, ok := typeExpr.(*ast.SelectorExpr)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
 	x, ok := sel.X.(*ast.Ident)
+	// Early return from function.
 	return ok && x.Name == "sync" && sel.Sel.Name == "WaitGroup"
 }
 
@@ -174,9 +193,11 @@ func isWaitGroupType(typeExpr ast.Expr) bool {
 func isWaitGroupMethod(fun ast.Expr) bool {
 	sel, ok := fun.(*ast.SelectorExpr)
 	if !ok {
+		// Condition not met, return false.
 		return false
 	}
 
+	// Early return from function.
 	return sel.Sel.Name == "Add" || sel.Sel.Name == "Wait"
 }
 

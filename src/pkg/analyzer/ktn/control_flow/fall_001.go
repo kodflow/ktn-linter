@@ -7,7 +7,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-var RuleFall001 = &analysis.Analyzer{
+// RuleFall001 analyzer for fallthrough statements.
+var RuleFall001 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FALL_001",
 	Doc:  "Détecte fallthrough hors d'un switch",
 	Run:  runRuleFall001,
@@ -18,6 +19,7 @@ func runRuleFall001(pass *analysis.Pass) (any, error) {
 		ast.Inspect(file, func(n ast.Node) bool {
 			branchStmt, ok := n.(*ast.BranchStmt)
 			if !ok || branchStmt.Tok != token.FALLTHROUGH {
+				// Continue traversing AST nodes.
 				return true
 			}
 
@@ -41,9 +43,11 @@ func runRuleFall001(pass *analysis.Pass) (any, error) {
 						"      doTwo()\n"+
 						"  }")
 			}
+			// Continue traversing AST nodes.
 			return true
 		})
 	}
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -57,6 +61,7 @@ func isInsideSwitchCase(file *ast.File, target ast.Node) bool {
 						for _, s := range caseClause.Body {
 							if s == target {
 								inCase = true
+								// Condition not met, return false.
 								return false
 							}
 						}
@@ -64,7 +69,9 @@ func isInsideSwitchCase(file *ast.File, target ast.Node) bool {
 				}
 			}
 		}
+		// Continue traversing AST nodes.
 		return true
 	})
+	// Early return from function.
 	return inCase
 }

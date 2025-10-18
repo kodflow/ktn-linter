@@ -7,12 +7,14 @@ type Service interface {
 }
 
 // serviceImpl est un struct PUBLIC dans interfaces.go - VIOLATION !
+// ServiceImpl represents the struct.
 type ServiceImpl struct {
 	data string
 }
 
 // Process implémente Service.
 func (s *ServiceImpl) Process() error {
+	// Early return from function.
 	return nil
 }
 
@@ -28,5 +30,6 @@ type repositoryImpl struct {
 
 // Save implémente Repository.
 func (r *repositoryImpl) Save(data string) error {
+	// Early return from function.
 	return nil
 }

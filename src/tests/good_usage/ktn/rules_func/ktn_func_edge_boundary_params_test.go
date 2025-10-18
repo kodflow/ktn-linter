@@ -2,7 +2,6 @@ package rules_func
 
 import (
 	"testing"
-
 )
 
 // TestFiveParamsIsOk teste la fonction avec 5 paramètres.

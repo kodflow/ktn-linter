@@ -12,18 +12,19 @@ import (
 // Trop d'imbrication rend le code difficile à lire.
 //
 // Incorrect:
-//   if a {
-//       if b {
-//           if c {
-//               if d { // 4 niveaux !
-//                   ...
-//               }
-//           }
-//       }
-//   }
+//
+//	if a {
+//	    if b {
+//	        if c {
+//	            if d { // 4 niveaux !
+//	                ...
+//	            }
+//	        }
+//	    }
+//	}
 //
 // Correct: décomposer en sous-fonctions ou utiliser early returns
-var Rule009 = &analysis.Analyzer{
+var Rule009 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "KTN_FUNC_009",
 	Doc:  "Vérifie que la profondeur d'imbrication ne dépasse pas 3 niveaux",
 	Run:  runRule009,
@@ -49,6 +50,7 @@ func runRule009(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Analysis completed successfully.
 	return nil, nil
 }
 
@@ -61,6 +63,7 @@ func checkNestingDepth(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	funcName := funcDecl.Name.Name
 
 	if funcDecl.Body == nil {
+		// Early return from function.
 		return
 	}
 
@@ -84,8 +87,10 @@ func calculateMaxNestingDepth(node ast.Node, currentDepth int) int {
 	maxDepth := currentDepth
 	ast.Inspect(node, func(n ast.Node) bool {
 		maxDepth = inspectNestingNode(n, maxDepth, currentDepth)
+		// Early return from function.
 		return shouldContinueInspection(n)
 	})
+	// Early return from function.
 	return maxDepth
 }
 
@@ -114,6 +119,7 @@ func inspectNestingNode(n ast.Node, currentMax, depth int) int {
 	case *ast.SelectStmt:
 		currentMax = updateMaxDepth(currentMax, stmt.Body, depth)
 	}
+	// Early return from function.
 	return currentMax
 }
 
@@ -127,8 +133,10 @@ func inspectNestingNode(n ast.Node, currentMax, depth int) int {
 func shouldContinueInspection(n ast.Node) bool {
 	switch n.(type) {
 	case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.SwitchStmt, *ast.SelectStmt:
+		// Condition not met, return false.
 		return false
 	}
+	// Continue traversing AST nodes.
 	return true
 }
 
@@ -144,7 +152,9 @@ func shouldContinueInspection(n ast.Node) bool {
 func updateMaxDepth(currentMax int, node ast.Node, depth int) int {
 	newDepth := calculateMaxNestingDepth(node, depth+1)
 	if newDepth > currentMax {
+		// Early return from function.
 		return newDepth
 	}
+	// Early return from function.
 	return currentMax
 }

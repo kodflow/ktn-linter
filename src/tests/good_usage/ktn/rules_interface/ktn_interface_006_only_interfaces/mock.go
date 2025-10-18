@@ -19,8 +19,10 @@ type MockService struct {
 //   - error: erreur si le traitement échoue
 func (m *MockService) Process(data string) error {
 	if m.ProcessFunc != nil {
+		// Early return from function.
 		return m.ProcessFunc(data)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -30,8 +32,10 @@ func (m *MockService) Process(data string) error {
 //   - string: le statut actuel
 func (m *MockService) GetStatus() string {
 	if m.GetStatusFunc != nil {
+		// Early return from function.
 		return m.GetStatusFunc()
 	}
+	// Early return from function.
 	return "mock"
 }
 
@@ -53,8 +57,10 @@ type MockRepository struct {
 //   - error: erreur si la sauvegarde échoue
 func (m *MockRepository) Save(data string) error {
 	if m.SaveFunc != nil {
+		// Early return from function.
 		return m.SaveFunc(data)
 	}
+	// Early return from function.
 	return nil
 }
 
@@ -68,8 +74,10 @@ func (m *MockRepository) Save(data string) error {
 //   - error: erreur si le chargement échoue
 func (m *MockRepository) Load(id string) (string, error) {
 	if m.LoadFunc != nil {
+		// Early return from function.
 		return m.LoadFunc(id)
 	}
+	// Early return from function.
 	return "", nil
 }
 

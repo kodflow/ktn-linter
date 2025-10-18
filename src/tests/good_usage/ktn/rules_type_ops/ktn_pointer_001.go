@@ -17,6 +17,7 @@ func safeDerefWithNew() {
 
 func safeCheck(p *int) {
 	if p == nil {
+		// Early return from function.
 		return
 	}
 	println(*p) // ✅ safe
