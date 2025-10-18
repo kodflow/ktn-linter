@@ -3,7 +3,7 @@ package ktn_interface
 import "golang.org/x/tools/go/analysis"
 
 var AllRules = []*analysis.Analyzer{
-	Rule001, Rule002, Rule003, Rule004, Rule003, Rule004,
+	Rule001, Rule002, Rule003, Rule004, Rule005, Rule006,
 }
 
 func GetRules() []*analysis.Analyzer {
