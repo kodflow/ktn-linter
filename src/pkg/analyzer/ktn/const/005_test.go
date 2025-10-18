@@ -7,7 +7,7 @@ import (
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
-func TestConst002(t *testing.T) {
+func TestConst005(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, ktnconst.Analyzer002, "const002")
+	analysistest.Run(t, testdata, ktnconst.Analyzer005, "const005")
 }

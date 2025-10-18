@@ -171,6 +171,8 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 		fileMap[filename] = append(fileMap[filename], diag)
 	}
 
+	// groups holds the configuration value.
+
 	var groups []DiagnosticGroupData
 	for filename, diags := range fileMap {
 		// Trier par ligne
@@ -196,6 +198,8 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 
 // filterAndSortDiagnostics filtre et trie les diagnostics par position
 func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostics []analysis.Diagnostic) []analysis.Diagnostic {
+	// filtered holds the configuration value.
+
 	var filtered []analysis.Diagnostic
 	for _, diag := range diagnostics {
 		pos := fset.Position(diag.Pos)

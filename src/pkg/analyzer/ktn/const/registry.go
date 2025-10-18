@@ -1,14 +1,14 @@
-package ktn_const
+package ktnconst
 
 import "golang.org/x/tools/go/analysis"
 
-// AllRules contains all analyzer rules for this category.
-var AllRules []*analysis.Analyzer = []*analysis.Analyzer{
-	Rule001, Rule002, Rule003, Rule004,
-}
-
-// GetRules returns all analyzer rules for this category.
-func GetRules() []*analysis.Analyzer {
-	// Early return from function.
-	return AllRules
+// Analyzers returns all const-related analyzers
+func Analyzers() []*analysis.Analyzer {
+	return []*analysis.Analyzer{
+		Analyzer001,
+		Analyzer002,
+		Analyzer003,
+		Analyzer004,
+		Analyzer005,
+	}
 }

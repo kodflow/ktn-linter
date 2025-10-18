@@ -1,50 +1,59 @@
-package ktn_const
+package ktnconst
 
 import (
 	"go/ast"
 	"go/token"
 
 	"golang.org/x/tools/go/analysis"
-
-	"github.com/kodflow/ktn-linter/src/pkg/analyzer/utils"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Rule001 analyzer for KTN linter.
-var Rule001 *analysis.Analyzer = &analysis.Analyzer{
-	Name: "KTN_CONST_001",
-	Doc:  "Vérifie que les constantes sont regroupées dans un bloc const()",
-	Run:  runRule001,
+// Analyzer001 checks that constants have explicit types
+var Analyzer001 = &analysis.Analyzer{
+	Name:     "ktnconst001",
+	Doc:      "KTN-CONST-001: Vérifie que les constantes ont un type explicite",
+	Run:      runConst001,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-func runRule001(pass *analysis.Pass) (any, error) {
-	for _, file := range pass.Files {
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			if !ok || genDecl.Tok != token.CONST {
+func runConst001(pass *analysis.Pass) (any, error) {
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.GenDecl)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		genDecl := n.(*ast.GenDecl)
+
+		// Only check const declarations
+		if genDecl.Tok != token.CONST {
+			return
+		}
+
+		for _, spec := range genDecl.Specs {
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			if !ok {
 				continue
 			}
 
-			// Vérifier si c'est une déclaration non groupée (pas de parenthèses)
-			if genDecl.Lparen == token.NoPos {
-				reportUngroupedConst(pass, genDecl)
+			// Check if the constant has an explicit type
+			if valueSpec.Type == nil {
+				// If there are values, it's an error (not inheriting from iota pattern)
+				// If there are no values, it's OK (inheriting type and value from previous line - iota pattern)
+				if len(valueSpec.Values) > 0 {
+					for _, name := range valueSpec.Names {
+						pass.Reportf(
+							name.Pos(),
+							"KTN-CONST-001: la constante '%s' doit avoir un type explicite",
+							name.Name,
+						)
+					}
+				}
 			}
 		}
-	}
-	// Analysis completed successfully.
-	return nil, nil
-}
+	})
 
-// reportUngroupedConst signale une constante non groupée.
-func reportUngroupedConst(pass *analysis.Pass, genDecl *ast.GenDecl) {
-	for _, spec := range genDecl.Specs {
-		valueSpec, ok := spec.(*ast.ValueSpec)
-		if !ok {
-			continue
-		}
-		for _, name := range valueSpec.Names {
-			pass.Reportf(name.Pos(),
-				"[KTN_CONST_001] Constante '%s' déclarée individuellement. Regroupez les constantes dans un bloc const ().\nExemple:\n  const (\n      %s %s = ...\n  )",
-				name.Name, name.Name, utils.GetTypeString(valueSpec))
-		}
-	}
+	return nil, nil
 }

@@ -90,6 +90,8 @@ func loadPackages(patterns []string) []*packages.Package {
 }
 
 func checkLoadErrors(pkgs []*packages.Package) {
+	// hasLoadErrors holds the configuration value.
+
 	var hasLoadErrors bool
 	for _, pkg := range pkgs {
 		for _, err := range pkg.Errors {
@@ -103,6 +105,8 @@ func checkLoadErrors(pkgs []*packages.Package) {
 }
 
 func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
+	// analyzers holds the configuration value.
+
 	var analyzers []*analysis.Analyzer
 
 	// Sélectionner les analyseurs selon la catégorie
@@ -121,6 +125,8 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 			fmt.Fprintf(os.Stderr, "Running all %d KTN rules\n", len(analyzers))
 		}
 	}
+
+	// allDiagnostics holds the configuration value.
 
 	var allDiagnostics []diagWithFset
 
