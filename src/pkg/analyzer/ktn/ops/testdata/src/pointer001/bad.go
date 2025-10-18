@@ -20,7 +20,7 @@ func GoodWithNilCheck(u *User) {
 	}
 }
 
-func GoodNonNilPointer() {
+func GoodStructLiteral() {
 	u := &User{Name: "test"}
 	_ = u.Name
 }
