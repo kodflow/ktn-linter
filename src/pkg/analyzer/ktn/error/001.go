@@ -214,3 +214,8 @@ func reportUnwrappedError(pass *analysis.Pass, returnStmt *ast.ReturnStmt, varNa
 			"  }",
 		varName, varName)
 }
+
+// ExportedIsErrorVariable exports isErrorVariable for testing
+func ExportedIsErrorVariable(pass *analysis.Pass, ident *ast.Ident) bool {
+	return isErrorVariable(pass, ident)
+}

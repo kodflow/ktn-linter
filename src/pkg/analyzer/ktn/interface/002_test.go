@@ -12,3 +12,8 @@ func TestRule002_NoPublicStructs(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule002, "interface002")
 }
+
+func TestRule002_AllowedTypes(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_interface.Rule002, "interface002_allowed")
+}

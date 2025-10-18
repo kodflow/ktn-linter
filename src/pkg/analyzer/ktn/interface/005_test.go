@@ -12,3 +12,8 @@ func TestRule005_InterfacesFileNotEmpty(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule005, "interface005")
 }
+
+func TestRule005_PrivateOnly(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_interface.Rule005, "interface005_private_only")
+}

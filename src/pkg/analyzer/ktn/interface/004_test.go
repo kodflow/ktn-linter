@@ -12,3 +12,8 @@ func TestRule004_ConstructorsRequired(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule004, "interface004")
 }
+
+func TestRule004_EmptyInterface(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_interface.Rule004, "interface004_empty_interface")
+}
