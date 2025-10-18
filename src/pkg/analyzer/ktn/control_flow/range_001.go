@@ -125,3 +125,8 @@ func usesVariable(body *ast.BlockStmt, varName string) bool {
 	})
 	return uses
 }
+
+// FindCopiedVarsExported est une version exportée pour les tests
+func FindCopiedVarsExported(body *ast.BlockStmt, funcLit *ast.FuncLit, rangeVars []string) map[string]bool {
+	return findCopiedVars(body, funcLit, rangeVars)
+}

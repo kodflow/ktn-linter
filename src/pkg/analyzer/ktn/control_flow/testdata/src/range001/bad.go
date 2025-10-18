@@ -19,6 +19,15 @@ func BadCaptureInGoroutine() {
 	}
 }
 
+func BadCaptureIndexAndValue() {
+	items := []string{"a", "b", "c"}
+	for i, v := range items {
+		go func() { // want `\[KTN-RANGE-003\].*` `\[KTN-RANGE-003\].*`
+			println(i, v) // i et v sont capturés
+		}()
+	}
+}
+
 func GoodLocalCopy() {
 	items := []int{1, 2, 3}
 	var funcs []func()

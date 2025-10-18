@@ -10,16 +10,6 @@ package fall001
 // 	}
 // }
 
-func GoodFallthroughInSwitch(x int) {
-	switch x {
-	case 1:
-		process()
-		fallthrough
-	case 2:
-		process()
-	}
-}
-
 func GoodNoFallthrough(x int) {
 	switch x {
 	case 1:

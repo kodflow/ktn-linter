@@ -12,3 +12,8 @@ func TestRule003_NoOrphanTests(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_test.Rule003, "test003")
 }
+
+func TestRule003_Extra(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule003, "test003_extra")
+}

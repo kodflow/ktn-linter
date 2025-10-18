@@ -16,6 +16,81 @@ func TestRule002_CoverageRequired(t *testing.T) {
 	analysistest.Run(t, testdata, ktn_test.Rule002, "test002")
 }
 
+func TestRule002_MainPackage(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_main")
+}
+
+func TestRule002_WindowsMock(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_windows")
+}
+
+func TestRule002_GenDeclCases(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_gendecl")
+}
+
+func TestRule002_EdgeCases(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_edgecases")
+}
+
+func TestRule002_Branches(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_branches")
+}
+
+func TestRule002_Stat(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_stat")
+}
+
+func TestRule002_Func(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_func")
+}
+
+func TestRule002_InterFunc(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_interfunc")
+}
+
+func TestRule002_InterStruct(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_interstruct")
+}
+
+func TestRule002_WinPath(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_winpath/tests/target")
+}
+
+func TestRule002_WinPath2(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_winpath2/tests/bad_usage")
+}
+
+func TestRule002_WinPath3(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_winpath3/tests/good_usage")
+}
+
+func TestRule002_InterConst(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_interconst")
+}
+
+func TestRule002_GenConst(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_genconst")
+}
+
+func TestRule002_TypeAlias2(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, ktn_test.Rule002, "test002_typealias2")
+}
+
 // Tests unitaires pour les fonctions internes
 func TestContainsOnlyInterfaces(t *testing.T) {
 	tests := []struct {

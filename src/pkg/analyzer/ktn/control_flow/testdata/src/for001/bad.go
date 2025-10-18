@@ -16,6 +16,17 @@ func BadForIndexUnderscoreInLoop() {
 	}
 }
 
+func BadForBothUnderscore() {
+	items := []int{1, 2, 3}
+	var i, v int
+	for i, v = range items { // Pas d'erreur - utilise des variables existantes
+		_, _ = i, v
+	}
+	for _, _ = range items { // want `\[KTN-FOR-001\].*`
+		process()
+	}
+}
+
 // Cas corrects pour référence
 
 func GoodUseIndexOnly() {

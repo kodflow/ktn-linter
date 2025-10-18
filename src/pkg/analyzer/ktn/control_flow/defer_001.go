@@ -82,3 +82,8 @@ func containsNode(block *ast.BlockStmt, target ast.Node) bool {
 	})
 	return found
 }
+
+// ContainsNodeExported est une version exportée pour les tests
+func ContainsNodeExported(block *ast.BlockStmt, target ast.Node) bool {
+	return containsNode(block, target)
+}

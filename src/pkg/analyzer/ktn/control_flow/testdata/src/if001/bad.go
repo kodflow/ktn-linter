@@ -36,3 +36,40 @@ func BadComplexCondition(a, b bool) bool {
 		return false
 	}
 }
+
+// Cas qui ne doivent PAS être détectés
+
+func GoodWithInitBad(x int) bool {
+	// if avec initialisation - ne devrait PAS être signalé
+	if y := x > 0; y {
+		return true
+	}
+	return false
+}
+
+func GoodMultipleStatementsBad(x bool) bool {
+	// if avec plusieurs statements - ne devrait PAS être signalé
+	if x {
+		println("debug")
+		return true
+	}
+	return false
+}
+
+func GoodNonBoolReturnBad(x bool) int {
+	// if qui ne retourne pas un booléen littéral
+	if x {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+func GoodSameBoolValueBad(x bool) bool {
+	// if/else qui retournent la même valeur (pas simplifiable)
+	if x {
+		return true
+	} else {
+		return true
+	}
+}
