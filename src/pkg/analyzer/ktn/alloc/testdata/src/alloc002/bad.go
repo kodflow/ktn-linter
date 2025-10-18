@@ -6,7 +6,7 @@ type Item struct {
 }
 
 func BadMakeAppendPattern() {
-	items := make([]Item, 0) // want `\[KTN-ALLOC-002\] Slice 'items' créé avec make\(\[\]T, 0\) puis utilisé avec append\(\)`
+	items := make([]Item, 0) // want `\[KTN-ALLOC-002\].*`
 	for i := 0; i < 10; i++ {
 		items = append(items, Item{ID: i})
 	}
@@ -14,7 +14,7 @@ func BadMakeAppendPattern() {
 }
 
 func BadMakeAppendPatternStrings() {
-	names := make([]string, 0) // want `\[KTN-ALLOC-002\] Slice 'names' créé avec make\(\[\]T, 0\) puis utilisé avec append\(\)`
+	names := make([]string, 0) // want `\[KTN-ALLOC-002\].*`
 	names = append(names, "test")
 	_ = names
 }

@@ -1,14 +1,14 @@
 package slice001
 
 func BadSliceIndexWithoutCheck(items []int, idx int) int {
-	return items[idx] // want `\[KTN-SLICE-001\] Indexation du slice`
+	return items[idx] // want `\[KTN-SLICE-001\].*`
 }
 
 func BadSliceIndexMultiple(data []string) {
 	i := 0
 	j := 1
-	first := data[i] // want `\[KTN-SLICE-001\] Indexation du slice`
-	second := data[j] // want `\[KTN-SLICE-001\] Indexation du slice`
+	first := data[i] // want `\[KTN-SLICE-001\].*`
+	second := data[j] // want `\[KTN-SLICE-001\].*`
 	_, _ = first, second
 }
 

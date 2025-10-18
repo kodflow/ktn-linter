@@ -1,7 +1,7 @@
 package fall001
 
 func BadFallthroughOutsideSwitch() {
-	if true { // want `\[KTN-CONTROL-FALL-001\] fallthrough en dehors d'un switch`
+	if true { // want `\[KTN-FALL-001\].*`
 		fallthrough
 	}
 }

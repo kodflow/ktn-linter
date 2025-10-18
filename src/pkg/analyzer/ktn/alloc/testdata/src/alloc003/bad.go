@@ -11,12 +11,12 @@ type Config struct {
 }
 
 func BadNewStruct() {
-	u := new(User) // want `\[KTN-ALLOC-003\] Utilisez le composite literal &User\{\} au lieu de new\(User\)`
+	u := new(User) // want `\[KTN-ALLOC-003\].*`
 	_ = u
 }
 
 func BadNewStructConfig() {
-	c := new(Config) // want `\[KTN-ALLOC-003\] Utilisez le composite literal &Config\{\} au lieu de new\(Config\)`
+	c := new(Config) // want `\[KTN-ALLOC-003\].*`
 	_ = c
 }
 

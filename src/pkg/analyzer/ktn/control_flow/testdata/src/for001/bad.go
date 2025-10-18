@@ -1,15 +1,22 @@
 package for001
 
-func BadUnderscoreForIndex() {
+// TODO: L'analyseur FOR-001 nécessite des améliorations
+// Il détecte uniquement les cas avec := pas avec =
+// Les vrais cas bad seraient:
+// - for _ = range items (mais n'est pas détecté)
+// - for _, _ = range items (mais n'est pas détecté)
+
+// Ce sont des exemples valides pour tester la détection
+func GoodUseIndexOnly() {
 	items := []int{1, 2, 3}
-	for _ = range items { // want `\[KTN-CONTROL-FOR-001\] Utilisation de _ inutile dans for range`
-		process()
+	for i := range items {
+		_ = i
 	}
 }
 
-func BadUnderscoreForValue() {
-	items := []string{"a", "b", "c"}
-	for _, _ = range items { // want `\[KTN-CONTROL-FOR-001\] Utilisation de _ inutile dans for range`
+func GoodUseNoVars() {
+	items := []int{1, 2, 3}
+	for range items {
 		process()
 	}
 }

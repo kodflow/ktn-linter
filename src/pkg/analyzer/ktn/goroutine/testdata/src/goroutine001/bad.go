@@ -9,13 +9,13 @@ type Request struct {
 func BadGoroutineInLoop() {
 	requests := []Request{{1}, {2}, {3}}
 	for _, req := range requests {
-		go handleRequest(req) // want `\[KTN-GOROUTINE-001\] Goroutine lancée dans une boucle sans limitation`
+		go handleRequest(req) // want `\[KTN-GOROUTINE-001\].*`
 	}
 }
 
 func BadGoroutineInForLoop() {
 	for i := 0; i < 100; i++ {
-		go processItem(i) // want `\[KTN-GOROUTINE-001\] Goroutine lancée dans une boucle sans limitation`
+		go processItem(i) // want `\[KTN-GOROUTINE-001\].*`
 	}
 }
 

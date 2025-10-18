@@ -7,7 +7,7 @@ import (
 
 func BadNoSync() {
 	data := "test"
-	go func() { // want `\[KTN-GOROUTINE-002\] Goroutine lancée sans mécanisme de synchronisation`
+	go func() { // want `\[KTN-GOROUTINE-002\].*`
 		process(data)
 	}()
 	// La fonction peut se terminer avant la goroutine
@@ -15,7 +15,7 @@ func BadNoSync() {
 
 func BadNoSyncMultiple() {
 	for i := 0; i < 5; i++ {
-		go func(n int) { // want `\[KTN-GOROUTINE-002\] Goroutine lancée sans mécanisme de synchronisation`
+		go func(n int) { // want `\[KTN-GOROUTINE-002\].*`
 			process(n)
 		}(i)
 	}

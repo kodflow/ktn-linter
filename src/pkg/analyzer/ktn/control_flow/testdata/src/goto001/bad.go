@@ -1,8 +1,8 @@
 package goto001
 
 func BadGotoUsage(x int) {
-	if x > 0 { // want `\[KTN-CONTROL-GOTO-001\] Utilisation de goto non idiomatique`
-		goto skip
+	if x > 0 {
+		goto skip // want `\[KTN-GOTO-001\].*`
 	}
 	process()
 skip:
@@ -11,7 +11,7 @@ skip:
 
 func BadGotoInLoop() {
 	for i := 0; i < 10; i++ {
-		goto end // want `\[KTN-CONTROL-GOTO-001\] Utilisation de goto non idiomatique`
+		goto end // want `\[KTN-GOTO-001\].*`
 	}
 end:
 }

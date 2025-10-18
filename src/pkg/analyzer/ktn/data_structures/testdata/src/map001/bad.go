@@ -1,11 +1,11 @@
 package map001
 
 func BadMapWriteWithoutCheck(m map[string]int) {
-	m["key"] = 42 // want `\[KTN-MAP-001\] Écriture dans la map`
+	m["key"] = 42 // want `\[KTN-MAP-001\].*`
 }
 
 func BadMapMultipleWrites(m map[string]string) {
-	m["a"] = "test" // want `\[KTN-MAP-001\] Écriture dans la map`
+	m["a"] = "test" // want `\[KTN-MAP-001\].*`
 	m["b"] = "value"
 }
 

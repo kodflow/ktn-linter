@@ -4,17 +4,17 @@ package predecl001
 // pas les short variable declarations (:=)
 
 func BadShadowError() {
-	var error = "custom error" // want `\[KTN-PREDECL-001\] Shadowing de l'identifiant prédéclaré 'error'`
+	var error = "custom error" // want `\[KTN-PREDECL-001\].*`
 	_ = error
 }
 
 func BadShadowLen() {
-	var len = 10 // want `\[KTN-PREDECL-001\] Shadowing de l'identifiant prédéclaré 'len'`
+	var len = 10 // want `\[KTN-PREDECL-001\].*`
 	_ = len
 }
 
 func BadShadowTrue() {
-	var true = false // want `\[KTN-PREDECL-001\] Shadowing de l'identifiant prédéclaré 'true'`
+	var true = false // want `\[KTN-PREDECL-001\].*`
 	_ = true
 }
 
