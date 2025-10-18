@@ -8,6 +8,7 @@ type Service interface {
 }
 // Config represents the struct.
 
+// Config represents the struct.
 type Config struct {
 	Name string
 }

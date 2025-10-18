@@ -11,7 +11,8 @@ import (
 )
 
 // TestRule001_DirectCoverage teste directement Rule001 pour améliorer la couverture.
-func TestRule001_DirectCoverage(t *testing.T) {
+// TestRule001DirectCoverage tests the functionality of the corresponding implementation.
+func TestRule001DirectCoverage(t *testing.T) {
 	src := `package test
 
 // Interface publique
@@ -28,6 +29,7 @@ type PublicStruct struct {
 type PublicAlias = string
 
 // Fonction publique
+// PublicFunction is a public exported function for testing purposes.
 func PublicFunction() {}
 
 // Interface non-exportée (privée)

@@ -40,6 +40,7 @@ func (u *User) validate() bool {
 
 // Calculator represents the struct.
 
+// Calculator represents the struct.
 type Calculator struct {
 	result float64
 }

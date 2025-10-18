@@ -8,6 +8,7 @@ import (
 	ktn_ops "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/ops"
 )
 
+// TestPredeclRule001_ShadowingPredeclared tests the functionality of the corresponding implementation.
 func TestPredeclRule001_ShadowingPredeclared(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_ops.RulePredecl001, "predecl001")

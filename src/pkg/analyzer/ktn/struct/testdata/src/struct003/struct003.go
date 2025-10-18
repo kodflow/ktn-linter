@@ -84,8 +84,11 @@ type FourthBadStruct struct {
 }
 
 // Types non-struct (pas d'erreur)
+// MyInt is a custom type.
 type MyInt int
+// MyString is a custom type.
 type MyString string
+// MyFloat is a custom type.
 type MyFloat float64
 
 // MyFunc est une fonction (pas d'erreur).

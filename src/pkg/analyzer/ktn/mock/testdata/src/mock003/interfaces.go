@@ -10,6 +10,7 @@ type ConcreteType struct {
 }
 // AnotherType represents the struct.
 
+// AnotherType represents the struct.
 type AnotherType struct {
 	Data []byte
 }

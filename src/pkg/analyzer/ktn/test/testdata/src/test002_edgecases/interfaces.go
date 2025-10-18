@@ -8,6 +8,7 @@ type ServiceA interface {
 }
 // ServiceB defines the interface.
 
+// ServiceB defines the interface.
 type ServiceB interface {
 	MethodB() string
 }

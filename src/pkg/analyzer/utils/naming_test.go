@@ -2,6 +2,7 @@ package utils
 
 import "testing"
 
+// TestIsAllCaps tests the functionality of the corresponding implementation.
 func TestIsAllCaps(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -29,6 +30,7 @@ func TestIsAllCaps(t *testing.T) {
 	}
 }
 
+// TestIsMixedCaps tests the functionality of the corresponding implementation.
 func TestIsMixedCaps(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -57,6 +59,7 @@ func TestIsMixedCaps(t *testing.T) {
 	}
 }
 
+// TestIsValidInitialism tests the functionality of the corresponding implementation.
 func TestIsValidInitialism(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -84,6 +87,7 @@ func TestIsValidInitialism(t *testing.T) {
 	}
 }
 
+// TestGetKnownInitialisms tests the functionality of the corresponding implementation.
 func TestGetKnownInitialisms(t *testing.T) {
 	initialisms := getKnownInitialisms()
 
@@ -108,6 +112,7 @@ func TestGetKnownInitialisms(t *testing.T) {
 	}
 }
 
+// TestTryMatchInitialismPrefix tests the functionality of the corresponding implementation.
 func TestTryMatchInitialismPrefix(t *testing.T) {
 	initialisms := getKnownInitialisms()
 

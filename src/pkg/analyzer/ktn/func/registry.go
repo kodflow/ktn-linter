@@ -5,7 +5,7 @@ import "golang.org/x/tools/go/analysis"
 // AllRules contient toutes les règles KTN-FUNC.
 //
 // Cette liste doit être mise à jour lorsqu'une nouvelle règle est ajoutée.
-var AllRules = []*analysis.Analyzer{
+var AllRules []*analysis.Analyzer = []*analysis.Analyzer{
 	Rule001, // KTN-FUNC-001: Nommage MixedCaps
 	Rule002, // KTN-FUNC-002: Documentation godoc
 	Rule003, // KTN-FUNC-003: Format section Params

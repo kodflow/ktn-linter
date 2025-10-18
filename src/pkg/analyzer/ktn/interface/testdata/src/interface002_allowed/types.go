@@ -7,12 +7,14 @@ type UserID struct {
 }
 // AppConfig represents the struct.
 
+// AppConfig represents the struct.
 type AppConfig struct {
 	host string
 	port int
 // ItemCount represents the struct.
 }
 
+// ItemCount represents the struct.
 type ItemCount struct {
 	total int
 }

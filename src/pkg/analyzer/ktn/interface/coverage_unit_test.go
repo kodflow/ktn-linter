@@ -359,6 +359,7 @@ func TestRunRule001EdgeCases(t *testing.T) {
 	t.Run("package with only functions", func(t *testing.T) {
 		src := `package test
 
+// PublicFunction is a public exported function for testing purposes.
 func PublicFunction() {}
 func privateFunction() {}
 `
@@ -491,6 +492,7 @@ type Service interface {
 	Method() error
 }
 
+// NewService creates and returns a new Service instance.
 func NewService() Service {
 	return nil
 }
@@ -658,6 +660,7 @@ func TestCollectPackageInfoNonTypeDecl(t *testing.T) {
 const PublicConst = 42
 var PublicVar = "test"
 
+// PublicFunc is a public exported function for testing purposes.
 func PublicFunc() {}
 `
 	fset := token.NewFileSet()

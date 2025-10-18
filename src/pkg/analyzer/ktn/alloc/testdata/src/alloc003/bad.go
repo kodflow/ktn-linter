@@ -7,6 +7,7 @@ type User struct {
 }
 // Config represents the struct.
 
+// Config represents the struct.
 type Config struct {
 	Host string
 	Port int

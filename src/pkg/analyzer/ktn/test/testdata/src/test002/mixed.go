@@ -7,6 +7,7 @@ type ServiceInterface interface {
 }
 // ServiceImpl represents the struct.
 
+// ServiceImpl represents the struct.
 type ServiceImpl struct {
 	Name string
 }

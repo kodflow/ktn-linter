@@ -150,6 +150,7 @@ type Config struct { Name string }`,
 			name: "interface and function",
 			code: `package test
 type Reader interface { Read() string }
+// DoSomething performs a test operation.
 func DoSomething() {}`,
 			want: false,
 		},

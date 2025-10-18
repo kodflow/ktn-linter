@@ -8,6 +8,7 @@ import (
 	ktn_ops "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/ops"
 )
 
+// TestCompRule001_RedundantComparisons tests the functionality of the corresponding implementation.
 func TestCompRule001_RedundantComparisons(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_ops.RuleComp001, "comp001")

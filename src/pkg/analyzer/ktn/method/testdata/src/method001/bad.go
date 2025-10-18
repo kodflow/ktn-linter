@@ -6,6 +6,7 @@ type Counter struct {
 }
 // User represents the struct.
 
+// User represents the struct.
 type User struct {
 	Name string
 	Age  int
@@ -41,6 +42,7 @@ func (u *User) UpdateUser(name string, age int) {
 // Data represents the struct.
 
 // Test IndexExpr avec slice
+// Data represents the struct.
 type Data struct {
 	items []int
 }
@@ -51,6 +53,7 @@ func (d Data) UpdateItem(index int, value int) {
 }
 
 // Test IndexExpr avec map
+// Cache represents the struct.
 type Cache struct {
 	data map[string]int
 }
@@ -70,6 +73,7 @@ func (c *Cache) SetCorrect(key string, value int) {
 }
 
 // Test assignation directe du receiver
+// Value represents the struct.
 type Value struct {
 	n int
 }

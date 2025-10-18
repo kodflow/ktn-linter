@@ -16,4 +16,5 @@ type UserConfig struct {
 	Age  int
 }
 
+// StatusType is a custom type.
 type StatusType string

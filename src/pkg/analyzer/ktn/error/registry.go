@@ -3,7 +3,7 @@ package ktn_error
 import "golang.org/x/tools/go/analysis"
 
 // AllRules contient toutes les règles KTN-ERROR.
-var AllRules []*analysis.Analyzer = []*analysis.Analyzer = []*analysis.Analyzer = []*analysis.Analyzer{
+var AllRules []*analysis.Analyzer = []*analysis.Analyzer{
 	Rule001, // KTN-ERROR-001: Wrapping d'erreurs avec contexte
 }
 

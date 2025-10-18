@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TestExprToString tests the functionality of the corresponding implementation.
 func TestExprToString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -37,6 +38,7 @@ func TestExprToString(t *testing.T) {
 	}
 }
 
+// TestExprToStringWithUnknownType tests the functionality of the corresponding implementation.
 func TestExprToStringWithUnknownType(t *testing.T) {
 	// Test avec un type non supporté (FuncType)
 	expr := &ast.FuncType{
@@ -48,6 +50,7 @@ func TestExprToStringWithUnknownType(t *testing.T) {
 	}
 }
 
+// TestGetTypeString tests the functionality of the corresponding implementation.
 func TestGetTypeString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -80,6 +83,7 @@ func TestGetTypeString(t *testing.T) {
 	}
 }
 
+// TestGetTypeStringWithNoType tests the functionality of the corresponding implementation.
 func TestGetTypeStringWithNoType(t *testing.T) {
 	// Test avec une ValueSpec sans type explicite
 	fset := token.NewFileSet()
@@ -98,6 +102,7 @@ func TestGetTypeStringWithNoType(t *testing.T) {
 	}
 }
 
+// TestExprToStringNested tests the functionality of the corresponding implementation.
 func TestExprToStringNested(t *testing.T) {
 	// Test avec des types imbriqués complexes
 	tests := []struct {

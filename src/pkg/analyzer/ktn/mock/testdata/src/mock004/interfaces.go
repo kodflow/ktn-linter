@@ -12,6 +12,7 @@ var (
 	ConfigPath   = "/etc/config"
 )
 
+// Alias is a custom type.
 type Alias = string
 
 // Config represents the struct.

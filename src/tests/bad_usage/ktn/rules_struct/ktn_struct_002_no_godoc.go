@@ -11,12 +11,14 @@ type NoDocUserConfig struct {
 
 // NoDocAPIClient represents the struct.
 
+// NoDocAPIClient represents the struct.
 type NoDocAPIClient struct {
 	BaseURL string
 	Timeout int
 	// NoDocDatabaseConnection represents the struct.
 }
 
+// NoDocDatabaseConnection represents the struct.
 type NoDocDatabaseConnection struct {
 	Host     string
 	Port     int
@@ -26,6 +28,7 @@ type NoDocDatabaseConnection struct {
 	Password string
 }
 
+// NoDocHTTPRequestConfig represents the struct.
 type NoDocHTTPRequestConfig struct {
 	Method string
 	URL    string
@@ -34,6 +37,7 @@ type NoDocHTTPRequestConfig struct {
 	Body    []byte
 }
 
+// NoDocCacheEntry represents the struct.
 type NoDocCacheEntry struct {
 	// NoDocWorkerPoolConfig represents the struct.
 	Key       string
@@ -42,6 +46,7 @@ type NoDocCacheEntry struct {
 }
 
 // NoDocErrorResponse represents the struct.
+// NoDocWorkerPoolConfig represents the struct.
 type NoDocWorkerPoolConfig struct {
 	MinWorkers int
 	MaxWorkers int
@@ -50,6 +55,7 @@ type NoDocWorkerPoolConfig struct {
 
 // NoDocAuthToken represents the struct.
 
+// NoDocErrorResponse represents the struct.
 type NoDocErrorResponse struct {
 	Code    int
 	Message string
@@ -57,6 +63,7 @@ type NoDocErrorResponse struct {
 	// NoDocServerConfig represents the struct.
 }
 
+// NoDocAuthToken represents the struct.
 type NoDocAuthToken struct {
 	Token     string
 	ExpiresAt int64
@@ -64,12 +71,14 @@ type NoDocAuthToken struct {
 	UserID string
 }
 
+// NoDocServerConfig represents the struct.
 type NoDocServerConfig struct {
 	Host    string
 	Port    int
 	Timeout int
 }
 
+// NoDocLogConfig represents the struct.
 type NoDocLogConfig struct {
 	Level  string
 	Output string

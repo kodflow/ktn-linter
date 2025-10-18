@@ -133,4 +133,5 @@ func createLoggerV004() interface{} { return nil }
 // ContextV004 represents the struct.
 // UserV004 represents the struct.
 type ContextV004 struct{}
+// UserV004 represents the struct.
 type UserV004 struct{ Name string }

@@ -6,5 +6,5 @@ package test002_interconst
 // MaxSize defines the maximum size.
 const MaxSize int = 100
 
-// GlobalVar is a global variable.
-var GlobalVar int = 200
+// GlobalVar is a global constant.
+const GlobalVar int = 200

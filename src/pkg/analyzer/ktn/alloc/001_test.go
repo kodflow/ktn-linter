@@ -8,6 +8,7 @@ import (
 	ktn_alloc "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/alloc"
 )
 
+// TestRule001_NewReferenceTypes tests the functionality of the corresponding implementation.
 func TestRule001_NewReferenceTypes(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_alloc.Rule001, "alloc001")

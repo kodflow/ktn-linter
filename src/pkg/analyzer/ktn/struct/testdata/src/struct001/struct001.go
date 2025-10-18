@@ -3,9 +3,10 @@ package struct001
 import "fmt"
 
 // Variables et constantes (pas d'erreur)
-var globalVar = 42
+var globalVar int = 42
 
-const globalConst = "test"
+// globalConst is a test constant.
+const globalConst string = "test"
 
 var (
 	multiVar1 = 1
@@ -13,8 +14,10 @@ var (
 )
 
 const (
-	multiConst1 = "a"
-	multiConst2 = "b"
+	// multiConst1 is the first constant.
+	multiConst1 string = "a"
+	// multiConst2 is the second constant.
+	multiConst2 string = "b"
 )
 
 // CORRECT: Structs en MixedCaps
@@ -62,8 +65,11 @@ type another_bad_name struct { // want "KTN-STRUCT-001.*MixedCaps"
 }
 
 // Types non-struct (pas d'erreur)
+// MyInt is a custom type.
 type MyInt int
+// MyString is a custom type.
 type MyString string
+// MyFloat is a custom type.
 type MyFloat float64
 
 // Déclarations groupées

@@ -18,7 +18,8 @@ import (
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestGetArraySize_NilLen(t *testing.T) {
+// TestGetArraySizeNilLen tests the functionality of the corresponding implementation.
+func TestGetArraySizeNilLen(t *testing.T) {
 	// Note: getArraySize is not exported, so we test it indirectly through RuleArray001
 	// This test is kept for documentation but will be refactored to test the public API
 	t.Skip("getArraySize is not exported - test indirectly through RuleArray001")
@@ -30,7 +31,8 @@ func TestGetArraySize_NilLen(t *testing.T) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestGetArraySize_NotBasicLit(t *testing.T) {
+// TestGetArraySizeNotBasicLit tests the functionality of the corresponding implementation.
+func TestGetArraySizeNotBasicLit(t *testing.T) {
 	t.Skip("getArraySize is not exported - test indirectly through RuleArray001")
 }
 
@@ -40,7 +42,8 @@ func TestGetArraySize_NotBasicLit(t *testing.T) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestGetArraySize_InvalidFormat(t *testing.T) {
+// TestGetArraySizeInvalidFormat tests the functionality of the corresponding implementation.
+func TestGetArraySizeInvalidFormat(t *testing.T) {
 	t.Skip("getArraySize is not exported - test indirectly through RuleArray001")
 }
 
@@ -50,7 +53,8 @@ func TestGetArraySize_InvalidFormat(t *testing.T) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestGetArraySize_ValidSize(t *testing.T) {
+// TestGetArraySizeValidSize tests the functionality of the corresponding implementation.
+func TestGetArraySizeValidSize(t *testing.T) {
 	t.Skip("getArraySize is not exported - test indirectly through RuleArray001")
 }
 
@@ -62,7 +66,8 @@ func TestGetArraySize_ValidSize(t *testing.T) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleArray001_NotCompositeLit(t *testing.T) {
+// TestRunRuleArray001NotCompositeLit tests the functionality of the corresponding implementation.
+func TestRunRuleArray001NotCompositeLit(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -78,7 +83,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleArray001_NotArrayType(t *testing.T) {
+// TestRunRuleArray001NotArrayType tests the functionality of the corresponding implementation.
+func TestRunRuleArray001NotArrayType(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -94,7 +100,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleArray001_InvalidArraySize(t *testing.T) {
+// TestRunRuleArray001InvalidArraySize tests the functionality of the corresponding implementation.
+func TestRunRuleArray001InvalidArraySize(t *testing.T) {
 	// Cas où getArraySize retourne -1
 	src := `
 package test
@@ -112,7 +119,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleArray001_ValidArray(t *testing.T) {
+// TestRunRuleArray001ValidArray tests the functionality of the corresponding implementation.
+func TestRunRuleArray001ValidArray(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -128,7 +136,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleArray001_TooManyElements(t *testing.T) {
+// TestRunRuleArray001TooManyElements tests the functionality of the corresponding implementation.
+func TestRunRuleArray001TooManyElements(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -146,7 +155,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleMap001_NotAssignStmt(t *testing.T) {
+// TestRunRuleMap001NotAssignStmt tests the functionality of the corresponding implementation.
+func TestRunRuleMap001NotAssignStmt(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -162,7 +172,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleMap001_LhsNotIndexExpr(t *testing.T) {
+// TestRunRuleMap001LhsNotIndexExpr tests the functionality of the corresponding implementation.
+func TestRunRuleMap001LhsNotIndexExpr(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -179,7 +190,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleMap001_IndexExprXNotIdent(t *testing.T) {
+// TestRunRuleMap001IndexExprXNotIdent tests the functionality of the corresponding implementation.
+func TestRunRuleMap001IndexExprXNotIdent(t *testing.T) {
 	// Cas où indexExpr.X n'est pas un Ident simple
 	src := `
 package test
@@ -199,7 +211,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleMap001_SafeMap(t *testing.T) {
+// TestRunRuleMap001SafeMap tests the functionality of the corresponding implementation.
+func TestRunRuleMap001SafeMap(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -216,7 +229,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleMap001_UnsafeMap(t *testing.T) {
+// TestRunRuleMap001UnsafeMap tests the functionality of the corresponding implementation.
+func TestRunRuleMap001UnsafeMap(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -235,7 +249,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleSlice001_NotIndexExpr(t *testing.T) {
+// TestRunRuleSlice001NotIndexExpr tests the functionality of the corresponding implementation.
+func TestRunRuleSlice001NotIndexExpr(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -251,7 +266,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleSlice001_BasicLitIndex(t *testing.T) {
+// TestRunRuleSlice001BasicLitIndex tests the functionality of the corresponding implementation.
+func TestRunRuleSlice001BasicLitIndex(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -268,7 +284,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleSlice001_IndexNotIdent(t *testing.T) {
+// TestRunRuleSlice001IndexNotIdent tests the functionality of the corresponding implementation.
+func TestRunRuleSlice001IndexNotIdent(t *testing.T) {
 	// Index est une expression complexe
 	src := `
 package test
@@ -286,7 +303,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleSlice001_IndexFromRange(t *testing.T) {
+// TestRunRuleSlice001IndexFromRange tests the functionality of the corresponding implementation.
+func TestRunRuleSlice001IndexFromRange(t *testing.T) {
 	src := `
 package test
 func test() {
@@ -305,7 +323,8 @@ func test() {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleSlice001_UncheckedIndex(t *testing.T) {
+// TestRunRuleSlice001UncheckedIndex tests the functionality of the corresponding implementation.
+func TestRunRuleSlice001UncheckedIndex(t *testing.T) {
 	src := `
 package test
 func test(items []int, i int) {
@@ -321,7 +340,8 @@ func test(items []int, i int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestRunRuleSlice001_CheckedIndex(t *testing.T) {
+// TestRunRuleSlice001CheckedIndex tests the functionality of the corresponding implementation.
+func TestRunRuleSlice001CheckedIndex(t *testing.T) {
 	src := `
 package test
 func test(items []int, i int) {
@@ -341,7 +361,8 @@ func test(items []int, i int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestIsIndexChecked_NotIfStmt(t *testing.T) {
+// TestIsIndexCheckedNotIfStmt tests the functionality of the corresponding implementation.
+func TestIsIndexCheckedNotIfStmt(t *testing.T) {
 	src := `
 package test
 func test(items []int, i int) {
@@ -357,7 +378,8 @@ func test(items []int, i int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestIsIndexChecked_NotBinaryExpr(t *testing.T) {
+// TestIsIndexCheckedNotBinaryExpr tests the functionality of the corresponding implementation.
+func TestIsIndexCheckedNotBinaryExpr(t *testing.T) {
 	src := `
 package test
 func test(items []int, i int) {
@@ -375,7 +397,8 @@ func test(items []int, i int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestIsIndexChecked_WrongOperator(t *testing.T) {
+// TestIsIndexCheckedWrongOperator tests the functionality of the corresponding implementation.
+func TestIsIndexCheckedWrongOperator(t *testing.T) {
 	// Opérateur différent de <
 	src := `
 package test
@@ -394,7 +417,8 @@ func test(items []int, i int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestIsIndexChecked_IdentMismatch(t *testing.T) {
+// TestIsIndexCheckedIdentMismatch tests the functionality of the corresponding implementation.
+func TestIsIndexCheckedIdentMismatch(t *testing.T) {
 	// L'identifiant vérifié n'est pas le bon
 	src := `
 package test
@@ -413,7 +437,8 @@ func test(items []int, i, j int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestIsIndexChecked_NotLenCall(t *testing.T) {
+// TestIsIndexCheckedNotLenCall tests the functionality of the corresponding implementation.
+func TestIsIndexCheckedNotLenCall(t *testing.T) {
 	// La fonction appelée n'est pas len
 	src := `
 package test
@@ -433,7 +458,8 @@ func test(items []int, i int) {
 //   - t: testing instance
 //
 // nolint:KTN-FUNC-001
-func TestIsIndexChecked_CorrectCheck(t *testing.T) {
+// TestIsIndexCheckedCorrectCheck tests the functionality of the corresponding implementation.
+func TestIsIndexCheckedCorrectCheck(t *testing.T) {
 	src := `
 package test
 func test(items []int, i int) {

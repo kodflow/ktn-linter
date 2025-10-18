@@ -8,7 +8,9 @@ import (
 	ktn_interface "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/interface"
 )
 
-func TestRule003_InterfacesInInterfacesFile(t *testing.T) {
+// TestRule003_InterfacesInInterfacesFile tests the functionality of the corresponding implementation.
+// TestRule003InterfacesInInterfacesFile tests the functionality of the corresponding implementation.
+func TestRule003InterfacesInInterfacesFile(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_interface.Rule003, "interface003")
 }

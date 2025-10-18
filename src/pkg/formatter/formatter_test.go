@@ -9,6 +9,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestNewFormatter tests the functionality of the corresponding implementation.
 func TestNewFormatter(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -49,6 +50,7 @@ func createTestDiagnostics() []analysis.Diagnostic {
 	}
 }
 
+// TestFormatEmpty tests the functionality of the corresponding implementation.
 func TestFormatEmpty(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, false)
@@ -62,6 +64,7 @@ func TestFormatEmpty(t *testing.T) {
 	}
 }
 
+// TestFormatHumanMode tests the functionality of the corresponding implementation.
 func TestFormatHumanMode(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, false)
@@ -82,6 +85,7 @@ func TestFormatHumanMode(t *testing.T) {
 	}
 }
 
+// TestFormatAIMode tests the functionality of the corresponding implementation.
 func TestFormatAIMode(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, true, false, false)
@@ -101,6 +105,7 @@ func TestFormatAIMode(t *testing.T) {
 	}
 }
 
+// TestFormatSimpleMode tests the functionality of the corresponding implementation.
 func TestFormatSimpleMode(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, true)
@@ -128,6 +133,7 @@ func TestFormatSimpleMode(t *testing.T) {
 	}
 }
 
+// TestFormatNoColor tests the functionality of the corresponding implementation.
 func TestFormatNoColor(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, true, false)
@@ -146,6 +152,7 @@ func TestFormatNoColor(t *testing.T) {
 	}
 }
 
+// TestExtractCode tests the functionality of the corresponding implementation.
 func TestExtractCode(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -184,6 +191,7 @@ func TestExtractCode(t *testing.T) {
 	}
 }
 
+// TestExtractMessage tests the functionality of the corresponding implementation.
 func TestExtractMessage(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -222,6 +230,7 @@ func TestExtractMessage(t *testing.T) {
 	}
 }
 
+// TestGetCodeColor tests the functionality of the corresponding implementation.
 func TestGetCodeColor(t *testing.T) {
 	formatter := &formatterImpl{noColor: false}
 
@@ -246,6 +255,7 @@ func TestGetCodeColor(t *testing.T) {
 	}
 }
 
+// TestGetCodeColorNoColor tests the functionality of the corresponding implementation.
 func TestGetCodeColorNoColor(t *testing.T) {
 	formatter := &formatterImpl{noColor: true}
 	got := formatter.getCodeColor("KTN-VAR-001")
@@ -254,6 +264,7 @@ func TestGetCodeColorNoColor(t *testing.T) {
 	}
 }
 
+// TestGroupByFile tests the functionality of the corresponding implementation.
 func TestGroupByFile(t *testing.T) {
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
@@ -291,6 +302,7 @@ func TestGroupByFile(t *testing.T) {
 	}
 }
 
+// TestGroupByFileFiltering tests the functionality of the corresponding implementation.
 func TestGroupByFileFiltering(t *testing.T) {
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
@@ -316,6 +328,7 @@ func TestGroupByFileFiltering(t *testing.T) {
 	}
 }
 
+// TestFilterAndSortDiagnostics tests the functionality of the corresponding implementation.
 func TestFilterAndSortDiagnostics(t *testing.T) {
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
@@ -351,6 +364,7 @@ func TestFilterAndSortDiagnostics(t *testing.T) {
 	}
 }
 
+// TestPrintFunctions tests the functionality of the corresponding implementation.
 func TestPrintFunctions(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -416,6 +430,7 @@ func TestPrintFunctions(t *testing.T) {
 	}
 }
 
+// TestFormatSimpleModeWithFiltering tests the functionality of the corresponding implementation.
 func TestFormatSimpleModeWithFiltering(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, true)
@@ -467,6 +482,7 @@ func TestFormatSimpleModeWithFiltering(t *testing.T) {
 	}
 }
 
+// TestFormatHumanModeEmpty tests the functionality of the corresponding implementation.
 func TestFormatHumanModeEmpty(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := &formatterImpl{

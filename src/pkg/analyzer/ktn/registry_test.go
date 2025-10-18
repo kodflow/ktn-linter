@@ -6,6 +6,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestAllRulesNotNil tests the functionality of the corresponding implementation.
 func TestAllRulesNotNil(t *testing.T) {
 	// Verify all rule categories are initialized
 	if AllRules.Func == nil {
@@ -58,6 +59,7 @@ func TestAllRulesNotNil(t *testing.T) {
 	}
 }
 
+// TestGetAllRules tests the functionality of the corresponding implementation.
 func TestGetAllRules(t *testing.T) {
 	all := GetAllRules()
 
@@ -96,6 +98,7 @@ func TestGetAllRules(t *testing.T) {
 	}
 }
 
+// TestGetRulesByCategory tests the functionality of the corresponding implementation.
 func TestGetRulesByCategory(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -138,6 +141,7 @@ func TestGetRulesByCategory(t *testing.T) {
 	}
 }
 
+// TestGetRulesByCategoryUnknown tests the functionality of the corresponding implementation.
 func TestGetRulesByCategoryUnknown(t *testing.T) {
 	tests := []string{
 		"unknown",
@@ -158,6 +162,7 @@ func TestGetRulesByCategoryUnknown(t *testing.T) {
 	}
 }
 
+// TestGetRulesByCategoryReturnsCorrectRules tests the functionality of the corresponding implementation.
 func TestGetRulesByCategoryReturnsCorrectRules(t *testing.T) {
 	// Verify that GetRulesByCategory returns the same slice as AllRules
 	tests := []struct {
@@ -206,6 +211,7 @@ func TestGetRulesByCategoryReturnsCorrectRules(t *testing.T) {
 	}
 }
 
+// TestAllRulesContainValidAnalyzers tests the functionality of the corresponding implementation.
 func TestAllRulesContainValidAnalyzers(t *testing.T) {
 	// Verify that all analyzers have valid names
 	all := GetAllRules()
@@ -230,6 +236,7 @@ func TestAllRulesContainValidAnalyzers(t *testing.T) {
 	}
 }
 
+// TestGetAllRulesConsistency tests the functionality of the corresponding implementation.
 func TestGetAllRulesConsistency(t *testing.T) {
 	// Call GetAllRules multiple times and verify we get the same count
 	firstCall := GetAllRules()

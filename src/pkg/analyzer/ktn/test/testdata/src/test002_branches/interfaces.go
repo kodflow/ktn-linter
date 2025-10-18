@@ -7,6 +7,7 @@ type Reader interface {
 }
 // Writer defines the interface.
 
+// Writer defines the interface.
 type Writer interface {
 	Write(data string) error
 }

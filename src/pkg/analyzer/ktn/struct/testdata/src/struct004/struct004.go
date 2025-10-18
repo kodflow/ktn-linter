@@ -120,6 +120,7 @@ type TooManyWithMultiplePerLine struct { // want "KTN-STRUCT-004.*trop de champs
 }
 
 // Types non-struct (pas d'erreur)
+// MyInt is a custom type.
 type MyInt int
 
 // MyFunc est une fonction (pas d'erreur).

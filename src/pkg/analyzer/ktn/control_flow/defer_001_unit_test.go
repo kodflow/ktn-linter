@@ -8,6 +8,7 @@ import (
 )
 
 // TestContainsNode teste directement la fonction containsNode pour améliorer la couverture
+// TestContainsNode_NilBlock tests the functionality of the corresponding implementation.
 func TestContainsNode_NilBlock(t *testing.T) {
 	// Test avec block nil
 	target := &ast.Ident{Name: "test"}
@@ -17,6 +18,7 @@ func TestContainsNode_NilBlock(t *testing.T) {
 	}
 }
 
+// TestContainsNode_Found tests the functionality of the corresponding implementation.
 func TestContainsNode_Found(t *testing.T) {
 	// Test avec nœud trouvé
 	target := &ast.Ident{Name: "test"}
@@ -33,6 +35,7 @@ func TestContainsNode_Found(t *testing.T) {
 	}
 }
 
+// TestContainsNode_NotFound tests the functionality of the corresponding implementation.
 func TestContainsNode_NotFound(t *testing.T) {
 	// Test avec nœud non trouvé
 	target := &ast.Ident{Name: "test"}

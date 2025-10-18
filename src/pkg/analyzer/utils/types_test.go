@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TestIsZeroLiteral tests the functionality of the corresponding implementation.
 func TestIsZeroLiteral(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -32,6 +33,7 @@ func TestIsZeroLiteral(t *testing.T) {
 	}
 }
 
+// TestIsReferenceType tests the functionality of the corresponding implementation.
 func TestIsReferenceType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -60,6 +62,7 @@ func TestIsReferenceType(t *testing.T) {
 	}
 }
 
+// TestIsStructType tests the functionality of the corresponding implementation.
 func TestIsStructType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -83,6 +86,7 @@ func TestIsStructType(t *testing.T) {
 	}
 }
 
+// TestIsSliceType tests the functionality of the corresponding implementation.
 func TestIsSliceType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -105,6 +109,7 @@ func TestIsSliceType(t *testing.T) {
 	}
 }
 
+// TestGetTypeName tests the functionality of the corresponding implementation.
 func TestGetTypeName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -131,6 +136,7 @@ func TestGetTypeName(t *testing.T) {
 	}
 }
 
+// TestGetTypeNameWithUnsupportedType tests the functionality of the corresponding implementation.
 func TestGetTypeNameWithUnsupportedType(t *testing.T) {
 	// Test avec un type non supporté
 	expr := &ast.FuncType{
@@ -142,6 +148,7 @@ func TestGetTypeNameWithUnsupportedType(t *testing.T) {
 	}
 }
 
+// TestIsMakeSliceZero tests the functionality of the corresponding implementation.
 func TestIsMakeSliceZero(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -168,6 +175,7 @@ func TestIsMakeSliceZero(t *testing.T) {
 	}
 }
 
+// TestIsMakeSliceZeroWithNonCallExpr tests the functionality of the corresponding implementation.
 func TestIsMakeSliceZeroWithNonCallExpr(t *testing.T) {
 	// Test avec une expression qui n'est pas un appel
 	expr := &ast.Ident{Name: "test"}
@@ -177,6 +185,7 @@ func TestIsMakeSliceZeroWithNonCallExpr(t *testing.T) {
 	}
 }
 
+// TestIsMakeSliceZeroWithNonMake tests the functionality of the corresponding implementation.
 func TestIsMakeSliceZeroWithNonMake(t *testing.T) {
 	// Test avec un appel qui n'est pas make
 	fset := token.NewFileSet()

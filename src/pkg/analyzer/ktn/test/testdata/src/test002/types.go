@@ -8,6 +8,7 @@ type Config struct {
 }
 // Settings represents the struct.
 
+// Settings represents the struct.
 type Settings struct {
 	Debug bool
 }

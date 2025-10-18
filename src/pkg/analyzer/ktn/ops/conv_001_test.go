@@ -8,6 +8,7 @@ import (
 	ktn_ops "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/ops"
 )
 
+// TestConvRule001_RedundantConversions tests the functionality of the corresponding implementation.
 func TestConvRule001_RedundantConversions(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_ops.RuleConv001, "conv001")

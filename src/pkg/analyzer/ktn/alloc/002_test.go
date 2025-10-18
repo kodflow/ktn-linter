@@ -8,6 +8,7 @@ import (
 	ktn_alloc "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/alloc"
 )
 
+// TestRule002_MakeSlicePrealloc tests the functionality of the corresponding implementation.
 func TestRule002_MakeSlicePrealloc(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, ktn_alloc.Rule002, "alloc002")

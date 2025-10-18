@@ -7,6 +7,7 @@ type Service interface {
 }
 // Repository defines the interface.
 
+// Repository defines the interface.
 type Repository interface {
 	Save(data string) error
 }

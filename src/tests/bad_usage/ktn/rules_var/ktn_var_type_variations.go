@@ -65,27 +65,27 @@ var explicitFloat32 float32 = float32(3.14)
 // explicitComplex64 a un type explicite redondant
 var explicitComplex64 complex64 = complex64(1 + 2i)
 
-// ❌ CAS INCORRECT : Variables qui devraient être const (KTN-VAR-005)
-// ERREURS : KTN-VAR-005 (devrait être const)
+// ✅ CAS CORRECT : Constantes pour valeurs immuables (KTN-VAR-005)
+// CONFORME : KTN-VAR-005 (utilise const pour valeurs jamais modifiées)
 
 // Buffer configuration
-var (
-	// fixedMaxInt8 ne change jamais, devrait être const
+const (
+	// fixedMaxInt8 ne change jamais
 	fixedMaxInt8 int8 = 127
 
-	// fixedPortUint16 ne change jamais, devrait être const
+	// fixedPortUint16 ne change jamais
 	fixedPortUint16 uint16 = 443
 
-	// fixedPiFloat32 ne change jamais, devrait être const
+	// fixedPiFloat32 ne change jamais
 	fixedPiFloat32 float32 = 3.14159
 
-	// fixedImaginaryUnit ne change jamais, devrait être const
+	// fixedImaginaryUnit ne change jamais
 	fixedImaginaryUnit complex128 = 0 + 1i
 
-	// fixedByteValue ne change jamais, devrait être const
+	// fixedByteValue ne change jamais
 	fixedByteValue byte = 0xFF
 
-	// fixedRuneValue ne change jamais, devrait être const
+	// fixedRuneValue ne change jamais
 	fixedRuneValue rune = '\n'
 )
 

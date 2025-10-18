@@ -11,6 +11,7 @@ import (
 )
 
 // TestRule Fall001_FallthroughInsideSwitch teste le cas où fallthrough EST dans un switch (pas d'erreur)
+// TestRuleFall001_FallthroughInsideSwitch tests the functionality of the corresponding implementation.
 func TestRuleFall001_FallthroughInsideSwitch(t *testing.T) {
 	src := `package test
 
