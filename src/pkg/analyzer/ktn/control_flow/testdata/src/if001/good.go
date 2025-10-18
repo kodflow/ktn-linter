@@ -1,6 +1,6 @@
 package if001
 
-// Cas corrects - l'analyseur ne devrait pas rapporter d'erreur
+// Cas corrects - early returns sans else (pattern idiomatique Go)
 
 // GoodExample - fonction simple
 func GoodExample() {
@@ -12,60 +12,54 @@ func GoodFunction(x int) int {
 	return x * 2
 }
 
-// GoodWithInit - if avec initialisation (ne devrait PAS être détecté)
+// GoodWithInit - if avec initialisation
 func GoodWithInit(x int) bool {
 	if y := x > 0; y {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
-// GoodMultipleStatementsBody - if avec plusieurs statements dans body
+// GoodMultipleStatementsBody - if avec plusieurs statements
 func GoodMultipleStatementsBody(x bool) bool {
 	if x {
 		println("debug")
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
-// GoodMultipleStatementsElse - if avec plusieurs statements dans else
-func GoodMultipleStatementsElse(x bool) bool {
+// GoodMultipleStatementsAfter - plusieurs statements après if
+func GoodMultipleStatementsAfter(x bool) bool {
 	if x {
 		return true
-	} else {
-		println("debug")
-		return false
 	}
+	println("debug")
+	return false
 }
 
 // GoodNonBooleanReturn - if qui retourne des non-booléens
 func GoodNonBooleanReturn(x bool) int {
 	if x {
 		return 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
 // GoodMultipleReturnValues - if qui retourne plusieurs valeurs
 func GoodMultipleReturnValues(x bool) (bool, error) {
 	if x {
 		return true, nil
-	} else {
-		return false, nil
 	}
+	return false, nil
 }
 
-// GoodSameValue - if/else qui retournent la même valeur
+// GoodSameValue - if qui retourne la même valeur
 func GoodSameValue(x bool) bool {
 	if x {
 		return true
-	} else {
-		return true
 	}
+	return true
 }
 
 // GoodNoElse - if sans else
@@ -80,7 +74,25 @@ func GoodNoElse(x bool) bool {
 func GoodNonLiteralReturn(x bool, a bool, b bool) bool {
 	if x {
 		return a
-	} else {
-		return b
 	}
+	return b
+}
+
+// GoodNestedChecks - checks imbriqués sans else
+func GoodNestedChecks(x, y int) int {
+	if x > 0 {
+		if y > 0 {
+			return x + y
+		}
+		return x
+	}
+	return 0
+}
+
+// GoodComplexCondition - condition complexe sans else
+func GoodComplexCondition(a, b int) bool {
+	if a > 0 && b > 0 {
+		return true
+	}
+	return false
 }

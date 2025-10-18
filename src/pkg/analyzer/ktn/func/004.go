@@ -84,7 +84,7 @@ func checkReturnsDocumentation(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	// Vérifier la présence de la section Returns:
 	if !strings.Contains(doc, "Returns:") {
 		exampleReturns := buildReturnsExample(funcDecl.Type.Results)
-		pass.Reportf(funcDecl.Doc.Pos(),
+		pass.Reportf(funcDecl.Name.Pos(),
 			"[KTN-FUNC-004] Commentaire godoc doit inclure une section 'Returns:' avec format strict.\nExemple:\n  // %s description.\n  //\n  // Returns:\n%s\n  func %s(...) { }",
 			funcName, exampleReturns, funcName)
 	}

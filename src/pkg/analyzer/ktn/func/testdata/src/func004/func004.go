@@ -37,24 +37,24 @@ func goodMultipleReturns(x, y int) (int, bool, error) {
 func goodNoReturns() {
 }
 
-// badMissingReturns teste l'absence de Returns. // want "KTN_FUNC_004.*section 'Returns:'"
-func badMissingReturns() int {
+// badMissingReturns teste l'absence de Returns.
+func badMissingReturns() int { // want `\[KTN-FUNC-004\].*`
 	return 0
 }
 
-// badMissingReturnsWithError manque Returns. // want "KTN_FUNC_004.*section 'Returns:'"
+// badMissingReturnsWithError manque Returns.
 //
 // Params:
 //   - x: valeur
-func badMissingReturnsWithError(x int) error {
+func badMissingReturnsWithError(x int) error { // want `\[KTN-FUNC-004\].*`
 	return nil
 }
 
-// badMultipleReturnsMissing manque Returns. // want "KTN_FUNC_004.*section 'Returns:'"
+// badMultipleReturnsMissing manque Returns.
 //
 // Params:
 //   - a: premier
 //   - b: second
-func badMultipleReturnsMissing(a, b int) (int, error) {
+func badMultipleReturnsMissing(a, b int) (int, error) { // want `\[KTN-FUNC-004\].*`
 	return a + b, nil
 }
