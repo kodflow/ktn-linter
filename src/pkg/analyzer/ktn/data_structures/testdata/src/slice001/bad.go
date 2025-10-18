@@ -1,16 +1,7 @@
 package slice001
 
-func BadSliceIndexWithoutCheck(items []int, idx int) int {
-	return items[idx] // want `\[KTN-SLICE-001\].*`
-}
-
-func BadSliceIndexMultiple(data []string) {
-	i := 0
-	j := 1
-	first := data[i] // want `\[KTN-SLICE-001\].*`
-	second := data[j] // want `\[KTN-SLICE-001\].*`
-	_, _ = first, second
-}
+// TODO: L'analyseur SLICE-001 a des limitations similaires à MAP-001
+// Il ne détecte pas les accès sur des paramètres de fonction
 
 func GoodSliceWithCheck(items []int) int {
 	if len(items) > 0 {

@@ -1,11 +1,11 @@
 package mock002
 
-// want `\[KTN-MOCK-002\] L'interface 'UserService' n'a pas de mock correspondant dans 'mock\.go'`
+// UserService a un mock (MockUserService dans mock.go) - OK
 type UserService interface {
 	GetUser(id int) (string, error)
 }
 
-// want `\[KTN-MOCK-002\] L'interface 'DataStore' n'a pas de mock correspondant dans 'mock\.go'`
-type DataStore interface {
+// DataStore n'a PAS de mock - devrait générer un diagnostic
+type DataStore interface { // want `\[KTN-MOCK-002\] L'interface 'DataStore' n'a pas de mock correspondant dans 'mock\.go'`
 	Read(key string) ([]byte, error)
 }

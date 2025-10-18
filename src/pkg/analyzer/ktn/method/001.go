@@ -97,14 +97,18 @@ func methodModifiesReceiver(funcDecl *ast.FuncDecl) bool {
 	modifies := false
 
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		assignStmt, ok := n.(*ast.AssignStmt)
-		if !ok {
-			return true
-		}
-
-		// Vérifier si Lhs contient le receiver ou un champ du receiver
-		for _, lhs := range assignStmt.Lhs {
-			if refersToReceiver(lhs, receiverName) {
+		switch stmt := n.(type) {
+		case *ast.AssignStmt:
+			// Vérifier si Lhs contient le receiver ou un champ du receiver
+			for _, lhs := range stmt.Lhs {
+				if refersToReceiver(lhs, receiverName) {
+					modifies = true
+					return false
+				}
+			}
+		case *ast.IncDecStmt:
+			// Vérifier si c'est une incrémentation/décrémentation du receiver
+			if refersToReceiver(stmt.X, receiverName) {
 				modifies = true
 				return false
 			}

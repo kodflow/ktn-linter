@@ -42,8 +42,8 @@ func runRule002(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Extraire les interfaces
-	interfaces := extractInterfaceNames(interfacesFile)
+	// Extraire les interfaces avec leurs positions
+	interfaces := extractInterfaceNamesWithPos(interfacesFile)
 	if len(interfaces) == 0 {
 		return nil, nil
 	}
@@ -59,10 +59,10 @@ func runRule002(pass *analysis.Pass) (any, error) {
 	mocks := extractMockNames(mockFile)
 
 	// Vérifier que chaque interface a un mock
-	for _, interfaceName := range interfaces {
-		expectedMockName := "Mock" + interfaceName
+	for name, pos := range interfaces {
+		expectedMockName := "Mock" + name
 		if !contains(mocks, expectedMockName) {
-			reportMissingMock(pass, interfaceName, expectedMockName)
+			reportMissingMock(pass, name, expectedMockName, pos)
 		}
 	}
 
@@ -126,15 +126,15 @@ func findMockFile(pass *analysis.Pass, interfacesPath string) *ast.File {
 	return nil
 }
 
-// extractInterfaceNames extrait les noms de toutes les interfaces.
+// extractInterfaceNamesWithPos extrait les noms de toutes les interfaces avec leurs positions.
 //
 // Params:
 //   - file: le fichier AST
 //
 // Returns:
-//   - []string: liste des noms d'interfaces
-func extractInterfaceNames(file *ast.File) []string {
-	var interfaces []string
+//   - map[string]token.Pos: map des noms d'interfaces vers leurs positions
+func extractInterfaceNamesWithPos(file *ast.File) map[string]token.Pos {
+	interfaces := make(map[string]token.Pos)
 
 	for _, decl := range file.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
@@ -149,7 +149,7 @@ func extractInterfaceNames(file *ast.File) []string {
 			}
 
 			if _, isInterface := typeSpec.Type.(*ast.InterfaceType); isInterface {
-				interfaces = append(interfaces, typeSpec.Name.Name)
+				interfaces[typeSpec.Name.Name] = typeSpec.Pos()
 			}
 		}
 	}
@@ -223,8 +223,9 @@ func contains(slice []string, item string) bool {
 //   - pass: la passe d'analyse
 //   - interfaceName: nom de l'interface sans mock
 //   - expectedMockName: nom du mock attendu
-func reportMissingMock(pass *analysis.Pass, interfaceName, expectedMockName string) {
-	pass.Reportf(token.Pos(1),
+//   - pos: position de l'interface
+func reportMissingMock(pass *analysis.Pass, interfaceName, expectedMockName string, pos token.Pos) {
+	pass.Reportf(pos,
 		"[KTN-MOCK-002] L'interface '%s' n'a pas de mock correspondant dans 'mock.go'.\n"+
 			"Créez le mock '%s' dans 'mock.go'.\n"+
 			"Exemple:\n"+

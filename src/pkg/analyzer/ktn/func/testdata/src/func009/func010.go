@@ -1,4 +1,4 @@
-package func010
+package func009
 
 // goodShallow a peu d'imbrication.
 func goodShallow(a, b bool) int {
@@ -23,7 +23,7 @@ func goodThreeLevels(a, b, c bool) int {
 }
 
 // badFourLevels a 4 niveaux (trop profond).
-func badFourLevels(a, b, c, d bool) int { // want "KTN-FUNC-010.*profondeur d'imbrication trop élevée"
+func badFourLevels(a, b, c, d bool) int { // want "KTN-FUNC-009.*profondeur d'imbrication trop élevée"
 	if a {
 		if b {
 			if c {
@@ -37,7 +37,7 @@ func badFourLevels(a, b, c, d bool) int { // want "KTN-FUNC-010.*profondeur d'im
 }
 
 // badWithLoops a trop d'imbrication avec boucles.
-func badWithLoops(items [][]int) int { // want "KTN-FUNC-010.*profondeur d'imbrication trop élevée"
+func badWithLoops(items [][]int) int { // want "KTN-FUNC-009.*profondeur d'imbrication trop élevée"
 	for _, row := range items {
 		for _, val := range row {
 			if val > 0 {
@@ -51,7 +51,7 @@ func badWithLoops(items [][]int) int { // want "KTN-FUNC-010.*profondeur d'imbri
 }
 
 // badWithSwitch a trop d'imbrication avec switch.
-func badWithSwitch(x, y int) int { // want "KTN-FUNC-010.*profondeur d'imbrication trop élevée"
+func badWithSwitch(x, y int) int { // want "KTN-FUNC-009.*profondeur d'imbrication trop élevée"
 	if x > 0 {
 		switch y {
 		case 1:
