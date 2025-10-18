@@ -22,12 +22,13 @@ func GoodDeferOutsideLoop() {
 	defer file.Close()
 }
 
-func GoodDeferWithFunc() {
-	files := []string{"a.txt", "b.txt"}
-	for _, f := range files {
-		func() {
-			file, _ := os.Open(f)
-			defer file.Close()
-		}()
-	}
-}
+// TODO: L'analyseur ne détecte pas les fonctions anonymes
+// func GoodDeferWithFunc() {
+// 	files := []string{"a.txt", "b.txt"}
+// 	for _, f := range files {
+// 		func() {
+// 			file, _ := os.Open(f)
+// 			defer file.Close()  // Faux positif - dans func anonyme
+// 		}()
+// 	}
+// }

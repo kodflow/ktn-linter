@@ -59,7 +59,7 @@ func runRuleIf001(pass *analysis.Pass) (any, error) {
 				}
 
 				pass.Reportf(ifStmt.Pos(),
-					"[KTN-IF-001] Expression booléenne simplifiable (Staticcheck S1008).\n"+
+					"[KTN-IF-004] Expression booléenne simplifiable (Staticcheck S1008).\n"+
 						"Un if qui retourne des littéraux booléens peut être simplifié.\n"+
 						"Suggestion: %s\n"+
 						"Exemple:\n"+

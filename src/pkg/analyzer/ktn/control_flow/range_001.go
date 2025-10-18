@@ -41,7 +41,7 @@ func runRuleRange001(pass *analysis.Pass) (any, error) {
 					if varName != "_" && !copiedVars[varName] {
 						if usesVariable(funcLit.Body, varName) {
 							pass.Reportf(funcLit.Pos(),
-								"[KTN-RANGE-001] Variable de range '%s' capturée dans une closure.\n"+
+								"[KTN-RANGE-003] Variable de range '%s' capturée dans une closure.\n"+
 									"Les variables de range sont réutilisées à chaque itération.\n"+
 									"Capturer directement dans une goroutine/closure cause des bugs.\n"+
 									"Créez une copie locale avant la closure.\n"+

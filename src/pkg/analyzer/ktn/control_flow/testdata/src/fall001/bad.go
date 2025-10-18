@@ -1,10 +1,14 @@
 package fall001
 
-func BadFallthroughOutsideSwitch() {
-	if true { // want `\[KTN-FALL-001\].*`
-		fallthrough
-	}
-}
+// TODO: L'analyseur FALL-001 détecte fallthrough hors switch
+// MAIS ce code ne compile pas (erreur de syntaxe Go)
+// On ne peut donc pas tester ce cas
+//
+// func BadFallthroughOutsideSwitch() {
+// 	if true {
+// 		fallthrough  // Erreur compilation: "fallthrough statement out of place"
+// 	}
+// }
 
 func GoodFallthroughInSwitch(x int) {
 	switch x {

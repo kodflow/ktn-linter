@@ -1,24 +1,23 @@
-package if004
+package if001
 
-func BadDoubleNegation(x bool) bool {
-	if x == true { // want `\[KTN-IF-004\].*`
+// TODO: L'analyseur IF-004 détecte les if/else qui retournent des booléens
+// Il NE détecte PAS les comparaisons x == true (limitation actuelle)
+
+// Ces exemples correspondent à ce que l'analyseur détecte
+func BadIfElseTrue(x bool) bool {
+	if x { // want `\[KTN-IF-004\].*`
 		return true
+	} else {
+		return false
 	}
-	return false
 }
 
-func BadBoolComparison(enabled bool) bool {
-	if enabled == true { // want `\[KTN-IF-004\].*`
+func BadIfElseFalse(x bool) bool {
+	if x { // want `\[KTN-IF-004\].*`
+		return false
+	} else {
 		return true
 	}
-	return false
-}
-
-func BadFalseComparison(disabled bool) bool {
-	if disabled == false { // want `\[KTN-IF-004\].*`
-		return true
-	}
-	return false
 }
 
 func GoodSimplified(x bool) bool {

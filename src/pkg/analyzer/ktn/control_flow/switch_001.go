@@ -32,7 +32,7 @@ func runRuleSwitch001(pass *analysis.Pass) (any, error) {
 
 			if caseCount == 1 {
 				pass.Reportf(switchStmt.Pos(),
-					"[KTN-SWITCH-001] switch avec un seul case devrait être un if.\n"+
+					"[KTN-SWITCH-005] switch avec un seul case devrait être un if.\n"+
 						"Un switch avec un seul case est moins lisible qu'un simple if.\n"+
 						"Utilisez if/else au lieu de switch pour 1-2 cas.\n"+
 						"Exemple:\n"+
