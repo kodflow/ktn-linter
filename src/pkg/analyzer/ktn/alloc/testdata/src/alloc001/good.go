@@ -27,3 +27,16 @@ func GoodSlicePreallocated() []int {
 	}
 	return items
 }
+
+// GoodNewWithStruct - new() avec struct est OK (pas un type référence)
+func GoodNewWithStruct() {
+	type Person struct{ Name string }
+	p := new(Person)
+	_ = p
+}
+
+// GoodNewWithInt - new() avec type primitif est OK
+func GoodNewWithInt() {
+	i := new(int)
+	_ = i
+}
