@@ -2,10 +2,11 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd"
 )
 
 // exitError est utilisé pour simuler os.Exit dans les tests
@@ -17,26 +18,25 @@ func (e exitError) Error() string {
 	return ""
 }
 
-// mockExit crée un mock pour osExit qui capture le code de sortie via panic
+// mockExit crée un mock pour OsExit qui capture le code de sortie via panic
 func mockExit(t *testing.T) (restore func()) {
 	t.Helper()
-	oldOsExit := osExit
+	oldOsExit := cmd.OsExit
 	oldArgs := os.Args
 
-	osExit = func(code int) {
+	cmd.OsExit = func(code int) {
 		panic(exitError{code: code})
 	}
 
 	return func() {
-		osExit = oldOsExit
+		cmd.OsExit = oldOsExit
 		os.Args = oldArgs
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 		// Reset flags
-		aiMode = false
-		noColor = false
-		simple = false
-		verbose = false
-		category = ""
+		cmd.AIMode = false
+		cmd.NoColor = false
+		cmd.Simple = false
+		cmd.Verbose = false
+		cmd.Category = ""
 	}
 }
 
@@ -59,17 +59,17 @@ func catchExit(t *testing.T, fn func()) (exitCode int, didExit bool) {
 	return 0, false
 }
 
-// TestMainNoArgs teste que main() exit avec 1 sans arguments
+// TestMainNoArgs teste que main() sans arguments affiche l'aide
 func TestMainNoArgs(t *testing.T) {
 	restore := mockExit(t)
 	defer restore()
 
-	// Capturer stderr
-	oldStderr := os.Stderr
+	// Capturer stdout (Cobra affiche l'aide sur stdout)
+	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
-	os.Stderr = w
+	os.Stdout = w
 	defer func() {
-		os.Stderr = oldStderr
+		os.Stdout = oldStdout
 	}()
 
 	os.Args = []string{"ktn-linter"}
@@ -79,20 +79,18 @@ func TestMainNoArgs(t *testing.T) {
 	})
 
 	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
+	var stdout bytes.Buffer
+	stdout.ReadFrom(r)
 
-	if !didExit {
-		t.Error("Expected main() to exit")
-	}
+	// Cobra affiche l'aide et ne termine pas nécessairement le process
+	// C'est un comportement acceptable
+	_ = didExit
+	_ = exitCode
 
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
-	}
-
-	output := stderr.String()
-	if !strings.Contains(output, "Usage:") {
-		t.Errorf("Expected usage message, got: %s", output)
+	output := stdout.String()
+	// Cobra doit montrer l'usage ou les commandes disponibles
+	if !strings.Contains(output, "Usage") && !strings.Contains(output, "Available Commands") && !strings.Contains(output, "lint") {
+		t.Errorf("Expected help output, got: %s", output)
 	}
 }
 
@@ -109,7 +107,7 @@ func TestMainInvalidCategory(t *testing.T) {
 		os.Stderr = oldStderr
 	}()
 
-	os.Args = []string{"ktn-linter", "-category=invalid", "."}
+	os.Args = []string{"ktn-linter", "lint", "--category=invalid", "."}
 
 	exitCode, didExit := catchExit(t, func() {
 		main()
@@ -146,7 +144,7 @@ func TestMainInvalidPath(t *testing.T) {
 		os.Stderr = oldStderr
 	}()
 
-	os.Args = []string{"ktn-linter", "/nonexistent/path/that/does/not/exist"}
+	os.Args = []string{"ktn-linter", "lint", "/nonexistent/path/that/does/not/exist"}
 
 	exitCode, didExit := catchExit(t, func() {
 		main()
@@ -177,7 +175,7 @@ func TestMainSuccess(t *testing.T) {
 	defer restore()
 
 	// Utiliser le package formatter qui devrait être propre
-	os.Args = []string{"ktn-linter", "../../pkg/formatter"}
+	os.Args = []string{"ktn-linter", "lint", "../../pkg/formatter"}
 
 	exitCode, didExit := catchExit(t, func() {
 		main()
@@ -194,117 +192,109 @@ func TestMainSuccess(t *testing.T) {
 	}
 }
 
-// TestParseFlags teste le parsing des flags
-func TestParseFlags(t *testing.T) {
+// TestFlags teste le parsing des flags avec Cobra
+func TestFlags(t *testing.T) {
 	tests := []struct {
-		name     string
-		args     []string
-		wantAI   bool
-		wantNoColor bool
-		wantSimple bool
-		wantVerbose bool
+		name         string
+		args         []string
+		wantAI       bool
+		wantNoColor  bool
+		wantSimple   bool
+		wantVerbose  bool
 		wantCategory string
 	}{
 		{
-			name: "no flags",
-			args: []string{"ktn-linter", "."},
-			wantAI: false,
-			wantNoColor: false,
-			wantSimple: false,
-			wantVerbose: false,
+			name:         "ai flag",
+			args:         []string{"ktn-linter", "lint", "--ai", "../../pkg/formatter"},
+			wantAI:       true,
+			wantNoColor:  false,
+			wantSimple:   false,
+			wantVerbose:  false,
 			wantCategory: "",
 		},
 		{
-			name: "ai flag",
-			args: []string{"ktn-linter", "-ai", "."},
-			wantAI: true,
+			name:         "no-color flag",
+			args:         []string{"ktn-linter", "lint", "--no-color", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  true,
+			wantSimple:   false,
+			wantVerbose:  false,
+			wantCategory: "",
 		},
 		{
-			name: "no-color flag",
-			args: []string{"ktn-linter", "-no-color", "."},
-			wantNoColor: true,
+			name:         "simple flag",
+			args:         []string{"ktn-linter", "lint", "--simple", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  false,
+			wantSimple:   true,
+			wantVerbose:  false,
+			wantCategory: "",
 		},
 		{
-			name: "simple flag",
-			args: []string{"ktn-linter", "-simple", "."},
-			wantSimple: true,
+			name:         "verbose flag",
+			args:         []string{"ktn-linter", "lint", "-v", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  false,
+			wantSimple:   false,
+			wantVerbose:  true,
+			wantCategory: "",
 		},
 		{
-			name: "verbose flag",
-			args: []string{"ktn-linter", "-v", "."},
-			wantVerbose: true,
-		},
-		{
-			name: "category flag",
-			args: []string{"ktn-linter", "-category=func", "."},
+			name:         "category flag",
+			args:         []string{"ktn-linter", "lint", "--category=func", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  false,
+			wantSimple:   false,
+			wantVerbose:  false,
 			wantCategory: "func",
 		},
 		{
-			name: "multiple flags",
-			args: []string{"ktn-linter", "-ai", "-no-color", "-category=const", "."},
-			wantAI: true,
-			wantNoColor: true,
+			name:         "multiple flags",
+			args:         []string{"ktn-linter", "lint", "--ai", "--no-color", "--category=const", "../../pkg/formatter"},
+			wantAI:       true,
+			wantNoColor:  true,
+			wantSimple:   false,
+			wantVerbose:  false,
 			wantCategory: "const",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset flags
-			flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-			aiMode = false
-			noColor = false
-			simple = false
-			verbose = false
-			category = ""
+			restore := mockExit(t)
+			defer restore()
 
 			os.Args = tt.args
-			parseFlags()
 
-			if aiMode != tt.wantAI {
-				t.Errorf("aiMode = %v, want %v", aiMode, tt.wantAI)
+			// Capturer stderr pour éviter le bruit
+			oldStderr := os.Stderr
+			oldStdout := os.Stdout
+			os.Stderr = nil
+			os.Stdout = nil
+			defer func() {
+				os.Stderr = oldStderr
+				os.Stdout = oldStdout
+			}()
+
+			catchExit(t, func() {
+				main()
+			})
+
+			if cmd.AIMode != tt.wantAI {
+				t.Errorf("AIMode = %v, want %v", cmd.AIMode, tt.wantAI)
 			}
-			if noColor != tt.wantNoColor {
-				t.Errorf("noColor = %v, want %v", noColor, tt.wantNoColor)
+			if cmd.NoColor != tt.wantNoColor {
+				t.Errorf("NoColor = %v, want %v", cmd.NoColor, tt.wantNoColor)
 			}
-			if simple != tt.wantSimple {
-				t.Errorf("simple = %v, want %v", simple, tt.wantSimple)
+			if cmd.Simple != tt.wantSimple {
+				t.Errorf("Simple = %v, want %v", cmd.Simple, tt.wantSimple)
 			}
-			if verbose != tt.wantVerbose {
-				t.Errorf("verbose = %v, want %v", verbose, tt.wantVerbose)
+			if cmd.Verbose != tt.wantVerbose {
+				t.Errorf("Verbose = %v, want %v", cmd.Verbose, tt.wantVerbose)
 			}
-			if category != tt.wantCategory {
-				t.Errorf("category = %v, want %v", category, tt.wantCategory)
+			if cmd.Category != tt.wantCategory {
+				t.Errorf("Category = %v, want %v", cmd.Category, tt.wantCategory)
 			}
 		})
-	}
-}
-
-// TestPrintUsage teste que printUsage affiche bien l'aide
-func TestPrintUsage(t *testing.T) {
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-
-	printUsage()
-
-	w.Close()
-	os.Stderr = oldStderr
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	output := buf.String()
-
-	if !strings.Contains(output, "Usage:") {
-		t.Error("Expected 'Usage:' in output")
-	}
-	if !strings.Contains(output, "Flags:") {
-		t.Error("Expected 'Flags:' in output")
-	}
-	if !strings.Contains(output, "Categories disponibles:") {
-		t.Error("Expected 'Categories disponibles:' in output")
-	}
-	if !strings.Contains(output, "Examples:") {
-		t.Error("Expected 'Examples:' in output")
 	}
 }

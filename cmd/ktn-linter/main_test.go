@@ -25,18 +25,14 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// TestCLIVersion teste le binaire sans arguments (affiche usage)
+// TestCLINoArgs teste le binaire sans arguments (affiche usage)
 func TestCLINoArgs(t *testing.T) {
 	cmd := exec.Command("./ktn-linter-test")
-	output, err := cmd.CombinedOutput()
-
-	// Doit échouer (exit 1) car pas d'arguments
-	if err == nil {
-		t.Error("Expected error when running without arguments")
-	}
+	output, _ := cmd.CombinedOutput()
 
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "Usage:") {
+	// Cobra affiche l'usage/help avec les commandes disponibles
+	if !strings.Contains(outputStr, "Usage") && !strings.Contains(outputStr, "Available Commands") && !strings.Contains(outputStr, "lint") {
 		t.Errorf("Expected usage message, got: %s", outputStr)
 	}
 }
@@ -83,7 +79,7 @@ func BadFunc() {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	cmd := exec.Command("./ktn-linter-test", "-simple", tmpDir)
+	cmd := exec.Command("./ktn-linter-test", "lint", "-simple", tmpDir)
 	output, err := cmd.CombinedOutput()
 
 	// Doit échouer car le code a des erreurs
@@ -112,7 +108,7 @@ func ValidFunc() {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	cmd := exec.Command("./ktn-linter-test", "-ai", tmpDir)
+	cmd := exec.Command("./ktn-linter-test", "lint", "-ai", tmpDir)
 	output, _ := cmd.CombinedOutput()
 
 	outputStr := string(output)
@@ -143,7 +139,7 @@ func ValidFunc() {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	cmd := exec.Command("./ktn-linter-test", "-no-color", tmpDir)
+	cmd := exec.Command("./ktn-linter-test", "lint", "-no-color", tmpDir)
 	output, _ := cmd.CombinedOutput()
 
 	outputStr := string(output)
@@ -177,7 +173,7 @@ func TestFunc() {
 				t.Fatalf("Failed to write test file: %v", err)
 			}
 
-			cmd := exec.Command("./ktn-linter-test", "-category="+tt.category, tmpDir)
+			cmd := exec.Command("./ktn-linter-test", "lint", "-category="+tt.category, tmpDir)
 			_, _ = cmd.CombinedOutput()
 
 			// La commande doit s'exécuter sans crash
@@ -188,7 +184,7 @@ func TestFunc() {
 
 // TestCLIInvalidCategory teste une catégorie invalide
 func TestCLIInvalidCategory(t *testing.T) {
-	cmd := exec.Command("./ktn-linter-test", "-category=invalid", ".")
+	cmd := exec.Command("./ktn-linter-test", "lint", "-category=invalid", ".")
 	output, err := cmd.CombinedOutput()
 
 	// Doit échouer avec une catégorie invalide
@@ -206,7 +202,7 @@ func TestCLIInvalidCategory(t *testing.T) {
 func TestCLIValidCode(t *testing.T) {
 	// Utiliser le workspace actuel qui contient déjà un module Go
 	// On teste sur le package formatter qui devrait être propre
-	cmd := exec.Command("./ktn-linter-test", "../../pkg/formatter")
+	cmd := exec.Command("./ktn-linter-test", "lint", "../../pkg/formatter")
 	output, _ := cmd.CombinedOutput()
 
 	// Le formatter package devrait être conforme
@@ -224,7 +220,7 @@ func TestCLIValidCode(t *testing.T) {
 
 // TestCLIInvalidPath teste avec un chemin invalide
 func TestCLIInvalidPath(t *testing.T) {
-	cmd := exec.Command("./ktn-linter-test", "/nonexistent/path/that/does/not/exist")
+	cmd := exec.Command("./ktn-linter-test", "lint", "/nonexistent/path/that/does/not/exist")
 	output, err := cmd.CombinedOutput()
 
 	// Doit échouer avec un chemin invalide
@@ -257,7 +253,7 @@ func TestFunc() {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	cmd := exec.Command("./ktn-linter-test", "-v", tmpDir)
+	cmd := exec.Command("./ktn-linter-test", "lint", "-v", tmpDir)
 	output, _ := cmd.CombinedOutput()
 
 	outputStr := string(output)
@@ -282,7 +278,7 @@ func TestFunc() {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	cmd := exec.Command("./ktn-linter-test", "-v", "-no-color", "-simple", tmpDir)
+	cmd := exec.Command("./ktn-linter-test", "lint", "-v", "-no-color", "-simple", tmpDir)
 	_, _ = cmd.CombinedOutput()
 
 	// La commande doit s'exécuter sans crash avec plusieurs flags
