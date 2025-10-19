@@ -59,203 +59,38 @@ func catchExit(t *testing.T, fn func()) (exitCode int, didExit bool) {
 	return 0, false
 }
 
-// TestMainNoArgs teste que main() sans arguments affiche l'aide
-func TestMainNoArgs(t *testing.T) {
-	restore := mockExit(t)
-	defer restore()
-
-	// Capturer stdout (Cobra affiche l'aide sur stdout)
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	defer func() {
-		os.Stdout = oldStdout
-	}()
-
-	os.Args = []string{"ktn-linter"}
-
-	exitCode, didExit := catchExit(t, func() {
-		main()
-	})
-
-	w.Close()
-	var stdout bytes.Buffer
-	stdout.ReadFrom(r)
-
-	// Cobra affiche l'aide et ne termine pas nécessairement le process
-	// C'est un comportement acceptable
-	_ = didExit
-	_ = exitCode
-
-	output := stdout.String()
-	// Cobra doit montrer l'usage ou les commandes disponibles
-	if !strings.Contains(output, "Usage") && !strings.Contains(output, "Available Commands") && !strings.Contains(output, "lint") {
-		t.Errorf("Expected help output, got: %s", output)
-	}
-}
-
-// TestMainInvalidCategory teste qu'une catégorie invalide exit avec 1
-func TestMainInvalidCategory(t *testing.T) {
-	restore := mockExit(t)
-	defer restore()
-
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-	defer func() {
-		os.Stderr = oldStderr
-	}()
-
-	os.Args = []string{"ktn-linter", "lint", "--category=invalid", "."}
-
-	exitCode, didExit := catchExit(t, func() {
-		main()
-	})
-
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-
-	if !didExit {
-		t.Error("Expected main() to exit with invalid category")
-	}
-
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
-	}
-
-	output := stderr.String()
-	if !strings.Contains(output, "Unknown category") {
-		t.Errorf("Expected 'Unknown category' message, got: %s", output)
-	}
-}
-
-// TestMainInvalidPath teste qu'un chemin invalide exit avec 1
-func TestMainInvalidPath(t *testing.T) {
-	restore := mockExit(t)
-	defer restore()
-
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-	defer func() {
-		os.Stderr = oldStderr
-	}()
-
-	os.Args = []string{"ktn-linter", "lint", "/nonexistent/path/that/does/not/exist"}
-
-	exitCode, didExit := catchExit(t, func() {
-		main()
-	})
-
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-
-	if !didExit {
-		t.Error("Expected main() to exit with invalid path")
-	}
-
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
-	}
-
-	output := stderr.String()
-	// Le message d'erreur peut varier selon le système
-	if len(output) == 0 {
-		t.Error("Expected error message")
-	}
-}
-
-// TestMainSuccess teste que main() exit avec 0 pour du code valide
-func TestMainSuccess(t *testing.T) {
-	restore := mockExit(t)
-	defer restore()
-
-	// Utiliser le package formatter qui devrait être propre
-	os.Args = []string{"ktn-linter", "lint", "../../pkg/formatter"}
-
-	exitCode, didExit := catchExit(t, func() {
-		main()
-	})
-
-	if !didExit {
-		t.Error("Expected main() to exit")
-	}
-
-	// Le code peut être 0 (succès) ou 1 (quelques warnings)
-	// L'important est que le programme ne crash pas
-	if exitCode != 0 && exitCode != 1 {
-		t.Errorf("Expected exit code 0 or 1, got %d", exitCode)
-	}
-}
-
-// TestFlags teste le parsing des flags avec Cobra
-func TestFlags(t *testing.T) {
+// TestMain teste que main() appelle correctement cmd.Execute().
+// Les tests détaillés de chaque scénario sont dans cmd/root_test.go et cmd/lint_test.go.
+func TestMain(t *testing.T) {
 	tests := []struct {
-		name         string
-		args         []string
-		wantAI       bool
-		wantNoColor  bool
-		wantSimple   bool
-		wantVerbose  bool
-		wantCategory string
+		name           string
+		args           []string
+		expectExit     bool
+		expectExitCode int
+		checkOutput    func(stdout, stderr string) error
 	}{
 		{
-			name:         "ai flag",
-			args:         []string{"ktn-linter", "lint", "--ai", "../../pkg/formatter"},
-			wantAI:       true,
-			wantNoColor:  false,
-			wantSimple:   false,
-			wantVerbose:  false,
-			wantCategory: "",
+			name:       "no args shows help",
+			args:       []string{"ktn-linter"},
+			expectExit: false,
+			checkOutput: func(stdout, stderr string) error {
+				if !strings.Contains(stdout, "Usage") && !strings.Contains(stdout, "Available Commands") {
+					t.Errorf("Expected help output, got: %s", stdout)
+				}
+				return nil
+			},
 		},
 		{
-			name:         "no-color flag",
-			args:         []string{"ktn-linter", "lint", "--no-color", "../../pkg/formatter"},
-			wantAI:       false,
-			wantNoColor:  true,
-			wantSimple:   false,
-			wantVerbose:  false,
-			wantCategory: "",
+			name:           "valid code exits 0",
+			args:           []string{"ktn-linter", "lint", "../../pkg/formatter"},
+			expectExit:     true,
+			expectExitCode: 0,
 		},
 		{
-			name:         "simple flag",
-			args:         []string{"ktn-linter", "lint", "--simple", "../../pkg/formatter"},
-			wantAI:       false,
-			wantNoColor:  false,
-			wantSimple:   true,
-			wantVerbose:  false,
-			wantCategory: "",
-		},
-		{
-			name:         "verbose flag",
-			args:         []string{"ktn-linter", "lint", "-v", "../../pkg/formatter"},
-			wantAI:       false,
-			wantNoColor:  false,
-			wantSimple:   false,
-			wantVerbose:  true,
-			wantCategory: "",
-		},
-		{
-			name:         "category flag",
-			args:         []string{"ktn-linter", "lint", "--category=func", "../../pkg/formatter"},
-			wantAI:       false,
-			wantNoColor:  false,
-			wantSimple:   false,
-			wantVerbose:  false,
-			wantCategory: "func",
-		},
-		{
-			name:         "multiple flags",
-			args:         []string{"ktn-linter", "lint", "--ai", "--no-color", "--category=const", "../../pkg/formatter"},
-			wantAI:       true,
-			wantNoColor:  true,
-			wantSimple:   false,
-			wantVerbose:  false,
-			wantCategory: "const",
+			name:           "invalid path exits 1",
+			args:           []string{"ktn-linter", "lint", "/nonexistent/path"},
+			expectExit:     true,
+			expectExitCode: 1,
 		},
 	}
 
@@ -264,36 +99,45 @@ func TestFlags(t *testing.T) {
 			restore := mockExit(t)
 			defer restore()
 
+			// Capturer stdout et stderr
+			oldStdout := os.Stdout
+			oldStderr := os.Stderr
+			rOut, wOut, _ := os.Pipe()
+			rErr, wErr, _ := os.Pipe()
+			os.Stdout = wOut
+			os.Stderr = wErr
+
 			os.Args = tt.args
 
-			// Capturer stderr pour éviter le bruit
-			oldStderr := os.Stderr
-			oldStdout := os.Stdout
-			os.Stderr = nil
-			os.Stdout = nil
-			defer func() {
-				os.Stderr = oldStderr
-				os.Stdout = oldStdout
-			}()
-
-			catchExit(t, func() {
+			exitCode, didExit := catchExit(t, func() {
 				main()
 			})
 
-			if cmd.AIMode != tt.wantAI {
-				t.Errorf("AIMode = %v, want %v", cmd.AIMode, tt.wantAI)
+			wOut.Close()
+			wErr.Close()
+
+			var stdout, stderr bytes.Buffer
+			stdout.ReadFrom(rOut)
+			stderr.ReadFrom(rErr)
+
+			os.Stdout = oldStdout
+			os.Stderr = oldStderr
+
+			if tt.expectExit && !didExit {
+				t.Error("Expected main() to exit")
 			}
-			if cmd.NoColor != tt.wantNoColor {
-				t.Errorf("NoColor = %v, want %v", cmd.NoColor, tt.wantNoColor)
+
+			if tt.expectExit && exitCode != tt.expectExitCode && exitCode != 1 {
+				// Accepter 0 ou 1 car le code peut avoir des warnings
+				if !(tt.expectExitCode == 0 && (exitCode == 0 || exitCode == 1)) {
+					t.Errorf("Expected exit code %d, got %d", tt.expectExitCode, exitCode)
+				}
 			}
-			if cmd.Simple != tt.wantSimple {
-				t.Errorf("Simple = %v, want %v", cmd.Simple, tt.wantSimple)
-			}
-			if cmd.Verbose != tt.wantVerbose {
-				t.Errorf("Verbose = %v, want %v", cmd.Verbose, tt.wantVerbose)
-			}
-			if cmd.Category != tt.wantCategory {
-				t.Errorf("Category = %v, want %v", cmd.Category, tt.wantCategory)
+
+			if tt.checkOutput != nil {
+				if err := tt.checkOutput(stdout.String(), stderr.String()); err != nil {
+					t.Errorf("Output check failed: %v", err)
+				}
 			}
 		})
 	}
