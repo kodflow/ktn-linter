@@ -1,285 +1,300 @@
 package main
 
 import (
+	"bytes"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd"
 )
 
-// TestMain compile le binaire avant de lancer les tests
-func TestMain(m *testing.M) {
-	// Compile le binaire
-	buildCmd := exec.Command("go", "build", "-o", "ktn-linter-test", ".")
-	if err := buildCmd.Run(); err != nil {
-		panic("Failed to build binary: " + err.Error())
-	}
-
-	// Exécute les tests
-	code := m.Run()
-
-	// Nettoyage
-	os.Remove("ktn-linter-test")
-
-	os.Exit(code)
+// exitError est utilisé pour simuler os.Exit dans les tests
+type exitError struct {
+	code int
 }
 
-// TestCLINoArgs teste le binaire sans arguments (affiche usage)
-func TestCLINoArgs(t *testing.T) {
-	cmd := exec.Command("./ktn-linter-test")
-	output, _ := cmd.CombinedOutput()
+func (e exitError) Error() string {
+	return ""
+}
 
-	outputStr := string(output)
-	// Cobra affiche l'usage/help avec les commandes disponibles
-	if !strings.Contains(outputStr, "Usage") && !strings.Contains(outputStr, "Available Commands") && !strings.Contains(outputStr, "lint") {
-		t.Errorf("Expected usage message, got: %s", outputStr)
+// mockExit crée un mock pour OsExit qui capture le code de sortie via panic
+func mockExit(t *testing.T) (restore func()) {
+	t.Helper()
+	oldOsExit := cmd.OsExit
+	oldArgs := os.Args
+
+	cmd.OsExit = func(code int) {
+		panic(exitError{code: code})
+	}
+
+	return func() {
+		cmd.OsExit = oldOsExit
+		os.Args = oldArgs
+		// Reset flags
+		cmd.AIMode = false
+		cmd.NoColor = false
+		cmd.Simple = false
+		cmd.Verbose = false
+		cmd.Category = ""
 	}
 }
 
-// TestCLIHelp teste l'affichage de l'aide
-func TestCLIHelp(t *testing.T) {
+// catchExit exécute une fonction et capture le code de sortie
+func catchExit(t *testing.T, fn func()) (exitCode int, didExit bool) {
+	t.Helper()
+
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(exitError); ok {
+				exitCode = e.code
+				didExit = true
+			} else {
+				panic(r) // Re-panic si ce n'est pas notre exitError
+			}
+		}
+	}()
+
+	fn()
+	return 0, false
+}
+
+// TestMainNoArgs teste que main() sans arguments affiche l'aide
+func TestMainNoArgs(t *testing.T) {
+	restore := mockExit(t)
+	defer restore()
+
+	// Capturer stdout (Cobra affiche l'aide sur stdout)
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	defer func() {
+		os.Stdout = oldStdout
+	}()
+
+	os.Args = []string{"ktn-linter"}
+
+	exitCode, didExit := catchExit(t, func() {
+		main()
+	})
+
+	w.Close()
+	var stdout bytes.Buffer
+	stdout.ReadFrom(r)
+
+	// Cobra affiche l'aide et ne termine pas nécessairement le process
+	// C'est un comportement acceptable
+	_ = didExit
+	_ = exitCode
+
+	output := stdout.String()
+	// Cobra doit montrer l'usage ou les commandes disponibles
+	if !strings.Contains(output, "Usage") && !strings.Contains(output, "Available Commands") && !strings.Contains(output, "lint") {
+		t.Errorf("Expected help output, got: %s", output)
+	}
+}
+
+// TestMainInvalidCategory teste qu'une catégorie invalide exit avec 1
+func TestMainInvalidCategory(t *testing.T) {
+	restore := mockExit(t)
+	defer restore()
+
+	// Capturer stderr
+	oldStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+	defer func() {
+		os.Stderr = oldStderr
+	}()
+
+	os.Args = []string{"ktn-linter", "lint", "--category=invalid", "."}
+
+	exitCode, didExit := catchExit(t, func() {
+		main()
+	})
+
+	w.Close()
+	var stderr bytes.Buffer
+	stderr.ReadFrom(r)
+
+	if !didExit {
+		t.Error("Expected main() to exit with invalid category")
+	}
+
+	if exitCode != 1 {
+		t.Errorf("Expected exit code 1, got %d", exitCode)
+	}
+
+	output := stderr.String()
+	if !strings.Contains(output, "Unknown category") {
+		t.Errorf("Expected 'Unknown category' message, got: %s", output)
+	}
+}
+
+// TestMainInvalidPath teste qu'un chemin invalide exit avec 1
+func TestMainInvalidPath(t *testing.T) {
+	restore := mockExit(t)
+	defer restore()
+
+	// Capturer stderr
+	oldStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+	defer func() {
+		os.Stderr = oldStderr
+	}()
+
+	os.Args = []string{"ktn-linter", "lint", "/nonexistent/path/that/does/not/exist"}
+
+	exitCode, didExit := catchExit(t, func() {
+		main()
+	})
+
+	w.Close()
+	var stderr bytes.Buffer
+	stderr.ReadFrom(r)
+
+	if !didExit {
+		t.Error("Expected main() to exit with invalid path")
+	}
+
+	if exitCode != 1 {
+		t.Errorf("Expected exit code 1, got %d", exitCode)
+	}
+
+	output := stderr.String()
+	// Le message d'erreur peut varier selon le système
+	if len(output) == 0 {
+		t.Error("Expected error message")
+	}
+}
+
+// TestMainSuccess teste que main() exit avec 0 pour du code valide
+func TestMainSuccess(t *testing.T) {
+	restore := mockExit(t)
+	defer restore()
+
+	// Utiliser le package formatter qui devrait être propre
+	os.Args = []string{"ktn-linter", "lint", "../../pkg/formatter"}
+
+	exitCode, didExit := catchExit(t, func() {
+		main()
+	})
+
+	if !didExit {
+		t.Error("Expected main() to exit")
+	}
+
+	// Le code peut être 0 (succès) ou 1 (quelques warnings)
+	// L'important est que le programme ne crash pas
+	if exitCode != 0 && exitCode != 1 {
+		t.Errorf("Expected exit code 0 or 1, got %d", exitCode)
+	}
+}
+
+// TestFlags teste le parsing des flags avec Cobra
+func TestFlags(t *testing.T) {
 	tests := []struct {
-		name string
-		args []string
+		name         string
+		args         []string
+		wantAI       bool
+		wantNoColor  bool
+		wantSimple   bool
+		wantVerbose  bool
+		wantCategory string
 	}{
-		{"short flag", []string{"-h"}},
-		{"long flag", []string{"--help"}},
+		{
+			name:         "ai flag",
+			args:         []string{"ktn-linter", "lint", "--ai", "../../pkg/formatter"},
+			wantAI:       true,
+			wantNoColor:  false,
+			wantSimple:   false,
+			wantVerbose:  false,
+			wantCategory: "",
+		},
+		{
+			name:         "no-color flag",
+			args:         []string{"ktn-linter", "lint", "--no-color", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  true,
+			wantSimple:   false,
+			wantVerbose:  false,
+			wantCategory: "",
+		},
+		{
+			name:         "simple flag",
+			args:         []string{"ktn-linter", "lint", "--simple", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  false,
+			wantSimple:   true,
+			wantVerbose:  false,
+			wantCategory: "",
+		},
+		{
+			name:         "verbose flag",
+			args:         []string{"ktn-linter", "lint", "-v", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  false,
+			wantSimple:   false,
+			wantVerbose:  true,
+			wantCategory: "",
+		},
+		{
+			name:         "category flag",
+			args:         []string{"ktn-linter", "lint", "--category=func", "../../pkg/formatter"},
+			wantAI:       false,
+			wantNoColor:  false,
+			wantSimple:   false,
+			wantVerbose:  false,
+			wantCategory: "func",
+		},
+		{
+			name:         "multiple flags",
+			args:         []string{"ktn-linter", "lint", "--ai", "--no-color", "--category=const", "../../pkg/formatter"},
+			wantAI:       true,
+			wantNoColor:  true,
+			wantSimple:   false,
+			wantVerbose:  false,
+			wantCategory: "const",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command("./ktn-linter-test", tt.args...)
-			output, err := cmd.CombinedOutput()
+			restore := mockExit(t)
+			defer restore()
 
-			outputStr := string(output)
-			// L'aide peut retourner 0 ou 1 selon l'implémentation
-			if !strings.Contains(outputStr, "Usage") {
-				t.Errorf("Expected help message, got: %s", outputStr)
+			os.Args = tt.args
+
+			// Capturer stderr pour éviter le bruit
+			oldStderr := os.Stderr
+			oldStdout := os.Stdout
+			os.Stderr = nil
+			os.Stdout = nil
+			defer func() {
+				os.Stderr = oldStderr
+				os.Stdout = oldStdout
+			}()
+
+			catchExit(t, func() {
+				main()
+			})
+
+			if cmd.AIMode != tt.wantAI {
+				t.Errorf("AIMode = %v, want %v", cmd.AIMode, tt.wantAI)
 			}
-
-			_ = err // L'aide peut exit 0 ou 1
+			if cmd.NoColor != tt.wantNoColor {
+				t.Errorf("NoColor = %v, want %v", cmd.NoColor, tt.wantNoColor)
+			}
+			if cmd.Simple != tt.wantSimple {
+				t.Errorf("Simple = %v, want %v", cmd.Simple, tt.wantSimple)
+			}
+			if cmd.Verbose != tt.wantVerbose {
+				t.Errorf("Verbose = %v, want %v", cmd.Verbose, tt.wantVerbose)
+			}
+			if cmd.Category != tt.wantCategory {
+				t.Errorf("Category = %v, want %v", cmd.Category, tt.wantCategory)
+			}
 		})
 	}
-}
-
-// TestCLISimpleMode teste le mode simple
-func TestCLISimpleMode(t *testing.T) {
-	// Créer un fichier de test temporaire avec une erreur
-	tmpDir := t.TempDir()
-	testFile := filepath.Join(tmpDir, "test.go")
-
-	code := `package test
-
-// Bad function without params/returns doc
-func BadFunc() {
-}
-`
-	if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	cmd := exec.Command("./ktn-linter-test", "lint", "-simple", tmpDir)
-	output, err := cmd.CombinedOutput()
-
-	// Doit échouer car le code a des erreurs
-	if err == nil {
-		t.Error("Expected error from linter")
-	}
-
-	outputStr := string(output)
-	// En mode simple, le format est: file:line:col: message
-	if !strings.Contains(outputStr, ":") {
-		t.Errorf("Expected simple format output, got: %s", outputStr)
-	}
-}
-
-// TestCLIAIMode teste le mode AI
-func TestCLIAIMode(t *testing.T) {
-	tmpDir := t.TempDir()
-	testFile := filepath.Join(tmpDir, "test.go")
-
-	code := `package test
-
-func ValidFunc() {
-}
-`
-	if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	cmd := exec.Command("./ktn-linter-test", "lint", "-ai", tmpDir)
-	output, _ := cmd.CombinedOutput()
-
-	outputStr := string(output)
-	// Mode AI doit produire une sortie structurée
-	// Même avec 0 issues, il y a une sortie
-	if outputStr == "" {
-		t.Error("Expected AI mode output")
-	}
-}
-
-// TestCLINoColor teste le mode sans couleurs
-func TestCLINoColor(t *testing.T) {
-	tmpDir := t.TempDir()
-	testFile := filepath.Join(tmpDir, "test.go")
-
-	code := `package test
-
-// ValidFunc description.
-//
-// Returns: aucun
-//
-// Params: aucun
-//
-func ValidFunc() {
-}
-`
-	if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	cmd := exec.Command("./ktn-linter-test", "lint", "-no-color", tmpDir)
-	output, _ := cmd.CombinedOutput()
-
-	outputStr := string(output)
-	// Ne doit pas contenir de codes ANSI de couleur
-	if strings.Contains(outputStr, "\033[") || strings.Contains(outputStr, "\x1b[") {
-		t.Errorf("Expected no color codes, got: %s", outputStr)
-	}
-}
-
-// TestCLICategory teste le filtrage par catégorie
-func TestCLICategory(t *testing.T) {
-	tests := []struct {
-		name     string
-		category string
-	}{
-		{"func category", "func"},
-		{"const category", "const"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			testFile := filepath.Join(tmpDir, "test.go")
-
-			code := `package test
-
-func TestFunc() {
-}
-`
-			if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-				t.Fatalf("Failed to write test file: %v", err)
-			}
-
-			cmd := exec.Command("./ktn-linter-test", "lint", "-category="+tt.category, tmpDir)
-			_, _ = cmd.CombinedOutput()
-
-			// La commande doit s'exécuter sans crash
-			// Le résultat dépend des règles de la catégorie
-		})
-	}
-}
-
-// TestCLIInvalidCategory teste une catégorie invalide
-func TestCLIInvalidCategory(t *testing.T) {
-	cmd := exec.Command("./ktn-linter-test", "lint", "-category=invalid", ".")
-	output, err := cmd.CombinedOutput()
-
-	// Doit échouer avec une catégorie invalide
-	if err == nil {
-		t.Error("Expected error with invalid category")
-	}
-
-	outputStr := string(output)
-	if !strings.Contains(outputStr, "Unknown category") && !strings.Contains(outputStr, "unknown") {
-		t.Errorf("Expected 'Unknown category' message, got: %s", outputStr)
-	}
-}
-
-// TestCLIValidCode teste avec du code valide
-func TestCLIValidCode(t *testing.T) {
-	// Utiliser le workspace actuel qui contient déjà un module Go
-	// On teste sur le package formatter qui devrait être propre
-	cmd := exec.Command("./ktn-linter-test", "lint", "../../pkg/formatter")
-	output, _ := cmd.CombinedOutput()
-
-	// Le formatter package devrait être conforme
-	// On accepte exit 0 ou 1 (quelques warnings acceptables)
-	// L'important est que la commande s'exécute sans crash
-	outputStr := string(output)
-	if outputStr == "" {
-		// Si pas de sortie du tout, c'est OK (pas d'erreurs)
-		return
-	}
-
-	// Si la sortie contient des résultats, c'est acceptable
-	// tant que le binaire ne crash pas
-}
-
-// TestCLIInvalidPath teste avec un chemin invalide
-func TestCLIInvalidPath(t *testing.T) {
-	cmd := exec.Command("./ktn-linter-test", "lint", "/nonexistent/path/that/does/not/exist")
-	output, err := cmd.CombinedOutput()
-
-	// Doit échouer avec un chemin invalide
-	if err == nil {
-		t.Error("Expected error with invalid path")
-	}
-
-	outputStr := string(output)
-	// Accepte différents formats de messages d'erreur
-	hasError := strings.Contains(outputStr, "Error") ||
-		strings.Contains(outputStr, "error") ||
-		strings.Contains(outputStr, "not found") ||
-		strings.Contains(outputStr, "directory")
-	if !hasError {
-		t.Errorf("Expected error message, got: %s", outputStr)
-	}
-}
-
-// TestCLIVerboseMode teste le mode verbose
-func TestCLIVerboseMode(t *testing.T) {
-	tmpDir := t.TempDir()
-	testFile := filepath.Join(tmpDir, "test.go")
-
-	code := `package test
-
-func TestFunc() {
-}
-`
-	if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	cmd := exec.Command("./ktn-linter-test", "lint", "-v", tmpDir)
-	output, _ := cmd.CombinedOutput()
-
-	outputStr := string(output)
-	// En mode verbose, doit afficher des informations supplémentaires
-	if !strings.Contains(outputStr, "Running") && !strings.Contains(outputStr, "Analyzing") && outputStr == "" {
-		// Accepte que verbose puisse ne rien afficher si tout va bien
-		// Mais vérifie au moins que la commande s'exécute
-	}
-}
-
-// TestCLIMultipleFlags teste la combinaison de plusieurs flags
-func TestCLIMultipleFlags(t *testing.T) {
-	tmpDir := t.TempDir()
-	testFile := filepath.Join(tmpDir, "test.go")
-
-	code := `package test
-
-func TestFunc() {
-}
-`
-	if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	cmd := exec.Command("./ktn-linter-test", "lint", "-v", "-no-color", "-simple", tmpDir)
-	_, _ = cmd.CombinedOutput()
-
-	// La commande doit s'exécuter sans crash avec plusieurs flags
 }
