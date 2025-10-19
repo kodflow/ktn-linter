@@ -4,7 +4,7 @@ import (
 	"go/ast"
 )
 
-// ExprToString convertit une expression AST en sa représentation textuelle.
+// GetExprAsString convertit une expression AST en sa représentation textuelle.
 //
 // Params:
 //   - expr: l'expression AST à convertir
@@ -21,19 +21,19 @@ func GetExprAsString(expr ast.Expr) string {
  // Traitement
 	case *ast.SelectorExpr:
 		// Early return from function.
-		return ExprToString(e.X) + "." + e.Sel.Name
+		return GetExprAsString(e.X) + "." + e.Sel.Name
  // Traitement
 	case *ast.ArrayType:
 		// Early return from function.
-		return "[]" + ExprToString(e.Elt)
+		return "[]" + GetExprAsString(e.Elt)
  // Traitement
 	case *ast.MapType:
 		// Early return from function.
-		return "map[" + ExprToString(e.Key) + "]" + ExprToString(e.Value)
+		return "map[" + GetExprAsString(e.Key) + "]" + GetExprAsString(e.Value)
  // Traitement
 	case *ast.StarExpr:
 		// Early return from function.
-		return "*" + ExprToString(e.X)
+		return "*" + GetExprAsString(e.X)
  // Traitement
 	case *ast.ChanType:
   // Sélection selon la valeur
@@ -41,15 +41,15 @@ func GetExprAsString(expr ast.Expr) string {
   // Traitement
 		case ast.SEND:
 			// Early return from function.
-			return "chan<- " + ExprToString(e.Value)
+			return "chan<- " + GetExprAsString(e.Value)
   // Traitement
 		case ast.RECV:
 			// Early return from function.
-			return "<-chan " + ExprToString(e.Value)
+			return "<-chan " + GetExprAsString(e.Value)
   // Traitement
 		default:
 			// Early return from function.
-			return "chan " + ExprToString(e.Value)
+			return "chan " + GetExprAsString(e.Value)
 		}
  // Traitement
 	default:
@@ -69,7 +69,7 @@ func GetTypeString(spec *ast.ValueSpec) string {
  // Vérification de la condition
 	if spec.Type != nil {
 		// Early return from function.
-		return ExprToString(spec.Type)
+		return GetExprAsString(spec.Type)
 	}
 	// Early return from function.
 	return "<type>"

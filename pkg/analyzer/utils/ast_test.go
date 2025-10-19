@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-// TestExprToString tests the functionality of the corresponding implementation.
-func TestExprToString(t *testing.T) {
+// TestGetExprAsString tests the functionality of the corresponding implementation.
+func TestGetExprAsString(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -30,23 +30,23 @@ func TestExprToString(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to parse %q: %v", tt.code, err)
 			}
-			got := ExprToString(expr)
+			got := GetExprAsString(expr)
 			if got != tt.expected {
-				t.Errorf("ExprToString(%q) = %q, want %q", tt.code, got, tt.expected)
+				t.Errorf("GetExprAsString(%q) = %q, want %q", tt.code, got, tt.expected)
 			}
 		})
 	}
 }
 
-// TestExprToStringWithUnknownType tests the functionality of the corresponding implementation.
-func TestExprToStringWithUnknownType(t *testing.T) {
+// TestGetExprAsStringWithUnknownType tests the functionality of the corresponding implementation.
+func TestGetExprAsStringWithUnknownType(t *testing.T) {
 	// Test avec un type non supporté (FuncType)
 	expr := &ast.FuncType{
 		Params: &ast.FieldList{},
 	}
-	got := ExprToString(expr)
+	got := GetExprAsString(expr)
 	if got != "unknown" {
-		t.Errorf("ExprToString(unsupported) = %q, want \"unknown\"", got)
+		t.Errorf("GetExprAsString(unsupported) = %q, want \"unknown\"", got)
 	}
 }
 
@@ -102,8 +102,8 @@ func TestGetTypeStringWithNoType(t *testing.T) {
 	}
 }
 
-// TestExprToStringNested tests the functionality of the corresponding implementation.
-func TestExprToStringNested(t *testing.T) {
+// TestGetExprAsStringNested tests the functionality of the corresponding implementation.
+func TestGetExprAsStringNested(t *testing.T) {
 	// Test avec des types imbriqués complexes
 	tests := []struct {
 		name     string
@@ -122,9 +122,9 @@ func TestExprToStringNested(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to parse %q: %v", tt.code, err)
 			}
-			got := ExprToString(expr)
+			got := GetExprAsString(expr)
 			if got != tt.expected {
-				t.Errorf("ExprToString(%q) = %q, want %q", tt.code, got, tt.expected)
+				t.Errorf("GetExprAsString(%q) = %q, want %q", tt.code, got, tt.expected)
 			}
 		})
 	}
