@@ -18,6 +18,14 @@ var Analyzer011 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
+// runFunc011 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc011(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -72,6 +80,9 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 }
 
 // checkIfStmt checks if an if statement has a comment
+// Params:
+//   - pass: contexte d'analyse
+//
 func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
  // Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) {
@@ -88,6 +99,9 @@ func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
 }
 
 // checkSwitchStmt checks if a switch statement and its cases have comments
+// Params:
+//   - pass: contexte d'analyse
+//
 func checkSwitchStmt(pass *analysis.Pass, stmt *ast.SwitchStmt) {
  // Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) {
@@ -110,6 +124,9 @@ func checkSwitchStmt(pass *analysis.Pass, stmt *ast.SwitchStmt) {
 }
 
 // checkTypeSwitchStmt checks if a type switch statement and its cases have comments
+// Params:
+//   - pass: contexte d'analyse
+//
 func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
  // Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) {
@@ -132,6 +149,9 @@ func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
 }
 
 // checkLoopStmt checks if a loop statement has a comment
+// Params:
+//   - pass: contexte d'analyse
+//
 func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
  // Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) {
@@ -140,6 +160,9 @@ func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
 }
 
 // checkReturnStmt checks if a return statement has a comment
+// Params:
+//   - pass: contexte d'analyse
+//
 func checkReturnStmt(pass *analysis.Pass, stmt *ast.ReturnStmt) {
  // Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) && !hasInlineComment(pass, stmt.Pos()) {
@@ -148,6 +171,12 @@ func checkReturnStmt(pass *analysis.Pass, stmt *ast.ReturnStmt) {
 }
 
 // hasCommentBefore checks if there's a comment on the line before the given position
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si commentaire présent
+//
 func hasCommentBefore(pass *analysis.Pass, pos token.Pos) bool {
 	position := pass.Fset.Position(pos)
 	filename := position.Filename
@@ -163,25 +192,21 @@ func hasCommentBefore(pass *analysis.Pass, pos token.Pos) bool {
 		}
 	}
 
- // Vérification de la condition
-	if file == nil {
-  // Retour de la fonction
-		return false
-	}
-
 	// Check all comments in the file
 	for _, commentGroup := range file.Comments {
 		commentPos := pass.Fset.Position(commentGroup.End())
 		// Comment should be on the line immediately before the statement
 		if commentPos.Filename == filename && commentPos.Line == position.Line-1 {
 			// Check if it's a real comment (not a "want" directive)
+   // Itération sur les statements
 			for _, comment := range commentGroup.List {
 				text := strings.TrimSpace(comment.Text)
-    // Vérification de la condition
-				if !strings.Contains(text, "want") {
-     // Retour de la fonction
-					return true
+    // Vérification de la condition - Skip only actual "want" directives (not any comment containing "want")
+				if strings.HasPrefix(text, "// want") || strings.HasPrefix(text, "//want") {
+					continue
 				}
+     // Retour de la fonction
+				return true
 			}
 		}
 	}
@@ -191,6 +216,12 @@ func hasCommentBefore(pass *analysis.Pass, pos token.Pos) bool {
 }
 
 // hasInlineComment checks if there's a comment on the same line as the given position
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si commentaire inline
+//
 func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
 	position := pass.Fset.Position(pos)
 	filename := position.Filename
@@ -206,12 +237,6 @@ func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
 		}
 	}
 
- // Vérification de la condition
-	if file == nil {
-  // Retour de la fonction
-		return false
-	}
-
 	// Check all comments in the file
 	for _, commentGroup := range file.Comments {
   // Itération sur les éléments
@@ -221,11 +246,12 @@ func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
 			if commentPos.Filename == filename && commentPos.Line == position.Line {
 				// Check if it's a real comment (not a "want" directive)
 				text := strings.TrimSpace(comment.Text)
-    // Vérification de la condition
-				if !strings.Contains(text, "want") {
-     // Retour de la fonction
-					return true
+    // Vérification de la condition - Skip only actual "want" directives (not any comment containing "want")
+				if strings.HasPrefix(text, "// want") || strings.HasPrefix(text, "//want") {
+					continue
 				}
+     // Retour de la fonction
+				return true
 			}
 		}
 	}
@@ -235,6 +261,12 @@ func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
 }
 
 // hasCommentBeforeOrInside checks if there's a comment before or at the start of an else block
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si commentaire avant
+//
 func hasCommentBeforeOrInside(pass *analysis.Pass, elseStmt ast.Stmt) bool {
 	// Check if there's a comment before the else
 	if hasCommentBefore(pass, elseStmt.Pos()) {
@@ -247,15 +279,6 @@ func hasCommentBeforeOrInside(pass *analysis.Pass, elseStmt ast.Stmt) bool {
 		firstStmt := blockStmt.List[0]
   // Vérification de la condition
 		if hasCommentBefore(pass, firstStmt.Pos()) {
-   // Retour de la fonction
-			return true
-		}
-	}
-
-	// If it's another if statement (else if), check for a comment before it
-	if ifStmt, ok := elseStmt.(*ast.IfStmt); ok {
-  // Vérification de la condition
-		if hasCommentBefore(pass, ifStmt.Pos()) {
    // Retour de la fonction
 			return true
 		}

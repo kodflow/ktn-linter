@@ -33,3 +33,51 @@ func MultipleExplicit() (a int, b string, c bool) {
 	c = true
 	return a, b, c
 }
+
+// Good: Function with no return values at all
+func NoReturnValues() {
+	x := 1
+	_ = x
+}
+
+// Good: Function with unnamed return (no named returns, so naked return doesn't apply)
+func UnnamedReturn() int {
+	return 42
+}
+
+// Good: Test function with naked return (exempt)
+func TestNakedReturn(t int) (result int) {
+	result = 1
+	result += 2
+	result += 3
+	result += 4
+	result += 5
+	result += 6
+	return
+}
+
+// Good: Benchmark function with naked return (exempt)
+func BenchmarkNakedReturn(b int) (result int) {
+	result = 1
+	result += 2
+	result += 3
+	result += 4
+	result += 5
+	result += 6
+	return
+}
+
+// Good: Function with returns but all unnamed (so naked return rule doesn't apply)
+type Calculator interface {
+	Calculate() (int, error)
+}
+
+// Good: Function with single unnamed return value
+func SingleUnnamedReturn() (int) {
+	return 42
+}
+
+// Good: Function with multiple unnamed return values
+func MultipleUnnamedReturns() (int, string, bool) {
+	return 1, "test", true
+}

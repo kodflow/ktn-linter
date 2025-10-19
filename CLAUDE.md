@@ -18,7 +18,8 @@
 3. **Corriger TOUS les warnings/errors/info**
 4. **Vérifier la couverture** → Coverage maximale
 5. **Mettre à jour README.md** si nouvelle règle
-6. **Répéter jusqu'à 0 erreur**
+6. **Nettoyer les fichiers temporaires** → Supprimer *.out, *.html, fichiers intermédiaires
+7. **Répéter jusqu'à 0 erreur**
 
 ### Agents Parallèles Post-Modification
 
@@ -234,6 +235,15 @@ Voir `/pkg/analyzer/ktn/const/001.go` pour un exemple de règle complète.
 - ⚠️ **OBLIGATOIRE** : Corriger tous les diagnostics avant de passer à la suite
 - 📊 **OBJECTIF** : Couverture de tests maximale
 - 🔄 **WORKFLOW** : Code → Test → Lint → Fix → Repeat
+- 🧹 **NETTOYAGE OBLIGATOIRE** : Après tests/debug, TOUJOURS supprimer :
+  - `*.out` (coverage.out, etc.)
+  - `*.html` (coverage.html, etc.)
+  - `*.o` (fichiers objets compilés)
+  - Binaires de test sans extension (test_*, *_test)
+  - Fichiers temporaires dans `/tmp/`
+  - Fichiers intermédiaires générés
+  - Rapports de debug
+  - ❌ **JAMAIS** laisser de fichiers binaires/compilés à la racine du projet
 
 ## Indicateurs de Qualité
 

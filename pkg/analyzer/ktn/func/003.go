@@ -38,12 +38,28 @@ var commonVerbs = map[string]bool{
 	"Render": true, "Draw": true, "Display": true, "Show": true, "Hide": true,
 	"Print": true, "Log": true, "Debug": true, "Trace": true, "Warn": true,
 	"Count": true, "Average": true,
+// runFunc003 exécute l'analyse KTN-FUNC-003.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 	"Sort": true, "Order": true, "Group": true, "Merge": true, "Split": true,
 	"Copy": true, "Clone": true, "Duplicate": true, "Move": true, "Swap": true,
 	"Compare": true, "Match": true, "Contains": true, "Equals": true, "Diff": true,
 	"Wait": true, "Sleep": true, "Pause": true, "Resume": true, "Continue": true,
 }
 
+// runFunc003 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc003(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -55,6 +71,18 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 		funcDecl := n.(*ast.FuncDecl)
 		funcName := funcDecl.Name.Name
 
+		// Skip main function (checked before IsExported because main is unexported)
+		if funcName == "main" {
+   // Retour de la fonction
+			return
+		}
+
+		// Skip init function (checked before IsExported because init is unexported)
+		if funcName == "init" {
+   // Retour de la fonction
+			return
+		}
+
 		// Skip unexported functions
 		if !ast.IsExported(funcName) {
    // Retour de la fonction
@@ -63,18 +91,6 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 
 		// Skip test functions
 		if isTestFunction(funcName) {
-   // Retour de la fonction
-			return
-		}
-
-		// Skip main function
-		if funcName == "main" {
-   // Retour de la fonction
-			return
-		}
-
-		// Skip init function
-		if funcName == "init" {
    // Retour de la fonction
 			return
 		}
@@ -94,6 +110,12 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 }
 
 // startsWithVerb checks if a function name starts with a known verb
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: premier mot extrait
+//
 func startsWithVerb(name string) bool {
 	// Extract the first word (before the first uppercase letter after position 0)
 	firstWord := extractFirstWord(name)
@@ -103,6 +125,12 @@ func startsWithVerb(name string) bool {
 }
 
 // extractFirstWord extracts the first word from a PascalCase/camelCase name
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si commence par verbe
+//
 func extractFirstWord(name string) string {
  // Vérification de la condition
 	if len(name) == 0 {

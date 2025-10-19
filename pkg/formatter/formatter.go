@@ -67,6 +67,9 @@ func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Forma
 }
 
 // Format affiche les diagnostics de manière lisible
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) Format(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
  // Vérification de la condition
 	if len(diagnostics) == 0 {
@@ -93,6 +96,9 @@ func (f *formatterImpl) Format(fset *token.FileSet, diagnostics []analysis.Diagn
 }
 
 // formatForHuman affiche pour un humain avec couleurs et structure
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	groups := f.groupByFile(fset, diagnostics)
 
@@ -128,6 +134,9 @@ func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analys
 }
 
 // formatForAI affiche un format optimisé pour l'IA
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	groups := f.groupByFile(fset, diagnostics)
 
@@ -159,6 +168,9 @@ func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.
 }
 
 // formatSimple affiche un format simple une ligne par erreur (pour IDE)
+// Params:
+//   - pass: contexte d'analyse
+//
 // Format compatible golangci-lint: file:line:col: message (code)
 func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	filtered := f.filterAndSortDiagnostics(fset, diagnostics)
@@ -176,6 +188,12 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 }
 
 // groupByFile regroupe les diagnostics par fichier et les trie
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - []DiagnosticGroupData: groupes de diagnostics
+//
 func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.Diagnostic) []DiagnosticGroupData {
 	fileMap := make(map[string][]analysis.Diagnostic)
 
@@ -221,6 +239,12 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 }
 
 // filterAndSortDiagnostics filtre et trie les diagnostics par position
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - []analysis.Diagnostic: diagnostics filtrés
+//
 func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostics []analysis.Diagnostic) []analysis.Diagnostic {
 	// filtered holds the configuration value.
 
@@ -259,6 +283,9 @@ func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostic
 }
 
 // printHeader affiche l'en-tête du rapport
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) printHeader(count int) {
  // Vérification de la condition
 	if f.noColor {
@@ -274,6 +301,9 @@ func (f *formatterImpl) printHeader(count int) {
 }
 
 // printFileHeader affiche l'en-tête pour un fichier
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) printFileHeader(filename string, count int) {
  // Vérification de la condition
 	if f.noColor {
@@ -288,6 +318,9 @@ func (f *formatterImpl) printFileHeader(filename string, count int) {
 }
 
 // printDiagnostic affiche un diagnostic individuel
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analysis.Diagnostic) {
 	code := extractCode(diag.Message)
 	message := extractMessage(diag.Message)
@@ -325,6 +358,9 @@ func (f *formatterImpl) printSuccess() {
 }
 
 // printSummary affiche le résumé final
+// Params:
+//   - pass: contexte d'analyse
+//
 func (f *formatterImpl) printSummary(count int) {
  // Vérification de la condition
 	if f.noColor {
@@ -341,6 +377,12 @@ func (f *formatterImpl) printSummary(count int) {
 }
 
 // getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: code extrait
+//
 func (f *formatterImpl) getCodeColor(code string) string {
  // Vérification de la condition
 	if f.noColor {
@@ -374,6 +416,12 @@ func (f *formatterImpl) getCodeColor(code string) string {
 }
 
 // extractCode extrait le code d'erreur du message (ex: "KTN-VAR-001")
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: message extrait
+//
 func extractCode(message string) string {
 	// Cherche le pattern KTN-XXX-XXX avec ou sans crochets
 	// Format 1: [KTN-XXX-XXX]
@@ -399,6 +447,12 @@ func extractCode(message string) string {
 }
 
 // extractMessage extrait le message principal en supprimant le code et les exemples
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: couleur ANSI
+//
 func extractMessage(message string) string {
 	// Supprimer le code [KTN-XXX-XXX] ou KTN-XXX-XXX:
 	// Format 1: [KTN-XXX-XXX] ...

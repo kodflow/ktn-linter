@@ -137,3 +137,71 @@ func ComplexSelectRange(ch chan int, items []int) int { // want "KTN-FUNC-005"
 
 	return result
 }
+
+// Bad: Switch with default and many cases
+// Complexity = 12 (1 base + 10 cases + 1 if)
+func SwitchManyWithDefault(x int) int { // want "KTN-FUNC-005"
+	result := 0
+	switch x {
+	case 1:
+		result = 1
+	case 2:
+		result = 2
+	case 3:
+		result = 3
+	case 4:
+		result = 4
+	case 5:
+		result = 5
+	case 6:
+		result = 6
+	case 7:
+		result = 7
+	case 8:
+		result = 8
+	case 9:
+		result = 9
+	case 10:
+		result = 10
+	default:
+		result = 0
+	}
+	if result > 5 {
+		result++
+	}
+	return result
+}
+
+// Bad: Select with default and many comm cases
+// Complexity = 11 (1 base + 5 comm cases + 5 ifs)
+func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int { // want "KTN-FUNC-005"
+	result := 0
+	select {
+	case x := <-ch1:
+		if x > 0 {
+			result = x
+		}
+	case y := <-ch2:
+		if y > 0 {
+			result = y
+		}
+	case z := <-ch3:
+		if z > 0 {
+			result = z
+		}
+	case a := <-ch4:
+		if a > 0 {
+			result = a
+		}
+	case b := <-ch5:
+		if b > 0 {
+			result = b
+		}
+	default:
+		result = 0
+	}
+	if result > 10 {
+		result = 10
+	}
+	return result
+}

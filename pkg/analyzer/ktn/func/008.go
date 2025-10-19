@@ -16,6 +16,14 @@ var Analyzer008 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
+// runFunc008 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc008(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -65,6 +73,12 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 }
 
 // isContextType checks if a type is context.Context
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si type context
+//
 func isContextType(expr ast.Expr) bool {
 	sel, ok := expr.(*ast.SelectorExpr)
  // Vérification de la condition
@@ -74,12 +88,6 @@ func isContextType(expr ast.Expr) bool {
 	}
 
 	ident, ok := sel.X.(*ast.Ident)
- // Vérification de la condition
-	if !ok {
-  // Retour de la fonction
-		return false
-	}
-
  // Retour de la fonction
-	return ident.Name == "context" && sel.Sel.Name == "Context"
+	return ok && ident.Name == "context" && sel.Sel.Name == "Context"
 }

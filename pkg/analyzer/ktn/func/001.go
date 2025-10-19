@@ -22,6 +22,14 @@ var Analyzer001 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
+// runFunc001 exécute l'analyse KTN-FUNC-001.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 func runFunc001(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -72,6 +80,12 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 }
 
 // isTestFunction checks if a function name indicates a test function
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si fonction de test
+//
 func isTestFunction(name string) bool {
  // Retour de la fonction
 	return strings.HasPrefix(name, "Test") ||
@@ -80,28 +94,83 @@ func isTestFunction(name string) bool {
 		strings.HasPrefix(name, "Fuzz")
 }
 
-// countPureCodeLines counts only pure code lines by reading the source file
+// isLineToSkip détermine si une ligne doit être ignorée du compte.
+//
+// Params:
+//   - trimmed: ligne trimée à vérifier
+//   - inBlockComment: pointeur vers l'état du commentaire bloc
+//
+// Returns:
+//   - bool: true si la ligne doit être ignorée
+func isLineToSkip(trimmed string, inBlockComment *bool) bool {
+	// Gestion des commentaires de bloc
+	if strings.Contains(trimmed, "/*") {
+		*inBlockComment = true
+	}
+	// Vérification fin de commentaire bloc
+	if strings.Contains(trimmed, "*/") {
+		*inBlockComment = false
+		// Ligne de fin de bloc à ignorer
+		return true
+	}
+
+	// Vérification si dans un commentaire bloc
+	if *inBlockComment {
+		// Ligne de commentaire bloc à ignorer
+		return true
+	}
+
+	// Vérification ligne vide
+	if trimmed == "" {
+		// Ligne vide à ignorer
+		return true
+	}
+
+	// Vérification commentaire ligne
+	if strings.HasPrefix(trimmed, "//") {
+		// Commentaire ligne à ignorer
+		return true
+	}
+
+	// Vérification accolade seule
+	if trimmed == "{" || trimmed == "}" {
+		// Accolade seule à ignorer
+		return true
+	}
+
+	// Ligne à compter
+	return false
+}
+
+// countPureCodeLines compte les lignes de code pur dans le corps d'une fonction.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - body: corps de la fonction à analyser
+//
+// Returns:
+//   - int: nombre de lignes de code pur
 func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
- // Vérification de la condition
+	// Vérification corps vide
 	if body == nil {
-  // Retour de la fonction
+		// Retour pour corps vide
 		return 0
 	}
 
 	startPos := pass.Fset.Position(body.Lbrace)
 	endPos := pass.Fset.Position(body.Rbrace)
 
-	// Read the source file
+	// Lecture du fichier source
 	filename := startPos.Filename
- // Vérification de la condition
+	// Vérification de ReadFile
 	if pass.ReadFile == nil {
-  // Retour de la fonction
+		// Retour si ReadFile indisponible
 		return 0
 	}
 	content, err := pass.ReadFile(filename)
- // Vérification de la condition
+	// Vérification erreur lecture
 	if err != nil {
-  // Retour de la fonction
+		// Retour si erreur
 		return 0
 	}
 
@@ -109,51 +178,22 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 	pureCodeLines := 0
 	inBlockComment := false
 
-	// Count lines between start and end (excluding braces)
-	// Start after the opening brace line
+	// Itération sur les lignes de la fonction
 	for i := startPos.Line + 1; i < endPos.Line; i++ {
-  // Vérification de la condition
+		// Vérification index valide
 		if i <= 0 || i > len(lines) {
 			continue
 		}
 
-		line := lines[i-1] // lines are 0-indexed
+		line := lines[i-1]
 		trimmed := strings.TrimSpace(line)
 
-		// Check for block comment start/end
-		if strings.Contains(trimmed, "/*") {
-			inBlockComment = true
+		// Vérification si ligne doit être ignorée
+		if !isLineToSkip(trimmed, &inBlockComment) {
+			pureCodeLines++
 		}
-  // Vérification de la condition
-		if strings.Contains(trimmed, "*/") {
-			inBlockComment = false
-			continue
-		}
-
-		// Skip if in block comment
-		if inBlockComment {
-			continue
-		}
-
-		// Skip empty lines
-		if trimmed == "" {
-			continue
-		}
-
-		// Skip line comments
-		if strings.HasPrefix(trimmed, "//") {
-			continue
-		}
-
-		// Skip standalone braces
-		if trimmed == "{" || trimmed == "}" {
-			continue
-		}
-
-		// This is a pure code line
-		pureCodeLines++
 	}
 
- // Retour de la fonction
+	// Retour du compte
 	return pureCodeLines
 }

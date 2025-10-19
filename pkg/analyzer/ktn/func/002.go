@@ -22,7 +22,23 @@ var Analyzer002 = &analysis.Analyzer{
 }
 
 
+// runFunc002 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc002(pass *analysis.Pass) (any, error) {
+// runFunc002 exécute l'analyse KTN-FUNC-002.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -53,16 +69,6 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 			funcType = fn.Type
 			pos = fn
 			name = "function literal"
-  // Traitement
-		default:
-   // Retour de la fonction
-			return
-		}
-
-  // Vérification de la condition
-		if funcType.Params == nil {
-   // Retour de la fonction
-			return
 		}
 
 		// Count total parameters

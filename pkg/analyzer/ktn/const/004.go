@@ -17,6 +17,14 @@ var Analyzer004 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
+// runConst004 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runConst004(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -29,7 +37,7 @@ func runConst004(pass *analysis.Pass) (any, error) {
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
@@ -37,7 +45,7 @@ func runConst004(pass *analysis.Pass) (any, error) {
 		// Filter out "want" directives used by analysistest
 		hasGenDeclDoc := hasValidComment(genDecl.Doc)
 
-  // Itération sur les éléments
+		// Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
@@ -52,9 +60,9 @@ func runConst004(pass *analysis.Pass) (any, error) {
 			// 3. The ValueSpec has a line comment (on the same line)
 			hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
 
-   // Vérification de la condition
+			// Vérification de la condition
 			if !hasComment {
-    // Itération sur les éléments
+				// Itération sur les éléments
 				for _, name := range valueSpec.Names {
 					pass.Reportf(
 						name.Pos(),
@@ -66,28 +74,34 @@ func runConst004(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
-// hasValidComment checks if a comment group exists and contains valid comments
-// (not just test directives like "want")
+// hasValidComment vérifie si un groupe de commentaires contient des commentaires valides.
+//
+// Params:
+//   - cg: groupe de commentaires à vérifier
+//
+// Returns:
+//   - bool: true si commentaire valide (pas juste directives "want")
 func hasValidComment(cg *ast.CommentGroup) bool {
- // Vérification de la condition
+	// Vérification de la condition
 	if cg == nil || len(cg.List) == 0 {
-  // Retour de la fonction
+		// Retour de la fonction
 		return false
 	}
 
 	// Check if any comment is NOT a "want" directive
+	// Itération sur les commentaires pour trouver un commentaire valide
 	for _, comment := range cg.List {
 		text := comment.Text
 		// Skip "want" directives used by analysistest
-		// Line comment: // want "..."
+		// Vérification si c'est un commentaire de ligne "want"
 		if len(text) >= 6 && text[2:6] == "want" {
 			continue
 		}
-		// Block comment: /* want "..." */
+		// Vérification si c'est un commentaire de bloc "want"
 		if len(text) >= 7 && text[2:7] == " want" {
 			continue
 		}
@@ -95,6 +109,6 @@ func hasValidComment(cg *ast.CommentGroup) bool {
 		return true
 	}
 
- // Retour de la fonction
+	// Retour de la fonction
 	return false
 }

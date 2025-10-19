@@ -28,6 +28,9 @@ credentials.json
 *.exe
 *.test
 *.out
+*.o
+test_*
+*_test
 go.work
 go.work.sum
 vendor/

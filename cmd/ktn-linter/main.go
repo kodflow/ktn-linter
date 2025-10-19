@@ -50,12 +50,19 @@ func main() {
 
 	pkgs := loadPackages(flag.Args())
 	diagnostics := runAnalyzers(pkgs)
-	formatAndDisplay(diagnostics)
+
+	// Filter out diagnostics from cache/tmp files (same logic as formatter)
+	filteredDiags := filterDiagnostics(diagnostics)
+
+	formatAndDisplay(filteredDiags)
 
  // Vérification de la condition
-	if len(diagnostics) > 0 {
+	if len(filteredDiags) > 0 {
 		os.Exit(1)
 	}
+
+	// Success - exit with 0
+	os.Exit(0)
 }
 
 // parseFlags analyse les drapeaux de ligne de commande.
@@ -91,13 +98,13 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "  ktn-linter -ai ./path/to/file.go\n")
 }
 
-//   - []*packages.Package: packages chargés
 // loadPackages charge les packages Go à analyser.
-// Returns:
 //
-//   - patterns: liste des patterns de packages à charger
 // Params:
+//   - patterns: liste des patterns de packages à charger
 //
+// Returns:
+//   - []*packages.Package: packages chargés
 func loadPackages(patterns []string) []*packages.Package {
 	cfg := &packages.Config{
 		Mode:  packages.NeedName | packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
@@ -117,6 +124,9 @@ func loadPackages(patterns []string) []*packages.Package {
 }
 
 // checkLoadErrors vérifie les erreurs de chargement des packages.
+// Params:
+//   - pass: contexte d'analyse
+//
 // Returns: aucun
 //
 //   - pkgs: liste des packages chargés
@@ -140,13 +150,13 @@ func checkLoadErrors(pkgs []*packages.Package) {
 	}
 }
 
-//   - []diagWithFset: diagnostics trouvés
 // runAnalyzers exécute tous les analyseurs sur les packages.
-// Returns:
 //
-//   - pkgs: packages à analyser
 // Params:
+//   - pkgs: packages à analyser
 //
+// Returns:
+//   - []diagWithFset: diagnostics trouvés
 func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	// analyzers holds the configuration value.
 
@@ -206,13 +216,14 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	return allDiagnostics
 }
 
-//   - []diagWithFset: diagnostics filtrés
-// filterTestFiles filtre les fichiers de test des diagnostics.
-// Returns:
+// filterTestFiles filtre les fichiers de test.
 //
-//   - diagnostics: diagnostics à filtrer
 // Params:
+//   - files: fichiers à filtrer
+//   - fset: fileset pour position
 //
+// Returns:
+//   - []*ast.File: fichiers filtrés
 func filterTestFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
 	filtered := make([]*ast.File, 0, len(files))
  // Itération sur les éléments
@@ -227,15 +238,17 @@ func filterTestFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
 	return filtered
 }
 
-//   - *analysis.Pass: pass d'analyse créé
 // createAnalysisPass crée un pass d'analyse pour un package.
-// Returns:
 //
-//   - allDiags: slice pour collecter les diagnostics
-//   - pkg: package à analyser
-//   - analyzer: analyseur à exécuter
 // Params:
+//   - a: analyseur à exécuter
+//   - pkg: package à analyser
+//   - fset: fileset pour positions
+//   - diagnostics: slice pour collecter diagnostics
+//   - results: résultats des analyseurs requis
 //
+// Returns:
+//   - *analysis.Pass: pass d'analyse créé
 func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet, diagnostics *[]diagWithFset, results map[*analysis.Analyzer]interface{}) *analysis.Pass {
 	// Filter out test files
 	nonTestFiles := filterTestFiles(pkg.Syntax, fset)
@@ -276,6 +289,9 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 }
 
 // formatAndDisplay formate et affiche les diagnostics.
+// Params:
+//   - pass: contexte d'analyse
+//
 // Returns: aucun
 //
 //   - diagnostics: diagnostics à afficher
@@ -296,13 +312,40 @@ func formatAndDisplay(diagnostics []diagWithFset) {
 	fmt.Format(firstFset, diags)
 }
 
-//   - []analysis.Diagnostic: diagnostics dédupliqués
-// extractDiagnostics extrait et déduplique les diagnostics.
-// Returns:
+// filterDiagnostics filtre les diagnostics des fichiers cache/tmp.
 //
-//   - diagnostics: diagnostics bruts
 // Params:
+//   - diagnostics: diagnostics bruts avec fset
 //
+// Returns:
+//   - []diagWithFset: diagnostics filtrés
+func filterDiagnostics(diagnostics []diagWithFset) []diagWithFset {
+	// filtered holds the configuration value.
+
+	var filtered []diagWithFset
+ // Itération sur les éléments
+	for _, d := range diagnostics {
+		pos := d.fset.Position(d.diag.Pos)
+		// Ignorer les fichiers du cache Go et les fichiers temporaires
+  // Vérification de la condition
+		if strings.Contains(pos.Filename, "/.cache/go-build/") ||
+			strings.Contains(pos.Filename, "/tmp/") ||
+			strings.Contains(pos.Filename, "\\cache\\go-build\\") {
+			continue
+		}
+		filtered = append(filtered, d)
+	}
+	// Early return from function.
+	return filtered
+}
+
+// extractDiagnostics extrait et déduplique les diagnostics.
+//
+// Params:
+//   - diagnostics: diagnostics bruts avec fset
+//
+// Returns:
+//   - []analysis.Diagnostic: diagnostics dédupliqués
 func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	// Dédupliquer les diagnostics (même position + même message)
 	seen := make(map[string]bool)

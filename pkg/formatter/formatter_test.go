@@ -124,12 +124,12 @@ func TestFormatSimpleMode(t *testing.T) {
 		t.Errorf("Expected at least 2 lines in simple mode, got %d", len(lines))
 	}
 
-	// Check format: filename:line:col: [CODE] message
+	// Check format: filename:line:col: message (CODE)
 	if !strings.Contains(lines[0], "test.go:") {
 		t.Error("Expected filename:line:col format")
 	}
-	if !strings.Contains(lines[0], "[KTN-") {
-		t.Error("Expected error code in brackets")
+	if !strings.Contains(lines[0], "(KTN-") {
+		t.Errorf("Expected error code in parentheses, got: %s", lines[0])
 	}
 }
 
@@ -179,6 +179,16 @@ func TestExtractCode(t *testing.T) {
 			"Some text [KTN-FUNC-002] and more text",
 			"KTN-FUNC-002",
 		},
+		{
+			"prefix format with colon",
+			"KTN-TEST-005: some error message",
+			"KTN-TEST-005",
+		},
+		{
+			"prefix format without colon",
+			"KTN-TEST-006 missing colon",
+			"UNKNOWN",
+		},
 	}
 
 	for _, tt := range tests {
@@ -216,6 +226,31 @@ func TestExtractMessage(t *testing.T) {
 		{
 			"empty",
 			"",
+			"",
+		},
+		{
+			"bracket at end",
+			"[KTN-TEST-001]",
+			"[KTN-TEST-001]",
+		},
+		{
+			"prefix format with colon",
+			"KTN-FUNC-002: Function issue here",
+			"Function issue here",
+		},
+		{
+			"prefix format with colon at end",
+			"KTN-FUNC-003:",
+			"KTN-FUNC-003:",
+		},
+		{
+			"prefix format no colon",
+			"KTN-FUNC-004 no colon",
+			"KTN-FUNC-004 no colon",
+		},
+		{
+			"only newline",
+			"\nJust newline",
 			"",
 		},
 	}

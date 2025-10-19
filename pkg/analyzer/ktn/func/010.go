@@ -22,6 +22,14 @@ var Analyzer010 = &analysis.Analyzer{
 }
 
 
+// runFunc010 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc010(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 

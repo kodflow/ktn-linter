@@ -23,3 +23,15 @@ func Settings() {} // want "KTN-FUNC-003"
 
 // Bad: Result without verb
 func Sum() {} // want "KTN-FUNC-003"
+
+// Bad: Single word noun
+func Data() {} // want "KTN-FUNC-003"
+
+// Bad: Single word non-verb
+func Result() {} // want "KTN-FUNC-003"
+
+// Bad: Single word adjective
+func Valid() {} // want "KTN-FUNC-003"
+
+// Bad: Single word generic name
+func Helper() {} // want "KTN-FUNC-003"

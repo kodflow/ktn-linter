@@ -17,6 +17,14 @@ var Analyzer001 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
+// runConst001 exécute l'analyse KTN-CONST-001.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 func runConst001(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -29,11 +37,11 @@ func runConst001(pass *analysis.Pass) (any, error) {
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
-  // Itération sur les éléments
+		// Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
@@ -42,7 +50,7 @@ func runConst001(pass *analysis.Pass) (any, error) {
 				// If there are values, it's an error (not inheriting from iota pattern)
 				// If there are no values, it's OK (inheriting type and value from previous line - iota pattern)
 				if len(valueSpec.Values) > 0 {
-     // Itération sur les éléments
+					// Itération sur les éléments
 					for _, name := range valueSpec.Names {
 						pass.Reportf(
 							name.Pos(),
@@ -55,6 +63,6 @@ func runConst001(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }

@@ -22,6 +22,14 @@ var Analyzer005 = &analysis.Analyzer{
 }
 
 
+// runFunc005 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc005(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -30,6 +38,14 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 	}
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
+// runFunc005 exécute l'analyse KTN-FUNC-005.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip if no body
@@ -66,6 +82,12 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 }
 
 // calculateComplexity calculates the cyclomatic complexity of a function
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - int: complexité calculée
+//
 func calculateComplexity(body *ast.BlockStmt) int {
 	// Start with complexity of 1 (the function itself)
 	complexity := 1

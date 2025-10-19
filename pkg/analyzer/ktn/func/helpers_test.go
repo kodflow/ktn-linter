@@ -145,9 +145,174 @@ func Test() {
 	}
 }
 
+// Test for countPureCodeLines with nil ReadFile
+func TestCountPureCodeLinesNilReadFile(t *testing.T) {
+	fset := token.NewFileSet()
+	code := `package test
+func Test() {
+	x := 1
+}`
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	var funcDecl *ast.FuncDecl
+	ast.Inspect(file, func(n ast.Node) bool {
+		if fd, ok := n.(*ast.FuncDecl); ok {
+			funcDecl = fd
+			return false
+		}
+		return true
+	})
+
+	// Pass with nil ReadFile
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ReadFile: nil,
+	}
+
+	result := countPureCodeLines(pass, funcDecl.Body)
+	if result != 0 {
+		t.Errorf("countPureCodeLines with nil ReadFile = %d, want 0", result)
+	}
+}
+
+// Test for countPureCodeLines with invalid line index
+func TestCountPureCodeLinesInvalidIndex(t *testing.T) {
+	fset := token.NewFileSet()
+	// Create a realistic source code
+	sourceCode := `package test
+
+func LongFunction() {
+	x := 1
+	y := 2
+	z := 3
+	a := 4
+	b := 5
+	c := 6
+}
+`
+	// Add a file and parse it
+	file := fset.AddFile("test.go", fset.Base(), len(sourceCode))
+	file.SetLinesForContent([]byte(sourceCode))
+
+	// Parse to get a real function
+	astFile, _ := parser.ParseFile(fset, "test.go", sourceCode, 0)
+	var funcDecl *ast.FuncDecl
+	ast.Inspect(astFile, func(n ast.Node) bool {
+		if fd, ok := n.(*ast.FuncDecl); ok {
+			funcDecl = fd
+			return false
+		}
+		return true
+	})
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ReadFile: func(filename string) ([]byte, error) {
+			// Return FEWER lines than the source expects
+			// This simulates a file that was modified/truncated
+			return []byte("package test\nfunc LongFunction() {\n"), nil
+		},
+	}
+
+	// This should handle the invalid index gracefully (lines beyond file length)
+	result := countPureCodeLines(pass, funcDecl.Body)
+	// The function should skip invalid indices and return what it can count
+	if result < 0 {
+		t.Errorf("countPureCodeLines with truncated file = %d, should be >= 0", result)
+	}
+}
+
 type testError struct{}
 
 func (e *testError) Error() string { return "test error" }
+
+// Test for isLineToSkip
+func TestIsLineToSkip(t *testing.T) {
+	tests := []struct {
+		name           string
+		trimmed        string
+		inBlockComment bool
+		want           bool
+		wantBlockState bool
+	}{
+		{
+			name:           "empty line",
+			trimmed:        "",
+			inBlockComment: false,
+			want:           true,
+			wantBlockState: false,
+		},
+		{
+			name:           "line comment",
+			trimmed:        "// comment",
+			inBlockComment: false,
+			want:           true,
+			wantBlockState: false,
+		},
+		{
+			name:           "opening brace",
+			trimmed:        "{",
+			inBlockComment: false,
+			want:           true,
+			wantBlockState: false,
+		},
+		{
+			name:           "closing brace",
+			trimmed:        "}",
+			inBlockComment: false,
+			want:           true,
+			wantBlockState: false,
+		},
+		{
+			name:           "start block comment",
+			trimmed:        "/* comment",
+			inBlockComment: false,
+			want:           true,
+			wantBlockState: true,
+		},
+		{
+			name:           "end block comment",
+			trimmed:        "comment */",
+			inBlockComment: true,
+			want:           true,
+			wantBlockState: false,
+		},
+		{
+			name:           "inside block comment",
+			trimmed:        "comment line",
+			inBlockComment: true,
+			want:           true,
+			wantBlockState: true,
+		},
+		{
+			name:           "code line",
+			trimmed:        "x := 1",
+			inBlockComment: false,
+			want:           false,
+			wantBlockState: false,
+		},
+		{
+			name:           "single line block comment",
+			trimmed:        "/* comment */ x := 1",
+			inBlockComment: false,
+			want:           true,
+			wantBlockState: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inBlock := tt.inBlockComment
+			got := isLineToSkip(tt.trimmed, &inBlock)
+			if got != tt.want {
+				t.Errorf("isLineToSkip(%q, %v) = %v, want %v", tt.trimmed, tt.inBlockComment, got, tt.want)
+			}
+			if inBlock != tt.wantBlockState {
+				t.Errorf("isLineToSkip(%q, %v) block state = %v, want %v", tt.trimmed, tt.inBlockComment, inBlock, tt.wantBlockState)
+			}
+		})
+	}
+}
 
 // Tests for isTestFunction
 func TestIsTestFunction(t *testing.T) {

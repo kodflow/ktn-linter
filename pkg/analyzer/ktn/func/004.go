@@ -22,6 +22,14 @@ var Analyzer004 = &analysis.Analyzer{
 }
 
 
+// runFunc004 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runFunc004(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -37,6 +45,14 @@ func runFunc004(pass *analysis.Pass) (any, error) {
    // Retour de la fonction
 			return
 		}
+// runFunc004 exécute l'analyse KTN-FUNC-004.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 
 		// Skip test functions
 		funcName := funcDecl.Name.Name
@@ -47,7 +63,7 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 		}
 
 		// Skip if function doesn't have named return values
-		if funcDecl.Type.Results == nil || !hasNamedReturns(funcDecl.Type.Results) {
+		if !hasNamedReturns(funcDecl.Type.Results) {
    // Retour de la fonction
 			return
 		}
@@ -88,6 +104,12 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 }
 
 // hasNamedReturns checks if the function has named return values
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si retours nommés
+//
 func hasNamedReturns(results *ast.FieldList) bool {
  // Vérification de la condition
 	if results == nil || len(results.List) == 0 {

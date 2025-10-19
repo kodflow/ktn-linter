@@ -72,3 +72,50 @@ func BadTypeSwitchNoComment(v interface{}) string {
 		return "unknown" // want "KTN-FUNC-011.*return.*commentaire"
 	}
 }
+
+// BadElseIfNoComment has an else if without a comment
+func BadElseIfNoComment(x int) string {
+	// Check if x is negative
+	if x < 0 {
+		// Return "negative" for negative values
+		return "negative"
+	} else if x > 0 { // want "KTN-FUNC-011.*if.*commentaire" "KTN-FUNC-011.*else.*commentaire"
+		return "positive" // want "KTN-FUNC-011.*return.*commentaire"
+	} else {
+		// Return "zero" for zero value
+		return "zero"
+	}
+}
+
+// BadElseNoCommentInside has an else with comment before but checking inside path
+func BadElseNoCommentInside(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	} else { // want "KTN-FUNC-011.*else.*commentaire"
+		return "non-positive" // want "KTN-FUNC-011.*return.*commentaire"
+	}
+}
+
+// BadElseEmptyBlock has an empty else block without comment
+func BadElseEmptyBlock(x int) {
+	// Check if x is positive
+	if x > 0 {
+		// Return for positive values
+		return
+	} else { // want "KTN-FUNC-011.*else.*commentaire"
+	}
+}
+
+// BadElseBlockNoCommentBeforeFirstStmt has else block without comment before or inside
+func BadElseBlockNoCommentBeforeFirstStmt(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	} else { // want "KTN-FUNC-011.*else.*commentaire"
+		x = 0
+		return "zero" // want "KTN-FUNC-011.*return.*commentaire"
+	}
+}

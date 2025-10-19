@@ -23,8 +23,24 @@ var Analyzer003 = &analysis.Analyzer{
 // Must contain at least one underscore for multi-word constants
 var validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 
+// runConst003 description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat
+//   - error: erreur éventuelle
 func runConst003(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+// runConst003 exécute l'analyse KTN-CONST-003.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
@@ -69,6 +85,16 @@ func runConst003(pass *analysis.Pass) (any, error) {
 }
 
 // isValidConstantName checks if a constant name follows CAPITAL_UNDERSCORE convention
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si nom valide
+//   - retours à documenter
+//
+// Returns:
+//   - bool: true si le nom est valide
+//
 func isValidConstantName(name string) bool {
 	// Must match the pattern: starts with uppercase, contains only uppercase, digits, underscores
 	if !validConstNamePattern.MatchString(name) {

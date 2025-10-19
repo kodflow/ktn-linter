@@ -17,6 +17,58 @@ var Analyzer006 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
+// validateErrorInReturns vérifie que l'erreur est en dernière position.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcType: type de la fonction
+func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
+	// Vérification présence de résultats
+	if funcType == nil || funcType.Results == nil {
+		// Pas de résultats à vérifier
+		return
+	}
+
+	results := funcType.Results.List
+
+	// Recherche des positions d'erreur
+	var errorPositions []int
+	// Itération sur les résultats
+	for i, result := range results {
+		// Vérification si type error
+		if isErrorType(pass, result.Type) {
+			errorPositions = append(errorPositions, i)
+		}
+	}
+
+	// Vérification erreurs mal placées
+	if len(errorPositions) > 0 {
+		lastPos := len(results) - 1
+		// Itération sur les positions d'erreur
+		for _, pos := range errorPositions {
+			// Vérification position incorrecte
+			if pos != lastPos {
+				pass.Reportf(
+					funcType.Results.Pos(),
+					"KTN-FUNC-006: l'erreur doit être en dernière position dans les valeurs de retour (trouvée en position %d sur %d)",
+					pos+1,
+					len(results),
+				)
+				// Retour après premier rapport
+				return
+			}
+		}
+	}
+}
+
+// runFunc006 exécute l'analyse KTN-FUNC-006.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 func runFunc006(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -27,65 +79,29 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		var funcType *ast.FuncType
-
-  // Sélection selon la valeur
+		// Sélection selon la valeur
 		switch node := n.(type) {
-  // Traitement
+		// Traitement FuncDecl
 		case *ast.FuncDecl:
 			funcType = node.Type
-  // Traitement
+		// Traitement FuncLit
 		case *ast.FuncLit:
 			funcType = node.Type
 		}
-
-  // Vérification de la condition
-		if funcType == nil || funcType.Results == nil {
-   // Retour de la fonction
-			return
-		}
-
-		results := funcType.Results.List
-  // Vérification de la condition
-		if len(results) == 0 {
-   // Retour de la fonction
-			return
-		}
-
-		// Check each return value to find error types
-		var errorPositions []int
-  // Itération sur les éléments
-		for i, result := range results {
-   // Vérification de la condition
-			if isErrorType(pass, result.Type) {
-				errorPositions = append(errorPositions, i)
-			}
-		}
-
-		// If there are errors and any is not in the last position, report
-		if len(errorPositions) > 0 {
-			lastPos := len(results) - 1
-   // Itération sur les éléments
-			for _, pos := range errorPositions {
-    // Vérification de la condition
-				if pos != lastPos {
-					pass.Reportf(
-						funcType.Results.Pos(),
-						"KTN-FUNC-006: l'erreur doit être en dernière position dans les valeurs de retour (trouvée en position %d sur %d)",
-						pos+1,
-						len(results),
-					)
-     // Retour de la fonction
-					return
-				}
-			}
-		}
+		validateErrorInReturns(pass, funcType)
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
 // isErrorType checks if a type expression represents the error interface
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si type error
+//
 func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 	tv, ok := pass.TypesInfo.Types[expr]
  // Vérification de la condition

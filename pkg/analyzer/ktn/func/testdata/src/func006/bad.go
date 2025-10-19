@@ -25,3 +25,8 @@ type BadType struct{}
 var badFunc = func() (error, int) { // want "KTN-FUNC-006"
 	return nil, 0
 }
+
+// Multiple errors with one misplaced (tests the early return after first error found)
+func BadMultipleErrors() (error, string, error) { // want "KTN-FUNC-006"
+	return nil, "", nil
+}
