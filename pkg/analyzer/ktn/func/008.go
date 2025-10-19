@@ -29,16 +29,21 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 
 		// Skip test functions
 		if isTestFunction(funcName) {
+   // Retour de la fonction
 			return
 		}
 
+  // Vérification de la condition
 		if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
+   // Retour de la fonction
 			return
 		}
 
 		// Check each parameter
 		contextParamIndex := -1
+  // Itération sur les éléments
 		for i, field := range funcDecl.Type.Params.List {
+   // Vérification de la condition
 			if isContextType(field.Type) {
 				contextParamIndex = i
 				break
@@ -55,20 +60,26 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
 // isContextType checks if a type is context.Context
 func isContextType(expr ast.Expr) bool {
 	sel, ok := expr.(*ast.SelectorExpr)
+ // Vérification de la condition
 	if !ok {
+  // Retour de la fonction
 		return false
 	}
 
 	ident, ok := sel.X.(*ast.Ident)
+ // Vérification de la condition
 	if !ok {
+  // Retour de la fonction
 		return false
 	}
 
+ // Retour de la fonction
 	return ident.Name == "context" && sel.Sel.Name == "Context"
 }

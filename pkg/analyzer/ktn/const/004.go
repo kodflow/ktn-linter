@@ -29,6 +29,7 @@ func runConst004(pass *analysis.Pass) (any, error) {
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
+   // Retour de la fonction
 			return
 		}
 
@@ -36,6 +37,7 @@ func runConst004(pass *analysis.Pass) (any, error) {
 		// Filter out "want" directives used by analysistest
 		hasGenDeclDoc := hasValidComment(genDecl.Doc)
 
+  // Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
@@ -50,7 +52,9 @@ func runConst004(pass *analysis.Pass) (any, error) {
 			// 3. The ValueSpec has a line comment (on the same line)
 			hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
 
+   // Vérification de la condition
 			if !hasComment {
+    // Itération sur les éléments
 				for _, name := range valueSpec.Names {
 					pass.Reportf(
 						name.Pos(),
@@ -62,13 +66,16 @@ func runConst004(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
 // hasValidComment checks if a comment group exists and contains valid comments
 // (not just test directives like "want")
 func hasValidComment(cg *ast.CommentGroup) bool {
+ // Vérification de la condition
 	if cg == nil || len(cg.List) == 0 {
+  // Retour de la fonction
 		return false
 	}
 
@@ -88,5 +95,6 @@ func hasValidComment(cg *ast.CommentGroup) bool {
 		return true
 	}
 
+ // Retour de la fonction
 	return false
 }

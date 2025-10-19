@@ -29,9 +29,11 @@ func runConst001(pass *analysis.Pass) (any, error) {
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
+   // Retour de la fonction
 			return
 		}
 
+  // Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
@@ -40,6 +42,7 @@ func runConst001(pass *analysis.Pass) (any, error) {
 				// If there are values, it's an error (not inheriting from iota pattern)
 				// If there are no values, it's OK (inheriting type and value from previous line - iota pattern)
 				if len(valueSpec.Values) > 0 {
+     // Itération sur les éléments
 					for _, name := range valueSpec.Names {
 						pass.Reportf(
 							name.Pos(),
@@ -52,5 +55,6 @@ func runConst001(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }

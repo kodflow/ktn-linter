@@ -25,16 +25,20 @@ func runConst002(pass *analysis.Pass) (any, error) {
 		// Collect const and var declarations
 		for _, decl := range file.Decls {
 			genDecl, ok := decl.(*ast.GenDecl)
+   // Vérification de la condition
 			if !ok {
 				continue
 			}
 
+   // Sélection selon la valeur
 			switch genDecl.Tok {
+   // Traitement
 			case token.CONST:
 				tracker.constGroups = append(tracker.constGroups, declGroup{
 					decl: genDecl,
 					pos:  genDecl.Pos(),
 				})
+   // Traitement
 			case token.VAR:
 				tracker.varGroups = append(tracker.varGroups, declGroup{
 					decl: genDecl,
@@ -47,6 +51,7 @@ func runConst002(pass *analysis.Pass) (any, error) {
 		checkConstGrouping(pass, tracker)
 	}
 
+ // Retour de la fonction
 	return nil, nil
 }
 
@@ -63,12 +68,14 @@ type declGroup struct {
 func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	// If no const declarations, nothing to check
 	if len(tracker.constGroups) == 0 {
+  // Retour de la fonction
 		return
 	}
 
 	// If no var declarations, only check if consts are scattered
 	if len(tracker.varGroups) == 0 {
 		checkScatteredConsts(pass, tracker.constGroups)
+  // Retour de la fonction
 		return
 	}
 
@@ -79,9 +86,12 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	constGroupsBeforeVar := []declGroup{}
 	constGroupsAfterVar := []declGroup{}
 
+ // Itération sur les éléments
 	for _, constGroup := range tracker.constGroups {
+  // Vérification de la condition
 		if constGroup.pos < firstVarPos {
 			constGroupsBeforeVar = append(constGroupsBeforeVar, constGroup)
+  // Cas alternatif
 		} else {
 			constGroupsAfterVar = append(constGroupsAfterVar, constGroup)
 		}
@@ -102,6 +112,7 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 func checkScatteredConsts(pass *analysis.Pass, constGroups []declGroup) {
 	// If 0 or 1 const group, they're not scattered
 	if len(constGroups) <= 1 {
+  // Retour de la fonction
 		return
 	}
 

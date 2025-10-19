@@ -2,8 +2,12 @@ package ktnconst
 
 import "golang.org/x/tools/go/analysis"
 
-// Analyzers returns all const-related analyzers
-func Analyzers() []*analysis.Analyzer {
+// GetAnalyzers retourne tous les analyseurs relatifs aux constantes.
+//
+// Returns:
+//   - []*analysis.Analyzer: liste des analyseurs de constantes (001-004)
+func GetAnalyzers() []*analysis.Analyzer {
+	// Retourne la liste complète des analyseurs de constantes
 	return []*analysis.Analyzer{
 		Analyzer001,
 		Analyzer002,

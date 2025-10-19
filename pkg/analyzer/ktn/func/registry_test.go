@@ -7,7 +7,7 @@ import (
 )
 
 func TestAnalyzers(t *testing.T) {
-	analyzers := ktnfunc.Analyzers()
+	analyzers := ktnfunc.GetAnalyzers()
 
 	// Check that we have at least 11 analyzers
 	minExpectedCount := 11

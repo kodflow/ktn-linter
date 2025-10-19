@@ -35,12 +35,15 @@ func runConst003(pass *analysis.Pass) (any, error) {
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
+   // Retour de la fonction
 			return
 		}
 
+  // Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
+   // Itération sur les éléments
 			for _, name := range valueSpec.Names {
 				constName := name.Name
 
@@ -61,6 +64,7 @@ func runConst003(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
@@ -68,11 +72,13 @@ func runConst003(pass *analysis.Pass) (any, error) {
 func isValidConstantName(name string) bool {
 	// Must match the pattern: starts with uppercase, contains only uppercase, digits, underscores
 	if !validConstNamePattern.MatchString(name) {
+  // Retour de la fonction
 		return false
 	}
 
 	// Single letter constants are valid (e.g., A, B, C)
 	if len(name) == 1 {
+  // Retour de la fonction
 		return true
 	}
 

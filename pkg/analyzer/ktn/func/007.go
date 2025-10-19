@@ -54,6 +54,7 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 				"KTN-FUNC-007: la fonction '%s' doit avoir une documentation",
 				funcDecl.Name.Name,
 			)
+   // Retour de la fonction
 			return
 		}
 
@@ -65,6 +66,7 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 		hasReturns := funcDecl.Type.Results != nil && len(funcDecl.Type.Results.List) > 0
 
 		err := validateDocFormat(comments, funcDecl.Name.Name, hasParams, hasReturns)
+  // Vérification de la condition
 		if err != "" {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
@@ -74,12 +76,14 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
 // extractCommentLines extracts individual comment lines from a CommentGroup
 func extractCommentLines(cg *ast.CommentGroup) []string {
 	var lines []string
+ // Itération sur les éléments
 	for _, comment := range cg.List {
 		text := comment.Text
 		// Remove // prefix
@@ -87,17 +91,21 @@ func extractCommentLines(cg *ast.CommentGroup) []string {
 			lines = append(lines, text)
 		}
 	}
+ // Retour de la fonction
 	return lines
 }
 
 // validateDocFormat validates the documentation format
 func validateDocFormat(comments []string, funcName string, hasParams, hasReturns bool) string {
+ // Vérification de la condition
 	if len(comments) == 0 {
+  // Retour de la fonction
 		return "documentation vide"
 	}
 
 	// Check first line (description)
 	if !strings.HasPrefix(comments[0], "// "+funcName) {
+  // Retour de la fonction
 		return "la description doit commencer par '// " + funcName + " '"
 	}
 
@@ -110,24 +118,31 @@ func validateDocFormat(comments []string, funcName string, hasParams, hasReturns
 
 	// Check for Params section if function has parameters
 	if hasParams {
+  // Vérification de la condition
 		if idx >= len(comments) || !paramsHeaderPattern.MatchString(comments[idx]) {
+   // Retour de la fonction
 			return "section 'Params:' manquante (fonction avec paramètres)"
 		}
 		idx++
 
 		// Validate param items
 		foundParam := false
+  // Itération sur les éléments
 		for idx < len(comments) {
 			line := comments[idx]
+   // Vérification de la condition
 			if paramItemPattern.MatchString(line) {
 				foundParam = true
 				idx++
+   // Cas alternatif
 			} else {
 				break
 			}
 		}
 
+  // Vérification de la condition
 		if !foundParam {
+   // Retour de la fonction
 			return "au moins un paramètre doit être documenté dans 'Params:'"
 		}
 
@@ -139,27 +154,35 @@ func validateDocFormat(comments []string, funcName string, hasParams, hasReturns
 
 	// Check for Returns section if function has return values
 	if hasReturns {
+  // Vérification de la condition
 		if idx >= len(comments) || !returnsHeaderPattern.MatchString(comments[idx]) {
+   // Retour de la fonction
 			return "section 'Returns:' manquante (fonction avec valeurs de retour)"
 		}
 		idx++
 
 		// Validate return items
 		foundReturn := false
+  // Itération sur les éléments
 		for idx < len(comments) {
 			line := comments[idx]
+   // Vérification de la condition
 			if returnItemPattern.MatchString(line) {
 				foundReturn = true
 				idx++
+   // Cas alternatif
 			} else {
 				break
 			}
 		}
 
+  // Vérification de la condition
 		if !foundReturn {
+   // Retour de la fonction
 			return "au moins une valeur de retour doit être documentée dans 'Returns:'"
 		}
 	}
 
+ // Retour de la fonction
 	return ""
 }

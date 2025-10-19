@@ -8,21 +8,40 @@ import (
 )
 
 // GetAllRules retourne toutes les règles KTN disponibles.
+//
+// Returns:
+//   - []*analysis.Analyzer: liste de tous les analyseurs (const + func)
 func GetAllRules() []*analysis.Analyzer {
 	var all []*analysis.Analyzer
-	all = append(all, ktnconst.Analyzers()...)
-	all = append(all, ktnfunc.Analyzers()...)
+	// Ajoute les analyseurs de constantes
+	all = append(all, ktnconst.GetAnalyzers()...)
+	// Ajoute les analyseurs de fonctions
+	all = append(all, ktnfunc.GetAnalyzers()...)
+	// Retourne la liste complète
 	return all
 }
 
 // GetRulesByCategory retourne les règles d'une catégorie spécifique.
+//
+// Params:
+//   - category: nom de la catégorie ("const" ou "func")
+//
+// Returns:
+//   - []*analysis.Analyzer: liste des analyseurs de la catégorie demandée
 func GetRulesByCategory(category string) []*analysis.Analyzer {
+	// Sélection de la catégorie
 	switch category {
+ // Traitement
 	case "const":
-		return ktnconst.Analyzers()
+		// Retourne les analyseurs de constantes
+		return ktnconst.GetAnalyzers()
+ // Traitement
 	case "func":
-		return ktnfunc.Analyzers()
+		// Retourne les analyseurs de fonctions
+		return ktnfunc.GetAnalyzers()
+ // Traitement
 	default:
+		// Catégorie inconnue
 		return nil
 	}
 }

@@ -31,7 +31,9 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 		var pos ast.Node
 		var name string
 
+  // Sélection selon la valeur
 		switch fn := n.(type) {
+  // Traitement
 		case *ast.FuncDecl:
 			funcType = fn.Type
 			pos = fn.Name
@@ -39,22 +41,29 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 
 			// Skip test functions
 			if isTestFunction(name) {
+    // Retour de la fonction
 				return
 			}
+  // Traitement
 		case *ast.FuncLit:
 			funcType = fn.Type
 			pos = fn
 			name = "function literal"
+  // Traitement
 		default:
+   // Retour de la fonction
 			return
 		}
 
+  // Vérification de la condition
 		if funcType.Params == nil {
+   // Retour de la fonction
 			return
 		}
 
 		// Count total parameters
 		paramCount := 0
+  // Itération sur les éléments
 		for _, field := range funcType.Params.List {
 			// Each field can declare multiple params: func(a, b, c int)
 			if len(field.Names) > 0 {
@@ -65,6 +74,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 			}
 		}
 
+  // Vérification de la condition
 		if paramCount > maxParams {
 			pass.Reportf(
 				pos.Pos(),
@@ -76,5 +86,6 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }

@@ -238,11 +238,11 @@ func TestGetCodeColor(t *testing.T) {
 		code     string
 		expected string
 	}{
-		{"KTN-VAR-001", Red},
-		{"KTN-FUNC-002", Yellow},
-		{"KTN-TEST-003", Magenta},
-		{"KTN-ALLOC-004", Cyan},
-		{"KTN-OTHER-999", Red}, // default
+		{"KTN-VAR-001", RED},
+		{"KTN-FUNC-002", YELLOW},
+		{"KTN-TEST-003", MAGENTA},
+		{"KTN-ALLOC-004", CYAN},
+		{"KTN-OTHER-999", RED}, // default
 	}
 
 	for _, tt := range tests {

@@ -30,18 +30,22 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 
 		// Skip if no body
 		if funcDecl.Body == nil {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip test functions
 		funcName := funcDecl.Name.Name
+  // Vérification de la condition
 		if isTestFunction(funcName) {
+   // Retour de la fonction
 			return
 		}
 
 		// Calculate cyclomatic complexity
 		complexity := calculateComplexity(funcDecl.Body)
 
+  // Vérification de la condition
 		if complexity > maxCyclomaticComplexity {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
@@ -53,6 +57,7 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
@@ -62,31 +67,39 @@ func calculateComplexity(body *ast.BlockStmt) int {
 	complexity := 1
 
 	ast.Inspect(body, func(n ast.Node) bool {
+  // Sélection selon la valeur
 		switch node := n.(type) {
+  // Traitement
 		case *ast.IfStmt:
 			// +1 for if
 			complexity++
+  // Traitement
 		case *ast.ForStmt, *ast.RangeStmt:
 			// +1 for each loop
 			complexity++
+  // Traitement
 		case *ast.CaseClause:
 			// +1 for each case (except default)
 			if node.List != nil {
 				complexity++
 			}
+  // Traitement
 		case *ast.CommClause:
 			// +1 for each comm case in select
 			if node.Comm != nil {
 				complexity++
 			}
+  // Traitement
 		case *ast.BinaryExpr:
 			// +1 for && and ||
 			if node.Op.String() == "&&" || node.Op.String() == "||" {
 				complexity++
 			}
 		}
+  // Retour de la fonction
 		return true
 	})
 
+ // Retour de la fonction
 	return complexity
 }

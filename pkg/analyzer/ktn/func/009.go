@@ -30,26 +30,32 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 
 		// Skip test functions
 		if isTestFunction(funcName) {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip if not a getter (Get*, Is*, Has*)
 		if !isGetter(funcName) {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip if no body
 		if funcDecl.Body == nil {
+   // Retour de la fonction
 			return
 		}
 
 		// Check for side effects
 		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+   // Sélection selon la valeur
 			switch stmt := node.(type) {
+   // Traitement
 			case *ast.AssignStmt:
 				// Check if it's assigning to a field or external variable
 				// Assignments to local variables (created in the function) are OK
 				for _, lhs := range stmt.Lhs {
+     // Vérification de la condition
 					if hasSideEffect(lhs) {
 						pass.Reportf(
 							stmt.Pos(),
@@ -58,6 +64,7 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 						)
 					}
 				}
+   // Traitement
 			case *ast.IncDecStmt:
 				// ++ or -- on fields
 				if hasSideEffect(stmt.X) {
@@ -68,15 +75,18 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 					)
 				}
 			}
+   // Retour de la fonction
 			return true
 		})
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
 // isGetter checks if a function name suggests it's a getter
 func isGetter(name string) bool {
+ // Retour de la fonction
 	return strings.HasPrefix(name, "Get") ||
 		strings.HasPrefix(name, "Is") ||
 		strings.HasPrefix(name, "Has")
@@ -84,16 +94,21 @@ func isGetter(name string) bool {
 
 // hasSideEffect checks if an expression modifies external state
 func hasSideEffect(expr ast.Expr) bool {
+ // Sélection selon la valeur
 	switch e := expr.(type) {
+ // Traitement
 	case *ast.SelectorExpr:
 		// Modifying a field is a side effect
 		return true
+ // Traitement
 	case *ast.IndexExpr:
 		// Modifying an index (array/map/slice element) could be a side effect
 		// Check if the base is a selector
 		if _, ok := e.X.(*ast.SelectorExpr); ok {
+   // Retour de la fonction
 			return true
 		}
 	}
+ // Retour de la fonction
 	return false
 }

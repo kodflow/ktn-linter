@@ -57,21 +57,25 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 
 		// Skip unexported functions
 		if !ast.IsExported(funcName) {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip test functions
 		if isTestFunction(funcName) {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip main function
 		if funcName == "main" {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip init function
 		if funcName == "init" {
+   // Retour de la fonction
 			return
 		}
 
@@ -85,6 +89,7 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
@@ -99,13 +104,17 @@ func startsWithVerb(name string) bool {
 
 // extractFirstWord extracts the first word from a PascalCase/camelCase name
 func extractFirstWord(name string) string {
+ // Vérification de la condition
 	if len(name) == 0 {
+  // Retour de la fonction
 		return ""
 	}
 
 	// Find the first uppercase letter after the start
 	for i := 1; i < len(name); i++ {
+  // Vérification de la condition
 		if unicode.IsUpper(rune(name[i])) {
+   // Retour de la fonction
 			return name[:i]
 		}
 	}

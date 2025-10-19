@@ -9,6 +9,11 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const (
+	// MAX_PURE_CODE_LINES définit le nombre maximum de lignes de code pur autorisées dans une fonction
+	MAX_PURE_CODE_LINES int = 35
+)
+
 // Analyzer001 checks that functions don't exceed 35 lines of pure code
 var Analyzer001 = &analysis.Analyzer{
 	Name:     "ktnfunc001",
@@ -16,8 +21,6 @@ var Analyzer001 = &analysis.Analyzer{
 	Run:      runFunc001,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
-
-const maxPureCodeLines = 35
 
 func runFunc001(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -31,39 +34,46 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 
 		// Skip if no body
 		if funcDecl.Body == nil {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
 		funcName := funcDecl.Name.Name
+  // Vérification de la condition
 		if isTestFunction(funcName) {
+   // Retour de la fonction
 			return
 		}
 
 		// Skip main function
 		if funcName == "main" {
+   // Retour de la fonction
 			return
 		}
 
 		// Count pure code lines
 		pureLines := countPureCodeLines(pass, funcDecl.Body)
 
-		if pureLines > maxPureCodeLines {
+  // Vérification de la condition
+		if pureLines > MAX_PURE_CODE_LINES {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
 				"KTN-FUNC-001: la fonction '%s' contient %d lignes de code pur (max: %d)",
 				funcName,
 				pureLines,
-				maxPureCodeLines,
+				MAX_PURE_CODE_LINES,
 			)
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }
 
 // isTestFunction checks if a function name indicates a test function
 func isTestFunction(name string) bool {
+ // Retour de la fonction
 	return strings.HasPrefix(name, "Test") ||
 		strings.HasPrefix(name, "Benchmark") ||
 		strings.HasPrefix(name, "Example") ||
@@ -72,7 +82,9 @@ func isTestFunction(name string) bool {
 
 // countPureCodeLines counts only pure code lines by reading the source file
 func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
+ // Vérification de la condition
 	if body == nil {
+  // Retour de la fonction
 		return 0
 	}
 
@@ -81,11 +93,15 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 
 	// Read the source file
 	filename := startPos.Filename
+ // Vérification de la condition
 	if pass.ReadFile == nil {
+  // Retour de la fonction
 		return 0
 	}
 	content, err := pass.ReadFile(filename)
+ // Vérification de la condition
 	if err != nil {
+  // Retour de la fonction
 		return 0
 	}
 
@@ -96,6 +112,7 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 	// Count lines between start and end (excluding braces)
 	// Start after the opening brace line
 	for i := startPos.Line + 1; i < endPos.Line; i++ {
+  // Vérification de la condition
 		if i <= 0 || i > len(lines) {
 			continue
 		}
@@ -107,6 +124,7 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 		if strings.Contains(trimmed, "/*") {
 			inBlockComment = true
 		}
+  // Vérification de la condition
 		if strings.Contains(trimmed, "*/") {
 			inBlockComment = false
 			continue
@@ -136,5 +154,6 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 		pureCodeLines++
 	}
 
+ // Retour de la fonction
 	return pureCodeLines
 }

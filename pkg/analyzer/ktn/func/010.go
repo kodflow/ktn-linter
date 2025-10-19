@@ -31,10 +31,13 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 
 		// Skip test functions
 		if isTestFunction(funcName) {
+   // Retour de la fonction
 			return
 		}
 
+  // Vérification de la condition
 		if funcDecl.Type.Results == nil {
+   // Retour de la fonction
 			return
 		}
 
@@ -42,7 +45,9 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 		returnCount := 0
 		hasUnnamedReturns := false
 
+  // Itération sur les éléments
 		for _, field := range funcDecl.Type.Results.List {
+   // Vérification de la condition
 			if len(field.Names) == 0 {
 				// Unnamed return
 				hasUnnamedReturns = true
@@ -65,5 +70,6 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 		}
 	})
 
+ // Retour de la fonction
 	return nil, nil
 }

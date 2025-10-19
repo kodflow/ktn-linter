@@ -2,8 +2,12 @@ package ktnfunc
 
 import "golang.org/x/tools/go/analysis"
 
-// Analyzers returns all func-related analyzers
-func Analyzers() []*analysis.Analyzer {
+// GetAnalyzers retourne tous les analyseurs relatifs aux fonctions.
+//
+// Returns:
+//   - []*analysis.Analyzer: liste des analyseurs de fonctions (001-011)
+func GetAnalyzers() []*analysis.Analyzer {
+	// Retourne la liste complète des analyseurs de fonctions
 	return []*analysis.Analyzer{
 		Analyzer001, // Max 35 lines of pure code
 		Analyzer002, // Max 5 parameters

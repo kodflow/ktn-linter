@@ -12,15 +12,24 @@ import (
 
 // Codes de couleurs ANSI pour le formatage terminal
 const (
-	Red     string = "\033[31m"
-	Green   string = "\033[32m"
-	Yellow  string = "\033[33m"
-	Blue    string = "\033[34m"
-	Magenta string = "\033[35m"
-	Cyan    string = "\033[36m"
-	Gray    string = "\033[90m"
-	Bold    string = "\033[1m"
-	Reset   string = "\033[0m"
+	// RED représente le code ANSI pour la couleur rouge
+	RED string = "\033[31m"
+	// GREEN représente le code ANSI pour la couleur verte
+	GREEN string = "\033[32m"
+	// YELLOW représente le code ANSI pour la couleur jaune
+	YELLOW string = "\033[33m"
+	// BLUE représente le code ANSI pour la couleur bleue
+	BLUE string = "\033[34m"
+	// MAGENTA représente le code ANSI pour la couleur magenta
+	MAGENTA string = "\033[35m"
+	// CYAN représente le code ANSI pour la couleur cyan
+	CYAN string = "\033[36m"
+	// GRAY représente le code ANSI pour la couleur grise
+	GRAY string = "\033[90m"
+	// BOLD représente le code ANSI pour le texte en gras
+	BOLD string = "\033[1m"
+	// RESET représente le code ANSI pour réinitialiser le formatage
+	RESET string = "\033[0m"
 )
 
 // DiagnosticGroupData regroupe les diagnostics par fichier
@@ -59,18 +68,21 @@ func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Forma
 
 // Format affiche les diagnostics de manière lisible
 func (f *formatterImpl) Format(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
+ // Vérification de la condition
 	if len(diagnostics) == 0 {
 		f.printSuccess()
 		// Early return from function.
 		return
 	}
 
+ // Vérification de la condition
 	if f.simpleMode {
 		f.formatSimple(fset, diagnostics)
 		// Early return from function.
 		return
 	}
 
+ // Vérification de la condition
 	if f.aiMode {
 		f.formatForAI(fset, diagnostics)
 		// Early return from function.
@@ -85,10 +97,12 @@ func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analys
 	groups := f.groupByFile(fset, diagnostics)
 
 	totalCount := 0
+ // Itération sur les éléments
 	for _, group := range groups {
 		totalCount += len(group.Diagnostics)
 	}
 
+ // Vérification de la condition
 	if totalCount == 0 {
 		f.printSuccess()
 		// Early return from function.
@@ -97,9 +111,11 @@ func (f *formatterImpl) formatForHuman(fset *token.FileSet, diagnostics []analys
 
 	f.printHeader(totalCount)
 
+ // Itération sur les éléments
 	for _, group := range groups {
 		f.printFileHeader(group.Filename, len(group.Diagnostics))
 
+  // Itération sur les éléments
 		for i, diag := range group.Diagnostics {
 			pos := fset.Position(diag.Pos)
 			f.printDiagnostic(i+1, pos, diag)
@@ -116,6 +132,7 @@ func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.
 	groups := f.groupByFile(fset, diagnostics)
 
 	totalCount := 0
+ // Itération sur les éléments
 	for _, group := range groups {
 		totalCount += len(group.Diagnostics)
 	}
@@ -123,9 +140,11 @@ func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.
 	fmt.Fprintf(f.writer, "# KTN-Linter Report (AI Mode)\n\n")
 	fmt.Fprintf(f.writer, "Total issues found: %d\n\n", totalCount)
 
+ // Itération sur les éléments
 	for _, group := range groups {
 		fmt.Fprintf(f.writer, "## File: %s (%d issues)\n\n", group.Filename, len(group.Diagnostics))
 
+  // Itération sur les éléments
 		for _, diag := range group.Diagnostics {
 			pos := fset.Position(diag.Pos)
 			code := extractCode(diag.Message)
@@ -144,6 +163,7 @@ func (f *formatterImpl) formatForAI(fset *token.FileSet, diagnostics []analysis.
 func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	filtered := f.filterAndSortDiagnostics(fset, diagnostics)
 
+ // Itération sur les éléments
 	for _, diag := range filtered {
 		pos := fset.Position(diag.Pos)
 		code := extractCode(diag.Message)
@@ -159,6 +179,7 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.Diagnostic) []DiagnosticGroupData {
 	fileMap := make(map[string][]analysis.Diagnostic)
 
+ // Itération sur les éléments
 	for _, diag := range diagnostics {
 		pos := fset.Position(diag.Pos)
 		filename := pos.Filename
@@ -176,6 +197,7 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 	// groups holds the configuration value.
 
 	var groups []DiagnosticGroupData
+ // Itération sur les éléments
 	for filename, diags := range fileMap {
 		// Trier par ligne
 		sort.Slice(diags, func(i, j int) bool {
@@ -203,6 +225,7 @@ func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostic
 	// filtered holds the configuration value.
 
 	var filtered []analysis.Diagnostic
+ // Itération sur les éléments
 	for _, diag := range diagnostics {
 		pos := fset.Position(diag.Pos)
 		// Ignorer les fichiers du cache Go et les fichiers temporaires
@@ -217,10 +240,12 @@ func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostic
 	sort.Slice(filtered, func(i, j int) bool {
 		posI := fset.Position(filtered[i].Pos)
 		posJ := fset.Position(filtered[j].Pos)
+  // Vérification de la condition
 		if posI.Filename != posJ.Filename {
 			// Early return from function.
 			return posI.Filename < posJ.Filename
 		}
+  // Vérification de la condition
 		if posI.Line != posJ.Line {
 			// Early return from function.
 			return posI.Line < posJ.Line
@@ -235,26 +260,30 @@ func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostic
 
 // printHeader affiche l'en-tête du rapport
 func (f *formatterImpl) printHeader(count int) {
+ // Vérification de la condition
 	if f.noColor {
 		fmt.Fprintf(f.writer, "\n╔════════════════════════════════════════════════════════════╗\n")
 		fmt.Fprintf(f.writer, "║  KTN-LINTER REPORT - %d issue(s) found                     ║\n", count)
 		fmt.Fprintf(f.writer, "╚════════════════════════════════════════════════════════════╝\n\n")
+ // Cas alternatif
 	} else {
-		fmt.Fprintf(f.writer, "\n%s%s╔════════════════════════════════════════════════════════════╗%s\n", Bold, Blue, Reset)
-		fmt.Fprintf(f.writer, "%s%s║  KTN-LINTER REPORT - %d issue(s) found                     ║%s\n", Bold, Blue, count, Reset)
-		fmt.Fprintf(f.writer, "%s%s╚════════════════════════════════════════════════════════════╝%s\n\n", Bold, Blue, Reset)
+		fmt.Fprintf(f.writer, "\n%s%s╔════════════════════════════════════════════════════════════╗%s\n", BOLD, BLUE, RESET)
+		fmt.Fprintf(f.writer, "%s%s║  KTN-LINTER REPORT - %d issue(s) found                     ║%s\n", BOLD, BLUE, count, RESET)
+		fmt.Fprintf(f.writer, "%s%s╚════════════════════════════════════════════════════════════╝%s\n\n", BOLD, BLUE, RESET)
 	}
 }
 
 // printFileHeader affiche l'en-tête pour un fichier
 func (f *formatterImpl) printFileHeader(filename string, count int) {
+ // Vérification de la condition
 	if f.noColor {
 		fmt.Fprintf(f.writer, "📁 File: %s (%d issues)\n", filename, count)
 		fmt.Fprintf(f.writer, "────────────────────────────────────────────────────────────\n")
+ // Cas alternatif
 	} else {
 		fmt.Fprintf(f.writer, "%s📁 File: %s%s %s(%d issues)%s\n",
-			Bold+Cyan, filename, Reset, Gray, count, Reset)
-		fmt.Fprintf(f.writer, "%s────────────────────────────────────────────────────────────%s\n", Gray, Reset)
+			BOLD+CYAN, filename, RESET, GRAY, count, RESET)
+		fmt.Fprintf(f.writer, "%s────────────────────────────────────────────────────────────%s\n", GRAY, RESET)
 	}
 }
 
@@ -264,70 +293,83 @@ func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analys
 	message := extractMessage(diag.Message)
 	location := fmt.Sprintf("%s:%d:%d", pos.Filename, pos.Line, pos.Column)
 
+ // Vérification de la condition
 	if f.noColor {
 		fmt.Fprintf(f.writer, "\n[%d] %s\n", num, location)
 		fmt.Fprintf(f.writer, "  Code: %s\n", code)
 		fmt.Fprintf(f.writer, "  Issue: %s\n", message)
+ // Cas alternatif
 	} else {
 		codeColor := f.getCodeColor(code)
 		fmt.Fprintf(f.writer, "\n%s[%d]%s %s%s%s\n",
-			Bold+Yellow, num, Reset,
-			Cyan, location, Reset)
+			BOLD+YELLOW, num, RESET,
+			CYAN, location, RESET)
 		fmt.Fprintf(f.writer, "  %s●%s %sCode:%s %s%s%s\n",
-			codeColor, Reset,
-			Gray, Reset,
-			Bold, code, Reset)
+			codeColor, RESET,
+			GRAY, RESET,
+			BOLD, code, RESET)
 		fmt.Fprintf(f.writer, "  %s▶%s %s\n",
-			Blue, Reset, message)
+			BLUE, RESET, message)
 	}
 }
 
 // printSuccess affiche un message de succès
 func (f *formatterImpl) printSuccess() {
+ // Vérification de la condition
 	if f.noColor {
 		fmt.Fprintf(f.writer, "\n✅ No issues found! Code is compliant.\n\n")
+ // Cas alternatif
 	} else {
-		fmt.Fprintf(f.writer, "\n%s✅ No issues found! Code is compliant.%s\n\n", Bold+Green, Reset)
+		fmt.Fprintf(f.writer, "\n%s✅ No issues found! Code is compliant.%s\n\n", BOLD+GREEN, RESET)
 	}
 }
 
 // printSummary affiche le résumé final
 func (f *formatterImpl) printSummary(count int) {
+ // Vérification de la condition
 	if f.noColor {
 		fmt.Fprintf(f.writer, "════════════════════════════════════════════════════════════\n")
 		fmt.Fprintf(f.writer, "Total: %d issue(s) to fix\n", count)
 		fmt.Fprintf(f.writer, "════════════════════════════════════════════════════════════\n\n")
+ // Cas alternatif
 	} else {
-		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n", Gray, Reset)
+		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n", GRAY, RESET)
 		fmt.Fprintf(f.writer, "%s📊 Total: %s%d%s issue(s) to fix\n",
-			Bold, Red, count, Reset)
-		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n\n", Gray, Reset)
+			BOLD, RED, count, RESET)
+		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n\n", GRAY, RESET)
 	}
 }
 
 // getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur
 func (f *formatterImpl) getCodeColor(code string) string {
+ // Vérification de la condition
 	if f.noColor {
 		// Early return from function.
 		return ""
 	}
 
+ // Sélection selon la valeur
 	switch {
+ // Traitement
 	case strings.HasSuffix(code, "-001"):
 		// Early return from function.
-		return Red
+		return RED
+ // Traitement
 	case strings.HasSuffix(code, "-002"):
 		// Early return from function.
-		return Yellow
+		return YELLOW
+ // Traitement
 	case strings.HasSuffix(code, "-003"):
 		// Early return from function.
-		return Magenta
+		return MAGENTA
+ // Traitement
 	case strings.HasSuffix(code, "-004"):
 		// Early return from function.
-		return Cyan
+		return CYAN
+ // Traitement
 	default:
 		// Early return from function.
-		return Red
+		return RED
 	}
 }
 
@@ -336,6 +378,7 @@ func extractCode(message string) string {
 	// Cherche le pattern KTN-XXX-XXX avec ou sans crochets
 	// Format 1: [KTN-XXX-XXX]
 	if start := strings.Index(message, "[KTN-"); start != -1 {
+  // Vérification de la condition
 		if end := strings.Index(message[start:], "]"); end != -1 {
 			// Early return from function.
 			return message[start+1 : start+end]
@@ -344,6 +387,7 @@ func extractCode(message string) string {
 
 	// Format 2: KTN-XXX-XXX: (au début du message)
 	if strings.HasPrefix(message, "KTN-") {
+  // Vérification de la condition
 		if idx := strings.Index(message, ":"); idx != -1 {
 			// Early return from function.
 			return message[:idx]
@@ -360,6 +404,8 @@ func extractMessage(message string) string {
 	// Format 1: [KTN-XXX-XXX] ...
 	if idx := strings.Index(message, "]"); idx != -1 && idx < len(message)-1 {
 		message = strings.TrimSpace(message[idx+1:])
+ // Traitement
+ // Vérification de la condition
 	} else if strings.HasPrefix(message, "KTN-") {
 		// Format 2: KTN-XXX-XXX: ...
 		if idx := strings.Index(message, ":"); idx != -1 && idx < len(message)-1 {
