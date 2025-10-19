@@ -9,6 +9,11 @@ import (
 )
 
 // Analyzer005 checks that functions don't exceed cyclomatic complexity of 10
+const (
+	// MAX_CYCLOMATIC_COMPLEXITY définit la complexité cyclomatique maximale autorisée
+	MAX_CYCLOMATIC_COMPLEXITY int = 10
+)
+
 var Analyzer005 = &analysis.Analyzer{
 	Name:     "ktnfunc005",
 	Doc:      "KTN-FUNC-005: La complexité cyclomatique ne doit pas dépasser 10",
@@ -16,7 +21,6 @@ var Analyzer005 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-const maxCyclomaticComplexity = 10
 
 func runFunc005(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -46,13 +50,13 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 		complexity := calculateComplexity(funcDecl.Body)
 
   // Vérification de la condition
-		if complexity > maxCyclomaticComplexity {
+		if complexity > MAX_CYCLOMATIC_COMPLEXITY {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
 				"KTN-FUNC-005: la fonction '%s' a une complexité cyclomatique de %d (max: %d)",
 				funcName,
 				complexity,
-				maxCyclomaticComplexity,
+				MAX_CYCLOMATIC_COMPLEXITY,
 			)
 		}
 	})

@@ -9,6 +9,11 @@ import (
 )
 
 // Analyzer002 checks that functions don't have too many parameters
+const (
+	// MAX_PARAMS définit le nombre maximum de paramètres autorisés dans une fonction
+	MAX_PARAMS int = 5
+)
+
 var Analyzer002 = &analysis.Analyzer{
 	Name:     "ktnfunc002",
 	Doc:      "KTN-FUNC-002: Les fonctions ne doivent pas dépasser 5 paramètres",
@@ -16,7 +21,6 @@ var Analyzer002 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-const maxParams = 5
 
 func runFunc002(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -75,13 +79,13 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 		}
 
   // Vérification de la condition
-		if paramCount > maxParams {
+		if paramCount > MAX_PARAMS {
 			pass.Reportf(
 				pos.Pos(),
 				"KTN-FUNC-002: la fonction '%s' a %d paramètres (max: %d)",
 				name,
 				paramCount,
-				maxParams,
+				MAX_PARAMS,
 			)
 		}
 	})

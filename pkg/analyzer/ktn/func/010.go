@@ -9,6 +9,11 @@ import (
 )
 
 // Analyzer010 checks that functions with >3 return values use named returns
+const (
+	// MAX_UNNAMED_RETURNS définit le nombre maximum de retours non-nommés autorisés
+	MAX_UNNAMED_RETURNS int = 3
+)
+
 var Analyzer010 = &analysis.Analyzer{
 	Name:     "ktnfunc010",
 	Doc:      "KTN-FUNC-010: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
@@ -16,7 +21,6 @@ var Analyzer010 = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-const maxUnnamedReturns = 3
 
 func runFunc010(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -59,13 +63,13 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 		}
 
 		// If more than 3 returns and has unnamed returns, report error
-		if returnCount > maxUnnamedReturns && hasUnnamedReturns {
+		if returnCount > MAX_UNNAMED_RETURNS && hasUnnamedReturns {
 			pass.Reportf(
 				funcDecl.Type.Results.Pos(),
 				"KTN-FUNC-010: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
 				funcName,
 				returnCount,
-				maxUnnamedReturns,
+				MAX_UNNAMED_RETURNS,
 			)
 		}
 	})

@@ -11,7 +11,7 @@ import (
 //
 // Returns:
 //   - string: la représentation textuelle (gère identifiants, sélecteurs, tableaux, maps, pointeurs, etc.)
-func ExprToString(expr ast.Expr) string {
+func GetExprAsString(expr ast.Expr) string {
  // Sélection selon la valeur
 	switch e := expr.(type) {
  // Traitement
