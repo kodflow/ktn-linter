@@ -14,9 +14,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🔴 | **TOTAL (Global)** | **88.6%** |
+| 🟡 | **TOTAL (Global)** | **99.4%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| ⚫ | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 0.0% |
+| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.7% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 100.0% |
@@ -27,7 +27,15 @@ Rapport de couverture généré automatiquement.
 
 ## Détail des packages incomplets
 
+### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 94.7%
+
+| Fichier:Fonction | Couverture |
+|------------------|------------|
+| 🔴 `lint.go:runLint` | 85.7% |
+| 🔴 `lint.go:loadPackages` | 71.4% |
+| 🟡 `lint.go:runAnalyzers` | 91.7% |
+
 
 ---
 
-*Généré le: 2025-10-19 20:07:37*
+*Généré le: 2025-10-19 20:19:34*

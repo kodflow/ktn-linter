@@ -36,13 +36,23 @@ It analyzes Go code to ensure compliance with KTN (Kodflow Typing Notation) stan
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
+//
+// Returns: aucun
+//
+// Params: aucun
 func Execute() {
+	// Vérification de la condition
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		OsExit(1)
 	}
 }
 
+// init configure les flags globaux de la commande root.
+//
+// Returns: aucun
+//
+// Params: aucun
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVar(&AIMode, "ai", false, "Enable AI-friendly output format")

@@ -34,11 +34,22 @@ Examples:
 	Run:  runLint,
 }
 
+// init enregistre la commande lint auprès de la commande root.
+//
+// Returns: aucun
+//
+// Params: aucun
 func init() {
 	rootCmd.AddCommand(lintCmd)
 }
 
 // runLint exécute l'analyse du linter.
+//
+// Params:
+//   - cmd: commande Cobra
+//   - args: arguments de la ligne de commande
+//
+// Returns: aucun
 func runLint(cmd *cobra.Command, args []string) {
 	pkgs := loadPackages(args)
 	diagnostics := runAnalyzers(pkgs)
