@@ -9,6 +9,11 @@ run:
 # Aucun linter golangci-lint activé
 linters:
   enable: []
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - all
 
 issues:
   max-issues-per-linter: 0

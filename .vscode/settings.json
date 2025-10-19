@@ -7,11 +7,13 @@
   "go.vetOnSave": "off",
   "go.lintFlags": [],
   "go.alternateTools": {
-    "golangci-lint": "${workspaceFolder}/src/bin/golangci-lint-wrapper"
+    "golangci-lint": "${workspaceFolder}/bin/golangci-lint-wrapper"
   },
   // Activer les diagnostics du linter
   "go.toolsManagement.autoUpdate": false,
   "go.toolsManagement.checkForUpdates": "off",
+  // Forcer l'utilisation du linter alternatif
+  "go.lintTool": "golangci-lint",
   // Désactiver les diagnostics "unused" et autres dans gopls
   "gopls": {
     "analyses": {
@@ -32,13 +34,16 @@
   // Build flags pour Go
   "go.buildFlags": ["-buildvcs=false"],
   "go.buildTags": "",
-  // Build automatique du linter au save
+  // Build automatique du linter au save via l'extension Run on Save
   "emeraldwalk.runonsave": {
     "commands": [
       {
-        "match": "src/(cmd|pkg)/.*\\.go$",
-        "cmd": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./src/cmd/ktn-linter"
+        "match": "(cmd|pkg)/.*\\.go$",
+        "cmd": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter"
       }
     ]
-  }
+  },
+  // Mapper la sortie du linter pour l'onglet Problèmes
+  "problems.autoReveal": true,
+  "problems.showCurrentInStatus": true
 }

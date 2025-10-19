@@ -1,0 +1,49 @@
+#!/bin/bash
+# Wrapper pour KTN-Linter (intégration VSCode Go extension)
+
+LINTER_BIN="/workspace/builds/ktn-linter"
+
+# Si le binaire n'existe pas, le construire une fois
+if [ ! -f "$LINTER_BIN" ]; then
+    echo "🔨 Building KTN-Linter..." >&2
+    cd /workspace
+    go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter > /dev/null 2>&1
+fi
+
+# Détecter si on analyse un fichier spécifique ou un pattern
+FILE_ARG=""
+PATTERN_ARG=""
+
+for arg in "$@"; do
+    # Ignorer les flags
+    if [[ "$arg" == -* ]]; then
+        continue
+    fi
+
+    # Fichier Go spécifique
+    if [[ "$arg" == *.go ]] && [[ -f "$arg" ]]; then
+        FILE_ARG="$arg"
+        break
+    fi
+
+    # Pattern (./..., tests/, src/, etc.)
+    if [[ "$arg" == *"..."* ]] || [[ "$arg" == *"/"* ]]; then
+        PATTERN_ARG="$arg"
+        break
+    fi
+done
+
+# Exécuter ktn-linter
+if [[ -n "$FILE_ARG" ]]; then
+    # Analyser le package du fichier, pas le fichier seul
+    FILE_DIR=$(dirname "$FILE_ARG")
+    "$LINTER_BIN" -simple -no-color "$FILE_DIR" 2>&1 || true
+elif [[ -n "$PATTERN_ARG" ]]; then
+    "$LINTER_BIN" -simple -no-color "$PATTERN_ARG" 2>&1 || true
+else
+    # Par défaut, analyser tout
+    "$LINTER_BIN" -simple -no-color ./... 2>&1 || true
+fi
+
+# Retourner 0 pour ne pas bloquer l'extension Go
+exit 0

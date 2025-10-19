@@ -1,0 +1,91 @@
+package ktnfunc
+
+import (
+	"go/ast"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
+)
+
+// Analyzer004 checks that functions don't use naked returns (except for very short functions)
+var Analyzer004 = &analysis.Analyzer{
+	Name:     "ktnfunc004",
+	Doc:      "KTN-FUNC-004: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
+	Run:      runFunc004,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
+
+const maxLinesForNakedReturn = 5
+
+func runFunc004(pass *analysis.Pass) (any, error) {
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		funcDecl := n.(*ast.FuncDecl)
+
+		// Skip if no body
+		if funcDecl.Body == nil {
+			return
+		}
+
+		// Skip test functions
+		funcName := funcDecl.Name.Name
+		if isTestFunction(funcName) {
+			return
+		}
+
+		// Skip if function doesn't have named return values
+		if funcDecl.Type.Results == nil || !hasNamedReturns(funcDecl.Type.Results) {
+			return
+		}
+
+		// Count the lines of the function
+		pureLines := countPureCodeLines(pass, funcDecl.Body)
+
+		// Check for naked returns
+		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+			ret, ok := node.(*ast.ReturnStmt)
+			if !ok {
+				return true
+			}
+
+			// Naked return has no results specified
+			if len(ret.Results) == 0 {
+				// Allow naked returns in very short functions
+				if pureLines >= maxLinesForNakedReturn {
+					pass.Reportf(
+						ret.Pos(),
+						"KTN-FUNC-004: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
+						funcName,
+						pureLines,
+						maxLinesForNakedReturn-1,
+					)
+				}
+			}
+
+			return true
+		})
+	})
+
+	return nil, nil
+}
+
+// hasNamedReturns checks if the function has named return values
+func hasNamedReturns(results *ast.FieldList) bool {
+	if results == nil || len(results.List) == 0 {
+		return false
+	}
+
+	for _, field := range results.List {
+		if len(field.Names) > 0 {
+			return true
+		}
+	}
+
+	return false
+}

@@ -28,12 +28,14 @@ credentials.json
 *.exe
 *.test
 *.out
-coverage*.out
-coverage.txt
-coverage.html
 go.work
 go.work.sum
 vendor/
+
+# Coverage - fichiers temporaires uniquement (COVERAGE.MD est versionné)
+coverage*.out
+coverage.txt
+coverage.html
 
 # Python (scripts uniquement)
 __pycache__/
