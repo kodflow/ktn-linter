@@ -28,6 +28,10 @@ var (
 	category string
 )
 
+// osExit est une variable pour permettre le mocking dans les tests.
+// Par défaut, elle pointe vers os.Exit, mais peut être remplacée par un mock.
+var osExit = os.Exit
+
 // diagWithFset associe un diagnostic avec son FileSet
 type diagWithFset struct {
 	diag analysis.Diagnostic
@@ -38,14 +42,13 @@ type diagWithFset struct {
 // Returns: aucun
 //
 // Params: aucun
-//
 func main() {
 	parseFlags()
 
- // Vérification de la condition
+	// Vérification de la condition
 	if len(flag.Args()) == 0 {
 		printUsage()
-		os.Exit(1)
+		osExit(1)
 	}
 
 	pkgs := loadPackages(flag.Args())
@@ -56,20 +59,19 @@ func main() {
 
 	formatAndDisplay(filteredDiags)
 
- // Vérification de la condition
+	// Vérification de la condition
 	if len(filteredDiags) > 0 {
-		os.Exit(1)
+		osExit(1)
 	}
 
 	// Success - exit with 0
-	os.Exit(0)
+	osExit(0)
 }
 
 // parseFlags analyse les drapeaux de ligne de commande.
 // Returns: aucun
 //
 // Params: aucun
-//
 func parseFlags() {
 	flag.BoolVar(&aiMode, "ai", false, "Enable AI-friendly output format")
 	flag.BoolVar(&noColor, "no-color", false, "Disable colored output")
@@ -83,7 +85,6 @@ func parseFlags() {
 // Returns: aucun
 //
 // Params: aucun
-//
 func printUsage() {
 	fmt.Fprintf(os.Stderr, "Usage: ktn-linter [flags] <packages>\n\n")
 	fmt.Fprintf(os.Stderr, "Flags:\n")
@@ -112,10 +113,10 @@ func loadPackages(patterns []string) []*packages.Package {
 	}
 
 	pkgs, err := packages.Load(cfg, patterns...)
- // Vérification de la condition
+	// Vérification de la condition
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading packages: %v\n", err)
-		os.Exit(1)
+		osExit(1)
 	}
 
 	checkLoadErrors(pkgs)
@@ -130,23 +131,23 @@ func loadPackages(patterns []string) []*packages.Package {
 // Returns: aucun
 //
 //   - pkgs: liste des packages chargés
-// Params:
 //
+// Params:
 func checkLoadErrors(pkgs []*packages.Package) {
 	// hasLoadErrors holds the configuration value.
 
 	var hasLoadErrors bool
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, pkg := range pkgs {
-  // Itération sur les éléments
+		// Itération sur les éléments
 		for _, err := range pkg.Errors {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			hasLoadErrors = true
 		}
 	}
- // Vérification de la condition
+	// Vérification de la condition
 	if hasLoadErrors {
-		os.Exit(1)
+		osExit(1)
 	}
 }
 
@@ -165,19 +166,19 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	// Sélectionner les analyseurs selon la catégorie
 	if category != "" {
 		analyzers = ktn.GetRulesByCategory(category)
-  // Vérification de la condition
+		// Vérification de la condition
 		if analyzers == nil {
 			fmt.Fprintf(os.Stderr, "Unknown category: %s\n", category)
-			os.Exit(1)
+			osExit(1)
 		}
-  // Vérification de la condition
+		// Vérification de la condition
 		if verbose {
 			fmt.Fprintf(os.Stderr, "Running %d rules from category '%s'\n", len(analyzers), category)
 		}
- // Cas alternatif
+		// Cas alternatif
 	} else {
 		analyzers = ktn.GetAllRules()
-  // Vérification de la condition
+		// Vérification de la condition
 		if verbose {
 			fmt.Fprintf(os.Stderr, "Running all %d KTN rules\n", len(analyzers))
 		}
@@ -187,11 +188,11 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 
 	var allDiagnostics []diagWithFset
 
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, pkg := range pkgs {
 		pkgFset := pkg.Fset
 
-  // Vérification de la condition
+		// Vérification de la condition
 		if verbose {
 			fmt.Fprintf(os.Stderr, "Analyzing package: %s\n", pkg.PkgPath)
 		}
@@ -199,12 +200,12 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		// Store results of required analyzers
 		results := make(map[*analysis.Analyzer]interface{})
 
-  // Itération sur les éléments
+		// Itération sur les éléments
 		for _, a := range analyzers {
 			pass := createAnalysisPass(a, pkg, pkgFset, &allDiagnostics, results)
 
 			result, err := a.Run(pass)
-   // Vérification de la condition
+			// Vérification de la condition
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error running analyzer %s on %s: %v\n", a.Name, pkg.PkgPath, err)
 			}
@@ -226,15 +227,15 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 //   - []*ast.File: fichiers filtrés
 func filterTestFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
 	filtered := make([]*ast.File, 0, len(files))
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, file := range files {
 		pos := fset.Position(file.Pos())
-  // Vérification de la condition
+		// Vérification de la condition
 		if !strings.HasSuffix(pos.Filename, "_test.go") {
 			filtered = append(filtered, file)
 		}
 	}
- // Retour de la fonction
+	// Retour de la fonction
 	return filtered
 }
 
@@ -255,7 +256,7 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 
 	// Run required analyzers first
 	for _, req := range a.Requires {
-  // Vérification de la condition
+		// Vérification de la condition
 		if _, ok := results[req]; !ok {
 			reqPass := &analysis.Pass{
 				Analyzer:  req,
@@ -295,12 +296,12 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 // Returns: aucun
 //
 //   - diagnostics: diagnostics à afficher
-// Params:
 //
+// Params:
 func formatAndDisplay(diagnostics []diagWithFset) {
 	fmt := formatter.NewFormatter(os.Stdout, aiMode, noColor, simple)
 
- // Vérification de la condition
+	// Vérification de la condition
 	if len(diagnostics) == 0 {
 		fmt.Format(nil, nil)
 		// Early return from function.
@@ -323,11 +324,11 @@ func filterDiagnostics(diagnostics []diagWithFset) []diagWithFset {
 	// filtered holds the configuration value.
 
 	var filtered []diagWithFset
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, d := range diagnostics {
 		pos := d.fset.Position(d.diag.Pos)
 		// Ignorer les fichiers du cache Go et les fichiers temporaires
-  // Vérification de la condition
+		// Vérification de la condition
 		if strings.Contains(pos.Filename, "/.cache/go-build/") ||
 			strings.Contains(pos.Filename, "/tmp/") ||
 			strings.Contains(pos.Filename, "\\cache\\go-build\\") {
@@ -352,11 +353,11 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	// deduped holds the configuration value.
 
 	var deduped []diagWithFset
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, d := range diagnostics {
 		pos := d.fset.Position(d.diag.Pos)
 		key := fmt.Sprintf("%s:%d:%d:%s", pos.Filename, pos.Line, pos.Column, d.diag.Message)
-  // Vérification de la condition
+		// Vérification de la condition
 		if !seen[key] {
 			seen[key] = true
 			deduped = append(deduped, d)
@@ -364,7 +365,7 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	}
 
 	diags := make([]analysis.Diagnostic, len(deduped))
- // Itération sur les éléments
+	// Itération sur les éléments
 	for i, d := range deduped {
 		diags[i] = d.diag
 	}
