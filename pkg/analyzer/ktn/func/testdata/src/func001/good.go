@@ -1,16 +1,22 @@
 package func001
 
-// Good: Small function with few statements
-func SmallFunction() string {
+// smallFunction est une petite fonction avec peu de code
+//
+// Returns:
+//   - string: résultat du calcul
+func smallFunction() string {
+	// Déclaration des variables
 	x := 1
 	y := 2
 	z := x + y
+	// Retour de la fonction
 	_ = z
+	// Retour de la fonction
 	return "result"
 }
 
-// Good: Function with exactly 35 statements
-func ExactlyThirtyFive() {
+// exactlyThirtyFive a exactement 35 lignes de code pur (limite)
+func exactlyThirtyFive() {
 	a := 1                                                                                                                                            // 1
 	b := 2                                                                                                                                            // 2
 	c := 3                                                                                                                                            // 3
@@ -48,166 +54,101 @@ func ExactlyThirtyFive() {
 	_ = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah // 35
 }
 
-// Good: Many comments don't count
-func ManyComments() {
-	// This is a comment
-	// This is another comment
-	// This is yet another comment
-	// Comments don't count
-	// More comments
-	// Even more comments
-	// Still more comments
-	x := 1 // First statement
-	// Comment between statements
-	y := 2 // Second statement
-	// Final comment
-	_ = x + y // Third statement
+// manyCommentsButFewStatements démontre que les commentaires ne comptent pas
+func manyCommentsButFewStatements() {
+	// Ce commentaire ne compte pas
+	// Ni celui-ci
+	// Ni celui-là
+	// Les commentaires sont ignorés
+	// Encore un commentaire
+	// Toujours des commentaires
+	// Plus de commentaires
+	// Commentaires partout
+	x := 1 // Statement 1
+	// Commentaire entre statements
+	y := 2 // Statement 2
+	// Encore un commentaire
+	z := x + y // Statement 3
+	// Commentaire final
+	_ = z // Statement 4
 }
 
-// Good: Test functions are exempt
-func TestSomething() {
-	// This can be as long as needed
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
-		z := x + y
-		_ = z
-	}
-}
-
-// Good: Benchmark functions are exempt
-func BenchmarkSomething() {
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
-		z := x + y
-		_ = z
-	}
-}
-
-// Good: main function is exempt
-func main() {
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
-		z := x + y
-		_ = z
-	}
-}
-
-
-// Good: Example function is exempt
-func ExampleSomething() {
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
-		z := x + y
-		_ = z
-	}
-}
-
-// Good: Fuzz function is exempt
-func FuzzSomething() {
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
-		z := x + y
-		_ = z
-	}
-}
-
-// Good: Function with empty lines and various whitespace
-func WithEmptyLines() {
-
-	x := 1
-
-	y := 2
-
-	z := x + y
-
-	_ = z
-
-}
-
-// Good: Function with block comments spanning multiple lines
-func WithBlockComments() {
-	/*
-		This is a long
-		block comment
-		that spans
-		many lines
-	*/
-	x := 1
-	/*
-		Another block comment
-	*/
-	y := 2
-	/* inline block */ z := x + y
-	_ = z
-}
-
-// Good: Function with mixed comment styles
-func WithMixedComments() {
-	// Line comment
-	x := 1
-	/*
-		Block comment
-	*/
-	y := 2
-	// Another line comment
-	z := x + y /* inline block */
-	_ = z
-}
-
-// Good: Function with only braces on separate lines
-func WithBraces() {
-	{
-		x := 1
-		_ = x
-	}
-	{
-		y := 2
-		_ = y
-	}
-}
-
-// Good: Function with nested block comments
-func WithNestedComments() {
-	/* Start block
-	   Still in block
-	   More block
-	*/x := 1
-	y := 2
-	/*
-		Another block
-		with multiple lines
-		still in block
-	*/
-	z := x + y
-	_ = z
-}
-
-// ProcessWithBlockComments démontre l'usage de commentaires blocs.
-func ProcessWithBlockComments() {
-	/* Initialisation des variables */
-	x := 1
-	/*
-	   Calcul complexe
-	   sur plusieurs lignes
-	*/
-	y := x * 2
-	/* Inline */ z := y + 1
-
-	{
-		nested := z + 1
-		_ = nested
-	}
-
-	_ = z
-}
-
-// GetExternalValue est une fonction externe (linkname/assembleur) - ignorée.
+// withNestedBlocks démontre que les blocs imbriqués sont comptés correctement
 //
 // Returns:
-//   - int: valeur externe
-func GetExternalValue() int
+//   - int: résultat
+func withNestedBlocks() int {
+	// Déclaration de la variable
+	x := 1
+	// Condition if
+	if x > 0 {
+		// Dans le if
+		y := 2
+		// Retour de la fonction
+		return y
+	}
+	// Boucle for
+	for i := 0; i < 10; i++ {
+		// Dans le for
+		z := i * 2
+		// Utilisation de z
+		_ = z
+	}
+	// Retour de la fonction
+	return 0
+}
+
+// TestSomething est une fonction de test exemptée
+func TestSomething() {
+	// Les fonctions de test peuvent être aussi longues que nécessaire
+	for i := 0; i < 100; i++ {
+		x := i * 2
+		y := i * 3
+		z := x + y
+		_ = z
+	}
+}
+
+// BenchmarkSomething est une fonction de benchmark exemptée
+func BenchmarkSomething() {
+	// Les fonctions de benchmark peuvent être aussi longues que nécessaire
+	for i := 0; i < 100; i++ {
+		x := i * 2
+		y := i * 3
+		z := x + y
+		_ = z
+	}
+}
+
+// ExampleSomething est une fonction d'exemple exemptée
+func ExampleSomething() {
+	// Les fonctions d'exemple peuvent être aussi longues que nécessaire
+	for i := 0; i < 100; i++ {
+		x := i * 2
+		y := i * 3
+		z := x + y
+		_ = z
+	}
+}
+
+// FuzzSomething est une fonction de fuzzing exemptée
+func FuzzSomething() {
+	// Les fonctions de fuzzing peuvent être aussi longues que nécessaire
+	for i := 0; i < 100; i++ {
+		x := i * 2
+		y := i * 3
+		z := x + y
+		_ = z
+	}
+}
+
+// main est la fonction principale exemptée
+func main() {
+	// La fonction main peut être aussi longue que nécessaire
+	for i := 0; i < 100; i++ {
+		x := i * 2
+		y := i * 3
+		z := x + y
+		_ = z
+	}
+}

@@ -235,6 +235,10 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 				TypesInfo: pkg.TypesInfo,
 				ResultOf:  results,
 				Report:    func(analysis.Diagnostic) {},
+				ReadFile: func(filename string) ([]byte, error) {
+					// Retour du contenu du fichier
+					return os.ReadFile(filename)
+				},
 			}
 			result, _ := req.Run(reqPass)
 			results[req] = result
@@ -254,6 +258,10 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 				diag: diag,
 				fset: fset,
 			})
+		},
+		ReadFile: func(filename string) ([]byte, error) {
+			// Retour du contenu du fichier
+			return os.ReadFile(filename)
 		},
 	}
 }

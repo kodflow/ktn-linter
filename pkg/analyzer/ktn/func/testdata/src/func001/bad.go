@@ -1,7 +1,11 @@
 package func001
 
-// Bad: Function with 36 statements (exceeds limit)
-func TooLong() {
+// calculateWithThirtySixLines dépasse la limite avec 36 statements
+//
+// Returns:
+//   - int: résultat du calcul
+func calculateWithThirtySixLines() int {
+	// Déclaration des variables
 	a := 1
 	b := 2
 	c := 3
@@ -37,12 +41,16 @@ func TooLong() {
 	ag := 33
 	ah := 34
 	ai := 35
-	_ = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah + ai
+	// Retour de la fonction avec calcul final
+	return a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah + ai
 }
 
-// Bad: Function with many statements (37 pure code lines)
-func VeryLong() {
-	// Even with comments, the code is too long
+// processWithThirtySevenLines dépasse largement avec 37 statements
+//
+// Returns:
+//   - int: résultat du traitement
+func processWithThirtySevenLines() int {
+	// Déclaration des variables (les commentaires ne comptent pas)
 	a := 1
 	b := 2
 	c := 3
@@ -79,5 +87,6 @@ func VeryLong() {
 	ah := 34
 	ai := 35
 	aj := 36
-	_ = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah + ai + aj
+	// Retour de la fonction avec calcul final
+	return a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah + ai + aj
 }

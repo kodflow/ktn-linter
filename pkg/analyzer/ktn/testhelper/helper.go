@@ -11,6 +11,51 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// createTypeInfo crée une nouvelle structure types.Info pour le type checking.
+//
+// Returns:
+//   - *types.Info: structure d'information de types
+func createTypeInfo() *types.Info {
+	// Retour de la structure types.Info
+	return &types.Info{
+		Types:      make(map[ast.Expr]types.TypeAndValue),
+		Defs:       make(map[*ast.Ident]types.Object),
+		Uses:       make(map[*ast.Ident]types.Object),
+		Implicits:  make(map[ast.Node]types.Object),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection),
+		Scopes:     make(map[ast.Node]*types.Scope),
+	}
+}
+
+// createPass crée un analysis.Pass pour l'exécution d'un analyzer.
+//
+// Params:
+//   - fset: ensemble de fichiers
+//   - file: fichier AST à analyser
+//   - pkg: package typé
+//   - info: informations de types
+//   - diagnostics: pointeur vers la liste des diagnostics
+//
+// Returns:
+//   - *analysis.Pass: contexte d'analyse créé
+func createPass(fset *token.FileSet, file *ast.File, pkg *types.Package, info *types.Info, diagnostics *[]analysis.Diagnostic) *analysis.Pass {
+	// Retour du pass d'analyse
+	return &analysis.Pass{
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			*diagnostics = append(*diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+		ReadFile: func(filename string) ([]byte, error) {
+			// Lecture du fichier pour les analyzers qui en ont besoin
+			return os.ReadFile(filename)
+		},
+	}
+}
+
 // RunAnalyzer exécute un analyzer sur un fichier et retourne les diagnostics.
 //
 // Params:
@@ -36,34 +81,12 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 		Importer: importer.Default(),
 		Error:    func(err error) {}, // Ignorer les erreurs de type pour les tests
 	}
-	info := &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Defs:       make(map[*ast.Ident]types.Object),
-		Uses:       make(map[*ast.Ident]types.Object),
-		Implicits:  make(map[ast.Node]types.Object),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection),
-		Scopes:     make(map[ast.Node]*types.Scope),
-	}
-
+	info := createTypeInfo()
 	pkg, _ := conf.Check(file.Name.Name, fset, []*ast.File{file}, info)
 
 	// Initialisation de la liste des diagnostics
 	var diagnostics []analysis.Diagnostic
-
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		Pkg:       pkg,
-		TypesInfo: info,
-		Report: func(d analysis.Diagnostic) {
-			diagnostics = append(diagnostics, d)
-		},
-		ResultOf: make(map[*analysis.Analyzer]any),
-		ReadFile: func(filename string) ([]byte, error) {
-			// Lecture du fichier pour les analyzers qui en ont besoin
-			return os.ReadFile(filename)
-		},
-	}
+	pass := createPass(fset, file, pkg, info, &diagnostics)
 
 	// Exécution des analyzers requis (comme inspect.Analyzer)
 	for _, req := range analyzer.Requires {
