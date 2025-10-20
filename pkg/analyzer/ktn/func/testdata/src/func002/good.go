@@ -1,79 +1,154 @@
 package func002
 
-// Good: Function with no parameters
-func NoParams() {
+// processNoParams fonction sans paramètre
+func processNoParams() {
+	// Fonction vide
 }
 
-// Good: Function with 1 parameter
-func OneParam(a int) {
+// calculateOneParam fonction avec 1 paramètre
+//
+// Params:
+//   - a: paramètre de test
+func calculateOneParam(a int) {
+	// Utilisation du paramètre
+	_ = a
 }
 
-// Good: Function with 5 parameters (exactly at limit)
-func FiveParams(a, b, c, d, e int) {
+// buildFiveParams exactement 5 paramètres (à la limite)
+//
+// Params:
+//   - a, b, c, d, e: paramètres de test
+func buildFiveParams(a, b, c, d, e int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e
 }
 
-// Good: Function with 5 parameters of different types
-func FiveParamsMixed(a int, b string, c bool, d float64, e []int) {
+// createFiveParamsMixed 5 paramètres de types différents
+//
+// Params:
+//   - a: entier
+//   - b: chaîne
+//   - c: booléen
+//   - d: flottant
+//   - e: slice
+func createFiveParamsMixed(a int, b string, c bool, d float64, e []int) {
+	// Utilisation des paramètres
+	_, _, _, _, _ = a, b, c, d, e
 }
 
-// Good: Method with receiver + 4 parameters = 5 total params (receiver doesn't count)
+// MyType structure de test
 type MyType struct{}
 
-func (m MyType) MethodWithFourParams(a, b, c, d int) {
+// processMethodFourParams méthode avec 4 paramètres (le receiver ne compte pas)
+//
+// Params:
+//   - a, b, c, d: paramètres de test
+func (m MyType) processMethodFourParams(a, b, c, d int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d
 }
 
-// Good: Test functions are exempt
+// TestWithManyParams les fonctions de test sont exemptées
+//
+// Params:
+//   - t, a, b, c, d, e, f: paramètres de test
 func TestWithManyParams(t, a, b, c, d, e, f int) {
+	// Utilisation des paramètres
+	_ = t + a + b + c + d + e + f
 }
 
-// Good: Benchmark functions are exempt
+// BenchmarkWithManyParams les fonctions de benchmark sont exemptées
+//
+// Params:
+//   - b, a, c, d, e, f, g: paramètres de test
 func BenchmarkWithManyParams(b, a, c, d, e, f, g int) {
+	// Utilisation des paramètres
+	_ = b + a + c + d + e + f + g
 }
 
-// Good: Example functions are exempt
+// ExampleWithManyParams les fonctions d'exemple sont exemptées
+//
+// Params:
+//   - a, b, c, d, e, f, g: paramètres de test
 func ExampleWithManyParams(a, b, c, d, e, f, g int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e + f + g
 }
 
-// Good: Fuzz functions are exempt
+// FuzzWithManyParams les fonctions de fuzzing sont exemptées
+//
+// Params:
+//   - f, a, b, c, d, e, g: paramètres de test
 func FuzzWithManyParams(f, a, b, c, d, e, g int) {
+	// Utilisation des paramètres
+	_ = f + a + b + c + d + e + g
 }
 
-// Good: Function literal with unnamed parameters (exactly 5)
-var GoodLiteralUnnamed = func(int, string, bool, float64, []int) {
+// formatThreeParams fonction avec 3 paramètres
+//
+// Params:
+//   - a, b, c: paramètres de test
+func formatThreeParams(a, b, c int) {
+	// Utilisation des paramètres
+	_ = a + b + c
 }
 
-// Good: Function literal with 4 unnamed parameters
-var GoodLiteralFourUnnamed = func(int, int, int, int) {
+// convertTwoParamsMixed fonction avec 2 paramètres de types différents
+//
+// Params:
+//   - a: entier
+//   - b: chaîne
+func convertTwoParamsMixed(a int, b string) {
+	// Utilisation des paramètres
+	_, _ = a, b
 }
 
-// Good: Function literal with 1 unnamed parameter
-var GoodLiteralOneUnnamed = func(int) {
+// validateFourParamsGrouped fonction avec 4 paramètres groupés par type
+//
+// Params:
+//   - a, b: entiers
+//   - c, d: chaînes
+func validateFourParamsGrouped(a, b int, c, d string) {
+	// Utilisation des paramètres
+	_, _, _, _ = a, b, c, d
 }
 
-// Good: Function literal with no parameters
-var GoodLiteralNoParams = func() {
+// convertWithVariadic fonction variadique avec 5 paramètres (variadique compte pour 1)
+//
+// Params:
+//   - a, b, c, d: paramètres réguliers
+//   - e: paramètre variadique
+func convertWithVariadic(a, b, c, d int, e ...string) {
+	// Utilisation des paramètres
+	_, _, _, _, _ = a, b, c, d, e
 }
 
-// Good: Function with 3 parameters
-func ThreeParams(a, b, c int) {
+// goodLiteralUnnamed fonction littérale avec exactement 5 paramètres non nommés
+var goodLiteralUnnamed = func(int, string, bool, float64, []int) {
+	// Fonction vide
 }
 
-// Good: Function with 2 parameters of different types
-func TwoParamsMixed(a int, b string) {
+// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
+var goodLiteralFourUnnamed = func(int, int, int, int) {
+	// Fonction vide
 }
 
-// Good: Function with 4 parameters grouped by type
-func FourParamsGrouped(a, b int, c, d string) {
+// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
+var goodLiteralOneUnnamed = func(int) {
+	// Fonction vide
 }
 
-// Good: Function literal with 3 unnamed parameters
-var GoodLiteralThreeUnnamed = func(int, string, bool) {
+// goodLiteralNoParams fonction littérale sans paramètre
+var goodLiteralNoParams = func() {
+	// Fonction vide
 }
 
-// Good: Function literal with 2 unnamed parameters
-var GoodLiteralTwoUnnamed = func(int, string) {
+// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
+var goodLiteralThreeUnnamed = func(int, string, bool) {
+	// Fonction vide
 }
 
-// Good: Function with variadic parameter counts as 1 param (5 total with variadic)
-func WithVariadic(a, b, c, d int, e ...string) {
+// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
+var goodLiteralTwoUnnamed = func(int, string) {
+	// Fonction vide
 }

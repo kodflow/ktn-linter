@@ -22,15 +22,6 @@ var Analyzer002 = &analysis.Analyzer{
 }
 
 
-// runFunc002 description à compléter.
-//
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - any: résultat
-//   - error: erreur éventuelle
-func runFunc002(pass *analysis.Pass) (any, error) {
 // runFunc002 exécute l'analyse KTN-FUNC-002.
 //
 // Params:
@@ -39,6 +30,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
+func runFunc002(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -51,9 +43,9 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 		var pos ast.Node
 		var name string
 
-  // Sélection selon la valeur
+		// Sélection selon la valeur
 		switch fn := n.(type) {
-  // Traitement
+		// Traitement
 		case *ast.FuncDecl:
 			funcType = fn.Type
 			pos = fn.Name
@@ -61,10 +53,10 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 
 			// Skip test functions
 			if isTestFunction(name) {
-    // Retour de la fonction
+				// Retour de la fonction
 				return
 			}
-  // Traitement
+		// Traitement
 		case *ast.FuncLit:
 			funcType = fn.Type
 			pos = fn
@@ -73,7 +65,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 
 		// Count total parameters
 		paramCount := 0
-  // Itération sur les éléments
+		// Itération sur les éléments
 		for _, field := range funcType.Params.List {
 			// Each field can declare multiple params: func(a, b, c int)
 			if len(field.Names) > 0 {
@@ -84,7 +76,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 			}
 		}
 
-  // Vérification de la condition
+		// Vérification de la condition
 		if paramCount > MAX_PARAMS {
 			pass.Reportf(
 				pos.Pos(),
@@ -96,6 +88,6 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
