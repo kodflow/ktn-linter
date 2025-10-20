@@ -14,6 +14,8 @@ const (
 	MAX_RETRY int = 5
 	// TIMEOUT_SEC defines the timeout in seconds
 	TIMEOUT_SEC int = 30
+	// SINGLE_CONST is also in the same block (not scattered)
+	SINGLE_CONST string = "single"
 )
 
 // Variables come after constants
@@ -23,3 +25,14 @@ var (
 )
 
 var AdditionalVar string = "var3"
+
+// Edge case: File with only variables (no const) - should not trigger analyzer
+var OnlyVar1 string = "only"
+var OnlyVar2 int = 42
+
+// Helper function (not a const/var declaration - tests non-GenDecl branch)
+func helperFunction() string {
+	return "helper"
+}
+
+var SingleVar string = "after single const"

@@ -132,12 +132,6 @@ func startsWithVerb(name string) bool {
 //   - bool: true si commence par verbe
 //
 func extractFirstWord(name string) string {
- // Vérification de la condition
-	if len(name) == 0 {
-  // Retour de la fonction
-		return ""
-	}
-
 	// Find the first uppercase letter after the start
 	for i := 1; i < len(name); i++ {
   // Vérification de la condition

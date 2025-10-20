@@ -21,3 +21,16 @@ const (
 	SCHEMA_NAME        string  = "public"
 	ADMIN_USER         string  = "root"
 )
+
+// Block comment for group (edge case: one missing comment)
+const (
+	// CONST_A has comment
+	CONST_A int = 1
+	// CONST_B has comment
+	CONST_B int = 2
+)
+
+const (
+	MISSING_COMMENT int = 3
+)
+

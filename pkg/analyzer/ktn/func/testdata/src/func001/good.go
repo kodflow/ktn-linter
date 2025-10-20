@@ -186,3 +186,28 @@ func WithNestedComments() {
 	z := x + y
 	_ = z
 }
+
+// ProcessWithBlockComments démontre l'usage de commentaires blocs.
+func ProcessWithBlockComments() {
+	/* Initialisation des variables */
+	x := 1
+	/*
+	   Calcul complexe
+	   sur plusieurs lignes
+	*/
+	y := x * 2
+	/* Inline */ z := y + 1
+
+	{
+		nested := z + 1
+		_ = nested
+	}
+
+	_ = z
+}
+
+// GetExternalValue est une fonction externe (linkname/assembleur) - ignorée.
+//
+// Returns:
+//   - int: valeur externe
+func GetExternalValue() int

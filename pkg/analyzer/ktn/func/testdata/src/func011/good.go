@@ -197,3 +197,5 @@ func GoodElseEmptyBlock(x int) {
 	} else {
 	}
 }
+// GetExternalFunc est une fonction externe - ignorée.
+func GetExternalFunc() int

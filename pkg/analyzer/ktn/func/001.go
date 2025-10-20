@@ -40,30 +40,30 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip if no body
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
 		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
 		funcName := funcDecl.Name.Name
-  // Vérification de la condition
+		// Vérification de la condition
 		if isTestFunction(funcName) {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
 		// Skip main function
 		if funcName == "main" {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
 		// Count pure code lines
 		pureLines := countPureCodeLines(pass, funcDecl.Body)
 
-  // Vérification de la condition
+		// Vérification de la condition
 		if pureLines > MAX_PURE_CODE_LINES {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
@@ -75,7 +75,7 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
@@ -85,9 +85,8 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - bool: true si fonction de test
-//
 func isTestFunction(name string) bool {
- // Retour de la fonction
+	// Retour de la fonction
 	return strings.HasPrefix(name, "Test") ||
 		strings.HasPrefix(name, "Benchmark") ||
 		strings.HasPrefix(name, "Example") ||
@@ -151,18 +150,12 @@ func isLineToSkip(trimmed string, inBlockComment *bool) bool {
 // Returns:
 //   - int: nombre de lignes de code pur
 func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
-	// Vérification corps vide
-	if body == nil {
-		// Retour pour corps vide
-		return 0
-	}
-
 	startPos := pass.Fset.Position(body.Lbrace)
 	endPos := pass.Fset.Position(body.Rbrace)
 
 	// Lecture du fichier source
 	filename := startPos.Filename
-	// Vérification de ReadFile
+	// Vérification de ReadFile (peut être nil dans certains contextes)
 	if pass.ReadFile == nil {
 		// Retour si ReadFile indisponible
 		return 0
@@ -173,18 +166,12 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 		// Retour si erreur
 		return 0
 	}
-
 	lines := strings.Split(string(content), "\n")
 	pureCodeLines := 0
 	inBlockComment := false
 
 	// Itération sur les lignes de la fonction
 	for i := startPos.Line + 1; i < endPos.Line; i++ {
-		// Vérification index valide
-		if i <= 0 || i > len(lines) {
-			continue
-		}
-
 		line := lines[i-1]
 		trimmed := strings.TrimSpace(line)
 

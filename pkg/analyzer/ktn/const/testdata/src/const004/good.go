@@ -46,3 +46,6 @@ const (
 	// DB_USER is the database user
 	DB_USER string = "admin"
 )
+
+// Edge case: No const declarations
+var OnlyVar string = "test"

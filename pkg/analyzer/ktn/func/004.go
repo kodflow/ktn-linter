@@ -40,19 +40,11 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip if no body
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
-// runFunc004 exécute l'analyse KTN-FUNC-004.
-//
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - any: résultat de l'analyse
-//   - error: erreur éventuelle
 
 		// Skip test functions
 		funcName := funcDecl.Name.Name

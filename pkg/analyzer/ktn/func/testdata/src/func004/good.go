@@ -97,3 +97,5 @@ func externalLinkedFunc(v int) (result unsafe.Pointer)
 //
 //go:linkname anotherExternal runtime.convTstring
 func anotherExternal(v string) (ptr unsafe.Pointer)
+// GetExternalFunc est une fonction externe - ignorée.
+func GetExternalFunc() int

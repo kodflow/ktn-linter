@@ -25,3 +25,28 @@ const (
 	// BAD_AFTER_VAR is placed after vars
 	BAD_AFTER_VAR string = "bad"
 )
+
+// Edge case: Another scattered const (no var between these)
+const (
+	// SCATTERED_ONE in another block
+	SCATTERED_ONE string = "one"
+)
+
+const (
+	// SCATTERED_TWO in yet another block
+	SCATTERED_TWO string = "two"
+)
+
+// Edge case: Scattered consts WITHOUT any var declarations
+const (
+	// FIRST_NO_VAR in first block
+	FIRST_NO_VAR int = 1
+)
+
+// Another function to separate const blocks (tests non-GenDecl)
+func separatorFunc() {}
+
+const (
+	// SECOND_NO_VAR in second block (scattered, no var)
+	SECOND_NO_VAR int = 2
+)

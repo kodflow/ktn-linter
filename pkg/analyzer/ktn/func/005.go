@@ -48,9 +48,9 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 //   - error: erreur éventuelle
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip if no body
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 

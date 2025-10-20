@@ -45,3 +45,27 @@ func TestManyUnnamedReturns() (int, string, bool, error) {
 func BenchmarkManyUnnamedReturns() (int, string, bool, error) {
 	return 1, "test", true, nil
 }
+
+// NoReturnValue ne retourne aucune valeur.
+func NoReturnValue() {
+	x := 1
+	_ = x
+}
+
+// GetFourValuesCompact retourne quatre valeurs nommées (format compact).
+//
+// Returns:
+//   - x, y: coordonnées
+//   - name: nom
+//   - err: erreur éventuelle
+func GetFourValuesCompact() (x, y int, name string, err error) {
+	// Retour de la fonction
+	return 1, 2, "point", nil
+}
+
+// TestFunction est une fonction de test (ignorée).
+func TestSomething() {
+	// Les fonctions de test ne sont pas vérifiées
+	x := 1
+	_ = x
+}

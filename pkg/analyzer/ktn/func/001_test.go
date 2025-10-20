@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	ktnfunc "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func"
-	"golang.org/x/tools/go/analysis/analysistest"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
 func TestFunc001(t *testing.T) {
-	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, ktnfunc.Analyzer001, "func001")
+	// func001/bad.go doit avoir 2 erreurs (TooLong: 36 lignes, VeryLong: 37 lignes)
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer001, "func001", 2)
 }
+

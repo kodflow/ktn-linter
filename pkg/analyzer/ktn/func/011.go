@@ -3,7 +3,6 @@ package ktnfunc
 import (
 	"go/ast"
 	"go/token"
-	"strings"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -36,9 +35,9 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip if no body
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
@@ -197,17 +196,8 @@ func hasCommentBefore(pass *analysis.Pass, pos token.Pos) bool {
 		commentPos := pass.Fset.Position(commentGroup.End())
 		// Comment should be on the line immediately before the statement
 		if commentPos.Filename == filename && commentPos.Line == position.Line-1 {
-			// Check if it's a real comment (not a "want" directive)
-   // Itération sur les statements
-			for _, comment := range commentGroup.List {
-				text := strings.TrimSpace(comment.Text)
-    // Vérification de la condition - Skip only actual "want" directives (not any comment containing "want")
-				if strings.HasPrefix(text, "// want") || strings.HasPrefix(text, "//want") {
-					continue
-				}
      // Retour de la fonction
-				return true
-			}
+			return true
 		}
 	}
 
@@ -244,12 +234,6 @@ func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
 			commentPos := pass.Fset.Position(comment.Pos())
 			// Comment should be on the same line as the statement
 			if commentPos.Filename == filename && commentPos.Line == position.Line {
-				// Check if it's a real comment (not a "want" directive)
-				text := strings.TrimSpace(comment.Text)
-    // Vérification de la condition - Skip only actual "want" directives (not any comment containing "want")
-				if strings.HasPrefix(text, "// want") || strings.HasPrefix(text, "//want") {
-					continue
-				}
      // Retour de la fonction
 				return true
 			}

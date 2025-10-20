@@ -100,3 +100,5 @@ func (m *MyStruct) GetDecrementedValue() int {
 	count-- // This is OK - decrementing local variable
 	return count
 }
+// GetExternalFunc est une fonction externe - ignorée.
+func GetExternalFunc() int

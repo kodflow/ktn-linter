@@ -39,12 +39,12 @@ func createTestDiagnostics() []analysis.Diagnostic {
 	return []analysis.Diagnostic{
 		{
 			Pos:      token.Pos(1),
-			Message:  "[KTN-VAR-001] Variable naming issue\nThis is a test diagnostic.\nExample: var myVar int",
+			Message:  "KTN-VAR-001: Variable naming issue\nThis is a test diagnostic.\nExample: var myVar int",
 			Category: "naming",
 		},
 		{
 			Pos:      token.Pos(10),
-			Message:  "[KTN-FUNC-002] Function complexity too high\nSplit into smaller functions",
+			Message:  "KTN-FUNC-002: Function complexity too high\nSplit into smaller functions",
 			Category: "complexity",
 		},
 	}
@@ -124,12 +124,12 @@ func TestFormatSimpleMode(t *testing.T) {
 		t.Errorf("Expected at least 2 lines in simple mode, got %d", len(lines))
 	}
 
-	// Check format: filename:line:col: message (CODE)
+	// Check format: filename:line:col: [CODE] message
 	if !strings.Contains(lines[0], "test.go:") {
 		t.Error("Expected filename:line:col format")
 	}
-	if !strings.Contains(lines[0], "(KTN-") {
-		t.Errorf("Expected error code in parentheses, got: %s", lines[0])
+	if !strings.Contains(lines[0], "[KTN-") {
+		t.Errorf("Expected error code in brackets, got: %s", lines[0])
 	}
 }
 
@@ -161,7 +161,7 @@ func TestExtractCode(t *testing.T) {
 	}{
 		{
 			"valid code",
-			"[KTN-VAR-001] Variable issue",
+			"KTN-VAR-001: Variable issue",
 			"KTN-VAR-001",
 		},
 		{
@@ -210,12 +210,12 @@ func TestExtractMessage(t *testing.T) {
 	}{
 		{
 			"with code and newline",
-			"[KTN-VAR-001] Variable issue\nDetails here",
+			"KTN-VAR-001: Variable issue\nDetails here",
 			"Variable issue",
 		},
 		{
 			"with code only",
-			"[KTN-VAR-001] Variable issue",
+			"KTN-VAR-001: Variable issue",
 			"Variable issue",
 		},
 		{
@@ -230,8 +230,8 @@ func TestExtractMessage(t *testing.T) {
 		},
 		{
 			"bracket at end",
-			"[KTN-TEST-001]",
-			"[KTN-TEST-001]",
+			"KTN-TEST-001:",
+			"KTN-TEST-001:",
 		},
 		{
 			"prefix format with colon",
@@ -252,6 +252,26 @@ func TestExtractMessage(t *testing.T) {
 			"only newline",
 			"\nJust newline",
 			"",
+		},
+		{
+			"bracket exactly at end",
+			"message]",
+			"message]",
+		},
+		{
+			"colon exactly at end",
+			"KTN-TEST:",
+			"KTN-TEST:",
+		},
+		{
+			"bracket format basic",
+			"[KTN-VAR-001] issue here",
+			"issue here",
+		},
+		{
+			"KTN prefix without any separator",
+			"KTN-ERROR",
+			"KTN-ERROR",
 		},
 	}
 
@@ -450,7 +470,7 @@ func TestPrintFunctions(t *testing.T) {
 			file := fset.AddFile("test.go", 1, 1000)
 			pos := fset.Position(file.Pos(10))
 			diag := analysis.Diagnostic{
-				Message:  "[KTN-TEST-001] Test issue\nDetails",
+				Message:  "KTN-TEST-001: Test issue\nDetails",
 				Category: "test",
 			}
 			formatter.printDiagnostic(1, pos, diag)
@@ -482,11 +502,11 @@ func TestFormatSimpleModeWithFiltering(t *testing.T) {
 	file3 := fset.AddFile("/tmp/test.go", 2003, 1000)
 
 	diagnostics := []analysis.Diagnostic{
-		{Pos: file1.Pos(100), Message: "[KTN-TEST-003] Issue 3", Category: "test"}, // Line 4
-		{Pos: file1.Pos(10), Message: "[KTN-TEST-001] Issue 1", Category: "test"},  // Line 2
-		{Pos: file2.Pos(20), Message: "[KTN-TEST-002] Issue 2", Category: "test"},  // Should be filtered
-		{Pos: file1.Pos(50), Message: "[KTN-TEST-004] Issue 4", Category: "test"},  // Line 3
-		{Pos: file3.Pos(30), Message: "[KTN-TEST-005] Issue 5", Category: "test"},  // Should be filtered
+		{Pos: file1.Pos(100), Message: "KTN-TEST-003: Issue 3", Category: "test"}, // Line 4
+		{Pos: file1.Pos(10), Message: "KTN-TEST-001: Issue 1", Category: "test"},  // Line 2
+		{Pos: file2.Pos(20), Message: "KTN-TEST-002: Issue 2", Category: "test"},  // Should be filtered
+		{Pos: file1.Pos(50), Message: "KTN-TEST-004: Issue 4", Category: "test"},  // Line 3
+		{Pos: file3.Pos(30), Message: "KTN-TEST-005: Issue 5", Category: "test"},  // Should be filtered
 	}
 
 	formatter.Format(fset, diagnostics)

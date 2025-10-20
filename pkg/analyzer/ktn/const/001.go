@@ -54,7 +54,7 @@ func runConst001(pass *analysis.Pass) (any, error) {
 					for _, name := range valueSpec.Names {
 						pass.Reportf(
 							name.Pos(),
-							"[KTN-CONST-001] la constante '%s' doit avoir un type explicite",
+							"KTN-CONST-001: la constante '%s' doit avoir un type explicite",
 							name.Name,
 						)
 					}

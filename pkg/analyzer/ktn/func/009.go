@@ -48,7 +48,7 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Skip if no body
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
 			// Retour de la fonction
 			return

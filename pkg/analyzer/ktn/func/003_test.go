@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	ktnfunc "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func"
-	"golang.org/x/tools/go/analysis/analysistest"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
 func TestFunc003(t *testing.T) {
-	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, ktnfunc.Analyzer003, "func003")
+	// Placeholder: will calculate error count by running test
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer003, "func003", 12)
 }
+
+

@@ -66,7 +66,7 @@ func runConst004(pass *analysis.Pass) (any, error) {
 				for _, name := range valueSpec.Names {
 					pass.Reportf(
 						name.Pos(),
-						"[KTN-CONST-004] la constante '%s' doit avoir un commentaire associé",
+						"KTN-CONST-004: la constante '%s' doit avoir un commentaire associé",
 						name.Name,
 					)
 				}

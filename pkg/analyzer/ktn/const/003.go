@@ -33,14 +33,6 @@ var validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 //   - error: erreur éventuelle
 func runConst003(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-// runConst003 exécute l'analyse KTN-CONST-003.
-//
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - any: résultat de l'analyse
-//   - error: erreur éventuelle
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
@@ -51,15 +43,15 @@ func runConst003(pass *analysis.Pass) (any, error) {
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
-  // Itération sur les éléments
+		// Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
-   // Itération sur les éléments
+			// Itération sur les éléments
 			for _, name := range valueSpec.Names {
 				constName := name.Name
 
@@ -72,7 +64,7 @@ func runConst003(pass *analysis.Pass) (any, error) {
 				if !isValidConstantName(constName) {
 					pass.Reportf(
 						name.Pos(),
-						"[KTN-CONST-003] la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
+						"KTN-CONST-003: la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
 						constName,
 					)
 				}
@@ -80,31 +72,27 @@ func runConst003(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
-// isValidConstantName checks if a constant name follows CAPITAL_UNDERSCORE convention
-// Params:
-//   - pass: contexte d'analyse
+// isValidConstantName checks if a constant name follows CAPITAL_UNDERSCORE convention.
 //
-// Returns:
-//   - bool: true si nom valide
-//   - retours à documenter
+// Params:
+//   - name: nom de la constante à vérifier
 //
 // Returns:
 //   - bool: true si le nom est valide
-//
 func isValidConstantName(name string) bool {
 	// Must match the pattern: starts with uppercase, contains only uppercase, digits, underscores
 	if !validConstNamePattern.MatchString(name) {
-  // Retour de la fonction
+		// Retour de la fonction
 		return false
 	}
 
 	// Single letter constants are valid (e.g., A, B, C)
 	if len(name) == 1 {
-  // Retour de la fonction
+		// Retour de la fonction
 		return true
 	}
 
@@ -113,5 +101,6 @@ func isValidConstantName(name string) bool {
 	// - Acronyms: API, HTTP, URL, HTTPS, EOF
 	// - Underscored names: MAX_SIZE, API_KEY, HTTP_TIMEOUT
 	// - With numbers: HTTP2, TLS1_2_VERSION
+	// Retour de la fonction
 	return true
 }
