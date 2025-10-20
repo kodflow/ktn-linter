@@ -1,7 +1,5 @@
 package const004
 
-// Bad: Constants WITHOUT any comments (violates KTN-CONST-004)
-// But respects: explicit types, proper naming, single-block grouping
 const (
 	SMTP_PORT          int     = 25
 	SSH_PORT           int     = 22
