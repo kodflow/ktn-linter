@@ -1,7 +1,8 @@
 package const004
 
-// Test cases for KTN-CONST-004: Constants with proper comments
+import "fmt"
 
+// Test cases for KTN-CONST-004: Constants with proper comments
 // Good: Individual constant with doc comment
 // GoodDocComment is a constant with documentation
 const GoodDocComment = "value"
@@ -106,3 +107,13 @@ const DefaultPort = 8080
 // DatabaseURL defines the connection string for the database.
 // Format: protocol://host:port/database
 const DatabaseURL = "postgresql://localhost:5432/mydb"
+
+// Type declarations should be skipped
+type MyType struct {
+	Field string
+}
+
+// Valid const with comment
+const ValidWithType = "test"
+
+var testVar = fmt.Sprintf("var")

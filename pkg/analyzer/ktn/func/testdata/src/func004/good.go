@@ -1,5 +1,7 @@
 package func004
 
+import "unsafe"
+
 // Good: No named returns, so naked return doesn't apply
 func NoNamedReturns() int {
 	return 42
@@ -73,7 +75,7 @@ type Calculator interface {
 }
 
 // Good: Function with single unnamed return value
-func SingleUnnamedReturn() (int) {
+func SingleUnnamedReturn() int {
 	return 42
 }
 
@@ -81,3 +83,17 @@ func SingleUnnamedReturn() (int) {
 func MultipleUnnamedReturns() (int, string, bool) {
 	return 1, "test", true
 }
+
+// Prevent "unsafe imported but not used" error
+var _ = unsafe.Pointer(nil)
+
+// Good: External function linked via go:linkname (no body to analyze)
+// This tests the funcDecl.Body == nil branch in runFunc004
+//
+//go:linkname externalLinkedFunc runtime.convT64
+func externalLinkedFunc(v int) (result unsafe.Pointer)
+
+// Good: Another external function with named return
+//
+//go:linkname anotherExternal runtime.convTstring
+func anotherExternal(v string) (ptr unsafe.Pointer)

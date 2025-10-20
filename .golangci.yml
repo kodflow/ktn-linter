@@ -4,6 +4,10 @@ run:
   timeout: 5m
   tests: true
   go: "1.25"
+  # Inclure les fichiers testdata dans l'analyse
+  build-tags: []
+  skip-dirs: []
+  skip-files: []
 
 # Configuration minimale : uniquement KTN-Linter via le wrapper
 # Aucun linter golangci-lint activé
@@ -18,3 +22,5 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  # Ne pas exclure testdata
+  exclude-dirs: []

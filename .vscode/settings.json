@@ -34,16 +34,14 @@
   // Build flags pour Go
   "go.buildFlags": ["-buildvcs=false"],
   "go.buildTags": "",
-  // Build automatique du linter au save via l'extension Run on Save
-  "emeraldwalk.runonsave": {
-    "commands": [
-      {
-        "match": "(cmd|pkg)/.*\\.go$",
-        "cmd": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter"
-      }
+  // Build + Scan automatique à chaque save de fichier Go
+  "triggerTaskOnSave.tasks": {
+    "KTN-Linter: Build and Scan": [
+      "**/*.go"
     ]
   },
-  // Mapper la sortie du linter pour l'onglet Problèmes
+  "triggerTaskOnSave.on": true,
+  // Afficher automatiquement les erreurs
   "problems.autoReveal": true,
   "problems.showCurrentInStatus": true
 }

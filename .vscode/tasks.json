@@ -2,70 +2,25 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build KTN-Linter",
+      "label": "KTN-Linter: Build and Scan",
       "type": "shell",
-      "command": "go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter",
-      "problemMatcher": ["$go"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "silent",
-        "panel": "shared",
-        "showReuseMessage": false
-      }
-    },
-    {
-      "label": "KTN Lint Current File",
-      "type": "shell",
-      "command": "${workspaceFolder}/bin/golangci-lint-wrapper ${file}",
+      "command": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter && ${workspaceFolder}/bin/golangci-lint-wrapper",
       "problemMatcher": {
-        "owner": "ktn-linter",
-        "fileLocation": "absolute",
+        "owner": "go",
+        "fileLocation": ["absolute"],
         "pattern": {
-          "regexp": "^(.+):(\\d+):(\\d+):\\s+(.+)\\s+\\((.+)\\)$",
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(.+)$",
           "file": 1,
           "line": 2,
           "column": 3,
-          "message": 4,
-          "code": 5
+          "message": 4
         }
       },
       "presentation": {
         "reveal": "never",
         "panel": "shared",
-        "showReuseMessage": false
-      }
-    },
-    {
-      "label": "Run KTN-Linter",
-      "type": "shell",
-      "command": "make lint",
-      "problemMatcher": [],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared",
-        "showReuseMessage": false
-      }
-    },
-    {
-      "label": "Run Tests with Coverage",
-      "type": "shell",
-      "command": "make test",
-      "problemMatcher": ["$go"],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared",
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": true
       }
     }
   ]

@@ -21,21 +21,27 @@ Voir [COVERAGE.MD](COVERAGE.MD) pour le rapport détaillé de couverture.
 
 ### Intégration VSCode
 
-**Linting automatique au Ctrl+S** : L'extension Go de VSCode lance automatiquement le linter via `go.lintOnSave: "workspace"`.
+**Linting automatique** : L'extension Go lance automatiquement le linter à la sauvegarde (`Ctrl+S`).
 
-**Workflow** :
-1. Sauvegardez un fichier Go (`Ctrl+S`)
-2. L'extension "Run on Save" rebuild le binaire automatiquement
-3. L'extension Go lance le linter et affiche les erreurs dans l'onglet Problèmes (`Ctrl+Shift+M`)
+**Voir les erreurs dans les fichiers testdata** :
+1. Ouvrir un fichier testdata (ex: `pkg/analyzer/ktn/const/testdata/src/const001/const001.go`)
+2. Sauvegarder (`Ctrl+S`) → Les erreurs apparaissent immédiatement
+3. Ouvrir l'onglet Problèmes (`Ctrl+Shift+M`) → 50 erreurs détectées
 
 **Fonctionnalités** :
+- ✅ Linting automatique (production + testdata)
+- ✅ Format simple pour VSCode (`file:line:col: message (CODE)`)
+- ✅ Erreurs visibles dans l'éditeur et l'onglet Problèmes
 - ✅ Build automatique du binaire à chaque sauvegarde
-- ✅ Linting automatique via l'extension Go
-- ✅ Affichage dans l'onglet Problèmes de VSCode
-- ✅ Raccourci `Ctrl+Shift+L` pour forcer le lint manuellement
+
+**Commandes** :
+```bash
+make lint           # Lint production seulement (exclut testdata)
+make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
+```
 
 **Configuration** : `.vscode/settings.json`, `.vscode/tasks.json`, `.vscode/keybindings.json`
-**Wrapper** : `bin/golangci-lint-wrapper` (utilisé par l'extension Go)
+**Wrapper** : `bin/golangci-lint-wrapper` (format simple, inclut testdata)
 
 ## Règles Implémentées
 
