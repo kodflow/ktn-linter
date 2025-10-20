@@ -122,7 +122,7 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	for _, constGroup := range constGroupsAfterVar {
 		pass.Reportf(
 			constGroup.pos,
-			"KTN-CONST-002: les constantes doivent être groupées et placées au-dessus des déclarations var",
+			"[KTN-CONST-002] les constantes doivent être groupées et placées au-dessus des déclarations var",
 		)
 	}
 
@@ -146,7 +146,7 @@ func checkScatteredConsts(pass *analysis.Pass, constGroups []declGroup) {
 	for i := 1; i < len(constGroups); i++ {
 		pass.Reportf(
 			constGroups[i].pos,
-			"KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc",
+			"[KTN-CONST-002] les constantes doivent être groupées ensemble dans un seul bloc",
 		)
 	}
 }

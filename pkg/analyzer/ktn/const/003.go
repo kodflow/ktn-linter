@@ -72,7 +72,7 @@ func runConst003(pass *analysis.Pass) (any, error) {
 				if !isValidConstantName(constName) {
 					pass.Reportf(
 						name.Pos(),
-						"KTN-CONST-003: la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
+						"[KTN-CONST-003] la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
 						constName,
 					)
 				}

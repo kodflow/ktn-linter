@@ -181,9 +181,9 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 		code := extractCode(diag.Message)
 		message := extractMessage(diag.Message)
 
-		// Format compatible avec golangci-lint et VSCode
-		fmt.Fprintf(f.writer, "%s:%d:%d: %s (%s)\n",
-			pos.Filename, pos.Line, pos.Column, message, code)
+		// Format compatible avec golangci-lint et VSCode : code en premier
+		fmt.Fprintf(f.writer, "%s:%d:%d: (%s) %s\n",
+			pos.Filename, pos.Line, pos.Column, code, message)
 	}
 }
 
