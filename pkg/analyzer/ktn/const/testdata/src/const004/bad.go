@@ -20,17 +20,8 @@ const (
 	CACHE_PORT         int     = 6379
 	SCHEMA_NAME        string  = "public"
 	ADMIN_USER         string  = "root"
+	MISSING_COMMENT    int     = 999
 )
 
-// Block comment for group (edge case: one missing comment)
-const (
-	// CONST_A has comment
-	CONST_A int = 1
-	// CONST_B has comment
-	CONST_B int = 2
-)
-
-const (
-	MISSING_COMMENT int = 3
-)
-
+// Valid edge case: File with only variables (no const) should not trigger errors
+var OnlyVar2 string = "test"

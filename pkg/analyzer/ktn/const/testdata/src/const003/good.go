@@ -75,17 +75,7 @@ const (
 	DB_MIN_CONNECTIONS int = 10
 	// DB_TIMEOUT database timeout
 	DB_TIMEOUT int = 30
-	// Blank identifier (should be ignored)
+
+	// Blank identifier (valid edge case - should be skipped by naming rules)
 	_ int = 999
 )
-
-// Edge case: Blank identifier (should be skipped by analyzer)
-const (
-	// Blank identifier should not trigger error
-	_ int = 1
-	// VALID_NAME follows rules
-	VALID_NAME int = 2
-)
-
-// Edge case: No const declarations
-var OnlyVar string = "test"

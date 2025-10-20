@@ -47,5 +47,5 @@ const (
 	DB_USER string = "admin"
 )
 
-// Edge case: No const declarations
+// Valid edge case: File with only variables (no const) should not trigger errors
 var OnlyVar string = "test"
