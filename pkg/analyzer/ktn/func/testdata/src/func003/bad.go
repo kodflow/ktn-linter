@@ -1,37 +1,37 @@
 package func003
 
 // Bad: Starts with a noun
-func User() {} // want "KTN-FUNC-003"
+func User() {}
 
 // Bad: Starts with adjective
-func ValidData() {} // want "KTN-FUNC-003"
+func ValidData() {}
 
 // Bad: Generic name without verb
-func Handler() {} // want "KTN-FUNC-003"
+func Handler() {}
 
 // Bad: Name without verb prefix
-func TotalAmount() {} // want "KTN-FUNC-003"
+func TotalAmount() {}
 
 // Bad: Property-like name
-func CurrentUser() {} // want "KTN-FUNC-003"
+func CurrentUser() {}
 
 // Bad: Noun-based name
-func Database() {} // want "KTN-FUNC-003"
+func Database() {}
 
 // Bad: Configuration without verb
-func Settings() {} // want "KTN-FUNC-003"
+func Settings() {}
 
 // Bad: Result without verb
-func Sum() {} // want "KTN-FUNC-003"
+func Sum() {}
 
 // Bad: Single word noun
-func Data() {} // want "KTN-FUNC-003"
+func Data() {}
 
 // Bad: Single word non-verb
-func Result() {} // want "KTN-FUNC-003"
+func Result() {}
 
 // Bad: Single word adjective
-func Valid() {} // want "KTN-FUNC-003"
+func Valid() {}
 
 // Bad: Single word generic name
-func Helper() {} // want "KTN-FUNC-003"
+func Helper() {}

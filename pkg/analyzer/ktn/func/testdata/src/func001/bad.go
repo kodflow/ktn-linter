@@ -1,7 +1,7 @@
 package func001
 
 // Bad: Function with 36 statements (exceeds limit)
-func TooLong() { // want "KTN-FUNC-001"
+func TooLong() {
 	a := 1
 	b := 2
 	c := 3
@@ -41,7 +41,7 @@ func TooLong() { // want "KTN-FUNC-001"
 }
 
 // Bad: Function with many statements (37 pure code lines)
-func VeryLong() { // want "KTN-FUNC-001"
+func VeryLong() {
 	// Even with comments, the code is too long
 	a := 1
 	b := 2

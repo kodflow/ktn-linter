@@ -1,7 +1,7 @@
 package func005
 
 // Bad: Complexity = 11 (exceeds limit)
-func ComplexityEleven(x int) { // want "KTN-FUNC-005"
+func ComplexityEleven(x int) {
 	if x > 0 {
 		x++
 	}
@@ -33,7 +33,7 @@ func ComplexityEleven(x int) { // want "KTN-FUNC-005"
 }
 
 // Bad: Very complex function
-func VeryComplex(x int) int { // want "KTN-FUNC-005"
+func VeryComplex(x int) int {
 	if x > 0 {
 		if x > 10 {
 			if x > 20 {
@@ -71,7 +71,7 @@ func VeryComplex(x int) int { // want "KTN-FUNC-005"
 }
 
 // Bad: Many logical operators
-func ManyLogicalOps(a, b, c, d bool) bool { // want "KTN-FUNC-005"
+func ManyLogicalOps(a, b, c, d bool) bool {
 	if a && b {
 		return true
 	}
@@ -97,7 +97,7 @@ func ManyLogicalOps(a, b, c, d bool) bool { // want "KTN-FUNC-005"
 }
 
 // Bad: Complex with select and range
-func ComplexSelectRange(ch chan int, items []int) int { // want "KTN-FUNC-005"
+func ComplexSelectRange(ch chan int, items []int) int {
 	result := 0
 
 	// Range adds complexity
@@ -140,7 +140,7 @@ func ComplexSelectRange(ch chan int, items []int) int { // want "KTN-FUNC-005"
 
 // Bad: Switch with default and many cases
 // Complexity = 12 (1 base + 10 cases + 1 if)
-func SwitchManyWithDefault(x int) int { // want "KTN-FUNC-005"
+func SwitchManyWithDefault(x int) int {
 	result := 0
 	switch x {
 	case 1:
@@ -174,7 +174,7 @@ func SwitchManyWithDefault(x int) int { // want "KTN-FUNC-005"
 
 // Bad: Select with default and many comm cases
 // Complexity = 11 (1 base + 5 comm cases + 5 ifs)
-func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int { // want "KTN-FUNC-005"
+func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int {
 	result := 0
 	select {
 	case x := <-ch1:

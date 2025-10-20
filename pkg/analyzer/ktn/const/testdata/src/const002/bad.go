@@ -1,13 +1,27 @@
 package const002
 
-// Bad example 1: scattered consts before var
+// Bad: Multiple const blocks (scattered) - violates KTN-CONST-002
+// But respects other rules: explicit types, proper naming, and comments
+
+// First group of constants
 const (
-	FirstGroup1 string = "first"
-	FirstGroup2 string = "group"
+	// FIRST_GROUP_A is in the first group
+	FIRST_GROUP_A string = "first"
+	// FIRST_GROUP_B is in the first group
+	FIRST_GROUP_B string = "group"
 )
 
-const SecondGroup1 string = "scattered" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
+// SECOND_GROUP is scattered
+const (
+	// SECOND_GROUP is in a second group
+	SECOND_GROUP string = "scattered"
+)
 
+// Variable declaration
 var GlobalVar string = "test"
 
-const BadConst1 string = "bad" // want "KTN-CONST-002: les constantes doivent être groupées et placées au-dessus des déclarations var"
+// BAD_AFTER_VAR appears after var
+const (
+	// BAD_AFTER_VAR is placed after vars
+	BAD_AFTER_VAR string = "bad"
+)

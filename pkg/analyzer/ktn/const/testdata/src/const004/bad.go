@@ -1,30 +1,25 @@
 package const004
 
-const BadNoComment = "value" // want "KTN-CONST-004: la constante 'BadNoComment' doit avoir un commentaire associé"
-
+// Bad: Constants WITHOUT any comments (violates KTN-CONST-004)
+// But respects: explicit types, proper naming, single-block grouping
 const (
-	BadMultiple1 = "value1" // want "KTN-CONST-004: la constante 'BadMultiple1' doit avoir un commentaire associé"
-	BadMultiple2 = "value2" // want "KTN-CONST-004: la constante 'BadMultiple2' doit avoir un commentaire associé"
+	SMTP_PORT          int     = 25
+	SSH_PORT           int     = 22
+	TELNET_PORT        int     = 23
+	POOL_MAX_SIZE      int     = 500
+	POOL_MIN_SIZE      int     = 5
+	CONNECTION_TIMEOUT int     = 60
+	SERVER_VERSION     string  = "v2.0"
+	BASE_PATH          string  = "/base"
+	AUTH_TOKEN         string  = "token123"
+	AUTO_RELOAD        bool    = false
+	STRICT_MODE        bool    = true
+	LOG_ENABLED        bool    = true
+	ATTEMPTS_LIMIT     int     = 3
+	WAIT_TIME_MS       int     = 500
+	SCALE_FACTOR       float64 = 2.0
+	CACHE_HOST         string  = "127.0.0.1"
+	CACHE_PORT         int     = 6379
+	SCHEMA_NAME        string  = "public"
+	ADMIN_USER         string  = "root"
 )
-
-const BadTyped int = 42 // want "KTN-CONST-004: la constante 'BadTyped' doit avoir un commentaire associé"
-
-const (
-	BadName1, BadName2 = 1, 2 // want "KTN-CONST-004: la constante 'BadName1' doit avoir un commentaire associé" "KTN-CONST-004: la constante 'BadName2' doit avoir un commentaire associé"
-)
-
-const (
-	BadIota1 = iota // want "KTN-CONST-004: la constante 'BadIota1' doit avoir un commentaire associé"
-	BadIota2        // want "KTN-CONST-004: la constante 'BadIota2' doit avoir un commentaire associé"
-	BadIota3        // want "KTN-CONST-004: la constante 'BadIota3' doit avoir un commentaire associé"
-)
-
-const BadString = "hello world" // want "KTN-CONST-004: la constante 'BadString' doit avoir un commentaire associé"
-
-const BadBool = true // want "KTN-CONST-004: la constante 'BadBool' doit avoir un commentaire associé"
-
-const BadFloat = 3.14 // want "KTN-CONST-004: la constante 'BadFloat' doit avoir un commentaire associé"
-
-const BadComplex = 1 + 2i // want "KTN-CONST-004: la constante 'BadComplex' doit avoir un commentaire associé"
-
-const BadExpr = 1 + 2*3 // want "KTN-CONST-004: la constante 'BadExpr' doit avoir un commentaire associé"

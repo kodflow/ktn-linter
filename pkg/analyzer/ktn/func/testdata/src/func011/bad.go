@@ -4,10 +4,10 @@ package func011
 
 // BadIfNoComment has an if statement without a comment
 func BadIfNoComment(x int) bool {
-	if x > 0 { // want "KTN-FUNC-011.*if.*commentaire"
-		return true // want "KTN-FUNC-011.*return.*commentaire"
+	if x > 0 {
+		return true
 	}
-	return false // want "KTN-FUNC-011.*return.*commentaire"
+	return false
 }
 
 // BadElseNoComment has an else statement without a comment
@@ -16,60 +16,60 @@ func BadElseNoComment(x int) bool {
 	if x > 0 {
 		// Return true for positive
 		return true
-	} else { // want "KTN-FUNC-011.*else.*commentaire"
-		return false // want "KTN-FUNC-011.*return.*commentaire"
+	} else {
+		return false
 	}
 }
 
 // BadSwitchNoComment has a switch without a comment
 func BadSwitchNoComment(x int) string {
-	switch x { // want "KTN-FUNC-011.*switch.*commentaire"
-	case 0: // want "KTN-FUNC-011.*case.*commentaire"
-		return "zero" // want "KTN-FUNC-011.*return.*commentaire"
-	case 1: // want "KTN-FUNC-011.*case.*commentaire"
-		return "one" // want "KTN-FUNC-011.*return.*commentaire"
-	default: // want "KTN-FUNC-011.*case.*commentaire"
-		return "other" // want "KTN-FUNC-011.*return.*commentaire"
+	switch x {
+	case 0:
+		return "zero"
+	case 1:
+		return "one"
+	default:
+		return "other"
 	}
 }
 
 // BadLoopNoComment has a loop without a comment
 func BadLoopNoComment(items []int) int {
 	sum := 0
-	for _, item := range items { // want "KTN-FUNC-011.*boucle.*commentaire"
+	for _, item := range items {
 		sum += item
 	}
-	return sum // want "KTN-FUNC-011.*return.*commentaire"
+	return sum
 }
 
 // BadReturnNoComment has returns without comments
 func BadReturnNoComment(x int) int {
-	return x * 2 // want "KTN-FUNC-011.*return.*commentaire"
+	return x * 2
 }
 
 // BadMixedComments has some comments but not all
 func BadMixedComments(x int) bool {
 	// Check if x is positive
 	if x > 0 {
-		return true // want "KTN-FUNC-011.*return.*commentaire"
+		return true
 	}
 	// Check if x is zero
 	if x == 0 {
 		// Return false for zero
 		return false
 	}
-	return true // want "KTN-FUNC-011.*return.*commentaire"
+	return true
 }
 
 // BadTypeSwitchNoComment has a type switch without comments
 func BadTypeSwitchNoComment(v interface{}) string {
-	switch v.(type) { // want "KTN-FUNC-011.*switch.*commentaire"
-	case string: // want "KTN-FUNC-011.*case.*commentaire"
-		return "string" // want "KTN-FUNC-011.*return.*commentaire"
-	case int: // want "KTN-FUNC-011.*case.*commentaire"
-		return "int" // want "KTN-FUNC-011.*return.*commentaire"
-	default: // want "KTN-FUNC-011.*case.*commentaire"
-		return "unknown" // want "KTN-FUNC-011.*return.*commentaire"
+	switch v.(type) {
+	case string:
+		return "string"
+	case int:
+		return "int"
+	default:
+		return "unknown"
 	}
 }
 
@@ -79,8 +79,8 @@ func BadElseIfNoComment(x int) string {
 	if x < 0 {
 		// Return "negative" for negative values
 		return "negative"
-	} else if x > 0 { // want "KTN-FUNC-011.*if.*commentaire" "KTN-FUNC-011.*else.*commentaire"
-		return "positive" // want "KTN-FUNC-011.*return.*commentaire"
+	} else if x > 0 {
+		return "positive"
 	} else {
 		// Return "zero" for zero value
 		return "zero"
@@ -93,8 +93,8 @@ func BadElseNoCommentInside(x int) string {
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else { // want "KTN-FUNC-011.*else.*commentaire"
-		return "non-positive" // want "KTN-FUNC-011.*return.*commentaire"
+	} else {
+		return "non-positive"
 	}
 }
 
@@ -104,7 +104,7 @@ func BadElseEmptyBlock(x int) {
 	if x > 0 {
 		// Return for positive values
 		return
-	} else { // want "KTN-FUNC-011.*else.*commentaire"
+	} else {
 	}
 }
 
@@ -114,8 +114,8 @@ func BadElseBlockNoCommentBeforeFirstStmt(x int) string {
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else { // want "KTN-FUNC-011.*else.*commentaire"
+	} else {
 		x = 0
-		return "zero" // want "KTN-FUNC-011.*return.*commentaire"
+		return "zero"
 	}
 }

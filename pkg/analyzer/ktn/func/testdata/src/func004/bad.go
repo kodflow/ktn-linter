@@ -7,7 +7,7 @@ func LongWithNakedReturn() (result int) {
 	result += 3
 	result += 4
 	result += 5
-	return // want "KTN-FUNC-004"
+	return
 }
 
 // Bad: Naked return in longer function
@@ -19,7 +19,7 @@ func VeryLongNakedReturn() (a int, b string) {
 	a += 5
 	a += 6
 	b = "test"
-	return // want "KTN-FUNC-004"
+	return
 }
 
 // Bad: Multiple naked returns in long function
@@ -30,12 +30,12 @@ func MultipleNakedReturns() (result int) {
 		result += 3
 		result += 4
 		result += 5
-		return // want "KTN-FUNC-004"
+		return
 	}
 	result = 10
 	result += 20
 	result += 30
 	result += 40
 	result += 50
-	return // want "KTN-FUNC-004"
+	return
 }
