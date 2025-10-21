@@ -52,7 +52,7 @@ func (b *BadType) BadMethod() (error, string) {
 // Returns:
 //   - error: potential error (bad position)
 //   - int: numeric result
-var badFunc = func() (error, int) {
+var badFunc func() (error, int) = func() (error, int) {
 	// Return nil error and zero
 	return nil, 0
 }

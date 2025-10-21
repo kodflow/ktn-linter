@@ -16,32 +16,38 @@ const (
 	SECOND_GROUP string = "scattered"
 )
 
-// Variable declaration
-var GlobalVar string = "test"
-
-// BAD_AFTER_VAR appears after var (ERROR #2)
+// Third scattered const group (ERROR #2)
 const (
-	// BAD_AFTER_VAR is placed after vars
-	BAD_AFTER_VAR string = "bad"
+	// BAD_SCATTERED_A is scattered
+	BAD_SCATTERED_A string = "bad"
 )
 
-// Another scattered const after var (ERROR #3)
+// Fourth scattered const group (ERROR #3)
 const (
 	// SCATTERED_ONE in another block
 	SCATTERED_ONE string = "one"
 )
 
-// Yet another scattered const after var (ERROR #4)
+// Fifth scattered const group (ERROR #4)
 const (
 	// SCATTERED_TWO in yet another block
 	SCATTERED_TWO string = "two"
 )
 
-// Another const after var (ERROR #5)
+// Sixth scattered const group (ERROR #5)
 const (
-	// THIRD_AFTER_VAR also after var
-	THIRD_AFTER_VAR int = 1
+	// THIRD_SCATTERED also scattered
+	THIRD_SCATTERED int = 1
 )
+
+// Seventh scattered const group (ERROR #6)
+const (
+	// FOURTH_SCATTERED also scattered
+	FOURTH_SCATTERED int = 2
+)
+
+// GlobalVar is a variable declaration (after all const blocks)
+var GlobalVar string = "test"
 
 // helperFunction is used to demonstrate const blocks separated by other declarations.
 //
@@ -51,9 +57,3 @@ func helperFunction() string {
 	// Retour de la fonction
 	return "helper"
 }
-
-// Last const after var (ERROR #6)
-const (
-	// FOURTH_AFTER_VAR also after var
-	FOURTH_AFTER_VAR int = 2
-)

@@ -17,8 +17,10 @@ const (
 
 // Variables come after constants (correct)
 var (
+	// GlobalVar1 is the first global variable
 	GlobalVar1 string = "var1"
+	// GlobalVar2 is the second global variable
 	GlobalVar2 string = "var2"
+	// AdditionalVar is an additional variable
+	AdditionalVar string = "var3"
 )
-
-var AdditionalVar string = "var3"

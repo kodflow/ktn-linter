@@ -3,7 +3,7 @@ package func003
 // badProcessSixItems creates a slice with magic number 6 (violates KTN-FUNC-003).
 func badProcessSixItems() {
 	// Create slice with magic number 6 (should be a constant)
-	items := make([]int, 6)
+	items := [6]int{}
 	_ = items
 }
 
@@ -46,7 +46,7 @@ func badProcessRetries() {
 // badSetBufferSize creates a buffer using magic number 1024 (violates KTN-FUNC-003).
 func badSetBufferSize() {
 	// Create buffer with magic number 1024 (should be a constant)
-	buffer := make([]byte, 1024)
+	buffer := [1024]byte{}
 	_ = buffer
 }
 

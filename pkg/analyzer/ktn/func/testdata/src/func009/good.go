@@ -82,11 +82,11 @@ func (m *MyStruct) UpdateValue(v int) {
 //   - []int: tableau contenant la valeur
 func (m *MyStruct) GetProcessed() []int {
 	// Crée un tableau local
-	local := make([]int, SLICE_CAPACITY)
+	local := [SLICE_CAPACITY]int{}
 	// Assigne la valeur au premier élément
 	local[0] = m.value
 	// Retourne le tableau local
-	return local
+	return local[:]
 }
 
 // GetMap retourne une map contenant la valeur.
@@ -94,7 +94,7 @@ func (m *MyStruct) GetProcessed() []int {
 //   - map[string]int: map avec la valeur
 func (m *MyStruct) GetMap() map[string]int {
 	// Crée une map locale
-	result := make(map[string]int)
+	result := make(map[string]int, 1)
 	// Stocke la valeur dans la map
 	result["value"] = m.value
 	// Retourne la map
@@ -132,13 +132,13 @@ func BenchmarkGetValue(m *MyStruct) int {
 //   - []int: tableau de valeurs
 func (m *MyStruct) GetLocalArray() []int {
 	// Crée un tableau local de 5 éléments
-	arr := make([]int, ARRAY_SIZE)
+	arr := [ARRAY_SIZE]int{}
 	// Stocke la valeur actuelle
 	arr[0] = m.value
 	// Stocke le double de la valeur
 	arr[1] = m.value * DOUBLE_MULTIPLIER
 	// Retourne le tableau
-	return arr
+	return arr[:]
 }
 
 // GetLocalMapValue retourne une valeur depuis une map locale.
@@ -146,7 +146,7 @@ func (m *MyStruct) GetLocalArray() []int {
 //   - int: valeur extraite de la map
 func (m *MyStruct) GetLocalMapValue() int {
 	// Crée une map locale
-	localMap := make(map[string]int)
+	localMap := make(map[string]int, 1)
 	// Stocke la valeur dans la map
 	localMap["key"] = m.value
 	// Retourne la valeur depuis la map

@@ -111,6 +111,15 @@ for file in "$WORKSPACE"/pkg/analyzer/ktn/func/testdata/src/*/bad.go; do
     check_bad_file "$file" "FUNC"
 done
 
+# Vérifier les fichiers VAR
+echo -e "${BLUE}━━━ VAR ━━━${NC}"
+for file in "$WORKSPACE"/pkg/analyzer/ktn/var/testdata/src/*/good.go; do
+    check_good_file "$file"
+done
+for file in "$WORKSPACE"/pkg/analyzer/ktn/var/testdata/src/*/bad.go; do
+    check_bad_file "$file" "VAR"
+done
+
 # Vérifier les redeclarations
 echo ""
 echo -e "${BLUE}━━━ REDECLARATIONS ━━━${NC}"

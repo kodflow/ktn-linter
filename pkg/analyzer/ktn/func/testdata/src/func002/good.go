@@ -161,32 +161,34 @@ func convertWithVariadic(a, b, c, d int, e ...string) {
 	_, _, _, _, _ = a, b, c, d, e
 }
 
-// goodLiteralUnnamed fonction littérale avec exactement 5 paramètres non nommés
-var goodLiteralUnnamed = func(int, string, bool, float64, []int) {
-	// Fonction vide
-}
+var (
+	// goodLiteralUnnamed fonction littérale avec exactement 5 paramètres non nommés
+	goodLiteralUnnamed func(int, string, bool, float64, []int) = func(int, string, bool, float64, []int) {
+		// Fonction vide
+	}
 
-// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
-var goodLiteralFourUnnamed = func(int, int, int, int) {
-	// Fonction vide
-}
+	// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
+	goodLiteralFourUnnamed func(int, int, int, int) = func(int, int, int, int) {
+		// Fonction vide
+	}
 
-// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
-var goodLiteralOneUnnamed = func(int) {
-	// Fonction vide
-}
+	// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
+	goodLiteralOneUnnamed func(int) = func(int) {
+		// Fonction vide
+	}
 
-// goodLiteralNoParams fonction littérale sans paramètre
-var goodLiteralNoParams = func() {
-	// Fonction vide
-}
+	// goodLiteralNoParams fonction littérale sans paramètre
+	goodLiteralNoParams func() = func() {
+		// Fonction vide
+	}
 
-// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
-var goodLiteralThreeUnnamed = func(int, string, bool) {
-	// Fonction vide
-}
+	// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
+	goodLiteralThreeUnnamed func(int, string, bool) = func(int, string, bool) {
+		// Fonction vide
+	}
 
-// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
-var goodLiteralTwoUnnamed = func(int, string) {
-	// Fonction vide
-}
+	// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
+	goodLiteralTwoUnnamed func(int, string) = func(int, string) {
+		// Fonction vide
+	}
+)

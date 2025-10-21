@@ -60,6 +60,15 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-CONST-003**: Nommage SCREAMING_SNAKE_CASE
 - **KTN-CONST-004**: Commentaire obligatoire
 
+### Variables (6 règles) ✅ 100%
+
+- **KTN-VAR-001**: Type explicite obligatoire
+- **KTN-VAR-002**: Groupement dans un seul bloc var ()
+- **KTN-VAR-003**: Nommage camelCase/PascalCase (pas SCREAMING_SNAKE_CASE)
+- **KTN-VAR-004**: Commentaire obligatoire
+- **KTN-VAR-005**: Pas d'initialisation multiple sur une ligne
+- **KTN-VAR-006**: Variables déclarées après les constantes (ordre imports → const → var → types → fonctions)
+
 ### Fonctions (12 règles) ✅ 100%
 
 - **KTN-FUNC-001**: Longueur max 35 lignes de code pur
@@ -77,11 +86,13 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 ## Statistiques
 
-- **Couverture globale**: 85.0% 🔴
-- **Packages 100%**: const, ktn, utils, formatter 🟢
-- **Package func**: 91.9% 🟡
+- **Couverture globale**: 95.6% 🟡
+- **Packages 100%**: utils, formatter, testhelper 🟢
+- **Package const**: 96.6% 🟡
+- **Package func**: 94.7% 🟡
+- **Package var**: 89.8% 🔴
 - **Go version**: 1.25
-- **Total règles**: 16 (4 const + 12 func)
+- **Total règles**: 22 (4 const + 6 var + 12 func)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Structure

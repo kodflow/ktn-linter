@@ -11,11 +11,12 @@ const (
 	HIGH_THRESHOLD      int     = 100
 	DEFAULT_TIMEOUT_SEC int     = 30
 	DEFAULT_PORT        int     = 8080
+	ARRAY_SIZE          int     = 10
 )
 
 // processSixItems utilise une constante nommée
 func processSixItems() {
-	items := make([]int, DEFAULT_ITEM_COUNT)
+	items := [DEFAULT_ITEM_COUNT]int{}
 	_ = items
 }
 
@@ -51,7 +52,7 @@ func processRetries() {
 
 // setBufferSize utilise une constante nommée
 func setBufferSize() {
-	buffer := make([]byte, BUFFER_SIZE)
+	buffer := [BUFFER_SIZE]byte{}
 	_ = buffer
 }
 
@@ -89,8 +90,9 @@ func allowedNumbers() {
 	_ = minusOne
 }
 
-// arraySize tailles de tableaux sont acceptables
+// arraySize tailles de tableaux doivent utiliser des constantes
 func arraySize() {
-	var arr [10]int
+	// arr tableau d'entiers de taille définie par constante
+	var arr [ARRAY_SIZE]int
 	_ = arr
 }

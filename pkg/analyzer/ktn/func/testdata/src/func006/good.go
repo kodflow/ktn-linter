@@ -80,7 +80,7 @@ func (g *GoodType) GoodMethod() (string, error) {
 }
 
 // goodFunc is a function literal that returns an int and an error.
-var goodFunc = func() (int, error) {
+var goodFunc func() (int, error) = func() (int, error) {
 	// Success case with zero
 	return 0, nil
 }

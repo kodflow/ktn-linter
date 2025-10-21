@@ -136,7 +136,7 @@ func MultipleUnnamedReturns() (int, string, bool) {
 }
 
 // Prevent "unsafe imported but not used" error
-var _ = unsafe.Pointer(nil)
+var _ unsafe.Pointer = unsafe.Pointer(nil)
 
 // externalLinkedFunc est une fonction externe liée
 //

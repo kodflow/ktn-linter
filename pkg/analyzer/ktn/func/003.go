@@ -54,7 +54,7 @@ func getAllowedValues() map[string]bool {
 	}
 }
 
-// collectAllowedLiterals collecte les littéraux dans const et array types.
+// collectAllowedLiterals collecte les littéraux dans const declarations.
 //
 // Params:
 //   - inspect: inspecteur AST
@@ -64,34 +64,24 @@ func getAllowedValues() map[string]bool {
 func collectAllowedLiterals(inspect *inspector.Inspector) map[ast.Node]bool {
 	allowedLiterals := make(map[ast.Node]bool)
 
-	// Filter pour GenDecl et ArrayType
+	// Filter pour GenDecl seulement
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
-		(*ast.ArrayType)(nil),
 	}
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		// Switch sur le type de nœud
-		switch node := n.(type) {
-		// Cas GenDecl : déclaration const
-		case *ast.GenDecl:
-			// Si c'est une déclaration const
-			if node.Tok == token.CONST {
-				ast.Inspect(node, func(inner ast.Node) bool {
-					// Si c'est un littéral
-					if lit, ok := inner.(*ast.BasicLit); ok {
-						allowedLiterals[lit] = true
-					}
-					// Continuer l'inspection
-					return true
-				})
-			}
-		// Cas ArrayType : taille de tableau
-		case *ast.ArrayType:
-			// Si la taille est un littéral
-			if lit, ok := node.Len.(*ast.BasicLit); ok {
-				allowedLiterals[lit] = true
-			}
+		genDecl := n.(*ast.GenDecl)
+
+		// Si c'est une déclaration const
+		if genDecl.Tok == token.CONST {
+			ast.Inspect(genDecl, func(inner ast.Node) bool {
+				// Si c'est un littéral
+				if lit, ok := inner.(*ast.BasicLit); ok {
+					allowedLiterals[lit] = true
+				}
+				// Continuer l'inspection
+				return true
+			})
 		}
 	})
 

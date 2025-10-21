@@ -87,18 +87,20 @@ func convertWithVariadicBad(a, b, c, d, e int, f ...string) {
 	_, _, _, _, _, _ = a, b, c, d, e, f
 }
 
-// badLiteralSix fonction littérale avec 6 paramètres
-var badLiteralSix = func(a, b, c, d, e, f int) {
-	// Utilisation des paramètres
-	_ = a + b + c + d + e + f
-}
+var (
+	// badLiteralSix fonction littérale avec 6 paramètres
+	badLiteralSix func(int, int, int, int, int, int) = func(a, b, c, d, e, f int) {
+		// Utilisation des paramètres
+		_ = a + b + c + d + e + f
+	}
 
-// badLiteralUnnamed fonction littérale avec 6 paramètres non nommés
-var badLiteralUnnamed = func(int, string, bool, float64, []int, map[string]int) {
-	// Fonction vide
-}
+	// badLiteralUnnamed fonction littérale avec 6 paramètres non nommés
+	badLiteralUnnamed func(int, string, bool, float64, []int, map[string]int) = func(int, string, bool, float64, []int, map[string]int) {
+		// Fonction vide
+	}
 
-// badLiteralSixUnnamed fonction littérale avec 6 paramètres non nommés identiques
-var badLiteralSixUnnamed = func(int, int, int, int, int, int) {
-	// Fonction vide
-}
+	// badLiteralSixUnnamed fonction littérale avec 6 paramètres non nommés identiques
+	badLiteralSixUnnamed func(int, int, int, int, int, int) = func(int, int, int, int, int, int) {
+		// Fonction vide
+	}
+)
