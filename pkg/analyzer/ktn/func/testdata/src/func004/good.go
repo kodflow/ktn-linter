@@ -2,100 +2,160 @@ package func004
 
 import "unsafe"
 
-// Good: No named returns, so naked return doesn't apply
+// NoNamedReturns vérifie le cas sans returns nommés
+//
+// Returns:
+//   - int: résultat
 func NoNamedReturns() int {
-	return 42
+	// Retour de 1
+	return 1
 }
 
-// Good: Named returns but very short function (< 5 lines)
+// ShortWithNakedReturn utilise naked return car courte
+//
+// Returns:
+//   - result: résultat
 func ShortWithNakedReturn() (result int) {
-	result = 42
+	result = 1
+	// Retour naked autorisé car < 5 lignes
 	return
 }
 
-// Good: Named returns but returns explicitly
+// ExplicitReturn utilise return explicite
+//
+// Returns:
+//   - result: résultat
+//   - err: erreur potentielle
 func ExplicitReturn() (result int, err error) {
-	result = 42
+	result = 1
 	err = nil
+	// Retour explicite
 	return result, err
 }
 
-// Good: Named returns in short function (4 lines)
+// ShortFourLines a 4 lignes donc naked return OK
+//
+// Returns:
+//   - x: valeur calculée
 func ShortFourLines() (x int) {
 	x = 1
-	x = 2
-	x = 3
+	x = x + 1
+	x = x + 1
+	// Retour naked autorisé
 	return
 }
 
-// Good: Multiple named returns with explicit return
+// MultipleExplicit retourne explicitement plusieurs valeurs
+//
+// Returns:
+//   - a: premier entier
+//   - b: chaîne
+//   - c: booléen
 func MultipleExplicit() (a int, b string, c bool) {
 	a = 1
 	b = "test"
 	c = true
+	// Retour explicite
 	return a, b, c
 }
 
-// Good: Function with no return values at all
+// NoReturnValues n'a pas de valeur de retour
 func NoReturnValues() {
 	x := 1
 	_ = x
 }
 
-// Good: Function with unnamed return (no named returns, so naked return doesn't apply)
+// UnnamedReturn utilise return sans nom
+//
+// Returns:
+//   - int: valeur
 func UnnamedReturn() int {
-	return 42
+	// Retour de 1
+	return 1
 }
 
-// Good: Test function with naked return (exempt)
+// TestNakedReturn est exempté car fonction test
+//
+// Params:
+//   - t: paramètre de test
+//
+// Returns:
+//   - result: résultat
 func TestNakedReturn(t int) (result int) {
 	result = 1
-	result += 2
-	result += 3
-	result += 4
-	result += 5
-	result += 6
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car test
 	return
 }
 
-// Good: Benchmark function with naked return (exempt)
+// BenchmarkNakedReturn est exempté car fonction benchmark
+//
+// Params:
+//   - b: paramètre de benchmark
+//
+// Returns:
+//   - result: résultat
 func BenchmarkNakedReturn(b int) (result int) {
 	result = 1
-	result += 2
-	result += 3
-	result += 4
-	result += 5
-	result += 6
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car benchmark
 	return
 }
 
-// Good: Function with returns but all unnamed (so naked return rule doesn't apply)
+// Calculator est une interface de test
 type Calculator interface {
 	Calculate() (int, error)
 }
 
-// Good: Function with single unnamed return value
+// SingleUnnamedReturn retourne une valeur sans nom
+//
+// Returns:
+//   - int: valeur
 func SingleUnnamedReturn() int {
-	return 42
+	// Retour de 1
+	return 1
 }
 
-// Good: Function with multiple unnamed return values
+// MultipleUnnamedReturns retourne plusieurs valeurs sans nom
+//
+// Returns:
+//   - int: entier
+//   - string: chaîne
+//   - bool: booléen
 func MultipleUnnamedReturns() (int, string, bool) {
+	// Retour de plusieurs valeurs
 	return 1, "test", true
 }
 
 // Prevent "unsafe imported but not used" error
 var _ = unsafe.Pointer(nil)
 
-// Good: External function linked via go:linkname (no body to analyze)
-// This tests the funcDecl.Body == nil branch in runFunc004
+// externalLinkedFunc est une fonction externe liée
+//
+// Params:
+//   - v: valeur d'entrée
+//
+// Returns:
+//   - result: pointeur résultat
 //
 //go:linkname externalLinkedFunc runtime.convT64
 func externalLinkedFunc(v int) (result unsafe.Pointer)
 
-// Good: Another external function with named return
+// anotherExternal est une autre fonction externe
+//
+// Params:
+//   - v: chaîne d'entrée
+//
+// Returns:
+//   - ptr: pointeur résultat
 //
 //go:linkname anotherExternal runtime.convTstring
 func anotherExternal(v string) (ptr unsafe.Pointer)
-// GetExternalFunc est une fonction externe - ignorée.
-func GetExternalFunc() int

@@ -2,7 +2,18 @@ package func011
 
 // Bad: Missing comments on branches and returns
 
-// BadIfNoComment has an if statement without a comment
+const (
+	// MULTIPLIER_TWO is used for doubling values
+	MULTIPLIER_TWO int = 2
+)
+
+// BadIfNoComment has an if statement without a comment.
+//
+// Params:
+//   - x: the number to check
+//
+// Returns:
+//   - bool: true if x is positive, false otherwise
 func BadIfNoComment(x int) bool {
 	if x > 0 {
 		return true
@@ -10,18 +21,13 @@ func BadIfNoComment(x int) bool {
 	return false
 }
 
-// BadElseNoComment has an else statement without a comment
-func BadElseNoComment(x int) bool {
-	// Check if x is positive
-	if x > 0 {
-		// Return true for positive
-		return true
-	} else {
-		return false
-	}
-}
-
-// BadSwitchNoComment has a switch without a comment
+// BadSwitchNoComment has a switch without a comment.
+//
+// Params:
+//   - x: the number to classify
+//
+// Returns:
+//   - string: textual representation of the number
 func BadSwitchNoComment(x int) string {
 	switch x {
 	case 0:
@@ -33,7 +39,13 @@ func BadSwitchNoComment(x int) string {
 	}
 }
 
-// BadLoopNoComment has a loop without a comment
+// BadLoopNoComment has a loop without a comment.
+//
+// Params:
+//   - items: slice of integers to sum
+//
+// Returns:
+//   - int: sum of all items
 func BadLoopNoComment(items []int) int {
 	sum := 0
 	for _, item := range items {
@@ -42,12 +54,24 @@ func BadLoopNoComment(items []int) int {
 	return sum
 }
 
-// BadReturnNoComment has returns without comments
+// BadReturnNoComment has returns without comments.
+//
+// Params:
+//   - x: the number to double
+//
+// Returns:
+//   - int: x multiplied by 2
 func BadReturnNoComment(x int) int {
-	return x * 2
+	return x * MULTIPLIER_TWO
 }
 
-// BadMixedComments has some comments but not all
+// BadMixedComments has some comments but not all.
+//
+// Params:
+//   - x: the number to check
+//
+// Returns:
+//   - bool: result based on value of x
 func BadMixedComments(x int) bool {
 	// Check if x is positive
 	if x > 0 {
@@ -61,7 +85,13 @@ func BadMixedComments(x int) bool {
 	return true
 }
 
-// BadTypeSwitchNoComment has a type switch without comments
+// BadTypeSwitchNoComment has a type switch without comments.
+//
+// Params:
+//   - v: the interface value to check type
+//
+// Returns:
+//   - string: name of the type
 func BadTypeSwitchNoComment(v interface{}) string {
 	switch v.(type) {
 	case string:
@@ -73,49 +103,67 @@ func BadTypeSwitchNoComment(v interface{}) string {
 	}
 }
 
-// BadElseIfNoComment has an else if without a comment
+// BadElseIfNoComment has an else if without a comment.
+//
+// Params:
+//   - x: the number to classify
+//
+// Returns:
+//   - string: classification of the number
 func BadElseIfNoComment(x int) string {
 	// Check if x is negative
 	if x < 0 {
 		// Return "negative" for negative values
 		return "negative"
-	} else if x > 0 {
-		return "positive"
-	} else {
-		// Return "zero" for zero value
-		return "zero"
 	}
+	if x > 0 {
+		return "positive"
+	}
+	// Return "zero" for zero value
+	return "zero"
 }
 
-// BadElseNoCommentInside has an else with comment before but checking inside path
-func BadElseNoCommentInside(x int) string {
+// BadIfNested has nested if without comment.
+//
+// Params:
+//   - x: the number to check
+//
+// Returns:
+//   - string: classification result
+func BadIfNested(x int) string {
 	// Check if x is positive
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		return "non-positive"
 	}
+	return "non-positive"
 }
 
-// BadElseEmptyBlock has an empty else block without comment
-func BadElseEmptyBlock(x int) {
+// BadEmptyAfterIf has code after if without else.
+//
+// Params:
+//   - x: the number to check
+func BadEmptyAfterIf(x int) {
 	// Check if x is positive
 	if x > 0 {
 		// Return for positive values
 		return
-	} else {
 	}
 }
 
-// BadElseBlockNoCommentBeforeFirstStmt has else block without comment before or inside
-func BadElseBlockNoCommentBeforeFirstStmt(x int) string {
+// BadBlockAfterIf has block after if without comment.
+//
+// Params:
+//   - x: the number to check
+//
+// Returns:
+//   - string: result string
+func BadBlockAfterIf(x int) string {
 	// Check if x is positive
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		x = 0
-		return "zero"
 	}
+	x = 0
+	return "zero"
 }

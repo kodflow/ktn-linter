@@ -1,41 +1,81 @@
 package func004
 
-// Bad: Naked return in function with 5 lines
-func LongWithNakedReturn() (result int) {
-	result = 1
-	result += 2
-	result += 3
-	result += 4
-	result += 5
+const (
+	// INCREMENT_ONE représente l'incrément de 1
+	INCREMENT_ONE int = 1
+	// INCREMENT_TWO représente l'incrément de 2
+	INCREMENT_TWO int = 2
+	// INCREMENT_THREE représente l'incrément de 3
+	INCREMENT_THREE int = 3
+	// INCREMENT_FOUR représente l'incrément de 4
+	INCREMENT_FOUR int = 4
+	// INCREMENT_FIVE représente l'incrément de 5
+	INCREMENT_FIVE int = 5
+	// INCREMENT_SIX représente l'incrément de 6
+	INCREMENT_SIX int = 6
+	// INCREMENT_TEN représente l'incrément de 10
+	INCREMENT_TEN int = 10
+	// INCREMENT_TWENTY représente l'incrément de 20
+	INCREMENT_TWENTY int = 20
+	// INCREMENT_THIRTY représente l'incrément de 30
+	INCREMENT_THIRTY int = 30
+	// INCREMENT_FORTY représente l'incrément de 40
+	INCREMENT_FORTY int = 40
+	// INCREMENT_FIFTY représente l'incrément de 50
+	INCREMENT_FIFTY int = 50
+)
+
+// badLongWithNakedReturn utilise naked return dans fonction de 5 lignes
+//
+// Returns:
+//   - result: résultat calculé
+func badLongWithNakedReturn() (result int) { // want "KTN-FUNC-004: naked return interdit dans la fonction 'badLongWithNakedReturn' \\(5 lignes, max: 4 pour naked return\\)"
+	result = INCREMENT_ONE
+	result += INCREMENT_TWO
+	result += INCREMENT_THREE
+	result += INCREMENT_FOUR
+	result += INCREMENT_FIVE
+	// Retour naked interdit car >= 5 lignes
 	return
 }
 
-// Bad: Naked return in longer function
-func VeryLongNakedReturn() (a int, b string) {
-	a = 1
-	a += 2
-	a += 3
-	a += 4
-	a += 5
-	a += 6
+// badVeryLongNakedReturn utilise naked return dans fonction longue
+//
+// Returns:
+//   - a: premier entier
+//   - b: chaîne de caractères
+func badVeryLongNakedReturn() (a int, b string) { // want "KTN-FUNC-004: naked return interdit dans la fonction 'badVeryLongNakedReturn' \\(7 lignes, max: 4 pour naked return\\)"
+	a = INCREMENT_ONE
+	a += INCREMENT_TWO
+	a += INCREMENT_THREE
+	a += INCREMENT_FOUR
+	a += INCREMENT_FIVE
+	a += INCREMENT_SIX
 	b = "test"
+	// Retour naked interdit car >= 5 lignes
 	return
 }
 
-// Bad: Multiple naked returns in long function
-func MultipleNakedReturns() (result int) {
+// badMultipleNakedReturns utilise plusieurs naked returns dans fonction longue
+//
+// Returns:
+//   - result: résultat calculé
+func badMultipleNakedReturns() (result int) { // want "KTN-FUNC-004: naked return interdit dans la fonction 'badMultipleNakedReturns' \\(11 lignes, max: 4 pour naked return\\)" "KTN-FUNC-004: naked return interdit dans la fonction 'badMultipleNakedReturns' \\(11 lignes, max: 4 pour naked return\\)"
+	// Vérification de la condition
 	if true {
-		result = 1
-		result += 2
-		result += 3
-		result += 4
-		result += 5
+		result = INCREMENT_ONE
+		result += INCREMENT_TWO
+		result += INCREMENT_THREE
+		result += INCREMENT_FOUR
+		result += INCREMENT_FIVE
+		// Retour naked interdit car >= 5 lignes
 		return
 	}
-	result = 10
-	result += 20
-	result += 30
-	result += 40
-	result += 50
+	result = INCREMENT_TEN
+	result += INCREMENT_TWENTY
+	result += INCREMENT_THIRTY
+	result += INCREMENT_FORTY
+	result += INCREMENT_FIFTY
+	// Retour naked interdit car >= 5 lignes
 	return
 }

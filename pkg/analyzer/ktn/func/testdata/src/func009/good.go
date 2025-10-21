@@ -1,104 +1,185 @@
 package func009
 
+const (
+	// DOUBLE_MULTIPLIER représente le multiplicateur pour doubler une valeur.
+	DOUBLE_MULTIPLIER int = 2
+	// ARRAY_SIZE représente la taille du tableau local.
+	ARRAY_SIZE int = 5
+	// INITIAL_COUNT représente le compteur initial.
+	INITIAL_COUNT int = 10
+	// SLICE_CAPACITY représente la capacité du slice.
+	SLICE_CAPACITY int = 10
+)
+
+// MyStruct représente une structure de test pour les getters.
 type MyStruct struct {
 	value int
 	name  string
 }
 
-// Good: Simple getter with no side effects
+// GetValue retourne la valeur du champ value.
+// Returns:
+//   - int: valeur actuelle
 func (m *MyStruct) GetValue() int {
+	// Retourne la valeur du champ
 	return m.value
 }
 
-// Good: IsValid with no side effects
+// IsValid vérifie si la valeur est positive.
+// Returns:
+//   - bool: true si valeur > 0
 func (m *MyStruct) IsValid() bool {
-	return m.value > 0
+	// Vérifie si la valeur est strictement positive
+	if m.value > 0 {
+		// Valeur positive
+		return true
+	}
+	// Valeur négative ou nulle
+	return false
 }
 
-// Good: HasName with no side effects
+// HasName vérifie si le nom n'est pas vide.
+// Returns:
+//   - bool: true si nom non vide
 func (m *MyStruct) HasName() bool {
-	return m.name != ""
+	// Vérifie si le nom n'est pas une chaîne vide
+	if m.name != "" {
+		// Nom non vide
+		return true
+	}
+	// Nom vide
+	return false
 }
 
-// Good: Getter with local variable (no side effect)
+// GetDoubleValue retourne le double de la valeur.
+// Returns:
+//   - int: valeur multipliée par 2
 func (m *MyStruct) GetDoubleValue() int {
-	result := m.value * 2
+	// Calcule le double de la valeur
+	result := m.value * DOUBLE_MULTIPLIER
+	// Retourne le résultat
 	return result
 }
 
-// Good: Not a getter, can have side effects
+// SetValue définit une nouvelle valeur.
+// Params:
+//   - v: nouvelle valeur à assigner
 func (m *MyStruct) SetValue(v int) {
+	// Assigne la nouvelle valeur
 	m.value = v
 }
 
-// Good: Not a getter (Update prefix)
+// UpdateValue met à jour la valeur.
+// Params:
+//   - v: nouvelle valeur à assigner
 func (m *MyStruct) UpdateValue(v int) {
+	// Met à jour la valeur du champ
 	m.value = v
 }
 
-// Good: Getter with local slice/map assignment (no side effect on struct)
+// GetProcessed retourne un tableau avec la valeur traitée.
+// Returns:
+//   - []int: tableau contenant la valeur
 func (m *MyStruct) GetProcessed() []int {
-	local := make([]int, 10)
+	// Crée un tableau local
+	local := make([]int, SLICE_CAPACITY)
+	// Assigne la valeur au premier élément
 	local[0] = m.value
+	// Retourne le tableau local
 	return local
 }
 
-// Good: Getter with local map assignment (no side effect on struct)
+// GetMap retourne une map contenant la valeur.
+// Returns:
+//   - map[string]int: map avec la valeur
 func (m *MyStruct) GetMap() map[string]int {
+	// Crée une map locale
 	result := make(map[string]int)
+	// Stocke la valeur dans la map
 	result["value"] = m.value
+	// Retourne la map
 	return result
 }
 
-// Good: Test function that is a getter with side effects (exempt)
+// TestGetValue fonction de test avec effet de bord.
+// Params:
+//   - m: structure à tester
+//
+// Returns:
+//   - int: valeur incrémentée
 func TestGetValue(m *MyStruct) int {
+	// Incrémente la valeur pour le test
 	m.value++
+	// Retourne la nouvelle valeur
 	return m.value
 }
 
-// Good: Benchmark function that is a getter with side effects (exempt)
+// BenchmarkGetValue fonction de benchmark avec effet de bord.
+// Params:
+//   - m: structure à benchmarker
+//
+// Returns:
+//   - int: valeur incrémentée
 func BenchmarkGetValue(m *MyStruct) int {
+	// Incrémente la valeur pour le benchmark
 	m.value++
+	// Retourne la nouvelle valeur
 	return m.value
 }
 
-// Good: Getter that assigns to local index (array/map/slice) - no side effect on struct
+// GetLocalArray retourne un tableau avec les valeurs calculées.
+// Returns:
+//   - []int: tableau de valeurs
 func (m *MyStruct) GetLocalArray() []int {
-	arr := make([]int, 5)
+	// Crée un tableau local de 5 éléments
+	arr := make([]int, ARRAY_SIZE)
+	// Stocke la valeur actuelle
 	arr[0] = m.value
-	arr[1] = m.value * 2
+	// Stocke le double de la valeur
+	arr[1] = m.value * DOUBLE_MULTIPLIER
+	// Retourne le tableau
 	return arr
 }
 
-// Good: Getter that assigns to local variable index - no side effect
+// GetLocalMapValue retourne une valeur depuis une map locale.
+// Returns:
+//   - int: valeur extraite de la map
 func (m *MyStruct) GetLocalMapValue() int {
+	// Crée une map locale
 	localMap := make(map[string]int)
+	// Stocke la valeur dans la map
 	localMap["key"] = m.value
+	// Retourne la valeur depuis la map
 	return localMap["key"]
 }
 
-// Good: External function declaration (no body) - should be skipped
-func GetExternalData() int
-
-// Good: Interface method declaration (no body) - should be skipped
+// DataReader interface pour la lecture de données.
 type DataReader interface {
 	GetData() string
 	IsReady() bool
 	HasItems() bool
 }
 
-// Good: Getter with local variable increment (no side effect on struct)
+// GetIncrementedValue retourne la valeur incrémentée localement.
+// Returns:
+//   - int: valeur + 1
 func (m *MyStruct) GetIncrementedValue() int {
+	// Copie la valeur dans une variable locale
 	local := m.value
-	local++ // This is OK - incrementing local variable, not struct field
+	// Incrémente la variable locale
+	local++
+	// Retourne la valeur incrémentée
 	return local
 }
 
-// Good: Getter with local variable decrement (no side effect on struct)
+// GetDecrementedValue retourne une valeur décrémentée.
+// Returns:
+//   - int: constante décrémentée
 func (m *MyStruct) GetDecrementedValue() int {
-	count := 10
-	count-- // This is OK - decrementing local variable
+	// Initialise un compteur
+	count := INITIAL_COUNT
+	// Décrémente le compteur
+	count--
+	// Retourne le compteur décrémenté
 	return count
 }
-// GetExternalFunc est une fonction externe - ignorée.
-func GetExternalFunc() int

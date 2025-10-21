@@ -1,11 +1,13 @@
 package func007
 
 func TotallyNoDoc() string {
+	// Retourne une chaîne vide
 	return ""
 }
 
 // Missing documentation completely
 func NoDoc() string {
+	// Retourne une chaîne vide
 	return ""
 }
 
@@ -22,6 +24,7 @@ func BadMissingParams(x int) {
 
 // BadMissingReturns has returns but no Returns section
 func BadMissingReturns() string {
+	// Retourne une chaîne vide
 	return ""
 }
 
@@ -37,6 +40,7 @@ func BlockCommentOnly() {
 // Returns:
 //   - string: résultat
 func BadEmptyParamsSection(x int) string {
+	// Retourne une chaîne vide
 	return ""
 }
 
@@ -47,5 +51,6 @@ func BadEmptyParamsSection(x int) string {
 //
 // Returns:
 func BadEmptyReturnsSection(x int) string {
+	// Retourne une chaîne vide
 	return ""
 }

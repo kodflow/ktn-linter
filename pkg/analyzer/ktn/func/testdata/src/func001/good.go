@@ -1,5 +1,43 @@
 package func001
 
+// Constantes pour éviter les magic numbers
+const (
+	TWO          int = 1 + 1
+	THREE        int = TWO + 1
+	FOUR         int = THREE + 1
+	FIVE         int = FOUR + 1
+	SIX          int = FIVE + 1
+	SEVEN        int = SIX + 1
+	EIGHT        int = SEVEN + 1
+	NINE         int = EIGHT + 1
+	TEN          int = NINE + 1
+	HUNDRED      int = TEN * TEN
+	ELEVEN       int = TEN + 1
+	TWELVE       int = ELEVEN + 1
+	THIRTEEN     int = TWELVE + 1
+	FOURTEEN     int = THIRTEEN + 1
+	FIFTEEN      int = FOURTEEN + 1
+	SIXTEEN      int = FIFTEEN + 1
+	SEVENTEEN    int = SIXTEEN + 1
+	EIGHTEEN     int = SEVENTEEN + 1
+	NINETEEN     int = EIGHTEEN + 1
+	TWENTY       int = NINETEEN + 1
+	TWENTY_ONE   int = TWENTY + 1
+	TWENTY_TWO   int = TWENTY_ONE + 1
+	TWENTY_THREE int = TWENTY_TWO + 1
+	TWENTY_FOUR  int = TWENTY_THREE + 1
+	TWENTY_FIVE  int = TWENTY_FOUR + 1
+	TWENTY_SIX   int = TWENTY_FIVE + 1
+	TWENTY_SEVEN int = TWENTY_SIX + 1
+	TWENTY_EIGHT int = TWENTY_SEVEN + 1
+	TWENTY_NINE  int = TWENTY_EIGHT + 1
+	THIRTY       int = TWENTY_NINE + 1
+	THIRTY_ONE   int = THIRTY + 1
+	THIRTY_TWO   int = THIRTY_ONE + 1
+	THIRTY_THREE int = THIRTY_TWO + 1
+	THIRTY_FOUR  int = THIRTY_THREE + 1
+)
+
 // smallFunction est une petite fonction avec peu de code
 //
 // Returns:
@@ -7,7 +45,7 @@ package func001
 func smallFunction() string {
 	// Déclaration des variables
 	x := 1
-	y := 2
+	y := 1 + 1
 	z := x + y
 	// Retour de la fonction
 	_ = z
@@ -18,39 +56,39 @@ func smallFunction() string {
 // exactlyThirtyFive a exactement 35 lignes de code pur (limite)
 func exactlyThirtyFive() {
 	a := 1                                                                                                                                            // 1
-	b := 2                                                                                                                                            // 2
-	c := 3                                                                                                                                            // 3
-	d := 4                                                                                                                                            // 4
-	e := 5                                                                                                                                            // 5
-	f := 6                                                                                                                                            // 6
-	g := 7                                                                                                                                            // 7
-	h := 8                                                                                                                                            // 8
-	i := 9                                                                                                                                            // 9
-	j := 10                                                                                                                                           // 10
-	k := 11                                                                                                                                           // 11
-	l := 12                                                                                                                                           // 12
-	m := 13                                                                                                                                           // 13
-	n := 14                                                                                                                                           // 14
-	o := 15                                                                                                                                           // 15
-	p := 16                                                                                                                                           // 16
-	q := 17                                                                                                                                           // 17
-	r := 18                                                                                                                                           // 18
-	s := 19                                                                                                                                           // 19
-	t := 20                                                                                                                                           // 20
-	u := 21                                                                                                                                           // 21
-	v := 22                                                                                                                                           // 22
-	w := 23                                                                                                                                           // 23
-	x := 24                                                                                                                                           // 24
-	y := 25                                                                                                                                           // 25
-	z := 26                                                                                                                                           // 26
-	aa := 27                                                                                                                                          // 27
-	ab := 28                                                                                                                                          // 28
-	ac := 29                                                                                                                                          // 29
-	ad := 30                                                                                                                                          // 30
-	ae := 31                                                                                                                                          // 31
-	af := 32                                                                                                                                          // 32
-	ag := 33                                                                                                                                          // 33
-	ah := 34                                                                                                                                          // 34
+	b := TWO                                                                                                                                          // 2
+	c := THREE                                                                                                                                        // 3
+	d := FOUR                                                                                                                                         // 4
+	e := FIVE                                                                                                                                         // 5
+	f := SIX                                                                                                                                          // 6
+	g := SEVEN                                                                                                                                        // 7
+	h := EIGHT                                                                                                                                        // 8
+	i := NINE                                                                                                                                         // 9
+	j := TEN                                                                                                                                          // 10
+	k := ELEVEN                                                                                                                                       // 11
+	l := TWELVE                                                                                                                                       // 12
+	m := THIRTEEN                                                                                                                                     // 13
+	n := FOURTEEN                                                                                                                                     // 14
+	o := FIFTEEN                                                                                                                                      // 15
+	p := SIXTEEN                                                                                                                                      // 16
+	q := SEVENTEEN                                                                                                                                    // 17
+	r := EIGHTEEN                                                                                                                                     // 18
+	s := NINETEEN                                                                                                                                     // 19
+	t := TWENTY                                                                                                                                       // 20
+	u := TWENTY_ONE                                                                                                                                   // 21
+	v := TWENTY_TWO                                                                                                                                   // 22
+	w := TWENTY_THREE                                                                                                                                 // 23
+	x := TWENTY_FOUR                                                                                                                                  // 24
+	y := TWENTY_FIVE                                                                                                                                  // 25
+	z := TWENTY_SIX                                                                                                                                   // 26
+	aa := TWENTY_SEVEN                                                                                                                                // 27
+	ab := TWENTY_EIGHT                                                                                                                                // 28
+	ac := TWENTY_NINE                                                                                                                                 // 29
+	ad := THIRTY                                                                                                                                      // 30
+	ae := THIRTY_ONE                                                                                                                                  // 31
+	af := THIRTY_TWO                                                                                                                                  // 32
+	ag := THIRTY_THREE                                                                                                                                // 33
+	ah := THIRTY_FOUR                                                                                                                                 // 34
 	_ = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah // 35
 }
 
@@ -66,7 +104,7 @@ func manyCommentsButFewStatements() {
 	// Commentaires partout
 	x := 1 // Statement 1
 	// Commentaire entre statements
-	y := 2 // Statement 2
+	y := 1 + 1 // Statement 2
 	// Encore un commentaire
 	z := x + y // Statement 3
 	// Commentaire final
@@ -83,14 +121,14 @@ func withNestedBlocks() int {
 	// Condition if
 	if x > 0 {
 		// Dans le if
-		y := 2
+		y := 1 + 1
 		// Retour de la fonction
 		return y
 	}
 	// Boucle for
-	for i := 0; i < 10; i++ {
+	for i := 0; i < TEN; i++ {
 		// Dans le for
-		z := i * 2
+		z := i * TWO
 		// Utilisation de z
 		_ = z
 	}
@@ -101,9 +139,9 @@ func withNestedBlocks() int {
 // TestSomething est une fonction de test exemptée
 func TestSomething() {
 	// Les fonctions de test peuvent être aussi longues que nécessaire
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
+	for i := 0; i < HUNDRED; i++ {
+		x := i * TWO
+		y := i * THREE
 		z := x + y
 		_ = z
 	}
@@ -112,9 +150,9 @@ func TestSomething() {
 // BenchmarkSomething est une fonction de benchmark exemptée
 func BenchmarkSomething() {
 	// Les fonctions de benchmark peuvent être aussi longues que nécessaire
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
+	for i := 0; i < HUNDRED; i++ {
+		x := i * TWO
+		y := i * THREE
 		z := x + y
 		_ = z
 	}
@@ -123,9 +161,9 @@ func BenchmarkSomething() {
 // ExampleSomething est une fonction d'exemple exemptée
 func ExampleSomething() {
 	// Les fonctions d'exemple peuvent être aussi longues que nécessaire
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
+	for i := 0; i < HUNDRED; i++ {
+		x := i * TWO
+		y := i * THREE
 		z := x + y
 		_ = z
 	}
@@ -134,9 +172,9 @@ func ExampleSomething() {
 // FuzzSomething est une fonction de fuzzing exemptée
 func FuzzSomething() {
 	// Les fonctions de fuzzing peuvent être aussi longues que nécessaire
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
+	for i := 0; i < HUNDRED; i++ {
+		x := i * TWO
+		y := i * THREE
 		z := x + y
 		_ = z
 	}
@@ -145,9 +183,9 @@ func FuzzSomething() {
 // main est la fonction principale exemptée
 func main() {
 	// La fonction main peut être aussi longue que nécessaire
-	for i := 0; i < 100; i++ {
-		x := i * 2
-		y := i * 3
+	for i := 0; i < HUNDRED; i++ {
+		x := i * TWO
+		y := i * THREE
 		z := x + y
 		_ = z
 	}

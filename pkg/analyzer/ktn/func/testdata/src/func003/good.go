@@ -2,15 +2,15 @@ package func003
 
 // Constantes bien définies
 const (
-	DEFAULT_ITEM_COUNT  = 6
-	MIN_LEGAL_AGE       = 18
-	MAX_HUMAN_AGE       = 120
-	DISCOUNT_RATE       = 0.15
-	MAX_RETRIES         = 3
-	BUFFER_SIZE         = 1024
-	HIGH_THRESHOLD      = 100
-	DEFAULT_TIMEOUT_SEC = 30
-	DEFAULT_PORT        = 8080
+	DEFAULT_ITEM_COUNT  int     = 6
+	MIN_LEGAL_AGE       int     = 18
+	MAX_HUMAN_AGE       int     = 120
+	DISCOUNT_RATE       float64 = 0.15
+	MAX_RETRIES         int     = 3
+	BUFFER_SIZE         int     = 1024
+	HIGH_THRESHOLD      int     = 100
+	DEFAULT_TIMEOUT_SEC int     = 30
+	DEFAULT_PORT        int     = 8080
 )
 
 // processSixItems utilise une constante nommée
@@ -20,12 +20,26 @@ func processSixItems() {
 }
 
 // validateAge utilise des constantes nommées
+//
+// Params:
+//   - age: âge à valider
+//
+// Returns:
+//   - bool: true si l'âge est valide
 func validateAge(age int) bool {
+	// Retourne la validation de l'âge
 	return age >= MIN_LEGAL_AGE && age <= MAX_HUMAN_AGE
 }
 
 // calculateDiscount utilise une constante nommée
+//
+// Params:
+//   - price: prix d'origine
+//
+// Returns:
+//   - float64: montant de la réduction
 func calculateDiscount(price float64) float64 {
+	// Retourne le montant de la réduction
 	return price * DISCOUNT_RATE
 }
 
@@ -42,7 +56,14 @@ func setBufferSize() {
 }
 
 // checkThreshold utilise une constante nommée
+//
+// Params:
+//   - value: valeur à vérifier
+//
+// Returns:
+//   - bool: true si la valeur dépasse le seuil
 func checkThreshold(value int) bool {
+	// Retourne true si la valeur dépasse le seuil
 	return value > HIGH_THRESHOLD
 }
 

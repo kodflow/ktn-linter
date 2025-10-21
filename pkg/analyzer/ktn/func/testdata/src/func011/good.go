@@ -2,19 +2,37 @@ package func011
 
 // Good: All branches and returns have comments
 
-// GoodExample demonstrates proper commenting
+const (
+	// DOUBLE_MULTIPLIER is the multiplier used for doubling values
+	DOUBLE_MULTIPLIER int = 2
+	// BENCHMARK_LIMIT is the iteration limit for benchmark tests
+	BENCHMARK_LIMIT int = 100
+)
+
+// GoodExample demonstrates proper commenting.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - bool: true if x is positive, false otherwise
 func GoodExample(x int) bool {
 	// Check if x is positive
 	if x > 0 {
 		// Return true because x is positive
 		return true
-	} else {
-		// Return false because x is not positive
-		return false
 	}
+	// Return false because x is not positive
+	return false
 }
 
-// GoodSwitch demonstrates proper switch commenting
+// GoodSwitch demonstrates proper switch commenting.
+//
+// Params:
+//   - x: the integer to determine the result
+//
+// Returns:
+//   - string: "zero", "one", or "other"
 func GoodSwitch(x int) string {
 	// Determine result based on x value
 	switch x {
@@ -33,7 +51,13 @@ func GoodSwitch(x int) string {
 	}
 }
 
-// GoodLoop demonstrates proper loop commenting
+// GoodLoop demonstrates proper loop commenting.
+//
+// Params:
+//   - items: the slice of integers to sum
+//
+// Returns:
+//   - int: the sum of all items
 func GoodLoop(items []int) int {
 	sum := 0
 	// Iterate through all items to calculate sum
@@ -44,12 +68,25 @@ func GoodLoop(items []int) int {
 	return sum
 }
 
-// GoodInlineComment demonstrates inline comments on returns
+// GoodInlineComment demonstrates inline comments on returns.
+//
+// Params:
+//   - x: the integer to double
+//
+// Returns:
+//   - int: double of x
 func GoodInlineComment(x int) int {
-	return x * 2 // Return double of x
+	return x * DOUBLE_MULTIPLIER // Return double of x
 }
 
-// GoodMultipleReturns demonstrates multiple returns with comments
+// GoodMultipleReturns demonstrates multiple returns with comments.
+//
+// Params:
+//   - x: the integer to process
+//
+// Returns:
+//   - int: doubled value or 0
+//   - error: nil always
 func GoodMultipleReturns(x int) (int, error) {
 	// Check for negative input
 	if x < 0 {
@@ -57,10 +94,16 @@ func GoodMultipleReturns(x int) (int, error) {
 		return 0, nil
 	}
 	// Return success with doubled value
-	return x * 2, nil
+	return x * DOUBLE_MULTIPLIER, nil
 }
 
-// GoodTypeSwitch demonstrates proper type switch commenting
+// GoodTypeSwitch demonstrates proper type switch commenting.
+//
+// Params:
+//   - v: the interface value to check
+//
+// Returns:
+//   - string: the type name or "unknown"
 func GoodTypeSwitch(v interface{}) string {
 	// Determine type of value
 	switch v.(type) {
@@ -79,79 +122,93 @@ func GoodTypeSwitch(v interface{}) string {
 	}
 }
 
-// GoodElseIf demonstrates proper else if commenting with comment before else if
+// GoodElseIf demonstrates proper else if commenting with early return.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: "negative", "positive", or "zero"
 func GoodElseIf(x int) string {
 	// Check if x is negative
 	if x < 0 {
 		// Return "negative" for negative values
 		return "negative"
-	// Check if x is positive (comment before else if)
-	} else if x > 0 {
+	}
+	// Check if x is positive
+	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		// Return "zero" for zero value
-		return "zero"
 	}
+	// Return "zero" for zero value
+	return "zero"
 }
 
-// GoodElseCommentInside demonstrates else with comment inside block
+// GoodElseCommentInside demonstrates else with comment inside block.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: "positive" or "non-positive"
 func GoodElseCommentInside(x int) string {
 	// Check if x is positive
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		// Handle non-positive values
-		// Return "non-positive" for non-positive values
-		return "non-positive"
 	}
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
-// GoodNoBody is an interface method declaration (no body, should be skipped)
+// GoodInterface defines an interface method (no body needed).
 type GoodInterface interface {
 	GoodNoBody(x int) bool
 }
 
-// GoodExternalFuncDeclaration demonstrates external function declaration (no body)
-// This is used in CGO or external linkage
-// Declaration externe sans body
+// GoodElseIfCommentBefore demonstrates else if with comment before the if part.
 //
-//go:noescape
-//go:linkname externalFunc runtime.externalFunc
-func externalFunc(x int) int
-
-// GoodElseIfCommentBefore demonstrates else if with comment before the if part
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: "negative", "positive", or "zero"
 func GoodElseIfCommentBefore(x int) string {
 	// Check if x is negative
 	if x < 0 {
 		// Return "negative" for negative values
 		return "negative"
-	} else
-	// Check if x is positive (comment right before if keyword in else if)
+	}
+	// Check if x is positive
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		// Return "zero" for zero value
-		return "zero"
 	}
+	// Return "zero" for zero value
+	return "zero"
 }
 
-// GoodElseBlockWithCommentInside demonstrates else block with comment at the start
+// GoodElseBlockWithCommentInside demonstrates else block with comment at the start.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: "positive" or "non-positive"
 func GoodElseBlockWithCommentInside(x int) string {
 	// Check if x is positive
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		// Handle non-positive case
-		// Return "non-positive" for non-positive values
-		return "non-positive"
 	}
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
-// TestGoodFunction demonstrates that test functions are skipped by the analyzer
+// TestGoodFunction demonstrates that test functions are skipped by the analyzer.
+//
+// Params:
+//   - t: the test interface
 func TestGoodFunction(t interface{}) {
 	// This is a test function, it should be skipped
 	if true {
@@ -160,16 +217,19 @@ func TestGoodFunction(t interface{}) {
 	return
 }
 
-// BenchmarkGoodFunction demonstrates that benchmark functions are skipped
+// BenchmarkGoodFunction demonstrates that benchmark functions are skipped.
+//
+// Params:
+//   - b: the benchmark interface
 func BenchmarkGoodFunction(b interface{}) {
 	// This is a benchmark function, it should be skipped
-	for i := 0; i < 100; i++ {
-		_ = i * 2
+	for i := 0; i < BENCHMARK_LIMIT; i++ {
+		_ = i * DOUBLE_MULTIPLIER
 	}
 	return
 }
 
-// ExampleGoodFunction demonstrates that example functions are skipped
+// ExampleGoodFunction demonstrates that example functions are skipped.
 func ExampleGoodFunction() {
 	// This is an example function, it should be skipped
 	if true {
@@ -178,7 +238,10 @@ func ExampleGoodFunction() {
 	return
 }
 
-// FuzzGoodFunction demonstrates that fuzz functions are skipped
+// FuzzGoodFunction demonstrates that fuzz functions are skipped.
+//
+// Params:
+//   - f: the fuzz interface
 func FuzzGoodFunction(f interface{}) {
 	// This is a fuzz function, it should be skipped
 	if true {
@@ -187,15 +250,15 @@ func FuzzGoodFunction(f interface{}) {
 	return
 }
 
-// GoodElseEmptyBlock demonstrates empty else block with comment
+// GoodElseEmptyBlock demonstrates empty else block with comment.
+//
+// Params:
+//   - x: the integer to check
 func GoodElseEmptyBlock(x int) {
 	// Check if x is positive
 	if x > 0 {
 		// Return for positive values
 		return
-	// Handle non-positive case with empty block
-	} else {
 	}
+	// Handle non-positive case with empty block
 }
-// GetExternalFunc est une fonction externe - ignorée.
-func GetExternalFunc() int

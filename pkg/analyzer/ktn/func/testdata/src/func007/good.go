@@ -5,6 +5,7 @@ package func007
 // Returns:
 //   - string: le résultat de l'opération
 func GoodNoParams() string {
+	// Retourne le résultat de l'opération
 	return "result"
 }
 
@@ -18,6 +19,7 @@ func GoodNoParams() string {
 //   - bool: true si le traitement a réussi
 //   - error: une erreur si le traitement a échoué
 func GoodWithParams(data string, count int) (bool, error) {
+	// Retourne succès du traitement sans erreur
 	return true, nil
 }
 
@@ -40,5 +42,6 @@ func GoodNoReturn(msg string) {
 // Example:
 //   result := GoodComplete("test")
 func GoodComplete(input string) string {
+	// Retourne les données d'entrée formatées
 	return input
 }
