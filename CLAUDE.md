@@ -21,6 +21,54 @@
 6. **Nettoyer les fichiers temporaires** → Supprimer *.out, *.html, fichiers intermédiaires
 7. **Répéter jusqu'à 0 erreur**
 
+## ⚠️ AUTO-VÉRIFICATION OBLIGATOIRE (Claude IA)
+
+**AVANT de considérer une tâche terminée**, Claude **DOIT** exécuter cette checklist :
+
+### Checklist Post-Création de Fichiers
+
+```bash
+# 1. Vérifier que le code créé respecte les règles KTN
+./builds/ktn-linter lint <fichier_créé>.go
+
+# 2. Vérifier les tests
+make test
+
+# 3. Vérifier qu'il n'y a pas de redeclarations dans testdata
+# Les fichiers bad.go et good.go doivent avoir des noms de fonctions différents
+# Exemple: badCheckPositive() vs checkPositive()
+```
+
+### Règles Spécifiques pour le Code du Linter
+
+**Tout fichier .go créé dans `/pkg/analyzer/` DOIT respecter** :
+
+- ✅ **KTN-FUNC-001**: Max 35 lignes par fonction → Extraire en sous-fonctions
+- ✅ **KTN-FUNC-002**: Max 5 paramètres
+- ✅ **KTN-FUNC-007**: Documentation complète (Params/Returns)
+- ✅ **KTN-FUNC-011**: Commentaires sur TOUS les blocs if/switch/return
+- ✅ **KTN-FUNC-012**: Pas de else après return
+
+### Testdata : Éviter les Redeclarations
+
+**Les fonctions dans `bad.go` et `good.go` doivent avoir des noms différents** :
+
+```go
+// ❌ BAD - Redeclaration
+// bad.go
+func checkPositive(x int) string { ... }
+
+// good.go
+func checkPositive(x int) string { ... } // ERREUR: redeclared
+
+// ✅ GOOD - Noms différents
+// bad.go
+func badCheckPositive(x int) string { ... }
+
+// good.go
+func checkPositive(x int) string { ... }
+```
+
 ### Agents Parallèles Post-Modification
 
 Après chaque modification importante, Claude lance **2 agents en parallèle** :

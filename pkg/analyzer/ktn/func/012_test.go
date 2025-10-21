@@ -7,6 +7,6 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-func TestFunc003(t *testing.T) {
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer003, "func003", 9)
+func TestFunc012(t *testing.T) {
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer012, "func012", 6)
 }

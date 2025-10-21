@@ -17,7 +17,11 @@ func calculateOneParam(a int) {
 // buildFiveParams exactement 5 paramètres (à la limite)
 //
 // Params:
-//   - a, b, c, d, e: paramètres de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
 func buildFiveParams(a, b, c, d, e int) {
 	// Utilisation des paramètres
 	_ = a + b + c + d + e
@@ -42,7 +46,10 @@ type MyType struct{}
 // processMethodFourParams méthode avec 4 paramètres (le receiver ne compte pas)
 //
 // Params:
-//   - a, b, c, d: paramètres de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
 func (m MyType) processMethodFourParams(a, b, c, d int) {
 	// Utilisation des paramètres
 	_ = a + b + c + d
@@ -51,7 +58,13 @@ func (m MyType) processMethodFourParams(a, b, c, d int) {
 // TestWithManyParams les fonctions de test sont exemptées
 //
 // Params:
-//   - t, a, b, c, d, e, f: paramètres de test
+//   - t: paramètre de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
 func TestWithManyParams(t, a, b, c, d, e, f int) {
 	// Utilisation des paramètres
 	_ = t + a + b + c + d + e + f
@@ -60,7 +73,13 @@ func TestWithManyParams(t, a, b, c, d, e, f int) {
 // BenchmarkWithManyParams les fonctions de benchmark sont exemptées
 //
 // Params:
-//   - b, a, c, d, e, f, g: paramètres de test
+//   - b: paramètre de test
+//   - a: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+//   - g: paramètre de test
 func BenchmarkWithManyParams(b, a, c, d, e, f, g int) {
 	// Utilisation des paramètres
 	_ = b + a + c + d + e + f + g
@@ -69,7 +88,13 @@ func BenchmarkWithManyParams(b, a, c, d, e, f, g int) {
 // ExampleWithManyParams les fonctions d'exemple sont exemptées
 //
 // Params:
-//   - a, b, c, d, e, f, g: paramètres de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+//   - g: paramètre de test
 func ExampleWithManyParams(a, b, c, d, e, f, g int) {
 	// Utilisation des paramètres
 	_ = a + b + c + d + e + f + g
@@ -78,7 +103,13 @@ func ExampleWithManyParams(a, b, c, d, e, f, g int) {
 // FuzzWithManyParams les fonctions de fuzzing sont exemptées
 //
 // Params:
-//   - f, a, b, c, d, e, g: paramètres de test
+//   - f: paramètre de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - g: paramètre de test
 func FuzzWithManyParams(f, a, b, c, d, e, g int) {
 	// Utilisation des paramètres
 	_ = f + a + b + c + d + e + g
@@ -87,7 +118,9 @@ func FuzzWithManyParams(f, a, b, c, d, e, g int) {
 // formatThreeParams fonction avec 3 paramètres
 //
 // Params:
-//   - a, b, c: paramètres de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
 func formatThreeParams(a, b, c int) {
 	// Utilisation des paramètres
 	_ = a + b + c
@@ -106,8 +139,10 @@ func convertTwoParamsMixed(a int, b string) {
 // validateFourParamsGrouped fonction avec 4 paramètres groupés par type
 //
 // Params:
-//   - a, b: entiers
-//   - c, d: chaînes
+//   - a: entier
+//   - b: entier
+//   - c: chaîne
+//   - d: chaîne
 func validateFourParamsGrouped(a, b int, c, d string) {
 	// Utilisation des paramètres
 	_, _, _, _ = a, b, c, d
@@ -116,7 +151,10 @@ func validateFourParamsGrouped(a, b int, c, d string) {
 // convertWithVariadic fonction variadique avec 5 paramètres (variadique compte pour 1)
 //
 // Params:
-//   - a, b, c, d: paramètres réguliers
+//   - a: paramètre régulier
+//   - b: paramètre régulier
+//   - c: paramètre régulier
+//   - d: paramètre régulier
 //   - e: paramètre variadique
 func convertWithVariadic(a, b, c, d int, e ...string) {
 	// Utilisation des paramètres

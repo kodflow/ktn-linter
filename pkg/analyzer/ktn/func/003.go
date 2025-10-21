@@ -2,42 +2,21 @@ package ktnfunc
 
 import (
 	"go/ast"
-	"unicode"
+	"go/token"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer003 checks that exported functions start with a verb
+// Analyzer003 checks for magic numbers (hardcoded numeric literals)
 var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnfunc003",
-	Doc:      "KTN-FUNC-003: Les fonctions publiques doivent commencer par un verbe (Get, Set, Create, Update, Delete, etc.)",
+	Doc:      "KTN-FUNC-003: Les nombres littéraux doivent être des constantes nommées (pas de magic numbers)",
 	Run:      runFunc003,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// Common verb prefixes for function names
-var commonVerbs = map[string]bool{
-	"Get": true, "Set": true, "Is": true, "Has": true, "Can": true, "Should": true,
-	"Create": true, "New": true, "Make": true, "Build": true, "Generate": true,
-	"Add": true, "Insert": true, "Append": true, "Push": true, "Put": true,
-	"Update": true, "Modify": true, "Change": true, "Edit": true, "Replace": true,
-	"Delete": true, "Remove": true, "Clear": true, "Reset": true, "Drop": true,
-	"Find": true, "Search": true, "Query": true, "Filter": true, "Select": true,
-	"Load": true, "Read": true, "Fetch": true, "Retrieve": true, "Parse": true,
-	"Save": true, "Write": true, "Store": true, "Persist": true, "Flush": true,
-	"Send": true, "Receive": true, "Publish": true, "Subscribe": true, "Emit": true,
-	"Start": true, "Stop": true, "Run": true, "Execute": true, "Perform": true,
-	"Open": true, "Close": true, "Connect": true, "Disconnect": true, "Listen": true,
-	"Validate": true, "Verify": true, "Check": true, "Test": true, "Ensure": true,
-	"Convert": true, "Transform": true, "Format": true, "Encode": true, "Decode": true,
-	"Register": true, "Unregister": true, "Unsubscribe": true,
-	"Enable": true, "Disable": true, "Activate": true, "Deactivate": true,
-	"Handle": true, "Process": true, "Apply": true, "Calculate": true, "Compute": true,
-	"Render": true, "Draw": true, "Display": true, "Show": true, "Hide": true,
-	"Print": true, "Log": true, "Debug": true, "Trace": true, "Warn": true,
-	"Count": true, "Average": true,
 // runFunc003 exécute l'analyse KTN-FUNC-003.
 //
 // Params:
@@ -46,101 +25,119 @@ var commonVerbs = map[string]bool{
 // Returns:
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
-	"Sort": true, "Order": true, "Group": true, "Merge": true, "Split": true,
-	"Copy": true, "Clone": true, "Duplicate": true, "Move": true, "Swap": true,
-	"Compare": true, "Match": true, "Contains": true, "Equals": true, "Diff": true,
-	"Wait": true, "Sleep": true, "Pause": true, "Resume": true, "Continue": true,
-}
-
-// runFunc003 description à compléter.
-//
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - any: résultat
-//   - error: erreur éventuelle
 func runFunc003(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
-	}
+	// Map des valeurs autorisées (non magic numbers)
+	allowedValues := getAllowedValues()
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-		funcName := funcDecl.Name.Name
+	// Collecter les littéraux autorisés (const, array sizes)
+	allowedLiterals := collectAllowedLiterals(inspect)
 
-		// Skip main function (checked before IsExported because main is unexported)
-		if funcName == "main" {
-   // Retour de la fonction
-			return
-		}
+	// Vérifier les magic numbers
+	checkMagicNumbers(inspect, pass, allowedValues, allowedLiterals)
 
-		// Skip init function (checked before IsExported because init is unexported)
-		if funcName == "init" {
-   // Retour de la fonction
-			return
-		}
-
-		// Skip unexported functions
-		if !ast.IsExported(funcName) {
-   // Retour de la fonction
-			return
-		}
-
-		// Skip test functions
-		if isTestFunction(funcName) {
-   // Retour de la fonction
-			return
-		}
-
-		// Check if function name starts with a verb
-		if !startsWithVerb(funcName) {
-			pass.Reportf(
-				funcDecl.Name.Pos(),
-				"KTN-FUNC-003: la fonction publique '%s' doit commencer par un verbe (Get, Set, Create, etc.)",
-				funcName,
-			)
-		}
-	})
-
- // Retour de la fonction
+	// Retour succès
 	return nil, nil
 }
 
-// startsWithVerb checks if a function name starts with a known verb
-// Params:
-//   - pass: contexte d'analyse
+// getAllowedValues retourne les valeurs numériques autorisées (non magic).
 //
 // Returns:
-//   - string: premier mot extrait
-//
-func startsWithVerb(name string) bool {
-	// Extract the first word (before the first uppercase letter after position 0)
-	firstWord := extractFirstWord(name)
-
-	// Check if it's in our verb list
-	return commonVerbs[firstWord]
+//   - map[string]bool: map des valeurs autorisées
+func getAllowedValues() map[string]bool {
+	// Retour de la map des valeurs autorisées
+	return map[string]bool{
+		"0":  true,
+		"1":  true,
+		"-1": true,
+	}
 }
 
-// extractFirstWord extracts the first word from a PascalCase/camelCase name
+// collectAllowedLiterals collecte les littéraux dans const et array types.
+//
 // Params:
-//   - pass: contexte d'analyse
+//   - inspect: inspecteur AST
 //
 // Returns:
-//   - bool: true si commence par verbe
-//
-func extractFirstWord(name string) string {
-	// Find the first uppercase letter after the start
-	for i := 1; i < len(name); i++ {
-  // Vérification de la condition
-		if unicode.IsUpper(rune(name[i])) {
-   // Retour de la fonction
-			return name[:i]
-		}
+//   - map[ast.Node]bool: map des littéraux autorisés
+func collectAllowedLiterals(inspect *inspector.Inspector) map[ast.Node]bool {
+	allowedLiterals := make(map[ast.Node]bool)
+
+	// Filter pour GenDecl et ArrayType
+	nodeFilter := []ast.Node{
+		(*ast.GenDecl)(nil),
+		(*ast.ArrayType)(nil),
 	}
 
-	// No uppercase found, return the whole name
-	return name
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		// Switch sur le type de nœud
+		switch node := n.(type) {
+		// Cas GenDecl : déclaration const
+		case *ast.GenDecl:
+			// Si c'est une déclaration const
+			if node.Tok == token.CONST {
+				ast.Inspect(node, func(inner ast.Node) bool {
+					// Si c'est un littéral
+					if lit, ok := inner.(*ast.BasicLit); ok {
+						allowedLiterals[lit] = true
+					}
+					// Continuer l'inspection
+					return true
+				})
+			}
+		// Cas ArrayType : taille de tableau
+		case *ast.ArrayType:
+			// Si la taille est un littéral
+			if lit, ok := node.Len.(*ast.BasicLit); ok {
+				allowedLiterals[lit] = true
+			}
+		}
+	})
+
+	// Retour de la map
+	return allowedLiterals
+}
+
+// checkMagicNumbers vérifie et rapporte les magic numbers.
+//
+// Params:
+//   - inspect: inspecteur AST
+//   - pass: contexte d'analyse
+//   - allowedValues: valeurs autorisées
+//   - allowedLiterals: littéraux autorisés
+func checkMagicNumbers(inspect *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool) {
+	// Filter pour les littéraux
+	nodeFilter := []ast.Node{
+		(*ast.BasicLit)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		lit := n.(*ast.BasicLit)
+
+		// Vérifier si c'est un nombre (INT ou FLOAT)
+		if lit.Kind != token.INT && lit.Kind != token.FLOAT {
+			// Pas un nombre, ignorer
+			return
+		}
+
+		// Vérifier si c'est une valeur autorisée
+		if allowedValues[lit.Value] {
+			// Valeur autorisée, ignorer
+			return
+		}
+
+		// Vérifier si c'est dans les littéraux autorisés
+		if allowedLiterals[lit] {
+			// Littéral autorisé, ignorer
+			return
+		}
+
+		// Reporter l'erreur
+		pass.Reportf(
+			lit.Pos(),
+			"KTN-FUNC-003: le nombre '%s' devrait être une constante nommée (magic number)",
+			lit.Value,
+		)
+	})
 }

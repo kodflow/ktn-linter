@@ -9,8 +9,8 @@ import (
 func TestAnalyzers(t *testing.T) {
 	analyzers := ktnfunc.GetAnalyzers()
 
-	// Check that we have at least 11 analyzers
-	minExpectedCount := 11
+	// Check that we have at least 12 analyzers
+	minExpectedCount := 12
 	if len(analyzers) < minExpectedCount {
 		t.Errorf("Analyzers() returned %d analyzers, expected at least %d", len(analyzers), minExpectedCount)
 	}
@@ -26,7 +26,7 @@ func TestAnalyzers(t *testing.T) {
 	expectedNames := map[string]bool{
 		"ktnfunc001": true, // Max 35 lines
 		"ktnfunc002": true, // Max 5 parameters
-		"ktnfunc003": true, // Function names must start with a verb
+		"ktnfunc003": true, // No magic numbers
 		"ktnfunc004": true, // No naked returns
 		"ktnfunc005": true, // Max cyclomatic complexity 10
 		"ktnfunc006": true, // Error last
@@ -35,6 +35,7 @@ func TestAnalyzers(t *testing.T) {
 		"ktnfunc009": true, // No side effects in getters
 		"ktnfunc010": true, // Named returns for >3 return values
 		"ktnfunc011": true, // Comments on branches/returns
+		"ktnfunc012": true, // No else after return/continue/break
 	}
 
 	for _, analyzer := range analyzers {

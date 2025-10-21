@@ -58,14 +58,14 @@ RUN AWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") &
     wait && \
     unzip /tmp/awscliv2.zip -d /tmp && \
     /tmp/aws/install && \
-    sh /tmp/golangci-install.sh -b /usr/local/bin v2.5.0 && \
+    sh /tmp/golangci-install.sh -b /usr/local/bin latest && \
     rm -rf /tmp/awscliv2.zip /tmp/aws /tmp/golangci-install.sh
 
 # Switch to vscode user
 USER vscode
 WORKDIR /home/vscode
 
-# Create directories for persistent volumes
+# Create directories for persistent volumes and clean old golangci-lint
 RUN mkdir -p /home/vscode/.cache \
     /home/vscode/.config \
     /home/vscode/.config/op \
@@ -74,7 +74,9 @@ RUN mkdir -p /home/vscode/.cache \
     /home/vscode/.claude \
     /home/vscode/.local/share/@anthropic \
     # Set strict permissions for 1Password config directory
-    && chmod 700 /home/vscode/.config/op
+    && chmod 700 /home/vscode/.config/op \
+    # Remove any old golangci-lint installations from user cache
+    && rm -rf /home/vscode/.cache/go/bin/golangci-lint
 
 # Install Oh My Zsh and themes in parallel (rarely changes - good for cache)
 RUN rm -rf "$HOME/.oh-my-zsh" && \
@@ -99,6 +101,9 @@ RUN sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.z
         echo 'export HISTFILE=~/.zsh_history_dir/.zsh_history'; \
         echo 'export HISTSIZE=10000'; \
         echo 'export SAVEHIST=10000'; \
+        echo ''; \
+        echo '# Ensure /usr/local/bin takes priority over user cache'; \
+        echo 'export PATH="/usr/local/bin:$PATH"'; \
         echo ''; \
         echo '# Super Claude alias'; \
         echo 'alias super-claude="claude --dangerously-skip-permissions --mcp-config /home/vscode/.devcontainer/mcp.json"'; \

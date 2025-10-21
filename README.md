@@ -52,11 +52,11 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-CONST-003**: Nommage SCREAMING_SNAKE_CASE
 - **KTN-CONST-004**: Commentaire obligatoire
 
-### Fonctions (11 règles) ✅ 100%
+### Fonctions (12 règles) ✅ 100%
 
 - **KTN-FUNC-001**: Longueur max 35 lignes de code pur
 - **KTN-FUNC-002**: Max 5 paramètres par fonction
-- **KTN-FUNC-003**: Noms de fonctions commencent par un verbe
+- **KTN-FUNC-003**: Pas de magic numbers (constantes nommées)
 - **KTN-FUNC-004**: Pas de naked returns (sauf <5 lignes)
 - **KTN-FUNC-005**: Complexité cyclomatique max 10
 - **KTN-FUNC-006**: Erreur toujours en dernière position
@@ -65,6 +65,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-FUNC-009**: Pas de side effects dans les getters
 - **KTN-FUNC-010**: Named returns pour >3 valeurs de retour
 - **KTN-FUNC-011**: Commentaires sur branches/returns/logique
+- **KTN-FUNC-012**: Éviter else après return/continue/break
 
 ## Statistiques
 
@@ -72,7 +73,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **Packages 100%**: const, ktn, utils, formatter 🟢
 - **Package func**: 91.9% 🟡
 - **Go version**: 1.25
-- **Total règles**: 15 (4 const + 11 func)
+- **Total règles**: 16 (4 const + 12 func)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Structure

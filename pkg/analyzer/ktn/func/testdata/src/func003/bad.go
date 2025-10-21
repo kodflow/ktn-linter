@@ -1,37 +1,46 @@
 package func003
 
-// Bad: Starts with a noun
-func User() {}
+// badProcessSixItems uses magic number 6
+func badProcessSixItems() {
+	items := make([]int, 6)
+	_ = items
+}
 
-// Bad: Starts with adjective
-func ValidData() {}
+// badValidateAge uses magic numbers 18 and 120
+func badValidateAge(age int) bool {
+	return age >= 18 && age <= 120
+}
 
-// Bad: Generic name without verb
-func Handler() {}
+// badCalculateDiscount uses magic number 0.15
+func badCalculateDiscount(price float64) float64 {
+	return price * 0.15
+}
 
-// Bad: Name without verb prefix
-func TotalAmount() {}
+// badProcessRetries uses magic number 3
+func badProcessRetries() {
+	maxRetries := 3
+	_ = maxRetries
+}
 
-// Bad: Property-like name
-func CurrentUser() {}
+// badSetBufferSize uses magic number 1024
+func badSetBufferSize() {
+	buffer := make([]byte, 1024)
+	_ = buffer
+}
 
-// Bad: Noun-based name
-func Database() {}
+// badCheckThreshold uses magic number 100
+func badCheckThreshold(value int) bool {
+	return value > 100
+}
 
-// Bad: Configuration without verb
-func Settings() {}
+// badWaitTimeout uses magic number 30
+func badWaitTimeout() {
+	timeout := 30
+	_ = timeout
+}
 
-// Bad: Result without verb
-func Sum() {}
-
-// Bad: Single word noun
-func Data() {}
-
-// Bad: Single word non-verb
-func Result() {}
-
-// Bad: Single word adjective
-func Valid() {}
-
-// Bad: Single word generic name
-func Helper() {}
+// badSetPort uses magic number 8080
+func badSetPort() {
+	port := 8080
+	_ = port
+}
