@@ -1,4 +1,4 @@
-.PHONY: help test lint coverage
+.PHONY: help test lint coverage build validate
 
 # Couleurs
 GREEN := \033[0;32m
@@ -12,6 +12,12 @@ help: ## Affiche cette aide
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  ${YELLOW}%-15s${NC} %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
 
+build: ## Compile le binaire ktn-linter dans builds/
+	@echo "${GREEN}Compilation de ktn-linter...${NC}"
+	@mkdir -p builds
+	@go build -o builds/ktn-linter ./cmd/ktn-linter
+	@echo "${GREEN}✅ Binaire créé: builds/ktn-linter${NC}"
+
 test: ## Exécute les tests avec couverture
 	@go test -v ./...
 	@$(MAKE) coverage
@@ -21,3 +27,6 @@ coverage: ## Génère le rapport de couverture (COVERAGE.MD)
 
 lint: ## Lance le linter sur le projet (exclut *_test.go)
 	@go run ./cmd/ktn-linter lint ./...
+
+validate: build ## Valide que tous les testdata good.go/bad.go sont corrects
+	@./scripts/validate-testdata.sh

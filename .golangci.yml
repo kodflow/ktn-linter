@@ -9,18 +9,19 @@ run:
   skip-dirs: []
   skip-files: []
 
-# Configuration minimale : uniquement KTN-Linter via le wrapper
+# Configuration minimale : uniquement KTN-Linter via make lint
 # Aucun linter golangci-lint activé
 linters:
   enable: []
-  exclusions:
-    rules:
-      - path: _test\.go
-        linters:
-          - all
+  disable-all: true
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   # Ne pas exclure testdata
   exclude-dirs: []
+  # Exclure les fichiers _test.go du linting IDE
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - all

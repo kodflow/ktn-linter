@@ -13,9 +13,17 @@ go mod download
 ```bash
 make test      # Tests + couverture (génère COVERAGE.MD)
 make coverage  # Génère uniquement le rapport COVERAGE.MD
-make lint      # Lance le linter KTN
+make lint      # Lance le linter KTN sur le code de production
+make validate  # Valide que tous les testdata good.go/bad.go sont corrects
+make build     # Compile le binaire ktn-linter dans builds/
 make help      # Aide
 ```
+
+**Validation testdata** : `make validate` vérifie automatiquement que :
+- ✅ Tous les **good.go** : 0 erreur (100% conformes)
+- ✅ Tous les **bad.go** : UNIQUEMENT les erreurs de leur règle spécifique
+  - Ex: `func001/bad.go` → **seulement** KTN-FUNC-001 (pas de KTN-CONST-001, etc.)
+- ✅ Aucune redeclaration entre good.go et bad.go
 
 Voir [COVERAGE.MD](COVERAGE.MD) pour le rapport détaillé de couverture.
 
