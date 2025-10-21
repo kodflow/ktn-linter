@@ -14,14 +14,14 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **91.7%** |
+| 🟡 | **TOTAL (Global)** | **92.1%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.8% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 90.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` | 94.3% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 94.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 83.2% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 84.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
 
@@ -66,7 +66,7 @@ Rapport de couverture généré automatiquement.
 | ⚫ `011.go:hasCommentBeforeOrInside` | 0.0% |
 | 🟡 `012.go:runFunc012` | 92.3% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` - 83.2%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` - 84.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -89,7 +89,6 @@ Rapport de couverture généré automatiquement.
 | 🔴 `009.go:isMapType` | 71.4% |
 | 🟡 `010.go:runVar010` | 90.0% |
 | 🔴 `010.go:isEmptySliceLiteral` | 66.7% |
-| ⚫ `011.go:isBuilderType` | 0.0% |
 | 🔴 `011.go:isBuilderCompositeLit` | 83.3% |
 | 🔴 `011.go:extractTypeString` | 60.0% |
 | 🔴 `011.go:extractAssignTypeString` | 83.3% |
@@ -113,4 +112,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-21 13:34:53*
+*Généré le: 2025-10-21 14:06:37*

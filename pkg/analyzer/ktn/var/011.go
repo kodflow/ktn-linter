@@ -123,29 +123,6 @@ func checkAssignStmt(node *ast.AssignStmt) (*ast.CompositeLit, ast.Node) {
 	return nil, nil
 }
 
-// isBuilderType checks if type is strings.Builder or bytes.Buffer.
-//
-// Params:
-//   - expr: type expression to check
-//
-// Returns:
-//   - bool: true if Builder/Buffer type
-func isBuilderType(expr ast.Expr) bool {
-	// Check if selector expression
-	if sel, ok := expr.(*ast.SelectorExpr); ok {
-		// Check package name
-		if pkg, ok := sel.X.(*ast.Ident); ok {
-			pkgName := pkg.Name
-			typeName := sel.Sel.Name
-			// Check for strings.Builder or bytes.Buffer
-			return (pkgName == "strings" && typeName == "Builder") ||
-				(pkgName == "bytes" && typeName == "Buffer")
-		}
-	}
-	// Return false if not Builder/Buffer
-	return false
-}
-
 // isBuilderCompositeLit checks if composite is Builder/Buffer.
 //
 // Params:

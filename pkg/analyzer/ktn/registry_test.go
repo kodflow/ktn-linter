@@ -46,8 +46,8 @@ func TestGetRulesByCategory(t *testing.T) {
 			rules := ktn.GetRulesByCategory(tt.category)
 
 			if tt.minExpectedRules == 0 {
-				if rules != nil && len(rules) > 0 {
-					t.Errorf("GetRulesByCategory(%q) returned %d rules, expected 0 or nil", tt.category, len(rules))
+				if len(rules) > 0 {
+					t.Errorf("GetRulesByCategory(%q) returned %d rules, expected 0", tt.category, len(rules))
 				}
 			} else {
 				if len(rules) < tt.minExpectedRules {

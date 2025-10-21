@@ -19,9 +19,6 @@ var Analyzer007 = &analysis.Analyzer{
 }
 
 var (
-	// Pattern for function description (first line)
-	descPattern = regexp.MustCompile(`^//\s*\w+\s+.+`)
-
 	// Pattern for Params section
 	paramsHeaderPattern = regexp.MustCompile(`^//\s*Params:\s*$`)
 	paramItemPattern    = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
@@ -29,9 +26,6 @@ var (
 	// Pattern for Returns section
 	returnsHeaderPattern = regexp.MustCompile(`^//\s*Returns:\s*$`)
 	returnItemPattern    = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
-
-	// Pattern for Example section (optional)
-	exampleHeaderPattern = regexp.MustCompile(`^//\s*Example:\s*$`)
 )
 
 // runFunc007 description à compléter.
@@ -266,8 +260,8 @@ func validateDocFormat(comments []string, funcName string, hasParams, hasReturns
 	// Validation de la section Returns si nécessaire
 	if hasReturns {
 		var err string
-		// Validation de la section
-		err, idx = validateReturnsSection(comments, idx)
+		// Validation de la section (idx ignoré car dernière section)
+		err, _ = validateReturnsSection(comments, idx)
 		// Vérification d'erreur
 		if err != "" {
 			// Retour si erreur

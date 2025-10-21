@@ -201,9 +201,18 @@ func createTestDataStructure(t *testing.T, testDir, goodContent, badContent stri
 	}
 
 	// Change to tmpDir so TestGoodBad can find testdata/
-	oldWd, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	t.Cleanup(func() { os.Chdir(oldWd) })
+	oldWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("Failed to change to tmpDir: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	})
 
 	return tmpDir
 }
