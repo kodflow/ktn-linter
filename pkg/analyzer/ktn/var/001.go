@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer001 checks that package-level variables have explicit types
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar001",
 	Doc:      "KTN-VAR-001: Vérifie que les variables de package ont un type explicite",
 	Run:      runVar001,

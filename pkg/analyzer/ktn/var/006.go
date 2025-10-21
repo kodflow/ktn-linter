@@ -28,9 +28,6 @@ var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 func runVar006(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Track if we've seen a var declaration
-	varSeenPerFile := make(map[*ast.File]bool)
-
 	nodeFilter := []ast.Node{
 		(*ast.File)(nil),
 	}
@@ -51,7 +48,6 @@ func runVar006(pass *analysis.Pass) (any, error) {
 			// Track variable declarations
 			if genDecl.Tok == token.VAR {
 				varSeen = true
-				varSeenPerFile[file] = true
 			}
 
 			// Error: const after var

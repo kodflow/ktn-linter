@@ -47,7 +47,7 @@ type varGroup struct {
 // Returns:
 //   - []varGroup: liste des groupes de variables
 func collectVarGroups(file *ast.File) []varGroup {
-	varGroups := []varGroup{}
+	var varGroups []varGroup
 
 	// Collect var declarations
 	for _, decl := range file.Decls {

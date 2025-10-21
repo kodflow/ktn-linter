@@ -19,7 +19,7 @@ const (
 )
 
 // Analyzer004 checks that every package-level variable has an associated comment
-var Analyzer004 = &analysis.Analyzer{
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar004",
 	Doc:      "KTN-VAR-004: Vérifie que chaque variable de package a un commentaire associé",
 	Run:      runVar004,
@@ -37,47 +37,56 @@ var Analyzer004 = &analysis.Analyzer{
 func runVar004(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// Filter for File nodes to access package-level declarations only
 	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
+		(*ast.File)(nil),
 	}
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
+		file := n.(*ast.File)
 
-		// Only check var declarations
-		if genDecl.Tok != token.VAR {
-			// Retour de la fonction
-			return
-		}
+		// Check package-level declarations only
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Skip if not a GenDecl
+			if !ok {
+				continue
+			}
 
-		// Check if the GenDecl has a doc comment (applies to all variables in the group)
-		// Filter out "want" directives used by analysistest
-		hasGenDeclDoc := hasValidComment(genDecl.Doc)
+			// Only check var declarations
+			if genDecl.Tok != token.VAR {
+				continue
+			}
 
-		// Itération sur les éléments
-		for _, spec := range genDecl.Specs {
-			valueSpec := spec.(*ast.ValueSpec)
-
-			// Check if this specific ValueSpec has a doc comment or line comment
+			// Check if the GenDecl has a doc comment (applies to all variables in the group)
 			// Filter out "want" directives used by analysistest
-			hasValueSpecDoc := hasValidComment(valueSpec.Doc)
-			hasValueSpecComment := hasValidComment(valueSpec.Comment)
+			hasGenDeclDoc := hasValidComment(genDecl.Doc)
 
-			// A variable is considered documented if:
-			// 1. The GenDecl has a doc comment (group documentation), OR
-			// 2. The ValueSpec has a doc comment (above the variable), OR
-			// 3. The ValueSpec has a line comment (on the same line)
-			hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
+			// Itération sur les éléments
+			for _, spec := range genDecl.Specs {
+				valueSpec := spec.(*ast.ValueSpec)
 
-			// Vérification de la condition
-			if !hasComment {
-				// Itération sur les éléments
-				for _, name := range valueSpec.Names {
-					pass.Reportf(
-						name.Pos(),
-						"KTN-VAR-004: la variable '%s' doit avoir un commentaire associé",
-						name.Name,
-					)
+				// Check if this specific ValueSpec has a doc comment or line comment
+				// Filter out "want" directives used by analysistest
+				hasValueSpecDoc := hasValidComment(valueSpec.Doc)
+				hasValueSpecComment := hasValidComment(valueSpec.Comment)
+
+				// A variable is considered documented if:
+				// 1. The GenDecl has a doc comment (group documentation), OR
+				// 2. The ValueSpec has a doc comment (above the variable), OR
+				// 3. The ValueSpec has a line comment (on the same line)
+				hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
+
+				// Vérification de la condition
+				if !hasComment {
+					// Itération sur les éléments
+					for _, name := range valueSpec.Names {
+						pass.Reportf(
+							name.Pos(),
+							"KTN-VAR-004: la variable '%s' doit avoir un commentaire associé",
+							name.Name,
+						)
+					}
 				}
 			}
 		}

@@ -7,6 +7,7 @@ import "golang.org/x/tools/go/analysis"
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs VAR
 func Analyzers() []*analysis.Analyzer {
+	// Retour de la liste complète des 16 analyseurs VAR
 	return []*analysis.Analyzer{
 		Analyzer001,
 		Analyzer002,
@@ -24,6 +25,5 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer014,
 		Analyzer015,
 		Analyzer016,
-		// VAR-017+ seront ajoutés progressivement
 	}
 }

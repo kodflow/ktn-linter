@@ -21,7 +21,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` | 94.3% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 94.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 83.3% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 83.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
 
@@ -66,18 +66,19 @@ Rapport de couverture généré automatiquement.
 | ⚫ `011.go:hasCommentBeforeOrInside` | 0.0% |
 | 🟡 `012.go:runFunc012` | 92.3% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` - 83.3%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` - 83.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `003.go:runVar003` | 93.3% |
+| 🟡 `004.go:runVar004` | 95.0% |
 | 🟡 `004.go:hasValidComment` | 90.0% |
 | 🔴 `005.go:runVar005` | 87.5% |
 | 🟡 `005.go:checkStatement` | 90.0% |
 | 🔴 `005.go:checkNestedBlocks` | 60.0% |
 | 🔴 `005.go:checkIfStmt` | 75.0% |
 | ⚫ `005.go:checkCommClause` | 0.0% |
-| 🟡 `006.go:runVar006` | 93.8% |
+| 🟡 `006.go:runVar006` | 92.9% |
 | 🔴 `007.go:isSliceType` | 50.0% |
 | 🔴 `007.go:checkMakeCall` | 85.7% |
 | 🔴 `008.go:isSliceTypeVar008` | 50.0% |
@@ -112,4 +113,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-21 13:29:59*
+*Généré le: 2025-10-21 13:34:53*
