@@ -25,6 +25,6 @@ const (
 	// ENABLE_CACHE indicates if caching is enabled
 	ENABLE_CACHE = false // want "KTN-CONST-001"
 
-	// DEFAULT_RATIO defines the default calculation ratio
-	DEFAULT_RATIO = 1.5 // want "KTN-CONST-001"
+	// BAD_RATIO defines a calculation ratio (renamed to avoid redeclaration)
+	BAD_RATIO = 1.5 // want "KTN-CONST-001"
 )
