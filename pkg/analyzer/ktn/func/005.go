@@ -14,7 +14,8 @@ const (
 	MAX_CYCLOMATIC_COMPLEXITY int = 10
 )
 
-var Analyzer005 = &analysis.Analyzer{
+// Analyzer005 checks that functions don't exceed maximum cyclomatic complexity
+var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc005",
 	Doc:      "KTN-FUNC-005: La complexité cyclomatique ne doit pas dépasser 10",
 	Run:      runFunc005,

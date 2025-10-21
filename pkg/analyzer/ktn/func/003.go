@@ -9,8 +9,13 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const (
+	// INITIAL_ALLOWED_LITERALS_CAP définit la capacité initiale pour allowed literals map
+	INITIAL_ALLOWED_LITERALS_CAP int = 32
+)
+
 // Analyzer003 checks for magic numbers (hardcoded numeric literals)
-var Analyzer003 = &analysis.Analyzer{
+var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc003",
 	Doc:      "KTN-FUNC-003: Les nombres littéraux doivent être des constantes nommées (pas de magic numbers)",
 	Run:      runFunc003,
@@ -62,7 +67,7 @@ func getAllowedValues() map[string]bool {
 // Returns:
 //   - map[ast.Node]bool: map des littéraux autorisés
 func collectAllowedLiterals(inspect *inspector.Inspector) map[ast.Node]bool {
-	allowedLiterals := make(map[ast.Node]bool)
+	allowedLiterals := make(map[ast.Node]bool, INITIAL_ALLOWED_LITERALS_CAP)
 
 	// Filter pour GenDecl seulement
 	nodeFilter := []ast.Node{

@@ -19,7 +19,7 @@ const (
 )
 
 // Analyzer004 checks that every constant has an associated comment
-var Analyzer004 = &analysis.Analyzer{
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnconst004",
 	Doc:      "KTN-CONST-004: Vérifie que chaque constante a un commentaire associé",
 	Run:      runConst004,

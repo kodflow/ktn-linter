@@ -10,22 +10,24 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer007 checks that all functions have proper documentation
-var Analyzer007 = &analysis.Analyzer{
-	Name:     "ktnfunc007",
-	Doc:      "KTN-FUNC-007: Toutes les fonctions doivent avoir une documentation au format strict (description, Params, Returns)",
-	Run:      runFunc007,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
-
 var (
-	// Pattern for Params section
-	paramsHeaderPattern = regexp.MustCompile(`^//\s*Params:\s*$`)
-	paramItemPattern    = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
+	// Analyzer007 checks that all functions have proper documentation
+	Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktnfunc007",
+		Doc:      "KTN-FUNC-007: Toutes les fonctions doivent avoir une documentation au format strict (description, Params, Returns)",
+		Run:      runFunc007,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
 
-	// Pattern for Returns section
-	returnsHeaderPattern = regexp.MustCompile(`^//\s*Returns:\s*$`)
-	returnItemPattern    = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
+	// Pattern for Params section header
+	paramsHeaderPattern *regexp.Regexp = regexp.MustCompile(`^//\s*Params:\s*$`)
+	// Pattern for individual Params items
+	paramItemPattern *regexp.Regexp = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
+
+	// Pattern for Returns section header
+	returnsHeaderPattern *regexp.Regexp = regexp.MustCompile(`^//\s*Returns:\s*$`)
+	// Pattern for individual Returns items
+	returnItemPattern *regexp.Regexp = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
 )
 
 // runFunc007 description à compléter.

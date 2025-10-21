@@ -30,6 +30,9 @@ const (
 	BOLD string = "\033[1m"
 	// RESET représente le code ANSI pour réinitialiser le formatage
 	RESET string = "\033[0m"
+
+	// INITIAL_FILE_MAP_CAP définit la capacité estimée pour groupement par fichier
+	INITIAL_FILE_MAP_CAP int = 16
 )
 
 // DiagnosticGroupData regroupe les diagnostics par fichier
@@ -195,7 +198,7 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 //   - []DiagnosticGroupData: groupes de diagnostics
 //
 func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.Diagnostic) []DiagnosticGroupData {
-	fileMap := make(map[string][]analysis.Diagnostic)
+	fileMap := make(map[string][]analysis.Diagnostic, INITIAL_FILE_MAP_CAP)
 
  // Itération sur les éléments
 	for _, diag := range diagnostics {

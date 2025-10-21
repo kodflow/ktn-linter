@@ -9,7 +9,7 @@ import (
 )
 
 // Analyzer008 checks that context.Context is always the first parameter
-var Analyzer008 = &analysis.Analyzer{
+var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc008",
 	Doc:      "KTN-FUNC-008: context.Context doit toujours être le premier paramètre (après le receiver pour les méthodes)",
 	Run:      runFunc008,

@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Global flags
+// Global flags and commands
 var (
 	// aiMode enables AI-friendly output format.
 	AIMode bool
@@ -19,20 +19,20 @@ var (
 	Verbose bool
 	// category filters rules by specific category.
 	Category string
-)
 
-// osExit est une variable pour permettre le mocking dans les tests.
-// Par défaut, elle pointe vers os.Exit, mais peut être remplacée par un mock.
-var OsExit = os.Exit
+	// OsExit est une variable pour permettre le mocking dans les tests.
+	// Par défaut, elle pointe vers os.Exit, mais peut être remplacée par un mock.
+	OsExit func(int) = os.Exit
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "ktn-linter",
-	Short: "KTN-Linter - Linter for Go code following KTN conventions",
-	Long: `KTN-Linter is a specialized linter that enforces naming conventions and code quality standards for Go projects.
+	// rootCmd represents the base command when called without any subcommands
+	rootCmd *cobra.Command = &cobra.Command{
+		Use:   "ktn-linter",
+		Short: "KTN-Linter - Linter for Go code following KTN conventions",
+		Long: `KTN-Linter is a specialized linter that enforces naming conventions and code quality standards for Go projects.
 
 It analyzes Go code to ensure compliance with KTN (Kodflow Typing Notation) standards.`,
-}
+	}
+)
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.

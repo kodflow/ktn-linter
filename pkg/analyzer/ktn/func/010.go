@@ -14,7 +14,8 @@ const (
 	MAX_UNNAMED_RETURNS int = 3
 )
 
-var Analyzer010 = &analysis.Analyzer{
+// Analyzer010 checks that functions with >3 return values use named returns
+var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc010",
 	Doc:      "KTN-FUNC-010: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
 	Run:      runFunc010,

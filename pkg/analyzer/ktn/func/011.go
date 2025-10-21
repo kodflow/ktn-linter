@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer011 checks that all branches, returns, and significant logic blocks have comments
-var Analyzer011 = &analysis.Analyzer{
+var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc011",
 	Doc:      "KTN-FUNC-011: Tous les blocs de contrôle (if/else/switch/for), returns et logique significative doivent être commentés",
 	Run:      runFunc011,

@@ -10,18 +10,20 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer003 checks that constants use CAPITAL_UNDERSCORE naming convention
-var Analyzer003 = &analysis.Analyzer{
-	Name:     "ktnconst003",
-	Doc:      "KTN-CONST-003: Vérifie que les constantes utilisent la convention CAPITAL_UNDERSCORE",
-	Run:      runConst003,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+var (
+	// Analyzer003 checks that constants use CAPITAL_UNDERSCORE naming convention
+	Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktnconst003",
+		Doc:      "KTN-CONST-003: Vérifie que les constantes utilisent la convention CAPITAL_UNDERSCORE",
+		Run:      runConst003,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
 
-// validConstNamePattern matches valid CAPITAL_UNDERSCORE constant names
-// Must start with uppercase letter, followed by uppercase letters, digits, or underscores
-// Must contain at least one underscore for multi-word constants
-var validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+	// validConstNamePattern matches valid CAPITAL_UNDERSCORE constant names
+	// Must start with uppercase letter, followed by uppercase letters, digits, or underscores
+	// Must contain at least one underscore for multi-word constants
+	validConstNamePattern *regexp.Regexp = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+)
 
 // runConst003 description à compléter.
 //

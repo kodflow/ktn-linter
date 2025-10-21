@@ -21,7 +21,7 @@ type diagWithFset struct {
 }
 
 // lintCmd represents the lint command
-var lintCmd = &cobra.Command{
+var lintCmd *cobra.Command = &cobra.Command{
 	Use:   "lint [packages...]",
 	Short: "Lint Go packages using KTN rules",
 	Long: `Lint analyzes Go packages and reports issues based on KTN conventions.
@@ -157,6 +157,9 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 
 	var allDiagnostics []diagWithFset
 
+	// Store results of required analyzers (reused across packages)
+	results := make(map[*analysis.Analyzer]interface{}, len(analyzers))
+
 	// Itération sur les éléments
 	for _, pkg := range pkgs {
 		pkgFset := pkg.Fset
@@ -166,8 +169,10 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 			fmt.Fprintf(os.Stderr, "Analyzing package: %s\n", pkg.PkgPath)
 		}
 
-		// Store results of required analyzers
-		results := make(map[*analysis.Analyzer]interface{})
+		// Clear results for this package
+		for k := range results {
+			delete(results, k)
+		}
 
 		// Itération sur les éléments
 		for _, a := range analyzers {
@@ -326,7 +331,7 @@ func filterDiagnostics(diagnostics []diagWithFset) []diagWithFset {
 //   - []analysis.Diagnostic: diagnostics dédupliqués
 func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	// Dédupliquer les diagnostics (même position + même message)
-	seen := make(map[string]bool)
+	seen := make(map[string]bool, len(diagnostics))
 	// deduped holds the configuration value.
 
 	var deduped []diagWithFset
@@ -341,10 +346,10 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 		}
 	}
 
-	diags := make([]analysis.Diagnostic, len(deduped))
+	diags := make([]analysis.Diagnostic, 0, len(deduped))
 	// Itération sur les éléments
-	for i, d := range deduped {
-		diags[i] = d.diag
+	for _, d := range deduped {
+		diags = append(diags, d.diag)
 	}
 	// Early return from function.
 	return diags

@@ -11,19 +11,28 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+const (
+	// INITIAL_TYPE_MAP_CAP définit la capacité initiale pour Types, Defs, Uses
+	INITIAL_TYPE_MAP_CAP int = 64
+	// INITIAL_SELECTOR_MAP_CAP définit la capacité initiale pour Implicits, Selections, Scopes
+	INITIAL_SELECTOR_MAP_CAP int = 16
+	// INITIAL_ANALYZER_MAP_CAP définit la capacité initiale pour ResultOf
+	INITIAL_ANALYZER_MAP_CAP int = 8
+)
+
 // createTypeInfo crée une nouvelle structure types.Info pour le type checking.
 //
 // Returns:
 //   - *types.Info: structure d'information de types
 func createTypeInfo() *types.Info {
-	// Retour de la structure types.Info
+	// Retour de la structure types.Info avec capacités initiales estimées
 	return &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Defs:       make(map[*ast.Ident]types.Object),
-		Uses:       make(map[*ast.Ident]types.Object),
-		Implicits:  make(map[ast.Node]types.Object),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection),
-		Scopes:     make(map[ast.Node]*types.Scope),
+		Types:      make(map[ast.Expr]types.TypeAndValue, INITIAL_TYPE_MAP_CAP),
+		Defs:       make(map[*ast.Ident]types.Object, INITIAL_TYPE_MAP_CAP),
+		Uses:       make(map[*ast.Ident]types.Object, INITIAL_TYPE_MAP_CAP),
+		Implicits:  make(map[ast.Node]types.Object, INITIAL_SELECTOR_MAP_CAP),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection, INITIAL_SELECTOR_MAP_CAP),
+		Scopes:     make(map[ast.Node]*types.Scope, INITIAL_SELECTOR_MAP_CAP),
 	}
 }
 
@@ -48,7 +57,7 @@ func createPass(fset *token.FileSet, file *ast.File, pkg *types.Package, info *t
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},
-		ResultOf: make(map[*analysis.Analyzer]any),
+		ResultOf: make(map[*analysis.Analyzer]any, INITIAL_ANALYZER_MAP_CAP),
 		ReadFile: func(filename string) ([]byte, error) {
 			// Lecture du fichier pour les analyzers qui en ont besoin
 			return os.ReadFile(filename)
@@ -77,7 +86,7 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 	}
 
 	// Création de la configuration de type checking
-	conf := types.Config{
+	conf := &types.Config{
 		Importer: importer.Default(),
 		Error:    func(err error) {}, // Ignorer les erreurs de type pour les tests
 	}

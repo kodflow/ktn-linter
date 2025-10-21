@@ -8,7 +8,7 @@ import (
 )
 
 // Analyzer002 checks that constants are grouped together and placed above var declarations
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktnconst002",
 	Doc:  "KTN-CONST-002: Vérifie que les constantes sont groupées ensemble et placées au-dessus des déclarations var",
 	Run:  runConst002,
@@ -25,9 +25,11 @@ var Analyzer002 = &analysis.Analyzer{
 func runConst002(pass *analysis.Pass) (any, error) {
 	// Analyze each file independently
 	for _, file := range pass.Files {
+		var constGroups []declGroup
+		var varGroups []declGroup
 		tracker := &declTracker{
-			constGroups: []declGroup{},
-			varGroups:   []declGroup{},
+			constGroups: constGroups,
+			varGroups:   varGroups,
 		}
 
 		// Collect const and var declarations
@@ -98,8 +100,8 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	firstVarPos := tracker.varGroups[0].pos
 
 	// Separate consts into those before and after first var
-	constGroupsBeforeVar := []declGroup{}
-	constGroupsAfterVar := []declGroup{}
+	var constGroupsBeforeVar []declGroup
+	var constGroupsAfterVar []declGroup
 
 	// Itération sur les éléments
 	for _, constGroup := range tracker.constGroups {

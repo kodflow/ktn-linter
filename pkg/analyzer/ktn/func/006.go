@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer006 checks that error is always the last return value
-var Analyzer006 = &analysis.Analyzer{
+var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc006",
 	Doc:      "KTN-FUNC-006: L'erreur doit toujours être en dernière position dans les valeurs de retour",
 	Run:      runFunc006,
