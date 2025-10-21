@@ -6,6 +6,14 @@ import (
 	"strings"
 )
 
+// Constantes pour les nombres utilisés dans les fonctions
+const (
+	MAKE_ARGS_WITH_LENGTH   int = 2 // make([]T, length)
+	MAKE_ARGS_WITH_CAPACITY int = 3 // make([]T, length, capacity)
+	SECOND_ARG_INDEX        int = 1 // index du deuxième argument
+	THIRD_ARG_INDEX         int = 2 // index du troisième argument
+)
+
 // IsZeroLiteral vérifie si une expression est le literal zéro (0).
 //
 // Params:
@@ -15,7 +23,7 @@ import (
 //   - bool: true si c'est le literal 0
 func IsZeroLiteral(expr ast.Expr) bool {
 	basicLit, ok := expr.(*ast.BasicLit)
- // Vérification de la condition
+	// Vérification de la condition
 	if !ok {
 		// Condition not met, return false.
 		return false
@@ -32,21 +40,21 @@ func IsZeroLiteral(expr ast.Expr) bool {
 // Returns:
 //   - bool: true si c'est un slice, map ou channel
 func IsReferenceType(expr ast.Expr) bool {
- // Sélection selon la valeur
+	// Sélection selon la valeur
 	switch t := expr.(type) {
- // Traitement
+	// Traitement
 	case *ast.ArrayType:
 		// Slice (ArrayType sans longueur)
 		return t.Len == nil
- // Traitement
+	// Traitement
 	case *ast.MapType:
 		// Continue traversing AST nodes.
 		return true
- // Traitement
+	// Traitement
 	case *ast.ChanType:
 		// Continue traversing AST nodes.
 		return true
- // Traitement
+	// Traitement
 	case *ast.Ident:
 		// Vérifier les types natifs par nom
 		return strings.Contains(t.Name, "map") ||
@@ -65,17 +73,17 @@ func IsReferenceType(expr ast.Expr) bool {
 // Returns:
 //   - bool: true si c'est une struct
 func IsStructType(expr ast.Expr) bool {
- // Sélection selon la valeur
+	// Sélection selon la valeur
 	switch expr.(type) {
- // Traitement
+	// Traitement
 	case *ast.StructType:
 		// Continue traversing AST nodes.
 		return true
- // Traitement
+	// Traitement
 	case *ast.Ident:
 		// Identifiant (type nommé) - potentiellement une struct
 		return true
- // Traitement
+	// Traitement
 	case *ast.SelectorExpr:
 		// Type importé (ex: pkg.MyStruct)
 		return true
@@ -105,34 +113,34 @@ func IsSliceType(expr ast.Expr) bool {
 // Returns:
 //   - string: le nom du type (ex: "map[string]int", "[]int", "chan int")
 func GetTypeName(expr ast.Expr) string {
- // Sélection selon la valeur
+	// Sélection selon la valeur
 	switch t := expr.(type) {
- // Traitement
+	// Traitement
 	case *ast.ArrayType:
 		elemType := GetTypeName(t.Elt)
 		// Early return from function.
 		return "[]" + elemType
- // Traitement
+	// Traitement
 	case *ast.MapType:
 		keyType := GetTypeName(t.Key)
 		valueType := GetTypeName(t.Value)
 		// Early return from function.
 		return "map[" + keyType + "]" + valueType
- // Traitement
+	// Traitement
 	case *ast.ChanType:
 		elemType := GetTypeName(t.Value)
 		// Early return from function.
 		return "chan " + elemType
- // Traitement
+	// Traitement
 	case *ast.Ident:
 		// Early return from function.
 		return t.Name
- // Traitement
+	// Traitement
 	case *ast.SelectorExpr:
 		pkg := GetTypeName(t.X)
 		// Early return from function.
 		return pkg + "." + t.Sel.Name
- // Traitement
+	// Traitement
 	case *ast.StarExpr:
 		base := GetTypeName(t.X)
 		// Early return from function.
@@ -151,7 +159,7 @@ func GetTypeName(expr ast.Expr) string {
 //   - bool: true si c'est make([]T, 0) ou make([]T, 0, 0)
 func IsMakeSliceZero(expr ast.Expr) bool {
 	callExpr, ok := expr.(*ast.CallExpr)
- // Vérification de la condition
+	// Vérification de la condition
 	if !ok {
 		// Condition not met, return false.
 		return false
@@ -159,7 +167,7 @@ func IsMakeSliceZero(expr ast.Expr) bool {
 
 	// Vérifier si c'est make()
 	ident, ok := callExpr.Fun.(*ast.Ident)
- // Vérification de la condition
+	// Vérification de la condition
 	if !ok || ident.Name != "make" {
 		// Condition not met, return false.
 		return false
@@ -172,14 +180,15 @@ func IsMakeSliceZero(expr ast.Expr) bool {
 	}
 
 	// Vérifier les arguments
-	if len(callExpr.Args) == 2 {
-		// make([]T, length)
-		return IsZeroLiteral(callExpr.Args[1])
- // Traitement
- // Vérification de la condition
-	} else if len(callExpr.Args) == 3 {
-		// make([]T, length, capacity)
-		return IsZeroLiteral(callExpr.Args[1]) && IsZeroLiteral(callExpr.Args[2])
+	if len(callExpr.Args) == MAKE_ARGS_WITH_LENGTH {
+		// make([]T, length) - vérifier que length est 0
+		return IsZeroLiteral(callExpr.Args[SECOND_ARG_INDEX])
+	}
+
+	// Vérification de la condition
+	if len(callExpr.Args) == MAKE_ARGS_WITH_CAPACITY {
+		// make([]T, length, capacity) - vérifier que length et capacity sont 0
+		return IsZeroLiteral(callExpr.Args[SECOND_ARG_INDEX]) && IsZeroLiteral(callExpr.Args[THIRD_ARG_INDEX])
 	}
 
 	// Condition not met, return false.
