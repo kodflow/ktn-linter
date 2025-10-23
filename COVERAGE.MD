@@ -14,12 +14,12 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **92.7%** |
+| 🟡 | **TOTAL (Global)** | **93.2%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.9% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 90.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` | 94.4% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 96.1% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` | 97.8% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 97.3% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 87.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
@@ -43,19 +43,17 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🔴 `registry.go:GetRulesByCategory` | 80.0% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` - 94.4%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` - 97.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🔴 `002.go:checkConstGrouping` | 69.2% |
-| 🟡 `003.go:runConst003` | 93.3% |
+| 🔴 `002.go:checkConstGrouping` | 84.6% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` - 96.1%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` - 97.3%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `001.go:runFunc001` | 93.3% |
-| 🔴 `001.go:isLineToSkip` | 64.3% |
 | 🔴 `001.go:countPureCodeLines` | 88.2% |
 | 🟡 `003.go:checkMagicNumbers` | 90.0% |
 | 🟡 `005.go:runFunc005` | 92.3% |
@@ -127,4 +125,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-23 19:43:48*
+*Généré le: 2025-10-23 20:14:44*
