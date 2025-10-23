@@ -167,3 +167,20 @@ func BadBlockAfterIf(x int) string {
 	x = 0
 	return "zero"
 }
+
+// BadElseNoComment has else without comment.
+//
+// Params:
+//   - x: the number to check
+//
+// Returns:
+//   - string: classification result
+func BadElseNoComment(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	} else { // want "KTN-FUNC-011: le bloc 'else' doit avoir un commentaire explicatif"
+		return "non-positive" // want "KTN-FUNC-011: le 'return' doit avoir un commentaire explicatif"
+	}
+}

@@ -167,3 +167,28 @@ func badVarInSwitch() {
 		_ = other
 	}
 }
+
+// badVarInSelect shows incorrect use of var in select.
+// Local variables should use := even in select cases.
+func badVarInSelect() {
+	// Create channels for testing
+	ch := make(chan int)
+
+	// Select on channel operations
+	select {
+	// Case when receiving from channel
+	case val := <-ch:
+		// Variable in select case (should use :=)
+		var result = val * MULTIPLIER // want `KTN-VAR-005: préférer ':=' au lieu de 'var' pour la variable 'result'`
+
+		// Using variable to avoid unused warning
+		_ = result
+	// Default case when no channel operation is ready
+	default:
+		// Variable in default block (should use :=)
+		var msg = "no data" // want `KTN-VAR-005: préférer ':=' au lieu de 'var' pour la variable 'msg'`
+
+		// Using variable to avoid unused warning
+		_ = msg
+	}
+}

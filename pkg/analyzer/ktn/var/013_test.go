@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar013(t *testing.T) {
-	// 5 allocations dans des boucles
-	testhelper.TestGoodBad(t, ktnvar.Analyzer013, "var013", 5)
+	// 7 allocations dans des boucles (5 assignements + 2 déclarations var)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer013, "var013", 7)
 }

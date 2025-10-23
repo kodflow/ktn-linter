@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar005(t *testing.T) {
-	// 13 variables using var with initialization instead of :=
-	testhelper.TestGoodBad(t, ktnvar.Analyzer005, "var005", 13)
+	// 15 variables using var with initialization instead of := (13 + 2 dans select)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer005, "var005", 15)
 }

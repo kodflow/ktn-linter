@@ -14,14 +14,14 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **91.3%** |
+| 🟡 | **TOTAL (Global)** | **92.7%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.9% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 90.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const` | 94.4% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 94.4% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 85.0% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` | 87.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
 
@@ -50,7 +50,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `002.go:checkConstGrouping` | 69.2% |
 | 🟡 `003.go:runConst003` | 93.3% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` - 94.4%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func` - 96.1%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -61,12 +61,12 @@ Rapport de couverture généré automatiquement.
 | 🟡 `005.go:runFunc005` | 92.3% |
 | 🟡 `009.go:runFunc009` | 95.0% |
 | 🟡 `011.go:runFunc011` | 94.4% |
-| 🔴 `011.go:checkIfStmt` | 60.0% |
+| 🔴 `011.go:checkIfStmt` | 80.0% |
 | 🟡 `011.go:hasInlineComment` | 92.3% |
-| ⚫ `011.go:hasCommentBeforeOrInside` | 0.0% |
+| 🔴 `011.go:hasCommentBeforeOrInside` | 85.7% |
 | 🟡 `012.go:runFunc012` | 92.3% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` - 85.0%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var` - 87.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -75,9 +75,8 @@ Rapport de couverture généré automatiquement.
 | 🟡 `004.go:hasValidComment` | 90.0% |
 | 🔴 `005.go:runVar005` | 87.5% |
 | 🟡 `005.go:checkStatement` | 90.0% |
-| 🔴 `005.go:checkNestedBlocks` | 60.0% |
+| 🔴 `005.go:checkNestedBlocks` | 80.0% |
 | 🔴 `005.go:checkIfStmt` | 75.0% |
-| ⚫ `005.go:checkCommClause` | 0.0% |
 | 🟡 `006.go:runVar006` | 92.9% |
 | 🔴 `007.go:isSliceType` | 50.0% |
 | 🔴 `007.go:checkMakeCall` | 85.7% |
@@ -96,8 +95,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `012.go:isStringConcatenation` | 75.0% |
 | 🟡 `013.go:runVar013` | 90.0% |
 | 🔴 `013.go:checkLoopBodyForAlloc` | 75.0% |
-| 🔴 `013.go:checkStmtForAlloc` | 66.7% |
-| ⚫ `013.go:checkDeclForAlloc` | 0.0% |
+| 🔴 `013.go:checkDeclForAlloc` | 81.8% |
 | 🔴 `013.go:isSliceOrMapType` | 66.7% |
 | 🔴 `014.go:runVar014` | 87.5% |
 | 🔴 `014.go:checkDeclForLargeStruct` | 75.0% |
@@ -125,9 +123,8 @@ Rapport de couverture généré automatiquement.
 | 🔴 `019.go:getMutexTypeFromType` | 75.0% |
 | 🔴 `019.go:getTypeName` | 40.0% |
 | 🔴 `019.go:isMutexCopy` | 85.7% |
-| ⚫ `registry.go:Analyzers` | 0.0% |
 
 
 ---
 
-*Généré le: 2025-10-23 19:22:38*
+*Généré le: 2025-10-23 19:30:28*

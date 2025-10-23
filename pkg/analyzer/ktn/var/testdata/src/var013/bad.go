@@ -52,3 +52,23 @@ func badNestedLoopAlloc() {
 		_ = i
 	}
 }
+
+// badVarDeclInLoop crée un slice avec var dans une boucle.
+func badVarDeclInLoop() {
+	// Allocation avec var dans boucle
+	for i := 0; i < 10; i++ {
+		var data = []int{1, 2, 3} // want "KTN-VAR-013: évitez d'allouer des slices/maps dans une boucle"
+		_ = data
+		_ = i
+	}
+}
+
+// badVarMapDeclInLoop crée une map avec var dans une boucle.
+func badVarMapDeclInLoop() {
+	// Allocation avec var dans boucle
+	for i := 0; i < 10; i++ {
+		var cache = make(map[string]int) // want "KTN-VAR-013: évitez d'allouer des slices/maps dans une boucle"
+		_ = cache
+		_ = i
+	}
+}

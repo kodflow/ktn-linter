@@ -270,3 +270,41 @@ func GoodElseEmptyBlock(x int) {
 	}
 	// Handle non-positive case with empty block
 }
+
+// GoodElseWithCommentBefore demonstrates else with comment before.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: classification result
+func GoodElseWithCommentBefore(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+		// Handle non-positive case
+	} else {
+		// Return "non-positive" for non-positive values
+		return "non-positive"
+	}
+}
+
+// GoodElseBlockWithCommentAtStart demonstrates else block with comment at start.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: classification result
+func GoodElseBlockWithCommentAtStart(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	} else {
+		// Handle non-positive case - comment at start of block
+		// Return "non-positive" for non-positive values
+		return "non-positive"
+	}
+}
