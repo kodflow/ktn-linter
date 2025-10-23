@@ -190,3 +190,23 @@ func main() {
 		_ = z
 	}
 }
+
+// functionWithBlockComments teste les commentaires de bloc
+//
+// Returns:
+//   - int: résultat
+func functionWithBlockComments() int {
+	/* Début du block comment
+	   Ligne dans le block comment
+	   Fin du block comment */
+	x := 1
+
+	/* Un autre block comment */
+	y := 2
+
+	// Ligne de commentaire normale
+	z := x + y
+
+	// Retour de la fonction
+	return z
+}
