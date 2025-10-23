@@ -8,6 +8,6 @@ import (
 )
 
 func TestConst002(t *testing.T) {
-	// good.go: 0 errors, bad.go: 6 errors (scattered const blocks + consts after var)
-	testhelper.TestGoodBad(t, ktnconst.Analyzer002, "const002", 6)
+	// good.go: 0 errors, bad.go: 7 errors (6 scattered + 1 after var)
+	testhelper.TestGoodBad(t, ktnconst.Analyzer002, "const002", 7)
 }

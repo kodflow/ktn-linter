@@ -47,7 +47,16 @@ const (
 )
 
 // GlobalVar is a variable declaration (after all const blocks)
-var GlobalVar string = "test"
+var (
+	// GlobalVar is a test variable
+	GlobalVar string = "test"
+)
+
+// Const after var - ERROR #7
+const ( // want "KTN-CONST-002: les constantes doivent être groupées et placées au-dessus des déclarations var"
+	// CONST_AFTER_VAR appears after var (BAD)
+	CONST_AFTER_VAR string = "after"
+)
 
 // helperFunction is used to demonstrate const blocks separated by other declarations.
 //

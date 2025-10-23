@@ -79,3 +79,9 @@ const (
 	// Blank identifier (valid edge case - should be skipped by naming rules)
 	_ int = 999
 )
+
+// Variable declaration to test that only const are checked
+var (
+	// This variable should be ignored by const003 rule
+	variableNotConst int = 123
+)
