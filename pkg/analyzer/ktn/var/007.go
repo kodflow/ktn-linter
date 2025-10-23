@@ -111,14 +111,14 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar007(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.CompositeLit)(nil),
 		(*ast.CallExpr)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Vérification du type de nœud
 		switch node := n.(type) {
 		// Traitement des composite literals pour détecter []T{}

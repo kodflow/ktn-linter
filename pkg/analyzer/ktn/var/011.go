@@ -25,14 +25,14 @@ var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar011(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.ValueSpec)(nil),
 		(*ast.AssignStmt)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		checkBuilderWithoutGrow(pass, n)
 	})
 
@@ -133,8 +133,9 @@ func checkAssignStmt(node *ast.AssignStmt) (*ast.CompositeLit, ast.Node) {
 func isBuilderCompositeLit(lit *ast.CompositeLit) bool {
 	// Check if type is selector expression
 	if sel, ok := lit.Type.(*ast.SelectorExpr); ok {
+		var pkg *ast.Ident
 		// Check package and type names
-		if pkg, ok := sel.X.(*ast.Ident); ok {
+		if pkg, ok = sel.X.(*ast.Ident); ok {
 			pkgName := pkg.Name
 			typeName := sel.Sel.Name
 			// Check for strings.Builder or bytes.Buffer
@@ -187,8 +188,9 @@ func extractTypeString(typeExpr ast.Expr, values []ast.Expr) string {
 	if typeExpr != nil {
 		// Check if selector expression
 		if sel, ok := typeExpr.(*ast.SelectorExpr); ok {
+			var pkg *ast.Ident
 			// Check package name
-			if pkg, ok := sel.X.(*ast.Ident); ok {
+			if pkg, ok = sel.X.(*ast.Ident); ok {
 				// Return package.Type format
 				return pkg.Name + "." + sel.Sel.Name
 			}
@@ -199,10 +201,12 @@ func extractTypeString(typeExpr ast.Expr, values []ast.Expr) string {
 	if len(values) > 0 {
 		// Check first value
 		if lit, ok := values[0].(*ast.CompositeLit); ok {
+			var sel *ast.SelectorExpr
 			// Check if type is selector expression
-			if sel, ok := lit.Type.(*ast.SelectorExpr); ok {
+			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
+				var pkg *ast.Ident
 				// Check package name
-				if pkg, ok := sel.X.(*ast.Ident); ok {
+				if pkg, ok = sel.X.(*ast.Ident); ok {
 					// Return package.Type format
 					return pkg.Name + "." + sel.Sel.Name
 				}
@@ -226,10 +230,12 @@ func extractAssignTypeString(assign *ast.AssignStmt) string {
 	for _, rhs := range assign.Rhs {
 		// Check if composite literal
 		if lit, ok := rhs.(*ast.CompositeLit); ok {
+			var sel *ast.SelectorExpr
 			// Check if type is selector expression
-			if sel, ok := lit.Type.(*ast.SelectorExpr); ok {
+			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
+				var pkg *ast.Ident
 				// Check package name
-				if pkg, ok := sel.X.(*ast.Ident); ok {
+				if pkg, ok = sel.X.(*ast.Ident); ok {
 					// Return package.Type format
 					return pkg.Name + "." + sel.Sel.Name
 				}

@@ -70,14 +70,14 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc006(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 		(*ast.FuncLit)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		var funcType *ast.FuncType
 		// Sélection selon la valeur
 		switch node := n.(type) {

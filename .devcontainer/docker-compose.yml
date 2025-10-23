@@ -24,6 +24,7 @@ services:
       - package-cache:/home/vscode/.cache
       - config-dir:/home/vscode/.config
       - local-bin:/home/vscode/.local/bin
+      - npm-global:/home/vscode/.npm-global
 
       # Claude CLI session persistence (survives rebuilds)
       - claude-config:/home/vscode/.claude
@@ -78,7 +79,7 @@ services:
       - GRADLE_USER_HOME=/home/vscode/.cache/gradle
 
       # PATH - Add all bin directories
-      - PATH=/home/vscode/.local/bin:/home/vscode/.cache/go/bin:/home/vscode/.cache/cargo/bin:/home/vscode/.cache/gems/bin:/home/vscode/.cache/pnpm:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+      - PATH=/home/vscode/.npm-global/bin:/home/vscode/.local/bin:/home/vscode/.cache/go/bin:/home/vscode/.cache/cargo/bin:/home/vscode/.cache/gems/bin:/home/vscode/.cache/pnpm:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
 
     # User
     user: vscode
@@ -88,6 +89,7 @@ volumes:
   package-cache:
   config-dir:
   local-bin:
+  npm-global:
   # Claude CLI volumes (persist sessions across rebuilds)
   claude-config:
   anthropic-config:

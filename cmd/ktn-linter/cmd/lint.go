@@ -281,18 +281,18 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 //
 // Params:
 func formatAndDisplay(diagnostics []diagWithFset) {
-	fmt := formatter.NewFormatter(os.Stdout, AIMode, NoColor, Simple)
+	fmtr := formatter.NewFormatter(os.Stdout, AIMode, NoColor, Simple)
 
 	// Vérification de la condition
 	if len(diagnostics) == 0 {
-		fmt.Format(nil, nil)
+		fmtr.Format(nil, nil)
 		// Early return from function.
 		return
 	}
 
 	firstFset := diagnostics[0].fset
 	diags := extractDiagnostics(diagnostics)
-	fmt.Format(firstFset, diags)
+	fmtr.Format(firstFset, diags)
 }
 
 // filterDiagnostics filtre les diagnostics des fichiers cache/tmp.

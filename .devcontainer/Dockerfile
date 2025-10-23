@@ -120,9 +120,13 @@ RUN GO_ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "amd64" || echo "arm64") && \
     ln -sf /usr/local/go/bin/go /usr/local/bin/go && \
     ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 
-# Install npm global packages as root (uses @latest - may change often, so at the end)
-RUN npm install -g @anthropic-ai/claude-code@latest @bazel/bazelisk
+# Configure npm to use user-local directory for global packages
 USER vscode
+ENV PATH="/home/vscode/.npm-global/bin:$PATH"
+RUN mkdir -p /home/vscode/.npm-global && \
+    npm config set prefix '/home/vscode/.npm-global' && \
+    echo 'export PATH=/home/vscode/.npm-global/bin:$PATH' >> /home/vscode/.zshrc && \
+    npm install -g @anthropic-ai/claude-code@latest @bazel/bazelisk
 
 # Set working directory
 WORKDIR /workspace

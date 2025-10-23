@@ -76,6 +76,7 @@ func GoodLoop(items []int) int {
 // Returns:
 //   - int: double of x
 func GoodInlineComment(x int) int {
+	// Retour de la fonction
 	return x * DOUBLE_MULTIPLIER // Return double of x
 }
 
@@ -212,8 +213,10 @@ func GoodElseBlockWithCommentInside(x int) string {
 func TestGoodFunction(t interface{}) {
 	// This is a test function, it should be skipped
 	if true {
+		// Retour de la fonction
 		return
 	}
+	// Retour de la fonction
 	return
 }
 
@@ -226,6 +229,7 @@ func BenchmarkGoodFunction(b interface{}) {
 	for i := 0; i < BENCHMARK_LIMIT; i++ {
 		_ = i * DOUBLE_MULTIPLIER
 	}
+	// Retour de la fonction
 	return
 }
 
@@ -233,8 +237,10 @@ func BenchmarkGoodFunction(b interface{}) {
 func ExampleGoodFunction() {
 	// This is an example function, it should be skipped
 	if true {
+		// Retour de la fonction
 		return
 	}
+	// Retour de la fonction
 	return
 }
 
@@ -245,8 +251,10 @@ func ExampleGoodFunction() {
 func FuzzGoodFunction(f interface{}) {
 	// This is a fuzz function, it should be skipped
 	if true {
+		// Retour de la fonction
 		return
 	}
+	// Retour de la fonction
 	return
 }
 

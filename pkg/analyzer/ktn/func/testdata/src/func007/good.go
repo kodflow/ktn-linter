@@ -40,7 +40,8 @@ func GoodNoReturn(msg string) {
 //   - string: les données formatées
 //
 // Example:
-//   result := GoodComplete("test")
+//
+//	result := GoodComplete("test")
 func GoodComplete(input string) string {
 	// Retourne les données d'entrée formatées
 	return input

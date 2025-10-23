@@ -99,7 +99,8 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 
 	// Exécution des analyzers requis (comme inspect.Analyzer)
 	for _, req := range analyzer.Requires {
-		result, err := req.Run(pass)
+		var result any
+		result, err = req.Run(pass)
 		// Vérification d'erreur de l'analyzer requis
 		if err != nil {
 			// Retour de la fonction avec erreur fatale

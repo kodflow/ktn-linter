@@ -457,21 +457,22 @@ func extractCode(message string) string {
 //   - string: couleur ANSI
 //
 func extractMessage(message string) string {
+	var idx int
 	// Supprimer le code [KTN-XXX-XXX] ou KTN-XXX-XXX:
 	// Format 1: [KTN-XXX-XXX] ...
-	if idx := strings.Index(message, "]"); idx != -1 && idx < len(message)-1 {
+	if idx = strings.Index(message, "]"); idx != -1 && idx < len(message)-1 {
 		message = strings.TrimSpace(message[idx+1:])
  // Traitement
  // Vérification de la condition
 	} else if strings.HasPrefix(message, "KTN-") {
 		// Format 2: KTN-XXX-XXX: ...
-		if idx := strings.Index(message, ":"); idx != -1 && idx < len(message)-1 {
+		if idx = strings.Index(message, ":"); idx != -1 && idx < len(message)-1 {
 			message = strings.TrimSpace(message[idx+1:])
 		}
 	}
 
 	// Tronquer au premier \n pour avoir juste la première ligne
-	if idx := strings.Index(message, "\n"); idx != -1 {
+	if idx = strings.Index(message, "\n"); idx != -1 {
 		message = message[:idx]
 	}
 

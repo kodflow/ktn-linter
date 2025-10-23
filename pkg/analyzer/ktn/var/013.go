@@ -25,14 +25,14 @@ var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar013(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.ForStmt)(nil),
 		(*ast.RangeStmt)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Récupération du corps de la boucle
 		var body *ast.BlockStmt
 		// Vérification du type de boucle
@@ -129,9 +129,10 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 		return
 	}
 
+	var valueSpec *ast.ValueSpec
 	// Parcours des spécifications
 	for _, spec := range genDecl.Specs {
-		valueSpec, ok := spec.(*ast.ValueSpec)
+		valueSpec, ok = spec.(*ast.ValueSpec)
 		// Vérification de la spécification de valeur
 		if !ok {
 			// Pas une spécification de valeur

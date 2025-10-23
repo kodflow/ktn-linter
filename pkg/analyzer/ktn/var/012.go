@@ -27,14 +27,14 @@ var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar012(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.ForStmt)(nil),
 		(*ast.RangeStmt)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		checkStringConcatInLoop(pass, n)
 	})
 
@@ -107,8 +107,9 @@ func isStringConcatenation(pass *analysis.Pass, assign *ast.AssignStmt) bool {
 
 	// Get type information
 	if tv, ok := pass.TypesInfo.Types[lhs]; ok {
+		var basic *types.Basic
 		// Check if type is string
-		if basic, ok := tv.Type.Underlying().(*types.Basic); ok {
+		if basic, ok = tv.Type.Underlying().(*types.Basic); ok {
 			// Return true if string type
 			return basic.Kind() == types.String
 		}

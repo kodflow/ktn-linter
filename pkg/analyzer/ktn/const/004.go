@@ -35,13 +35,13 @@ var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runConst004(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		genDecl := n.(*ast.GenDecl)
 
 		// Only check const declarations

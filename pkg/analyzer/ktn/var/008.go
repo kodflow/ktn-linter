@@ -122,13 +122,13 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar008(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.CallExpr)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
 		checkMakeCallVar008(pass, call)
 	})

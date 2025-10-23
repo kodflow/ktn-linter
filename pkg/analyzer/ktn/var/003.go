@@ -33,13 +33,13 @@ var (
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar003(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		genDecl := n.(*ast.GenDecl)
 
 		// Only check var declarations

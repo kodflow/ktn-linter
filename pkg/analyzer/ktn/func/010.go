@@ -32,13 +32,13 @@ var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runFunc010(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		funcName := funcDecl.Name.Name
 

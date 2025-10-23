@@ -31,16 +31,16 @@ var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc003(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Map des valeurs autorisées (non magic numbers)
 	allowedValues := getAllowedValues()
 
 	// Collecter les littéraux autorisés (const, array sizes)
-	allowedLiterals := collectAllowedLiterals(inspect)
+	allowedLiterals := collectAllowedLiterals(insp)
 
 	// Vérifier les magic numbers
-	checkMagicNumbers(inspect, pass, allowedValues, allowedLiterals)
+	checkMagicNumbers(insp, pass, allowedValues, allowedLiterals)
 
 	// Retour succès
 	return nil, nil
@@ -66,7 +66,7 @@ func getAllowedValues() map[string]bool {
 //
 // Returns:
 //   - map[ast.Node]bool: map des littéraux autorisés
-func collectAllowedLiterals(inspect *inspector.Inspector) map[ast.Node]bool {
+func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
 	allowedLiterals := make(map[ast.Node]bool, INITIAL_ALLOWED_LITERALS_CAP)
 
 	// Filter pour GenDecl seulement
@@ -74,7 +74,7 @@ func collectAllowedLiterals(inspect *inspector.Inspector) map[ast.Node]bool {
 		(*ast.GenDecl)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		genDecl := n.(*ast.GenDecl)
 
 		// Si c'est une déclaration const
@@ -101,13 +101,13 @@ func collectAllowedLiterals(inspect *inspector.Inspector) map[ast.Node]bool {
 //   - pass: contexte d'analyse
 //   - allowedValues: valeurs autorisées
 //   - allowedLiterals: littéraux autorisés
-func checkMagicNumbers(inspect *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool) {
+func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool) {
 	// Filter pour les littéraux
 	nodeFilter := []ast.Node{
 		(*ast.BasicLit)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		lit := n.(*ast.BasicLit)
 
 		// Vérifier si c'est un nombre (INT ou FLOAT)
