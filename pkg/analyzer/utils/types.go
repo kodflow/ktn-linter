@@ -2,8 +2,11 @@ package utils
 
 import (
 	"go/ast"
+	"go/constant"
 	"go/token"
 	"strings"
+
+	"golang.org/x/tools/go/analysis"
 )
 
 // Constantes pour les nombres utilisés dans les fonctions
@@ -148,6 +151,42 @@ func GetTypeName(expr ast.Expr) string {
 	}
 	// Early return from function.
 	return "T"
+}
+
+// HasPositiveLength vérifie si un argument de longueur est > 0.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - lengthArg: argument de longueur
+//
+// Returns:
+//   - bool: true si la longueur est positive
+func HasPositiveLength(pass *analysis.Pass, lengthArg ast.Expr) bool {
+	// Check via TypesInfo
+	if pass != nil && pass.TypesInfo != nil {
+		// Vérification du type de l'argument
+		if tv, ok := pass.TypesInfo.Types[lengthArg]; ok {
+			// Check if it's a constant
+			if tv.Value != nil && tv.Value.Kind() == constant.Int {
+				var val int64
+				var isInt bool
+				// Get integer value
+				val, isInt = constant.Int64Val(tv.Value)
+				// Vérification de la condition
+				if isInt {
+					// Return true if positive
+					return val > 0
+				}
+			}
+		}
+	}
+	// Check via AST for basic literals
+	if lit, ok := lengthArg.(*ast.BasicLit); ok && lit.Kind == token.INT {
+		// Return true if not "0"
+		return lit.Value != "0"
+	}
+	// Default to true (assume positive for variables)
+	return true
 }
 
 // IsMakeSliceZero vérifie si une expression est make([]T, 0) ou make([]T, 0, 0).

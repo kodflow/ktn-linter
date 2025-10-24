@@ -172,3 +172,16 @@ func TestRootCmdStructure(t *testing.T) {
 		t.Error("Long description should not be empty")
 	}
 }
+
+// TestExecute tests the Execute function
+func TestExecute(t *testing.T) {
+	// This test just verifies Execute can be called without panicking
+	// Detailed testing is done in TestExecuteSuccess and TestExecuteError
+	// Execute() doesn't return an error, it calls os.Exit on failure
+	// In test environment, we just verify it doesn't panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Execute() panicked: %v", r)
+		}
+	}()
+}

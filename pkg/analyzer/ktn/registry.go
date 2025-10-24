@@ -3,15 +3,16 @@ package ktn
 import (
 	"golang.org/x/tools/go/analysis"
 
-	ktnconst "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/const"
-	ktnfunc "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/func"
-	ktnvar "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/var"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 )
 
 // GetAllRules retourne toutes les règles KTN disponibles.
 //
 // Returns:
-//   - []*analysis.Analyzer: liste de tous les analyseurs (const + func + var)
+//   - []*analysis.Analyzer: liste de tous les analyseurs (const + func + var + test)
 func GetAllRules() []*analysis.Analyzer {
 	var all []*analysis.Analyzer
 	// Ajoute les analyseurs de constantes
@@ -20,6 +21,8 @@ func GetAllRules() []*analysis.Analyzer {
 	all = append(all, ktnfunc.GetAnalyzers()...)
 	// Ajoute les analyseurs de variables
 	all = append(all, ktnvar.Analyzers()...)
+	// Ajoute les analyseurs de tests
+	all = append(all, ktntest.Analyzers()...)
 	// Retourne la liste complète
 	return all
 }
@@ -27,7 +30,7 @@ func GetAllRules() []*analysis.Analyzer {
 // GetRulesByCategory retourne les règles d'une catégorie spécifique.
 //
 // Params:
-//   - category: nom de la catégorie ("const", "func" ou "var")
+//   - category: nom de la catégorie ("const", "func", "var" ou "test")
 //
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs de la catégorie demandée
@@ -46,6 +49,10 @@ func GetRulesByCategory(category string) []*analysis.Analyzer {
 	case "var":
 		// Retourne les analyseurs de variables
 		return ktnvar.Analyzers()
+ // Traitement
+	case "test":
+		// Retourne les analyseurs de tests
+		return ktntest.Analyzers()
  // Traitement
 	default:
 		// Catégorie inconnue

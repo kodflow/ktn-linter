@@ -1,13 +1,11 @@
-package ktn_test
+package ktn
 
 import (
 	"testing"
-
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn"
 )
 
 func TestGetAllRules(t *testing.T) {
-	rules := ktn.GetAllRules()
+	rules := GetAllRules()
 
 	// Check that we have rules
 	if len(rules) == 0 {
@@ -36,14 +34,16 @@ func TestGetRulesByCategory(t *testing.T) {
 		minExpectedRules int
 	}{
 		{"const category", "const", 4},
-		{"func category", "func", 4},
+		{"func category", "func", 12},
+		{"var category", "var", 19},
+		{"test category", "test", 6},
 		{"unknown category", "unknown", 0},
 		{"empty category", "", 0},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rules := ktn.GetRulesByCategory(tt.category)
+			rules := GetRulesByCategory(tt.category)
 
 			if tt.minExpectedRules == 0 {
 				if len(rules) > 0 {

@@ -1,0 +1,302 @@
+package utils
+
+import (
+	"go/ast"
+	"go/parser"
+	"testing"
+
+)
+
+func TestIsMakeCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "make slice",
+			code: `make([]int, 0)`,
+			want: true,
+		},
+		{
+			name: "make map",
+			code: `make(map[string]int)`,
+			want: true,
+		},
+		{
+			name: "make channel",
+			code: `make(chan int, 10)`,
+			want: true,
+		},
+		{
+			name: "not make call",
+			code: `append(slice, 1)`,
+			want: false,
+		},
+		{
+			name: "method call",
+			code: `obj.make()`,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parser.ParseExpr(tt.code)
+			if err != nil {
+				t.Fatalf("Failed to parse expression: %v", err)
+			}
+
+			call, ok := expr.(*ast.CallExpr)
+			if !ok {
+				t.Fatalf("Expression is not a CallExpr")
+			}
+
+			got := IsMakeCall(call)
+			if got != tt.want {
+				t.Errorf("IsMakeCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsMakeCallWithLength(t *testing.T) {
+	tests := []struct {
+		name    string
+		code    string
+		minArgs int
+		want    bool
+	}{
+		{
+			name:    "make with length",
+			code:    `make([]int, 10)`,
+			minArgs: 2,
+			want:    true,
+		},
+		{
+			name:    "make with length and capacity",
+			code:    `make([]int, 10, 20)`,
+			minArgs: 3,
+			want:    true,
+		},
+		{
+			name:    "make without enough args",
+			code:    `make(map[string]int)`,
+			minArgs: 2,
+			want:    false,
+		},
+		{
+			name:    "not make call",
+			code:    `append(slice, 1, 2, 3)`,
+			minArgs: 2,
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parser.ParseExpr(tt.code)
+			if err != nil {
+				t.Fatalf("Failed to parse expression: %v", err)
+			}
+
+			call, ok := expr.(*ast.CallExpr)
+			if !ok {
+				t.Fatalf("Expression is not a CallExpr")
+			}
+
+			got := IsMakeCallWithLength(call, tt.minArgs)
+			if got != tt.want {
+				t.Errorf("IsMakeCallWithLength() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsMakeSliceCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "make slice with length",
+			code: `make([]int, 10)`,
+			want: true,
+		},
+		{
+			name: "make slice with capacity",
+			code: `make([]string, 0, 10)`,
+			want: true,
+		},
+		{
+			name: "make map",
+			code: `make(map[string]int)`,
+			want: false,
+		},
+		{
+			name: "make channel",
+			code: `make(chan int)`,
+			want: false,
+		},
+		{
+			name: "not make call",
+			code: `append([]int{}, 1)`,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parser.ParseExpr(tt.code)
+			if err != nil {
+				t.Fatalf("Failed to parse expression: %v", err)
+			}
+
+			call, ok := expr.(*ast.CallExpr)
+			if !ok {
+				t.Fatalf("Expression is not a CallExpr")
+			}
+
+			got := IsMakeSliceCall(call)
+			if got != tt.want {
+				t.Errorf("IsMakeSliceCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsMakeMapCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "make map without capacity",
+			code: `make(map[string]int)`,
+			want: true,
+		},
+		{
+			name: "make map with capacity",
+			code: `make(map[string]bool, 100)`,
+			want: true,
+		},
+		{
+			name: "make slice",
+			code: `make([]int, 10)`,
+			want: false,
+		},
+		{
+			name: "make channel",
+			code: `make(chan int)`,
+			want: false,
+		},
+		{
+			name: "not make call",
+			code: `len(myMap)`,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parser.ParseExpr(tt.code)
+			if err != nil {
+				t.Fatalf("Failed to parse expression: %v", err)
+			}
+
+			call, ok := expr.(*ast.CallExpr)
+			if !ok {
+				t.Fatalf("Expression is not a CallExpr")
+			}
+
+			got := IsMakeMapCall(call)
+			if got != tt.want {
+				t.Errorf("IsMakeMapCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsMakeByteSliceCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "make byte slice",
+			code: `make([]byte, 1024)`,
+			want: true,
+		},
+		{
+			name: "make byte slice with capacity",
+			code: `make([]byte, 0, 1024)`,
+			want: true,
+		},
+		{
+			name: "make int slice",
+			code: `make([]int, 10)`,
+			want: false,
+		},
+		{
+			name: "make string slice",
+			code: `make([]string, 0)`,
+			want: false,
+		},
+		{
+			name: "not make call",
+			code: `[]byte("hello")`,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parser.ParseExpr(tt.code)
+			if err != nil {
+				t.Fatalf("Failed to parse expression: %v", err)
+			}
+
+			call, ok := expr.(*ast.CallExpr)
+			if !ok {
+				t.Fatalf("Expression is not a CallExpr")
+			}
+
+			got := IsMakeByteSliceCall(call)
+			if got != tt.want {
+				t.Errorf("IsMakeByteSliceCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+// TestIsMakeCallsWithNoArgs tests make calls without arguments
+func TestIsMakeCallsWithNoArgs(t *testing.T) {
+	// Create a make call without args artificially
+	makeCall := &ast.CallExpr{
+		Fun:  &ast.Ident{Name: "make"},
+		Args: []ast.Expr{}, // Empty args
+	}
+
+	t.Run("IsMakeSliceCall with no args", func(t *testing.T) {
+		got := IsMakeSliceCall(makeCall)
+		if got != false {
+			t.Errorf("IsMakeSliceCall(make with no args) = %v, want false", got)
+		}
+	})
+
+	t.Run("IsMakeMapCall with no args", func(t *testing.T) {
+		got := IsMakeMapCall(makeCall)
+		if got != false {
+			t.Errorf("IsMakeMapCall(make with no args) = %v, want false", got)
+		}
+	})
+
+	t.Run("IsMakeByteSliceCall with no args", func(t *testing.T) {
+		got := IsMakeByteSliceCall(makeCall)
+		if got != false {
+			t.Errorf("IsMakeByteSliceCall(make with no args) = %v, want false", got)
+		}
+	})
+}

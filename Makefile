@@ -15,7 +15,7 @@ help: ## Affiche cette aide
 build: ## Compile le binaire ktn-linter dans builds/
 	@echo "${GREEN}Compilation de ktn-linter...${NC}"
 	@mkdir -p builds
-	@go build -o builds/ktn-linter ./cmd/ktn-linter
+	@go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter
 	@echo "${GREEN}✅ Binaire créé: builds/ktn-linter${NC}"
 
 test: ## Exécute les tests avec couverture
@@ -26,7 +26,7 @@ coverage: ## Génère le rapport de couverture (COVERAGE.MD)
 	@./scripts/generate-coverage.sh
 
 lint: ## Lance le linter sur le projet (exclut *_test.go)
-	@go run ./cmd/ktn-linter lint ./...
+	@go run -buildvcs=false ./cmd/ktn-linter lint ./...
 
 validate: build ## Valide que tous les testdata good.go/bad.go sont corrects
 	@./scripts/validate-testdata.sh

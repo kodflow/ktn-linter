@@ -12,46 +12,46 @@ import (
 // Returns:
 //   - string: la représentation textuelle (gère identifiants, sélecteurs, tableaux, maps, pointeurs, etc.)
 func GetExprAsString(expr ast.Expr) string {
- // Sélection selon la valeur
+	// Sélection selon la valeur
 	switch e := expr.(type) {
- // Traitement
+	// Traitement
 	case *ast.Ident:
 		// Early return from function.
 		return e.Name
- // Traitement
+	// Traitement
 	case *ast.SelectorExpr:
 		// Early return from function.
 		return GetExprAsString(e.X) + "." + e.Sel.Name
- // Traitement
+	// Traitement
 	case *ast.ArrayType:
 		// Early return from function.
 		return "[]" + GetExprAsString(e.Elt)
- // Traitement
+	// Traitement
 	case *ast.MapType:
 		// Early return from function.
 		return "map[" + GetExprAsString(e.Key) + "]" + GetExprAsString(e.Value)
- // Traitement
+	// Traitement
 	case *ast.StarExpr:
 		// Early return from function.
 		return "*" + GetExprAsString(e.X)
- // Traitement
+	// Traitement
 	case *ast.ChanType:
-  // Sélection selon la valeur
+		// Sélection selon la valeur
 		switch e.Dir {
-  // Traitement
+		// Traitement
 		case ast.SEND:
 			// Early return from function.
 			return "chan<- " + GetExprAsString(e.Value)
-  // Traitement
+		// Traitement
 		case ast.RECV:
 			// Early return from function.
 			return "<-chan " + GetExprAsString(e.Value)
-  // Traitement
+		// Traitement
 		default:
 			// Early return from function.
 			return "chan " + GetExprAsString(e.Value)
 		}
- // Traitement
+	// Traitement
 	default:
 		// Early return from function.
 		return "unknown"
@@ -66,7 +66,7 @@ func GetExprAsString(expr ast.Expr) string {
 // Returns:
 //   - string: la représentation textuelle du type, ou "<type>" si non spécifié
 func GetTypeString(spec *ast.ValueSpec) string {
- // Vérification de la condition
+	// Vérification de la condition
 	if spec.Type != nil {
 		// Early return from function.
 		return GetExprAsString(spec.Type)

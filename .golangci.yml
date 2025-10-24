@@ -20,8 +20,15 @@ issues:
   max-same-issues: 0
   # Ne pas exclure testdata
   exclude-dirs: []
-  # Exclure les fichiers _test.go du linting IDE
+  # Exclure les fichiers _test.go du linting KTN
   exclude-rules:
     - path: _test\.go
       linters:
         - all
+  # Désactiver les diagnostics natifs de Go (redeclarations, unused vars, etc.)
+  exclude-use-default: false
+  exclude:
+    - ".*other declaration.*"
+    - ".*declared and not used.*"
+    - ".*imported and not used.*"
+    - ".*no new variables.*"

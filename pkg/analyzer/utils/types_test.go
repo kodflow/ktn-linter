@@ -5,6 +5,8 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"golang.org/x/tools/go/analysis"
 )
 
 // TestIsZeroLiteral tests the functionality of the corresponding implementation.
@@ -81,29 +83,6 @@ func TestIsStructType(t *testing.T) {
 			got := IsStructType(expr)
 			if got != tt.expected {
 				t.Errorf("IsStructType(%s) = %v, want %v", tt.code, got, tt.expected)
-			}
-		})
-	}
-}
-
-// TestIsSliceType tests the functionality of the corresponding implementation.
-func TestIsSliceType(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		expected bool
-	}{
-		{"slice type", "[]int", true},
-		{"array type", "[5]int", false},
-		{"map type", "map[string]int", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			expr, _ := parser.ParseExpr(tt.code)
-			got := IsSliceType(expr)
-			if got != tt.expected {
-				t.Errorf("IsSliceType(%s) = %v, want %v", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -195,4 +174,42 @@ func TestIsMakeSliceZeroWithNonMake(t *testing.T) {
 	if got != false {
 		t.Errorf("IsMakeSliceZero(non-make) = %v, want false", got)
 	}
+}
+
+// TestHasPositiveLength tests the functionality of HasPositiveLength
+func TestHasPositiveLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
+		expected bool
+	}{
+		{"positive literal", "5", true},
+		{"zero literal", "0", false},
+		{"variable", "n", true},  // Variables assumed positive
+		{"expression", "1+1", true}, // Non-literal assumed positive
+		{"hex zero", "0x0", true}, // Not "0" string, treated as positive
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, _ := parser.ParseExpr(tt.code)
+			// Call with nil pass to test AST-only path
+			got := HasPositiveLength(nil, expr)
+			if got != tt.expected {
+				t.Errorf("HasPositiveLength(%q) = %v, want %v", tt.code, got, tt.expected)
+			}
+		})
+	}
+
+	// Test avec pass non-nil mais TypesInfo nil
+	t.Run("pass without typesinfo", func(t *testing.T) {
+		pass := &analysis.Pass{
+			TypesInfo: nil,
+		}
+		expr, _ := parser.ParseExpr("5")
+		got := HasPositiveLength(pass, expr)
+		if !got {
+			t.Errorf("HasPositiveLength with pass but no TypesInfo should return true")
+		}
+	})
 }

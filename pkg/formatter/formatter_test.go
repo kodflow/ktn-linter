@@ -556,3 +556,18 @@ func TestFormatHumanModeEmpty(t *testing.T) {
 		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
 	}
 }
+
+// TestFormat tests the public Format method
+func TestFormat(t *testing.T) {
+	var buf bytes.Buffer
+	formatter := NewFormatter(&buf, false, true, false)
+	fset := token.NewFileSet()
+	
+	// Test avec diagnostics vides
+	formatter.Format(fset, []analysis.Diagnostic{})
+	output := buf.String()
+	
+	if !strings.Contains(output, "No issues found") {
+		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
+	}
+}

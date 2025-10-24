@@ -110,6 +110,11 @@ func checkLoadErrors(pkgs []*packages.Package) {
 	for _, pkg := range pkgs {
 		// Itération sur les éléments
 		for _, err := range pkg.Errors {
+			// Only warn about VCS errors, don't exit
+			if strings.Contains(err.Error(), "VCS status") {
+				// Skip VCS errors
+				continue
+			}
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			hasLoadErrors = true
 		}
@@ -213,6 +218,57 @@ func filterTestFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
 	return filtered
 }
 
+// selectFilesForAnalyzer détermine les fichiers à analyser.
+//
+// Params:
+//   - a: analyseur
+//   - pkg: package
+//   - fset: fileset
+//
+// Returns:
+//   - []*ast.File: fichiers à analyser
+func selectFilesForAnalyzer(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet) []*ast.File {
+	// TEST analyzers need all files (including test files)
+	if strings.HasPrefix(a.Name, "ktntest") {
+		// Return all files
+		return pkg.Syntax
+	}
+	// Other analyzers get only non-test files
+	return filterTestFiles(pkg.Syntax, fset)
+}
+
+// runRequiredAnalyzers exécute les analyseurs requis.
+//
+// Params:
+//   - a: analyseur
+//   - files: fichiers
+//   - pkg: package
+//   - fset: fileset
+//   - results: map des résultats
+func runRequiredAnalyzers(a *analysis.Analyzer, files []*ast.File, pkg *packages.Package, fset *token.FileSet, results map[*analysis.Analyzer]interface{}) {
+	// Run required analyzers first
+	for _, req := range a.Requires {
+		// Vérification de la condition
+		if _, ok := results[req]; !ok {
+			reqPass := &analysis.Pass{
+				Analyzer:  req,
+				Fset:      fset,
+				Files:     files,
+				Pkg:       pkg.Types,
+				TypesInfo: pkg.TypesInfo,
+				ResultOf: results,
+				Report:   func(analysis.Diagnostic) {},
+				ReadFile: func(filename string) ([]byte, error) {
+					// Lit le contenu du fichier
+					return os.ReadFile(filename)
+				},
+			}
+			result, _ := req.Run(reqPass)
+			results[req] = result
+		}
+	}
+}
+
 // createAnalysisPass crée un pass d'analyse pour un package.
 //
 // Params:
@@ -225,36 +281,14 @@ func filterTestFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
 // Returns:
 //   - *analysis.Pass: pass d'analyse créé
 func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet, diagnostics *[]diagWithFset, results map[*analysis.Analyzer]interface{}) *analysis.Pass {
-	// Filter out test files
-	nonTestFiles := filterTestFiles(pkg.Syntax, fset)
-
-	// Run required analyzers first
-	for _, req := range a.Requires {
-		// Vérification de la condition
-		if _, ok := results[req]; !ok {
-			reqPass := &analysis.Pass{
-				Analyzer:  req,
-				Fset:      fset,
-				Files:     nonTestFiles,
-				Pkg:       pkg.Types,
-				TypesInfo: pkg.TypesInfo,
-				ResultOf:  results,
-				Report:    func(analysis.Diagnostic) {},
-				ReadFile: func(filename string) ([]byte, error) {
-					// Retour du contenu du fichier
-					return os.ReadFile(filename)
-				},
-			}
-			result, _ := req.Run(reqPass)
-			results[req] = result
-		}
-	}
+	filesToAnalyze := selectFilesForAnalyzer(a, pkg, fset)
+	runRequiredAnalyzers(a, filesToAnalyze, pkg, fset, results)
 
 	// Early return from function.
 	return &analysis.Pass{
 		Analyzer:  a,
 		Fset:      fset,
-		Files:     nonTestFiles,
+		Files:     filesToAnalyze,
 		Pkg:       pkg.Types,
 		TypesInfo: pkg.TypesInfo,
 		ResultOf:  results,
