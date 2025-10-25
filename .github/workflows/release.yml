@@ -2,6 +2,8 @@ name: Release KTN-Linter
 
 on:
   push:
+    branches:
+      - main  # Auto-release au merge sur main
     tags:
       - 'v*.*.*'  # Déclenché sur tags semver (v1.0.0, v1.2.3, etc.)
   workflow_dispatch:
@@ -58,9 +60,26 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Workflow manuel : utiliser la version fournie
             VERSION="${{ inputs.version }}"
-          else
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Push de tag : utiliser le tag
             VERSION="${{ github.ref_name }}"
+          else
+            # Push sur main : auto-bump version
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $LATEST_TAG"
+
+            # Extraire major.minor.patch
+            VERSION_NUM=${LATEST_TAG#v}
+            MAJOR=$(echo $VERSION_NUM | cut -d. -f1)
+            MINOR=$(echo $VERSION_NUM | cut -d. -f2)
+            PATCH=$(echo $VERSION_NUM | cut -d. -f3)
+
+            # Bump patch
+            PATCH=$((PATCH + 1))
+            VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            echo "New version: $VERSION"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "version_no_v=${VERSION#v}" >> $GITHUB_OUTPUT
@@ -107,9 +126,26 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Workflow manuel : utiliser la version fournie
             VERSION="${{ inputs.version }}"
-          else
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Push de tag : utiliser le tag
             VERSION="${{ github.ref_name }}"
+          else
+            # Push sur main : auto-bump version
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $LATEST_TAG"
+
+            # Extraire major.minor.patch
+            VERSION_NUM=${LATEST_TAG#v}
+            MAJOR=$(echo $VERSION_NUM | cut -d. -f1)
+            MINOR=$(echo $VERSION_NUM | cut -d. -f2)
+            PATCH=$(echo $VERSION_NUM | cut -d. -f3)
+
+            # Bump patch
+            PATCH=$((PATCH + 1))
+            VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            echo "New version: $VERSION"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "version_no_v=${VERSION#v}" >> $GITHUB_OUTPUT
