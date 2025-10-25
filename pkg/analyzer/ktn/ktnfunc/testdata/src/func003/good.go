@@ -96,3 +96,12 @@ func arraySize() {
 	var arr [ARRAY_SIZE]int
 	_ = arr
 }
+
+// stringLiterals les littéraux string ne sont pas des magic numbers
+func stringLiterals() {
+	// Les strings ne déclenchent pas KTN-FUNC-003
+	message := "hello"
+	code := "CODE123"
+	_ = message
+	_ = code
+}

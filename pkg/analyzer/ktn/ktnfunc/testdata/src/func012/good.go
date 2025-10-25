@@ -153,3 +153,14 @@ func nestedConditions(a, b int) int {
 	// Retour b si a non positif
 	return b
 }
+
+// emptyIfBody teste les blocs if vides (edge case)
+//
+// Params:
+//   - x: valeur à tester
+func emptyIfBody(x int) {
+	// Bloc if vide (ne déclenche pas KTN-FUNC-012)
+	if x > 0 {
+	}
+	// Retour de la fonction
+}

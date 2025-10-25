@@ -14,12 +14,12 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **91.1%** |
+| 🟡 | **TOTAL (Global)** | **91.5%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 94.4% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 97.8% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 97.8% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 98.5% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 77.5% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 85.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
@@ -40,25 +40,21 @@ Rapport de couverture généré automatiquement.
 | 🟡 `lint.go:runAnalyzers` | 96.2% |
 | 🔴 `lint.go:runRequiredAnalyzers` | 83.3% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 94.4%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 97.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🔴 `002.go:checkConstGrouping` | 84.6% |
-| 🔴 `004.go:hasValidComment` | 70.0% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 97.8%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 98.5%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `001.go:runFunc001` | 93.3% |
 | 🔴 `001.go:countPureCodeLines` | 88.2% |
-| 🟡 `003.go:checkMagicNumbers` | 90.0% |
 | 🟡 `005.go:runFunc005` | 92.3% |
 | 🟡 `009.go:runFunc009` | 95.0% |
 | 🟡 `011.go:runFunc011` | 94.4% |
-| 🟡 `011.go:hasInlineComment` | 92.3% |
-| 🟡 `012.go:runFunc012` | 92.3% |
 
 ### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 77.5%
 
@@ -147,4 +143,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-25 00:10:10*
+*Généré le: 2025-10-25 03:56:23*
