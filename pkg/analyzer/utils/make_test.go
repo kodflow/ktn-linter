@@ -279,24 +279,26 @@ func TestIsMakeCallsWithNoArgs(t *testing.T) {
 		Args: []ast.Expr{}, // Empty args
 	}
 
-	t.Run("IsMakeSliceCall with no args", func(t *testing.T) {
-		got := IsMakeSliceCall(makeCall)
-		if got != false {
-			t.Errorf("IsMakeSliceCall(make with no args) = %v, want false", got)
-		}
-	})
+	tests := []struct {
+		name     string
+		callFunc func(*ast.CallExpr) bool
+		funcName string
+	}{
+		{"IsMakeSliceCall with no args", IsMakeSliceCall, "IsMakeSliceCall"},
+		{"IsMakeMapCall with no args", IsMakeMapCall, "IsMakeMapCall"},
+		{"IsMakeByteSliceCall with no args", IsMakeByteSliceCall, "IsMakeByteSliceCall"},
+	}
 
-	t.Run("IsMakeMapCall with no args", func(t *testing.T) {
-		got := IsMakeMapCall(makeCall)
-		if got != false {
-			t.Errorf("IsMakeMapCall(make with no args) = %v, want false", got)
-		}
-	})
-
-	t.Run("IsMakeByteSliceCall with no args", func(t *testing.T) {
-		got := IsMakeByteSliceCall(makeCall)
-		if got != false {
-			t.Errorf("IsMakeByteSliceCall(make with no args) = %v, want false", got)
-		}
-	})
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Appel fonction
+			got := tt.callFunc(makeCall)
+			// Vérification résultat
+			if got != false {
+				t.Errorf("%s(make with no args) = %v, want false", tt.funcName, got)
+			}
+		})
+	}
 }

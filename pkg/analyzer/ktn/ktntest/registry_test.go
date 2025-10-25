@@ -6,33 +6,52 @@ import (
 
 // TestAnalyzers tests the functionality of Analyzers
 func TestAnalyzers(t *testing.T) {
-	analyzers := Analyzers()
-
-	// Vérifier que la liste n'est pas vide
-	if len(analyzers) == 0 {
-		t.Error("Analyzers should return at least one analyzer")
+	tests := []struct {
+		name  string
+		check func(t *testing.T)
+	}{
+		{
+			name: "returns non-empty list",
+			check: func(t *testing.T) {
+				analyzers := Analyzers()
+				// Vérification liste non vide
+				if len(analyzers) == 0 {
+					t.Error("Analyzers should return at least one analyzer")
+				}
+			},
+		},
+		{
+			name: "all analyzers are valid",
+			check: func(t *testing.T) {
+				analyzers := Analyzers()
+				// Vérification chaque analyzer
+				for _, analyzer := range analyzers {
+					// Vérification non-nil
+					if analyzer == nil {
+						t.Error("Analyzers returned nil analyzer")
+					}
+					// Vérification nom
+					if analyzer.Name == "" {
+						t.Error("Analyzer has empty name")
+					}
+					// Vérification doc
+					if analyzer.Doc == "" {
+						t.Error("Analyzer has empty documentation")
+					}
+					// Vérification fonction Run
+					if analyzer.Run == nil {
+						t.Errorf("Analyzer %s has nil Run function", analyzer.Name)
+					}
+				}
+			},
+		},
 	}
 
-	// Vérifier que chaque analyseur est valide
-	for _, analyzer := range analyzers {
-		// Vérifier que l'analyseur n'est pas nil
-		if analyzer == nil {
-			t.Error("Analyzers returned nil analyzer")
-		}
-
-		// Vérifier que l'analyseur a un nom
-		if analyzer.Name == "" {
-			t.Error("Analyzer has empty name")
-		}
-
-		// Vérifier que l'analyseur a une doc
-		if analyzer.Doc == "" {
-			t.Error("Analyzer has empty documentation")
-		}
-
-		// Vérifier que l'analyseur a une fonction Run
-		if analyzer.Run == nil {
-			t.Errorf("Analyzer %s has nil Run function", analyzer.Name)
-		}
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t)
+		})
 	}
 }

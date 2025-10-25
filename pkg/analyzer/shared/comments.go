@@ -8,10 +8,13 @@ const (
 	COMMENT_PREFIX_LENGTH int = 2
 	// WANT_MIN_LENGTH est la longueur minimale pour "// want" ou "/*want"
 	WANT_MIN_LENGTH int = 8 // "//" + " want" ou "/*" + " want"
+	// WANT_KEYWORD_LENGTH longueur du mot "want"
+	WANT_KEYWORD_LENGTH int = 4
+	// WANT_WITH_SPACE_LENGTH longueur de " want"
+	WANT_WITH_SPACE_LENGTH int = 5
 )
 
-// HasValidComment vérifie si un groupe de commentaires contient des commentaires valides.
-// Il ignore les directives "want" utilisées par analysistest.
+// HasValidComment vérifie si un groupe de commentaires contient des commentaires valides et ignore les directives "want" utilisées par analysistest.
 //
 // Params:
 //   - cg: groupe de commentaires à vérifier
@@ -36,7 +39,7 @@ func HasValidComment(cg *ast.CommentGroup) bool {
 			// Extraire le contenu après "//" ou "/*"
 			content := text[COMMENT_PREFIX_LENGTH:]
 			// Vérifier si c'est une directive "want"
-			if len(content) >= 5 && (content[:4] == "want" || content[:5] == " want") {
+			if len(content) >= WANT_WITH_SPACE_LENGTH && (content[:WANT_KEYWORD_LENGTH] == "want" || content[:WANT_WITH_SPACE_LENGTH] == " want") {
 				continue
 			}
 		}

@@ -136,60 +136,70 @@ func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]shared.
 	return interfaces
 }
 
-// collectStructsWithMethods collecte les structs et leurs méthodes publiques.
+// extractStructNameFromReceiver extrait le nom de la struct depuis le receiver.
+//
+// Params:
+//   - recvType: type du receiver
+//
+// Returns:
+//   - string: nom de la struct
+func extractStructNameFromReceiver(recvType ast.Expr) string {
+	var structName string
+	// Gérer les receivers de type *T ou T
+	switch t := recvType.(type) {
+	// Traitement
+	case *ast.StarExpr:
+		// Receiver de type *T
+		if ident, ok := t.X.(*ast.Ident); ok {
+			structName = ident.Name
+		}
+	// Traitement
+	case *ast.Ident:
+		// Receiver de type T
+		structName = t.Name
+	}
+	// Retour du nom
+	return structName
+}
+
+// collectMethodsByStruct collecte les méthodes publiques pour chaque struct.
 //
 // Params:
 //   - file: fichier AST
 //   - pass: contexte d'analyse
-//   - insp: inspector
 //
 // Returns:
-//   - []structWithMethods: liste des structs avec méthodes
-func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
-	// Map pour stocker les méthodes par type de struct
+//   - map[string][]shared.MethodSignature: map des méthodes par struct
+func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]shared.MethodSignature {
 	methodsByStruct := make(map[string][]shared.MethodSignature, 0)
 
-	// Collecter les méthodes du fichier courant uniquement
+	// Collecter les méthodes du fichier
 	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier si c'est une FuncDecl
+		// Vérifier FuncDecl
 		funcDecl, ok := n.(*ast.FuncDecl)
-		// Si ce n'est pas une FuncDecl, continuer
+		// Vérification si FuncDecl
 		if !ok {
 			// Continue traversal
 			return true
 		}
 
-		// Vérifier si la fonction a un receiver
+		// Vérifier receiver
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
-			// Pas un receiver, continuer
+			// Pas de receiver
 			return true
 		}
 
-		// Vérifier si la méthode est publique
+		// Vérifier méthode publique
 		if !ast.IsExported(funcDecl.Name.Name) {
-			// Méthode privée, ignorer
+			// Méthode privée
 			return true
 		}
 
-		// Extraire le type du receiver
+		// Extraire nom de struct
 		recvType := funcDecl.Recv.List[0].Type
-		var structName string
+		structName := extractStructNameFromReceiver(recvType)
 
-		// Gérer les receivers de type *T ou T
-		switch t := recvType.(type) {
-		// Traitement
-		case *ast.StarExpr:
-			// Receiver de type *T
-			if ident, ok := t.X.(*ast.Ident); ok {
-				structName = ident.Name
-			}
-			// Traitement
-		case *ast.Ident:
-			// Receiver de type T
-			structName = t.Name
-		}
-
-		// Si on a trouvé le nom de la struct
+		// Ajouter méthode
 		if structName != "" {
 			methodsByStruct[structName] = append(methodsByStruct[structName], shared.MethodSignature{
 				Name:       funcDecl.Name.Name,
@@ -201,6 +211,23 @@ func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspec
 		// Continue traversal
 		return true
 	})
+
+	// Retour de la map
+	return methodsByStruct
+}
+
+// collectStructsWithMethods collecte les structs et leurs méthodes publiques.
+//
+// Params:
+//   - file: fichier AST
+//   - pass: contexte d'analyse
+//   - insp: inspector
+//
+// Returns:
+//   - []structWithMethods: liste des structs avec méthodes
+func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
+	// Collecter les méthodes
+	methodsByStruct := collectMethodsByStruct(file, pass)
 
 	// Collecter les structs du fichier
 	var structs []structWithMethods

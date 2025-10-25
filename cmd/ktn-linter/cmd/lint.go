@@ -77,8 +77,9 @@ func runLint(cmd *cobra.Command, args []string) {
 //   - []*packages.Package: packages chargés
 func loadPackages(patterns []string) []*packages.Package {
 	cfg := &packages.Config{
-		Mode:  packages.NeedName | packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
-		Tests: true,
+		Mode:       packages.NeedName | packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
+		Tests:      true,
+		BuildFlags: []string{"-buildvcs=false"},
 	}
 
 	pkgs, err := packages.Load(cfg, patterns...)

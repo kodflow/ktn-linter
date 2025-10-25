@@ -96,80 +96,136 @@ func TestExecuteSuccess(t *testing.T) {
 
 // TestExecuteError teste l'exécution avec une erreur
 func TestExecuteError(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
-
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-	defer func() {
-		os.Stderr = oldStderr
-	}()
-
-	// Simuler des arguments invalides
-	oldArgs := os.Args
-	os.Args = []string{"ktn-linter", "invalid-command"}
-	defer func() {
-		os.Args = oldArgs
-	}()
-
-	exitCode, didExit := catchExitInCmd(t, func() {
-		Execute()
-	})
-
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-
-	// Vérification de la condition
-	if !didExit {
-		t.Error("Expected Execute() to exit on invalid command")
+	tests := []struct {
+		name          string
+		args          []string
+		expectedExit  bool
+		expectedCode  int
+		expectedInMsg string
+	}{
+		{
+			name:          "invalid command",
+			args:          []string{"ktn-linter", "invalid-command"},
+			expectedExit:  true,
+			expectedCode:  1,
+			expectedInMsg: "Error",
+		},
 	}
 
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
 
-	output := stderr.String()
-	if !strings.Contains(output, "Error") {
-		t.Errorf("Expected error message, got: %s", output)
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+			defer func() {
+				os.Stderr = oldStderr
+			}()
+
+			// Simuler arguments
+			oldArgs := os.Args
+			os.Args = tt.args
+			defer func() {
+				os.Args = oldArgs
+			}()
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				Execute()
+			})
+
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+
+			// Vérification exit
+			if didExit != tt.expectedExit {
+				t.Errorf("Expected didExit=%v, got %v", tt.expectedExit, didExit)
+			}
+
+			// Vérification code
+			if exitCode != tt.expectedCode {
+				t.Errorf("Expected exit code %d, got %d", tt.expectedCode, exitCode)
+			}
+
+			// Vérification message
+			output := stderr.String()
+			if !strings.Contains(output, tt.expectedInMsg) {
+				t.Errorf("Expected %q in output, got: %s", tt.expectedInMsg, output)
+			}
+		})
 	}
 }
 
 // TestInitFlags teste que les flags sont correctement initialisés
 func TestInitFlags(t *testing.T) {
-	// Les flags sont initialisés dans init()
-	// Vérifier qu'ils existent dans rootCmd
-	if rootCmd.PersistentFlags().Lookup("ai") == nil {
-		t.Error("Flag 'ai' not found")
+	tests := []struct {
+		name     string
+		flagName string
+	}{
+		{"ai flag exists", "ai"},
+		{"no-color flag exists", "no-color"},
+		{"simple flag exists", "simple"},
+		{"verbose flag exists", "verbose"},
+		{"category flag exists", "category"},
 	}
-	if rootCmd.PersistentFlags().Lookup("no-color") == nil {
-		t.Error("Flag 'no-color' not found")
-	}
-	if rootCmd.PersistentFlags().Lookup("simple") == nil {
-		t.Error("Flag 'simple' not found")
-	}
-	if rootCmd.PersistentFlags().Lookup("verbose") == nil {
-		t.Error("Flag 'verbose' not found")
-	}
-	if rootCmd.PersistentFlags().Lookup("category") == nil {
-		t.Error("Flag 'category' not found")
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Vérification flag
+			if rootCmd.PersistentFlags().Lookup(tt.flagName) == nil {
+				t.Errorf("Flag '%s' not found", tt.flagName)
+			}
+		})
 	}
 }
 
 // TestRootCmdStructure teste la structure de la commande root
 func TestRootCmdStructure(t *testing.T) {
-	if rootCmd.Use != "ktn-linter" {
-		t.Errorf("Expected Use='ktn-linter', got '%s'", rootCmd.Use)
+	tests := []struct {
+		name  string
+		check func(t *testing.T)
+	}{
+		{
+			name: "Use field is correct",
+			check: func(t *testing.T) {
+				const EXPECTED_USE string = "ktn-linter"
+				// Vérification Use
+				if rootCmd.Use != EXPECTED_USE {
+					t.Errorf("Expected Use='%s', got '%s'", EXPECTED_USE, rootCmd.Use)
+				}
+			},
+		},
+		{
+			name: "Short description is not empty",
+			check: func(t *testing.T) {
+				// Vérification Short
+				if rootCmd.Short == "" {
+					t.Error("Short description should not be empty")
+				}
+			},
+		},
+		{
+			name: "Long description is not empty",
+			check: func(t *testing.T) {
+				// Vérification Long
+				if rootCmd.Long == "" {
+					t.Error("Long description should not be empty")
+				}
+			},
+		},
 	}
 
-	if rootCmd.Short == "" {
-		t.Error("Short description should not be empty")
-	}
-
-	if rootCmd.Long == "" {
-		t.Error("Long description should not be empty")
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t)
+		})
 	}
 }
 

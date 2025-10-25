@@ -10,35 +10,60 @@ import (
 // Returns:
 //   - (voir code)
 func TestAnalyzers(t *testing.T) {
-	analyzers := Analyzers()
+	const EXPECTED_COUNT int = 19
 
-	// Vérifier que la liste n'est pas vide
-	if len(analyzers) == 0 {
-		t.Fatal("Analyzers() returned empty list")
+	tests := []struct {
+		name  string
+		check func(t *testing.T)
+	}{
+		{
+			name: "returns non-empty list",
+			check: func(t *testing.T) {
+				analyzers := Analyzers()
+				// Vérification liste non vide
+				if len(analyzers) == 0 {
+					t.Fatal("Analyzers() returned empty list")
+				}
+			},
+		},
+		{
+			name: "all analyzers have name and doc",
+			check: func(t *testing.T) {
+				analyzers := Analyzers()
+				// Vérification chaque analyzer
+				for i, analyzer := range analyzers {
+					// Vérification non-nil
+					if analyzer == nil {
+						t.Fatalf("Analyzer at index %d is nil", i)
+					}
+					// Vérification nom
+					if analyzer.Name == "" {
+						t.Errorf("Analyzer at index %d has empty name", i)
+					}
+					// Vérification doc
+					if analyzer.Doc == "" {
+						t.Errorf("Analyzer %s has empty documentation", analyzer.Name)
+					}
+				}
+			},
+		},
+		{
+			name: "returns expected count",
+			check: func(t *testing.T) {
+				analyzers := Analyzers()
+				// Vérification nombre
+				if len(analyzers) != EXPECTED_COUNT {
+					t.Errorf("Expected %d analyzers, got %d", EXPECTED_COUNT, len(analyzers))
+				}
+			},
+		},
 	}
 
-	// Vérifier que chaque analyseur a un nom et une doc
-	for i, analyzer := range analyzers {
-		// Vérification de la condition
-		if analyzer == nil {
-			t.Fatalf("Analyzer at index %d is nil", i)
-		}
-
-		// Vérification de la condition
-		if analyzer.Name == "" {
-			t.Errorf("Analyzer at index %d has empty name", i)
-		}
-
-		// Vérification de la condition
-		if analyzer.Doc == "" {
-			t.Errorf("Analyzer %s has empty documentation", analyzer.Name)
-		}
-	}
-
-	// Vérifier le nombre attendu d'analyseurs (19 règles VAR)
-	expectedCount := 19
-	// Vérification de la condition
-	if len(analyzers) != expectedCount {
-		t.Errorf("Expected %d analyzers, got %d", expectedCount, len(analyzers))
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t)
+		})
 	}
 }

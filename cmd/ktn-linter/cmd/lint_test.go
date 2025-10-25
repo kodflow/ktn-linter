@@ -151,44 +151,77 @@ func TestLoadPackagesWithPackageError(t *testing.T) {
 
 // TestCheckLoadErrors teste checkLoadErrors avec des erreurs
 func TestCheckLoadErrors(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
-
-	// Créer un package avec des erreurs
-	pkg := &packages.Package{
-		PkgPath: "test/pkg",
-		Errors: []packages.Error{
-			{Msg: "test error"},
+	tests := []struct {
+		name          string
+		pkg           *packages.Package
+		expectedExit  bool
+		expectedCode  int
+		expectedInMsg string
+	}{
+		{
+			name: "package with single error",
+			pkg: &packages.Package{
+				PkgPath: "test/pkg",
+				Errors: []packages.Error{
+					{Msg: "test error"},
+				},
+			},
+			expectedExit:  true,
+			expectedCode:  1,
+			expectedInMsg: "test error",
+		},
+		{
+			name: "package with multiple errors",
+			pkg: &packages.Package{
+				PkgPath: "test/multi",
+				Errors: []packages.Error{
+					{Msg: "error 1"},
+					{Msg: "error 2"},
+				},
+			},
+			expectedExit:  true,
+			expectedCode:  1,
+			expectedInMsg: "error 1",
 		},
 	}
 
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-	defer func() {
-		os.Stderr = oldStderr
-	}()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
 
-	exitCode, didExit := catchExitInCmd(t, func() {
-		checkLoadErrors([]*packages.Package{pkg})
-	})
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+			defer func() {
+				os.Stderr = oldStderr
+			}()
 
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
+			exitCode, didExit := catchExitInCmd(t, func() {
+				checkLoadErrors([]*packages.Package{tt.pkg})
+			})
 
-	if !didExit {
-		t.Error("Expected checkLoadErrors to exit with errors")
-	}
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
 
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
-	}
+			// Vérification exit
+			if didExit != tt.expectedExit {
+				t.Errorf("Expected didExit=%v, got %v", tt.expectedExit, didExit)
+			}
 
-	output := stderr.String()
-	if !strings.Contains(output, "test error") {
-		t.Errorf("Expected error message in output, got: %s", output)
+			// Vérification code
+			if exitCode != tt.expectedCode {
+				t.Errorf("Expected exit code %d, got %d", tt.expectedCode, exitCode)
+			}
+
+			// Vérification message
+			output := stderr.String()
+			if !strings.Contains(output, tt.expectedInMsg) {
+				t.Errorf("Expected %q in output, got: %s", tt.expectedInMsg, output)
+			}
+		})
 	}
 }
 
@@ -206,12 +239,70 @@ func TestCheckLoadErrorsNoErrors(t *testing.T) {
 
 // TestRunAnalyzers teste runAnalyzers
 func TestRunAnalyzers(t *testing.T) {
-	pkgs := loadPackages([]string{"../../../pkg/formatter"})
-	diagnostics := runAnalyzers(pkgs)
+	tests := []struct {
+		name           string
+		packages       []string
+		setupCategory  func()
+		cleanupCategory func()
+		expectPanic    bool
+	}{
+		{
+			name:     "success with valid packages",
+			packages: []string{"../../../pkg/formatter"},
+			setupCategory: func() {
+				// Pas de catégorie spécifique
+			},
+			cleanupCategory: func() {},
+			expectPanic:     false,
+		},
+		{
+			name:     "success with multiple packages",
+			packages: []string{"../../../pkg/formatter", "../../../pkg/analyzer/utils"},
+			setupCategory: func() {
+				// Pas de catégorie spécifique
+			},
+			cleanupCategory: func() {},
+			expectPanic:     false,
+		},
+		{
+			name:     "success with specific category",
+			packages: []string{"../../../pkg/formatter"},
+			setupCategory: func() {
+				Category = "func"
+			},
+			cleanupCategory: func() {
+				Category = ""
+			},
+			expectPanic: false,
+		},
+		{
+			name:     "error handling with empty packages",
+			packages: []string{},
+			setupCategory: func() {
+				// Pas de catégorie spécifique
+			},
+			cleanupCategory: func() {},
+			expectPanic:     false,
+		},
+	}
 
-	// Les diagnostics peuvent être vides ou non selon le code
-	// L'important est que la fonction ne panique pas
-	_ = diagnostics
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupCategory()
+			defer tt.cleanupCategory()
+
+			// Chargement des packages
+			pkgs := loadPackages(tt.packages)
+
+			// Exécution de runAnalyzers
+			diagnostics := runAnalyzers(pkgs)
+
+			// Vérification que la fonction ne panique pas
+			_ = diagnostics
+		})
+	}
 }
 
 // TestRunAnalyzersWithCategory teste runAnalyzers avec une catégorie
@@ -490,23 +581,63 @@ func TestFormatAndDisplayWithDiagnostics(t *testing.T) {
 
 // TestLintCmdStructure teste la structure de la commande lint
 func TestLintCmdStructure(t *testing.T) {
-	if lintCmd.Use != "lint [packages...]" {
-		t.Errorf("Expected Use='lint [packages...]', got '%s'", lintCmd.Use)
+	tests := []struct {
+		name  string
+		check func(t *testing.T)
+	}{
+		{
+			name: "Use field is correct",
+			check: func(t *testing.T) {
+				const EXPECTED_USE string = "lint [packages...]"
+				// Vérification Use
+				if lintCmd.Use != EXPECTED_USE {
+					t.Errorf("Expected Use='%s', got '%s'", EXPECTED_USE, lintCmd.Use)
+				}
+			},
+		},
+		{
+			name: "Short description is not empty",
+			check: func(t *testing.T) {
+				// Vérification Short
+				if lintCmd.Short == "" {
+					t.Error("Short description should not be empty")
+				}
+			},
+		},
+		{
+			name: "Long description is not empty",
+			check: func(t *testing.T) {
+				// Vérification Long
+				if lintCmd.Long == "" {
+					t.Error("Long description should not be empty")
+				}
+			},
+		},
+		{
+			name: "Args validator is not nil",
+			check: func(t *testing.T) {
+				// Vérification Args
+				if lintCmd.Args == nil {
+					t.Error("Args validator should not be nil")
+				}
+			},
+		},
+		{
+			name: "Run function is not nil",
+			check: func(t *testing.T) {
+				// Vérification Run
+				if lintCmd.Run == nil {
+					t.Error("Run function should not be nil")
+				}
+			},
+		},
 	}
 
-	if lintCmd.Short == "" {
-		t.Error("Short description should not be empty")
-	}
-
-	if lintCmd.Long == "" {
-		t.Error("Long description should not be empty")
-	}
-
-	if lintCmd.Args == nil {
-		t.Error("Args validator should not be nil")
-	}
-
-	if lintCmd.Run == nil {
-		t.Error("Run function should not be nil")
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t)
+		})
 	}
 }

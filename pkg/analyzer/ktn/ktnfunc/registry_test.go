@@ -6,22 +6,7 @@ import (
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
 func TestGetAnalyzers(t *testing.T) {
-	analyzers := GetAnalyzers()
-
-	// Check that we have at least 12 analyzers
-	minExpectedCount := 12
-	if len(analyzers) < minExpectedCount {
-		t.Errorf("GetAnalyzers() returned %d analyzers, expected at least %d", len(analyzers), minExpectedCount)
-	}
-
-	// Check that all analyzers are non-nil
-	for i, analyzer := range analyzers {
-		if analyzer == nil {
-			t.Errorf("Analyzer at index %d is nil", i)
-		}
-	}
-
-	// Check that the analyzers have the expected names
+	const MIN_EXPECTED_COUNT int = 12
 	expectedNames := map[string]bool{
 		"ktnfunc001": true, // Max 35 lines
 		"ktnfunc002": true, // Max 5 parameters
@@ -37,9 +22,53 @@ func TestGetAnalyzers(t *testing.T) {
 		"ktnfunc012": true, // No else after return/continue/break
 	}
 
-	for _, analyzer := range analyzers {
-		if !expectedNames[analyzer.Name] {
-			t.Errorf("Unexpected analyzer name: %s", analyzer.Name)
-		}
+	tests := []struct {
+		name  string
+		check func(t *testing.T)
+	}{
+		{
+			name: "returns minimum expected count",
+			check: func(t *testing.T) {
+				analyzers := GetAnalyzers()
+				// Vérification nombre minimum
+				if len(analyzers) < MIN_EXPECTED_COUNT {
+					t.Errorf("GetAnalyzers() returned %d analyzers, expected at least %d", len(analyzers), MIN_EXPECTED_COUNT)
+				}
+			},
+		},
+		{
+			name: "all analyzers are non-nil",
+			check: func(t *testing.T) {
+				analyzers := GetAnalyzers()
+				// Vérification non-nil
+				for i, analyzer := range analyzers {
+					// Vérification analyzer
+					if analyzer == nil {
+						t.Errorf("Analyzer at index %d is nil", i)
+					}
+				}
+			},
+		},
+		{
+			name: "all analyzer names are expected",
+			check: func(t *testing.T) {
+				analyzers := GetAnalyzers()
+				// Vérification noms attendus
+				for _, analyzer := range analyzers {
+					// Vérification nom dans map
+					if !expectedNames[analyzer.Name] {
+						t.Errorf("Unexpected analyzer name: %s", analyzer.Name)
+					}
+				}
+			},
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t)
+		})
 	}
 }

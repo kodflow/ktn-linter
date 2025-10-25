@@ -55,6 +55,7 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 
 		// Skip main function
 		funcName := funcDecl.Name.Name
+		// Vérification fonction main
 		if funcName == "main" {
 			// Retour de la fonction
 			return

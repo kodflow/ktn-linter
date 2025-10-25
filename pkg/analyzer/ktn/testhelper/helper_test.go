@@ -310,30 +310,94 @@ func TestTestGoodBadWrongErrorCount(t *testing.T) {
 
 // TestRunAnalyzerWithReadFile teste que ReadFile fonctionne.
 func TestRunAnalyzerWithReadFile(t *testing.T) {
-	// Analyzer qui utilise ReadFile
-	readFileAnalyzer := &analysis.Analyzer{
-		Name: "test-readfile",
-		Doc:  "Test analyzer that uses ReadFile",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Lecture du fichier
-			content, err := pass.ReadFile(pass.Fset.Position(pass.Files[0].Pos()).Filename)
-			if err != nil {
-				t.Errorf("ReadFile failed: %v", err)
-			}
-			if len(content) == 0 {
-				t.Error("ReadFile returned empty content")
-			}
-			// Retour de la fonction
-			return nil, nil
+	const EXPECTED_DIAG_COUNT int = 0
+
+	tests := []struct {
+		name  string
+		check func(t *testing.T)
+	}{
+		{
+			name: "ReadFile succeeds",
+			check: func(t *testing.T) {
+				var readErr error
+				// Analyzer qui utilise ReadFile
+				readFileAnalyzer := &analysis.Analyzer{
+					Name: "test-readfile",
+					Doc:  "Test analyzer that uses ReadFile",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Lecture du fichier
+						_, readErr = pass.ReadFile(pass.Fset.Position(pass.Files[0].Pos()).Filename)
+						// Retour de la fonction
+						return nil, nil
+					},
+				}
+
+				// Test avec un fichier Go valide
+				tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
+				RunAnalyzer(t, readFileAnalyzer, tmpFile)
+				// Vérification pas d'erreur
+				if readErr != nil {
+					t.Errorf("ReadFile failed: %v", readErr)
+				}
+			},
+		},
+		{
+			name: "ReadFile returns non-empty content",
+			check: func(t *testing.T) {
+				var content []byte
+				// Analyzer qui utilise ReadFile
+				readFileAnalyzer := &analysis.Analyzer{
+					Name: "test-readfile-content",
+					Doc:  "Test analyzer that checks content",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Lecture du fichier
+						content, _ = pass.ReadFile(pass.Fset.Position(pass.Files[0].Pos()).Filename)
+						// Retour de la fonction
+						return nil, nil
+					},
+				}
+
+				// Test avec un fichier Go valide
+				tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
+				RunAnalyzer(t, readFileAnalyzer, tmpFile)
+				// Vérification contenu non vide
+				if len(content) == 0 {
+					t.Error("ReadFile returned empty content")
+				}
+			},
+		},
+		{
+			name: "No diagnostics generated",
+			check: func(t *testing.T) {
+				// Analyzer qui utilise ReadFile
+				readFileAnalyzer := &analysis.Analyzer{
+					Name: "test-readfile-no-diag",
+					Doc:  "Test analyzer with no diagnostics",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Lecture du fichier
+						_, _ = pass.ReadFile(pass.Fset.Position(pass.Files[0].Pos()).Filename)
+						// Retour de la fonction
+						return nil, nil
+					},
+				}
+
+				// Test avec un fichier Go valide
+				tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
+				diags := RunAnalyzer(t, readFileAnalyzer, tmpFile)
+				// Vérification qu'aucun diagnostic n'est généré
+				if len(diags) != EXPECTED_DIAG_COUNT {
+					t.Errorf("Expected %d diagnostics, got %d", EXPECTED_DIAG_COUNT, len(diags))
+				}
+			},
 		},
 	}
 
-	// Test avec un fichier Go valide
-	tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
-	diags := RunAnalyzer(t, readFileAnalyzer, tmpFile)
-	// Vérification qu'aucun diagnostic n'est généré
-	if len(diags) != 0 {
-		t.Errorf("Expected 0 diagnostics, got %d", len(diags))
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t)
+		})
 	}
 }
 
@@ -403,515 +467,532 @@ func (m *MockTestingT) Logf(format string, args ...any) {
 
 // TestTestGoodBadWithFiles teste la fonction TestGoodBadWithFiles.
 func TestTestGoodBadWithFiles(t *testing.T) {
-	// Note: Cette fonction appelle RunAnalyzer qui utilise testdata/src
-	// Pour un vrai test, il faudrait créer la structure testdata appropriée
-	// Ce test vérifie juste que la fonction est exportée et documentée
-	t.Log("TestGoodBadWithFiles covered by integration tests in ktntest package")
+	tests := []struct {
+		name         string
+		goodContent  string
+		badContent   string
+		expectedBad  int
+		shouldFail   bool
+		errorMessage string
+	}{
+		{
+			name:         "valid good and bad files",
+			goodContent:  "package test\n\nfunc Good() {}\n",
+			badContent:   "package test\n\nfunc Bad() {}\n",
+			expectedBad:  0,
+			shouldFail:   false,
+			errorMessage: "",
+		},
+		{
+			name:         "good file with errors",
+			goodContent:  "package test\n\nfunc Good() {}\n",
+			badContent:   "package test\n\nfunc Bad() {}\n",
+			expectedBad:  0,
+			shouldFail:   true,
+			errorMessage: "good.go should have no errors",
+		},
+		{
+			name:         "bad file with wrong error count",
+			goodContent:  "package test\n\nfunc Good() {}\n",
+			badContent:   "package test\n\nfunc Bad() {}\n",
+			expectedBad:  5,
+			shouldFail:   true,
+			errorMessage: "bad.go should have expected errors",
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := &MockTestingT{}
+
+			// Créer analyzer approprié pour le cas de test
+			var testAnalyzer *analysis.Analyzer
+			// Vérification du cas de test
+			if tt.errorMessage == "good.go should have no errors" {
+				// Analyzer qui génère toujours des erreurs
+				testAnalyzer = &analysis.Analyzer{
+					Name: "test-errors",
+					Doc:  "Test analyzer with errors",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Génération d'un diagnostic
+						pass.Report(analysis.Diagnostic{
+							Pos:     pass.Files[0].Package,
+							Message: "test error",
+						})
+						// Retour de la fonction
+						return nil, nil
+					},
+				}
+			} else {
+				// Analyzer sans erreurs
+				testAnalyzer = &analysis.Analyzer{
+					Name: "test-no-errors",
+					Doc:  "Test analyzer without errors",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Retour de la fonction
+						return nil, nil
+					},
+				}
+			}
+
+			// Créer structure testdata
+			createTestDataStructure(t, "testfiles", tt.goodContent, tt.badContent)
+
+			// Appel fonction avec bons paramètres (testDir, goodFilename, badFilename, expectedBad)
+			TestGoodBadWithFiles(mockT, testAnalyzer, "testfiles", "good.go", "bad.go", tt.expectedBad)
+
+			// Vérification résultat
+			if tt.shouldFail && !mockT.ErrorfCalled {
+				t.Errorf("Expected Errorf to be called: %s", tt.errorMessage)
+			}
+			// Vérification pas d'erreur si succès attendu
+			if !tt.shouldFail && mockT.ErrorfCalled {
+				t.Error("Expected no errors but Errorf was called")
+			}
+		})
+	}
 }
 
 // TestParsePackageFiles teste la fonction parsePackageFiles.
 func TestParsePackageFiles(t *testing.T) {
-	t.Run("valid package with multiple files", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		file1 := filepath.Join(tmpDir, "file1.go")
-		file2 := filepath.Join(tmpDir, "file2.go")
+	const EXPECTED_FILE_COUNT_TWO int = 2
+	const EXPECTED_FILE_COUNT_ONE int = 1
 
-		// Écriture des fichiers
-		err := os.WriteFile(file1, []byte("package test\n\nfunc Func1() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write file1: %v", err)
-		}
-		err = os.WriteFile(file2, []byte("package test\n\nfunc Func2() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write file2: %v", err)
-		}
+	tests := []struct {
+		name       string
+		setupFunc  func(*testing.T) string
+		useMock    bool
+		expectFail bool
+		fileCount  int
+	}{
+		{
+			name: "valid package with multiple files",
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				file1 := filepath.Join(tmpDir, "file1.go")
+				file2 := filepath.Join(tmpDir, "file2.go")
+				// Écriture des fichiers
+				_ = os.WriteFile(file1, []byte("package test\n\nfunc Func1() {}\n"), 0644)
+				_ = os.WriteFile(file2, []byte("package test\n\nfunc Func2() {}\n"), 0644)
+				return tmpDir
+			},
+			useMock:    false,
+			expectFail: false,
+			fileCount:  EXPECTED_FILE_COUNT_TWO,
+		},
+		{
+			name: "directory read error",
+			setupFunc: func(t *testing.T) string {
+				return "/nonexistent/directory"
+			},
+			useMock:    true,
+			expectFail: true,
+			fileCount:  0,
+		},
+		{
+			name: "no go files",
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				txtFile := filepath.Join(tmpDir, "readme.txt")
+				_ = os.WriteFile(txtFile, []byte("Not a go file"), 0644)
+				return tmpDir
+			},
+			useMock:    true,
+			expectFail: true,
+			fileCount:  0,
+		},
+		{
+			name: "parse error",
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				invalidFile := filepath.Join(tmpDir, "invalid.go")
+				_ = os.WriteFile(invalidFile, []byte("package test\n\nfunc InvalidSyntax( {}\n"), 0644)
+				return tmpDir
+			},
+			useMock:    true,
+			expectFail: true,
+			fileCount:  0,
+		},
+		{
+			name: "skip subdirectories",
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				validFile := filepath.Join(tmpDir, "valid.go")
+				_ = os.WriteFile(validFile, []byte("package test\n\nfunc Valid() {}\n"), 0644)
+				subDir := filepath.Join(tmpDir, "subdir")
+				_ = os.Mkdir(subDir, 0755)
+				return tmpDir
+			},
+			useMock:    false,
+			expectFail: false,
+			fileCount:  EXPECTED_FILE_COUNT_ONE,
+		},
+		{
+			name: "skip non-go files",
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				goFile := filepath.Join(tmpDir, "code.go")
+				txtFile := filepath.Join(tmpDir, "readme.txt")
+				mdFile := filepath.Join(tmpDir, "doc.md")
+				_ = os.WriteFile(goFile, []byte("package test\n\nfunc Code() {}\n"), 0644)
+				_ = os.WriteFile(txtFile, []byte("readme"), 0644)
+				_ = os.WriteFile(mdFile, []byte("# doc"), 0644)
+				return tmpDir
+			},
+			useMock:    false,
+			expectFail: false,
+			fileCount:  EXPECTED_FILE_COUNT_ONE,
+		},
+	}
 
-		// Appel de parsePackageFiles
-		fset := token.NewFileSet()
-		files := parsePackageFiles(t, tmpDir, fset)
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			dir := tt.setupFunc(t)
+			fset := token.NewFileSet()
 
-		// Vérification
-		if len(files) != 2 {
-			t.Errorf("Expected 2 files, got %d", len(files))
-		}
-	})
-
-	t.Run("directory read error", func(t *testing.T) {
-		mock := &MockTestingT{}
-		fset := token.NewFileSet()
-		parsePackageFiles(mock, "/nonexistent/directory", fset)
-		// Vérification que Fatalf a été appelé
-		if !mock.FatalfCalled {
-			t.Error("Expected Fatalf to be called for nonexistent directory")
-		}
-	})
-
-	t.Run("no go files", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		// Créer un fichier non-.go
-		txtFile := filepath.Join(tmpDir, "readme.txt")
-		err := os.WriteFile(txtFile, []byte("Not a go file"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write txt file: %v", err)
-		}
-
-		mock := &MockTestingT{}
-		fset := token.NewFileSet()
-		parsePackageFiles(mock, tmpDir, fset)
-		// Vérification que Fatalf a été appelé
-		if !mock.FatalfCalled {
-			t.Error("Expected Fatalf to be called for directory without go files")
-		}
-	})
-
-	t.Run("parse error", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		invalidFile := filepath.Join(tmpDir, "invalid.go")
-		err := os.WriteFile(invalidFile, []byte("package test\n\nfunc InvalidSyntax( {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write invalid file: %v", err)
-		}
-
-		mock := &MockTestingT{}
-		fset := token.NewFileSet()
-		parsePackageFiles(mock, tmpDir, fset)
-		// Vérification que Fatalf a été appelé
-		if !mock.FatalfCalled {
-			t.Error("Expected Fatalf to be called for invalid Go syntax")
-		}
-	})
-
-	t.Run("skip subdirectories", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		// Créer un fichier .go valide
-		validFile := filepath.Join(tmpDir, "valid.go")
-		err := os.WriteFile(validFile, []byte("package test\n\nfunc Valid() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write valid file: %v", err)
-		}
-		// Créer un sous-répertoire (doit être ignoré)
-		subDir := filepath.Join(tmpDir, "subdir")
-		err = os.Mkdir(subDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create subdir: %v", err)
-		}
-
-		// Appel de parsePackageFiles
-		fset := token.NewFileSet()
-		files := parsePackageFiles(t, tmpDir, fset)
-
-		// Vérification - doit avoir seulement 1 fichier (le subdir est ignoré)
-		if len(files) != 1 {
-			t.Errorf("Expected 1 file, got %d", len(files))
-		}
-	})
-
-	t.Run("skip non-go files", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		// Créer des fichiers de différents types
-		goFile := filepath.Join(tmpDir, "code.go")
-		txtFile := filepath.Join(tmpDir, "readme.txt")
-		mdFile := filepath.Join(tmpDir, "doc.md")
-
-		err := os.WriteFile(goFile, []byte("package test\n\nfunc Code() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write go file: %v", err)
-		}
-		err = os.WriteFile(txtFile, []byte("readme"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write txt file: %v", err)
-		}
-		err = os.WriteFile(mdFile, []byte("# doc"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write md file: %v", err)
-		}
-
-		// Appel de parsePackageFiles
-		fset := token.NewFileSet()
-		files := parsePackageFiles(t, tmpDir, fset)
-
-		// Vérification - doit avoir seulement 1 fichier .go
-		if len(files) != 1 {
-			t.Errorf("Expected 1 file, got %d", len(files))
-		}
-	})
+			// Vérification si mock nécessaire
+			if tt.useMock {
+				mock := &MockTestingT{}
+				parsePackageFiles(mock, dir, fset)
+				// Vérification que Fatalf a été appelé
+				if tt.expectFail && !mock.FatalfCalled {
+					t.Error("Expected Fatalf to be called")
+				}
+			} else {
+				files := parsePackageFiles(t, dir, fset)
+				// Vérification du nombre de fichiers
+				if len(files) != tt.fileCount {
+					t.Errorf("Expected %d files, got %d", tt.fileCount, len(files))
+				}
+			}
+		})
+	}
 }
 
 // TestRunAnalyzerOnPackage teste la fonction RunAnalyzerOnPackage.
 func TestRunAnalyzerOnPackage(t *testing.T) {
-	t.Run("valid package", func(t *testing.T) {
-		// Création d'un analyzer de test simple
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer",
-			Run: func(pass *analysis.Pass) (any, error) {
-				// Retour de la fonction
-				return nil, nil
-			},
-		}
+	const EXPECTED_DIAG_COUNT int = 0
 
-		// Création d'un package temporaire
-		tmpDir := t.TempDir()
-		file1 := filepath.Join(tmpDir, "file1.go")
-		file2 := filepath.Join(tmpDir, "file2.go")
-
-		// Écriture des fichiers
-		err := os.WriteFile(file1, []byte("package test\n\nfunc Func1() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write file1: %v", err)
-		}
-		err = os.WriteFile(file2, []byte("package test\n\nfunc Func2() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write file2: %v", err)
-		}
-
-		// Exécution de l'analyzer sur le package
-		diags := RunAnalyzerOnPackage(t, testAnalyzer, tmpDir)
-		// Vérification que le slice est vide
-		if len(diags) != 0 {
-			t.Errorf("Expected 0 diagnostics, got %d", len(diags))
-		}
-	})
-
-	t.Run("required analyzer error", func(t *testing.T) {
-		// Test avec un analyzer requis qui échoue
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer",
-			Run: func(pass *analysis.Pass) (any, error) {
-				return nil, nil
-			},
-			Requires: []*analysis.Analyzer{
-				{
-					Name: "required",
-					Doc:  "Required analyzer that fails",
+	tests := []struct {
+		name           string
+		createAnalyzer func(*bool) *analysis.Analyzer
+		setupFiles     func(*testing.T) string
+		useMock        bool
+		expectFatal    bool
+		expectDiagZero bool
+		fileReadFlag   *bool
+	}{
+		{
+			name: "valid package",
+			createAnalyzer: func(_ *bool) *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer",
 					Run: func(pass *analysis.Pass) (any, error) {
-						return nil, errors.New("required analyzer failed")
+						return nil, nil
 					},
-				},
-			},
-		}
-
-		tmpDir := t.TempDir()
-		validFile := filepath.Join(tmpDir, "valid.go")
-		err := os.WriteFile(validFile, []byte("package test\n\nfunc Valid() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write valid file: %v", err)
-		}
-
-		mock := &MockTestingT{}
-		RunAnalyzerOnPackage(mock, testAnalyzer, tmpDir)
-		// Vérification que Fatalf a été appelé
-		if !mock.FatalfCalled {
-			t.Error("Expected Fatalf to be called for required analyzer failure")
-		}
-	})
-
-	t.Run("analyzer error", func(t *testing.T) {
-		// Test avec un analyzer qui échoue
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer that fails",
-			Run: func(pass *analysis.Pass) (any, error) {
-				return nil, errors.New("analyzer failed")
-			},
-		}
-
-		tmpDir := t.TempDir()
-		validFile := filepath.Join(tmpDir, "valid.go")
-		err := os.WriteFile(validFile, []byte("package test\n\nfunc Valid() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write valid file: %v", err)
-		}
-
-		mock := &MockTestingT{}
-		RunAnalyzerOnPackage(mock, testAnalyzer, tmpDir)
-		// Vérification que Fatalf a été appelé
-		if !mock.FatalfCalled {
-			t.Error("Expected Fatalf to be called for analyzer failure")
-		}
-	})
-
-	t.Run("analyzer uses ReadFile", func(t *testing.T) {
-		// Test avec un analyzer qui utilise ReadFile
-		var fileRead bool
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer that reads file",
-			Run: func(pass *analysis.Pass) (any, error) {
-				// Lire le fichier source via pass.ReadFile
-				for _, file := range pass.Files {
-					filename := pass.Fset.File(file.Pos()).Name()
-					_, err := pass.ReadFile(filename)
-					if err == nil {
-						fileRead = true
-					}
 				}
-				return nil, nil
 			},
-		}
+			setupFiles: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				file1 := filepath.Join(tmpDir, "file1.go")
+				file2 := filepath.Join(tmpDir, "file2.go")
+				_ = os.WriteFile(file1, []byte("package test\n\nfunc Func1() {}\n"), 0644)
+				_ = os.WriteFile(file2, []byte("package test\n\nfunc Func2() {}\n"), 0644)
+				return tmpDir
+			},
+			useMock:        false,
+			expectFatal:    false,
+			expectDiagZero: true,
+			fileReadFlag:   nil,
+		},
+		{
+			name: "required analyzer error",
+			createAnalyzer: func(_ *bool) *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer",
+					Run: func(pass *analysis.Pass) (any, error) {
+						return nil, nil
+					},
+					Requires: []*analysis.Analyzer{
+						{
+							Name: "required",
+							Doc:  "Required analyzer that fails",
+							Run: func(pass *analysis.Pass) (any, error) {
+								return nil, errors.New("required analyzer failed")
+							},
+						},
+					},
+				}
+			},
+			setupFiles: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				validFile := filepath.Join(tmpDir, "valid.go")
+				_ = os.WriteFile(validFile, []byte("package test\n\nfunc Valid() {}\n"), 0644)
+				return tmpDir
+			},
+			useMock:        true,
+			expectFatal:    true,
+			expectDiagZero: false,
+			fileReadFlag:   nil,
+		},
+		{
+			name: "analyzer error",
+			createAnalyzer: func(_ *bool) *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer that fails",
+					Run: func(pass *analysis.Pass) (any, error) {
+						return nil, errors.New("analyzer failed")
+					},
+				}
+			},
+			setupFiles: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				validFile := filepath.Join(tmpDir, "valid.go")
+				_ = os.WriteFile(validFile, []byte("package test\n\nfunc Valid() {}\n"), 0644)
+				return tmpDir
+			},
+			useMock:        true,
+			expectFatal:    true,
+			expectDiagZero: false,
+			fileReadFlag:   nil,
+		},
+		{
+			name: "analyzer uses ReadFile",
+			createAnalyzer: func(fileRead *bool) *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer that reads file",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Lire le fichier source via pass.ReadFile
+						for _, file := range pass.Files {
+							filename := pass.Fset.File(file.Pos()).Name()
+							_, err := pass.ReadFile(filename)
+							// Vérification de l'erreur
+							if err == nil {
+								*fileRead = true
+							}
+						}
+						return nil, nil
+					},
+				}
+			},
+			setupFiles: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				file1 := filepath.Join(tmpDir, "file1.go")
+				_ = os.WriteFile(file1, []byte("package test\n\nfunc TestFunc() {}\n"), 0644)
+				return tmpDir
+			},
+			useMock:        false,
+			expectFatal:    false,
+			expectDiagZero: true,
+			fileReadFlag:   new(bool),
+		},
+	}
 
-		tmpDir := t.TempDir()
-		file1 := filepath.Join(tmpDir, "file1.go")
-		err := os.WriteFile(file1, []byte("package test\n\nfunc TestFunc() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write file1: %v", err)
-		}
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := tt.setupFiles(t)
+			analyzer := tt.createAnalyzer(tt.fileReadFlag)
 
-		// Exécution de l'analyzer
-		RunAnalyzerOnPackage(t, testAnalyzer, tmpDir)
-
-		// Vérification que le fichier a été lu
-		if !fileRead {
-			t.Error("Expected analyzer to read file via pass.ReadFile")
-		}
-	})
+			// Vérification si mock nécessaire
+			if tt.useMock {
+				mock := &MockTestingT{}
+				RunAnalyzerOnPackage(mock, analyzer, tmpDir)
+				// Vérification que Fatalf a été appelé
+				if tt.expectFatal && !mock.FatalfCalled {
+					t.Error("Expected Fatalf to be called")
+				}
+			} else {
+				diags := RunAnalyzerOnPackage(t, analyzer, tmpDir)
+				// Vérification du nombre de diagnostics
+				if tt.expectDiagZero && len(diags) != EXPECTED_DIAG_COUNT {
+					t.Errorf("Expected %d diagnostics, got %d", EXPECTED_DIAG_COUNT, len(diags))
+				}
+				// Vérification du flag ReadFile si applicable
+				if tt.fileReadFlag != nil && !*tt.fileReadFlag {
+					t.Error("Expected analyzer to read file via pass.ReadFile")
+				}
+			}
+		})
+	}
 }
 
 // TestTestGoodBadPackage teste la fonction TestGoodBadPackage.
 func TestTestGoodBadPackage(t *testing.T) {
-	t.Run("valid packages", func(t *testing.T) {
-		// Création d'un analyzer de test simple
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer",
-			Run: func(pass *analysis.Pass) (any, error) {
-				// Retour de la fonction
-				return nil, nil
-			},
-		}
-
-		// Création de la structure testdata/src/testpkg/good et bad
-		tmpDir := t.TempDir()
-		goodDir := filepath.Join(tmpDir, "testdata", "src", "testpkg", "good")
-		badDir := filepath.Join(tmpDir, "testdata", "src", "testpkg", "bad")
-
-		err := os.MkdirAll(goodDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create good dir: %v", err)
-		}
-		err = os.MkdirAll(badDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create bad dir: %v", err)
-		}
-
-		// Créer des fichiers .go dans good
-		goodFile := filepath.Join(goodDir, "code.go")
-		err = os.WriteFile(goodFile, []byte("package testpkg\n\nfunc Good() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write good file: %v", err)
-		}
-
-		// Créer des fichiers .go dans bad
-		badFile := filepath.Join(badDir, "code.go")
-		err = os.WriteFile(badFile, []byte("package testpkg\n\nfunc Bad() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write bad file: %v", err)
-		}
-
-		// Changer le répertoire de travail temporairement
-		oldWd, _ := os.Getwd()
-		err = os.Chdir(tmpDir)
-		if err != nil {
-			t.Fatalf("Failed to change directory: %v", err)
-		}
-		defer os.Chdir(oldWd)
-
-		// Exécution de TestGoodBadPackage
-		TestGoodBadPackage(t, testAnalyzer, "testpkg", 0)
-	})
-
-	t.Run("bad package with errors", func(t *testing.T) {
-		// Création d'un analyzer qui génère un diagnostic
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer",
-			Run: func(pass *analysis.Pass) (any, error) {
-				// Générer un diagnostic pour chaque fonction
-				for _, file := range pass.Files {
-					for _, decl := range file.Decls {
-						if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-							pass.Reportf(funcDecl.Pos(), "test diagnostic")
-						}
-					}
+	tests := []struct {
+		name           string
+		analyzerFunc   func() *analysis.Analyzer
+		pkgName        string
+		goodContent    string
+		badContent     string
+		expectedErrors int
+		useMock        bool
+		expectErrorf   bool
+		expectLogf     bool
+	}{
+		{
+			name: "valid packages",
+			analyzerFunc: func() *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer",
+					Run: func(pass *analysis.Pass) (any, error) {
+						return nil, nil
+					},
 				}
-				return nil, nil
 			},
-			Requires: []*analysis.Analyzer{inspect.Analyzer},
-		}
-
-		// Création de la structure testdata
-		tmpDir := t.TempDir()
-		goodDir := filepath.Join(tmpDir, "testdata", "src", "testpkg2", "good")
-		badDir := filepath.Join(tmpDir, "testdata", "src", "testpkg2", "bad")
-
-		err := os.MkdirAll(goodDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create good dir: %v", err)
-		}
-		err = os.MkdirAll(badDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create bad dir: %v", err)
-		}
-
-		// Créer des fichiers .go dans good (pas de fonctions -> 0 diagnostics)
-		goodFile := filepath.Join(goodDir, "code.go")
-		err = os.WriteFile(goodFile, []byte("package testpkg2\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write good file: %v", err)
-		}
-
-		// Créer des fichiers .go dans bad (1 fonction -> 1 diagnostic)
-		badFile := filepath.Join(badDir, "code.go")
-		err = os.WriteFile(badFile, []byte("package testpkg2\n\nimport \"go/ast\"\n\nfunc Bad(f *ast.FuncDecl) {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write bad file: %v", err)
-		}
-
-		// Changer le répertoire de travail temporairement
-		oldWd, _ := os.Getwd()
-		err = os.Chdir(tmpDir)
-		if err != nil {
-			t.Fatalf("Failed to change directory: %v", err)
-		}
-		defer os.Chdir(oldWd)
-
-		// Exécution de TestGoodBadPackage avec mock
-		mock := &MockTestingT{}
-		TestGoodBadPackage(mock, testAnalyzer, "testpkg2", 1)
-		// On s'attend à ce qu'il y ait 1 diagnostic dans bad, donc pas d'erreur
-		// Si le nombre ne correspond pas, Errorf sera appelé
-	})
-
-	t.Run("good package with unexpected errors", func(t *testing.T) {
-		// Création d'un analyzer qui génère un diagnostic pour toutes les fonctions
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer",
-			Run: func(pass *analysis.Pass) (any, error) {
-				// Générer un diagnostic pour chaque fonction
-				for _, file := range pass.Files {
-					for _, decl := range file.Decls {
-						if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-							pass.Reportf(funcDecl.Pos(), "unexpected error")
+			pkgName:        "testpkg",
+			goodContent:    "package testpkg\n\nfunc Good() {}\n",
+			badContent:     "package testpkg\n\nfunc Bad() {}\n",
+			expectedErrors: 0,
+			useMock:        false,
+			expectErrorf:   false,
+			expectLogf:     false,
+		},
+		{
+			name: "bad package with errors",
+			analyzerFunc: func() *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Générer un diagnostic pour chaque fonction
+						for _, file := range pass.Files {
+							// Itération sur les déclarations
+							for _, decl := range file.Decls {
+								// Vérification du type
+								if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+									pass.Reportf(funcDecl.Pos(), "test diagnostic")
+								}
+							}
 						}
-					}
+						return nil, nil
+					},
+					Requires: []*analysis.Analyzer{inspect.Analyzer},
 				}
-				return nil, nil
 			},
-		}
-
-		// Création de la structure testdata
-		tmpDir := t.TempDir()
-		goodDir := filepath.Join(tmpDir, "testdata", "src", "testpkg3", "good")
-		badDir := filepath.Join(tmpDir, "testdata", "src", "testpkg3", "bad")
-
-		err := os.MkdirAll(goodDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create good dir: %v", err)
-		}
-		err = os.MkdirAll(badDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create bad dir: %v", err)
-		}
-
-		// Créer un fichier .go dans good avec une fonction (génère 1 erreur inattendue)
-		goodFile := filepath.Join(goodDir, "code.go")
-		err = os.WriteFile(goodFile, []byte("package testpkg3\n\nfunc Good() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write good file: %v", err)
-		}
-
-		// Créer un fichier .go dans bad sans fonctions
-		badFile := filepath.Join(badDir, "code.go")
-		err = os.WriteFile(badFile, []byte("package testpkg3\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write bad file: %v", err)
-		}
-
-		// Changer le répertoire de travail temporairement
-		oldWd, _ := os.Getwd()
-		err = os.Chdir(tmpDir)
-		if err != nil {
-			t.Fatalf("Failed to change directory: %v", err)
-		}
-		defer os.Chdir(oldWd)
-
-		// Exécution de TestGoodBadPackage avec mock
-		mock := &MockTestingT{}
-		TestGoodBadPackage(mock, testAnalyzer, "testpkg3", 0)
-		// Good a 1 erreur au lieu de 0, donc Errorf sera appelé et Logf aussi
-		if !mock.ErrorfCalled {
-			t.Error("Expected Errorf to be called for good package with errors")
-		}
-		if !mock.LogfCalled {
-			t.Error("Expected Logf to be called to display errors")
-		}
-	})
-
-	t.Run("bad package with wrong error count", func(t *testing.T) {
-		// Création d'un analyzer qui génère un diagnostic pour toutes les fonctions
-		testAnalyzer := &analysis.Analyzer{
-			Name: "test",
-			Doc:  "Test analyzer",
-			Run: func(pass *analysis.Pass) (any, error) {
-				// Générer un diagnostic pour chaque fonction
-				for _, file := range pass.Files {
-					for _, decl := range file.Decls {
-						if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-							pass.Reportf(funcDecl.Pos(), "error")
+			pkgName:        "testpkg2",
+			goodContent:    "package testpkg2\n",
+			badContent:     "package testpkg2\n\nimport \"go/ast\"\n\nfunc Bad(f *ast.FuncDecl) {}\n",
+			expectedErrors: 1,
+			useMock:        true,
+			expectErrorf:   false,
+			expectLogf:     false,
+		},
+		{
+			name: "good package with unexpected errors",
+			analyzerFunc: func() *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Générer un diagnostic pour chaque fonction
+						for _, file := range pass.Files {
+							// Itération sur les déclarations
+							for _, decl := range file.Decls {
+								// Vérification du type
+								if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+									pass.Reportf(funcDecl.Pos(), "unexpected error")
+								}
+							}
 						}
-					}
+						return nil, nil
+					},
 				}
-				return nil, nil
 			},
-		}
+			pkgName:        "testpkg3",
+			goodContent:    "package testpkg3\n\nfunc Good() {}\n",
+			badContent:     "package testpkg3\n",
+			expectedErrors: 0,
+			useMock:        true,
+			expectErrorf:   true,
+			expectLogf:     true,
+		},
+		{
+			name: "bad package with wrong error count",
+			analyzerFunc: func() *analysis.Analyzer {
+				return &analysis.Analyzer{
+					Name: "test",
+					Doc:  "Test analyzer",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Générer un diagnostic pour chaque fonction
+						for _, file := range pass.Files {
+							// Itération sur les déclarations
+							for _, decl := range file.Decls {
+								// Vérification du type
+								if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+									pass.Reportf(funcDecl.Pos(), "error")
+								}
+							}
+						}
+						return nil, nil
+					},
+				}
+			},
+			pkgName:        "testpkg4",
+			goodContent:    "package testpkg4\n",
+			badContent:     "package testpkg4\n\nfunc Bad1() {}\nfunc Bad2() {}\n",
+			expectedErrors: 1,
+			useMock:        true,
+			expectErrorf:   true,
+			expectLogf:     true,
+		},
+	}
 
-		// Création de la structure testdata
-		tmpDir := t.TempDir()
-		goodDir := filepath.Join(tmpDir, "testdata", "src", "testpkg4", "good")
-		badDir := filepath.Join(tmpDir, "testdata", "src", "testpkg4", "bad")
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			goodDir := filepath.Join(tmpDir, "testdata", "src", tt.pkgName, "good")
+			badDir := filepath.Join(tmpDir, "testdata", "src", tt.pkgName, "bad")
 
-		err := os.MkdirAll(goodDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create good dir: %v", err)
-		}
-		err = os.MkdirAll(badDir, 0755)
-		if err != nil {
-			t.Fatalf("Failed to create bad dir: %v", err)
-		}
+			// Création des répertoires
+			_ = os.MkdirAll(goodDir, 0755)
+			_ = os.MkdirAll(badDir, 0755)
 
-		// Créer un fichier .go dans good sans fonctions
-		goodFile := filepath.Join(goodDir, "code.go")
-		err = os.WriteFile(goodFile, []byte("package testpkg4\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write good file: %v", err)
-		}
+			// Création des fichiers
+			goodFile := filepath.Join(goodDir, "code.go")
+			badFile := filepath.Join(badDir, "code.go")
+			_ = os.WriteFile(goodFile, []byte(tt.goodContent), 0644)
+			_ = os.WriteFile(badFile, []byte(tt.badContent), 0644)
 
-		// Créer un fichier .go dans bad avec 2 fonctions (génère 2 erreurs)
-		badFile := filepath.Join(badDir, "code.go")
-		err = os.WriteFile(badFile, []byte("package testpkg4\n\nfunc Bad1() {}\nfunc Bad2() {}\n"), 0644)
-		if err != nil {
-			t.Fatalf("Failed to write bad file: %v", err)
-		}
+			// Changer le répertoire de travail temporairement
+			oldWd, _ := os.Getwd()
+			_ = os.Chdir(tmpDir)
+			defer os.Chdir(oldWd)
 
-		// Changer le répertoire de travail temporairement
-		oldWd, _ := os.Getwd()
-		err = os.Chdir(tmpDir)
-		if err != nil {
-			t.Fatalf("Failed to change directory: %v", err)
-		}
-		defer os.Chdir(oldWd)
+			// Création de l'analyzer
+			testAnalyzer := tt.analyzerFunc()
 
-		// Exécution de TestGoodBadPackage avec mock (on attend 1 erreur mais il y en a 2)
-		mock := &MockTestingT{}
-		TestGoodBadPackage(mock, testAnalyzer, "testpkg4", 1)
-		// Bad a 2 erreurs au lieu de 1, donc Errorf sera appelé et Logf aussi
-		if !mock.ErrorfCalled {
-			t.Error("Expected Errorf to be called for bad package with wrong error count")
-		}
-		if !mock.LogfCalled {
-			t.Error("Expected Logf to be called to display errors")
-		}
-	})
+			// Exécution du test
+			if tt.useMock {
+				mock := &MockTestingT{}
+				TestGoodBadPackage(mock, testAnalyzer, tt.pkgName, tt.expectedErrors)
+				// Vérifications
+				if tt.expectErrorf && !mock.ErrorfCalled {
+					t.Error("Expected Errorf to be called")
+				}
+				// Vérification pas d'Errorf si non attendu
+				if !tt.expectErrorf && mock.ErrorfCalled {
+					t.Error("Unexpected Errorf call")
+				}
+				// Vérification Logf
+				if tt.expectLogf && !mock.LogfCalled {
+					t.Error("Expected Logf to be called")
+				}
+			} else {
+				TestGoodBadPackage(t, testAnalyzer, tt.pkgName, tt.expectedErrors)
+			}
+		})
+	}
 }
