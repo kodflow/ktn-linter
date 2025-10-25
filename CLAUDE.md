@@ -18,7 +18,7 @@
 3. **Corriger TOUS les warnings/errors/info**
 4. **Vérifier la couverture** → Coverage maximale
 5. **Mettre à jour README.md** si nouvelle règle
-6. **Nettoyer les fichiers temporaires** → Supprimer *.out, *.html, fichiers intermédiaires
+6. **Nettoyer les fichiers temporaires** → Supprimer _.out, _.html, fichiers intermédiaires
 7. **Répéter jusqu'à 0 erreur**
 
 ## ⚠️ AUTO-VÉRIFICATION OBLIGATOIRE (Claude IA)
@@ -74,11 +74,13 @@ func checkPositive(x int) string { ... }
 Après chaque modification importante, Claude lance **2 agents en parallèle** :
 
 **Agent 1 - Test Runner** :
+
 ```
 Task("Exécuter tests avec couverture", "make test", "general-purpose")
 ```
 
 **Agent 2 - Lint Runner** :
+
 ```
 Task("Linter le projet", "make lint", "general-purpose")
 ```
@@ -185,7 +187,7 @@ func Test<Category><XXX>(t *testing.T) {
 package <category><XXX>
 
 // Exemples de code qui DOIVENT générer des erreurs
-func BadExample() { // want "KTN-<CATEGORY>-<XXX>: message d'erreur"
+func BadExample() {
     // Code non-conforme
 }
 ```
@@ -287,7 +289,7 @@ Voir `/pkg/analyzer/ktn/const/001.go` pour un exemple de règle complète.
   - `*.out` (coverage.out, etc.)
   - `*.html` (coverage.html, etc.)
   - `*.o` (fichiers objets compilés)
-  - Binaires de test sans extension (test_*, *_test)
+  - Binaires de test sans extension (test\__, _\_test)
   - Fichiers temporaires dans `/tmp/`
   - Fichiers intermédiaires générés
   - Rapports de debug

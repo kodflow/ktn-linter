@@ -1,5 +1,15 @@
 package var014
 
+// Constantes pour les valeurs de test
+const (
+	TEST_FIELD1_VALUE   int     = 42
+	TEST_FIELD4_VALUE   float64 = 3.14
+	TEST_AGE_VALUE      int     = 30
+	TEST_BALANCE_VALUE  float64 = 100.0
+	TEST_STRUCT1_FIELD1 int     = 1
+	TEST_CONFIG_FIELD1  int     = 10
+)
+
 // LargeStruct est une structure avec plus de 3 champs.
 type LargeStruct struct {
 	Field1 int
@@ -21,10 +31,10 @@ type AnotherLargeStruct struct {
 func badLargeStructValue() {
 	// Variable locale de grande structure
 	data := LargeStruct{
-		Field1: 42,
+		Field1: TEST_FIELD1_VALUE,
 		Field2: "test",
 		Field3: true,
-		Field4: 3.14,
+		Field4: TEST_FIELD4_VALUE,
 	}
 	_ = data
 }
@@ -34,10 +44,10 @@ func badAnotherLargeStructValue() {
 	// Variable locale de grande structure
 	user := AnotherLargeStruct{
 		Name:    "John",
-		Age:     30,
+		Age:     TEST_AGE_VALUE,
 		Email:   "john@example.com",
 		Active:  true,
-		Balance: 100.0,
+		Balance: TEST_BALANCE_VALUE,
 	}
 	_ = user
 }
@@ -45,7 +55,7 @@ func badAnotherLargeStructValue() {
 // badMultipleVars déclare plusieurs grandes structures.
 func badMultipleVars() {
 	// Première variable
-	a := LargeStruct{Field1: 1}
+	a := LargeStruct{Field1: TEST_STRUCT1_FIELD1}
 	// Deuxième variable
 	b := AnotherLargeStruct{Name: "test"}
 	_, _ = a, b
@@ -55,6 +65,6 @@ func badMultipleVars() {
 func badVarDecl() {
 	// Déclaration var explicite
 	var config LargeStruct
-	config.Field1 = 10
+	config.Field1 = TEST_CONFIG_FIELD1
 	_ = config
 }

@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 )
@@ -132,10 +133,23 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 //   - testDir: nom du répertoire de test
 //   - expectedBadErrors: nombre d'erreurs attendues dans bad.go
 func TestGoodBad(t TestingT, analyzer *analysis.Analyzer, testDir string, expectedBadErrors int) {
-	goodFile := "testdata/src/" + testDir + "/good.go"
-	badFile := "testdata/src/" + testDir + "/bad.go"
+	TestGoodBadWithFiles(t, analyzer, testDir, "good.go", "bad.go", expectedBadErrors)
+}
 
-	// Test de good.go - doit avoir 0 erreur
+// TestGoodBadWithFiles teste avec des noms de fichiers personnalisés.
+//
+// Params:
+//   - t: contexte de test
+//   - analyzer: l'analyzer à tester
+//   - testDir: nom du répertoire de test
+//   - goodFilename: nom du fichier "good"
+//   - badFilename: nom du fichier "bad"
+//   - expectedBadErrors: nombre d'erreurs attendues dans le fichier bad
+func TestGoodBadWithFiles(t TestingT, analyzer *analysis.Analyzer, testDir string, goodFilename string, badFilename string, expectedBadErrors int) {
+	goodFile := "testdata/src/" + testDir + "/" + goodFilename
+	badFile := "testdata/src/" + testDir + "/" + badFilename
+
+	// Test du fichier good - doit avoir 0 erreur
 	diags := RunAnalyzer(t, analyzer, goodFile)
 	// Vérification du nombre de diagnostics
 	if len(diags) != 0 {
@@ -146,12 +160,167 @@ func TestGoodBad(t TestingT, analyzer *analysis.Analyzer, testDir string, expect
 		}
 	}
 
-	// Test de bad.go - doit avoir le nombre attendu d'erreurs
+	// Test du fichier bad - doit avoir le nombre attendu d'erreurs
 	diags = RunAnalyzer(t, analyzer, badFile)
 	// Vérification du nombre de diagnostics
 	if len(diags) != expectedBadErrors {
 		t.Errorf("%s should have %d errors, got %d", badFile, expectedBadErrors, len(diags))
 		// Itération sur les diagnostics pour les afficher
+		for _, d := range diags {
+			t.Logf("  %v", d.Message)
+		}
+	}
+}
+
+// parsePackageFiles parse tous les fichiers .go d'un répertoire.
+//
+// Params:
+//   - t: contexte de test
+//   - dir: répertoire contenant les fichiers
+//   - fset: ensemble de fichiers pour le parsing
+//
+// Returns:
+//   - []*ast.File: liste des fichiers parsés
+func parsePackageFiles(t TestingT, dir string, fset *token.FileSet) []*ast.File {
+	entries, err := os.ReadDir(dir)
+	// Vérification d'erreur de lecture du répertoire
+	if err != nil {
+		t.Fatalf("failed to read directory %s: %v", dir, err)
+		// Retour anticipé pour les mocks qui ne terminent pas le test
+		return nil
+	}
+
+	var files []*ast.File
+	// Parcours des fichiers du répertoire
+	for _, entry := range entries {
+		// Vérification si c'est un fichier .go
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+			// Ignorer les répertoires et fichiers non-.go
+			continue
+		}
+
+		filepath := dir + "/" + entry.Name()
+		file, parseErr := parser.ParseFile(fset, filepath, nil, parser.ParseComments)
+		// Vérification d'erreur de parsing
+		if parseErr != nil {
+			t.Fatalf("failed to parse %s: %v", filepath, parseErr)
+			// Retour anticipé pour les mocks qui ne terminent pas le test
+			return nil
+		}
+		files = append(files, file)
+	}
+
+	// Vérification qu'au moins un fichier a été trouvé
+	if len(files) == 0 {
+		t.Fatalf("no .go files found in %s", dir)
+		// Retour anticipé pour les mocks qui ne terminent pas le test
+		return nil
+	}
+
+	// Retour de la liste des fichiers parsés
+	return files
+}
+
+// createPassForPackage crée un analysis.Pass pour un package.
+//
+// Params:
+//   - fset: ensemble de fichiers
+//   - files: fichiers AST du package
+//   - diagnostics: pointeur vers la liste des diagnostics
+//
+// Returns:
+//   - *analysis.Pass: pass d'analyse créé
+func createPassForPackage(fset *token.FileSet, files []*ast.File, diagnostics *[]analysis.Diagnostic) *analysis.Pass {
+	conf := &types.Config{
+		Importer: importer.Default(),
+		Error:    func(err error) {}, // Ignorer les erreurs de type pour les tests
+	}
+	info := createTypeInfo()
+	pkg, _ := conf.Check(files[0].Name.Name, fset, files, info)
+
+	// Retour du pass d'analyse
+	return &analysis.Pass{
+		Fset:      fset,
+		Files:     files,
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			*diagnostics = append(*diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any, INITIAL_ANALYZER_MAP_CAP),
+		ReadFile: func(filename string) ([]byte, error) {
+			// Lecture du fichier pour les analyzers qui en ont besoin
+			return os.ReadFile(filename)
+		},
+	}
+}
+
+// RunAnalyzerOnPackage exécute un analyzer sur tous les fichiers d'un package.
+//
+// Params:
+//   - t: contexte de test
+//   - analyzer: l'analyzer à exécuter
+//   - dir: répertoire contenant les fichiers du package
+//
+// Returns:
+//   - []analysis.Diagnostic: liste des diagnostics trouvés
+func RunAnalyzerOnPackage(t TestingT, analyzer *analysis.Analyzer, dir string) []analysis.Diagnostic {
+	fset := token.NewFileSet()
+	files := parsePackageFiles(t, dir, fset)
+
+	var diagnostics []analysis.Diagnostic
+	pass := createPassForPackage(fset, files, &diagnostics)
+
+	// Exécution des analyzers requis
+	for _, req := range analyzer.Requires {
+		var result any
+		var err error
+		result, err = req.Run(pass)
+		// Vérification d'erreur de l'analyzer requis
+		if err != nil {
+			t.Fatalf("required analyzer %s failed: %v", req.Name, err)
+			// Retour anticipé pour les mocks qui ne terminent pas le test
+			return nil
+		}
+		pass.ResultOf[req] = result
+	}
+
+	_, err := analyzer.Run(pass)
+	// Vérification d'erreur de l'analyzer principal
+	if err != nil {
+		t.Fatalf("analyzer failed: %v", err)
+		// Retour anticipé pour les mocks qui ne terminent pas le test
+		return nil
+	}
+
+	// Retour de la liste des diagnostics
+	return diagnostics
+}
+
+// TestGoodBadPackage teste un analyzer sur des packages complets.
+//
+// Params:
+//   - t: contexte de test
+//   - analyzer: l'analyzer à tester
+//   - testDir: nom du répertoire de test
+//   - expectedBadErrors: nombre d'erreurs attendues dans le package bad
+func TestGoodBadPackage(t TestingT, analyzer *analysis.Analyzer, testDir string, expectedBadErrors int) {
+	goodDir := "testdata/src/" + testDir + "/good"
+	badDir := "testdata/src/" + testDir + "/bad"
+
+	// Test du package good - doit avoir 0 erreur
+	diags := RunAnalyzerOnPackage(t, analyzer, goodDir)
+	if len(diags) != 0 {
+		t.Errorf("%s should have 0 errors, got %d", goodDir, len(diags))
+		for _, d := range diags {
+			t.Logf("  %v", d.Message)
+		}
+	}
+
+	// Test du package bad - doit avoir le nombre attendu d'erreurs
+	diags = RunAnalyzerOnPackage(t, analyzer, badDir)
+	if len(diags) != expectedBadErrors {
+		t.Errorf("%s should have %d errors, got %d", badDir, expectedBadErrors, len(diags))
 		for _, d := range diags {
 			t.Logf("  %v", d.Message)
 		}

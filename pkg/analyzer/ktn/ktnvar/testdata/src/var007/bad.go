@@ -2,8 +2,11 @@ package var007
 
 // Bad: Slices created without capacity when it could be known
 
-// MAX_SIZE defines the maximum size
-const MAX_SIZE int = 50
+// Constantes pour les tests
+const (
+	MAX_SIZE         int = 50
+	SMALL_LOOP_COUNT int = 20
+)
 
 // badEmptySliceLiteral creates a slice without capacity
 //
@@ -11,9 +14,9 @@ const MAX_SIZE int = 50
 //   - []int: slice without preallocated capacity
 func badEmptySliceLiteral() []int {
 	// Bad: Empty literal without capacity
-	items := []int{}
+	itemList := []int{}
 	// Retour de la fonction
-	return items
+	return itemList
 }
 
 // badMakeWithoutCapacity creates a slice using make without capacity
@@ -48,13 +51,13 @@ func badMakeInLoop() []int {
 //   - []string: slice without preallocated capacity
 func badEmptyLiteralInLoop() []string {
 	// Bad: Empty literal for known-size loop
-	items := []string{}
+	itemList := []string{}
 	// Itération sur les éléments
-	for i := 0; i < 20; i++ {
-		items = append(items, "value")
+	for index := 0; index < SMALL_LOOP_COUNT; index++ {
+		itemList = append(itemList, "value")
 	}
 	// Retour de la fonction
-	return items
+	return itemList
 }
 
 // badSliceOfSlices creates a slice of slices without capacity
@@ -63,24 +66,25 @@ func badEmptyLiteralInLoop() []string {
 //   - [][]int: nested slice without capacity
 func badSliceOfSlices() [][]int {
 	// Bad: Nested slice without capacity
-	matrix := [][]int{}
+	matrixData := [][]int{}
 	// Retour de la fonction
-	return matrix
+	return matrixData
 }
 
-// badSliceOfStructs creates a slice of structs without capacity
+// Item is a test struct
 type Item struct {
 	value int
 }
 
+// badSliceOfStructs creates a slice of structs without capacity
 //
 // Returns:
 //   - []Item: slice of structs without capacity
 func badSliceOfStructs() []Item {
 	// Bad: Slice of structs without capacity
-	items := []Item{}
+	itemArray := []Item{}
 	// Retour de la fonction
-	return items
+	return itemArray
 }
 
 // badMakeByteSlice creates a byte slice without capacity

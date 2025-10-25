@@ -5,16 +5,22 @@ import (
 	"strings"
 )
 
+// Constantes pour les tests
+const (
+	BAD_LOOP_COUNT_LARGE int = 100
+	BAD_LOOP_COUNT_SMALL int = 50
+)
+
 // badStringsBuilderNoGrow creates a strings.Builder without Grow.
 //
 // Returns:
 //   - string: concatenated result
 func badStringsBuilderNoGrow() string {
 	// Bad: composite literal without Grow() call
-	var sb = strings.Builder{}
+	sb := strings.Builder{}
 
 	// Iteration over data to append
-	for i := 0; i < 100; i++ {
+	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
 		sb.WriteString("item")
 	}
 
@@ -28,10 +34,10 @@ func badStringsBuilderNoGrow() string {
 //   - []byte: concatenated result
 func badBytesBufferNoGrow() []byte {
 	// Bad: composite literal without Grow() call
-	var buf = bytes.Buffer{}
+	buf := bytes.Buffer{}
 
 	// Iteration over data to append
-	for i := 0; i < 100; i++ {
+	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
 		buf.WriteString("item")
 	}
 
@@ -48,7 +54,7 @@ func badShortFormBuilder() string {
 	sb := strings.Builder{}
 
 	// Iteration over data to append
-	for i := 0; i < 50; i++ {
+	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
 		sb.WriteString("x")
 	}
 
@@ -65,7 +71,7 @@ func badShortFormBuffer() []byte {
 	buf := bytes.Buffer{}
 
 	// Iteration over data to append
-	for i := 0; i < 50; i++ {
+	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
 		buf.Write([]byte("x"))
 	}
 

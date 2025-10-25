@@ -8,7 +8,7 @@ var (
 	badStatus string = "idle"
 )
 
-// Const block AFTER vars (violates VAR-006) - grouped to avoid CONST-002
+// Const block AFTER vars (violates VAR-006 and CONST-002 - inévitable)
 const (
 	// BAD_MAX_ATTEMPTS is placed after var
 	BAD_MAX_ATTEMPTS int = 5
