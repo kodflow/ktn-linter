@@ -94,7 +94,7 @@ func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
 	case *ast.DeclStmt:
 		// Vérification des déclarations
 		checkDeclForAlloc(pass, s)
-	// Note: les boucles imbriquées sont déjà gérées par Preorder
+		// Note: les boucles imbriquées sont déjà gérées par Preorder
 	}
 }
 
@@ -182,4 +182,3 @@ func isSliceOrMapAlloc(expr ast.Expr) bool {
 	// Pas d'allocation détectée
 	return false
 }
-

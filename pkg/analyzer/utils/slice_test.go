@@ -387,6 +387,7 @@ func TestIsSliceOrMapTypeWithPass(t *testing.T) {
 		t.Errorf("IsSliceOrMapTypeWithPass() with map = false, want true")
 	}
 }
+
 // TestIsByteSliceNonIdent tests IsByteSlice with non-identifier element type
 func TestIsByteSliceNonIdent(t *testing.T) {
 	// Create a slice with SelectorExpr element (e.g., pkg.Type)

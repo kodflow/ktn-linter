@@ -246,4 +246,3 @@ func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
 		}
 	}
 }
-

@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"testing"
-
 )
 
 func TestIsIdentCall(t *testing.T) {

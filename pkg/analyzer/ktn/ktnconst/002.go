@@ -87,7 +87,6 @@ type declGroup struct {
 //
 // Params:
 //   - pass: contexte d'analyse
-//
 func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	// If no var declarations, only check if consts are scattered
 	if len(tracker.varGroups) == 0 {
@@ -130,7 +129,6 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 //
 // Params:
 //   - pass: contexte d'analyse
-//
 func checkScatteredConsts(pass *analysis.Pass, constGroups []declGroup) {
 	// If 0 or 1 const group, they're not scattered
 	if len(constGroups) <= 1 {

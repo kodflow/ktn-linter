@@ -111,4 +111,3 @@ func checkMakeCallForByteSlice(pass *analysis.Pass, call *ast.CallExpr) {
 		"KTN-VAR-015: buffer créé dans boucle, utiliser sync.Pool",
 	)
 }
-

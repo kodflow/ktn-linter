@@ -11,11 +11,11 @@ import (
 
 // Constantes pour la détection des directives "want" dans les commentaires
 const (
-	WANT_MIN_LENGTH      int = 6 // longueur minimale pour "// want"
+	WANT_MIN_LENGTH       int = 6 // longueur minimale pour "// want"
 	WANT_SPACE_MIN_LENGTH int = 7 // longueur minimale pour "// want"
-	COMMENT_PREFIX_END   int = 2 // fin du préfixe "//" dans un commentaire
-	WANT_DIRECTIVE_END   int = 6 // position de fin de "want" dans "// want"
-	WANT_SPACE_END       int = 7 // position de fin de " want" dans "//  want"
+	COMMENT_PREFIX_END    int = 2 // fin du préfixe "//" dans un commentaire
+	WANT_DIRECTIVE_END    int = 6 // position de fin de "want" dans "// want"
+	WANT_SPACE_END        int = 7 // position de fin de " want" dans "//  want"
 )
 
 // Analyzer004 checks that every package-level variable has an associated comment

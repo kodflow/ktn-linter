@@ -101,19 +101,18 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - bool: true si type error
-//
 func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 	tv := pass.TypesInfo.Types[expr]
 
 	// Check if it's the error interface
 	named, ok := tv.Type.(*types.Named)
- // Vérification de la condition
+	// Vérification de la condition
 	if !ok {
-  // Retour de la fonction
+		// Retour de la fonction
 		return false
 	}
 
 	obj := named.Obj()
- // Retour de la fonction
+	// Retour de la fonction
 	return obj != nil && obj.Name() == "error" && obj.Pkg() == nil
 }

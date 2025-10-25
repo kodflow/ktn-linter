@@ -1,4 +1,4 @@
-.PHONY: help test lint coverage build validate
+.PHONY: help test lint coverage build validate fmt
 
 # Couleurs
 GREEN := \033[0;32m
@@ -17,6 +17,11 @@ build: ## Compile le binaire ktn-linter dans builds/
 	@mkdir -p builds
 	@go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter
 	@echo "${GREEN}✅ Binaire créé: builds/ktn-linter${NC}"
+
+fmt: ## Formate le code Go avec go fmt
+	@echo "${GREEN}Formatage du code...${NC}"
+	@go fmt ./...
+	@echo "${GREEN}✅ Code formaté${NC}"
 
 test: ## Exécute les tests avec couverture
 	@go test -v ./...

@@ -51,4 +51,3 @@ func runVar010(pass *analysis.Pass) (any, error) {
 	// Retour de la fonction
 	return nil, nil
 }
-

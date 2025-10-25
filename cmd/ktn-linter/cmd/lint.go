@@ -256,8 +256,8 @@ func runRequiredAnalyzers(a *analysis.Analyzer, files []*ast.File, pkg *packages
 				Files:     files,
 				Pkg:       pkg.Types,
 				TypesInfo: pkg.TypesInfo,
-				ResultOf: results,
-				Report:   func(analysis.Diagnostic) {},
+				ResultOf:  results,
+				Report:    func(analysis.Diagnostic) {},
 				ReadFile: func(filename string) ([]byte, error) {
 					// Lit le contenu du fichier
 					return os.ReadFile(filename)

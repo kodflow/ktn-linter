@@ -22,7 +22,6 @@ var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-
 // checkCompositeLit vérifie un composite literal pour les slices vides.
 //
 // Params:

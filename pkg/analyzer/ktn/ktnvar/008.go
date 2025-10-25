@@ -22,8 +22,6 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-
-
 // checkMakeCallVar008 vérifie un appel à make avec length > 0.
 //
 // Params:

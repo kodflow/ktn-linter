@@ -13,18 +13,18 @@ import (
 // Returns:
 //   - bool: true si au moins une lettre est présente et toutes sont en majuscules
 func IsAllCaps(s string) bool {
- // Vérification de la condition
+	// Vérification de la condition
 	if len(s) == 0 {
 		// Condition not met, return false.
 		return false
 	}
 	hasLetter := false
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, r := range s {
-  // Vérification de la condition
+		// Vérification de la condition
 		if unicode.IsLetter(r) {
 			hasLetter = true
-   // Vérification de la condition
+			// Vérification de la condition
 			if !unicode.IsUpper(r) {
 				// Condition not met, return false.
 				return false
@@ -43,19 +43,19 @@ func IsAllCaps(s string) bool {
 // Returns:
 //   - bool: true si valide (pas de snake_case, pas de ALL_CAPS sauf initialismes)
 func IsMixedCaps(name string) bool {
- // Vérification de la condition
+	// Vérification de la condition
 	if len(name) == 0 {
 		// Condition not met, return false.
 		return false
 	}
 
- // Vérification de la condition
+	// Vérification de la condition
 	if strings.Contains(name, "_") {
 		// Condition not met, return false.
 		return false
 	}
 
- // Vérification de la condition
+	// Vérification de la condition
 	if IsAllCaps(name) {
 		// Early return from function.
 		return IsValidInitialism(name)
@@ -89,9 +89,9 @@ func getKnownInitialisms() []string {
 //   - string: la chaîne restante
 //   - bool: true si un match a été trouvé
 func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, bool) {
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, init := range initialisms {
-  // Vérification de la condition
+		// Vérification de la condition
 		if strings.HasPrefix(remaining, init) {
 			// Early return from function.
 			return remaining[len(init):], true
@@ -109,7 +109,7 @@ func tryMatchInitialismPrefix(remaining string, initialisms []string) (string, b
 // Returns:
 //   - bool: true si composé uniquement d'initialismes valides
 func IsValidInitialism(name string) bool {
- // Vérification de la condition
+	// Vérification de la condition
 	if strings.Contains(name, "_") {
 		// Condition not met, return false.
 		return false
@@ -119,16 +119,16 @@ func IsValidInitialism(name string) bool {
 	remaining := name
 	matched := false
 
- // Itération sur les éléments
+	// Itération sur les éléments
 	for len(remaining) > 0 {
 		newRemaining, foundMatch := tryMatchInitialismPrefix(remaining, initialisms)
-  // Vérification de la condition
+		// Vérification de la condition
 		if foundMatch {
 			remaining = newRemaining
 			matched = true
-  // Cas alternatif
+			// Cas alternatif
 		} else {
-   // Vérification de la condition
+			// Vérification de la condition
 			if remaining != "" && unicode.IsUpper(rune(remaining[0])) {
 				// Early return from function.
 				return matched

@@ -58,7 +58,7 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 				"KTN-FUNC-007: la fonction '%s' doit avoir une documentation",
 				funcDecl.Name.Name,
 			)
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
@@ -70,7 +70,7 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 		hasReturns := funcDecl.Type.Results != nil && len(funcDecl.Type.Results.List) > 0
 
 		err := validateDocFormat(comments, funcDecl.Name.Name, hasParams, hasReturns)
-  // Vérification de la condition
+		// Vérification de la condition
 		if err != "" {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
@@ -80,7 +80,7 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
@@ -90,10 +90,9 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - []string: lignes de commentaires
-//
 func extractCommentLines(cg *ast.CommentGroup) []string {
 	var lines []string
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, comment := range cg.List {
 		text := comment.Text
 		// Remove // prefix
@@ -101,7 +100,7 @@ func extractCommentLines(cg *ast.CommentGroup) []string {
 			lines = append(lines, text)
 		}
 	}
- // Retour de la fonction
+	// Retour de la fonction
 	return lines
 }
 
@@ -274,4 +273,3 @@ func validateDocFormat(comments []string, funcName string, hasParams, hasReturns
 	// Validation complète réussie
 	return ""
 }
-

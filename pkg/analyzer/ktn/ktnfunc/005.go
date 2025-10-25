@@ -22,7 +22,6 @@ var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-
 // runFunc005 description à compléter.
 //
 // Params:
@@ -39,14 +38,14 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-// runFunc005 exécute l'analyse KTN-FUNC-005.
-//
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - any: résultat de l'analyse
-//   - error: erreur éventuelle
+		// runFunc005 exécute l'analyse KTN-FUNC-005.
+		//
+		// Params:
+		//   - pass: contexte d'analyse
+		//
+		// Returns:
+		//   - any: résultat de l'analyse
+		//   - error: erreur éventuelle
 		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip if no body (external functions)
@@ -57,16 +56,16 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 
 		// Skip test functions
 		funcName := funcDecl.Name.Name
-  // Vérification de la condition
+		// Vérification de la condition
 		if isTestFunction(funcName) {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
 		// Calculate cyclomatic complexity
 		complexity := calculateComplexity(funcDecl.Body)
 
-  // Vérification de la condition
+		// Vérification de la condition
 		if complexity > MAX_CYCLOMATIC_COMPLEXITY {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
@@ -78,7 +77,7 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 		}
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
@@ -88,45 +87,44 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - int: complexité calculée
-//
 func calculateComplexity(body *ast.BlockStmt) int {
 	// Start with complexity of 1 (the function itself)
 	complexity := 1
 
 	ast.Inspect(body, func(n ast.Node) bool {
-  // Sélection selon la valeur
+		// Sélection selon la valeur
 		switch node := n.(type) {
-  // Traitement
+		// Traitement
 		case *ast.IfStmt:
 			// +1 for if
 			complexity++
-  // Traitement
+		// Traitement
 		case *ast.ForStmt, *ast.RangeStmt:
 			// +1 for each loop
 			complexity++
-  // Traitement
+		// Traitement
 		case *ast.CaseClause:
 			// +1 for each case (except default)
 			if node.List != nil {
 				complexity++
 			}
-  // Traitement
+		// Traitement
 		case *ast.CommClause:
 			// +1 for each comm case in select
 			if node.Comm != nil {
 				complexity++
 			}
-  // Traitement
+		// Traitement
 		case *ast.BinaryExpr:
 			// +1 for && and ||
 			if node.Op.String() == "&&" || node.Op.String() == "||" {
 				complexity++
 			}
 		}
-  // Retour de la fonction
+		// Retour de la fonction
 		return true
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return complexity
 }

@@ -22,7 +22,6 @@ var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-
 // runFunc004 description à compléter.
 //
 // Params:
@@ -49,15 +48,15 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 
 		// Skip test functions
 		funcName := funcDecl.Name.Name
-  // Vérification de la condition
+		// Vérification de la condition
 		if isTestFunction(funcName) {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
 		// Skip if function doesn't have named return values
 		if !hasNamedReturns(funcDecl.Type.Results) {
-   // Retour de la fonction
+			// Retour de la fonction
 			return
 		}
 
@@ -67,9 +66,9 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 		// Check for naked returns
 		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
 			ret, ok := node.(*ast.ReturnStmt)
-   // Vérification de la condition
+			// Vérification de la condition
 			if !ok {
-    // Retour de la fonction
+				// Retour de la fonction
 				return true
 			}
 
@@ -87,12 +86,12 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 				}
 			}
 
-   // Retour de la fonction
+			// Retour de la fonction
 			return true
 		})
 	})
 
- // Retour de la fonction
+	// Retour de la fonction
 	return nil, nil
 }
 
@@ -102,23 +101,22 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - bool: true si retours nommés
-//
 func hasNamedReturns(results *ast.FieldList) bool {
- // Vérification de la condition
+	// Vérification de la condition
 	if results == nil || len(results.List) == 0 {
-  // Retour de la fonction
+		// Retour de la fonction
 		return false
 	}
 
- // Itération sur les éléments
+	// Itération sur les éléments
 	for _, field := range results.List {
-  // Vérification de la condition
+		// Vérification de la condition
 		if len(field.Names) > 0 {
-   // Retour de la fonction
+			// Retour de la fonction
 			return true
 		}
 	}
 
- // Retour de la fonction
+	// Retour de la fonction
 	return false
 }

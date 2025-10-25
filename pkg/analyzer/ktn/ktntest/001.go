@@ -81,14 +81,14 @@ func isExemptPackage(pkgName string) bool {
 	exemptPkgs := []string{
 		"main",
 		"testhelper",
-		"cmd",        // tests de fonctions privées cmd
-		"utils",      // tests de fonctions privées utils
-		"formatter",  // tests de fonctions privées formatter
-		"ktn",        // registry tests need same package for KTN-TEST-003
-		"ktnconst",   // registry tests need same package for KTN-TEST-003
-		"ktnfunc",    // registry tests need same package for KTN-TEST-003
-		"ktntest",    // registry tests need same package for KTN-TEST-003
-		"ktnvar",     // registry tests need same package for KTN-TEST-003
+		"cmd",       // tests de fonctions privées cmd
+		"utils",     // tests de fonctions privées utils
+		"formatter", // tests de fonctions privées formatter
+		"ktn",       // registry tests need same package for KTN-TEST-003
+		"ktnconst",  // registry tests need same package for KTN-TEST-003
+		"ktnfunc",   // registry tests need same package for KTN-TEST-003
+		"ktntest",   // registry tests need same package for KTN-TEST-003
+		"ktnvar",    // registry tests need same package for KTN-TEST-003
 	}
 
 	// Parcours des packages exemptés

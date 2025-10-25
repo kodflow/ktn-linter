@@ -11,5 +11,3 @@ func TestFunc007(t *testing.T) {
 	// Placeholder: will calculate error count by running test
 	testhelper.TestGoodBad(t, ktnfunc.Analyzer007, "func007", 8)
 }
-
-

@@ -16,6 +16,7 @@ make coverage  # Génère uniquement le rapport COVERAGE.MD
 make lint      # Lance le linter KTN sur le code de production
 make validate  # Valide que tous les testdata good.go/bad.go sont corrects
 make build     # Compile le binaire ktn-linter dans builds/
+make fmt       # Formate le code Go avec go fmt sur tout le projet
 make help      # Aide
 ```
 
@@ -84,6 +85,11 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-FUNC-011**: Commentaires sur branches/returns/logique
 - **KTN-FUNC-012**: Éviter else après return/continue/break
 
+### Structures (2 règles) ✅ 100%
+
+- **KTN-STRUCT-001**: Un fichier Go par struct (évite fichiers de 10000 lignes)
+- **KTN-STRUCT-002**: Interface obligatoire reprenant 100% des méthodes publiques de chaque struct
+
 ## Statistiques
 
 - **Couverture globale**: 95.6% 🟡
@@ -92,7 +98,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **Package func**: 94.7% 🟡
 - **Package var**: 89.8% 🔴
 - **Go version**: 1.25
-- **Total règles**: 22 (4 const + 6 var + 12 func)
+- **Total règles**: 24 (4 const + 6 var + 12 func + 2 struct)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Structure

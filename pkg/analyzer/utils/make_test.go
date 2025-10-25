@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"testing"
-
 )
 
 func TestIsMakeCall(t *testing.T) {
@@ -271,6 +270,7 @@ func TestIsMakeByteSliceCall(t *testing.T) {
 		})
 	}
 }
+
 // TestIsMakeCallsWithNoArgs tests make calls without arguments
 func TestIsMakeCallsWithNoArgs(t *testing.T) {
 	// Create a make call without args artificially

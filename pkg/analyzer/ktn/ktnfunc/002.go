@@ -22,7 +22,6 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-
 // runFunc002 exécute l'analyse KTN-FUNC-002.
 //
 // Params:

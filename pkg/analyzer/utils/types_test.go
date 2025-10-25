@@ -185,9 +185,9 @@ func TestHasPositiveLength(t *testing.T) {
 	}{
 		{"positive literal", "5", true},
 		{"zero literal", "0", false},
-		{"variable", "n", true},  // Variables assumed positive
+		{"variable", "n", true},     // Variables assumed positive
 		{"expression", "1+1", true}, // Non-literal assumed positive
-		{"hex zero", "0x0", true}, // Not "0" string, treated as positive
+		{"hex zero", "0x0", true},   // Not "0" string, treated as positive
 	}
 
 	for _, tt := range tests {
