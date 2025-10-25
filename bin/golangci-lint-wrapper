@@ -9,17 +9,8 @@ if [ ! -f "$LINTER_BIN" ]; then
     go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1
 fi
 
-# Scanner tout le projet principal
+# Scanner tout le projet (./... inclut déjà testdata)
 cd /workspace
 "$LINTER_BIN" lint --simple --no-color ./... 2>&1 || true
-
-# Scanner tous les répertoires testdata (incluant sous-dossiers)
-find ./pkg/analyzer/ktn/*/testdata/src/* -type d 2>/dev/null | while read dir; do
-    # Vérifier s'il y a des fichiers .go dans ce répertoire
-    if ls "$dir"/*.go >/dev/null 2>&1; then
-        (cd /workspace && "$LINTER_BIN" lint --simple --no-color "$dir" 2>&1) || true &
-    fi
-done
-wait
 
 exit 0

@@ -34,13 +34,6 @@
   // Build flags pour Go
   "go.buildFlags": ["-buildvcs=false"],
   "go.buildTags": "",
-  // Build + Scan automatique à chaque save de fichier Go
-  "triggerTaskOnSave.tasks": {
-    "KTN-Linter: Build and Scan": [
-      "**/*.go"
-    ]
-  },
-  "triggerTaskOnSave.on": true,
   // Afficher automatiquement les erreurs
   "problems.autoReveal": true,
   "problems.showCurrentInStatus": true
