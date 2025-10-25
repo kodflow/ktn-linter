@@ -6,11 +6,26 @@ LINTER_BIN="/workspace/builds/ktn-linter"
 # Si le binaire n'existe pas, le construire
 if [ ! -f "$LINTER_BIN" ]; then
     cd /workspace
-    go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1
+    go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
 fi
 
-# Scanner tout le projet (./... inclut déjà testdata)
 cd /workspace
-"$LINTER_BIN" lint --simple --no-color ./... 2>&1 || true
+
+# Filtrer les arguments golangci-lint pour garder uniquement les packages/chemins
+TARGETS=()
+for arg in "$@"; do
+    # Ignorer les flags golangci-lint
+    if [[ ! "$arg" =~ ^- ]]; then
+        TARGETS+=("$arg")
+    fi
+done
+
+# Si aucune cible spécifiée, scanner tout le projet
+if [ ${#TARGETS[@]} -eq 0 ]; then
+    TARGETS=("./...")
+fi
+
+# Exécuter le linter sur les cibles
+"$LINTER_BIN" lint --simple --no-color "${TARGETS[@]}" 2>&1 || true
 
 exit 0

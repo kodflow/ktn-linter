@@ -1,9 +1,9 @@
 {
   // Configuration KTN-Linter via wrapper
   "go.lintTool": "golangci-lint",
-  "go.lintOnSave": "workspace",
+  "go.lintOnSave": "off",
   "go.useLanguageServer": true,
-  "go.buildOnSave": "package",
+  "go.buildOnSave": "off",
   "go.vetOnSave": "off",
   "go.lintFlags": [],
   "go.alternateTools": {
@@ -12,8 +12,6 @@
   // Activer les diagnostics du linter
   "go.toolsManagement.autoUpdate": false,
   "go.toolsManagement.checkForUpdates": "off",
-  // Forcer l'utilisation du linter alternatif
-  "go.lintTool": "golangci-lint",
   // Désactiver les diagnostics "unused" et autres dans gopls
   "gopls": {
     "analyses": {
@@ -34,6 +32,14 @@
   // Build flags pour Go
   "go.buildFlags": ["-buildvcs=false"],
   "go.buildTags": "",
+  // Linter automatique via triggerTaskOnSave
+  "triggerTaskOnSave.tasks": {
+    "KTN-Linter: Build and Scan": [
+      "**/*.go"
+    ]
+  },
+  "triggerTaskOnSave.on": true,
+  "triggerTaskOnSave.restart": true,
   // Afficher automatiquement les erreurs
   "problems.autoReveal": true,
   "problems.showCurrentInStatus": true
