@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -43,14 +44,14 @@ func runTest004(pass *analysis.Pass) (any, error) {
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
 		// Vérification de la condition
-		if !strings.HasSuffix(filename, "_test.go") {
+		if !shared.IsTestFile(filename) {
 			// Pas un fichier de test
 			return
 		}
 
-		// Vérifier si c'est une fonction de test
-		if !isTestFunction(funcDecl) {
-			// Pas une fonction de test
+		// Vérifier si c'est une fonction de test unitaire (Test*)
+		if !shared.IsUnitTestFunction(funcDecl) {
+			// Pas une fonction de test unitaire
 			return
 		}
 
@@ -67,25 +68,6 @@ func runTest004(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// isTestFunction vérifie si c'est une fonction de test.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//
-// Returns:
-//   - bool: true si c'est une fonction de test
-func isTestFunction(funcDecl *ast.FuncDecl) bool {
-	// Vérification du nom
-	if funcDecl.Name == nil {
-		// Pas de nom
-		return false
-	}
-
-	name := funcDecl.Name.Name
-	// Retour du résultat
-	return strings.HasPrefix(name, "Test")
 }
 
 // hasErrorCaseCoverage vérifie si le test couvre les cas d'erreur.

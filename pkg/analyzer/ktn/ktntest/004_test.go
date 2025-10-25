@@ -8,6 +8,6 @@ import (
 )
 
 func TestTest004(t *testing.T) {
-	// 1 erreur: test sans couverture des cas d'erreur
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer004, "test004", "good_test.go", "bad_test.go", 1)
+	// 2 erreurs: tests sans couverture des cas d'erreur
+	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer004, "test004", "good_test.go", "bad_test.go", 2)
 }

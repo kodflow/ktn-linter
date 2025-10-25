@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -11,7 +12,9 @@ import (
 
 const (
 	// MIN_TEST_CASES est le nombre minimum de cas de test pour table-driven
-	MIN_TEST_CASES int = 2
+	// Note: 3 assertions = pattern répétitif qui devrait utiliser table-driven
+	// 2 assertions = normal (ex: vérifier erreur + résultat)
+	MIN_TEST_CASES int = 3
 )
 
 // Analyzer005 checks that tests use table-driven test pattern
@@ -43,14 +46,14 @@ func runTest005(pass *analysis.Pass) (any, error) {
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
 		// Vérification de la condition
-		if !strings.HasSuffix(filename, "_test.go") {
+		if !shared.IsTestFile(filename) {
 			// Pas un fichier de test
 			return
 		}
 
-		// Vérifier si c'est une fonction de test
-		if !isTestFunc(funcDecl) {
-			// Pas une fonction de test
+		// Vérifier si c'est une fonction de test unitaire (Test*)
+		if !shared.IsUnitTestFunction(funcDecl) {
+			// Pas une fonction de test unitaire
 			return
 		}
 
@@ -67,27 +70,6 @@ func runTest005(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// isTestFunc vérifie si c'est une fonction de test.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//
-// Returns:
-//   - bool: true si c'est une fonction de test
-func isTestFunc(funcDecl *ast.FuncDecl) bool {
-	// Vérification du nom
-	if funcDecl.Name == nil {
-		// Pas de nom
-		return false
-	}
-
-	name := funcDecl.Name.Name
-	// Retour du résultat
-	return strings.HasPrefix(name, "Test") ||
-		strings.HasPrefix(name, "Benchmark") ||
-		strings.HasPrefix(name, "Fuzz")
 }
 
 // hasMultipleAssertions vérifie si le test a plusieurs assertions.

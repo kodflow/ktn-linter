@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -47,14 +48,13 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 		}
 
 		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
-		funcName := funcDecl.Name.Name
-		// Vérification de la condition
-		if isTestFunction(funcName) {
+		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
 			return
 		}
 
 		// Skip main function
+		funcName := funcDecl.Name.Name
 		if funcName == "main" {
 			// Retour de la fonction
 			return
@@ -77,20 +77,6 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// isTestFunction checks if a function name indicates a test function
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - bool: true si fonction de test
-func isTestFunction(name string) bool {
-	// Retour de la fonction
-	return strings.HasPrefix(name, "Test") ||
-		strings.HasPrefix(name, "Benchmark") ||
-		strings.HasPrefix(name, "Example") ||
-		strings.HasPrefix(name, "Fuzz")
 }
 
 // isLineToSkip détermine si une ligne doit être ignorée du compte.

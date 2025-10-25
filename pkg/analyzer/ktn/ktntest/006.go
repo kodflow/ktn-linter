@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -43,7 +44,7 @@ func runTest006(pass *analysis.Pass) (any, error) {
 		basename := filepath.Base(filename)
 
 		// Vérification si fichier de test
-		if strings.HasSuffix(basename, "_test.go") {
+		if shared.IsTestFile(basename) {
 			// Extraire le nom de base sans _test.go
 			baseName := strings.TrimSuffix(basename, "_test.go")
 			testFiles[baseName] = &testFileInfo{

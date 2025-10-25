@@ -10,6 +10,16 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// Formatter définit l'interface pour formater et afficher les diagnostics.
+type Formatter interface {
+	// Format affiche les diagnostics de manière lisible
+	//
+	// Params:
+	//   - fset: le FileSet contenant les informations de position
+	//   - diagnostics: la liste des diagnostics à formater
+	Format(fset *token.FileSet, diagnostics []analysis.Diagnostic)
+}
+
 // formatterImpl implémente l'interface Formatter
 type formatterImpl struct {
 	writer     io.Writer
@@ -338,18 +348,18 @@ func (f *formatterImpl) printSummary(count int) {
 		// Cas alternatif
 	} else {
 		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n", GRAY, RESET)
-		fmt.Fprintf(f.writer, "%s📊 Total: %s%d%s issue(s) to fix\n",
-			BOLD, RED, count, RESET)
+		fmt.Fprintf(f.writer, "%s📊 Total: %s%d%s issue(s) to fix (WARNING)\n",
+			BOLD, YELLOW, count, RESET)
 		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n\n", GRAY, RESET)
 	}
 }
 
-// getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur
+// getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur (TOUJOURS WARNING)
 // Params:
 //   - code: code d'erreur
 //
 // Returns:
-//   - string: couleur ANSI
+//   - string: couleur ANSI (YELLOW pour WARNING)
 func (f *formatterImpl) getCodeColor(code string) string {
 	// Vérification de la condition
 	if f.noColor {
@@ -357,27 +367,6 @@ func (f *formatterImpl) getCodeColor(code string) string {
 		return ""
 	}
 
-	// Sélection selon la valeur
-	switch {
-	// Traitement
-	case strings.HasSuffix(code, "-001"):
-		// Early return from function.
-		return RED
-	// Traitement
-	case strings.HasSuffix(code, "-002"):
-		// Early return from function.
-		return YELLOW
-	// Traitement
-	case strings.HasSuffix(code, "-003"):
-		// Early return from function.
-		return MAGENTA
-	// Traitement
-	case strings.HasSuffix(code, "-004"):
-		// Early return from function.
-		return CYAN
-	// Traitement
-	default:
-		// Early return from function.
-		return RED
-	}
+	// Toutes les règles sont des WARNING (YELLOW)
+	return YELLOW
 }

@@ -248,24 +248,24 @@ func selectFilesForAnalyzer(a *analysis.Analyzer, pkg *packages.Package, fset *t
 func runRequiredAnalyzers(a *analysis.Analyzer, files []*ast.File, pkg *packages.Package, fset *token.FileSet, results map[*analysis.Analyzer]interface{}) {
 	// Run required analyzers first
 	for _, req := range a.Requires {
-		// Vérification de la condition
-		if _, ok := results[req]; !ok {
-			reqPass := &analysis.Pass{
-				Analyzer:  req,
-				Fset:      fset,
-				Files:     files,
-				Pkg:       pkg.Types,
-				TypesInfo: pkg.TypesInfo,
-				ResultOf:  results,
-				Report:    func(analysis.Diagnostic) {},
-				ReadFile: func(filename string) ([]byte, error) {
-					// Lit le contenu du fichier
-					return os.ReadFile(filename)
-				},
-			}
-			result, _ := req.Run(reqPass)
-			results[req] = result
+		// IMPORTANT: Always run inspect.Analyzer with the correct file set
+		// Different analyzers need different files (test vs non-test)
+		// So we can't reuse inspect results across analyzers with different file sets
+		reqPass := &analysis.Pass{
+			Analyzer:  req,
+			Fset:      fset,
+			Files:     files,
+			Pkg:       pkg.Types,
+			TypesInfo: pkg.TypesInfo,
+			ResultOf:  results,
+			Report:    func(analysis.Diagnostic) {},
+			ReadFile: func(filename string) ([]byte, error) {
+				// Lit le contenu du fichier
+				return os.ReadFile(filename)
+			},
 		}
+		result, _ := req.Run(reqPass)
+		results[req] = result
 	}
 }
 

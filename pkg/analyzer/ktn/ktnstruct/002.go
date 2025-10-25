@@ -5,6 +5,7 @@ import (
 	"go/types"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -18,18 +19,11 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// methodSignature représente la signature d'une méthode
-type methodSignature struct {
-	name       string
-	paramsStr  string
-	resultsStr string
-}
-
 // structWithMethods stocke une struct et ses méthodes publiques
 type structWithMethods struct {
 	name    string
 	node    *ast.TypeSpec
-	methods []methodSignature
+	methods []shared.MethodSignature
 }
 
 // runStruct002 exécute l'analyse KTN-STRUCT-002.
@@ -48,7 +42,7 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 		filename := pass.Fset.Position(file.Pos()).Filename
 
 		// Ignorer les fichiers de test
-		if strings.HasSuffix(filename, "_test.go") {
+		if shared.IsTestFile(filename) {
 			// Continuer avec le fichier suivant
 			continue
 		}
@@ -90,9 +84,9 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - map[string][]methodSignature: map nom interface -> signatures méthodes
-func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]methodSignature {
-	interfaces := make(map[string][]methodSignature, 0)
+//   - map[string][]shared.MethodSignature: map nom interface -> signatures méthodes
+func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]shared.MethodSignature {
+	interfaces := make(map[string][]shared.MethodSignature, 0)
 
 	ast.Inspect(file, func(n ast.Node) bool {
 		// Vérifier si c'est une TypeSpec
@@ -112,7 +106,7 @@ func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]methodS
 		}
 
 		// Collecter les méthodes de l'interface
-		var methods []methodSignature
+		var methods []shared.MethodSignature
 		// Parcourir les méthodes de l'interface
 		for _, method := range ifaceType.Methods.List {
 			// Vérifier si c'est une méthode (pas un embedded interface)
@@ -125,10 +119,10 @@ func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]methodS
 
 			// Extraire le nom de la méthode
 			for _, name := range method.Names {
-				methods = append(methods, methodSignature{
-					name:       name.Name,
-					paramsStr:  formatFieldList(funcType.Params, pass),
-					resultsStr: formatFieldList(funcType.Results, pass),
+				methods = append(methods, shared.MethodSignature{
+					Name:       name.Name,
+					ParamsStr:  formatFieldList(funcType.Params, pass),
+					ResultsStr: formatFieldList(funcType.Results, pass),
 				})
 			}
 		}
@@ -153,7 +147,7 @@ func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]methodS
 //   - []structWithMethods: liste des structs avec méthodes
 func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
 	// Map pour stocker les méthodes par type de struct
-	methodsByStruct := make(map[string][]methodSignature, 0)
+	methodsByStruct := make(map[string][]shared.MethodSignature, 0)
 
 	// Collecter les méthodes du fichier courant uniquement
 	ast.Inspect(file, func(n ast.Node) bool {
@@ -197,10 +191,10 @@ func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspec
 
 		// Si on a trouvé le nom de la struct
 		if structName != "" {
-			methodsByStruct[structName] = append(methodsByStruct[structName], methodSignature{
-				name:       funcDecl.Name.Name,
-				paramsStr:  formatFieldList(funcDecl.Type.Params, pass),
-				resultsStr: formatFieldList(funcDecl.Type.Results, pass),
+			methodsByStruct[structName] = append(methodsByStruct[structName], shared.MethodSignature{
+				Name:       funcDecl.Name.Name,
+				ParamsStr:  formatFieldList(funcDecl.Type.Params, pass),
+				ResultsStr: formatFieldList(funcDecl.Type.Results, pass),
 			})
 		}
 
@@ -246,7 +240,7 @@ func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspec
 //
 // Returns:
 //   - bool: true si une interface matching existe
-func hasMatchingInterface(s structWithMethods, interfaces map[string][]methodSignature) bool {
+func hasMatchingInterface(s structWithMethods, interfaces map[string][]shared.MethodSignature) bool {
 	// Parcourir toutes les interfaces
 	for _, ifaceMethods := range interfaces {
 		// Vérifier si cette interface couvre toutes les méthodes de la struct
@@ -268,14 +262,14 @@ func hasMatchingInterface(s structWithMethods, interfaces map[string][]methodSig
 //
 // Returns:
 //   - bool: true si toutes les méthodes sont couvertes
-func interfaceCoversAllMethods(structMethods []methodSignature, ifaceMethods []methodSignature) bool {
+func interfaceCoversAllMethods(structMethods []shared.MethodSignature, ifaceMethods []shared.MethodSignature) bool {
 	// Chaque méthode de la struct doit être dans l'interface
 	for _, sm := range structMethods {
 		found := false
 		// Chercher la méthode dans l'interface
 		for _, im := range ifaceMethods {
 			// Comparer nom et signatures
-			if sm.name == im.name && sm.paramsStr == im.paramsStr && sm.resultsStr == im.resultsStr {
+			if sm.Name == im.Name && sm.ParamsStr == im.ParamsStr && sm.ResultsStr == im.ResultsStr {
 				found = true
 				// Sortir de la boucle
 				break

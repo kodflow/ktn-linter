@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -34,7 +35,7 @@ func runTest002(pass *analysis.Pass) (any, error) {
 	for _, f := range pass.Files {
 		filename := pass.Fset.Position(f.Pos()).Filename
 		// Vérification de la condition
-		if !strings.HasSuffix(filename, "_test.go") {
+		if !shared.IsTestFile(filename) {
 			// Pas un fichier de test
 			continue
 		}

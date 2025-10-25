@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -33,21 +34,15 @@ func runVar002(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// varGroup represents a var declaration group
-type varGroup struct {
-	decl *ast.GenDecl
-	pos  token.Pos
-}
-
 // collectVarGroups collecte les déclarations var du fichier.
 //
 // Params:
 //   - file: fichier à analyser
 //
 // Returns:
-//   - []varGroup: liste des groupes de variables
-func collectVarGroups(file *ast.File) []varGroup {
-	var varGroups []varGroup
+//   - []shared.DeclGroup: liste des groupes de variables
+func collectVarGroups(file *ast.File) []shared.DeclGroup {
+	var varGroups []shared.DeclGroup
 
 	// Collect var declarations
 	for _, decl := range file.Decls {
@@ -59,9 +54,9 @@ func collectVarGroups(file *ast.File) []varGroup {
 
 		// Only collect var declarations
 		if genDecl.Tok == token.VAR {
-			varGroups = append(varGroups, varGroup{
-				decl: genDecl,
-				pos:  genDecl.Pos(),
+			varGroups = append(varGroups, shared.DeclGroup{
+				Decl: genDecl,
+				Pos:  genDecl.Pos(),
 			})
 		}
 	}
@@ -75,7 +70,7 @@ func collectVarGroups(file *ast.File) []varGroup {
 // Params:
 //   - pass: contexte d'analyse
 //   - varGroups: groupes de variables à vérifier
-func checkVarGrouping(pass *analysis.Pass, varGroups []varGroup) {
+func checkVarGrouping(pass *analysis.Pass, varGroups []shared.DeclGroup) {
 	// If 0 or 1 var group, they're properly grouped
 	if len(varGroups) <= 1 {
 		// Retour de la fonction
@@ -85,7 +80,7 @@ func checkVarGrouping(pass *analysis.Pass, varGroups []varGroup) {
 	// Report all var groups except the first as scattered
 	for i := 1; i < len(varGroups); i++ {
 		pass.Reportf(
-			varGroups[i].pos,
+			varGroups[i].Pos,
 			"KTN-VAR-002: les variables doivent être groupées ensemble dans un seul bloc var ()",
 		)
 	}

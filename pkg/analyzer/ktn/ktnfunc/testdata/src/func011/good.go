@@ -309,14 +309,14 @@ func GoodElseBlockWithCommentAtStart(x int) string {
 	}
 }
 
-// GoodInlineComment demonstrates inline comments on same line as code.
+// GoodInlineCommentSameLine demonstrates inline comments on same line as code.
 //
 // Params:
 //   - x: the integer to check
 //
 // Returns:
 //   - int: doubled value
-func GoodInlineComment(x int) int {
+func GoodInlineCommentSameLine(x int) int {
 	// Check if x is positive
 	if x > 0 {
 		return x * DOUBLE_MULTIPLIER // Inline comment: double the positive value

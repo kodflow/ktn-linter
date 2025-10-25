@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -51,7 +52,7 @@ func collectFunctions(pass *analysis.Pass, publicFuncs *[]publicFuncInfo, tested
 			}
 
 			// Vérification de la condition
-			if strings.HasSuffix(filename, "_test.go") {
+			if shared.IsTestFile(filename) {
 				// Fichier de test - collecter les fonctions testées
 				collectTestedFunctions(funcDecl, testedFuncs)
 			} else {
@@ -86,7 +87,7 @@ func runTest003(pass *analysis.Pass) (any, error) {
 	for _, file := range pass.Files {
 		pos := pass.Fset.Position(file.Pos())
 		// Vérification de la condition
-		if strings.HasSuffix(pos.Filename, "_test.go") {
+		if shared.IsTestFile(pos.Filename) {
 			hasTestFiles = true
 			testFileCount++
 		}
@@ -163,21 +164,14 @@ func isPublicFunction(funcDecl *ast.FuncDecl) bool {
 //   - funcDecl: déclaration de fonction de test
 //   - testedFuncs: map des fonctions testées
 func collectTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool) {
-	// Vérification du nom
-	if funcDecl.Name == nil {
-		// Pas de nom
-		return
-	}
-
-	name := funcDecl.Name.Name
-	// Vérifier si c'est un test
-	if !strings.HasPrefix(name, "Test") {
-		// Pas un test
+	// Vérifier si c'est une fonction de test unitaire (Test*)
+	if !shared.IsUnitTestFunction(funcDecl) {
+		// Pas une fonction de test unitaire
 		return
 	}
 
 	// Extraire le nom de la fonction testée
-	testedName := strings.TrimPrefix(name, "Test")
+	testedName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
 	// Vérification de la condition
 	if testedName != "" {
 		// Ajouter à la map

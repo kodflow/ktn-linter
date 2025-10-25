@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -42,9 +43,7 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 		}
 
 		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
-		funcName := funcDecl.Name.Name
-		// Vérification de la condition
-		if isTestFunction(funcName) {
+		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
 			return
 		}

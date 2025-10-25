@@ -3,6 +3,7 @@ package ktnfunc
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -55,12 +56,12 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 		}
 
 		// Skip test functions
-		funcName := funcDecl.Name.Name
-		// Vérification de la condition
-		if isTestFunction(funcName) {
+		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
 			return
 		}
+
+		funcName := funcDecl.Name.Name
 
 		// Calculate cyclomatic complexity
 		complexity := calculateComplexity(funcDecl.Body)

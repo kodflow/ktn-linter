@@ -3,6 +3,7 @@ package ktnfunc
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -52,7 +53,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 			name = fn.Name.Name
 
 			// Skip test functions
-			if isTestFunction(name) {
+			if shared.IsTestFunction(fn) {
 				// Retour de la fonction
 				return
 			}

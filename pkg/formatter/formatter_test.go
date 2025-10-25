@@ -107,29 +107,57 @@ func TestFormatAIMode(t *testing.T) {
 
 // TestFormatSimpleMode tests the functionality of the corresponding implementation.
 func TestFormatSimpleMode(t *testing.T) {
+	const MIN_LINE_COUNT int = 2
+
+	tests := []struct {
+		name  string
+		check func(t *testing.T, output string, lines []string)
+	}{
+		{
+			name: "has minimum line count",
+			check: func(t *testing.T, output string, lines []string) {
+				// Simple mode: one line per diagnostic
+				if len(lines) < MIN_LINE_COUNT {
+					t.Errorf("Expected at least %d lines in simple mode, got %d", MIN_LINE_COUNT, len(lines))
+				}
+			},
+		},
+		{
+			name: "has filename:line:col format",
+			check: func(t *testing.T, output string, lines []string) {
+				// Check format: filename:line:col: [CODE] message
+				if !strings.Contains(lines[0], "test.go:") {
+					t.Error("Expected filename:line:col format")
+				}
+			},
+		},
+		{
+			name: "has error code in brackets",
+			check: func(t *testing.T, output string, lines []string) {
+				// Vérification du code d'erreur
+				if !strings.Contains(lines[0], "[KTN-") {
+					t.Errorf("Expected error code in brackets, got: %s", lines[0])
+				}
+			},
+		},
+	}
+
+	// Préparation commune
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, true)
 	fset := token.NewFileSet()
-
 	fset.AddFile("test.go", 1, 1000)
 	diagnostics := createTestDiagnostics()
-
 	formatter.Format(fset, diagnostics)
-
 	output := buf.String()
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 
-	// Simple mode: one line per diagnostic
-	if len(lines) < 2 {
-		t.Errorf("Expected at least 2 lines in simple mode, got %d", len(lines))
-	}
-
-	// Check format: filename:line:col: [CODE] message
-	if !strings.Contains(lines[0], "test.go:") {
-		t.Error("Expected filename:line:col format")
-	}
-	if !strings.Contains(lines[0], "[KTN-") {
-		t.Errorf("Expected error code in brackets, got: %s", lines[0])
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t, output, lines)
+		})
 	}
 }
 
@@ -293,11 +321,11 @@ func TestGetCodeColor(t *testing.T) {
 		code     string
 		expected string
 	}{
-		{"KTN-VAR-001", RED},
-		{"KTN-FUNC-002", YELLOW},
-		{"KTN-TEST-003", MAGENTA},
-		{"KTN-ALLOC-004", CYAN},
-		{"KTN-OTHER-999", RED}, // default
+		{"KTN-VAR-001", YELLOW},   // Toutes les règles = WARNING
+		{"KTN-FUNC-002", YELLOW},  // Toutes les règles = WARNING
+		{"KTN-TEST-003", YELLOW},  // Toutes les règles = WARNING
+		{"KTN-ALLOC-004", YELLOW}, // Toutes les règles = WARNING
+		{"KTN-OTHER-999", YELLOW}, // Toutes les règles = WARNING
 	}
 
 	for _, tt := range tests {
@@ -321,39 +349,67 @@ func TestGetCodeColorNoColor(t *testing.T) {
 
 // TestGroupByFile tests the functionality of the corresponding implementation.
 func TestGroupByFile(t *testing.T) {
+	const EXPECTED_GROUP_COUNT int = 2
+
+	tests := []struct {
+		name  string
+		check func(t *testing.T, groups []DiagnosticGroupData, fset *token.FileSet)
+	}{
+		{
+			name: "correct group count",
+			check: func(t *testing.T, groups []DiagnosticGroupData, fset *token.FileSet) {
+				// Vérification du nombre de groupes
+				if len(groups) != EXPECTED_GROUP_COUNT {
+					t.Errorf("Expected %d groups, got %d", EXPECTED_GROUP_COUNT, len(groups))
+				}
+			},
+		},
+		{
+			name: "groups sorted by filename",
+			check: func(t *testing.T, groups []DiagnosticGroupData, fset *token.FileSet) {
+				// Check sorting (by filename)
+				if groups[0].Filename > groups[1].Filename {
+					t.Error("Groups should be sorted by filename")
+				}
+			},
+		},
+		{
+			name: "diagnostics sorted by line within groups",
+			check: func(t *testing.T, groups []DiagnosticGroupData, fset *token.FileSet) {
+				// Check that diagnostics are sorted by line within each group
+				for _, group := range groups {
+					// Itération sur les diagnostics
+					for i := 1; i < len(group.Diagnostics); i++ {
+						posI := fset.Position(group.Diagnostics[i-1].Pos)
+						posJ := fset.Position(group.Diagnostics[i].Pos)
+						// Vérification de l'ordre
+						if posI.Line > posJ.Line {
+							t.Error("Diagnostics should be sorted by line number")
+						}
+					}
+				}
+			},
+		},
+	}
+
+	// Préparation commune
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
-
-	// Add files
 	file1 := fset.AddFile("file1.go", 1, 1000)
 	file2 := fset.AddFile("file2.go", 1002, 1000)
-
 	diagnostics := []analysis.Diagnostic{
 		{Pos: file1.Pos(10), Message: "Issue 1", Category: "test"},
 		{Pos: file2.Pos(20), Message: "Issue 2", Category: "test"},
 		{Pos: file1.Pos(5), Message: "Issue 3", Category: "test"},
 	}
-
 	groups := formatter.groupByFile(fset, diagnostics)
 
-	if len(groups) != 2 {
-		t.Errorf("Expected 2 groups, got %d", len(groups))
-	}
-
-	// Check sorting (by filename)
-	if groups[0].Filename > groups[1].Filename {
-		t.Error("Groups should be sorted by filename")
-	}
-
-	// Check that diagnostics are sorted by line within each group
-	for _, group := range groups {
-		for i := 1; i < len(group.Diagnostics); i++ {
-			posI := fset.Position(group.Diagnostics[i-1].Pos)
-			posJ := fset.Position(group.Diagnostics[i].Pos)
-			if posI.Line > posJ.Line {
-				t.Error("Diagnostics should be sorted by line number")
-			}
-		}
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t, groups, fset)
+		})
 	}
 }
 
@@ -385,37 +441,75 @@ func TestGroupByFileFiltering(t *testing.T) {
 
 // TestFilterAndSortDiagnostics tests the functionality of the corresponding implementation.
 func TestFilterAndSortDiagnostics(t *testing.T) {
+	const EXPECTED_DIAG_COUNT int = 3
+
+	tests := []struct {
+		name  string
+		check func(t *testing.T, filtered []analysis.Diagnostic, fset *token.FileSet)
+	}{
+		{
+			name: "correct diagnostic count",
+			check: func(t *testing.T, filtered []analysis.Diagnostic, fset *token.FileSet) {
+				// Vérification du nombre de diagnostics
+				if len(filtered) != EXPECTED_DIAG_COUNT {
+					t.Errorf("Expected %d diagnostics, got %d", EXPECTED_DIAG_COUNT, len(filtered))
+				}
+			},
+		},
+		{
+			name: "first diagnostic from a.go",
+			check: func(t *testing.T, filtered []analysis.Diagnostic, fset *token.FileSet) {
+				// Check sorting: by filename, then line, then column
+				positionStrings := make([]string, len(filtered))
+				// Itération sur les diagnostics
+				for i, diag := range filtered {
+					pos := fset.Position(diag.Pos)
+					positionStrings[i] = pos.String()
+				}
+
+				// Should be: a.go line 10, a.go line 20, b.go line 10
+				if !strings.Contains(positionStrings[0], "a.go") {
+					t.Error("First diagnostic should be from a.go")
+				}
+			},
+		},
+		{
+			name: "last diagnostic from b.go",
+			check: func(t *testing.T, filtered []analysis.Diagnostic, fset *token.FileSet) {
+				// Calcul des positions
+				positionStrings := make([]string, len(filtered))
+				// Itération sur les diagnostics
+				for i, diag := range filtered {
+					pos := fset.Position(diag.Pos)
+					positionStrings[i] = pos.String()
+				}
+
+				// Vérification du dernier diagnostic
+				if !strings.Contains(positionStrings[2], "b.go") {
+					t.Error("Last diagnostic should be from b.go")
+				}
+			},
+		},
+	}
+
+	// Préparation commune
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
-
 	file1 := fset.AddFile("a.go", 1, 1000)
 	file2 := fset.AddFile("b.go", 1002, 1000)
-
 	diagnostics := []analysis.Diagnostic{
 		{Pos: file2.Pos(10), Message: "B1", Category: "test"},
 		{Pos: file1.Pos(20), Message: "A2", Category: "test"},
 		{Pos: file1.Pos(10), Message: "A1", Category: "test"},
 	}
-
 	filtered := formatter.filterAndSortDiagnostics(fset, diagnostics)
 
-	if len(filtered) != 3 {
-		t.Errorf("Expected 3 diagnostics, got %d", len(filtered))
-	}
-
-	// Check sorting: by filename, then line, then column
-	positionStrings := make([]string, len(filtered))
-	for i, diag := range filtered {
-		pos := fset.Position(diag.Pos)
-		positionStrings[i] = pos.String()
-	}
-
-	// Should be: a.go line 10, a.go line 20, b.go line 10
-	if !strings.Contains(positionStrings[0], "a.go") {
-		t.Error("First diagnostic should be from a.go")
-	}
-	if !strings.Contains(positionStrings[2], "b.go") {
-		t.Error("Last diagnostic should be from b.go")
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t, filtered, fset)
+		})
 	}
 }
 
@@ -487,53 +581,95 @@ func TestPrintFunctions(t *testing.T) {
 
 // TestFormatSimpleModeWithFiltering tests the functionality of the corresponding implementation.
 func TestFormatSimpleModeWithFiltering(t *testing.T) {
+	const EXPECTED_LINE_COUNT int = 3
+
+	tests := []struct {
+		name  string
+		check func(t *testing.T, output string, lines []string)
+	}{
+		{
+			name: "correct line count after filtering",
+			check: func(t *testing.T, output string, lines []string) {
+				// Should have 3 lines (from normal.go on different lines)
+				if len(lines) != EXPECTED_LINE_COUNT {
+					t.Errorf("Expected %d lines after filtering, got %d", EXPECTED_LINE_COUNT, len(lines))
+				}
+			},
+		},
+		{
+			name: "contains normal.go in output",
+			check: func(t *testing.T, output string, lines []string) {
+				// Vérification du fichier normal
+				if !strings.Contains(output, "normal.go") {
+					t.Error("Expected normal.go in output")
+				}
+			},
+		},
+		{
+			name: "filters out cache and tmp files",
+			check: func(t *testing.T, output string, lines []string) {
+				// Vérification du filtrage
+				if strings.Contains(output, "temp.go") || strings.Contains(output, "/tmp/") {
+					t.Error("Expected cache/tmp files to be filtered out")
+				}
+			},
+		},
+		{
+			name: "sorts by line number - Issue 1 first",
+			check: func(t *testing.T, output string, lines []string) {
+				// Check sorting: line 2, then line 3, then line 4
+				if !strings.Contains(lines[0], "Issue 1") {
+					t.Error("First line should be Issue 1 (line 2)")
+				}
+			},
+		},
+		{
+			name: "sorts by line number - Issue 4 second",
+			check: func(t *testing.T, output string, lines []string) {
+				// Vérification de la deuxième ligne
+				if !strings.Contains(lines[1], "Issue 4") {
+					t.Error("Second line should be Issue 4 (line 3)")
+				}
+			},
+		},
+		{
+			name: "sorts by line number - Issue 3 third",
+			check: func(t *testing.T, output string, lines []string) {
+				// Vérification de la troisième ligne
+				if !strings.Contains(lines[2], "Issue 3") {
+					t.Error("Third line should be Issue 3 (line 4)")
+				}
+			},
+		},
+	}
+
+	// Préparation commune
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, true)
 	fset := token.NewFileSet()
-
-	// Add files including temp/cache files
 	file1 := fset.AddFile("normal.go", 1, 1000)
-	// Add line breaks to define different lines in file1
-	file1.AddLine(10)  // Line 2 starts at offset 10
-	file1.AddLine(50)  // Line 3 starts at offset 50
-	file1.AddLine(100) // Line 4 starts at offset 100
-
+	file1.AddLine(10)
+	file1.AddLine(50)
+	file1.AddLine(100)
 	file2 := fset.AddFile("/.cache/go-build/temp.go", 1002, 1000)
 	file3 := fset.AddFile("/tmp/test.go", 2003, 1000)
-
 	diagnostics := []analysis.Diagnostic{
-		{Pos: file1.Pos(100), Message: "KTN-TEST-003: Issue 3", Category: "test"}, // Line 4
-		{Pos: file1.Pos(10), Message: "KTN-TEST-001: Issue 1", Category: "test"},  // Line 2
-		{Pos: file2.Pos(20), Message: "KTN-TEST-002: Issue 2", Category: "test"},  // Should be filtered
-		{Pos: file1.Pos(50), Message: "KTN-TEST-004: Issue 4", Category: "test"},  // Line 3
-		{Pos: file3.Pos(30), Message: "KTN-TEST-005: Issue 5", Category: "test"},  // Should be filtered
+		{Pos: file1.Pos(100), Message: "KTN-TEST-003: Issue 3", Category: "test"},
+		{Pos: file1.Pos(10), Message: "KTN-TEST-001: Issue 1", Category: "test"},
+		{Pos: file2.Pos(20), Message: "KTN-TEST-002: Issue 2", Category: "test"},
+		{Pos: file1.Pos(50), Message: "KTN-TEST-004: Issue 4", Category: "test"},
+		{Pos: file3.Pos(30), Message: "KTN-TEST-005: Issue 5", Category: "test"},
 	}
-
 	formatter.Format(fset, diagnostics)
-
 	output := buf.String()
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 
-	// Should have 3 lines (from normal.go on different lines)
-	if len(lines) != 3 {
-		t.Errorf("Expected 3 lines after filtering, got %d", len(lines))
-	}
-	if !strings.Contains(output, "normal.go") {
-		t.Error("Expected normal.go in output")
-	}
-	if strings.Contains(output, "temp.go") || strings.Contains(output, "/tmp/") {
-		t.Error("Expected cache/tmp files to be filtered out")
-	}
-
-	// Check sorting: line 2, then line 3, then line 4
-	if !strings.Contains(lines[0], "Issue 1") {
-		t.Error("First line should be Issue 1 (line 2)")
-	}
-	if !strings.Contains(lines[1], "Issue 4") {
-		t.Error("Second line should be Issue 4 (line 3)")
-	}
-	if !strings.Contains(lines[2], "Issue 3") {
-		t.Error("Third line should be Issue 3 (line 4)")
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			tt.check(t, output, lines)
+		})
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -34,13 +35,14 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
-		funcName := funcDecl.Name.Name
 
 		// Skip test functions
-		if isTestFunction(funcName) {
+		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
 			return
 		}
+
+		funcName := funcDecl.Name.Name
 
 		// Skip if not a getter (Get*, Is*, Has*)
 		if !isGetter(funcName) {

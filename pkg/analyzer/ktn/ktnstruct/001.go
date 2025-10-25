@@ -2,8 +2,8 @@ package ktnstruct
 
 import (
 	"go/ast"
-	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -34,7 +34,7 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 		filename := pass.Fset.Position(file.Pos()).Filename
 
 		// Ignorer les fichiers de test
-		if strings.HasSuffix(filename, "_test.go") {
+		if shared.IsTestFile(filename) {
 			// Continuer avec le fichier suivant
 			continue
 		}

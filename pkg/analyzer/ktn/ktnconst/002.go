@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -25,8 +26,8 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 func runConst002(pass *analysis.Pass) (any, error) {
 	// Analyze each file independently
 	for _, file := range pass.Files {
-		var constGroups []declGroup
-		var varGroups []declGroup
+		var constGroups []shared.DeclGroup
+		var varGroups []shared.DeclGroup
 		tracker := &declTracker{
 			constGroups: constGroups,
 			varGroups:   varGroups,
@@ -44,15 +45,15 @@ func runConst002(pass *analysis.Pass) (any, error) {
 			switch genDecl.Tok {
 			// Traitement
 			case token.CONST:
-				tracker.constGroups = append(tracker.constGroups, declGroup{
-					decl: genDecl,
-					pos:  genDecl.Pos(),
+				tracker.constGroups = append(tracker.constGroups, shared.DeclGroup{
+					Decl: genDecl,
+					Pos:  genDecl.Pos(),
 				})
 			// Traitement
 			case token.VAR:
-				tracker.varGroups = append(tracker.varGroups, declGroup{
-					decl: genDecl,
-					pos:  genDecl.Pos(),
+				tracker.varGroups = append(tracker.varGroups, shared.DeclGroup{
+					Decl: genDecl,
+					Pos:  genDecl.Pos(),
 				})
 			}
 		}
@@ -66,21 +67,8 @@ func runConst002(pass *analysis.Pass) (any, error) {
 }
 
 type declTracker struct {
-	constGroups []declGroup
-	varGroups   []declGroup
-}
-
-// runConst002 exécute l'analyse KTN-CONST-002.
-//
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - any: résultat de l'analyse
-//   - error: erreur éventuelle
-type declGroup struct {
-	decl *ast.GenDecl
-	pos  token.Pos
+	constGroups []shared.DeclGroup
+	varGroups   []shared.DeclGroup
 }
 
 // checkConstGrouping description à compléter.
@@ -96,16 +84,16 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	}
 
 	// Find the position of the first var declaration
-	firstVarPos := tracker.varGroups[0].pos
+	firstVarPos := tracker.varGroups[0].Pos
 
 	// Separate consts into those before and after first var
-	var constGroupsBeforeVar []declGroup
-	var constGroupsAfterVar []declGroup
+	var constGroupsBeforeVar []shared.DeclGroup
+	var constGroupsAfterVar []shared.DeclGroup
 
 	// Itération sur les éléments
 	for _, constGroup := range tracker.constGroups {
 		// Vérification de la condition
-		if constGroup.pos < firstVarPos {
+		if constGroup.Pos < firstVarPos {
 			constGroupsBeforeVar = append(constGroupsBeforeVar, constGroup)
 			// Cas alternatif
 		} else {
@@ -116,7 +104,7 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 	// Report consts that appear after var
 	for _, constGroup := range constGroupsAfterVar {
 		pass.Reportf(
-			constGroup.pos,
+			constGroup.Pos,
 			"KTN-CONST-002: les constantes doivent être groupées et placées au-dessus des déclarations var",
 		)
 	}
@@ -129,7 +117,7 @@ func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
 //
 // Params:
 //   - pass: contexte d'analyse
-func checkScatteredConsts(pass *analysis.Pass, constGroups []declGroup) {
+func checkScatteredConsts(pass *analysis.Pass, constGroups []shared.DeclGroup) {
 	// If 0 or 1 const group, they're not scattered
 	if len(constGroups) <= 1 {
 		// Retour de la fonction
@@ -139,7 +127,7 @@ func checkScatteredConsts(pass *analysis.Pass, constGroups []declGroup) {
 	// Report all const groups except the first as scattered
 	for i := 1; i < len(constGroups); i++ {
 		pass.Reportf(
-			constGroups[i].pos,
+			constGroups[i].Pos,
 			"KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc",
 		)
 	}

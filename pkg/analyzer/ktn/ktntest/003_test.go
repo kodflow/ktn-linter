@@ -8,6 +8,6 @@ import (
 )
 
 func TestTest003(t *testing.T) {
-	// 1 erreur: fonction Multiply sans test
-	testhelper.TestGoodBadPackage(t, ktntest.Analyzer003, "test003", 1)
+	// 2 erreurs: fonctions Multiply et Divide sans test
+	testhelper.TestGoodBadPackage(t, ktntest.Analyzer003, "test003", 2)
 }

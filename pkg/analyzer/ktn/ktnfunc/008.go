@@ -3,6 +3,7 @@ package ktnfunc
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -33,13 +34,14 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
-		funcName := funcDecl.Name.Name
 
 		// Skip test functions
-		if isTestFunction(funcName) {
+		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
 			return
 		}
+
+		funcName := funcDecl.Name.Name
 
 		// Vérification de la condition
 		if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
