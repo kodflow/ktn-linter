@@ -1,0 +1,196 @@
+name: Release KTN-Linter
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Déclenché sur tags semver (v1.0.0, v1.2.3, etc.)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            artifact: ktn-linter-linux-amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            artifact: ktn-linter-linux-arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            artifact: ktn-linter-darwin-amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            artifact: ktn-linter-darwin-arm64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            artifact: ktn-linter-windows-amd64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Nécessaire pour git describe
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_no_v=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -buildvcs=false \
+            -ldflags="-s -w -X main.Version=${{ steps.version.outputs.version }}" \
+            -o ${{ matrix.artifact }} \
+            ./cmd/ktn-linter
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_no_v=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          for dir in */; do
+            cd "$dir"
+            for file in *; do
+              sha256sum "$file" >> ../checksums.txt
+            done
+            cd ..
+          done
+          cat checksums.txt
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          ## KTN-Linter ${{ steps.version.outputs.version }}
+
+          ### 📦 Installation
+
+          #### Linux (AMD64)
+          ```bash
+          curl -Lo ktn-linter https://github.com/kodflow/ktn-linter/releases/download/${{ steps.version.outputs.version }}/ktn-linter-linux-amd64
+          chmod +x ktn-linter
+          sudo mv ktn-linter /usr/local/bin/
+          ```
+
+          #### Linux (ARM64)
+          ```bash
+          curl -Lo ktn-linter https://github.com/kodflow/ktn-linter/releases/download/${{ steps.version.outputs.version }}/ktn-linter-linux-arm64
+          chmod +x ktn-linter
+          sudo mv ktn-linter /usr/local/bin/
+          ```
+
+          #### macOS (Intel)
+          ```bash
+          curl -Lo ktn-linter https://github.com/kodflow/ktn-linter/releases/download/${{ steps.version.outputs.version }}/ktn-linter-darwin-amd64
+          chmod +x ktn-linter
+          sudo mv ktn-linter /usr/local/bin/
+          ```
+
+          #### macOS (Apple Silicon)
+          ```bash
+          curl -Lo ktn-linter https://github.com/kodflow/ktn-linter/releases/download/${{ steps.version.outputs.version }}/ktn-linter-darwin-arm64
+          chmod +x ktn-linter
+          sudo mv ktn-linter /usr/local/bin/
+          ```
+
+          #### Windows
+          Télécharger `ktn-linter-windows-amd64.exe` et ajouter au PATH.
+
+          ### 🔒 Checksums (SHA256)
+          ```
+          $(cat artifacts/checksums.txt)
+          ```
+
+          ### 📝 Changelog
+          Pour voir les changements détaillés, consultez les commits depuis la dernière release.
+
+          ---
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          EOF
+          cat release-notes.md
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f -name 'ktn-linter-*' -exec mv {} release/ \;
+          mv artifacts/checksums.txt release/
+          ls -la release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: KTN-Linter ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: release/*
+          token: ${{ secrets.GITHUB_TOKEN }}

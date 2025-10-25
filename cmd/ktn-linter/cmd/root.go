@@ -19,6 +19,8 @@ var (
 	Verbose bool
 	// category filters rules by specific category.
 	Category string
+	// version stocke la version du linter
+	version string = "dev"
 
 	// OsExit est une variable pour permettre le mocking dans les tests.
 	// Par défaut, elle pointe vers os.Exit, mais peut être remplacée par un mock.
@@ -31,8 +33,20 @@ var (
 		Long: `KTN-Linter is a specialized linter that enforces naming conventions and code quality standards for Go projects.
 
 It analyzes Go code to ensure compliance with KTN (Kodflow Typing Notation) standards.`,
+		Version: version,
 	}
 )
+
+// SetVersion définit la version du linter.
+//
+// Params:
+//   - v: version à définir
+//
+// Returns: aucun
+func SetVersion(v string) {
+	version = v
+	rootCmd.Version = v
+}
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
