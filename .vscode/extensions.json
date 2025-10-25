@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "golang.go",
-    "emeraldwalk.runonsave"
-  ]
+    "Gruntfuggly.triggertaskonsave"
+  ],
+  "unwantedRecommendations": []
 }

@@ -1,0 +1,8 @@
+[
+  {
+    "key": "ctrl+shift+l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "KTN Lint Current File",
+    "when": "editorTextFocus && editorLangId == 'go'"
+  }
+]

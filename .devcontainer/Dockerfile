@@ -58,14 +58,14 @@ RUN AWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") &
     wait && \
     unzip /tmp/awscliv2.zip -d /tmp && \
     /tmp/aws/install && \
-    sh /tmp/golangci-install.sh -b /usr/local/bin v2.5.0 && \
+    sh /tmp/golangci-install.sh -b /usr/local/bin latest && \
     rm -rf /tmp/awscliv2.zip /tmp/aws /tmp/golangci-install.sh
 
 # Switch to vscode user
 USER vscode
 WORKDIR /home/vscode
 
-# Create directories for persistent volumes
+# Create directories for persistent volumes and clean old golangci-lint
 RUN mkdir -p /home/vscode/.cache \
     /home/vscode/.config \
     /home/vscode/.config/op \
@@ -74,7 +74,9 @@ RUN mkdir -p /home/vscode/.cache \
     /home/vscode/.claude \
     /home/vscode/.local/share/@anthropic \
     # Set strict permissions for 1Password config directory
-    && chmod 700 /home/vscode/.config/op
+    && chmod 700 /home/vscode/.config/op \
+    # Remove any old golangci-lint installations from user cache
+    && rm -rf /home/vscode/.cache/go/bin/golangci-lint
 
 # Install Oh My Zsh and themes in parallel (rarely changes - good for cache)
 RUN rm -rf "$HOME/.oh-my-zsh" && \
@@ -100,6 +102,9 @@ RUN sed -i 's/^ZSH_THEME=.*/ZSH_THEME="powerlevel10k\/powerlevel10k"/' "$HOME/.z
         echo 'export HISTSIZE=10000'; \
         echo 'export SAVEHIST=10000'; \
         echo ''; \
+        echo '# Ensure /usr/local/bin takes priority over user cache'; \
+        echo 'export PATH="/usr/local/bin:$PATH"'; \
+        echo ''; \
         echo '# Super Claude alias'; \
         echo 'alias super-claude="claude --dangerously-skip-permissions --mcp-config /home/vscode/.devcontainer/mcp.json"'; \
     } >> "$HOME/.zshrc"
@@ -115,9 +120,13 @@ RUN GO_ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "amd64" || echo "arm64") && \
     ln -sf /usr/local/go/bin/go /usr/local/bin/go && \
     ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 
-# Install npm global packages as root (uses @latest - may change often, so at the end)
-RUN npm install -g @anthropic-ai/claude-code@latest @bazel/bazelisk
+# Configure npm to use user-local directory for global packages
 USER vscode
+ENV PATH="/home/vscode/.npm-global/bin:$PATH"
+RUN mkdir -p /home/vscode/.npm-global && \
+    npm config set prefix '/home/vscode/.npm-global' && \
+    echo 'export PATH=/home/vscode/.npm-global/bin:$PATH' >> /home/vscode/.zshrc && \
+    npm install -g @anthropic-ai/claude-code@latest @bazel/bazelisk
 
 # Set working directory
 WORKDIR /workspace

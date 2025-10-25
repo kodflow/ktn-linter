@@ -2,18 +2,25 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build KTN-Linter",
+      "label": "KTN-Linter: Build and Scan",
       "type": "shell",
-      "command": "go build -buildvcs=false -o builds/ktn-linter ./src/cmd/ktn-linter",
-      "problemMatcher": ["$go"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
+      "command": "cd ${workspaceFolder} && go build -buildvcs=false -o builds/ktn-linter ./cmd/ktn-linter && ${workspaceFolder}/bin/golangci-lint-wrapper",
+      "problemMatcher": {
+        "owner": "go",
+        "fileLocation": ["absolute"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
       },
       "presentation": {
-        "reveal": "silent",
+        "reveal": "never",
         "panel": "shared",
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": true
       }
     }
   ]

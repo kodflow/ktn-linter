@@ -71,7 +71,7 @@ jobs:
           context: .devcontainer
           file: .devcontainer/Dockerfile
           platforms: ${{ matrix.platform }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=build-${{ steps.platform.outputs.tag }}
@@ -81,6 +81,7 @@ jobs:
   manifest:
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write
