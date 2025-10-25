@@ -12,6 +12,6 @@ import (
 // Params:
 //   - t: contexte de test
 func TestVar019(t *testing.T) {
-	// 9 cas de copies de mutex attendus
-	testhelper.TestGoodBad(t, ktnvar.Analyzer019, "var019", 9)
+	// 15 cas de copies de mutex attendus
+	testhelper.TestGoodBad(t, ktnvar.Analyzer019, "var019", 15)
 }

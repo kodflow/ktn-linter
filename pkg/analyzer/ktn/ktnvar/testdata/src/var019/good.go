@@ -107,3 +107,56 @@ func (s goodStructWithoutMutex) ValueMethod() int {
 	// Retour de la fonction
 	return s.value
 }
+
+// goodTypeAlias est un alias de type (pas une struct).
+type goodTypeAlias = int
+
+// goodInterfaceType est une interface (pas une struct avec mutex).
+type goodInterfaceType interface {
+	DoSomething()
+}
+
+// goodImplStruct implémente l'interface.
+type goodImplStruct struct {
+	value int
+}
+
+// DoSomething implémente l'interface (receiver par valeur OK).
+func (g goodImplStruct) DoSomething() {
+	// Implementation
+	_ = g.value
+}
+
+// goodPtrMutexStruct utilise un pointeur de mutex comme champ.
+type goodPtrMutexStruct struct {
+	mu *sync.Mutex
+}
+
+// ProcessWithPtrMutex utilise value receiver (OK car mu est un pointeur).
+func (g goodPtrMutexStruct) ProcessWithPtrMutex() {
+	// Traitement
+	if g.mu != nil {
+		g.mu.Lock()
+		defer g.mu.Unlock()
+	}
+}
+
+// goodFuncNoParams est une fonction sans paramètres.
+func goodFuncNoParams() {
+	// Pas de paramètres donc pas de problème
+	mu := &sync.Mutex{}
+	mu.Lock()
+	defer mu.Unlock()
+}
+
+// goodPointerTypeAlias est un alias de type pointeur.
+type goodPointerTypeAlias *GoodCounter
+
+// goodNonStructType est un type qui n'est pas une struct.
+type goodNonStructType int
+
+// Process traite avec un receiver de type non-struct (OK).
+func (g goodNonStructType) Process() int {
+	// Retour de la fonction
+	return int(g) * 2
+}

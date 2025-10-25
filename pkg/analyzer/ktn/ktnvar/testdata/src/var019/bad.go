@@ -125,3 +125,34 @@ func (s Stats) Count() uint64 {
 	// Retourne la valeur du compteur
 	return s.counter.Load()
 }
+
+// badRWMutexParam passe un RWMutex par valeur.
+//
+// Params:
+//   - mu: RWMutex passé par valeur (copie).
+func badRWMutexParam(mu sync.RWMutex) {
+	mu.Lock()
+	defer mu.Unlock()
+}
+
+// badAtomicValueParam passe un atomic.Value par valeur.
+//
+// Params:
+//   - v: atomic.Value passé par valeur (copie).
+func badAtomicValueParam(v atomic.Value) {
+	_ = v.Load()
+}
+
+// badRWMutexAssignment assigne un RWMutex (copie).
+func badRWMutexAssignment() {
+	var mu1 sync.RWMutex
+	mu2 := mu1
+	_ = mu2
+}
+
+// badAtomicValueAssignment assigne un atomic.Value (copie).
+func badAtomicValueAssignment() {
+	var v1 atomic.Value
+	v2 := v1
+	_ = v2
+}

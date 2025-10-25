@@ -14,14 +14,14 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **91.0%** |
+| 🟡 | **TOTAL (Global)** | **91.1%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 94.4% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 97.8% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 77.5% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 85.5% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 85.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 94.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
@@ -85,7 +85,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `005.go:hasTableDrivenPattern` | 60.0% |
 | 🟡 `006.go:runTest006` | 94.1% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 85.5%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 85.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -125,14 +125,14 @@ Rapport de couverture généré automatiquement.
 | 🔴 `018.go:checkFuncForRepeatedConversions` | 80.0% |
 | 🟡 `018.go:isStringConversion` | 90.9% |
 | 🟡 `019.go:collectTypesWithValueReceivers` | 92.9% |
-| 🔴 `019.go:checkStructsWithMutex` | 84.6% |
+| 🟡 `019.go:checkStructsWithMutex` | 92.3% |
 | 🟡 `019.go:checkValueReceivers` | 92.3% |
 | 🔴 `019.go:checkValueParams` | 88.9% |
 | 🔴 `019.go:checkAssignments` | 88.9% |
 | 🔴 `019.go:getMutexType` | 75.0% |
 | 🟡 `019.go:getMutexTypeName` | 92.3% |
 | 🔴 `019.go:hasMutex` | 75.0% |
-| 🔴 `019.go:hasMutexInType` | 84.6% |
+| 🟡 `019.go:hasMutexInType` | 92.3% |
 | 🔴 `019.go:getMutexTypeFromType` | 75.0% |
 | 🔴 `019.go:getTypeName` | 40.0% |
 | 🔴 `019.go:isMutexCopy` | 85.7% |
@@ -147,4 +147,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-24 23:56:59*
+*Généré le: 2025-10-25 00:10:10*
