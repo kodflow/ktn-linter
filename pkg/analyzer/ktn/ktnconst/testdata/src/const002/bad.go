@@ -52,6 +52,15 @@ const (
 	CONST_FINAL string = "final"
 )
 
+// Variable declaration
+var GlobalVar string = "some var"
+
+// Bad: Const after var (ERROR #8)
+const (
+	// CONST_AFTER_VAR appears after a var declaration
+	CONST_AFTER_VAR string = "after var"
+)
+
 // helperFunction is used to demonstrate const blocks separated by other declarations.
 //
 // Returns:

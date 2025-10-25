@@ -25,3 +25,13 @@ const (
 
 // Valid edge case: File with only variables (no const) should not trigger errors
 var OnlyVar2 string = "test"
+
+const (
+	//want "KTN-CONST-004"
+	ONLY_WANT_DIRECTIVE int = 42
+)
+
+const (
+	// want "some directive"
+	SPACE_WANT_DIRECTIVE int = 43
+)
