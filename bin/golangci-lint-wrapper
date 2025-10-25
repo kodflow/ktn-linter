@@ -20,12 +20,21 @@ for arg in "$@"; do
     fi
 done
 
-# Si aucune cible spécifiée, scanner tout le projet
+# Si aucune cible spécifiée, scanner tout le projet + testdata
 if [ ${#TARGETS[@]} -eq 0 ]; then
-    TARGETS=("./...")
-fi
+    # Scanner le projet principal
+    "$LINTER_BIN" lint --simple --no-color ./... 2>&1 || true
 
-# Exécuter le linter sur les cibles
-"$LINTER_BIN" lint --simple --no-color "${TARGETS[@]}" 2>&1 || true
+    # Scanner tous les packages testdata (qui ne sont pas inclus dans ./...)
+    find ./pkg/analyzer/ktn/*/testdata/src/* -maxdepth 1 -type d 2>/dev/null | while IFS= read -r dir; do
+        # Vérifier si le répertoire contient des fichiers .go
+        if compgen -G "$dir/*.go" > /dev/null 2>&1; then
+            "$LINTER_BIN" lint --simple --no-color "$dir" 2>&1 || true
+        fi
+    done
+else
+    # Exécuter le linter sur les cibles spécifiées
+    "$LINTER_BIN" lint --simple --no-color "${TARGETS[@]}" 2>&1 || true
+fi
 
 exit 0
