@@ -2,6 +2,29 @@
 
 Linter Go pour l'application des bonnes pratiques.
 
+## 🚀 Plugin Claude Code
+
+**Transformez Claude en expert Go ultime !**
+
+Ce projet inclut un **plugin Claude Code** qui active automatiquement :
+- ✅ Auto-linting après chaque modification
+- ✅ 13+ design patterns Go intégrés
+- ✅ Connaissance Go 1.25+ à jour
+- ✅ Zéro dette technique garantie
+
+**[📖 Guide Installation Plugin](.claude-plugin/INSTALL.md)** | **[📚 Documentation](.claude-plugin/README.md)** | **[🎯 Exemples](.claude-plugin/EXAMPLES.md)**
+
+### Installation Rapide
+
+```bash
+# Le plugin est déjà dans .claude-plugin/
+# Claude Code le détectera automatiquement !
+```
+
+**Résout les problèmes Reddit** : Conventions oubliées, contexte perdu, règles à répéter → Plugin = Contexte permanent + Auto-correction réflexe
+
+---
+
 ## Installation
 
 ```bash

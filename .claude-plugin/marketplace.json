@@ -7,5 +7,14 @@
   "description": "Collection of development plugins with strict standards and best practices enforcement",
   "version": "1.0.0",
   "repository": "https://github.com/kodflow/ktn-linter",
-  "plugins": []
+  "plugins": [
+    {
+      "name": "go-expert-ktn",
+      "version": "1.0.0",
+      "path": ".",
+      "description": "Agent IA Go ultime avec linting automatique, design patterns, et best practices Go 1.25+",
+      "tags": ["go", "golang", "linter", "quality", "patterns"],
+      "featured": true
+    }
+  ]
 }

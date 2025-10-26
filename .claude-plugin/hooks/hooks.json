@@ -1,0 +1,50 @@
+{
+  "hooks": [
+    {
+      "name": "auto-lint-go",
+      "description": "Exécute automatiquement le linter après modification de fichiers Go",
+      "trigger": "after-file-edit",
+      "filter": {
+        "extensions": [".go"]
+      },
+      "command": "make lint",
+      "continueOnError": false,
+      "showOutput": true
+    },
+    {
+      "name": "auto-test-go",
+      "description": "Exécute les tests Go après modification de fichiers de test",
+      "trigger": "after-file-edit",
+      "filter": {
+        "patterns": ["*_test.go"]
+      },
+      "command": "make test",
+      "continueOnError": false,
+      "showOutput": true
+    },
+    {
+      "name": "pre-commit-check",
+      "description": "Vérification complète avant commit",
+      "trigger": "before-commit",
+      "command": "make lint && make test && make build",
+      "continueOnError": false,
+      "showOutput": true
+    },
+    {
+      "name": "go-version-check",
+      "description": "Vérifie que la version Go est ≥1.23",
+      "trigger": "on-load",
+      "command": "bash -c 'go version | grep -E \"go1\\.(2[3-9]|[3-9][0-9])\" || (echo \"❌ Go 1.23+ required\" && exit 1)'",
+      "continueOnError": true,
+      "showOutput": true
+    },
+    {
+      "name": "setup-linters",
+      "description": "Configure golangci-lint si non installé",
+      "trigger": "on-load",
+      "command": "bash -c 'which golangci-lint > /dev/null || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest'",
+      "continueOnError": true,
+      "showOutput": false
+    }
+  ]
+}
