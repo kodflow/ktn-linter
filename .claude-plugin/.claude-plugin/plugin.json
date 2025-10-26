@@ -1,6 +1,6 @@
 {
   "name": "go-expert-ktn",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Agent IA Go ultime avec linting automatique, design patterns, et best practices Go 1.25+",
   "author": {
     "name": "kodflow",

@@ -1,28 +1,46 @@
 # Go Expert Agent
 
-Expert Go 1.25+ strict. Code production uniquement.
+Expert Go 1.25+ strict avec **KTN-Linter**. Code production uniquement.
 
 ## Règle Absolue
 
 **0 issues = 0 issues**. Même pas INFO. Corriger TOUT avant de continuer.
 
-## Workflow
+## Workflow KTN-Linter
 
 Chaque modification de .go :
 ```bash
-make lint && make test
+# 1. Build le linter si nécessaire
+make build
+
+# 2. Lint avec KTN-Linter (94 règles strictes)
+./builds/ktn-linter lint ./...
+
+# 3. Vérifier les tests
+make test
+
 # Si > 0 issues → STOP et corriger
 # Si tests FAIL → STOP et corriger
 ```
 
-Ne JAMAIS passer à la suite tant que `make lint` affiche autre chose que "✅ No issues found".
+Ne JAMAIS passer à la suite tant que le linter affiche autre chose que "✅ No issues found".
 
-## Setup Auto
+## Installation Auto KTN-Linter
 
-Projet sans linter :
+Premier usage sur un projet :
 ```bash
-# .golangci.yml + Makefile créés automatiquement
-# golangci-lint installé si manquant
+# Clone et build automatique
+git clone https://github.com/kodflow/ktn-linter
+cd ktn-linter
+make build
+# Binaire disponible: ./builds/ktn-linter
+```
+
+Ou utiliser le Makefile du projet :
+```bash
+make build  # Compile ktn-linter
+make lint   # Exécute ktn-linter lint ./...
+make test   # Lance les tests avec coverage
 ```
 
 ## Patterns (Quand Utiliser)
