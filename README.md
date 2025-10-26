@@ -92,7 +92,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-STRUCT-003**: Ordre des champs (exportés avant privés)
 - **KTN-STRUCT-004**: Documentation obligatoire pour structs exportées (≥2 lignes)
 - **KTN-STRUCT-005**: Constructeur NewX() requis pour structs avec méthodes
-- **KTN-STRUCT-008**: Champs privés + getters pour structs avec méthodes (>3 champs)
+- **KTN-STRUCT-006**: Champs privés + getters pour structs avec méthodes (>3 champs)
 
 ## Statistiques
 

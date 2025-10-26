@@ -241,3 +241,42 @@ func TestExecute(t *testing.T) {
 		}
 	}()
 }
+
+// TestSetVersion teste la configuration de la version
+func TestSetVersion(t *testing.T) {
+	tests := []struct {
+		name    string
+		version string
+		want    string
+	}{
+		{
+			name:    "set valid version",
+			version: "1.2.3",
+			want:    "1.2.3",
+		},
+		{
+			name:    "set dev version",
+			version: "dev",
+			want:    "dev",
+		},
+		{
+			name:    "set empty version",
+			version: "",
+			want:    "",
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Configuration de la version
+			SetVersion(tt.version)
+
+			// Vérification de la version
+			if rootCmd.Version != tt.want {
+				t.Errorf("Expected version='%s', got '%s'", tt.want, rootCmd.Version)
+			}
+		})
+	}
+}

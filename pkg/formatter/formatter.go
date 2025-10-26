@@ -31,7 +31,8 @@ const (
 	INITIAL_FILE_MAP_CAP int = 16
 )
 
-// DiagnosticGroupData regroupe les diagnostics par fichier
+// DiagnosticGroupData regroupe les diagnostics par fichier.
+// Structure utilisée pour organiser les violations détectées par fichier lors du formatage de la sortie.
 type DiagnosticGroupData struct {
 	Filename    string
 	Diagnostics []analysis.Diagnostic

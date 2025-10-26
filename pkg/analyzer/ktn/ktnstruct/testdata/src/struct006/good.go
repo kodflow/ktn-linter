@@ -1,4 +1,4 @@
-package struct008
+package struct006
 
 // UserEntity entité avec encapsulation correcte - OK
 type UserEntity struct {

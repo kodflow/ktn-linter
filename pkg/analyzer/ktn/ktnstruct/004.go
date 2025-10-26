@@ -10,6 +10,11 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const (
+	// MinDocLines nombre minimum de lignes de documentation pour une struct
+	MinDocLines = 2
+)
+
 // Analyzer004 vérifie que les structs exportées ont une documentation
 var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct004",
@@ -127,6 +132,6 @@ func hasValidDocumentation(doc *ast.CommentGroup, structName string) bool {
 		realLines++
 	}
 
-	// Il faut au moins 2 lignes de documentation réelle
-	return realLines >= 2
+	// Il faut au moins MinDocLines lignes de documentation réelle
+	return realLines >= MinDocLines
 }

@@ -7,13 +7,13 @@ import (
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
-// TestStruct008 teste la règle KTN-STRUCT-008.
+// TestStruct006 teste la règle KTN-STRUCT-006.
 //
 // Returns: aucun
 //
 // Params:
 //   - t: instance de testing
-func TestStruct008(t *testing.T) {
+func TestStruct006(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, ktnstruct.Analyzer008, "struct008")
+	analysistest.Run(t, testdata, ktnstruct.Analyzer006, "struct006")
 }

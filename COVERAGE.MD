@@ -14,25 +14,26 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **92.3%** |
+| 🟡 | **TOTAL (Global)** | **91.6%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 92.4% |
+| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.3% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 92.9% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 98.5% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 93.3% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 93.7% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 83.1% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 86.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 94.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
+| ⚫ | `github.com/kodflow/ktn-linter/pkg/severity` | 0.0% |
 
 ---
 
 ## Détail des packages incomplets
 
-### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 92.4%
+### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 94.3%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -41,7 +42,6 @@ Rapport de couverture généré automatiquement.
 | 🔴 `lint.go:checkLoadErrors` | 88.9% |
 | 🟡 `lint.go:runAnalyzers` | 96.2% |
 | 🔴 `lint.go:runRequiredAnalyzers` | 80.0% |
-| ⚫ `root.go:SetVersion` | 0.0% |
 
 ### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` - 92.9%
 
@@ -65,7 +65,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `009.go:runFunc009` | 95.0% |
 | 🟡 `011.go:runFunc011` | 94.1% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 93.3%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 93.7%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -79,10 +79,9 @@ Rapport de couverture généré automatiquement.
 | 🟡 `005.go:runStruct005` | 92.9% |
 | 🟡 `005.go:collectConstructors` | 93.8% |
 | 🔴 `005.go:extractReturnTypeName` | 75.0% |
-| 🟡 `008.go:runStruct008` | 92.9% |
-| 🔴 `008.go:collectStructFields` | 87.5% |
-| 🔴 `008.go:capitalize` | 80.0% |
-| ⚫ `registry.go:GetAnalyzers` | 0.0% |
+| 🟡 `006.go:runStruct006` | 92.9% |
+| 🔴 `006.go:collectStructFields` | 87.5% |
+| 🔴 `006.go:capitalize` | 80.0% |
 
 ### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 83.1%
 
@@ -166,4 +165,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-26 11:42:38*
+*Généré le: 2025-10-26 12:31:34*

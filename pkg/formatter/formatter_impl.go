@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/severity"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -313,11 +314,12 @@ func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analys
 		// Cas alternatif
 	} else {
 		codeColor := f.getCodeColor(code)
+		symbol := f.getSymbol(code)
 		fmt.Fprintf(f.writer, "\n%s[%d]%s %s%s%s\n",
 			BOLD+YELLOW, num, RESET,
 			CYAN, location, RESET)
-		fmt.Fprintf(f.writer, "  %s●%s %sCode:%s %s%s%s\n",
-			codeColor, RESET,
+		fmt.Fprintf(f.writer, "  %s%s%s %sCode:%s %s%s%s\n",
+			codeColor, symbol, RESET,
 			GRAY, RESET,
 			BOLD, code, RESET)
 		fmt.Fprintf(f.writer, "  %s▶%s %s\n",
@@ -354,12 +356,12 @@ func (f *formatterImpl) printSummary(count int) {
 	}
 }
 
-// getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur (TOUJOURS WARNING)
+// getCodeColor retourne la couleur ANSI appropriée pour un code d'erreur basée sur la sévérité
 // Params:
-//   - code: code d'erreur
+//   - code: code d'erreur (ex: "KTN-VAR-001")
 //
 // Returns:
-//   - string: couleur ANSI (YELLOW pour WARNING)
+//   - string: couleur ANSI selon la sévérité (rouge/orange/bleu)
 func (f *formatterImpl) getCodeColor(code string) string {
 	// Vérification de la condition
 	if f.noColor {
@@ -367,6 +369,21 @@ func (f *formatterImpl) getCodeColor(code string) string {
 		return ""
 	}
 
-	// Toutes les règles sont des WARNING (YELLOW)
-	return YELLOW
+	// Obtenir la sévérité du code
+	level := severity.GetSeverity(code)
+	// Retour de la couleur selon le niveau
+	return level.ColorCode()
+}
+
+// getSymbol retourne le symbole approprié pour un code d'erreur basé sur la sévérité
+// Params:
+//   - code: code d'erreur (ex: "KTN-VAR-001")
+//
+// Returns:
+//   - string: symbole (✖/⚠/ℹ)
+func (f *formatterImpl) getSymbol(code string) string {
+	// Obtenir la sévérité du code
+	level := severity.GetSeverity(code)
+	// Retour du symbole selon le niveau
+	return level.Symbol()
 }

@@ -5,7 +5,7 @@ import (
 )
 
 // Version est injectée au moment du build via -ldflags
-var Version = "dev"
+var Version string = "dev"
 
 // main est le point d'entrée du linter KTN.
 // Returns: aucun

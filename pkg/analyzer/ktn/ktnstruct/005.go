@@ -200,6 +200,7 @@ func extractReturnTypeName(results *ast.FieldList) string {
 	case *ast.StarExpr:
 		// Retour de type pointeur (*T)
 		if ident, ok := t.X.(*ast.Ident); ok {
+			// Retour du nom du type extrait
 			return ident.Name
 		}
 	// Traitement de l'identifiant

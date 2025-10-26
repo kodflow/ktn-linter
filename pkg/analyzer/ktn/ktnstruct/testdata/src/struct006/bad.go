@@ -1,7 +1,7 @@
-package struct008
+package struct006
 
 // BadUser champs publics alors qu'il a des méthodes - VIOLATION
-type BadUser struct { // want "KTN-STRUCT-008"
+type BadUser struct { // want "KTN-STRUCT-006"
 	ID    int
 	Name  string
 	Email string
@@ -19,7 +19,7 @@ func (b *BadUser) Delete() error {
 }
 
 // MixedVisibility mélange champs publics/privés avec méthodes - VIOLATION
-type MixedVisibility struct { // want "KTN-STRUCT-008"
+type MixedVisibility struct { // want "KTN-STRUCT-006"
 	ID       int
 	name     string
 	Email    string
@@ -32,7 +32,7 @@ func (m *MixedVisibility) Validate() bool {
 }
 
 // ProductEntity entité avec champs publics - VIOLATION
-type ProductEntity struct { // want "KTN-STRUCT-008"
+type ProductEntity struct { // want "KTN-STRUCT-006"
 	ID          int
 	Name        string
 	Description string
@@ -50,7 +50,7 @@ func (p *ProductEntity) UpdatePrice(newPrice float64) {
 }
 
 // NoGetters champs privés MAIS pas de getters - VIOLATION
-type NoGetters struct { // want "KTN-STRUCT-008"
+type NoGetters struct { // want "KTN-STRUCT-006"
 	id    int
 	name  string
 	email string
@@ -68,7 +68,7 @@ func (n *NoGetters) Update(name string) {
 }
 
 // PartialGetters champs privés avec getters incomplets - VIOLATION
-type PartialGetters struct { // want "KTN-STRUCT-008"
+type PartialGetters struct { // want "KTN-STRUCT-006"
 	id    int
 	name  string
 	email string

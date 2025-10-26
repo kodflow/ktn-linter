@@ -11,15 +11,20 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer008 vérifie l'encapsulation des structs avec méthodes
-var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktnstruct008",
-	Doc:      "KTN-STRUCT-008: Struct exportée avec méthodes (>3 champs) doit avoir champs privés + getters",
-	Run:      runStruct008,
+const (
+	// MaxSimpleFields nombre maximum de champs pour une struct simple (config)
+	MaxSimpleFields = 3
+)
+
+// Analyzer006 vérifie l'encapsulation des structs avec méthodes
+var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnstruct006",
+	Doc:      "KTN-STRUCT-006: Struct exportée avec méthodes (>3 champs) doit avoir champs privés + getters",
+	Run:      runStruct006,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runStruct008 exécute l'analyse KTN-STRUCT-008.
+// runStruct006 exécute l'analyse KTN-STRUCT-006.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -27,7 +32,7 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 // Returns:
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
-func runStruct008(pass *analysis.Pass) (any, error) {
+func runStruct006(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Parcourir chaque fichier du package
@@ -55,7 +60,7 @@ func runStruct008(pass *analysis.Pass) (any, error) {
 			fields := collectStructFields(s.node)
 
 			// Si ≤3 champs, pas de règle stricte (config simple)
-			if len(fields) <= 3 {
+			if len(fields) <= MaxSimpleFields {
 				// Continuer avec la struct suivante
 				continue
 			}
@@ -120,6 +125,7 @@ func checkEncapsulation(pass *analysis.Pass, s structWithMethods, fields []struc
 		if f.exported {
 			publicFields = append(publicFields, f.name)
 		} else {
+			// Champ privé
 			privateFields = append(privateFields, f.name)
 		}
 	}
@@ -128,7 +134,7 @@ func checkEncapsulation(pass *analysis.Pass, s structWithMethods, fields []struc
 	if len(publicFields) > 0 {
 		pass.Reportf(
 			s.node.Pos(),
-			"KTN-STRUCT-008: la struct exportée '%s' a des méthodes et %d champ(s) public(s) [%s]. Utiliser des champs privés avec getters",
+			"KTN-STRUCT-006: la struct exportée '%s' a des méthodes et %d champ(s) public(s) [%s]. Utiliser des champs privés avec getters",
 			s.name,
 			len(publicFields),
 			strings.Join(publicFields, ", "),
@@ -175,7 +181,7 @@ func checkGetters(pass *analysis.Pass, s structWithMethods, privateFields []stri
 	if len(missingGetters) > 0 {
 		pass.Reportf(
 			s.node.Pos(),
-			"KTN-STRUCT-008: la struct exportée '%s' a des champs privés mais il manque %d getter(s): %s",
+			"KTN-STRUCT-006: la struct exportée '%s' a des champs privés mais il manque %d getter(s): %s",
 			s.name,
 			len(missingGetters),
 			strings.Join(missingGetters, ", "),
