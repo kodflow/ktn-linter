@@ -5,12 +5,12 @@
     "url": "https://github.com/kodflow"
   },
   "description": "Go 1.25+ plugin: auto-lint, strict rules, 0 debt",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "repository": "https://github.com/kodflow/ktn-linter",
   "plugins": [
     {
       "name": "go-expert-ktn",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "source": "./.claude-plugin",
       "description": "Go 1.25+ plugin: auto-lint, 0 issues rule, patterns",
       "tags": ["go", "golang", "linter"]
