@@ -32,9 +32,9 @@
     },
     {
       "name": "go-version-check",
-      "description": "Vérifie que la version Go est ≥1.23",
+      "description": "Vérifie que la version Go est ≥1.25",
       "trigger": "on-load",
-      "command": "bash -c 'go version | grep -E \"go1\\.(2[3-9]|[3-9][0-9])\" || (echo \"❌ Go 1.23+ required\" && exit 1)'",
+      "command": "bash -c 'go version | grep -E \"go1\\.(2[5-9]|[3-9][0-9])\" || (echo \"❌ Go 1.25+ required\" && exit 1)'",
       "continueOnError": true,
       "showOutput": true
     },
