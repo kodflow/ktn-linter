@@ -165,4 +165,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-10-26 12:31:34*
+*Généré le: 2025-10-26 12:38:12*

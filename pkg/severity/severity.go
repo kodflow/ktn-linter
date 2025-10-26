@@ -39,7 +39,7 @@ func (l Level) String() string {
 }
 
 // rulesSeverity mappe chaque règle à son niveau de sévérité
-var rulesSeverity = map[string]Level{
+var rulesSeverity map[string]Level = map[string]Level{
 	// CONST - Constantes
 	"KTN-CONST-001": Warning, // Nommage ALL_CAPS (convention importante)
 	"KTN-CONST-002": Info,    // Groupement iota/valeur (style)
@@ -117,9 +117,6 @@ func GetSeverity(ruleCode string) Level {
 
 // ColorCode retourne le code couleur ANSI pour un niveau.
 //
-// Params:
-//   - l: niveau de sévérité
-//
 // Returns:
 //   - string: code couleur ANSI
 func (l Level) ColorCode() string {
@@ -145,9 +142,6 @@ func (l Level) ColorCode() string {
 }
 
 // Symbol retourne le symbole associé au niveau.
-//
-// Params:
-//   - l: niveau de sévérité
 //
 // Returns:
 //   - string: symbole

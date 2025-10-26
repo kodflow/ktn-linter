@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	// MaxSimpleFields nombre maximum de champs pour une struct simple (config)
-	MaxSimpleFields = 3
+	// MAX_SIMPLE_FIELDS nombre maximum de champs pour une struct simple (config)
+	MAX_SIMPLE_FIELDS int = 3
 )
 
 // Analyzer006 vérifie l'encapsulation des structs avec méthodes
@@ -60,7 +60,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 			fields := collectStructFields(s.node)
 
 			// Si ≤3 champs, pas de règle stricte (config simple)
-			if len(fields) <= MaxSimpleFields {
+			if len(fields) <= MAX_SIMPLE_FIELDS {
 				// Continuer avec la struct suivante
 				continue
 			}

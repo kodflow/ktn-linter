@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// MinDocLines nombre minimum de lignes de documentation pour une struct
-	MinDocLines = 2
+	// MIN_DOC_LINES nombre minimum de lignes de documentation pour une struct
+	MIN_DOC_LINES int = 2
 )
 
 // Analyzer004 vérifie que les structs exportées ont une documentation
@@ -132,6 +132,6 @@ func hasValidDocumentation(doc *ast.CommentGroup, structName string) bool {
 		realLines++
 	}
 
-	// Il faut au moins MinDocLines lignes de documentation réelle
-	return realLines >= MinDocLines
+	// Il faut au moins MIN_DOC_LINES lignes de documentation réelle
+	return realLines >= MIN_DOC_LINES
 }
