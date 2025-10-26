@@ -3,22 +3,12 @@
 # Transparently runs both linters and combines results
 
 LINTER_BIN="/workspace/builds/ktn-linter"
-INSTALL_SCRIPT="/workspace/scripts/install-ktn-linter.sh"
 
 # Ensure ktn-linter is installed
 if [ ! -f "$LINTER_BIN" ]; then
-    if [ -f "$INSTALL_SCRIPT" ]; then
-        # Try to download from GitHub releases
-        bash "$INSTALL_SCRIPT" 2>&1 >/dev/null || {
-            # Fallback: build from source
-            cd /workspace
-            go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
-        }
-    else
-        # Build from source
-        cd /workspace
-        go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
-    fi
+    # Build from source
+    cd /workspace
+    go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
 fi
 
 cd /workspace

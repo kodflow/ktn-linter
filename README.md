@@ -1,40 +1,62 @@
 # KTN-Linter
 
-Linter Go pour l'application des bonnes pratiques.
-
-## 🚀 Plugin Claude Code
-
-Plugin Go 1.25+ : Auto-lint, patterns, 0 dette technique.
-
-```bash
-# Plugin dans .claude-plugin/
-# Détecté automatiquement par Claude Code
-```
+Linter Go strict pour l'application des bonnes pratiques et règles de style.
 
 **Règle stricte** : 0 issues = 0 issues (même INFO). STOP et corriger immédiatement.
 
-**[📚 Doc Plugin](.claude-plugin/README.md)**
-
----
-
 ## Installation
 
-### Installation Rapide (Recommandée)
+### Installation Universelle (Recommandée)
 
-Télécharge le binaire depuis les releases GitHub :
-
-```bash
-make install    # Télécharge la dernière version ou compile si échec
-```
-
-### Installation Manuelle
+Pour installer ktn-linter sur **n'importe quel projet Go** :
 
 ```bash
-go mod download
-make build      # Compile depuis les sources
+curl -sSL https://raw.githubusercontent.com/kodflow/ktn-linter/main/install.sh | bash
 ```
 
-## Utilisation
+Ou téléchargez et exécutez le script :
+
+```bash
+wget https://raw.githubusercontent.com/kodflow/ktn-linter/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+Le script :
+- ✅ Télécharge le binaire depuis GitHub releases (linux/darwin, amd64/arm64)
+- ✅ Installe dans `/usr/local/bin` ou `~/.local/bin`
+- ✅ Configure optionnellement golangci-lint
+- ✅ Crée un Makefile avec targets ktn-linter
+
+### Installation depuis les sources
+
+```bash
+git clone https://github.com/kodflow/ktn-linter
+cd ktn-linter
+make build      # Compile le binaire dans builds/
+```
+
+## Utilisation sur n'importe quel projet
+
+Une fois installé (via `install.sh`), utilisez ktn-linter sur n'importe quel projet Go :
+
+```bash
+# Dans votre projet Go
+ktn-linter lint ./...                # Lint tout le projet
+ktn-linter lint --help               # Affiche l'aide
+ktn-linter lint --simple ./pkg/...   # Format simplifié sur pkg/
+```
+
+**Intégration avec golangci-lint** (optionnel) :
+
+Le script `install.sh` propose de configurer automatiquement `.golangci.yml` pour intégrer ktn-linter comme linter custom.
+
+```bash
+# Après installation
+golangci-lint run ./...   # Exécute golangci-lint + ktn-linter
+```
+
+## Utilisation (développement du linter)
 
 ```bash
 make test      # Tests + couverture (génère COVERAGE.MD)

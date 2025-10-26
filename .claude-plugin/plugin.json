@@ -1,8 +1,0 @@
-{
-  "name": "ktn",
-  "version": "1.2.3",
-  "description": "KTN-Linter plugin: Agent Go strict, auto-lint hooks, 94 règles, 0 issues tolerance",
-  "author": {
-    "name": "kodflow"
-  }
-}

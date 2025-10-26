@@ -1,4 +1,4 @@
-.PHONY: help test lint coverage build install validate fmt
+.PHONY: help test lint coverage build validate fmt
 
 # Couleurs
 GREEN := \033[0;32m
@@ -11,10 +11,6 @@ help: ## Affiche cette aide
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  ${YELLOW}%-15s${NC} %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
-
-install: ## Installe ktn-linter depuis GitHub releases (fallback: compile)
-	@echo "${GREEN}Installation de ktn-linter...${NC}"
-	@bash scripts/install-ktn-linter.sh
 
 build: ## Compile le binaire ktn-linter dans builds/
 	@echo "${GREEN}Compilation de ktn-linter...${NC}"
