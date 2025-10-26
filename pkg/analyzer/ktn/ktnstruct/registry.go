@@ -11,5 +11,7 @@ func GetAnalyzers() []*analysis.Analyzer {
 	return []*analysis.Analyzer{
 		Analyzer001,
 		Analyzer002,
+		Analyzer003,
+		Analyzer004,
 	}
 }
