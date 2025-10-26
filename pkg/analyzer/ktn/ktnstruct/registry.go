@@ -13,5 +13,7 @@ func GetAnalyzers() []*analysis.Analyzer {
 		Analyzer002,
 		Analyzer003,
 		Analyzer004,
+		Analyzer005,
+		Analyzer008,
 	}
 }

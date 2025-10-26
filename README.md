@@ -85,10 +85,14 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-FUNC-011**: Commentaires sur branches/returns/logique
 - **KTN-FUNC-012**: Éviter else après return/continue/break
 
-### Structures (2 règles) ✅ 100%
+### Structures (6 règles) ✅ 100%
 
 - **KTN-STRUCT-001**: Un fichier Go par struct (évite fichiers de 10000 lignes)
 - **KTN-STRUCT-002**: Interface obligatoire reprenant 100% des méthodes publiques de chaque struct
+- **KTN-STRUCT-003**: Ordre des champs (exportés avant privés)
+- **KTN-STRUCT-004**: Documentation obligatoire pour structs exportées (≥2 lignes)
+- **KTN-STRUCT-005**: Constructeur NewX() requis pour structs avec méthodes
+- **KTN-STRUCT-008**: Champs privés + getters pour structs avec méthodes (>3 champs)
 
 ## Statistiques
 
@@ -98,7 +102,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **Package func**: 94.7% 🟡
 - **Package var**: 89.8% 🔴
 - **Go version**: 1.25
-- **Total règles**: 24 (4 const + 6 var + 12 func + 2 struct)
+- **Total règles**: 28 (4 const + 6 var + 12 func + 6 struct)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Structure
