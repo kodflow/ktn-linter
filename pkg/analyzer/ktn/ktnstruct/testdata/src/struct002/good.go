@@ -34,3 +34,16 @@ func (u *userServiceImpl) Update(id int, name string) error {
 func (u *userServiceImpl) helper() {
 	// Private method
 }
+
+// Config est une struct simple sans méthode - PAS BESOIN D'INTERFACE
+type Config struct {
+	Host string
+	Port int
+}
+
+// DataModel est une struct DTO sans méthode - PAS BESOIN D'INTERFACE
+type DataModel struct {
+	ID   int
+	Name string
+	Tags []string
+}
