@@ -1,7 +1,7 @@
 {
-  "name": "go-expert-ktn",
-  "version": "1.2.2",
-  "description": "Agent IA Go ultime avec linting automatique, design patterns, et best practices Go 1.25+",
+  "name": "ktn",
+  "version": "1.2.3",
+  "description": "KTN-Linter plugin: Agent Go strict, auto-lint hooks, 94 règles, 0 issues tolerance",
   "author": {
     "name": "kodflow"
   }
