@@ -45,6 +45,14 @@
       "command": "bash -c 'which golangci-lint > /dev/null || go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest'",
       "continueOnError": true,
       "showOutput": false
+    },
+    {
+      "name": "install-ktn-linter",
+      "description": "Installe ktn-linter depuis GitHub releases ou compile depuis la source",
+      "trigger": "on-load",
+      "command": "bash -c '[ -f builds/ktn-linter ] || bash scripts/install-ktn-linter.sh'",
+      "continueOnError": true,
+      "showOutput": false
     }
   ]
 }

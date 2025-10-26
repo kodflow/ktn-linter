@@ -1,15 +1,39 @@
 #!/bin/bash
-# Wrapper pour KTN-Linter (intégration VSCode)
+# Wrapper for golangci-lint + KTN-Linter integration
+# Transparently runs both linters and combines results
 
 LINTER_BIN="/workspace/builds/ktn-linter"
+INSTALL_SCRIPT="/workspace/scripts/install-ktn-linter.sh"
 
-# Si le binaire n'existe pas, le construire
+# Ensure ktn-linter is installed
 if [ ! -f "$LINTER_BIN" ]; then
-    cd /workspace
-    go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
+    if [ -f "$INSTALL_SCRIPT" ]; then
+        # Try to download from GitHub releases
+        bash "$INSTALL_SCRIPT" 2>&1 >/dev/null || {
+            # Fallback: build from source
+            cd /workspace
+            go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
+        }
+    else
+        # Build from source
+        cd /workspace
+        go build -buildvcs=false -o "$LINTER_BIN" ./cmd/ktn-linter 2>&1 >/dev/null
+    fi
 fi
 
 cd /workspace
+
+# Real golangci-lint binary path
+REAL_GOLANGCI_LINT="/usr/local/bin/golangci-lint"
+
+# Temporary file for combined output
+TEMP_OUTPUT=$(mktemp)
+
+# Run real golangci-lint if it exists and we have standard arguments
+if [ -x "$REAL_GOLANGCI_LINT" ] && [[ "$*" != *"testdata"* ]]; then
+    # Execute real golangci-lint with all original arguments
+    "$REAL_GOLANGCI_LINT" "$@" 2>&1 >> "$TEMP_OUTPUT" || true
+fi
 
 # Filtrer les arguments golangci-lint pour garder uniquement les packages/chemins
 TARGETS=()
@@ -20,21 +44,25 @@ for arg in "$@"; do
     fi
 done
 
-# Si aucune cible spécifiée, scanner tout le projet + testdata
+# Run KTN-Linter
 if [ ${#TARGETS[@]} -eq 0 ]; then
     # Scanner le projet principal
-    "$LINTER_BIN" lint --simple --no-color ./... 2>&1 || true
+    "$LINTER_BIN" lint --simple --no-color ./... 2>&1 >> "$TEMP_OUTPUT" || true
 
     # Scanner tous les packages testdata (qui ne sont pas inclus dans ./...)
     find ./pkg/analyzer/ktn/*/testdata/src/* -maxdepth 1 -type d 2>/dev/null | while IFS= read -r dir; do
         # Vérifier si le répertoire contient des fichiers .go
         if compgen -G "$dir/*.go" > /dev/null 2>&1; then
-            "$LINTER_BIN" lint --simple --no-color "$dir" 2>&1 || true
+            "$LINTER_BIN" lint --simple --no-color "$dir" 2>&1 >> "$TEMP_OUTPUT" || true
         fi
     done
 else
     # Exécuter le linter sur les cibles spécifiées
-    "$LINTER_BIN" lint --simple --no-color "${TARGETS[@]}" 2>&1 || true
+    "$LINTER_BIN" lint --simple --no-color "${TARGETS[@]}" 2>&1 >> "$TEMP_OUTPUT" || true
 fi
+
+# Output combined results
+cat "$TEMP_OUTPUT"
+rm -f "$TEMP_OUTPUT"
 
 exit 0

@@ -7,9 +7,18 @@ Plugin Claude Code pour Go 1.25+. Auto-lint, patterns, 0 dette technique.
 ```bash
 # Clone repo
 git clone https://github.com/kodflow/ktn-linter
+cd ktn-linter
 
-# Plugin dans .claude-plugin/ détecté automatiquement par Claude Code
+# Installation automatique depuis GitHub releases (recommandé)
+make install
+
+# OU compilation depuis les sources
+make build
+
+# Plugin détecté automatiquement par Claude Code
 ```
+
+Le hook `install-ktn-linter` télécharge automatiquement le binaire depuis les releases GitHub au démarrage de Claude Code.
 
 ## Features
 

@@ -19,8 +19,19 @@ Plugin Go 1.25+ : Auto-lint, patterns, 0 dette technique.
 
 ## Installation
 
+### Installation Rapide (Recommandée)
+
+Télécharge le binaire depuis les releases GitHub :
+
+```bash
+make install    # Télécharge la dernière version ou compile si échec
+```
+
+### Installation Manuelle
+
 ```bash
 go mod download
+make build      # Compile depuis les sources
 ```
 
 ## Utilisation
