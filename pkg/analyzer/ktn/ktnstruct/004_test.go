@@ -3,17 +3,11 @@ package ktnstruct_test
 import (
 	"testing"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
-	"golang.org/x/tools/go/analysis/analysistest"
+	ktnstruct "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestStruct004 teste la règle KTN-STRUCT-004.
-//
-// Returns: aucun
-//
-// Params:
-//   - t: instance de testing
 func TestStruct004(t *testing.T) {
-	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, ktnstruct.Analyzer004, "struct004")
+	// good.go: 0 errors (documentation complète), bad.go: 4 errors (documentation manquante/insuffisante)
+	testhelper.TestGoodBad(t, ktnstruct.Analyzer004, "struct004", 4)
 }
