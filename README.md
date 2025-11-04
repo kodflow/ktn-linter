@@ -142,15 +142,30 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-STRUCT-005**: Constructeur NewX() requis pour structs avec méthodes
 - **KTN-STRUCT-006**: Champs privés + getters pour structs avec méthodes (>3 champs)
 
+### Retours (1 règle) ✅ 100%
+
+- **KTN-RETURN-002**: Préférer slice/map vide à nil pour éviter nil pointer dereference
+
+### Interfaces (1 règle) ✅ 100%
+
+- **KTN-INTERFACE-001**: Interface déclarée mais jamais utilisée (code mort)
+
+### Commentaires (2 règles) ✅ 100%
+
+- **KTN-COMMENT-001**: Commentaires redondants qui répètent le code
+- **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
+
 ## Statistiques
 
-- **Couverture globale**: 95.6% 🟡
-- **Packages 100%**: utils, formatter, testhelper 🟢
-- **Package const**: 96.6% 🟡
-- **Package func**: 94.7% 🟡
-- **Package var**: 89.8% 🔴
+- **Couverture globale**: 91.2% 🟡
+- **Packages 100%**: utils, formatter 🟢
+- **Package const**: 92.9% 🟡
+- **Package func**: Conforme 🟡
+- **Package return**: 100% 🟢
+- **Package interface**: 100% 🟢
+- **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 28 (4 const + 6 var + 12 func + 6 struct)
+- **Total règles**: 32 (4 const + 6 var + 12 func + 6 struct + 1 return + 1 interface + 2 comment)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Structure
