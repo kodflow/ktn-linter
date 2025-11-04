@@ -63,7 +63,7 @@ func TestGetRulesByCategory(t *testing.T) {
 	}{
 		{"const category", "const", 4},
 		{"func category", "func", 12},
-		{"var category", "var", 19},
+		{"var category", "var", 18}, // VAR-010 supprimé
 		{"test category", "test", 6},
 		{"unknown category", "unknown", 0},
 		{"empty category", "", 0},

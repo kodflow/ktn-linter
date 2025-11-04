@@ -18,7 +18,7 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer007,
 		Analyzer008,
 		Analyzer009,
-		Analyzer010,
+		// Analyzer010 supprimé (contradiction avec KTN-RETURN-002)
 		Analyzer011,
 		Analyzer012,
 		Analyzer013,

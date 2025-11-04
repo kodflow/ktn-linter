@@ -10,7 +10,7 @@ import (
 // Returns:
 //   - (voir code)
 func TestAnalyzers(t *testing.T) {
-	const EXPECTED_COUNT int = 19
+	const EXPECTED_COUNT int = 18 // VAR-010 supprimé (contradiction avec RETURN-002)
 
 	tests := []struct {
 		name  string

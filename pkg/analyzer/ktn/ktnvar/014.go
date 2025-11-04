@@ -169,6 +169,11 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
 		return
 	}
 
+	// Ignorer les types externes (frameworks comme Terraform)
+	if isExternalType(typeInfo, pass) {
+		return
+	}
+
 	// Vérification que c'est une struct
 	structType, ok := typeInfo.Underlying().(*types.Struct)
 	// Vérification du type struct
@@ -188,4 +193,26 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
 			numFields,
 		)
 	}
+}
+
+// isExternalType checks if type is from external package.
+//
+// Params:
+//   - typeInfo: Type to check
+//   - pass: Analysis pass
+func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
+	// Check if it's a named type
+	named, ok := typeInfo.(*types.Named)
+	if !ok {
+		return false
+	}
+
+	// Get package of the type
+	obj := named.Obj()
+	if obj == nil || obj.Pkg() == nil {
+		return false
+	}
+
+	// Check if type is from current package
+	return obj.Pkg().Path() != pass.Pkg.Path()
 }

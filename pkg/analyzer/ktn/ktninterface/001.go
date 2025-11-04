@@ -24,8 +24,9 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 	// Collect all interface declarations
 	interfaces := make(map[string]*ast.TypeSpec)
 	usedInterfaces := make(map[string]bool)
+	structNames := make(map[string]bool)
 
-	// First pass: collect all interface declarations
+	// First pass: collect all interface and struct declarations
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
 			genDecl, ok := node.(*ast.GenDecl)
@@ -45,6 +46,12 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 				// Store if interface type
 				if isInterface {
 					interfaces[typeSpec.Name.Name] = typeSpec
+				}
+
+				_, isStruct := typeSpec.Type.(*ast.StructType)
+				// Store struct names for KTN-STRUCT-002 pattern detection
+				if isStruct {
+					structNames[typeSpec.Name.Name] = true
 				}
 			}
 			return true
@@ -84,16 +91,41 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 
 	// Report unused interfaces
 	for name, typeSpec := range interfaces {
-		// Report if not used
-		if !usedInterfaces[name] {
-			pass.Reportf(
-				typeSpec.Pos(),
-				"KTN-INTERFACE-001: interface non utilisée",
-			)
+		// Skip if interface is used
+		if usedInterfaces[name] {
+			continue
 		}
+
+		// Skip if interface follows XXXInterface pattern for struct XXX (KTN-STRUCT-002)
+		if isStructInterfacePattern(name, structNames) {
+			continue
+		}
+
+		// Report unused interface
+		pass.Reportf(
+			typeSpec.Pos(),
+			"KTN-INTERFACE-001: interface non utilisée",
+		)
 	}
 
 	return nil, nil
+}
+
+// isStructInterfacePattern checks if interface follows XXXInterface pattern.
+// Params:
+//   - interfaceName: Interface name to check
+//   - structs: Map of struct names
+func isStructInterfacePattern(interfaceName string, structs map[string]bool) bool {
+	// Check if interface name ends with "Interface"
+	if len(interfaceName) <= 9 || interfaceName[len(interfaceName)-9:] != "Interface" {
+		return false
+	}
+
+	// Extract potential struct name (remove "Interface" suffix)
+	structName := interfaceName[:len(interfaceName)-9]
+
+	// Check if corresponding struct exists
+	return structs[structName]
 }
 
 // checkFieldList checks field list for interface usage.

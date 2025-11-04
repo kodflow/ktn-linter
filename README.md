@@ -157,16 +157,22 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 ## Statistiques
 
-- **Couverture globale**: 91.2% 🟡
+- **Couverture globale**: 91.0% 🟡
 - **Packages 100%**: utils, formatter 🟢
 - **Package const**: 92.9% 🟡
 - **Package func**: Conforme 🟡
 - **Package return**: 100% 🟢
-- **Package interface**: 100% 🟢
+- **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 32 (4 const + 6 var + 12 func + 6 struct + 1 return + 1 interface + 2 comment)
+- **Total règles**: 31 (4 const + 5 var + 12 func + 6 struct + 1 return + 1 interface + 2 comment)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
+
+## Corrections des Contradictions
+
+- ✅ **KTN-VAR-010 supprimé** : Contradictoire avec KTN-RETURN-002
+- ✅ **KTN-INTERFACE-001 amélioré** : Ignore les interfaces qui suivent le pattern `XXXInterface` pour struct `XXX` (KTN-STRUCT-002)
+- ✅ **KTN-VAR-014 amélioré** : Ignore les types externes (frameworks comme Terraform)
 
 ## Structure
 
