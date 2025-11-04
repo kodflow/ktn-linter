@@ -153,10 +153,49 @@ func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
 	}
 }
 
+// isTrivialReturn checks if return is trivial (nil, empty slice/map, bool).
+//
+// Params:
+//   - stmt: Return statement to check
+func isTrivialReturn(stmt *ast.ReturnStmt) bool {
+	// No return values (bare return)
+	if len(stmt.Results) == 0 {
+		return true
+	}
+
+	// Check each return value
+	for _, result := range stmt.Results {
+		// Check for nil
+		if ident, ok := result.(*ast.Ident); ok {
+			if ident.Name == "nil" || ident.Name == "true" || ident.Name == "false" {
+				continue
+			}
+		}
+
+		// Check for empty composite literal ([]T{}, map[K]V{})
+		if comp, ok := result.(*ast.CompositeLit); ok {
+			if len(comp.Elts) == 0 {
+				continue
+			}
+		}
+
+		// If we get here, return value is not trivial
+		return false
+	}
+
+	// All return values are trivial
+	return true
+}
+
 // checkReturnStmt checks if a return statement has a comment
 // Params:
 //   - pass: contexte d'analyse
 func checkReturnStmt(pass *analysis.Pass, stmt *ast.ReturnStmt) {
+	// Ignorer les returns triviaux (nil, []T{}, true, false, etc.)
+	if isTrivialReturn(stmt) {
+		return
+	}
+
 	// Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) && !hasInlineComment(pass, stmt.Pos()) {
 		pass.Reportf(stmt.Pos(), "KTN-FUNC-011: le 'return' doit avoir un commentaire explicatif")

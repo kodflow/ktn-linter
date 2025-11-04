@@ -143,8 +143,8 @@ func validateParamsSection(comments []string, startIdx int) (string, int) {
 
 	// Vérification de la présence du header Params:
 	if idx >= len(comments) || !paramsHeaderPattern.MatchString(comments[idx]) {
-		// Retour si header manquant
-		return "section 'Params:' manquante (fonction avec paramètres)", idx
+		// Retour si header manquant avec message explicite
+		return "section 'Params:' manquante ou mal formatée. Format attendu:\n  // Params:\n  //   - param: description", idx
 	}
 	idx++
 
@@ -192,8 +192,8 @@ func validateReturnsSection(comments []string, startIdx int) (string, int) {
 
 	// Vérification de la présence du header Returns:
 	if idx >= len(comments) || !returnsHeaderPattern.MatchString(comments[idx]) {
-		// Retour si header manquant
-		return "section 'Returns:' manquante (fonction avec valeurs de retour)", idx
+		// Retour si header manquant avec message explicite
+		return "section 'Returns:' manquante ou mal formatée. Format attendu:\n  // Returns:\n  //   - type: description", idx
 	}
 	idx++
 

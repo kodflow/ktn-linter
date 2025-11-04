@@ -8,6 +8,7 @@ import (
 )
 
 func TestVar007(t *testing.T) {
-	// 7 slices without capacity (4 original + 3 nouveaux edge cases)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer007, "var007", 7)
+	// 3 errors: only checking make([]T, 0) without capacity
+	// []T{} literals are ignored to avoid false positives
+	testhelper.TestGoodBad(t, ktnvar.Analyzer007, "var007", 3)
 }

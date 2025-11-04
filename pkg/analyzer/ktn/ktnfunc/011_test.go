@@ -8,6 +8,6 @@ import (
 )
 
 func TestFunc011(t *testing.T) {
-	// Updated count after fixing BadElseNoComment to avoid FUNC-012
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer011, "func011", 28)
+	// Updated count: 24 errors after ignoring trivial returns (true, false, nil, empty slices)
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer011, "func011", 24)
 }
