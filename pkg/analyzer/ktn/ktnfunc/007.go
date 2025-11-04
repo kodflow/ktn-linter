@@ -144,7 +144,7 @@ func validateParamsSection(comments []string, startIdx int) (string, int) {
 	// Vérification de la présence du header Params:
 	if idx >= len(comments) || !paramsHeaderPattern.MatchString(comments[idx]) {
 		// Retour si header manquant avec message explicite
-		return "section 'Params:' manquante ou mal formatée. Format attendu:\n  // Params:\n  //   - param: description", idx
+		return "section 'Params:' manquante. Ajouter après description: '// Params:' sur ligne seule, puis '//   - nomParam: description' (avec 2 espaces avant tiret)", idx
 	}
 	idx++
 
@@ -193,7 +193,7 @@ func validateReturnsSection(comments []string, startIdx int) (string, int) {
 	// Vérification de la présence du header Returns:
 	if idx >= len(comments) || !returnsHeaderPattern.MatchString(comments[idx]) {
 		// Retour si header manquant avec message explicite
-		return "section 'Returns:' manquante ou mal formatée. Format attendu:\n  // Returns:\n  //   - type: description", idx
+		return "section 'Returns:' manquante. Ajouter après Params: '// Returns:' sur ligne seule, puis '//   - type: description' (ex: '//   - error: erreur éventuelle')", idx
 	}
 	idx++
 
@@ -241,8 +241,19 @@ func validateDocFormat(comments []string, funcName string, hasParams, hasReturns
 
 	idx := 1
 
-	// Skip blank line if present
-	if idx < len(comments) && strings.TrimSpace(comments[idx]) == "//" {
+	// Skip description lines until we find blank line before Params/Returns
+	for idx < len(comments) {
+		line := strings.TrimSpace(comments[idx])
+		// Stop at blank line separator
+		if line == "//" {
+			idx++
+			break
+		}
+		// Stop if we find Params: or Returns: header
+		if paramsHeaderPattern.MatchString(comments[idx]) || returnsHeaderPattern.MatchString(comments[idx]) {
+			break
+		}
+		// Continue skipping description lines
 		idx++
 	}
 
