@@ -3,9 +3,7 @@ name: Release KTN-Linter
 on:
   push:
     branches:
-      - main  # Auto-release au merge sur main
-    tags:
-      - 'v*.*.*'  # Déclenché sur tags semver (v1.0.0, v1.2.3, etc.)
+      - main  # Auto-release au merge sur main (auto-bump version)
   workflow_dispatch:
     inputs:
       version:
