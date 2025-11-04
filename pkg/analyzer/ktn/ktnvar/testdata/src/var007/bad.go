@@ -8,15 +8,15 @@ const (
 	SMALL_LOOP_COUNT int = 20
 )
 
-// badEmptySliceLiteral creates a slice without capacity
+// badMakeStringSlice creates a string slice without capacity
 //
 // Returns:
-//   - []int: slice without preallocated capacity
-func badEmptySliceLiteral() []int {
-	// Bad: Empty literal without capacity
-	itemList := []int{}
+//   - []string: slice without preallocated capacity
+func badMakeStringSlice() []string {
+	// Bad: make without capacity argument
+	items := make([]string, 0)
 	// Retour de la fonction
-	return itemList
+	return items
 }
 
 // badMakeWithoutCapacity creates a slice using make without capacity
@@ -45,30 +45,26 @@ func badMakeInLoop() []int {
 	return numbers
 }
 
-// badEmptyLiteralInLoop creates a slice without capacity for loop
+// badMakeFloatSlice creates a float slice without capacity
 //
 // Returns:
-//   - []string: slice without preallocated capacity
-func badEmptyLiteralInLoop() []string {
-	// Bad: Empty literal for known-size loop
-	itemList := []string{}
-	// Itération sur les éléments
-	for index := 0; index < SMALL_LOOP_COUNT; index++ {
-		itemList = append(itemList, "value")
-	}
+//   - []float64: slice without preallocated capacity
+func badMakeFloatSlice() []float64 {
+	// Bad: make for float64 without capacity
+	values := make([]float64, 0)
 	// Retour de la fonction
-	return itemList
+	return values
 }
 
-// badSliceOfSlices creates a slice of slices without capacity
+// badMakeInterfaceSlice creates an interface slice without capacity
 //
 // Returns:
-//   - [][]int: nested slice without capacity
-func badSliceOfSlices() [][]int {
-	// Bad: Nested slice without capacity
-	matrixData := [][]int{}
+//   - []interface{}: interface slice without capacity
+func badMakeInterfaceSlice() []interface{} {
+	// Bad: make for interface{} without capacity
+	items := make([]interface{}, 0)
 	// Retour de la fonction
-	return matrixData
+	return items
 }
 
 // Item is a test struct
@@ -76,15 +72,15 @@ type Item struct {
 	value int
 }
 
-// badSliceOfStructs creates a slice of structs without capacity
+// badMakeStructSlice creates a slice of structs without capacity
 //
 // Returns:
 //   - []Item: slice of structs without capacity
-func badSliceOfStructs() []Item {
-	// Bad: Slice of structs without capacity
-	itemArray := []Item{}
+func badMakeStructSlice() []Item {
+	// Bad: make for struct slice without capacity
+	items := make([]Item, 0)
 	// Retour de la fonction
-	return itemArray
+	return items
 }
 
 // badMakeByteSlice creates a byte slice without capacity

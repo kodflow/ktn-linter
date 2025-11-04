@@ -324,3 +324,60 @@ func GoodInlineCommentSameLine(x int) int {
 	// Return zero for non-positive values
 	return 0
 }
+
+// GoodTrivialBoolReturn demonstrates trivial bool returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - bool: true if positive, false otherwise
+func GoodTrivialBoolReturn(x int) bool {
+	// Check if x is positive
+	if x > 0 {
+		return true
+	}
+	return false
+}
+
+// GoodTrivialNilReturn demonstrates trivial nil returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - error: nil always
+func GoodTrivialNilReturn(x int) error {
+	// Check if x is positive
+	if x > 0 {
+		return nil
+	}
+	return nil
+}
+
+// GoodBareReturn demonstrates bare returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
+func GoodBareReturn(x int) {
+	// Check if x is positive
+	if x > 0 {
+		return
+	}
+	return
+}
+
+// GoodEmptySliceReturn demonstrates empty slice returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - []int: empty slice
+func GoodEmptySliceReturn(x int) []int {
+	// Check if x is positive
+	if x > 0 {
+		return []int{}
+	}
+	return []int{}
+}

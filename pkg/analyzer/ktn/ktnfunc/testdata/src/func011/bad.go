@@ -185,3 +185,73 @@ func BadElseNoComment(x int) string {
 	}
 	return result
 }
+
+// BadComplexReturn has complex return without comment.
+//
+// Params:
+//   - x: the number to process
+//
+// Returns:
+//   - int: processed value
+func BadComplexReturn(x int) int {
+	// Check if x is positive
+	if x > 0 {
+		return x * MULTIPLIER_TWO + 1
+	}
+	return x - 1
+}
+
+// BadMultipleNonTrivialReturns has multiple non-trivial returns without comments.
+//
+// Params:
+//   - x: the number to check
+//
+// Returns:
+//   - string: status message
+func BadMultipleNonTrivialReturns(x int) string {
+	// Check if x is negative
+	if x < 0 {
+		return "error: negative"
+	}
+	// Check if x is zero
+	if x == 0 {
+		return "warning: zero"
+	}
+	return "success"
+}
+
+// BadReturnStruct has struct return without comment.
+//
+// Params:
+//   - x: the number to wrap
+//
+// Returns:
+//   - Result: result struct
+type Result struct {
+	Value int
+}
+
+func BadReturnStruct(x int) Result {
+	// Check if x is positive
+	if x > 0 {
+		return Result{Value: x}
+	}
+	return Result{Value: 0}
+}
+
+// BadReturnPointer has pointer return without comment.
+//
+// Params:
+//   - x: the number to wrap
+//
+// Returns:
+//   - *int: pointer to result
+func BadReturnPointer(x int) *int {
+	result := x * MULTIPLIER_TWO
+	// Check if result is positive
+	if result > 0 {
+		return &result
+	}
+	zero := 0
+	return &zero
+}

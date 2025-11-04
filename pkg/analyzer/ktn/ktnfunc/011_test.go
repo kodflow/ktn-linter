@@ -8,6 +8,6 @@ import (
 )
 
 func TestFunc011(t *testing.T) {
-	// Updated count: 24 errors after ignoring trivial returns (true, false, nil, empty slices)
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer011, "func011", 24)
+	// 33 errors: trivial returns moved to good.go, added robust non-trivial test cases
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer011, "func011", 33)
 }

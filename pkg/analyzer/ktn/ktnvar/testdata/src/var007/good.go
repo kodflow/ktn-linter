@@ -79,3 +79,49 @@ func goodDynamicSize(data []string) []string {
 	// Retour de la fonction
 	return result
 }
+
+// goodEmptySliceLiteral returns empty slice literal (acceptable pattern)
+//
+// Returns:
+//   - []int: empty slice
+func goodEmptySliceLiteral() []int {
+	// Good: []T{} is acceptable when capacity unknown
+	// Retour de la fonction
+	return []int{}
+}
+
+// goodEmptyLiteralForReturn uses empty literal in direct return
+//
+// Returns:
+//   - []string: empty slice
+func goodEmptyLiteralForReturn() []string {
+	// Good: Direct return with []T{} is a common pattern
+	items := []string{}
+	// Retour de la fonction
+	return items
+}
+
+// goodSliceOfSlices creates empty slice of slices
+//
+// Returns:
+//   - [][]int: empty nested slice
+func goodSliceOfSlices() [][]int {
+	// Good: [][]T{} acceptable when capacity unknown
+	// Retour de la fonction
+	return [][]int{}
+}
+
+// Item is a test struct
+type Item struct {
+	value int
+}
+
+// goodSliceOfStructs creates empty slice of structs
+//
+// Returns:
+//   - []Item: empty slice of structs
+func goodSliceOfStructs() []Item {
+	// Good: []T{} for structs is acceptable
+	// Retour de la fonction
+	return []Item{}
+}
