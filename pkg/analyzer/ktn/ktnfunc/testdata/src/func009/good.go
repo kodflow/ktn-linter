@@ -12,9 +12,42 @@ const (
 )
 
 // MyStruct représente une structure de test pour les getters.
+// Elle fournit des méthodes pour accéder et modifier ses champs privés.
 type MyStruct struct {
 	value int
 	name  string
+}
+
+// MyStructInterface définit les méthodes publiques de MyStruct.
+type MyStructInterface interface {
+	GetValue() int
+	IsValid() bool
+	HasName() bool
+	GetDoubleValue() int
+	SetValue(v int)
+	UpdateValue(v int)
+	GetProcessed() []int
+	GetMap() map[string]int
+	GetLocalArray() []int
+	GetLocalMapValue() int
+	GetIncrementedValue() int
+	GetDecrementedValue() int
+}
+
+// NewMyStruct crée une nouvelle instance de MyStruct.
+//
+// Params:
+//   - value: valeur initiale
+//   - name: nom initial
+//
+// Returns:
+//   - *MyStruct: nouvelle instance
+func NewMyStruct(value int, name string) *MyStruct {
+	// Retour de la nouvelle instance
+	return &MyStruct{
+		value: value,
+		name:  name,
+	}
 }
 
 // GetValue retourne la valeur du champ value.
@@ -158,6 +191,61 @@ type DataReader interface {
 	GetData() string
 	IsReady() bool
 	HasItems() bool
+}
+
+// dataReaderImpl implémente DataReader.
+type dataReaderImpl struct {
+	data  string
+	ready bool
+}
+
+// GetData retourne les données.
+//
+// Returns:
+//   - string: les données stockées
+func (d *dataReaderImpl) GetData() string {
+	// Retourne les données
+	return d.data
+}
+
+// IsReady indique si prêt.
+//
+// Returns:
+//   - bool: état de préparation
+func (d *dataReaderImpl) IsReady() bool {
+	// Retourne l'état ready
+	return d.ready
+}
+
+// HasItems vérifie si des items existent.
+//
+// Returns:
+//   - bool: true si données non vides
+func (d *dataReaderImpl) HasItems() bool {
+	// Vérifie si la chaîne n'est pas vide
+	if d.data != "" {
+		// Données présentes
+		return true
+	}
+	// Pas de données
+	return false
+}
+
+// useDataReader utilise l'interface DataReader.
+//
+// Params:
+//   - dr: interface de lecture de données
+//
+// Returns:
+//   - string: données lues
+func useDataReader(dr DataReader) string {
+	// Vérifie si prêt
+	if dr.IsReady() && dr.HasItems() {
+		// Retourne les données
+		return dr.GetData()
+	}
+	// Retourne chaîne vide
+	return ""
 }
 
 // GetIncrementedValue retourne la valeur incrémentée localement.

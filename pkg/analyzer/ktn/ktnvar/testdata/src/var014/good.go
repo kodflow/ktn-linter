@@ -18,6 +18,7 @@ const (
 )
 
 // GoodSmallStruct est une petite structure (≤3 champs).
+// Utilisée pour tester l'allocation par valeur.
 type GoodSmallStruct struct {
 	ID   int
 	Name string
@@ -25,6 +26,7 @@ type GoodSmallStruct struct {
 }
 
 // GoodLargeStruct est une grande structure (>3 champs).
+// Doit être utilisée avec un pointeur pour éviter copies coûteuses.
 type GoodLargeStruct struct {
 	Field1 int
 	Field2 string
@@ -33,6 +35,7 @@ type GoodLargeStruct struct {
 }
 
 // GoodAnotherLargeStruct est une autre grande structure.
+// Contient plusieurs champs et doit être manipulée par pointeur.
 type GoodAnotherLargeStruct struct {
 	Name    string
 	Age     int

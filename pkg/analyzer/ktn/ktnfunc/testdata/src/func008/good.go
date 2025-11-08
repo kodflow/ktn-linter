@@ -28,7 +28,22 @@ func SimpleFunctionGood(id int, name string) {
 }
 
 // ServiceGood demonstrates a service type.
+// Provides data processing capabilities with context support.
 type ServiceGood struct{}
+
+// ServiceGoodInterface définit les méthodes publiques de ServiceGood.
+type ServiceGoodInterface interface {
+	ProcessData(ctx context.Context, data string)
+}
+
+// NewServiceGood crée une nouvelle instance de ServiceGood.
+//
+// Returns:
+//   - *ServiceGood: nouvelle instance du service
+func NewServiceGood() *ServiceGood {
+	// Retour de la nouvelle instance
+	return &ServiceGood{}
+}
 
 // ProcessData demonstrates method with context as first parameter after receiver.
 //

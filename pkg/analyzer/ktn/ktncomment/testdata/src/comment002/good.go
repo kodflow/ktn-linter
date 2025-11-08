@@ -1,9 +1,18 @@
 package comment002
 
+const (
+	// DEFAULT_VALUE valeur par défaut pour les exemples
+	DEFAULT_VALUE int = 42
+	// MAX_COUNTER valeur maximale du compteur
+	MAX_COUNTER int = 100
+	// MULTIPLIER multiplicateur pour les calculs
+	MULTIPLIER int = 2
+)
+
 // goodFunctionWithShortComments demonstrates proper comment length.
 func goodFunctionWithShortComments() {
 	// Short comment within limit
-	x := 42
+	x := DEFAULT_VALUE
 	_ = x
 }
 
@@ -13,14 +22,14 @@ func goodMultipleShortComments() {
 	y := "test"
 
 	// Set counter
-	z := 100
+	z := MAX_COUNTER
 	_, _ = y, z
 }
 
 // goodNoInlineComments has no inline comments.
 func goodNoInlineComments() {
 	x := 1
-	y := 2
+	y := MULTIPLIER
 	_ = x + y
 }
 

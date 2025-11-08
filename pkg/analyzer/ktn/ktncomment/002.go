@@ -13,8 +13,6 @@ import (
 const maxCommentLength = 80
 
 // Analyzer002 detects inline comments exceeding 80 characters.
-// Params:
-//   - N/A
 var Analyzer002 = &analysis.Analyzer{
 	Name:     "ktncomment002",
 	Doc:      "KTN-COMMENT-002: commentaire inline trop long (>80 chars)",

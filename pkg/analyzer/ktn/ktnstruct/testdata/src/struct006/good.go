@@ -1,10 +1,19 @@
 package struct006
 
-// UserEntity entité avec encapsulation correcte - OK
+// UserEntity entité avec encapsulation correcte - OK.
+// Représente une entité utilisateur avec champs privés et getters publics.
 type UserEntity struct {
 	id    int
 	name  string
 	email string
+}
+
+// UserEntityInterface définit les méthodes publiques de UserEntity.
+type UserEntityInterface interface {
+	GetID() int
+	GetName() string
+	GetEmail() string
+	Save() error
 }
 
 // NewUserEntity crée une nouvelle entité utilisateur.
@@ -17,6 +26,7 @@ type UserEntity struct {
 // Returns:
 //   - *UserEntity: instance
 func NewUserEntity(id int, name, email string) *UserEntity {
+	// Retourne nouvelle instance avec champs initialisés
 	return &UserEntity{
 		id:    id,
 		name:  name,
@@ -29,6 +39,7 @@ func NewUserEntity(id int, name, email string) *UserEntity {
 // Returns:
 //   - int: identifiant
 func (u *UserEntity) GetID() int {
+	// Retourne le champ id
 	return u.id
 }
 
@@ -37,6 +48,7 @@ func (u *UserEntity) GetID() int {
 // Returns:
 //   - string: nom
 func (u *UserEntity) GetName() string {
+	// Retourne le champ name
 	return u.name
 }
 
@@ -45,21 +57,28 @@ func (u *UserEntity) GetName() string {
 // Returns:
 //   - string: email
 func (u *UserEntity) GetEmail() string {
+	// Retourne le champ email
 	return u.email
 }
 
-// Save sauvegarde l'entité
+// Save sauvegarde l'entité.
+//
+// Returns:
+//   - error: erreur éventuelle
 func (u *UserEntity) Save() error {
+	// Retourne nil si succès
 	return nil
 }
 
-// SimpleDTO struct sans méthodes (DTO) - PAS BESOIN DE GETTERS
+// SimpleDTO struct sans méthodes (DTO) - PAS BESOIN DE GETTERS.
+// Structure de transfert de données simple.
 type SimpleDTO struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
-// Config configuration simple (≤3 champs) - PAS BESOIN DE GETTERS
+// Config configuration simple (≤3 champs) - PAS BESOIN DE GETTERS.
+// Contient les paramètres de configuration réseau.
 type Config struct {
 	Host string
 	Port int
@@ -71,15 +90,29 @@ type internalService struct {
 	Data string
 }
 
+// process traite les données.
+//
+// Returns:
+//   - error: erreur éventuelle
 func (i *internalService) process() error {
+	// Retourne nil si succès
 	return nil
 }
 
 // Repository entité avec encapsulation complète.
+// Service de persistance avec dépendances et méthodes publiques.
 type Repository struct {
 	db     Database
 	logger Logger
 	cache  Cache
+}
+
+// RepositoryInterface définit les méthodes publiques de Repository.
+type RepositoryInterface interface {
+	GetDB() Database
+	GetLogger() Logger
+	GetCache() Cache
+	Find(id int) (interface{}, error)
 }
 
 // NewRepository crée un nouveau repository.
@@ -92,6 +125,7 @@ type Repository struct {
 // Returns:
 //   - *Repository: instance
 func NewRepository(db Database, logger Logger, cache Cache) *Repository {
+	// Retourne nouvelle instance avec dépendances
 	return &Repository{
 		db:     db,
 		logger: logger,
@@ -104,6 +138,7 @@ func NewRepository(db Database, logger Logger, cache Cache) *Repository {
 // Returns:
 //   - Database: base
 func (r *Repository) GetDB() Database {
+	// Retourne le champ db
 	return r.db
 }
 
@@ -112,6 +147,7 @@ func (r *Repository) GetDB() Database {
 // Returns:
 //   - Logger: logger
 func (r *Repository) GetLogger() Logger {
+	// Retourne le champ logger
 	return r.logger
 }
 
@@ -120,19 +156,34 @@ func (r *Repository) GetLogger() Logger {
 // Returns:
 //   - Cache: cache
 func (r *Repository) GetCache() Cache {
+	// Retourne le champ cache
 	return r.cache
 }
 
-// Find recherche une entité
+// Find recherche une entité.
+//
+// Params:
+//   - id: identifiant de l'entité
+//
+// Returns:
+//   - interface{}: entité trouvée
+//   - error: erreur éventuelle
 func (r *Repository) Find(id int) (interface{}, error) {
+	// Retourne nil si non trouvé
 	return nil, nil
 }
 
 // EmailService service avec encapsulation partielle OK (≤3 champs).
+// Service d'envoi d'emails avec configuration réseau.
 type EmailService struct {
 	host string
 	port int
 	tls  bool
+}
+
+// EmailServiceInterface définit les méthodes de EmailService.
+type EmailServiceInterface interface {
+	Send(to, subject, body string) error
 }
 
 // NewEmailService crée un service email.
@@ -145,6 +196,7 @@ type EmailService struct {
 // Returns:
 //   - *EmailService: instance
 func NewEmailService(host string, port int, tls bool) *EmailService {
+	// Retourne nouvelle instance avec configuration
 	return &EmailService{
 		host: host,
 		port: port,
@@ -152,8 +204,17 @@ func NewEmailService(host string, port int, tls bool) *EmailService {
 	}
 }
 
-// Send envoie un email
+// Send envoie un email.
+//
+// Params:
+//   - to: destinataire
+//   - subject: sujet
+//   - body: corps du message
+//
+// Returns:
+//   - error: erreur éventuelle
 func (e *EmailService) Send(to, subject, body string) error {
+	// Retourne nil si succès
 	return nil
 }
 

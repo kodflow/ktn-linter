@@ -12,19 +12,48 @@ type userServiceImpl struct {
 	users map[int]string
 }
 
-// Create crée un utilisateur
+// useUserService utilise l'interface UserService.
+//
+// Params:
+//   - us: service utilisateur
+func useUserService(us UserService) {
+	// Utilise l'interface
+	_ = us
+}
+
+// Create crée un utilisateur.
+//
+// Params:
+//   - name: nom de l'utilisateur
+//
+// Returns:
+//   - error: erreur éventuelle
 func (u *userServiceImpl) Create(name string) error {
 	// Implementation
 	return nil
 }
 
-// GetByID récupère un utilisateur par ID
+// GetByID récupère un utilisateur par ID.
+//
+// Params:
+//   - id: identifiant utilisateur
+//
+// Returns:
+//   - string: nom de l'utilisateur
+//   - error: erreur éventuelle
 func (u *userServiceImpl) GetByID(id int) (string, error) {
 	// Implementation
 	return "", nil
 }
 
-// Update met à jour un utilisateur
+// Update met à jour un utilisateur.
+//
+// Params:
+//   - id: identifiant utilisateur
+//   - name: nouveau nom
+//
+// Returns:
+//   - error: erreur éventuelle
 func (u *userServiceImpl) Update(id int, name string) error {
 	// Implementation
 	return nil
@@ -35,13 +64,15 @@ func (u *userServiceImpl) helper() {
 	// Private method
 }
 
-// Config est une struct simple sans méthode - PAS BESOIN D'INTERFACE
+// Config est une struct simple sans méthode - PAS BESOIN D'INTERFACE.
+// Contient la configuration de connexion réseau.
 type Config struct {
 	Host string
 	Port int
 }
 
-// DataModel est une struct DTO sans méthode - PAS BESOIN D'INTERFACE
+// DataModel est une struct DTO sans méthode - PAS BESOIN D'INTERFACE.
+// Représente un modèle de données avec identifiant, nom et tags.
 type DataModel struct {
 	ID   int
 	Name string

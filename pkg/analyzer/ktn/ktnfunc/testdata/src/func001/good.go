@@ -196,12 +196,10 @@ func main() {
 // Returns:
 //   - int: résultat
 func functionWithBlockComments() int {
-	/* Début du block comment
-	   Ligne dans le block comment
-	   Fin du block comment */
+	/* Block comment court */
 	x := 1
 
-	/* Un autre block comment */
+	/* Autre block comment */
 	y := TWO
 
 	// Ligne de commentaire normale

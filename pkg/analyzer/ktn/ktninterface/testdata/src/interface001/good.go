@@ -6,6 +6,9 @@ type goodUsedInterface interface {
 }
 
 // goodProcess uses the interface as parameter.
+//
+// Params:
+//   - g: interface implémentant Method
 func goodProcess(g goodUsedInterface) {
 	g.Method()
 }
@@ -16,6 +19,9 @@ type goodReturnInterface interface {
 }
 
 // goodFactory returns the interface.
+//
+// Returns:
+//   - goodReturnInterface: interface implementation ou nil
 func goodFactory() goodReturnInterface {
 	return nil
 }
@@ -42,6 +48,9 @@ type goodCompositeInterface interface {
 }
 
 // goodUseComposite uses the composite interface.
+//
+// Params:
+//   - c: interface composite à utiliser
 func goodUseComposite(c goodCompositeInterface) {
 	c.Extended()
 }
@@ -55,6 +64,9 @@ type goodMethodReceiver interface {
 type goodStruct struct{}
 
 // goodMethod accepts the interface.
+//
+// Params:
+//   - mr: interface avec méthode Process
 func (g goodStruct) goodMethod(mr goodMethodReceiver) {
 	mr.Process()
 }

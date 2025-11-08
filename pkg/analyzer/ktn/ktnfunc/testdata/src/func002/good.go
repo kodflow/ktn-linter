@@ -40,7 +40,8 @@ func createFiveParamsMixed(a int, b string, c bool, d float64, e []int) {
 	_, _, _, _, _ = a, b, c, d, e
 }
 
-// MyType structure de test
+// MyType structure de test pour les méthodes.
+// Utilisée pour démontrer les règles sur les paramètres de méthodes.
 type MyType struct{}
 
 // processMethodFourParams méthode avec 4 paramètres (le receiver ne compte pas)
@@ -162,7 +163,7 @@ func convertWithVariadic(a, b, c, d int, e ...string) {
 }
 
 var (
-	// goodLiteralUnnamed fonction littérale avec exactement 5 paramètres non nommés
+	// goodLiteralUnnamed fonction avec 5 paramètres non nommés
 	goodLiteralUnnamed func(int, string, bool, float64, []int) = func(int, string, bool, float64, []int) {
 		// Fonction vide
 	}

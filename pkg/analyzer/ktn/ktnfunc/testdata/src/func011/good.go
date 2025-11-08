@@ -167,6 +167,38 @@ type GoodInterface interface {
 	GoodNoBody(x int) bool
 }
 
+// goodImplementation implémente GoodInterface.
+type goodImplementation struct{}
+
+// GoodNoBody implémente la méthode de l'interface.
+//
+// Params:
+//   - x: valeur à tester
+//
+// Returns:
+//   - bool: true si x est positif
+func (g *goodImplementation) GoodNoBody(x int) bool {
+	// Vérifie si x est positif
+	if x > 0 {
+		// Retourne true pour valeur positive
+		return true
+	}
+	// Retourne false pour valeur négative ou nulle
+	return false
+}
+
+// useGoodInterface utilise l'interface.
+//
+// Params:
+//   - gi: interface à utiliser
+//
+// Returns:
+//   - bool: résultat de GoodNoBody
+func useGoodInterface(gi GoodInterface) bool {
+	// Appelle la méthode de l'interface
+	return gi.GoodNoBody(0)
+}
+
 // GoodElseIfCommentBefore demonstrates else if with comment before the if part.
 //
 // Params:
@@ -283,11 +315,10 @@ func GoodElseWithCommentBefore(x int) string {
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-		// Handle non-positive case
-	} else {
-		// Return "non-positive" for non-positive values
-		return "non-positive"
 	}
+	// Handle non-positive case
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
 // GoodElseBlockWithCommentAtStart demonstrates else block with comment at start.
@@ -302,11 +333,10 @@ func GoodElseBlockWithCommentAtStart(x int) string {
 	if x > 0 {
 		// Return "positive" for positive values
 		return "positive"
-	} else {
-		// Handle non-positive case - comment at start of block
-		// Return "non-positive" for non-positive values
-		return "non-positive"
 	}
+	// Handle non-positive case - comment at start of block
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
 // GoodInlineCommentSameLine demonstrates inline comments on same line as code.

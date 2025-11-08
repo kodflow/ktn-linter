@@ -8,8 +8,6 @@ import (
 )
 
 // Analyzer001 detects unused interface declarations.
-// Params:
-//   - N/A
 var Analyzer001 = &analysis.Analyzer{
 	Name:     "ktninterface001",
 	Doc:      "KTN-INTERFACE-001: interface non utilisée",

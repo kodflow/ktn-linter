@@ -110,9 +110,36 @@ func BenchmarkNakedReturn(b int) (result int) {
 	return
 }
 
-// Calculator est une interface de test
+// Calculator est une interface de test.
+// Utilisée pour démontrer l'utilisation d'interfaces.
 type Calculator interface {
 	Calculate() (int, error)
+}
+
+// simpleCalculator implémente Calculator
+type simpleCalculator struct{}
+
+// Calculate implémente l'interface Calculator
+//
+// Returns:
+//   - int: résultat du calcul
+//   - error: erreur éventuelle
+func (s simpleCalculator) Calculate() (int, error) {
+	// Retour du résultat
+	return 0, nil
+}
+
+// useCalculator utilise l'interface Calculator
+//
+// Params:
+//   - calc: calculateur à utiliser
+//
+// Returns:
+//   - int: résultat
+//   - error: erreur éventuelle
+func useCalculator(calc Calculator) (int, error) {
+	// Utilisation du calculateur
+	return calc.Calculate()
 }
 
 // SingleUnnamedReturn retourne une valeur sans nom

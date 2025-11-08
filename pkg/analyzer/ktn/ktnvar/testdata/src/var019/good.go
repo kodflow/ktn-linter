@@ -5,10 +5,21 @@ import (
 	"sync/atomic"
 )
 
+const (
+	// MULTIPLIER_VALUE multiplicateur pour les calculs
+	MULTIPLIER_VALUE int = 2
+)
+
 // GoodCounter utilise un pointeur de mutex.
+// Compteur thread-safe avec mutex pointeur.
 type GoodCounter struct {
 	mu    *sync.Mutex // OK: Pointeur de mutex
 	value int
+}
+
+// GoodCounterInterface définit les méthodes de GoodCounter.
+type GoodCounterInterface interface {
+	Increment()
 }
 
 // NewGoodCounter crée un nouveau compteur.
@@ -30,9 +41,16 @@ func (c *GoodCounter) Increment() {
 }
 
 // GoodSafeCounter utilise un mutex embarqué mais des receivers par pointeur.
+// Compteur thread-safe avec RWMutex pour lecture/écriture optimisée.
 type GoodSafeCounter struct {
 	mu    sync.RWMutex // OK si tous les receivers sont des pointeurs
 	value int
+}
+
+// GoodSafeCounterInterface définit les méthodes de GoodSafeCounter.
+type GoodSafeCounterInterface interface {
+	Read() int
+	Write(v int)
 }
 
 // Read utilise un receiver par pointeur (correct).
@@ -57,8 +75,33 @@ func (c *GoodSafeCounter) Write(v int) {
 }
 
 // GoodConfig utilise atomic.Value avec receivers par pointeur.
+// Configuration thread-safe avec atomic.Value.
 type GoodConfig struct {
 	data atomic.Value
+}
+
+// GoodConfigInterface définit les méthodes de GoodConfig.
+type GoodConfigInterface interface {
+	Load() interface{}
+	Store(v interface{})
+}
+
+// NewGoodSafeCounter crée un nouveau compteur safe.
+//
+// Returns:
+//   - *GoodSafeCounter: nouveau compteur initialisé
+func NewGoodSafeCounter() *GoodSafeCounter {
+	// Retour nouvelle instance
+	return &GoodSafeCounter{}
+}
+
+// NewGoodConfig crée une nouvelle configuration.
+//
+// Returns:
+//   - *GoodConfig: nouvelle configuration
+func NewGoodConfig() *GoodConfig {
+	// Retour nouvelle instance
+	return &GoodConfig{}
 }
 
 // Load utilise un receiver par pointeur (correct).
@@ -99,6 +142,11 @@ type goodStructWithoutMutex struct {
 	value int
 }
 
+// goodStructWithoutMutexInterface définit les méthodes.
+type goodStructWithoutMutexInterface interface {
+	ValueMethod() int
+}
+
 // ValueMethod peut utiliser receiver par valeur (pas de mutex).
 //
 // Returns:
@@ -121,6 +169,15 @@ type goodImplStruct struct {
 	value int
 }
 
+// useGoodInterfaceType utilise l'interface.
+//
+// Params:
+//   - g: interface à utiliser
+func useGoodInterfaceType(g goodInterfaceType) {
+	// Utilise l'interface
+	g.DoSomething()
+}
+
 // DoSomething implémente l'interface (receiver par valeur OK).
 func (g goodImplStruct) DoSomething() {
 	// Implementation
@@ -130,6 +187,11 @@ func (g goodImplStruct) DoSomething() {
 // goodPtrMutexStruct utilise un pointeur de mutex comme champ.
 type goodPtrMutexStruct struct {
 	mu *sync.Mutex
+}
+
+// goodPtrMutexStructInterface définit les méthodes.
+type goodPtrMutexStructInterface interface {
+	ProcessWithPtrMutex()
 }
 
 // ProcessWithPtrMutex utilise value receiver (OK car mu est un pointeur).
@@ -156,7 +218,10 @@ type goodPointerTypeAlias *GoodCounter
 type goodNonStructType int
 
 // Process traite avec un receiver de type non-struct (OK).
+//
+// Returns:
+//   - int: valeur multipliée
 func (g goodNonStructType) Process() int {
 	// Retour de la fonction
-	return int(g) * 2
+	return int(g) * MULTIPLIER_VALUE
 }

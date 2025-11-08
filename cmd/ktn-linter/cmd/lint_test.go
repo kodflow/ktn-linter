@@ -240,11 +240,11 @@ func TestCheckLoadErrorsNoErrors(t *testing.T) {
 // TestRunAnalyzers teste runAnalyzers
 func TestRunAnalyzers(t *testing.T) {
 	tests := []struct {
-		name           string
-		packages       []string
-		setupCategory  func()
+		name            string
+		packages        []string
+		setupCategory   func()
 		cleanupCategory func()
-		expectPanic    bool
+		expectPanic     bool
 	}{
 		{
 			name:     "success with valid packages",
