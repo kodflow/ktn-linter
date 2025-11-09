@@ -11,7 +11,7 @@ import (
 // Analyzer008 checks that test files follow strict internal/external naming convention
 var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktntest008",
-	Doc:  "KTN-TEST-008: Les fichiers de test doivent se terminer par _internal_test.go (package xxx) ou _external_test.go (package xxx_test)",
+	Doc:  "KTN-TEST-008: Les fichiers de test doivent se terminer par _internal_test.go (white-box: package xxx pour tester fonctions privées) ou _external_test.go (black-box: package xxx_test pour tester API publique)",
 	Run:  runTest008,
 }
 
@@ -51,7 +51,7 @@ func runTest008(pass *analysis.Pass) (any, error) {
 		if !hasInternalSuffix && !hasExternalSuffix {
 			pass.Reportf(
 				file.Name.Pos(),
-				"KTN-TEST-008: le fichier de test '%s' doit se terminer par '_internal_test.go' ou '_external_test.go'",
+				"KTN-TEST-008: le fichier de test '%s' doit se terminer par '_internal_test.go' (white-box: teste fonctions privées avec package xxx) ou '_external_test.go' (black-box: teste API publique avec package xxx_test)",
 				baseName,
 			)
 			// Continuer au fichier suivant
@@ -65,7 +65,7 @@ func runTest008(pass *analysis.Pass) (any, error) {
 			if strings.HasSuffix(packageName, "_test") {
 				pass.Reportf(
 					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' doit utiliser 'package %s' (pas '%s') pour les tests internes",
+					"KTN-TEST-008: le fichier '%s' (_internal_test.go = white-box) doit utiliser 'package %s' (pas '%s') pour accéder aux fonctions privées non-exportées",
 					baseName,
 					expectedPackage,
 					packageName,
@@ -76,7 +76,7 @@ func runTest008(pass *analysis.Pass) (any, error) {
 			if !strings.HasSuffix(packageName, "_test") {
 				pass.Reportf(
 					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' doit utiliser 'package xxx_test' (pas '%s') pour les tests externes",
+					"KTN-TEST-008: le fichier '%s' (_external_test.go = black-box) doit utiliser 'package xxx_test' (pas '%s') pour tester uniquement l'API publique exportée",
 					baseName,
 					packageName,
 				)
