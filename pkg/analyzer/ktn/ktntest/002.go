@@ -41,7 +41,18 @@ func runTest002(pass *analysis.Pass) (any, error) {
 		}
 
 		// Extraire le nom du fichier source correspondant
-		sourceFile := strings.TrimSuffix(filename, "_test.go") + ".go"
+		var sourceFile string
+		// Vérification du suffixe (convention internal/external)
+		if strings.HasSuffix(filename, "_internal_test.go") {
+			// Fichier _internal_test.go → chercher .go
+			sourceFile = strings.TrimSuffix(filename, "_internal_test.go") + ".go"
+		} else if strings.HasSuffix(filename, "_external_test.go") {
+			// Fichier _external_test.go → chercher .go
+			sourceFile = strings.TrimSuffix(filename, "_external_test.go") + ".go"
+		} else {
+			// Fichier _test.go standard → chercher .go
+			sourceFile = strings.TrimSuffix(filename, "_test.go") + ".go"
+		}
 
 		// Vérifier si le fichier source existe
 		if !fileExists(sourceFile) && !isExemptTestFile(filename) {
