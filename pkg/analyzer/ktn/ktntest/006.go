@@ -45,8 +45,19 @@ func runTest006(pass *analysis.Pass) (any, error) {
 
 		// Vérification si fichier de test
 		if shared.IsTestFile(basename) {
-			// Extraire le nom de base sans _test.go
-			baseName := strings.TrimSuffix(basename, "_test.go")
+			// Extraire le nom de base sans suffixe de test (support convention internal/external)
+			var baseName string
+			// Vérification du suffixe
+			if strings.HasSuffix(basename, "_internal_test.go") {
+				// Fichier _internal_test.go → chercher .go
+				baseName = strings.TrimSuffix(basename, "_internal_test.go")
+			} else if strings.HasSuffix(basename, "_external_test.go") {
+				// Fichier _external_test.go → chercher .go
+				baseName = strings.TrimSuffix(basename, "_external_test.go")
+			} else {
+				// Fichier _test.go standard → chercher .go
+				baseName = strings.TrimSuffix(basename, "_test.go")
+			}
 			testFiles[baseName] = &testFileInfo{
 				basename: basename,
 				filename: filename,
