@@ -154,6 +154,16 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 - **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
 
+### Tests (6 règles) ✅ 100%
+
+- **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: incompatible white-box testing)
+- **KTN-TEST-002**: Fichier test sans fichier source correspondant
+- **KTN-TEST-003**: Fonctions publiques sans tests (détecte pattern Type_Method)
+- **KTN-TEST-004**: Tests sans couverture cas d'erreur
+- **KTN-TEST-005**: Tests sans table-driven pattern
+- **KTN-TEST-006**: Tests Benchmark sans *testing.B
+- **KTN-TEST-007**: Interdiction t.Skip() / t.Skipf() / t.SkipNow()
+
 ## Statistiques
 
 - **Couverture globale**: 91.0% 🟡

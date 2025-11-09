@@ -109,6 +109,8 @@ func runTest003(pass *analysis.Pass) (any, error) {
 	}
 
 	// Analyze only packages with both source and test files
+	// OR if we're in a source package (no test files), we'll scan for external test package
+	hasSourceFiles := testFileCount < len(pass.Files)
 	// If we only have test files, this is probably a separate test package - skip it
 	if testFileCount == len(pass.Files) {
 		// Early return from function.
@@ -122,6 +124,12 @@ func runTest003(pass *analysis.Pass) (any, error) {
 
 	// Collecter les fonctions publiques et testées
 	collectFunctions(pass, &publicFuncs, testedFuncs)
+
+	// Si on a des fichiers source mais pas de tests internes,
+	// scanner les packages _test externes
+	if hasSourceFiles && !hasTestFiles {
+		collectExternalTestFunctions(pass, testedFuncs)
+	}
 
 	// Vérifier que chaque fonction publique a un test
 	for _, funcInfo := range publicFuncs {
@@ -235,6 +243,18 @@ func extractReceiverTypeName(expr ast.Expr) string {
 
 	// Type non géré
 	return ""
+}
+
+// collectExternalTestFunctions scanne les packages _test externes.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - testedFuncs: map des fonctions testées à remplir
+func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bool) {
+	// Pas d'implémentation pour l'instant
+	// Cette fonctionnalité nécessite de parser des fichiers en dehors du package courant
+	// ce qui n'est pas directement supporté par l'API analysis
+	// Pour l'instant, on accepte que les tests externes ne soient pas détectés
 }
 
 // isExemptFunction vérifie si une fonction est exemptée.
