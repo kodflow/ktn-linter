@@ -17,9 +17,10 @@ const (
 
 // publicFuncInfo stores information about a public function
 type publicFuncInfo struct {
-	name     string
-	pos      token.Pos
-	filename string
+	name         string
+	receiverName string // Nom du receiver pour les méthodes (vide pour les fonctions)
+	pos          token.Pos
+	filename     string
 }
 
 // Analyzer003 checks that public functions have corresponding tests
@@ -58,10 +59,17 @@ func collectFunctions(pass *analysis.Pass, publicFuncs *[]publicFuncInfo, tested
 			} else {
 				// Fichier source - collecter les fonctions publiques
 				if isPublicFunction(funcDecl) {
+					receiverName := ""
+					// Vérification si c'est une méthode avec un receiver
+					if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+						// Extraire le nom du type du receiver
+						receiverName = extractReceiverTypeName(funcDecl.Recv.List[0].Type)
+					}
 					*publicFuncs = append(*publicFuncs, publicFuncInfo{
-						name:     funcDecl.Name.Name,
-						pos:      funcDecl.Pos(),
-						filename: filename,
+						name:         funcDecl.Name.Name,
+						receiverName: receiverName,
+						pos:          funcDecl.Pos(),
+						filename:     filename,
 					})
 				}
 			}
@@ -117,14 +125,40 @@ func runTest003(pass *analysis.Pass) (any, error) {
 
 	// Vérifier que chaque fonction publique a un test
 	for _, funcInfo := range publicFuncs {
+		// Construire les noms possibles pour le test
+		testNames := []string{funcInfo.name}
+		// Si c'est une méthode, ajouter aussi le pattern Receiver_Method
+		if funcInfo.receiverName != "" {
+			testNames = append(testNames, funcInfo.receiverName+"_"+funcInfo.name)
+		}
+
+		// Vérifier si au moins un des noms possibles a un test
+		hasTest := false
+		// Parcours des noms de test possibles
+		for _, testName := range testNames {
+			// Vérification de la condition
+			if testedFuncs[testName] {
+				hasTest = true
+				// Test trouvé
+				break
+			}
+		}
+
 		// Vérification de la condition
-		if !testedFuncs[funcInfo.name] && !isExemptFunction(funcInfo.name) {
+		if !hasTest && !isExemptFunction(funcInfo.name) {
+			// Construire le nom du test suggéré
+			suggestedTestName := "Test" + funcInfo.name
+			// Si c'est une méthode, suggérer le pattern Type_Method
+			if funcInfo.receiverName != "" {
+				suggestedTestName = "Test" + funcInfo.receiverName + "_" + funcInfo.name
+			}
+
 			// Fonction non testée - reporter à la position de la fonction
 			pass.Reportf(
 				funcInfo.pos,
-				"KTN-TEST-003: fonction publique '%s' dans '%s' n'a pas de test correspondant",
+				"KTN-TEST-003: fonction publique '%s' n'a pas de test correspondant. Créer un test nommé '%s'",
 				funcInfo.name,
-				funcInfo.filename,
+				suggestedTestName,
 			)
 		}
 	}
@@ -177,6 +211,30 @@ func collectTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool)
 		// Ajouter à la map
 		testedFuncs[testedName] = true
 	}
+}
+
+// extractReceiverTypeName extrait le nom du type du receiver.
+//
+// Params:
+//   - expr: expression du type du receiver
+//
+// Returns:
+//   - string: nom du type (sans * pour les pointeurs)
+func extractReceiverTypeName(expr ast.Expr) string {
+	// Gérer les pointeurs (*Type)
+	if starExpr, ok := expr.(*ast.StarExpr); ok {
+		// Expression pointeur
+		return extractReceiverTypeName(starExpr.X)
+	}
+
+	// Gérer les identifiants simples (Type)
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Retour du nom du type
+		return ident.Name
+	}
+
+	// Type non géré
+	return ""
 }
 
 // isExemptFunction vérifie si une fonction est exemptée.
