@@ -1,10 +1,12 @@
-package utils
+package utils_test
 
 import (
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 )
 
 // TestGetExprAsString tests the functionality of the corresponding implementation.
@@ -30,9 +32,9 @@ func TestGetExprAsString(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to parse %q: %v", tt.code, err)
 			}
-			got := GetExprAsString(expr)
+			got := utils.GetExprAsString(expr)
 			if got != tt.expected {
-				t.Errorf("GetExprAsString(%q) = %q, want %q", tt.code, got, tt.expected)
+				t.Errorf("utils.GetExprAsString(%q) = %q, want %q", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -44,9 +46,9 @@ func TestGetExprAsStringWithUnknownType(t *testing.T) {
 	expr := &ast.FuncType{
 		Params: &ast.FieldList{},
 	}
-	got := GetExprAsString(expr)
+	got := utils.GetExprAsString(expr)
 	if got != "unknown" {
-		t.Errorf("GetExprAsString(unsupported) = %q, want \"unknown\"", got)
+		t.Errorf("utils.GetExprAsString(unsupported) = %q, want \"unknown\"", got)
 	}
 }
 
@@ -75,9 +77,9 @@ func TestGetTypeString(t *testing.T) {
 			genDecl := file.Decls[0].(*ast.GenDecl)
 			spec := genDecl.Specs[0].(*ast.ValueSpec)
 
-			got := GetTypeString(spec)
+			got := utils.GetTypeString(spec)
 			if got != tt.expected {
-				t.Errorf("GetTypeString(%q) = %q, want %q", tt.code, got, tt.expected)
+				t.Errorf("utils.GetTypeString(%q) = %q, want %q", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -96,9 +98,9 @@ func TestGetTypeStringWithNoType(t *testing.T) {
 	genDecl := file.Decls[0].(*ast.GenDecl)
 	spec := genDecl.Specs[0].(*ast.ValueSpec)
 
-	got := GetTypeString(spec)
+	got := utils.GetTypeString(spec)
 	if got != "<type>" {
-		t.Errorf("GetTypeString(no type) = %q, want \"<type>\"", got)
+		t.Errorf("utils.GetTypeString(no type) = %q, want \"<type>\"", got)
 	}
 }
 
@@ -122,9 +124,9 @@ func TestGetExprAsStringNested(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to parse %q: %v", tt.code, err)
 			}
-			got := GetExprAsString(expr)
+			got := utils.GetExprAsString(expr)
 			if got != tt.expected {
-				t.Errorf("GetExprAsString(%q) = %q, want %q", tt.code, got, tt.expected)
+				t.Errorf("utils.GetExprAsString(%q) = %q, want %q", tt.code, got, tt.expected)
 			}
 		})
 	}

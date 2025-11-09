@@ -154,15 +154,16 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 - **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
 
-### Tests (6 règles) ✅ 100%
+### Tests (7 règles) ✅ 100%
 
-- **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: incompatible white-box testing)
+- **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: remplacée par KTN-TEST-008)
 - **KTN-TEST-002**: Fichier test sans fichier source correspondant
 - **KTN-TEST-003**: Fonctions publiques sans tests (détecte pattern Type_Method)
 - **KTN-TEST-004**: Tests sans couverture cas d'erreur
 - **KTN-TEST-005**: Tests sans table-driven pattern
 - **KTN-TEST-006**: Tests Benchmark sans *testing.B
 - **KTN-TEST-007**: Interdiction t.Skip() / t.Skipf() / t.SkipNow()
+- **KTN-TEST-008**: Convention stricte internal/external tests (xxx_internal_test.go avec package xxx, xxx_external_test.go avec package xxx_test)
 
 ## Statistiques
 
@@ -174,13 +175,14 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 30 (4 const + 5 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment)
+- **Total règles**: 38 (4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 7 test) - 7 règles actives dans test
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Corrections des Contradictions
 
 - ✅ **KTN-VAR-010 supprimé** : Contradictoire avec KTN-RETURN-002
 - ✅ **KTN-COMMENT-001 supprimé** : Contradictoire avec KTN-FUNC-011 (demandait commentaires puis les marquait redondants)
+- ✅ **KTN-TEST-001 remplacé par KTN-TEST-008** : Incompatible avec white-box testing. KTN-TEST-008 impose une convention hybride (internal/external) permettant à la fois le white-box (tests internes) et le black-box (tests externes)
 - ✅ **KTN-INTERFACE-001 amélioré** : Ignore les interfaces qui suivent le pattern `XXXInterface` pour struct `XXX` (KTN-STRUCT-002)
 - ✅ **KTN-VAR-014 amélioré** : Ignore les types externes (frameworks comme Terraform)
 - ✅ **KTN-VAR-007 amélioré** : Ignore `[]T{}` (faux positifs), vérifie seulement `make([]T, 0)` sans capacity

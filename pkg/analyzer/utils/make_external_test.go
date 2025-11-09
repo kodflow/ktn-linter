@@ -1,9 +1,11 @@
-package utils
+package utils_test
 
 import (
 	"go/ast"
 	"go/parser"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 )
 
 func TestIsMakeCall(t *testing.T) {
@@ -51,9 +53,9 @@ func TestIsMakeCall(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsMakeCall(call)
+			got := utils.IsMakeCall(call)
 			if got != tt.want {
-				t.Errorf("IsMakeCall() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsMakeCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -104,9 +106,9 @@ func TestIsMakeCallWithLength(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsMakeCallWithLength(call, tt.minArgs)
+			got := utils.IsMakeCallWithLength(call, tt.minArgs)
 			if got != tt.want {
-				t.Errorf("IsMakeCallWithLength() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsMakeCallWithLength() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -157,9 +159,9 @@ func TestIsMakeSliceCall(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsMakeSliceCall(call)
+			got := utils.IsMakeSliceCall(call)
 			if got != tt.want {
-				t.Errorf("IsMakeSliceCall() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsMakeSliceCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -210,9 +212,9 @@ func TestIsMakeMapCall(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsMakeMapCall(call)
+			got := utils.IsMakeMapCall(call)
 			if got != tt.want {
-				t.Errorf("IsMakeMapCall() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsMakeMapCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -263,9 +265,9 @@ func TestIsMakeByteSliceCall(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsMakeByteSliceCall(call)
+			got := utils.IsMakeByteSliceCall(call)
 			if got != tt.want {
-				t.Errorf("IsMakeByteSliceCall() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsMakeByteSliceCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -284,9 +286,9 @@ func TestIsMakeCallsWithNoArgs(t *testing.T) {
 		callFunc func(*ast.CallExpr) bool
 		funcName string
 	}{
-		{"IsMakeSliceCall with no args", IsMakeSliceCall, "IsMakeSliceCall"},
-		{"IsMakeMapCall with no args", IsMakeMapCall, "IsMakeMapCall"},
-		{"IsMakeByteSliceCall with no args", IsMakeByteSliceCall, "IsMakeByteSliceCall"},
+		{"IsMakeSliceCall with no args", utils.IsMakeSliceCall, "IsMakeSliceCall"},
+		{"IsMakeMapCall with no args", utils.IsMakeMapCall, "IsMakeMapCall"},
+		{"IsMakeByteSliceCall with no args", utils.IsMakeByteSliceCall, "IsMakeByteSliceCall"},
 	}
 
 	// Exécution tests

@@ -10,13 +10,15 @@ func Analyzers() []*analysis.Analyzer {
 	// Retourne tous les analyseurs de test
 	// NOTE: KTN-TEST-001 désactivée car elle force black-box testing (xxx_test)
 	// ce qui empêche de tester les fonctions privées (white-box testing)
+	// KTN-TEST-008 la remplace avec une convention hybride internal/external
 	return []*analysis.Analyzer{
-		// Analyzer001, // Désactivée : incompatible avec white-box testing
+		// Analyzer001, // Désactivée : remplacée par Analyzer008
 		Analyzer002,
 		Analyzer003,
 		Analyzer004,
 		Analyzer005,
 		Analyzer006,
 		Analyzer007,
+		Analyzer008,
 	}
 }

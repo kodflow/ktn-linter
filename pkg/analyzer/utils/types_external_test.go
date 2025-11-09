@@ -1,4 +1,4 @@
-package utils
+package utils_test
 
 import (
 	"go/ast"
@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -27,9 +28,9 @@ func TestIsZeroLiteral(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
-			got := IsZeroLiteral(expr)
+			got := utils.IsZeroLiteral(expr)
 			if got != tt.expected {
-				t.Errorf("IsZeroLiteral(%s) = %v, want %v", tt.code, got, tt.expected)
+				t.Errorf("utils.IsZeroLiteral(%s) = %v, want %v", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -56,9 +57,9 @@ func TestIsReferenceType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
-			got := IsReferenceType(expr)
+			got := utils.IsReferenceType(expr)
 			if got != tt.expected {
-				t.Errorf("IsReferenceType(%s) = %v, want %v", tt.code, got, tt.expected)
+				t.Errorf("utils.IsReferenceType(%s) = %v, want %v", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -80,9 +81,9 @@ func TestIsStructType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
-			got := IsStructType(expr)
+			got := utils.IsStructType(expr)
 			if got != tt.expected {
-				t.Errorf("IsStructType(%s) = %v, want %v", tt.code, got, tt.expected)
+				t.Errorf("utils.IsStructType(%s) = %v, want %v", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -107,9 +108,9 @@ func TestGetTypeName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
-			got := GetTypeName(expr)
+			got := utils.GetTypeName(expr)
 			if got != tt.expected {
-				t.Errorf("GetTypeName(%s) = %s, want %s", tt.code, got, tt.expected)
+				t.Errorf("utils.GetTypeName(%s) = %s, want %s", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -121,9 +122,9 @@ func TestGetTypeNameWithUnsupportedType(t *testing.T) {
 	expr := &ast.FuncType{
 		Params: &ast.FieldList{},
 	}
-	got := GetTypeName(expr)
+	got := utils.GetTypeName(expr)
 	if got != "T" {
-		t.Errorf("GetTypeName(unsupported) = %s, want T", got)
+		t.Errorf("utils.GetTypeName(unsupported) = %s, want T", got)
 	}
 }
 
@@ -146,9 +147,9 @@ func TestIsMakeSliceZero(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
-			got := IsMakeSliceZero(expr)
+			got := utils.IsMakeSliceZero(expr)
 			if got != tt.expected {
-				t.Errorf("IsMakeSliceZero(%s) = %v, want %v", tt.code, got, tt.expected)
+				t.Errorf("utils.IsMakeSliceZero(%s) = %v, want %v", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -158,9 +159,9 @@ func TestIsMakeSliceZero(t *testing.T) {
 func TestIsMakeSliceZeroWithNonCallExpr(t *testing.T) {
 	// Test avec une expression qui n'est pas un appel
 	expr := &ast.Ident{Name: "test"}
-	got := IsMakeSliceZero(expr)
+	got := utils.IsMakeSliceZero(expr)
 	if got != false {
-		t.Errorf("IsMakeSliceZero(non-call) = %v, want false", got)
+		t.Errorf("utils.IsMakeSliceZero(non-call) = %v, want false", got)
 	}
 }
 
@@ -170,9 +171,9 @@ func TestIsMakeSliceZeroWithNonMake(t *testing.T) {
 	fset := token.NewFileSet()
 	code := "append(s, 1)"
 	expr, _ := parser.ParseExprFrom(fset, "", code, 0)
-	got := IsMakeSliceZero(expr)
+	got := utils.IsMakeSliceZero(expr)
 	if got != false {
-		t.Errorf("IsMakeSliceZero(non-make) = %v, want false", got)
+		t.Errorf("utils.IsMakeSliceZero(non-make) = %v, want false", got)
 	}
 }
 
@@ -194,9 +195,9 @@ func TestHasPositiveLength(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			// Call with nil pass to test AST-only path
-			got := HasPositiveLength(nil, expr)
+			got := utils.HasPositiveLength(nil, expr)
 			if got != tt.expected {
-				t.Errorf("HasPositiveLength(%q) = %v, want %v", tt.code, got, tt.expected)
+				t.Errorf("utils.HasPositiveLength(%q) = %v, want %v", tt.code, got, tt.expected)
 			}
 		})
 	}
@@ -207,7 +208,7 @@ func TestHasPositiveLength(t *testing.T) {
 			TypesInfo: nil,
 		}
 		expr, _ := parser.ParseExpr("5")
-		got := HasPositiveLength(pass, expr)
+		got := utils.HasPositiveLength(pass, expr)
 		if !got {
 			t.Errorf("HasPositiveLength with pass but no TypesInfo should return true")
 		}

@@ -109,23 +109,24 @@ make lint
 ├── CLAUDE.md
 ├── cmd/
 │   └── ktn-linter/
-│       └── main.go              # Point d'entrée du linter
+│       └── main.go                    # Point d'entrée du linter
 ├── pkg/
 │   ├── analyzer/
 │   │   ├── ktn/
-│   │   │   ├── registry.go      # Enregistrement global des catégories
+│   │   │   ├── registry.go            # Enregistrement global des catégories
 │   │   │   └── <category>/
-│   │   │       ├── 001.go       # Règle KTN-<CATEGORY>-001
-│   │   │       ├── 001_test.go  # Tests de la règle 001
-│   │   │       ├── registry.go  # Enregistrement des règles de la catégorie
+│   │   │       ├── 001.go             # Règle KTN-<CATEGORY>-001
+│   │   │       ├── 001_external_test.go  # ⚠️ Tests externes (black-box)
+│   │   │       ├── 001_internal_test.go  # Tests internes (white-box) si nécessaire
+│   │   │       ├── registry.go        # Enregistrement des règles de la catégorie
 │   │   │       └── testdata/
 │   │   │           └── src/
 │   │   │               └── <category>001/
 │   │   │                   ├── good.go
 │   │   │                   └── bad.go
-│   │   └── utils/           # Fonctions utilitaires
-│   └── formatter/           # Formatage de la sortie
-└── builds/                  # Binaires compilés (git-ignoré)
+│   │   └── utils/                 # Fonctions utilitaires
+│   └── formatter/                 # Formatage de la sortie
+└── builds/                        # Binaires compilés (git-ignoré)
 ```
 
 ### Template d'une Règle (XXX.go)
@@ -164,20 +165,42 @@ func run<Category><XXX>(pass *analysis.Pass) (any, error) {
 }
 ```
 
-### Template du Test (XXX_test.go)
+### Template du Test (XXX_external_test.go)
+
+⚠️ **NOUVELLE CONVENTION (KTN-TEST-008)** : Tous les fichiers de test doivent se terminer par `_internal_test.go` ou `_external_test.go`
+
+**Tests Externes (Black-box)** : Pour tester l'API publique uniquement
 
 ```go
-package ktn<category>_test
+package ktn<category>_test  // ← Package se termine par _test
 
 import (
     "testing"
-    "golang.org/x/tools/go/analysis/analysistest"
-    "github.com/kodflow/ktn-linter/src/pkg/analyzer/ktn/<category>"
+    "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktn<category>"
+    "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
 func Test<Category><XXX>(t *testing.T) {
-    testdata := analysistest.TestData()
-    analysistest.Run(t, testdata, ktn<category>.Analyzer<XXX>, "<category><XXX>")
+    // Teste uniquement les fonctions/méthodes publiques exportées
+    testhelper.TestGoodBad(t, ktn<category>.Analyzer<XXX>, "<category><XXX>", expectedErrors)
+}
+```
+
+**Tests Internes (White-box)** : Pour tester les fonctions privées
+
+```go
+package ktn<category>  // ← Même package que le code source
+
+import (
+    "testing"
+)
+
+func testPrivateFunction(t *testing.T) {
+    // Teste les fonctions privées (non-exportées)
+    result := privateHelperFunction()
+    if result != expected {
+        t.Errorf("expected %v, got %v", expected, result)
+    }
 }
 ```
 
@@ -226,10 +249,10 @@ func Analyzers() []*analysis.Analyzer {
 3. **Convention de nommage** :
    - Fichiers : `001.go`, `002.go`, etc.
    - Analyzers : `Analyzer001`, `Analyzer002`, etc.
-   - Tests : `001_test.go`, `002_test.go`, etc.
+   - Tests : `001_external_test.go`, `002_internal_test.go`, etc. (⚠️ **KTN-TEST-008** : tous les tests doivent avoir le suffixe `_internal_test.go` ou `_external_test.go`)
 4. **Organisation des fichiers** :
    - Source : `/cmd/` (binaires), `/pkg/` (packages)
-   - Tests : à côté du code, suffixe `_test.go`
+   - Tests : à côté du code, suffixe `_internal_test.go` (white-box) ou `_external_test.go` (black-box)
    - Testdata : `/pkg/analyzer/ktn/<category>/testdata/`
    - Build : `/builds/` (généré, git-ignoré)
    - Coverage : `/coverage.out`, `/coverage.html` (généré, git-ignoré)
@@ -254,12 +277,13 @@ control_flow, data_structures, ops
 ```bash
 # 1. Créer la structure
 touch pkg/analyzer/ktn/<category>/<XXX>.go
-touch pkg/analyzer/ktn/<category>/<XXX>_test.go
+touch pkg/analyzer/ktn/<category>/<XXX>_external_test.go  # ⚠️ Nouvelle convention KTN-TEST-008
 mkdir -p pkg/analyzer/ktn/<category>/testdata/src/<category><XXX>
 touch pkg/analyzer/ktn/<category>/testdata/src/<category><XXX>/good.go
 touch pkg/analyzer/ktn/<category>/testdata/src/<category><XXX>/bad.go
 
-# 2. Implémenter les tests (testdata + XXX_test.go)
+# 2. Implémenter les tests (testdata + XXX_external_test.go)
+#    - Si tests de fonctions privées : créer aussi XXX_internal_test.go
 # 3. Implémenter la règle (XXX.go)
 # 4. Ajouter dans pkg/analyzer/ktn/<category>/registry.go
 # 5. Ajouter la catégorie dans pkg/analyzer/ktn/registry.go si nouvelle

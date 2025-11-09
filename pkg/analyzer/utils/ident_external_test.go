@@ -1,9 +1,11 @@
-package utils
+package utils_test
 
 import (
 	"go/ast"
 	"go/parser"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 )
 
 func TestIsIdentCall(t *testing.T) {
@@ -51,9 +53,9 @@ func TestIsIdentCall(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsIdentCall(call, tt.funcName)
+			got := utils.IsIdentCall(call, tt.funcName)
 			if got != tt.want {
-				t.Errorf("IsIdentCall() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsIdentCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -116,9 +118,9 @@ func TestIsBuiltinCall(t *testing.T) {
 				t.Fatalf("Expression is not a CallExpr")
 			}
 
-			got := IsBuiltinCall(call, tt.builtinName)
+			got := utils.IsBuiltinCall(call, tt.builtinName)
 			if got != tt.want {
-				t.Errorf("IsBuiltinCall() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsBuiltinCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -154,9 +156,9 @@ func TestGetIdentName(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := GetIdentName(expr)
+			got := utils.GetIdentName(expr)
 			if got != tt.want {
-				t.Errorf("GetIdentName() = %v, want %v", got, tt.want)
+				t.Errorf("utils.GetIdentName() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -202,9 +204,9 @@ func TestExtractVarName(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := ExtractVarName(expr)
+			got := utils.ExtractVarName(expr)
 			if got != tt.want {
-				t.Errorf("ExtractVarName() = %v, want %v", got, tt.want)
+				t.Errorf("utils.ExtractVarName() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -251,9 +253,9 @@ func TestExtractVarNameExtended(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := ExtractVarName(expr)
+			got := utils.ExtractVarName(expr)
 			if got != tt.want {
-				t.Errorf("ExtractVarName() = %v, want %v", got, tt.want)
+				t.Errorf("utils.ExtractVarName() = %v, want %v", got, tt.want)
 			}
 		})
 	}

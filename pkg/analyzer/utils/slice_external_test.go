@@ -1,4 +1,4 @@
-package utils
+package utils_test
 
 import (
 	"go/ast"
@@ -6,6 +6,7 @@ import (
 	"go/types"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -49,9 +50,9 @@ func TestIsSliceType(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := IsSliceType(expr)
+			got := utils.IsSliceType(expr)
 			if got != tt.want {
-				t.Errorf("IsSliceType() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsSliceType() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -97,9 +98,9 @@ func TestIsMapType(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := IsMapType(expr)
+			got := utils.IsMapType(expr)
 			if got != tt.want {
-				t.Errorf("IsMapType() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsMapType() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -145,9 +146,9 @@ func TestIsSliceOrMapType(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := IsSliceOrMapType(expr)
+			got := utils.IsSliceOrMapType(expr)
 			if got != tt.want {
-				t.Errorf("IsSliceOrMapType() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsSliceOrMapType() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -193,9 +194,9 @@ func TestIsEmptySliceLiteral(t *testing.T) {
 				t.Fatalf("Expression is not a CompositeLit")
 			}
 
-			got := IsEmptySliceLiteral(lit)
+			got := utils.IsEmptySliceLiteral(lit)
 			if got != tt.want {
-				t.Errorf("IsEmptySliceLiteral() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsEmptySliceLiteral() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -246,9 +247,9 @@ func TestIsByteSlice(t *testing.T) {
 				t.Fatalf("Failed to parse expression: %v", err)
 			}
 
-			got := IsByteSlice(expr)
+			got := utils.IsByteSlice(expr)
 			if got != tt.want {
-				t.Errorf("IsByteSlice() = %v, want %v", got, tt.want)
+				t.Errorf("utils.IsByteSlice() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -269,9 +270,9 @@ func TestIsSliceTypeWithPass(t *testing.T) {
 		Type: types.NewSlice(types.Typ[types.Int]),
 	}
 
-	got := IsSliceTypeWithPass(pass, sliceExpr)
+	got := utils.IsSliceTypeWithPass(pass, sliceExpr)
 	if !got {
-		t.Errorf("IsSliceTypeWithPass() with TypesInfo = false, want true")
+		t.Errorf("utils.IsSliceTypeWithPass() with TypesInfo = false, want true")
 	}
 
 	// Test fallback to AST checking
@@ -281,9 +282,9 @@ func TestIsSliceTypeWithPass(t *testing.T) {
 		},
 	}
 
-	got2 := IsSliceTypeWithPass(pass2, sliceExpr)
+	got2 := utils.IsSliceTypeWithPass(pass2, sliceExpr)
 	if !got2 {
-		t.Errorf("IsSliceTypeWithPass() fallback to AST = false, want true")
+		t.Errorf("utils.IsSliceTypeWithPass() fallback to AST = false, want true")
 	}
 }
 
@@ -304,9 +305,9 @@ func TestIsMapTypeWithPass(t *testing.T) {
 		Type: types.NewMap(types.Typ[types.String], types.Typ[types.Int]),
 	}
 
-	got := IsMapTypeWithPass(pass, mapExpr)
+	got := utils.IsMapTypeWithPass(pass, mapExpr)
 	if !got {
-		t.Errorf("IsMapTypeWithPass() with TypesInfo = false, want true")
+		t.Errorf("utils.IsMapTypeWithPass() with TypesInfo = false, want true")
 	}
 
 	// Test fallback to AST checking
@@ -316,9 +317,9 @@ func TestIsMapTypeWithPass(t *testing.T) {
 		},
 	}
 
-	got2 := IsMapTypeWithPass(pass2, mapExpr)
+	got2 := utils.IsMapTypeWithPass(pass2, mapExpr)
 	if !got2 {
-		t.Errorf("IsMapTypeWithPass() fallback to AST = false, want true")
+		t.Errorf("utils.IsMapTypeWithPass() fallback to AST = false, want true")
 	}
 }
 
@@ -336,9 +337,9 @@ func TestIsByteSliceWithPass(t *testing.T) {
 		Type: types.NewSlice(types.Typ[types.Byte]),
 	}
 
-	got := IsByteSliceWithPass(pass, byteSliceExpr)
+	got := utils.IsByteSliceWithPass(pass, byteSliceExpr)
 	if !got {
-		t.Errorf("IsByteSliceWithPass() with TypesInfo = false, want true")
+		t.Errorf("utils.IsByteSliceWithPass() with TypesInfo = false, want true")
 	}
 
 	// Test fallback to AST checking
@@ -348,9 +349,9 @@ func TestIsByteSliceWithPass(t *testing.T) {
 		},
 	}
 
-	got2 := IsByteSliceWithPass(pass2, byteSliceExpr)
+	got2 := utils.IsByteSliceWithPass(pass2, byteSliceExpr)
 	if !got2 {
-		t.Errorf("IsByteSliceWithPass() fallback to AST = false, want true")
+		t.Errorf("utils.IsByteSliceWithPass() fallback to AST = false, want true")
 	}
 }
 
@@ -368,9 +369,9 @@ func TestIsSliceOrMapTypeWithPass(t *testing.T) {
 		Type: types.NewSlice(types.Typ[types.Int]),
 	}
 
-	got := IsSliceOrMapTypeWithPass(pass, sliceExpr)
+	got := utils.IsSliceOrMapTypeWithPass(pass, sliceExpr)
 	if !got {
-		t.Errorf("IsSliceOrMapTypeWithPass() with slice = false, want true")
+		t.Errorf("utils.IsSliceOrMapTypeWithPass() with slice = false, want true")
 	}
 
 	// Test with map
@@ -382,9 +383,9 @@ func TestIsSliceOrMapTypeWithPass(t *testing.T) {
 		Type: types.NewMap(types.Typ[types.String], types.Typ[types.Int]),
 	}
 
-	got2 := IsSliceOrMapTypeWithPass(pass, mapExpr)
+	got2 := utils.IsSliceOrMapTypeWithPass(pass, mapExpr)
 	if !got2 {
-		t.Errorf("IsSliceOrMapTypeWithPass() with map = false, want true")
+		t.Errorf("utils.IsSliceOrMapTypeWithPass() with map = false, want true")
 	}
 }
 
@@ -399,8 +400,8 @@ func TestIsByteSliceNonIdent(t *testing.T) {
 		},
 	}
 
-	got := IsByteSlice(sliceExpr)
+	got := utils.IsByteSlice(sliceExpr)
 	if got != false {
-		t.Errorf("IsByteSlice([]pkg.Type) = %v, want false", got)
+		t.Errorf("utils.IsByteSlice([]pkg.Type) = %v, want false", got)
 	}
 }
