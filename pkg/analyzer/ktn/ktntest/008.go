@@ -1,6 +1,7 @@
 package ktntest
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,41 +25,9 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest008(pass *analysis.Pass) (any, error) {
-	// Maps pour tracker les fichiers
-	sourceFiles := make(map[string]bool)        // xxx.go -> true
-	internalTestFiles := make(map[string]bool)  // xxx -> true (a xxx_internal_test.go)
-	externalTestFiles := make(map[string]bool)  // xxx -> true (a xxx_external_test.go)
-
-	// Premier passage : collecter tous les fichiers
+	// Parcourir tous les fichiers sources (non-test)
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
-		baseName := filepath.Base(filename)
-
-		// Ignorer les fichiers de test
-		if shared.IsTestFile(filename) {
-			// Extraire le nom de base du fichier testé
-			var testedFileName string
-			// Vérification du type de test
-			if strings.HasSuffix(baseName, "_internal_test.go") {
-				testedFileName = strings.TrimSuffix(baseName, "_internal_test.go")
-				internalTestFiles[testedFileName] = true
-			} else if strings.HasSuffix(baseName, "_external_test.go") {
-				testedFileName = strings.TrimSuffix(baseName, "_external_test.go")
-				externalTestFiles[testedFileName] = true
-			}
-			// Continuer à la prochaine itération
-			continue
-		}
-
-		// Fichier source Go
-		fileBase := strings.TrimSuffix(baseName, ".go")
-		sourceFiles[fileBase] = true
-	}
-
-	// Deuxième passage : vérifier que chaque fichier source a ses deux fichiers de test
-	for _, file := range pass.Files {
-		filename := pass.Fset.Position(file.Pos()).Filename
-		baseName := filepath.Base(filename)
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
@@ -66,12 +35,18 @@ func runTest008(pass *analysis.Pass) (any, error) {
 			continue
 		}
 
+		// Extraire le répertoire et le nom de base
+		dir := filepath.Dir(filename)
+		baseName := filepath.Base(filename)
 		fileBase := strings.TrimSuffix(baseName, ".go")
 
-		// Vérifier si le fichier internal existe
-		hasInternal := internalTestFiles[fileBase]
-		// Vérifier si le fichier external existe
-		hasExternal := externalTestFiles[fileBase]
+		// Construire les chemins attendus pour les fichiers de test
+		internalTestPath := filepath.Join(dir, fileBase+"_internal_test.go")
+		externalTestPath := filepath.Join(dir, fileBase+"_external_test.go")
+
+		// Vérifier si les fichiers existent sur le disque (détecte aussi XTestGoFiles)
+		hasInternal := fileExistsOnDisk(internalTestPath)
+		hasExternal := fileExistsOnDisk(externalTestPath)
 
 		// Vérification des fichiers manquants
 		if !hasInternal && !hasExternal {
@@ -101,4 +76,24 @@ func runTest008(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// fileExistsOnDisk vérifie si un fichier existe sur le disque.
+// Cette fonction permet de détecter les fichiers _external_test.go même s'ils utilisent
+// package xxx_test et sont dans XTestGoFiles (package séparé de Go).
+//
+// Params:
+//   - path: chemin absolu du fichier à vérifier
+//
+// Returns:
+//   - bool: true si le fichier existe, false sinon
+func fileExistsOnDisk(path string) bool {
+	info, err := os.Stat(path)
+	// Vérification de la condition
+	if err != nil {
+		// Erreur ou fichier n'existe pas
+		return false
+	}
+	// Retour du résultat (fichier existe et n'est pas un répertoire)
+	return !info.IsDir()
 }

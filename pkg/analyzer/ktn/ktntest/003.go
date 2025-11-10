@@ -2,7 +2,10 @@ package ktntest
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -246,15 +249,73 @@ func extractReceiverTypeName(expr ast.Expr) string {
 }
 
 // collectExternalTestFunctions scanne les packages _test externes.
+// Cette fonction détecte les fichiers _external_test.go même s'ils utilisent
+// package xxx_test et sont dans XTestGoFiles (package séparé de Go).
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - testedFuncs: map des fonctions testées à remplir
 func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bool) {
-	// Pas d'implémentation pour l'instant
-	// Cette fonctionnalité nécessite de parser des fichiers en dehors du package courant
-	// ce qui n'est pas directement supporté par l'API analysis
-	// Pour l'instant, on accepte que les tests externes ne soient pas détectés
+	// Extraire le répertoire du premier fichier du package
+	if len(pass.Files) == 0 {
+		// Pas de fichiers, rien à faire
+		return
+	}
+
+	// Obtenir le répertoire du package
+	firstFile := pass.Fset.Position(pass.Files[0].Pos()).Filename
+	packageDir := filepath.Dir(firstFile)
+
+	// Scanner tous les fichiers du répertoire
+	entries, err := os.ReadDir(packageDir)
+	// Si erreur de lecture, retourner sans erreur
+	if err != nil {
+		// Retour silencieux
+		return
+	}
+
+	// Parcourir tous les fichiers
+	for _, entry := range entries {
+		// Ignorer les répertoires
+		if entry.IsDir() {
+			// Continuer avec le prochain
+			continue
+		}
+
+		filename := entry.Name()
+		// Ne garder que les fichiers de test (*_test.go)
+		if !strings.HasSuffix(filename, "_test.go") {
+			// Continuer avec le prochain
+			continue
+		}
+
+		// Construire le chemin complet
+		fullPath := filepath.Join(packageDir, filename)
+
+		// Parser le fichier pour extraire les tests
+		fset := token.NewFileSet()
+		node, err := parser.ParseFile(fset, fullPath, nil, 0)
+		// Si erreur de parsing, continuer avec le prochain fichier
+		if err != nil {
+			// Continuer avec le prochain
+			continue
+		}
+
+		// Extraire les fonctions de test du fichier parsé
+		ast.Inspect(node, func(n ast.Node) bool {
+			funcDecl, ok := n.(*ast.FuncDecl)
+			// Si ce n'est pas une fonction, continuer
+			if !ok {
+				// Continue traversal
+				return true
+			}
+
+			// Collecter les fonctions testées
+			collectTestedFunctions(funcDecl, testedFuncs)
+			// Continue traversal
+			return true
+		})
+	}
 }
 
 // isExemptFunction vérifie si une fonction est exemptée.
