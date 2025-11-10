@@ -45,7 +45,16 @@ Une fois installé (via `install.sh`), utilisez ktn-linter sur n'importe quel pr
 ktn-linter lint ./...                # Lint tout le projet
 ktn-linter lint --help               # Affiche l'aide
 ktn-linter lint --simple ./pkg/...   # Format simplifié sur pkg/
+ktn-linter lint --fix ./...          # Applique automatiquement les fixes modernize
 ```
+
+**Flag --fix (v1.3.0+)** :
+
+Applique automatiquement les fixes suggérés par les analyseurs modernize SÛRS :
+- ✅ `interface{}` → `any` (Go 1.18+) - Seul analyseur sûr actuellement
+- ⚠️ Fixes complexes (slices.Contains, CutSuffix, etc.) : utiliser `go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest && modernize -fix ./...`
+
+Le flag `--fix` n'applique que les transformations simples qui ne nécessitent pas d'ajout d'imports, pour éviter de corrompre le code.
 
 **Intégration avec golangci-lint** (optionnel) :
 
@@ -64,6 +73,7 @@ make coverage  # Génère uniquement le rapport COVERAGE.MD
 make lint      # Lance le linter KTN sur le code de production
 make validate  # Valide que tous les testdata good.go/bad.go sont corrects
 make build     # Compile le binaire ktn-linter dans builds/
+make install   # Compile et installe ktn-linter dans /usr/local/bin
 make fmt       # Formate le code Go avec go fmt sur tout le projet
 make help      # Aide
 ```

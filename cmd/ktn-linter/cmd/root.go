@@ -19,6 +19,8 @@ var (
 	Verbose bool
 	// category filters rules by specific category.
 	Category string
+	// fix enables automatic fix application for modernize analyzers.
+	Fix bool
 	// version stocke la version du linter
 	version string = "dev"
 
@@ -74,4 +76,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&Simple, "simple", false, "Simple one-line format for IDE integration")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.PersistentFlags().StringVar(&Category, "category", "", "Run only rules from specific category (func, var, error, etc.)")
+	rootCmd.PersistentFlags().BoolVar(&Fix, "fix", false, "Automatically apply suggested fixes from modernize analyzers")
 }

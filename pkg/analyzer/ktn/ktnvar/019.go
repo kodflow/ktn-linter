@@ -33,7 +33,7 @@ var Analyzer019 *analysis.Analyzer = &analysis.Analyzer{
 // Returns:
 //   - interface{}: toujours nil
 //   - error: erreur éventuelle
-func runVar019(pass *analysis.Pass) (interface{}, error) {
+func runVar019(pass *analysis.Pass) (any, error) {
 	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
