@@ -1,7 +1,9 @@
-package ktnfunc
+package ktnfunc_test
 
 import (
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc"
 )
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
@@ -29,7 +31,7 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "returns minimum expected count",
 			check: func(t *testing.T) {
-				analyzers := GetAnalyzers()
+				analyzers := ktnfunc.GetAnalyzers()
 				// Vérification nombre minimum
 				if len(analyzers) < MIN_EXPECTED_COUNT {
 					t.Errorf("GetAnalyzers() returned %d analyzers, expected at least %d", len(analyzers), MIN_EXPECTED_COUNT)
@@ -39,7 +41,7 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "all analyzers are non-nil",
 			check: func(t *testing.T) {
-				analyzers := GetAnalyzers()
+				analyzers := ktnfunc.GetAnalyzers()
 				// Vérification non-nil
 				for i, analyzer := range analyzers {
 					// Vérification analyzer
@@ -52,7 +54,7 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "all analyzer names are expected",
 			check: func(t *testing.T) {
-				analyzers := GetAnalyzers()
+				analyzers := ktnfunc.GetAnalyzers()
 				// Vérification noms attendus
 				for _, analyzer := range analyzers {
 					// Vérification nom dans map

@@ -1,7 +1,9 @@
-package ktnvar
+package ktnvar_test
 
 import (
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 )
 
 // TestAnalyzers vérifie que la fonction Analyzers retourne
@@ -19,7 +21,7 @@ func TestAnalyzers(t *testing.T) {
 		{
 			name: "returns non-empty list",
 			check: func(t *testing.T) {
-				analyzers := Analyzers()
+				analyzers := ktnvar.Analyzers()
 				// Vérification liste non vide
 				if len(analyzers) == 0 {
 					t.Fatal("Analyzers() returned empty list")
@@ -29,7 +31,7 @@ func TestAnalyzers(t *testing.T) {
 		{
 			name: "all analyzers have name and doc",
 			check: func(t *testing.T) {
-				analyzers := Analyzers()
+				analyzers := ktnvar.Analyzers()
 				// Vérification chaque analyzer
 				for i, analyzer := range analyzers {
 					// Vérification non-nil
@@ -50,7 +52,7 @@ func TestAnalyzers(t *testing.T) {
 		{
 			name: "returns expected count",
 			check: func(t *testing.T) {
-				analyzers := Analyzers()
+				analyzers := ktnvar.Analyzers()
 				// Vérification nombre
 				if len(analyzers) != EXPECTED_COUNT {
 					t.Errorf("Expected %d analyzers, got %d", EXPECTED_COUNT, len(analyzers))
