@@ -111,9 +111,6 @@ func runTest003(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Analyze only packages with both source and test files
-	// OR if we're in a source package (no test files), we'll scan for external test package
-	hasSourceFiles := testFileCount < len(pass.Files)
 	// If we only have test files, this is probably a separate test package - skip it
 	if testFileCount == len(pass.Files) {
 		// Early return from function.
@@ -128,11 +125,9 @@ func runTest003(pass *analysis.Pass) (any, error) {
 	// Collecter toutes les fonctions et les tests
 	collectFunctions(pass, &allFuncs, testedFuncs)
 
-	// Si on a des fichiers source mais pas de tests internes,
-	// scanner les packages _test externes
-	if hasSourceFiles && !hasTestFiles {
-		collectExternalTestFunctions(pass, testedFuncs)
-	}
+	// Toujours scanner les packages _test externes (XTestGoFiles)
+	// pour détecter tous les tests, même si on a des tests internes
+	collectExternalTestFunctions(pass, testedFuncs)
 
 	// Vérifier que chaque fonction (publique ou privée) a un test
 	for _, fn := range allFuncs {
