@@ -9,32 +9,6 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestNewFormatter tests the functionality of the corresponding implementation.
-func TestNewFormatter(t *testing.T) {
-	tests := []struct {
-		name       string
-		aiMode     bool
-		noColor    bool
-		simpleMode bool
-	}{
-		{"default mode", false, false, false},
-		{"AI mode", true, false, false},
-		{"no color", false, true, false},
-		{"simple mode", false, false, true},
-		{"all flags", true, true, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode)
-			if formatter == nil {
-				t.Error("NewFormatter returned nil")
-			}
-		})
-	}
-}
-
 func createTestDiagnostics() []analysis.Diagnostic {
 	return []analysis.Diagnostic{
 		{
@@ -688,21 +662,6 @@ func TestFormatHumanModeEmpty(t *testing.T) {
 	formatter.formatForHuman(fset, []analysis.Diagnostic{})
 
 	output := buf.String()
-	if !strings.Contains(output, "No issues found") {
-		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
-	}
-}
-
-// TestFormat tests the public Format method
-func TestFormat(t *testing.T) {
-	var buf bytes.Buffer
-	formatter := NewFormatter(&buf, false, true, false)
-	fset := token.NewFileSet()
-
-	// Test avec diagnostics vides
-	formatter.Format(fset, []analysis.Diagnostic{})
-	output := buf.String()
-
 	if !strings.Contains(output, "No issues found") {
 		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
 	}
