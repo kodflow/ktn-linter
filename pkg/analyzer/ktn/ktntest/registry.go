@@ -24,5 +24,6 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer009, // Tests fonctions publiques dans _external uniquement
 		Analyzer010, // Tests fonctions privées dans _internal uniquement
 		Analyzer011, // Convention package: _internal → xxx, _external → xxx_test
+		Analyzer012, // Interdiction des fichiers *_test.go (doivent être _internal ou _external)
 	}
 }

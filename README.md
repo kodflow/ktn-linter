@@ -164,7 +164,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 - **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
 
-### Tests (10 règles) ✅ 100%
+### Tests (11 règles) ✅ 100%
 
 - **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: remplacée par KTN-TEST-008+009+010+011)
 - **KTN-TEST-002**: Fichier test sans fichier source correspondant
@@ -177,6 +177,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-TEST-009**: Tests de fonctions publiques (exportées) doivent être dans _external_test.go uniquement (black-box testing)
 - **KTN-TEST-010**: Tests de fonctions privées (non-exportées) doivent être dans _internal_test.go uniquement (white-box testing)
 - **KTN-TEST-011**: Fichiers _internal_test.go doivent utiliser package xxx (white-box), _external_test.go doivent utiliser package xxx_test (black-box)
+- **KTN-TEST-012**: Interdiction fichiers *_test.go sans suffixe _internal ou _external (doivent être renommés ou dispatchés)
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
@@ -227,8 +228,8 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 70 (41 KTN + 17 modernize actifs + 12 désactivées/remplacées)
-  - **KTN**: 4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 10 test
+- **Total règles**: 71 (42 KTN + 17 modernize actifs + 12 désactivées/remplacées)
+  - **KTN**: 4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 11 test
   - **Modernize**: 17 analyseurs actifs / 18 totaux golang.org/x/tools (Go 1.18-1.25, newexpr désactivé)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 

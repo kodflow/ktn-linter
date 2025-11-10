@@ -96,6 +96,12 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-TEST-004": SEVERITY_INFO,    // Coverage cas d'erreur (qualité)
 	"KTN-TEST-005": SEVERITY_WARNING, // Table-driven tests (maintenabilité)
 	"KTN-TEST-006": SEVERITY_WARNING, // Test helpers (organisation)
+	"KTN-TEST-007": SEVERITY_WARNING, // t.Skip() interdit (qualité)
+	"KTN-TEST-008": SEVERITY_WARNING, // Convention _internal/_external_test.go (organisation)
+	"KTN-TEST-009": SEVERITY_WARNING, // Tests publics dans _external uniquement (organisation)
+	"KTN-TEST-010": SEVERITY_WARNING, // Tests privés dans _internal uniquement (organisation)
+	"KTN-TEST-011": SEVERITY_WARNING, // Package xxx vs xxx_test (isolation)
+	"KTN-TEST-012": SEVERITY_ERROR,   // Fichiers *_test.go interdits (convention stricte)
 }
 
 // GetSeverity retourne le niveau de sévérité d'une règle.
