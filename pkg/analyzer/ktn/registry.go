@@ -11,12 +11,13 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/modernize"
 )
 
 // GetAllRules retourne toutes les règles KTN disponibles.
 //
 // Returns:
-//   - []*analysis.Analyzer: liste de tous les analyseurs (const + func + struct + var + test)
+//   - []*analysis.Analyzer: liste de tous les analyseurs (const + func + struct + var + test + modernize)
 func GetAllRules() []*analysis.Analyzer {
 	var all []*analysis.Analyzer
 	// Ajoute les analyseurs de constantes
@@ -35,6 +36,8 @@ func GetAllRules() []*analysis.Analyzer {
 	all = append(all, ktninterface.Analyzers()...)
 	// Ajoute les analyseurs de commentaires
 	all = append(all, ktncomment.Analyzers()...)
+	// Ajoute les analyseurs modernize (golang.org/x/tools)
+	all = append(all, modernize.Analyzers()...)
 	// Retourne la liste complète
 	return all
 }
@@ -42,7 +45,7 @@ func GetAllRules() []*analysis.Analyzer {
 // GetRulesByCategory retourne les règles d'une catégorie spécifique.
 //
 // Params:
-//   - category: nom de la catégorie ("const", "func", "struct", "var", "test", "return", "interface" ou "comment")
+//   - category: nom de la catégorie ("const", "func", "struct", "var", "test", "return", "interface", "comment" ou "modernize")
 //
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs de la catégorie demandée
@@ -81,6 +84,10 @@ func GetRulesByCategory(category string) []*analysis.Analyzer {
 	case "comment":
 		// Retourne les analyseurs de commentaires
 		return ktncomment.Analyzers()
+	// Traitement
+	case "modernize":
+		// Retourne les analyseurs modernize (golang.org/x/tools)
+		return modernize.Analyzers()
 	// Traitement
 	default:
 		// Catégorie inconnue

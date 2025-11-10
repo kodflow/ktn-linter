@@ -160,7 +160,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-TEST-002**: Fichier test sans fichier source correspondant
 - **KTN-TEST-003**: Fonctions publiques sans tests (détecte pattern Type_Method)
 - **KTN-TEST-004**: Tests sans couverture cas d'erreur
-- **KTN-TEST-005**: Tests sans table-driven pattern
+- **KTN-TEST-005**: Tests sans table-driven pattern (détecte t.*, assert.*, require.*)
 - **KTN-TEST-006**: Tests Benchmark sans *testing.B
 - **KTN-TEST-007**: Interdiction t.Skip() / t.Skipf() / t.SkipNow()
 - **KTN-TEST-008**: Règle 1:2 - Chaque fichier .go doit avoir DEUX fichiers de test (_internal_test.go ET _external_test.go)
@@ -168,9 +168,48 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-TEST-010**: Tests de fonctions privées (non-exportées) doivent être dans _internal_test.go uniquement (white-box testing)
 - **KTN-TEST-011**: Fichiers _internal_test.go doivent utiliser package xxx (white-box), _external_test.go doivent utiliser package xxx_test (black-box)
 
+### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
+
+Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fonctionnalités du langage et de la stdlib:
+
+**Go 1.18+**
+- **any**: `interface{}` → `any`
+
+**Go 1.21+**
+- **minmax**: `if a > b { return a }` → `max(a, b)`
+- **slicescontains**: Loop manuel → `slices.Contains()`
+- **slicessort**: `sort.Slice()` → `slices.Sort()`
+- **slicesdelete**: `append(a[:i], a[i+1:]...)` → `slices.Delete()`
+
+**Go 1.22+**
+- **rangeint**: `for i := 0; i < n; i++` → `for range n`
+- **forvar**: Supprime `x := x` inutiles dans loops
+- **reflecttypefor**: `reflect.TypeOf(T{})` → `reflect.TypeFor[T]()`
+
+**Go 1.23+**
+- **mapsloop**: Loop manuel → `maps.Keys/Values()`
+- **stditerators**: Modernise vers iterateurs stdlib
+- **stringsseq**: Modernise manipulation strings
+
+**Go 1.24+**
+- **bloop**: `for b.N` → `b.Loop()`
+- **testingcontext**: Context manuel → `t.Context()`
+
+**Optimisations générales**
+- **fmtappendf**: `append(x, fmt.Sprintf(...))` → `fmt.Appendf()`
+- **stringsbuilder**: Concaténation `+=` → `strings.Builder`
+- **stringscutprefix**: `HasPrefix+TrimPrefix` → `CutPrefix()`
+- **omitzero**: Supprime valeurs zéro redondantes
+- **waitgroup**: Pattern manuel → `wg.Go()`
+
+**Analyseurs désactivés** (bugs connus ou instabilité):
+- ~~**newexpr**~~: `&T{}` → `new(T)` (désactivé: panic dans certains cas)
+
+**Mise à jour**: `go get -u golang.org/x/tools/go/analysis/passes/modernize@latest && go mod tidy`
+
 ## Statistiques
 
-- **Couverture globale**: 91.0% 🟡
+- **Couverture globale**: 89.9% 🟡
 - **Packages 100%**: utils, formatter 🟢
 - **Package const**: 92.9% 🟡
 - **Package func**: Conforme 🟡
@@ -178,7 +217,9 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 41 (4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 10 test) - 10 règles actives dans test
+- **Total règles**: 70 (41 KTN + 17 modernize actifs + 12 désactivées/remplacées)
+  - **KTN**: 4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 10 test
+  - **Modernize**: 17 analyseurs actifs / 18 totaux golang.org/x/tools (Go 1.18-1.25, newexpr désactivé)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Corrections des Contradictions
