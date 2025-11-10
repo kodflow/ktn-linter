@@ -1,18 +1,20 @@
 package ktntest
 
 import (
+	"go/ast"
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
-// Analyzer008 checks that each source file has both internal and external test files
+// Analyzer008 checks that each source file has appropriate test files based on its content
 var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktntest008",
-	Doc:  "KTN-TEST-008: Chaque fichier .go doit avoir deux fichiers de test (xxx_internal_test.go pour white-box et xxx_external_test.go pour black-box)",
+	Doc:  "KTN-TEST-008: Chaque fichier .go doit avoir les fichiers de test appropriés (xxx_internal_test.go si fonctions privées, xxx_external_test.go si fonctions publiques)",
 	Run:  runTest008,
 }
 
@@ -35,6 +37,51 @@ func runTest008(pass *analysis.Pass) (any, error) {
 			continue
 		}
 
+		// Analyser le contenu du fichier pour détecter les fonctions
+		hasPublicFuncs := false
+		hasPrivateFuncs := false
+
+		// Parcourir l'AST du fichier
+		ast.Inspect(file, func(n ast.Node) bool {
+			funcDecl, ok := n.(*ast.FuncDecl)
+			// Si ce n'est pas une fonction, continuer
+			if !ok {
+				// Continue traversal
+				return true
+			}
+
+			// Ignorer les fonctions sans nom
+			if funcDecl.Name == nil {
+				// Continue traversal
+				return true
+			}
+
+			funcName := funcDecl.Name.Name
+			// Ignorer les fonctions exemptées (init, main)
+			if isExemptFunction(funcName) {
+				// Continue traversal
+				return true
+			}
+
+			// Vérifier si la fonction est publique ou privée
+			if len(funcName) > 0 && unicode.IsUpper(rune(funcName[0])) {
+				// Fonction publique
+				hasPublicFuncs = true
+			} else {
+				// Fonction privée
+				hasPrivateFuncs = true
+			}
+
+			// Continue traversal
+			return true
+		})
+
+		// Si le fichier n'a ni fonctions publiques ni privées, pas de test requis
+		if !hasPublicFuncs && !hasPrivateFuncs {
+			// Pas de fonctions, pas de tests requis
+			continue
+		}
+
 		// Extraire le répertoire et le nom de base
 		dir := filepath.Dir(filename)
 		baseName := filepath.Base(filename)
@@ -44,30 +91,49 @@ func runTest008(pass *analysis.Pass) (any, error) {
 		internalTestPath := filepath.Join(dir, fileBase+"_internal_test.go")
 		externalTestPath := filepath.Join(dir, fileBase+"_external_test.go")
 
-		// Vérifier si les fichiers existent sur le disque (détecte aussi XTestGoFiles)
+		// Vérifier si les fichiers existent sur le disque
 		hasInternal := fileExistsOnDisk(internalTestPath)
 		hasExternal := fileExistsOnDisk(externalTestPath)
 
-		// Vérification des fichiers manquants
-		if !hasInternal && !hasExternal {
+		// Vérifier les fichiers manquants selon le contenu
+		if hasPublicFuncs && hasPrivateFuncs {
+			// Fichier avec fonctions publiques ET privées → besoin des deux fichiers
+			if !hasInternal && !hasExternal {
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient des fonctions publiques ET privées. Il doit avoir DEUX fichiers de test : '%s_internal_test.go' (white-box) ET '%s_external_test.go' (black-box)",
+					baseName,
+					fileBase,
+					fileBase,
+				)
+			} else if !hasInternal {
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
+					baseName,
+					fileBase,
+				)
+			} else if !hasExternal {
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
+					baseName,
+					fileBase,
+				)
+			}
+		} else if hasPublicFuncs && !hasExternal {
+			// Fichier avec UNIQUEMENT des fonctions publiques → besoin de _external_test.go
 			pass.Reportf(
 				file.Name.Pos(),
-				"KTN-TEST-008: le fichier '%s' doit avoir DEUX fichiers de test : '%s_internal_test.go' (white-box: teste fonctions privées) ET '%s_external_test.go' (black-box: teste API publique)",
+				"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
 				baseName,
 				fileBase,
-				fileBase,
 			)
-		} else if !hasInternal {
+		} else if hasPrivateFuncs && !hasInternal {
+			// Fichier avec UNIQUEMENT des fonctions privées → besoin de _internal_test.go
 			pass.Reportf(
 				file.Name.Pos(),
-				"KTN-TEST-008: le fichier '%s' n'a pas de fichier '%s_internal_test.go' (white-box: pour tester les fonctions privées non-exportées)",
-				baseName,
-				fileBase,
-			)
-		} else if !hasExternal {
-			pass.Reportf(
-				file.Name.Pos(),
-				"KTN-TEST-008: le fichier '%s' n'a pas de fichier '%s_external_test.go' (black-box: pour tester l'API publique exportée)",
+				"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
 				baseName,
 				fileBase,
 			)

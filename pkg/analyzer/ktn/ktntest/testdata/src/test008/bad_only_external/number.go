@@ -1,4 +1,4 @@
-package test008 // want "KTN-TEST-008: le fichier 'number.go' n'a pas de fichier 'number_internal_test.go'"
+package test008 // want "KTN-TEST-008: le fichier 'number.go' contient des fonctions privées. Il doit avoir un fichier 'number_internal_test.go' \\(white-box\\)"
 
 // Double double un nombre
 func Double(x int) int {
