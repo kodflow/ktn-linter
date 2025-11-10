@@ -149,3 +149,78 @@ func TestCountWordsMultipleInputs(t *testing.T) {
 		t.Errorf("'  spaces  around  ' devrait avoir 2 mots, got %d", count5)
 	}
 }
+
+// TestWithAssertManyScenarios teste avec beaucoup d'assertions testify/assert (PAS BIEN)
+// Ce test devrait déclencher KTN-TEST-005 car il a 3+ assertions assert.*
+func TestWithAssertManyScenarios(t *testing.T) {
+	// On simule l'utilisation de testify/assert avec un objet simulé
+	assert := mockAssert{t: t}
+
+	// Scénario 1
+	assert.Equal(5, test005.StringLength("hello"))
+
+	// Scénario 2
+	assert.True(test005.IsEmpty(""))
+
+	// Scénario 3 - déclenche la règle (3+ assertions)
+	assert.False(test005.IsEmpty("test"))
+
+	// Scénario 4
+	assert.Equal("HELLO", test005.ToUpper("hello"))
+}
+
+// TestWithRequireManyScenarios teste avec beaucoup d'assertions testify/require (PAS BIEN)
+// Ce test devrait déclencher KTN-TEST-005 car il a 3+ assertions require.*
+func TestWithRequireManyScenarios(t *testing.T) {
+	// On simule l'utilisation de testify/require avec un objet simulé
+	require := mockRequire{t: t}
+
+	// Scénario 1
+	result1, err1 := test005.Calculator("+", 2, 3)
+	require.NoError(err1)
+
+	// Scénario 2
+	require.Equal(5, result1)
+
+	// Scénario 3 - déclenche la règle (3+ assertions)
+	result2, err2 := test005.Calculator("*", 4, 5)
+	require.NoError(err2)
+
+	// Scénario 4
+	require.Equal(20, result2)
+}
+
+// mockAssert simule testify/assert pour le test
+type mockAssert struct {
+	t *testing.T
+}
+
+// Equal simule assert.Equal
+func (a mockAssert) Equal(expected, actual interface{}) {
+	// Simulation
+}
+
+// True simule assert.True
+func (a mockAssert) True(value bool) {
+	// Simulation
+}
+
+// False simule assert.False
+func (a mockAssert) False(value bool) {
+	// Simulation
+}
+
+// mockRequire simule testify/require pour le test
+type mockRequire struct {
+	t *testing.T
+}
+
+// NoError simule require.NoError
+func (r mockRequire) NoError(err error) {
+	// Simulation
+}
+
+// Equal simule require.Equal
+func (r mockRequire) Equal(expected, actual interface{}) {
+	// Simulation
+}

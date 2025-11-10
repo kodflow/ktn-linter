@@ -24,7 +24,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 85.2% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 87.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 93.7% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 80.6% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 81.0% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 84.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 100.0% |
@@ -114,7 +114,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `006.go:collectStructFields` | 87.5% |
 | 🔴 `006.go:capitalize` | 80.0% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 80.6%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 81.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -132,10 +132,12 @@ Rapport de couverture généré automatiquement.
 | 🟡 `004.go:runTest004` | 91.7% |
 | 🔴 `004.go:hasErrorCaseCoverage` | 84.6% |
 | ⚫ `004.go:hasErrorTestCases` | 0.0% |
-| 🔴 `005.go:runTest005` | 83.3% |
+| 🟡 `005.go:runTest005` | 91.7% |
 | 🔴 `005.go:checkAssignStmt` | 80.0% |
 | ⚫ `005.go:checkRangeStmt` | 0.0% |
 | 🔴 `005.go:hasTableDrivenPattern` | 70.0% |
+| 🔴 `005.go:isAssertionCall` | 85.7% |
+| 🔴 `005.go:isAssertMethod` | 80.0% |
 | 🔴 `006.go:runTest006` | 86.4% |
 | 🔴 `007.go:runTest007` | 88.9% |
 | 🔴 `008.go:runTest008` | 73.9% |
@@ -207,4 +209,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-11-10 09:50:53*
+*Généré le: 2025-11-10 11:09:34*

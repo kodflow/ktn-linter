@@ -84,20 +84,18 @@ func hasMultipleAssertions(funcDecl *ast.FuncDecl) bool {
 
 	// Parcourir le corps de la fonction
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Vérifier si c'est un appel à t.Error, t.Errorf, t.Fatal, etc.
-		if call, ok := n.(*ast.CallExpr); ok {
-			// Vérification de la condition
-			if sel, selOk := call.Fun.(*ast.SelectorExpr); selOk {
-				// Vérifier si c'est un appel à t.*
-				if ident, identOk := sel.X.(*ast.Ident); identOk && ident.Name == "t" {
-					methodName := sel.Sel.Name
-					// Vérification de la condition
-					if isAssertionMethod(methodName) {
-						assertionCount++
-					}
-				}
-			}
+		call, ok := n.(*ast.CallExpr)
+		// Vérification de la condition
+		if !ok {
+			// Continue traversal
+			return true
 		}
+
+		// Utiliser la nouvelle fonction isAssertionCall
+		if isAssertionCall(call) {
+			assertionCount++
+		}
+
 		// Continue traversal
 		return true
 	})
@@ -195,32 +193,114 @@ func hasTableDrivenPattern(funcDecl *ast.FuncDecl) bool {
 	return hasTestsVar && hasRangeLoop
 }
 
-// isAssertionMethod vérifie si c'est une méthode d'assertion.
+// isAssertionCall vérifie si c'est un appel d'assertion (testing, testify/assert, testify/require).
+//
+// Params:
+//   - call: appel de fonction AST
+//
+// Returns:
+//   - bool: true si c'est une assertion
+func isAssertionCall(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	// Vérification de la condition
+	if !ok {
+		// Pas un SelectorExpr
+		return false
+	}
+
+	ident, ok := sel.X.(*ast.Ident)
+	// Vérification de la condition
+	if !ok {
+		// Pas un Ident
+		return false
+	}
+
+	methodName := sel.Sel.Name
+
+	// Case 1: testing package (t.Error, t.Fatal, etc.)
+	if ident.Name == "t" && isTestingMethod(methodName) {
+		// Méthode testing détectée
+		return true
+	}
+
+	// Case 2: testify/assert package
+	if ident.Name == "assert" && isAssertMethod(methodName) {
+		// Méthode assert détectée
+		return true
+	}
+
+	// Case 3: testify/require package
+	if ident.Name == "require" && isRequireMethod(methodName) {
+		// Méthode require détectée
+		return true
+	}
+
+	// Pas une assertion
+	return false
+}
+
+// isTestingMethod vérifie si c'est une méthode du package testing.
 //
 // Params:
 //   - methodName: nom de la méthode
 //
 // Returns:
-//   - bool: true si c'est une assertion
-func isAssertionMethod(methodName string) bool {
-	assertionMethods := []string{
-		"Error",
-		"Errorf",
-		"Fatal",
-		"Fatalf",
-		"Fail",
-		"FailNow",
+//   - bool: true si c'est une méthode testing
+func isTestingMethod(methodName string) bool {
+	methods := []string{
+		"Error", "Errorf", "Fatal", "Fatalf", "Fail", "FailNow",
+		"Log", "Logf", "Skip", "Skipf", "SkipNow",
 	}
-
-	// Parcours des méthodes d'assertion
-	for _, method := range assertionMethods {
+	// Parcours des méthodes
+	for _, m := range methods {
 		// Vérification de la condition
-		if methodName == method {
-			// Méthode d'assertion trouvée
+		if methodName == m {
+			// Méthode trouvée
 			return true
 		}
 	}
-
-	// Pas une méthode d'assertion
+	// Pas une méthode testing
 	return false
+}
+
+// isAssertMethod vérifie si c'est une méthode de testify/assert.
+//
+// Params:
+//   - methodName: nom de la méthode
+//
+// Returns:
+//   - bool: true si c'est une méthode assert
+func isAssertMethod(methodName string) bool {
+	// Liste des méthodes assert les plus courantes
+	methods := []string{
+		"Equal", "NotEqual", "Nil", "NotNil", "True", "False",
+		"Empty", "NotEmpty", "Len", "Contains", "NotContains",
+		"Greater", "GreaterOrEqual", "Less", "LessOrEqual",
+		"Same", "NotSame", "Implements", "IsType", "Panics",
+		"NotPanics", "WithinDuration", "InDelta", "InEpsilon",
+		"JSONEq", "YAMLEq", "Error", "NoError", "ErrorIs", "ErrorAs",
+		"ErrorContains", "Regexp", "NotRegexp", "Zero", "NotZero",
+	}
+	// Parcours des méthodes
+	for _, m := range methods {
+		// Vérification de la condition
+		if methodName == m {
+			// Méthode trouvée
+			return true
+		}
+	}
+	// Pas une méthode assert
+	return false
+}
+
+// isRequireMethod vérifie si c'est une méthode de testify/require.
+//
+// Params:
+//   - methodName: nom de la méthode
+//
+// Returns:
+//   - bool: true si c'est une méthode require
+func isRequireMethod(methodName string) bool {
+	// require a les mêmes méthodes que assert
+	return isAssertMethod(methodName)
 }

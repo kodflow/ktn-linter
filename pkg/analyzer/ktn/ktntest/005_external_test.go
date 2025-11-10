@@ -8,11 +8,13 @@ import (
 )
 
 func TestTest005(t *testing.T) {
-	// 5 erreurs: tests sans table-driven pattern
+	// 7 erreurs: tests sans table-driven pattern
 	// - TestStringLengthMultipleCases
 	// - TestIsEmptyRepeatedAssertions
 	// - TestToUpperManyScenarios
 	// - TestContainsManyChecks
 	// - TestCountWordsMultipleInputs
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer005, "test005", "good_test.go", "bad_test.go", 5)
+	// - TestWithAssertManyScenarios (testify/assert)
+	// - TestWithRequireManyScenarios (testify/require)
+	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer005, "test005", "good_test.go", "bad_test.go", 7)
 }
