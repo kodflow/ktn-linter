@@ -1,3 +1,4 @@
+// Package ktnstruct implements KTN linter rules.
 package ktnstruct
 
 import (

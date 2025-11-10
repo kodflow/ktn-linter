@@ -1,3 +1,4 @@
+// Package ktnvar implements KTN linter rules.
 package ktnvar
 
 import (

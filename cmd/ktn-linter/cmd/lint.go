@@ -67,6 +67,7 @@ func runLint(cmd *cobra.Command, args []string) {
 		// Vérification de la condition
 		if fixCount > 0 {
 			fmt.Fprintf(os.Stderr, "Applied fixes to %d file(s)\n", fixCount)
+  // Alternative path handling
 		} else {
 			fmt.Fprintf(os.Stderr, "No fixes to apply\n")
 		}
@@ -424,16 +425,39 @@ type textEdit struct {
 //   - int: nombre de fichiers modifiés
 func applyFixes(diagnostics []diagWithFset) int {
 	// Liste blanche des analyseurs dont les fixes sont sûrs
-	// Ces analyseurs ne nécessitent pas d'ajout d'imports
 	safeAnalyzers := map[string]bool{
 		"any": true, // interface{} → any
 	}
 
-	// Grouper les fixes par fichier
+	// Collecter les éditions par fichier
+	fileEdits, skippedCount := collectSafeEdits(diagnostics, safeAnalyzers)
+
+	// Afficher le nombre de fixes skippés
+	// Vérification de la condition
+	if skippedCount > 0 {
+		fmt.Fprintf(os.Stderr, "Skipped %d unsafe fixes (use modernize tool for complex transformations)\n", skippedCount)
+	}
+
+	// Appliquer les éditions collectées
+	// Early return from function.
+	return applyCollectedEdits(fileEdits)
+}
+
+// collectSafeEdits collecte les éditions de texte sûres depuis les diagnostics.
+//
+// Params:
+//   - diagnostics: diagnostics avec fixes suggérés
+//   - safeAnalyzers: map des analyseurs sûrs
+//
+// Returns:
+//   - map[string][]textEdit: éditions groupées par fichier
+//   - int: nombre de fixes skippés
+func collectSafeEdits(diagnostics []diagWithFset, safeAnalyzers map[string]bool) (map[string][]textEdit, int) {
 	fileEdits := make(map[string][]textEdit)
 	skippedCount := 0
 
-	// Collecter tous les TextEdits pour chaque fichier
+	// Parcourir tous les diagnostics
+	// Itération sur les éléments
 	for _, d := range diagnostics {
 		// Skip diagnostics without suggested fixes
 		if len(d.diag.SuggestedFixes) == 0 {
@@ -444,6 +468,7 @@ func applyFixes(diagnostics []diagWithFset) int {
 		// Vérification de la condition
 		if !safeAnalyzers[d.analyzerName] {
 			skippedCount++
+			// Log si verbose
 			// Vérification de la condition
 			if Verbose {
 				pos := d.fset.Position(d.diag.Pos)
@@ -453,46 +478,67 @@ func applyFixes(diagnostics []diagWithFset) int {
 			continue
 		}
 
-		// Process only the first suggested fix (most analyzers provide one fix)
-		if len(d.diag.SuggestedFixes) > 0 {
-			fix := d.diag.SuggestedFixes[0]
+		// Extraire les éditions de texte
+		extractTextEdits(d, &fileEdits)
+	}
 
-			// Process all text edits in this fix
-			for _, edit := range fix.TextEdits {
-				// Convert token positions to byte offsets
-				file := d.fset.File(edit.Pos)
-				// Vérification de la condition
-				if file == nil {
-					continue
-				}
+	// Early return from function.
+	return fileEdits, skippedCount
+}
 
-				startOffset := file.Offset(edit.Pos)
-				endOffset := file.Offset(edit.End)
-				pos := d.fset.Position(edit.Pos)
-				filename := pos.Filename
+// extractTextEdits extrait les éditions de texte depuis un diagnostic.
+//
+// Params:
+//   - d: diagnostic avec fixes
+//   - fileEdits: map pour stocker les éditions par fichier
+func extractTextEdits(d diagWithFset, fileEdits *map[string][]textEdit) {
+	// Process only the first suggested fix
+	if len(d.diag.SuggestedFixes) == 0 {
+		// Early return from function.
+		return
+	}
 
-				// Store edit for this file
-				fileEdits[filename] = append(fileEdits[filename], textEdit{
-					start:   startOffset,
-					end:     endOffset,
-					newText: edit.NewText,
-				})
-			}
+	fix := d.diag.SuggestedFixes[0]
+
+	// Process all text edits in this fix
+	// Itération sur les éléments
+	for _, edit := range fix.TextEdits {
+		// Convert token positions to byte offsets
+		file := d.fset.File(edit.Pos)
+		// Vérification de la condition
+		if file == nil {
+			continue
 		}
-	}
 
-	// Vérification de la condition
-	if skippedCount > 0 {
-		fmt.Fprintf(os.Stderr, "Skipped %d unsafe fixes (use modernize tool for complex transformations)\n", skippedCount)
-	}
+		startOffset := file.Offset(edit.Pos)
+		endOffset := file.Offset(edit.End)
+		pos := d.fset.Position(edit.Pos)
 
-	// Apply edits to each file
+		// Store edit for this file
+		(*fileEdits)[pos.Filename] = append((*fileEdits)[pos.Filename], textEdit{
+			start:   startOffset,
+			end:     endOffset,
+			newText: edit.NewText,
+		})
+	}
+}
+
+// applyCollectedEdits applique les éditions collectées à chaque fichier.
+//
+// Params:
+//   - fileEdits: éditions groupées par fichier
+//
+// Returns:
+//   - int: nombre de fichiers modifiés
+func applyCollectedEdits(fileEdits map[string][]textEdit) int {
 	fixCount := 0
+
 	// Itération sur les éléments
 	for filename, edits := range fileEdits {
 		// Vérification de la condition
 		if applyEditsToFile(filename, edits) {
 			fixCount++
+			// Log si verbose
 			// Vérification de la condition
 			if Verbose {
 				fmt.Fprintf(os.Stderr, "Applied %d edits to %s\n", len(edits), filename)

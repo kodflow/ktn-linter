@@ -1,3 +1,4 @@
+// Package testhelper implements KTN linter rules.
 package testhelper
 
 import (

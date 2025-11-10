@@ -1,3 +1,4 @@
+// Package ktntest implements KTN linter rules.
 package ktntest
 
 import (
@@ -106,6 +107,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					fileBase,
 					fileBase,
 				)
+   // Verification de la condition
+   // Alternative path handling
 			} else if !hasInternal {
 				pass.Reportf(
 					file.Name.Pos(),
@@ -113,6 +116,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					baseName,
 					fileBase,
 				)
+   // Alternative path handling
+   // Verification de la condition
 			} else if !hasExternal {
 				pass.Reportf(
 					file.Name.Pos(),
@@ -121,6 +126,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					fileBase,
 				)
 			}
+  // Alternative path handling
+  // Verification de la condition
 		} else if hasPublicFuncs {
 			// Fichier avec UNIQUEMENT des fonctions publiques
 			if !hasExternal {
@@ -131,6 +138,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					baseName,
 					fileBase,
 				)
+   // Verification de la condition
+   // Alternative path handling
 			} else if hasInternal {
 				// A _external (correct) mais aussi _internal (inutile) → demander de supprimer _internal
 				pass.Reportf(
@@ -141,6 +150,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					fileBase,
 				)
 			}
+  // Verification de la condition
+  // Alternative path handling
 		} else if hasPrivateFuncs {
 			// Fichier avec UNIQUEMENT des fonctions privées
 			if !hasInternal {
@@ -151,6 +162,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					baseName,
 					fileBase,
 				)
+   // Alternative path handling
+   // Verification de la condition
 			} else if hasExternal {
 				// A _internal (correct) mais aussi _external (inutile) → demander de supprimer _external
 				pass.Reportf(

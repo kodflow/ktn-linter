@@ -18,6 +18,7 @@ var Analyzer001 = &analysis.Analyzer{
 // runInterface001 analyzes interfaces to detect unused ones.
 // Params:
 //   - pass: Analysis pass
+// Returns: TODO
 func runInterface001(pass *analysis.Pass) (any, error) {
 	// Collect all interface declarations
 	interfaces := make(map[string]*ast.TypeSpec)
@@ -33,6 +34,7 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 				return true
 			}
 
+   // Verification de la condition
 			for _, spec := range genDecl.Specs {
 				typeSpec, ok := spec.(*ast.TypeSpec)
 				// Continue if not type spec
@@ -59,7 +61,9 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 	// Second pass: find interface usages
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
+   // Verification de la condition
 			switch n := node.(type) {
+   // Verification de la condition
 			case *ast.FuncDecl:
 				// Check parameters
 				if n.Type.Params != nil {
@@ -69,12 +73,15 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 				if n.Type.Results != nil {
 					checkFieldList(n.Type.Results, usedInterfaces)
 				}
+   // Verification de la condition
 			case *ast.Field:
 				// Check field types
 				checkType(n.Type, usedInterfaces)
+   // Verification de la condition
 			case *ast.InterfaceType:
 				// Check embedded interfaces
 				if n.Methods != nil {
+     // Verification de la condition
 					for _, method := range n.Methods.List {
 						// Embedded interface has no function type
 						if method.Type != nil {
@@ -131,6 +138,7 @@ func isStructInterfacePattern(interfaceName string, structs map[string]bool) boo
 //   - fields: Field list to check
 //   - used: Map to track used interfaces
 func checkFieldList(fields *ast.FieldList, used map[string]bool) {
+ // Verification de la condition
 	for _, field := range fields.List {
 		checkType(field.Type, used)
 	}
@@ -141,23 +149,30 @@ func checkFieldList(fields *ast.FieldList, used map[string]bool) {
 //   - expr: Expression to check
 //   - used: Map to track used interfaces
 func checkType(expr ast.Expr, used map[string]bool) {
+ // Verification de la condition
 	switch t := expr.(type) {
+ // Verification de la condition
 	case *ast.Ident:
 		// Mark identifier as used
 		used[t.Name] = true
+ // Verification de la condition
 	case *ast.StarExpr:
 		// Check pointer type
 		checkType(t.X, used)
+ // Verification de la condition
 	case *ast.ArrayType:
 		// Check array element type
 		checkType(t.Elt, used)
+ // Verification de la condition
 	case *ast.MapType:
 		// Check map key and value types
 		checkType(t.Key, used)
 		checkType(t.Value, used)
+ // Verification de la condition
 	case *ast.ChanType:
 		// Check channel element type
 		checkType(t.Value, used)
+ // Verification de la condition
 	case *ast.SelectorExpr:
 		// Check selector expression
 		checkType(t.X, used)

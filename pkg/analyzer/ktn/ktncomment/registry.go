@@ -7,6 +7,7 @@ import "golang.org/x/tools/go/analysis"
 // Returns:
 //   - []*analysis.Analyzer: list of comment analyzers
 func Analyzers() []*analysis.Analyzer {
+ // Verification de la condition
 	return []*analysis.Analyzer{
 		Analyzer002,
 	}

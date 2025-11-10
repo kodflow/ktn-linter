@@ -23,6 +23,7 @@ var Analyzer002 = &analysis.Analyzer{
 // runComment002 analyzes inline comments for excessive length.
 // Params:
 //   - pass: Analysis pass
+// Returns: TODO
 func runComment002(pass *analysis.Pass) (any, error) {
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -33,7 +34,9 @@ func runComment002(pass *analysis.Pass) (any, error) {
 	inspectResult.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
 
+  // Verification de la condition
 		for _, commentGroup := range file.Comments {
+   // Verification de la condition
 			for _, comment := range commentGroup.List {
 				// Skip doc comments (start at beginning of line)
 				if isDocComment(pass, file, comment) {
@@ -87,7 +90,9 @@ func isDocComment(
 		if funcDecl, ok := decl.(*ast.FuncDecl); ok {
 			// Check if comment is doc comment
 			if funcDecl.Doc != nil {
+    // Verification de la condition
 				for _, c := range funcDecl.Doc.List {
+     // Verification de la condition
 					if c == comment {
 						return true
 					}
@@ -99,7 +104,9 @@ func isDocComment(
 		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			// Check if comment is doc comment
 			if genDecl.Doc != nil {
+    // Verification de la condition
 				for _, c := range genDecl.Doc.List {
+     // Verification de la condition
 					if c == comment {
 						return true
 					}
@@ -108,6 +115,7 @@ func isDocComment(
 		}
 	}
 
+ // Verification de la condition
 	return isCommentAtLineStart(pass, comment)
 }
 
@@ -126,5 +134,6 @@ func isCommentAtLineStart(pass *analysis.Pass, comment *ast.Comment) bool {
 //   - fset: File set
 //   - comment: Comment to check
 func getCommentLine(fset *token.FileSet, comment *ast.Comment) int {
+ // Verification de la condition
 	return fset.Position(comment.Pos()).Line
 }

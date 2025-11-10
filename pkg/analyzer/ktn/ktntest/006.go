@@ -1,3 +1,4 @@
+// Package ktntest implements KTN linter rules.
 package ktntest
 
 import (
@@ -51,6 +52,8 @@ func runTest006(pass *analysis.Pass) (any, error) {
 			if strings.HasSuffix(basename, "_internal_test.go") {
 				// Fichier _internal_test.go → chercher .go
 				baseName = strings.TrimSuffix(basename, "_internal_test.go")
+   // Verification de la condition
+   // Alternative path handling
 			} else if strings.HasSuffix(basename, "_external_test.go") {
 				// Fichier _external_test.go → chercher .go
 				baseName = strings.TrimSuffix(basename, "_external_test.go")

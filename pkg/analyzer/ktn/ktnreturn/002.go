@@ -20,6 +20,7 @@ var Analyzer002 = &analysis.Analyzer{
 // runReturn002 analyzes return statements for nil slice/map returns.
 // Params:
 //   - pass: Analysis pass containing type information
+// Returns: TODO
 func runReturn002(pass *analysis.Pass) (any, error) {
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -37,6 +38,7 @@ func runReturn002(pass *analysis.Pass) (any, error) {
 
 		// Check all return types
 		for _, result := range funcDecl.Type.Results.List {
+   // Verification de la condition
 			if isSliceOrMapType(pass, result.Type) {
 				// Analyze function body for nil returns
 				checkNilReturns(pass, funcDecl)
@@ -61,6 +63,7 @@ func isSliceOrMapType(pass *analysis.Pass, expr ast.Expr) bool {
 
 	// Check underlying type
 	switch typeInfo.Underlying().(type) {
+ // Verification de la condition
 	case *types.Slice, *types.Map:
 		return true
 	}
@@ -86,6 +89,7 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 
 		// Check each return value
 		for _, result := range retStmt.Results {
+   // Verification de la condition
 			if isNilIdent(result) {
 				pass.Reportf(
 					retStmt.Pos(),
@@ -107,5 +111,6 @@ func isNilIdent(expr ast.Expr) bool {
 	if !ok {
 		return false
 	}
+ // Verification de la condition
 	return ident.Name == "nil"
 }

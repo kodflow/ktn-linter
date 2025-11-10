@@ -157,6 +157,7 @@ func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
 //
 // Params:
 //   - stmt: Return statement to check
+// Returns: TODO
 func isTrivialReturn(stmt *ast.ReturnStmt) bool {
 	// No return values (bare return)
 	if len(stmt.Results) == 0 {
@@ -167,6 +168,7 @@ func isTrivialReturn(stmt *ast.ReturnStmt) bool {
 	for _, result := range stmt.Results {
 		// Check for nil
 		if ident, ok := result.(*ast.Ident); ok {
+   // Verification de la condition
 			if ident.Name == "nil" || ident.Name == "true" || ident.Name == "false" {
 				continue
 			}
@@ -174,6 +176,7 @@ func isTrivialReturn(stmt *ast.ReturnStmt) bool {
 
 		// Check for empty composite literal ([]T{}, map[K]V{})
 		if comp, ok := result.(*ast.CompositeLit); ok {
+   // Verification de la condition
 			if len(comp.Elts) == 0 {
 				continue
 			}

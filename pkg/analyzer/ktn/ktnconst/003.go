@@ -1,3 +1,4 @@
+// Package ktnconst implements KTN linter rules.
 package ktnconst
 
 import (

@@ -1,3 +1,4 @@
+// Package ktntest implements KTN linter rules.
 package ktntest
 
 import "golang.org/x/tools/go/analysis"

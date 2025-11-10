@@ -1,3 +1,4 @@
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
