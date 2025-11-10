@@ -18,28 +18,29 @@ const (
 	MIN_PUBLIC_FUNCS int = 1
 )
 
-// publicFuncInfo stores information about a public function
-type publicFuncInfo struct {
+// funcInfo stores information about a function (public or private)
+type funcInfo struct {
 	name         string
 	receiverName string // Nom du receiver pour les méthodes (vide pour les fonctions)
+	isExported   bool   // true si fonction publique, false si privée
 	pos          token.Pos
 	filename     string
 }
 
-// Analyzer003 checks that public functions have corresponding tests
+// Analyzer003 checks that all functions (public and private) have corresponding tests
 var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktntest003",
-	Doc:  "KTN-TEST-003: Toutes les fonctions publiques doivent avoir des tests",
+	Doc:  "KTN-TEST-003: Toutes les fonctions (publiques et privées) doivent avoir des tests",
 	Run:  runTest003,
 }
 
-// collectFunctions collecte les fonctions publiques et testées.
+// collectFunctions collecte toutes les fonctions (publiques et privées) et les fonctions testées.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - publicFuncs: pointeur vers slice de fonctions publiques
+//   - funcs: pointeur vers slice de toutes les fonctions
 //   - testedFuncs: map des fonctions testées
-func collectFunctions(pass *analysis.Pass, publicFuncs *[]publicFuncInfo, testedFuncs map[string]bool) {
+func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[string]bool) {
 	// Parcourir tous les fichiers du pass
 	// Pour chaque fichier, collecter les fonctions publiques et les tests
 	for _, file := range pass.Files {
@@ -60,21 +61,20 @@ func collectFunctions(pass *analysis.Pass, publicFuncs *[]publicFuncInfo, tested
 				// Fichier de test - collecter les fonctions testées
 				collectTestedFunctions(funcDecl, testedFuncs)
 			} else {
-				// Fichier source - collecter les fonctions publiques
-				if isPublicFunction(funcDecl) {
-					receiverName := ""
-					// Vérification si c'est une méthode avec un receiver
-					if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
-						// Extraire le nom du type du receiver
-						receiverName = extractReceiverTypeName(funcDecl.Recv.List[0].Type)
-					}
-					*publicFuncs = append(*publicFuncs, publicFuncInfo{
-						name:         funcDecl.Name.Name,
-						receiverName: receiverName,
-						pos:          funcDecl.Pos(),
-						filename:     filename,
-					})
+				// Fichier source - collecter TOUTES les fonctions (publiques et privées)
+				receiverName := ""
+				// Vérification si c'est une méthode avec un receiver
+				if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+					// Extraire le nom du type du receiver
+					receiverName = extractReceiverTypeName(funcDecl.Recv.List[0].Type)
 				}
+				*funcs = append(*funcs, funcInfo{
+					name:         funcDecl.Name.Name,
+					receiverName: receiverName,
+					isExported:   isPublicFunction(funcDecl),
+					pos:          funcDecl.Pos(),
+					filename:     filename,
+				})
 			}
 			// Continue traversal
 			return true
@@ -120,13 +120,13 @@ func runTest003(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Liste des fonctions publiques avec leurs positions
-	var publicFuncs []publicFuncInfo
+	// Liste de toutes les fonctions (publiques et privées) avec leurs positions
+	var allFuncs []funcInfo
 	// Map des fonctions testées
 	testedFuncs := make(map[string]bool, 0)
 
-	// Collecter les fonctions publiques et testées
-	collectFunctions(pass, &publicFuncs, testedFuncs)
+	// Collecter toutes les fonctions et les tests
+	collectFunctions(pass, &allFuncs, testedFuncs)
 
 	// Si on a des fichiers source mais pas de tests internes,
 	// scanner les packages _test externes
@@ -134,13 +134,13 @@ func runTest003(pass *analysis.Pass) (any, error) {
 		collectExternalTestFunctions(pass, testedFuncs)
 	}
 
-	// Vérifier que chaque fonction publique a un test
-	for _, funcInfo := range publicFuncs {
+	// Vérifier que chaque fonction (publique ou privée) a un test
+	for _, fn := range allFuncs {
 		// Construire les noms possibles pour le test
-		testNames := []string{funcInfo.name}
+		testNames := []string{fn.name}
 		// Si c'est une méthode, ajouter aussi le pattern Receiver_Method
-		if funcInfo.receiverName != "" {
-			testNames = append(testNames, funcInfo.receiverName+"_"+funcInfo.name)
+		if fn.receiverName != "" {
+			testNames = append(testNames, fn.receiverName+"_"+fn.name)
 		}
 
 		// Vérifier si au moins un des noms possibles a un test
@@ -156,26 +156,44 @@ func runTest003(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérification de la condition
-		if !hasTest && !isExemptFunction(funcInfo.name) {
+		if !hasTest && !isExemptFunction(fn.name) {
 			// Construire le nom du test suggéré
-			suggestedTestName := "Test" + funcInfo.name
+			suggestedTestName := "Test" + fn.name
 			// Si c'est une méthode, suggérer le pattern Type_Method
-			if funcInfo.receiverName != "" {
-				suggestedTestName = "Test" + funcInfo.receiverName + "_" + funcInfo.name
+			if fn.receiverName != "" {
+				suggestedTestName = "Test" + fn.receiverName + "_" + fn.name
 			}
 
 			// Extraire le nom de base du fichier pour construire le nom du fichier de test
-			baseName := filepath.Base(funcInfo.filename)
+			baseName := filepath.Base(fn.filename)
 			fileBase := strings.TrimSuffix(baseName, ".go")
-			suggestedTestFile := fileBase + "_external_test.go"
+
+			// Déterminer le fichier et le type de test selon si la fonction est exportée
+			var suggestedTestFile string
+			var testType string
+			var funcType string
+			// Vérification du type de fonction
+			if fn.isExported {
+				// Fonction publique → test black-box dans _external_test.go
+				suggestedTestFile = fileBase + "_external_test.go"
+				testType = "black-box testing avec package xxx_test"
+				funcType = "publique"
+			} else {
+				// Fonction privée → test white-box dans _internal_test.go
+				suggestedTestFile = fileBase + "_internal_test.go"
+				testType = "white-box testing avec package xxx"
+				funcType = "privée"
+			}
 
 			// Fonction non testée - reporter à la position de la fonction
 			pass.Reportf(
-				funcInfo.pos,
-				"KTN-TEST-003: fonction publique '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (black-box testing avec package xxx_test)",
-				funcInfo.name,
+				fn.pos,
+				"KTN-TEST-003: fonction %s '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (%s)",
+				funcType,
+				fn.name,
 				suggestedTestName,
 				suggestedTestFile,
+				testType,
 			)
 		}
 	}
