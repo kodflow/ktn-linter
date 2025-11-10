@@ -20,7 +20,10 @@ var Analyzer002 = &analysis.Analyzer{
 // runReturn002 analyzes return statements for nil slice/map returns.
 // Params:
 //   - pass: Analysis pass containing type information
-// Returns: TODO
+//
+// Returns:
+//   - any: always nil
+//   - error: analysis error if any
 func runReturn002(pass *analysis.Pass) (any, error) {
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 

@@ -200,7 +200,9 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
 // Params:
 //   - typeInfo: Type to check
 //   - pass: Analysis pass
-// Returns: TODO
+//
+// Returns:
+//   - bool: true if type is from external package
 func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
 	// Check if it's a named type
 	named, ok := typeInfo.(*types.Named)

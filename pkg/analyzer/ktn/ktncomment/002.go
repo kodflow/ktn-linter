@@ -23,7 +23,10 @@ var Analyzer002 = &analysis.Analyzer{
 // runComment002 analyzes inline comments for excessive length.
 // Params:
 //   - pass: Analysis pass
-// Returns: TODO
+//
+// Returns:
+//   - any: always nil
+//   - error: analysis error if any
 func runComment002(pass *analysis.Pass) (any, error) {
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 

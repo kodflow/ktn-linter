@@ -87,7 +87,9 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 //
 // Params:
 //   - lit: Composite literal to check
-// Returns: TODO
+//
+// Returns:
+//   - bool: always true to avoid false positives
 func isInReturnStatement(lit *ast.CompositeLit) bool {
 	// Cette fonction devrait checker si le parent est un ReturnStmt
 	// Mais on n'a pas accès au parent avec inspector

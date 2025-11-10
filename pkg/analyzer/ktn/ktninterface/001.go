@@ -18,7 +18,10 @@ var Analyzer001 = &analysis.Analyzer{
 // runInterface001 analyzes interfaces to detect unused ones.
 // Params:
 //   - pass: Analysis pass
-// Returns: TODO
+//
+// Returns:
+//   - any: always nil
+//   - error: analysis error if any
 func runInterface001(pass *analysis.Pass) (any, error) {
 	// Collect all interface declarations
 	interfaces := make(map[string]*ast.TypeSpec)

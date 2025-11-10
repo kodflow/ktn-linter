@@ -157,7 +157,9 @@ func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
 //
 // Params:
 //   - stmt: Return statement to check
-// Returns: TODO
+//
+// Returns:
+//   - bool: true if return is trivial (bare, nil, or simple literal)
 func isTrivialReturn(stmt *ast.ReturnStmt) bool {
 	// No return values (bare return)
 	if len(stmt.Results) == 0 {

@@ -21,7 +21,6 @@ import (
 //
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs modernize
-// Params: TODO
 func Analyzers() []*analysis.Analyzer {
 	// Liste des analyseurs à désactiver (bugs connus ou instables)
 	disabled := map[string]bool{
