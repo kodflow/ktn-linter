@@ -154,9 +154,9 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 - **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
 
-### Tests (9 règles) ✅ 100%
+### Tests (10 règles) ✅ 100%
 
-- **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: remplacée par KTN-TEST-008+009+010)
+- **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: remplacée par KTN-TEST-008+009+010+011)
 - **KTN-TEST-002**: Fichier test sans fichier source correspondant
 - **KTN-TEST-003**: Fonctions publiques sans tests (détecte pattern Type_Method)
 - **KTN-TEST-004**: Tests sans couverture cas d'erreur
@@ -166,6 +166,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-TEST-008**: Règle 1:2 - Chaque fichier .go doit avoir DEUX fichiers de test (_internal_test.go ET _external_test.go)
 - **KTN-TEST-009**: Tests de fonctions publiques (exportées) doivent être dans _external_test.go uniquement (black-box testing)
 - **KTN-TEST-010**: Tests de fonctions privées (non-exportées) doivent être dans _internal_test.go uniquement (white-box testing)
+- **KTN-TEST-011**: Fichiers _internal_test.go doivent utiliser package xxx (white-box), _external_test.go doivent utiliser package xxx_test (black-box)
 
 ## Statistiques
 
@@ -177,17 +178,18 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 40 (4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 9 test) - 9 règles actives dans test
+- **Total règles**: 41 (4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 10 test) - 10 règles actives dans test
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
 ## Corrections des Contradictions
 
 - ✅ **KTN-VAR-010 supprimé** : Contradictoire avec KTN-RETURN-002
 - ✅ **KTN-COMMENT-001 supprimé** : Contradictoire avec KTN-FUNC-011 (demandait commentaires puis les marquait redondants)
-- ✅ **KTN-TEST-001 remplacé par KTN-TEST-008+009+010** : Incompatible avec white-box testing. Les 3 nouvelles règles imposent une convention stricte :
+- ✅ **KTN-TEST-001 remplacé par KTN-TEST-008+009+010+011** : Incompatible avec white-box testing. Les 4 nouvelles règles imposent une convention stricte :
   - **008** : Règle 1:2 (chaque .go → _internal_test.go ET _external_test.go)
   - **009** : Tests fonctions publiques → _external_test.go UNIQUEMENT
   - **010** : Tests fonctions privées → _internal_test.go UNIQUEMENT
+  - **011** : Convention package (_internal → package xxx, _external → package xxx_test)
 - ✅ **KTN-INTERFACE-001 amélioré** : Ignore les interfaces qui suivent le pattern `XXXInterface` pour struct `XXX` (KTN-STRUCT-002)
 - ✅ **KTN-VAR-014 amélioré** : Ignore les types externes (frameworks comme Terraform)
 - ✅ **KTN-VAR-007 amélioré** : Ignore `[]T{}` (faux positifs), vérifie seulement `make([]T, 0)` sans capacity
