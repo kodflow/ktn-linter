@@ -45,3 +45,27 @@ func (r *GoodResource) Configure(config string) error {
 	// Retour succès
 	return nil
 }
+
+// validateConfig valide la configuration (fonction privée avec test).
+//
+// Params:
+//   - config: configuration à valider
+//
+// Returns:
+//   - bool: true si valide
+func validateConfig(config string) bool {
+	// Validation
+	return len(config) > 0
+}
+
+// sanitize nettoie les données (fonction privée avec test).
+//
+// Params:
+//   - data: données à nettoyer
+//
+// Returns:
+//   - string: données nettoyées
+func (r *GoodResource) sanitize(data string) string {
+	// Nettoyage
+	return data + "_sanitized"
+}

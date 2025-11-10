@@ -36,3 +36,34 @@ func TestGoodResource_Configure(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 }
+
+// TestvalidateConfig teste la fonction privée validateConfig
+func TestvalidateConfig(t *testing.T) {
+	tests := []struct {
+		name   string
+		config string
+		want   bool
+	}{
+		{"valid config", "test", true},
+		{"empty config", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := validateConfig(tt.config)
+			if result != tt.want {
+				t.Errorf("validateConfig() = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+// TestGoodResource_sanitize teste la méthode privée sanitize
+func TestGoodResource_sanitize(t *testing.T) {
+	r := NewGoodResource()
+	result := r.sanitize("test")
+	expected := "test_sanitized"
+	if result != expected {
+		t.Errorf("sanitize() = %v, want %v", result, expected)
+	}
+}
