@@ -164,12 +164,18 @@ func runTest003(pass *analysis.Pass) (any, error) {
 				suggestedTestName = "Test" + funcInfo.receiverName + "_" + funcInfo.name
 			}
 
+			// Extraire le nom de base du fichier pour construire le nom du fichier de test
+			baseName := filepath.Base(funcInfo.filename)
+			fileBase := strings.TrimSuffix(baseName, ".go")
+			suggestedTestFile := fileBase + "_external_test.go"
+
 			// Fonction non testée - reporter à la position de la fonction
 			pass.Reportf(
 				funcInfo.pos,
-				"KTN-TEST-003: fonction publique '%s' n'a pas de test correspondant. Créer un test nommé '%s'",
+				"KTN-TEST-003: fonction publique '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (black-box testing avec package xxx_test)",
 				funcInfo.name,
 				suggestedTestName,
+				suggestedTestFile,
 			)
 		}
 	}
