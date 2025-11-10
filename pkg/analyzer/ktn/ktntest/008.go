@@ -121,22 +121,46 @@ func runTest008(pass *analysis.Pass) (any, error) {
 					fileBase,
 				)
 			}
-		} else if hasPublicFuncs && !hasExternal {
-			// Fichier avec UNIQUEMENT des fonctions publiques → besoin de _external_test.go
-			pass.Reportf(
-				file.Name.Pos(),
-				"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
-				baseName,
-				fileBase,
-			)
-		} else if hasPrivateFuncs && !hasInternal {
-			// Fichier avec UNIQUEMENT des fonctions privées → besoin de _internal_test.go
-			pass.Reportf(
-				file.Name.Pos(),
-				"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
-				baseName,
-				fileBase,
-			)
+		} else if hasPublicFuncs {
+			// Fichier avec UNIQUEMENT des fonctions publiques
+			if !hasExternal {
+				// Manque _external_test.go
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
+					baseName,
+					fileBase,
+				)
+			} else if hasInternal {
+				// A _external (correct) mais aussi _internal (inutile) → demander de supprimer _internal
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions publiques. Le fichier '%s_internal_test.go' est inutile et doit être supprimé (utilisez '%s_external_test.go' pour tester l'API publique)",
+					baseName,
+					fileBase,
+					fileBase,
+				)
+			}
+		} else if hasPrivateFuncs {
+			// Fichier avec UNIQUEMENT des fonctions privées
+			if !hasInternal {
+				// Manque _internal_test.go
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
+					baseName,
+					fileBase,
+				)
+			} else if hasExternal {
+				// A _internal (correct) mais aussi _external (inutile) → demander de supprimer _external
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions privées. Le fichier '%s_external_test.go' est inutile et doit être supprimé (utilisez '%s_internal_test.go' pour tester les fonctions privées)",
+					baseName,
+					fileBase,
+					fileBase,
+				)
+			}
 		}
 	}
 
