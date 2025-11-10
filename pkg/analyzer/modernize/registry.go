@@ -29,7 +29,7 @@ func Analyzers() []*analysis.Analyzer {
 
 	// Filtrer les analyseurs désactivés
 	var filtered []*analysis.Analyzer
- // Verification de la condition
+	// Verification de la condition
 	for _, a := range modernize.Suite {
 		// Vérification si l'analyseur est désactivé
 		if !disabled[a.Name] {

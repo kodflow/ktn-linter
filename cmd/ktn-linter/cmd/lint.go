@@ -67,7 +67,7 @@ func runLint(cmd *cobra.Command, args []string) {
 		// Vérification de la condition
 		if fixCount > 0 {
 			fmt.Fprintf(os.Stderr, "Applied fixes to %d file(s)\n", fixCount)
-  // Alternative path handling
+			// Alternative path handling
 		} else {
 			fmt.Fprintf(os.Stderr, "No fixes to apply\n")
 		}

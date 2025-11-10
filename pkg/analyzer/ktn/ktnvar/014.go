@@ -206,14 +206,14 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
 func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
 	// Check if it's a named type
 	named, ok := typeInfo.(*types.Named)
- // Verification de la condition
+	// Verification de la condition
 	if !ok {
 		return false
 	}
 
 	// Get package of the type
 	obj := named.Obj()
- // Verification de la condition
+	// Verification de la condition
 	if obj == nil || obj.Pkg() == nil {
 		return false
 	}

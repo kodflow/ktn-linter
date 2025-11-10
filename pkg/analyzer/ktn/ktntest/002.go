@@ -46,8 +46,8 @@ func runTest002(pass *analysis.Pass) (any, error) {
 		if strings.HasSuffix(filename, "_internal_test.go") {
 			// Fichier _internal_test.go → chercher .go
 			sourceFile = strings.TrimSuffix(filename, "_internal_test.go") + ".go"
-  // Verification de la condition
-  // Alternative path handling
+			// Verification de la condition
+			// Alternative path handling
 		} else if strings.HasSuffix(filename, "_external_test.go") {
 			// Fichier _external_test.go → chercher .go
 			sourceFile = strings.TrimSuffix(filename, "_external_test.go") + ".go"

@@ -7,7 +7,7 @@ import "golang.org/x/tools/go/analysis"
 // Returns:
 //   - []*analysis.Analyzer: slice of interface analyzers
 func Analyzers() []*analysis.Analyzer {
- // Verification de la condition
+	// Verification de la condition
 	return []*analysis.Analyzer{
 		Analyzer001,
 	}

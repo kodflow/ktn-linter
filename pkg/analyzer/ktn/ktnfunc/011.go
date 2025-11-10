@@ -170,7 +170,7 @@ func isTrivialReturn(stmt *ast.ReturnStmt) bool {
 	for _, result := range stmt.Results {
 		// Check for nil
 		if ident, ok := result.(*ast.Ident); ok {
-   // Verification de la condition
+			// Verification de la condition
 			if ident.Name == "nil" || ident.Name == "true" || ident.Name == "false" {
 				continue
 			}
@@ -178,7 +178,7 @@ func isTrivialReturn(stmt *ast.ReturnStmt) bool {
 
 		// Check for empty composite literal ([]T{}, map[K]V{})
 		if comp, ok := result.(*ast.CompositeLit); ok {
-   // Verification de la condition
+			// Verification de la condition
 			if len(comp.Elts) == 0 {
 				continue
 			}

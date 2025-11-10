@@ -56,8 +56,8 @@ func runTest011(pass *analysis.Pass) (any, error) {
 					actualPkg,
 				)
 			}
-  // Verification de la condition
-  // Alternative path handling
+			// Verification de la condition
+			// Alternative path handling
 		} else if strings.HasSuffix(basename, "_external_test.go") {
 			// Fichier _external_test.go → doit utiliser package xxx_test
 			if !strings.HasSuffix(actualPkg, "_test") {

@@ -279,9 +279,9 @@ func TestExample(t *testing.T) {
 // TestIsTestsVariableName teste la détection des noms de variables de tests
 func TestIsTestsVariableName(t *testing.T) {
 	tests := []struct {
-		name     string
-		varName  string
-		want     bool
+		name    string
+		varName string
+		want    bool
 	}{
 		// Noms valides
 		{name: "tests", varName: "tests", want: true},
