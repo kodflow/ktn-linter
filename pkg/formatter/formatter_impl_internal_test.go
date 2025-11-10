@@ -666,3 +666,222 @@ func TestFormatHumanModeEmpty(t *testing.T) {
 		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
 	}
 }
+// TestformatterImpl_formatForHuman tests formatForHuman private method
+func TestFormatterImpl_formatForHuman(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := NewFormatter(buf, false, false, false).(*formatterImpl)
+	fset := token.NewFileSet()
+	fset.AddFile("test.go", 1, 100)
+
+	diags := []analysis.Diagnostic{
+		{Pos: token.Pos(1), Message: "KTN-VAR-001: test error"},
+	}
+
+	formatter.formatForHuman(fset, diags)
+	output := buf.String()
+
+	if !strings.Contains(output, "test error") {
+		t.Errorf("Expected error message in output")
+	}
+}
+
+// TestformatterImpl_formatForAI tests formatForAI private method
+func TestFormatterImpl_formatForAI(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := NewFormatter(buf, true, false, false).(*formatterImpl)
+	fset := token.NewFileSet()
+	fset.AddFile("test.go", 1, 100)
+
+	diags := []analysis.Diagnostic{
+		{Pos: token.Pos(1), Message: "KTN-VAR-001: test error"},
+	}
+
+	formatter.formatForAI(fset, diags)
+	output := buf.String()
+
+	if !strings.Contains(output, "test.go") {
+		t.Errorf("Expected filename in AI output")
+	}
+}
+
+// TestformatterImpl_formatSimple tests formatSimple private method
+func TestFormatterImpl_formatSimple(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := NewFormatter(buf, false, false, true).(*formatterImpl)
+	fset := token.NewFileSet()
+	fset.AddFile("test.go", 1, 100)
+
+	diags := []analysis.Diagnostic{
+		{Pos: token.Pos(1), Message: "KTN-VAR-001: test error"},
+	}
+
+	formatter.formatSimple(fset, diags)
+	output := buf.String()
+
+	if !strings.Contains(output, "test.go:") {
+		t.Errorf("Expected simple format with filename:line")
+	}
+}
+
+// TestformatterImpl_groupByFile tests groupByFile private method
+func TestFormatterImpl_groupByFile(t *testing.T) {
+	formatter := &formatterImpl{}
+	fset := token.NewFileSet()
+	file1 := fset.AddFile("test1.go", 1, 100)
+	file2 := fset.AddFile("test2.go", 102, 100)
+
+	diags := []analysis.Diagnostic{
+		{Pos: file1.Pos(10), Message: "error1"},
+		{Pos: file2.Pos(20), Message: "error2"},
+		{Pos: file1.Pos(30), Message: "error3"},
+	}
+
+	grouped := formatter.groupByFile(fset, diags)
+
+	if len(grouped) != 2 {
+		t.Errorf("Expected 2 files, got %d", len(grouped))
+	}
+}
+
+// TestformatterImpl_filterAndSortDiagnostics tests filterAndSortDiagnostics
+func TestFormatterImpl_filterAndSortDiagnostics(t *testing.T) {
+	formatter := &formatterImpl{}
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 100)
+
+	diags := []analysis.Diagnostic{
+		{Pos: file.Pos(50), Message: "error2"},
+		{Pos: file.Pos(10), Message: "error1"},
+		{Pos: file.Pos(90), Message: "error3"},
+	}
+
+	sorted := formatter.filterAndSortDiagnostics(fset, diags)
+
+	if len(sorted) != 3 {
+		t.Errorf("Expected 3 diagnostics, got %d", len(sorted))
+	}
+
+	// Check sorting by position
+	if sorted[0].Pos > sorted[1].Pos {
+		t.Errorf("Diagnostics not sorted by position")
+	}
+}
+
+// TestformatterImpl_printHeader tests printHeader private method
+func TestFormatterImpl_printHeader(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := &formatterImpl{writer: buf, noColor: true}
+
+	formatter.printHeader(5)
+	output := buf.String()
+
+	if !strings.Contains(output, "5") {
+		t.Errorf("Expected count in header")
+	}
+}
+
+// TestformatterImpl_printFileHeader tests printFileHeader private method
+func TestFormatterImpl_printFileHeader(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := &formatterImpl{writer: buf, noColor: true}
+
+	formatter.printFileHeader("test.go", 3)
+	output := buf.String()
+
+	if !strings.Contains(output, "test.go") || !strings.Contains(output, "3") {
+		t.Errorf("Expected filename and count in file header")
+	}
+}
+
+// TestformatterImpl_printDiagnostic tests printDiagnostic private method
+func TestFormatterImpl_printDiagnostic(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := &formatterImpl{writer: buf, noColor: true}
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", 1, 100)
+
+	diag := analysis.Diagnostic{
+		Pos:     file.Pos(10),
+		Message: "KTN-VAR-001: test error\ndetails",
+	}
+
+	pos := fset.Position(diag.Pos)
+	formatter.printDiagnostic(1, pos, diag)
+	output := buf.String()
+
+	if !strings.Contains(output, "test error") {
+		t.Errorf("Expected error message in diagnostic output")
+	}
+}
+
+// TestformatterImpl_printSuccess tests printSuccess private method
+func TestFormatterImpl_printSuccess(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := &formatterImpl{writer: buf, noColor: true}
+
+	formatter.printSuccess()
+	output := buf.String()
+
+	if !strings.Contains(output, "No issues found") {
+		t.Errorf("Expected success message")
+	}
+}
+
+// TestformatterImpl_printSummary tests printSummary private method
+func TestFormatterImpl_printSummary(t *testing.T) {
+	buf := &bytes.Buffer{}
+	formatter := &formatterImpl{writer: buf, noColor: true}
+
+	formatter.printSummary(10)
+	output := buf.String()
+
+	if !strings.Contains(output, "10") || !strings.Contains(output, "Total") {
+		t.Errorf("Expected count in summary")
+	}
+}
+
+// TestformatterImpl_getCodeColor tests getCodeColor private method
+func TestFormatterImpl_getCodeColor(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
+		noColor  bool
+		wantNonEmpty bool
+	}{
+		{"with color", "KTN-VAR-001", false, true},
+		{"no color", "KTN-VAR-001", true, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			formatter := &formatterImpl{noColor: tt.noColor}
+			result := formatter.getCodeColor(tt.code)
+
+			if tt.wantNonEmpty && result == "" {
+				t.Errorf("Expected non-empty color code")
+			}
+			if !tt.wantNonEmpty && result != "" {
+				t.Errorf("Expected empty color code with noColor=true")
+			}
+		})
+	}
+}
+
+// TestformatterImpl_getSymbol tests getSymbol private method
+func TestFormatterImpl_getSymbol(t *testing.T) {
+	formatter := &formatterImpl{}
+
+	symbol := formatter.getSymbol("KTN-VAR-001")
+
+	if symbol == "" {
+		t.Errorf("Expected non-empty symbol")
+	}
+
+	// Check different severity levels
+	errorSymbol := formatter.getSymbol("KTN-VAR-003") // ERROR level
+	warnSymbol := formatter.getSymbol("KTN-VAR-001")  // WARNING level
+
+	if errorSymbol == "" || warnSymbol == "" {
+		t.Errorf("Expected valid symbols for different severity levels")
+	}
+}
