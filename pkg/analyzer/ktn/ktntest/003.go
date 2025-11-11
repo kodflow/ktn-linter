@@ -154,6 +154,10 @@ func runTest003(pass *analysis.Pass) (any, error) {
 		if !hasTest && !isExemptFunction(fn.name) {
 			// Construire le nom du test suggéré
 			suggestedTestName := "Test" + fn.name
+			// Si c'est une fonction privée (lowercase), ajouter underscore pour respect Go conventions
+			if !fn.isExported && fn.receiverName == "" {
+				suggestedTestName = "Test_" + fn.name
+			}
 			// Si c'est une méthode, suggérer le pattern Type_Method
 			if fn.receiverName != "" {
 				suggestedTestName = "Test" + fn.receiverName + "_" + fn.name
@@ -236,6 +240,9 @@ func collectTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool)
 
 	// Extraire le nom de la fonction testée
 	testedName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
+	// Gérer le format Test_functionName pour les fonctions privées (enlever l'underscore)
+	testedName = strings.TrimPrefix(testedName, "_")
+
 	// Vérification de la condition
 	if testedName != "" {
 		// Ajouter à la map
