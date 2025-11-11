@@ -5,7 +5,7 @@ import "golang.org/x/tools/go/analysis"
 // GetAnalyzers retourne tous les analyseurs relatifs aux fonctions.
 //
 // Returns:
-//   - []*analysis.Analyzer: liste des analyseurs de fonctions (001-013)
+//   - []*analysis.Analyzer: liste des analyseurs de fonctions (001-014)
 func GetAnalyzers() []*analysis.Analyzer {
 	// Retourne la liste complète des analyseurs de fonctions
 	return []*analysis.Analyzer{
@@ -22,5 +22,6 @@ func GetAnalyzers() []*analysis.Analyzer {
 		Analyzer011, // Comments on branches/returns
 		Analyzer012, // No else after return/continue/break
 		Analyzer013, // Unused parameters must be prefixed with _ or assigned to _
+		Analyzer014, // Private functions must be used in production code
 	}
 }

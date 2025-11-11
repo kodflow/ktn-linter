@@ -81,6 +81,7 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-FUNC-011": SEVERITY_WARNING, // Commentaires manquants (maintenabilité)
 	"KTN-FUNC-012": SEVERITY_ERROR,   // else après return (dead code potentiel)
 	"KTN-FUNC-013": SEVERITY_WARNING, // Paramètres non utilisés (clarté)
+	"KTN-FUNC-014": SEVERITY_ERROR,   // Fonctions privées non utilisées (code mort)
 
 	// STRUCT - Structures
 	"KTN-STRUCT-001": SEVERITY_INFO,    // Un fichier par struct (organisation)

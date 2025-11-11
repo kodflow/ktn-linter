@@ -128,7 +128,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-VAR-005**: Pas d'initialisation multiple sur une ligne
 - **KTN-VAR-006**: Variables déclarées après les constantes (ordre imports → const → var → types → fonctions)
 
-### Fonctions (13 règles) ✅ 100%
+### Fonctions (14 règles) ✅ 100%
 
 - **KTN-FUNC-001**: Longueur max 35 lignes de code pur
 - **KTN-FUNC-002**: Max 5 paramètres par fonction
@@ -143,6 +143,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 - **KTN-FUNC-011**: Commentaires sur branches/returns/logique
 - **KTN-FUNC-012**: Éviter else après return/continue/break
 - **KTN-FUNC-013**: Paramètres non utilisés doivent être préfixés par _ ou assignés à _
+- **KTN-FUNC-014**: Fonctions privées doivent être utilisées dans le code de production (détecte code mort créé pour contourner les règles)
 
 ### Structures (6 règles) ✅ 100%
 
@@ -233,8 +234,8 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 73 (44 KTN + 17 modernize actifs + 12 désactivées/remplacées)
-  - **KTN**: 4 const + 19 var + 13 func + 6 struct + 1 return + 1 interface + 1 comment + 1 package + 11 test
+- **Total règles**: 74 (45 KTN + 17 modernize actifs + 12 désactivées/remplacées)
+  - **KTN**: 4 const + 19 var + 14 func + 6 struct + 1 return + 1 interface + 1 comment + 1 package + 11 test
   - **Modernize**: 17 analyseurs actifs / 18 totaux golang.org/x/tools (Go 1.18-1.25, newexpr désactivé)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 
