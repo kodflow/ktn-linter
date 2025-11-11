@@ -164,6 +164,10 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 - **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
 
+### Package (1 règle) ✅ 100%
+
+- **KTN-PACKAGE-001**: Chaque fichier .go (non-test) doit avoir un commentaire descriptif avant la déclaration `package`
+
 ### Tests (11 règles) ✅ 100%
 
 - **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: remplacée par KTN-TEST-008+009+010+011)
@@ -228,8 +232,8 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - **Package interface**: 100% 🟢 (ignores struct interfaces)
 - **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 71 (42 KTN + 17 modernize actifs + 12 désactivées/remplacées)
-  - **KTN**: 4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 11 test
+- **Total règles**: 72 (43 KTN + 17 modernize actifs + 12 désactivées/remplacées)
+  - **KTN**: 4 const + 19 var + 12 func + 6 struct + 1 return + 1 interface + 1 comment + 1 package + 11 test
   - **Modernize**: 17 analyseurs actifs / 18 totaux golang.org/x/tools (Go 1.18-1.25, newexpr désactivé)
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
 

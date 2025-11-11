@@ -102,6 +102,9 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-TEST-010": SEVERITY_WARNING, // Tests privés dans _internal uniquement (organisation)
 	"KTN-TEST-011": SEVERITY_WARNING, // Package xxx vs xxx_test (isolation)
 	"KTN-TEST-012": SEVERITY_ERROR,   // Fichiers *_test.go interdits (convention stricte)
+
+	// PACKAGE - Documentation de fichiers
+	"KTN-PACKAGE-001": SEVERITY_WARNING, // Description de fichier manquante (maintenabilité)
 }
 
 // GetSeverity retourne le niveau de sévérité d'une règle.
