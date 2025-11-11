@@ -80,6 +80,7 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-FUNC-010": SEVERITY_INFO,    // Named returns (style)
 	"KTN-FUNC-011": SEVERITY_WARNING, // Commentaires manquants (maintenabilité)
 	"KTN-FUNC-012": SEVERITY_ERROR,   // else après return (dead code potentiel)
+	"KTN-FUNC-013": SEVERITY_WARNING, // Paramètres non utilisés (clarté)
 
 	// STRUCT - Structures
 	"KTN-STRUCT-001": SEVERITY_INFO,    // Un fichier par struct (organisation)
