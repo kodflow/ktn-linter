@@ -8,7 +8,7 @@ import (
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
 func TestGetAnalyzers(t *testing.T) {
-	const MIN_EXPECTED_COUNT int = 12
+	const MIN_EXPECTED_COUNT int = 14
 	expectedNames := map[string]bool{
 		"ktnfunc001": true, // Max 35 lines
 		"ktnfunc002": true, // Max 5 parameters
@@ -22,6 +22,8 @@ func TestGetAnalyzers(t *testing.T) {
 		"ktnfunc010": true, // Named returns for >3 return values
 		"ktnfunc011": true, // Comments on branches/returns
 		"ktnfunc012": true, // No else after return/continue/break
+		"ktnfunc013": true, // Unused parameters must be marked
+		"ktnfunc014": true, // Private functions must be used in production
 	}
 
 	tests := []struct {

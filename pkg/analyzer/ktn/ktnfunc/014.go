@@ -65,12 +65,20 @@ func runFunc014(pass *analysis.Pass) (any, error) {
 			return
 		}
 
+		funcName := funcDecl.Name.Name
+
+		// Ignorer les fonctions spéciales Go (main et init sont appelées implicitement)
+		if funcName == "main" || funcName == "init" {
+			// Fonction spéciale - ignorer
+			return
+		}
+
 		// Vérifier si c'est privé (première lettre en minuscule)
-		firstChar := rune(funcDecl.Name.Name[0])
+		firstChar := rune(funcName[0])
 		if firstChar >= 'a' && firstChar <= 'z' {
 			// Fonction privée
 			info := &privateFuncInfo{
-				name: funcDecl.Name.Name,
+				name: funcName,
 				pos:  funcDecl.Pos(),
 			}
 
@@ -113,6 +121,38 @@ func runFunc014(pass *analysis.Pass) (any, error) {
 			// Marquer comme utilisée
 			calledInProduction[funcName] = true
 		}
+	})
+
+	// Étape 2b: Détecter les fonctions passées comme valeurs (callbacks)
+	nodeFilter3 := []ast.Node{
+		(*ast.CompositeLit)(nil), // struct{Field: func}
+		(*ast.AssignStmt)(nil),   // var = func
+		(*ast.ValueSpec)(nil),    // var x = func
+	}
+
+	inspect.Preorder(nodeFilter3, func(n ast.Node) {
+		// Récupérer le nom du fichier
+		filename := pass.Fset.Position(n.Pos()).Filename
+
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			// Fichier de test - ignorer
+			return
+		}
+
+		// Parcourir tous les identifiants dans ce nœud
+		ast.Inspect(n, func(node ast.Node) bool {
+			// Si c'est un identifiant
+			if ident, ok := node.(*ast.Ident); ok {
+				// Vérifier si c'est une fonction privée qu'on connaît
+				if _, exists := privateFuncs[ident.Name]; exists {
+					// Marquer comme utilisée (passée comme valeur/callback)
+					calledInProduction[ident.Name] = true
+				}
+			}
+			// Continuer la traversée
+			return true
+		})
 	})
 
 	// Étape 3: Vérifier les fonctions privées non utilisées
