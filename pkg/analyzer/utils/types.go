@@ -1,3 +1,4 @@
+// Utility functions for types operations.
 package utils
 
 import (

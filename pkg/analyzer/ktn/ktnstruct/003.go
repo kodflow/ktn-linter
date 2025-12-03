@@ -1,3 +1,4 @@
+// Analyzer 003 for the ktnstruct package.
 package ktnstruct
 
 import (
@@ -11,7 +12,7 @@ import (
 )
 
 // Analyzer003 vérifie que les champs exportés sont avant les champs privés
-var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnstruct003",
 	Doc:      "KTN-STRUCT-003: Les champs exportés doivent être placés avant les champs privés dans une struct",
 	Run:      runStruct003,

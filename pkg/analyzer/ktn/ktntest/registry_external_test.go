@@ -1,10 +1,12 @@
-package ktntest
+package ktntest_test
 
 import (
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest"
 )
 
-// TestAnalyzers tests the functionality of Analyzers
+// TestAnalyzers tests the functionality of Analyzers with error cases
 func TestAnalyzers(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -13,7 +15,7 @@ func TestAnalyzers(t *testing.T) {
 		{
 			name: "returns non-empty list",
 			check: func(t *testing.T) {
-				analyzers := Analyzers()
+				analyzers := ktntest.Analyzers()
 				// Vérification liste non vide
 				if len(analyzers) == 0 {
 					t.Error("Analyzers should return at least one analyzer")
@@ -21,9 +23,9 @@ func TestAnalyzers(t *testing.T) {
 			},
 		},
 		{
-			name: "all analyzers are valid",
+			name: "all analyzers are valid - error handling",
 			check: func(t *testing.T) {
-				analyzers := Analyzers()
+				analyzers := ktntest.Analyzers()
 				// Vérification chaque analyzer
 				for _, analyzer := range analyzers {
 					// Vérification non-nil

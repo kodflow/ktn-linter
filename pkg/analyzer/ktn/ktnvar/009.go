@@ -1,3 +1,4 @@
+// Analyzer 009 for the ktnvar package.
 package ktnvar
 
 import (
@@ -10,7 +11,7 @@ import (
 )
 
 // Analyzer009 detects map allocations without capacity hints
-var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer009 = &analysis.Analyzer{
 	Name:     "ktnvar009",
 	Doc:      "KTN-VAR-009: Préallouer maps avec capacité si connue",
 	Run:      runVar009,

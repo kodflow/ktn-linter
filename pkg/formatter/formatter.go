@@ -1,3 +1,4 @@
+// Formatter interface for linter output formatting.
 package formatter
 
 import (

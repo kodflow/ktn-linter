@@ -12,12 +12,12 @@ import (
 
 // Analyzer010 checks that functions with >3 return values use named returns
 const (
-	// MAX_UNNAMED_RETURNS définit le nombre maximum de retours non-nommés autorisés
+	// MAX_UNNAMED_RETURNS max unnamed returns allowed
 	MAX_UNNAMED_RETURNS int = 3
 )
 
 // Analyzer010 checks that functions with >3 return values use named returns
-var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer010 = &analysis.Analyzer{
 	Name:     "ktnfunc010",
 	Doc:      "KTN-FUNC-010: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
 	Run:      runFunc010,

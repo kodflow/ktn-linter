@@ -1,7 +1,12 @@
+// Analyzer 004 for the ktntest package.
 package ktntest
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -10,13 +15,20 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const (
-	// MIN_ERROR_CHECKS est le nombre minimum de vérifications d'erreur
-	MIN_ERROR_CHECKS int = 1
-)
+// INITIAL_MAP_CAPACITY est la capacité initiale des maps de signatures.
+const INITIAL_MAP_CAPACITY int = 32
+
+// testedFuncInfo contient les informations sur une fonction testée.
+type testedFuncInfo struct {
+	name          string
+	returnsError  bool
+	hasReceiver   bool
+	receiverName  string
+}
+
 
 // Analyzer004 checks that tests cover error cases
-var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer004 = &analysis.Analyzer{
 	Name:     "ktntest004",
 	Doc:      "KTN-TEST-004: Les tests doivent couvrir les cas d'erreur et exceptions",
 	Run:      runTest004,
@@ -34,6 +46,9 @@ var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 func runTest004(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// Collecter toutes les fonctions du package avec leur signature
+	funcSignatures := collectFuncSignatures(pass, insp)
+
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
@@ -43,143 +58,438 @@ func runTest004(pass *analysis.Pass) (any, error) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Vérification de la condition
+		// Vérification fichier de test
 		if !shared.IsTestFile(filename) {
-			// Pas un fichier de test
 			return
 		}
 
-		// Vérifier si c'est une fonction de test unitaire (Test*)
+		// Vérifier si c'est une fonction de test unitaire
 		if !shared.IsUnitTestFunction(funcDecl) {
-			// Pas une fonction de test unitaire
 			return
 		}
 
-		// Vérifier si le test couvre les cas d'erreur
-		if !hasErrorCaseCoverage(funcDecl) {
-			// Pas de couverture des cas d'erreur
-			pass.Reportf(
-				funcDecl.Pos(),
-				"KTN-TEST-004: le test '%s' devrait couvrir les cas d'erreur/exceptions",
-				funcDecl.Name.Name,
-			)
-		}
+		// Analyser le test par rapport à la fonction testée
+		analyzeTestFunction(pass, funcDecl, funcSignatures)
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// hasErrorCaseCoverage vérifie si le test couvre les cas d'erreur.
+// collectFuncSignatures collecte les signatures des fonctions.
 //
 // Params:
-//   - funcDecl: déclaration de fonction de test
+//   - pass: contexte d'analyse
+//   - insp: inspecteur AST
 //
 // Returns:
-//   - bool: true si le test couvre les cas d'erreur
+//   - map[string]testedFuncInfo: map nom -> info fonction
+func collectFuncSignatures(pass *analysis.Pass, insp *inspector.Inspector) map[string]testedFuncInfo {
+	// Initialiser avec capacité estimée
+	signatures := make(map[string]testedFuncInfo, INITIAL_MAP_CAPACITY)
+
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
+
+	// Parcourir toutes les fonctions du pass
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		funcDecl := n.(*ast.FuncDecl)
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			return
+		}
+
+		// Ajouter la signature
+		addFuncSignature(signatures, funcDecl)
+	})
+
+	// Scanner les fichiers sources du répertoire (pour tests externes)
+	collectExternalSourceSignatures(pass, signatures)
+
+	// Retour des signatures
+	return signatures
+}
+
+// addFuncSignature ajoute une signature de fonction.
+//
+// Params:
+//   - signatures: map des signatures
+//   - funcDecl: déclaration de fonction
+func addFuncSignature(signatures map[string]testedFuncInfo, funcDecl *ast.FuncDecl) {
+	info := extractFuncInfo(funcDecl)
+	// Stocker avec le nom simple
+	signatures[info.name] = *info
+	// Stocker aussi avec Receiver_Method si méthode
+	if info.hasReceiver {
+		signatures[info.receiverName+"_"+info.name] = *info
+	}
+}
+
+// collectExternalSourceSignatures scanne les fichiers sources du répertoire.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - signatures: map des signatures à remplir
+func collectExternalSourceSignatures(pass *analysis.Pass, signatures map[string]testedFuncInfo) {
+	// Pas de fichiers dans le pass
+	if len(pass.Files) == 0 {
+		return
+	}
+
+	// Obtenir le répertoire du package
+	firstFile := pass.Fset.Position(pass.Files[0].Pos()).Filename
+	packageDir := filepath.Dir(firstFile)
+
+	// Lire les fichiers du répertoire
+	entries, err := os.ReadDir(packageDir)
+	// Erreur de lecture
+	if err != nil {
+		return
+	}
+
+	// Parcourir les fichiers
+	for _, entry := range entries {
+		// Ignorer les répertoires
+		if entry.IsDir() {
+			continue
+		}
+		// Scanner les fichiers Go non-test
+		scanSourceFile(packageDir, entry.Name(), signatures)
+	}
+}
+
+// scanSourceFile scanne un fichier source pour les signatures.
+//
+// Params:
+//   - dir: répertoire du fichier
+//   - filename: nom du fichier
+//   - signatures: map des signatures
+func scanSourceFile(dir string, filename string, signatures map[string]testedFuncInfo) {
+	// Ignorer les fichiers non-Go
+	if !strings.HasSuffix(filename, ".go") {
+		return
+	}
+	// Ignorer les fichiers de test
+	if strings.HasSuffix(filename, "_test.go") {
+		return
+	}
+
+	// Parser le fichier
+	fullPath := filepath.Join(dir, filename)
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, fullPath, nil, 0)
+	// Erreur de parsing
+	if err != nil {
+		return
+	}
+
+	// Extraire les signatures
+	ast.Inspect(file, func(n ast.Node) bool {
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Pas une fonction
+		if !ok {
+			return true
+		}
+		// Ajouter la signature
+		addFuncSignature(signatures, funcDecl)
+		return true
+	})
+}
+
+// extractFuncInfo extrait les informations d'une fonction.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - *testedFuncInfo: informations extraites
+func extractFuncInfo(funcDecl *ast.FuncDecl) *testedFuncInfo {
+	// Créer les infos de base
+	info := &testedFuncInfo{
+		name:         funcDecl.Name.Name,
+		returnsError: functionReturnsError(funcDecl),
+	}
+
+	// Vérifier si c'est une méthode
+	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+		info.hasReceiver = true
+		info.receiverName = extractReceiverName(funcDecl.Recv.List[0].Type)
+	}
+
+	// Retour des infos
+	return info
+}
+
+// functionReturnsError vérifie si une fonction retourne error.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - bool: true si retourne error
+func functionReturnsError(funcDecl *ast.FuncDecl) bool {
+	// Pas de type de fonction
+	if funcDecl.Type == nil {
+		return false
+	}
+	// Pas de résultats
+	if funcDecl.Type.Results == nil {
+		return false
+	}
+
+	// Parcourir les types de retour
+	for _, field := range funcDecl.Type.Results.List {
+		// Vérifier si c'est "error"
+		if isErrorType(field.Type) {
+			// Type error trouvé
+			return true
+		}
+	}
+
+	// Aucun type error trouvé
+	return false
+}
+
+// isErrorType vérifie si un type est error.
+//
+// Params:
+//   - expr: expression du type
+//
+// Returns:
+//   - bool: true si c'est error
+func isErrorType(expr ast.Expr) bool {
+	// Identifiant simple "error"
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Comparer avec "error"
+		return ident.Name == "error"
+	}
+	// Pas un type error
+	return false
+}
+
+// extractReceiverName extrait le nom du receiver.
+//
+// Params:
+//   - expr: expression du type
+//
+// Returns:
+//   - string: nom du receiver
+func extractReceiverName(expr ast.Expr) string {
+	// Gérer les pointeurs
+	if star, ok := expr.(*ast.StarExpr); ok {
+		// Appel récursif sur le type pointé
+		return extractReceiverName(star.X)
+	}
+	// Identifiant simple
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Retour du nom de l'identifiant
+		return ident.Name
+	}
+	// Type non supporté
+	return ""
+}
+
+// analyzeTestFunction analyse une fonction de test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - testFunc: fonction de test
+//   - signatures: signatures des fonctions
+func analyzeTestFunction(
+	pass *analysis.Pass,
+	testFunc *ast.FuncDecl,
+	signatures map[string]testedFuncInfo,
+) {
+	// Extraire le nom de la fonction testée
+	testedName := extractTestedFuncName(testFunc.Name.Name)
+	// Nom vide = pas de fonction testée identifiable
+	if testedName == "" {
+		return
+	}
+
+	// Chercher la fonction dans les signatures
+	info, found := signatures[testedName]
+	// Fonction non trouvée dans les signatures
+	if !found {
+		return
+	}
+
+	// Vérifier si la fonction retourne error
+	if !info.returnsError {
+		return
+	}
+
+	// Vérifier la couverture des cas d'erreur
+	if !hasErrorCaseCoverage(testFunc) {
+		pass.Reportf(
+			testFunc.Pos(),
+			"KTN-TEST-004: le test '%s' teste une fonction qui retourne error, "+
+				"il devrait couvrir les cas d'erreur",
+			testFunc.Name.Name,
+		)
+	}
+}
+
+// extractTestedFuncName extrait le nom de la fonction testée.
+//
+// Params:
+//   - testName: nom du test (ex: TestParseConfig)
+//
+// Returns:
+//   - string: nom de la fonction testée
+func extractTestedFuncName(testName string) string {
+	// Retirer le préfixe "Test"
+	name := strings.TrimPrefix(testName, "Test")
+	// Retirer le _ pour les fonctions privées
+	name = strings.TrimPrefix(name, "_")
+	// Retour du nom extrait
+	return name
+}
+
+// hasErrorCaseCoverage vérifie la couverture des cas d'erreur.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - bool: true si cas d'erreur couverts
 func hasErrorCaseCoverage(funcDecl *ast.FuncDecl) bool {
-	errorCaseIndicators := 0
+	found := false
 
 	// Parcourir le corps de la fonction
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Vérification de la condition
-		switch node := n.(type) {
-		// Cas d'un composite literal (tests table)
-		case *ast.CompositeLit:
-			// Vérifier si c'est un test table avec des cas d'erreur
-			if hasErrorTestCases(node) {
-				errorCaseIndicators++
-			}
-		// Cas d'un ident (variables)
-		case *ast.Ident:
-			// Vérifier les noms de variables indicateurs d'erreur
-			if isErrorIndicatorName(node.Name) {
-				errorCaseIndicators++
-			}
-		// Cas d'un string literal
-		case *ast.BasicLit:
-			// Vérifier les strings avec "error", "invalid", "fail"
-			if node.Kind.String() == "STRING" {
-				value := strings.ToLower(node.Value)
-				// Vérification de la condition
-				if strings.Contains(value, "error") ||
-					strings.Contains(value, "invalid") ||
-					strings.Contains(value, "fail") {
-					errorCaseIndicators++
-				}
-			}
+		// Vérifier les différents types de nœuds
+		if checkErrorInNode(n) {
+			found = true
 		}
-		// Continue traversal
+		// Continuer l'inspection
 		return true
 	})
 
-	// Retour du résultat
-	return errorCaseIndicators >= MIN_ERROR_CHECKS
+	// Retour du résultat de l'analyse
+	return found
 }
 
-// hasErrorTestCases vérifie si un composite literal a des cas d'erreur.
+// checkErrorInNode vérifie si un nœud contient un indicateur d'erreur.
+//
+// Params:
+//   - n: nœud AST
+//
+// Returns:
+//   - bool: true si indicateur trouvé
+func checkErrorInNode(n ast.Node) bool {
+	// Traiter selon le type de nœud
+	switch node := n.(type) {
+	// Composite literal avec cas d'erreur
+	case *ast.CompositeLit:
+		// Vérifier les cas de test d'erreur
+		return hasErrorTestCases(node)
+	// Identifiant indicateur d'erreur
+	case *ast.Ident:
+		// Vérifier le nom de l'identifiant
+		return isErrorIndicatorName(node.Name)
+	// String literal avec error/invalid/fail
+	case *ast.BasicLit:
+		// Vérifier le contenu du literal
+		return checkErrorInBasicLit(node)
+	}
+	// Type de nœud non concerné
+	return false
+}
+
+// checkErrorInBasicLit vérifie un literal string.
+//
+// Params:
+//   - node: nœud BasicLit
+//
+// Returns:
+//   - bool: true si indicateur trouvé
+func checkErrorInBasicLit(node *ast.BasicLit) bool {
+	// Vérifier si c'est une string
+	if node.Kind.String() != "STRING" {
+		return false
+	}
+	// Vérifier le contenu de la string
+	value := strings.ToLower(node.Value)
+	// Vérifier les mots-clés d'erreur
+	return strings.Contains(value, "error") ||
+		strings.Contains(value, "invalid") ||
+		strings.Contains(value, "fail")
+}
+
+// hasErrorTestCases vérifie les cas d'erreur dans un composite.
 //
 // Params:
 //   - lit: composite literal
 //
 // Returns:
-//   - bool: true si des cas d'erreur sont présents
+//   - bool: true si cas d'erreur présents
 func hasErrorTestCases(lit *ast.CompositeLit) bool {
 	// Parcourir les éléments
 	for _, elt := range lit.Elts {
 		// Vérifier si c'est un KeyValueExpr
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
-			// Vérifier si la clé est "name" ou "want"
-			if ident, identOk := kv.Key.(*ast.Ident); identOk {
-				// Vérification de la condition
-				if ident.Name == "name" {
-					// Vérifier si la valeur contient "error", "invalid", "fail"
-					if basic, basicOk := kv.Value.(*ast.BasicLit); basicOk {
-						value := strings.ToLower(basic.Value)
-						// Vérification de la condition
-						if strings.Contains(value, "error") ||
-							strings.Contains(value, "invalid") ||
-							strings.Contains(value, "fail") {
-							// Cas d'erreur trouvé
-							return true
-						}
-					}
-				}
+			// Vérifier si c'est un cas d'erreur
+			if checkErrorInKeyValue(kv) {
+				// Cas d'erreur trouvé
+				return true
 			}
 		}
 	}
-
 	// Pas de cas d'erreur
 	return false
 }
 
-// isErrorIndicatorName vérifie si un nom indique un cas d'erreur.
+// checkErrorInKeyValue vérifie un KeyValueExpr.
 //
 // Params:
-//   - name: nom de la variable
+//   - kv: KeyValueExpr
 //
 // Returns:
-//   - bool: true si c'est un indicateur d'erreur
+//   - bool: true si indicateur trouvé
+func checkErrorInKeyValue(kv *ast.KeyValueExpr) bool {
+	// Vérifier si la clé est "name"
+	ident, ok := kv.Key.(*ast.Ident)
+	// Pas un identifiant ou pas "name"
+	if !ok || ident.Name != "name" {
+		return false
+	}
+	// Vérifier si la valeur est un BasicLit
+	basic, basicOk := kv.Value.(*ast.BasicLit)
+	// Pas un BasicLit
+	if !basicOk {
+		return false
+	}
+	// Vérifier les mots-clés d'erreur
+	value := strings.ToLower(basic.Value)
+	// Retour du résultat
+	return strings.Contains(value, "error") ||
+		strings.Contains(value, "invalid") ||
+		strings.Contains(value, "fail")
+}
+
+// isErrorIndicatorName vérifie si un nom indique une erreur.
+//
+// Params:
+//   - name: nom à vérifier
+//
+// Returns:
+//   - bool: true si indicateur d'erreur
 func isErrorIndicatorName(name string) bool {
 	lowerName := strings.ToLower(name)
-	errorIndicators := []string{
-		"err",
-		"error",
-		"invalid",
-		"fail",
-		"bad",
-		"wrong",
-	}
+	indicators := []string{"err", "error", "invalid", "fail", "bad", "wrong"}
 
-	// Parcours des indicateurs
-	for _, indicator := range errorIndicators {
-		// Vérification de la condition
+	// Parcourir les indicateurs
+	for _, indicator := range indicators {
+		// Vérifier si le nom contient l'indicateur
 		if strings.Contains(lowerName, indicator) {
 			// Indicateur trouvé
 			return true
 		}
 	}
-
-	// Pas d'indicateur
+	// Aucun indicateur trouvé
 	return false
 }

@@ -1,3 +1,4 @@
+// Utility functions for make operations.
 package utils
 
 import (

@@ -1,3 +1,4 @@
+// Analyzer 011 for the ktntest package.
 package ktntest
 
 import (
@@ -12,7 +13,7 @@ import (
 )
 
 // Analyzer011 checks package naming convention for internal/external test files
-var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer011 = &analysis.Analyzer{
 	Name:     "ktntest011",
 	Doc:      "KTN-TEST-011: Les fichiers _internal_test.go doivent utiliser 'package xxx', les fichiers _external_test.go doivent utiliser 'package xxx_test'",
 	Run:      runTest011,
@@ -46,13 +47,13 @@ func runTest011(pass *analysis.Pass) (any, error) {
 		// Vérifier les conventions internal/external
 		if strings.HasSuffix(basename, "_internal_test.go") {
 			// Fichier _internal_test.go → doit utiliser package xxx (sans _test)
-			if strings.HasSuffix(actualPkg, "_test") {
+			if basePkg, ok := strings.CutSuffix(actualPkg, "_test"); ok {
 				// Erreur : package xxx_test dans _internal_test.go
 				pass.Reportf(
 					file.Name.Pos(),
 					"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s' (white-box testing) au lieu de 'package %s'. Les fichiers _internal_test.go testent les fonctions privées et doivent partager le même package",
 					basename,
-					strings.TrimSuffix(actualPkg, "_test"),
+					basePkg,
 					actualPkg,
 				)
 			}

@@ -1,3 +1,4 @@
+// Shared utilities for file handling in ktn-linter.
 package shared
 
 import (

@@ -1,7 +1,9 @@
+// Analyzer 005 for the ktntest package.
 package ktntest
 
 import (
 	"go/ast"
+	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -18,7 +20,7 @@ const (
 )
 
 // Analyzer005 checks that tests use table-driven test pattern
-var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer005 = &analysis.Analyzer{
 	Name:     "ktntest005",
 	Doc:      "KTN-TEST-005: Les tests avec plusieurs cas doivent utiliser table-driven tests",
 	Run:      runTest005,
@@ -251,16 +253,8 @@ func isTestingMethod(methodName string) bool {
 		"Error", "Errorf", "Fatal", "Fatalf", "Fail", "FailNow",
 		"Log", "Logf", "Skip", "Skipf", "SkipNow",
 	}
-	// Parcours des méthodes
-	for _, m := range methods {
-		// Vérification de la condition
-		if methodName == m {
-			// Méthode trouvée
-			return true
-		}
-	}
-	// Pas une méthode testing
-	return false
+	// Vérifier si c'est une méthode testing
+	return slices.Contains(methods, methodName)
 }
 
 // isAssertMethod vérifie si c'est une méthode de testify/assert.
@@ -281,16 +275,8 @@ func isAssertMethod(methodName string) bool {
 		"JSONEq", "YAMLEq", "Error", "NoError", "ErrorIs", "ErrorAs",
 		"ErrorContains", "Regexp", "NotRegexp", "Zero", "NotZero",
 	}
-	// Parcours des méthodes
-	for _, m := range methods {
-		// Vérification de la condition
-		if methodName == m {
-			// Méthode trouvée
-			return true
-		}
-	}
-	// Pas une méthode assert
-	return false
+	// Vérifier si c'est une méthode assert
+	return slices.Contains(methods, methodName)
 }
 
 // isRequireMethod vérifie si c'est une méthode de testify/require.

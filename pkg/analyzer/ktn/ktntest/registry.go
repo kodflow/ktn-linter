@@ -9,9 +9,7 @@ import "golang.org/x/tools/go/analysis"
 //   - []*analysis.Analyzer: liste des analyseurs TEST
 func Analyzers() []*analysis.Analyzer {
 	// Retourne tous les analyseurs de test
-	// NOTE: KTN-TEST-001 désactivée car elle force black-box testing (xxx_test)
-	// ce qui empêche de tester les fonctions privées (white-box testing)
-	// KTN-TEST-008, 009, 010, 011 la remplacent avec une convention hybride internal/external stricte
+	// NOTE: KTN-TEST-001 disabled: replaced by 008/009/010/011
 	return []*analysis.Analyzer{
 		// Analyzer001, // Désactivée : remplacée par Analyzer008+009+010+011
 		Analyzer002,
@@ -25,5 +23,6 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer010, // Tests fonctions privées dans _internal uniquement
 		Analyzer011, // Convention package: _internal → xxx, _external → xxx_test
 		Analyzer012, // Interdiction des fichiers *_test.go (doivent être _internal ou _external)
+		Analyzer013, // Tests passthrough - détecte les tests qui ne testent rien
 	}
 }

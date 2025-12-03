@@ -1,3 +1,4 @@
+// Analyzer 006 for the ktnvar package.
 package ktnvar
 
 import (
@@ -10,7 +11,7 @@ import (
 )
 
 // Analyzer006 checks that package-level variables are declared after constants
-var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer006 = &analysis.Analyzer{
 	Name:     "ktnvar006",
 	Doc:      "KTN-VAR-006: Vérifie que les variables de package sont déclarées après les constantes",
 	Run:      runVar006,

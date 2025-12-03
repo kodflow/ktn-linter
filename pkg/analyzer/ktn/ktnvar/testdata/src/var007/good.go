@@ -116,6 +116,12 @@ type Item struct {
 	value int
 }
 
+// Container is a test struct with slice fields
+type Container struct {
+	items  []int
+	values []string
+}
+
 // goodSliceOfStructs creates empty slice of structs
 //
 // Returns:
@@ -124,4 +130,29 @@ func goodSliceOfStructs() []Item {
 	// Good: []T{} for structs is acceptable
 	// Retour de la fonction
 	return []Item{}
+}
+
+// goodEmptySliceInStructInit initializes struct with empty slices
+//
+// Returns:
+//   - Container: struct with empty slices
+func goodEmptySliceInStructInit() Container {
+	// Good: []T{} in struct initialization is acceptable
+	c := Container{
+		items:  []int{},
+		values: []string{},
+	}
+	// Retour de la fonction
+	return c
+}
+
+// goodEmptySliceNotAppended creates slice but never appends
+//
+// Returns:
+//   - []int: empty slice (no append = no need for capacity)
+func goodEmptySliceNotAppended() []int {
+	// Good: []T{} without append is acceptable
+	numbers := []int{}
+	// Retour de la fonction
+	return numbers
 }

@@ -1,3 +1,4 @@
+// Analyzer 013 for the ktnfunc package.
 package ktnfunc
 
 import (
@@ -9,7 +10,14 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer013 vérifie que les paramètres non utilisés sont explicitement ignorés avec _.
+const (
+	// INITIAL_PARAMS_CAP initial capacity for params map
+	INITIAL_PARAMS_CAP int = 8
+	// INITIAL_USED_VARS_CAP initial capacity for used vars map
+	INITIAL_USED_VARS_CAP int = 16
+)
+
+// Analyzer013 vérifie que les paramètres non utilisés sont explicitement ignorés.
 var Analyzer013 = &analysis.Analyzer{
 	Name:     "ktnfunc013",
 	Doc:      "KTN-FUNC-013: paramètres non utilisés doivent être préfixés par _ ou assignés à _",
@@ -26,14 +34,14 @@ var Analyzer013 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc013(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Filtrer uniquement les déclarations de fonction
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
 
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
+	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
 		// Vérification de la présence d'un corps de fonction
@@ -94,7 +102,7 @@ func runFunc013(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string]token.Pos: map des noms de paramètres vers leurs positions
 func collectFunctionParams(funcDecl *ast.FuncDecl) map[string]token.Pos {
-	params := make(map[string]token.Pos)
+	params := make(map[string]token.Pos, INITIAL_PARAMS_CAP)
 
 	// Vérification de la présence de paramètres
 	if funcDecl.Type.Params == nil {
@@ -126,13 +134,15 @@ func collectFunctionParams(funcDecl *ast.FuncDecl) map[string]token.Pos {
 // Returns:
 //   - map[string]bool: map des variables utilisées
 func collectUsedVariables(body *ast.BlockStmt) map[string]bool {
-	used := make(map[string]bool)
+	used := make(map[string]bool, INITIAL_USED_VARS_CAP)
 
 	ast.Inspect(body, func(n ast.Node) bool {
+		ident, isIdent := n.(*ast.Ident)
 		// Vérifier si c'est un identifiant
-		if ident, ok := n.(*ast.Ident); ok {
-			// Vérifier que ce n'est pas dans une assignation à _
-			if parent, ok := findParentAssignToBlank(body, ident); ok && parent {
+		if isIdent {
+			parent, found := findParentAssignToBlank(body, ident)
+			// Vérifier si dans une assignation à _
+			if found && parent {
 				// C'est dans une assignation à _ - ne pas compter comme utilisé
 				return true
 			}
@@ -155,26 +165,31 @@ func collectUsedVariables(body *ast.BlockStmt) map[string]bool {
 // Returns:
 //   - map[string]bool: map des variables ignorées
 func collectIgnoredVariables(body *ast.BlockStmt) map[string]bool {
-	ignored := make(map[string]bool)
+	ignored := make(map[string]bool, INITIAL_PARAMS_CAP)
 
 	ast.Inspect(body, func(n ast.Node) bool {
+		assign, isAssign := n.(*ast.AssignStmt)
 		// Vérifier si c'est une assignation
-		if assign, ok := n.(*ast.AssignStmt); ok {
-			// Vérifier si le côté gauche est _
-			if len(assign.Lhs) == 1 {
-				// Vérification du côté gauche
-				if ident, ok := assign.Lhs[0].(*ast.Ident); ok && ident.Name == "_" {
-					// C'est une assignation à _
-					// Extraire la variable du côté droit
-					if len(assign.Rhs) == 1 {
-						// Vérification du côté droit
-						if rhsIdent, ok := assign.Rhs[0].(*ast.Ident); ok {
-							// Ajouter comme variable ignorée
-							ignored[rhsIdent.Name] = true
-						}
-					}
-				}
-			}
+		if !isAssign {
+			// Continuer la traversée
+			return true
+		}
+		// Vérifier si le côté gauche est _
+		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			// Continuer la traversée
+			return true
+		}
+		lhsIdent, isLhsIdent := assign.Lhs[0].(*ast.Ident)
+		// Vérification du côté gauche
+		if !isLhsIdent || lhsIdent.Name != "_" {
+			// Continuer la traversée
+			return true
+		}
+		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
+		// Vérification du côté droit
+		if isRhsIdent {
+			// Ajouter comme variable ignorée
+			ignored[rhsIdent.Name] = true
 		}
 		// Continuer la traversée
 		return true
@@ -198,24 +213,35 @@ func findParentAssignToBlank(body *ast.BlockStmt, target *ast.Ident) (bool, bool
 	inAssignToBlank := false
 
 	ast.Inspect(body, func(n ast.Node) bool {
+		assign, isAssign := n.(*ast.AssignStmt)
 		// Vérifier si c'est une assignation
-		if assign, ok := n.(*ast.AssignStmt); ok {
-			// Vérifier si le côté gauche est _
-			if len(assign.Lhs) == 1 && len(assign.Rhs) == 1 {
-				// Vérification du côté gauche
-				if lhsIdent, ok := assign.Lhs[0].(*ast.Ident); ok && lhsIdent.Name == "_" {
-					// Vérification du côté droit
-					if rhsIdent, ok := assign.Rhs[0].(*ast.Ident); ok {
-						// Vérification si c'est notre target
-						if rhsIdent.Pos() == target.Pos() {
-							found = true
-							inAssignToBlank = true
-							// Arrêter la recherche
-							return false
-						}
-					}
-				}
-			}
+		if !isAssign {
+			// Continuer la traversée
+			return true
+		}
+		// Vérifier la structure de l'assignation
+		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			// Continuer la traversée
+			return true
+		}
+		lhsIdent, isLhsIdent := assign.Lhs[0].(*ast.Ident)
+		// Vérification du côté gauche
+		if !isLhsIdent || lhsIdent.Name != "_" {
+			// Continuer la traversée
+			return true
+		}
+		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
+		// Vérification du côté droit
+		if !isRhsIdent {
+			// Continuer la traversée
+			return true
+		}
+		// Vérification si c'est notre target
+		if rhsIdent.Pos() == target.Pos() {
+			found = true
+			inAssignToBlank = true
+			// Arrêter la recherche
+			return false
 		}
 		// Continuer la traversée
 		return true

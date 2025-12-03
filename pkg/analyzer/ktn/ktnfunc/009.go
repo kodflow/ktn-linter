@@ -1,3 +1,4 @@
+// Analyzer 009 for the ktnfunc package.
 package ktnfunc
 
 import (
@@ -11,7 +12,7 @@ import (
 )
 
 // Analyzer009 checks that getter functions don't have side effects
-var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer009 = &analysis.Analyzer{
 	Name:     "ktnfunc009",
 	Doc:      "KTN-FUNC-009: Les getters (Get*/Is*/Has*) ne doivent pas avoir de side effects (assignations, appels de fonctions modifiant l'état)",
 	Run:      runFunc009,

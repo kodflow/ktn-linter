@@ -1,6 +1,6 @@
 package var001
 
-// Good: All package-level variables have explicit types
+// Good: Variables with correct type visibility
 
 const (
 	// DEFAULT_TIMEOUT is the default timeout
@@ -13,7 +13,7 @@ const (
 	ANSWER int = 42
 )
 
-// All variables grouped in a single block
+// Cas 1: Type non visible (constante, variable) → type explicite requis
 var (
 	// defaultRetries defines the default number of retries
 	defaultRetries int = DEFAULT_TIMEOUT
@@ -27,6 +27,28 @@ var (
 	serverHost string = "localhost"
 	// maxConnections is the maximum connections
 	maxConnections int = MAX_CONNECTIONS
+)
+
+// Cas 2: Type visible dans composite literal → pas de type explicite
+var (
+	// endpoints is a list of endpoints
+	endpoints = []string{"http://localhost:8080", "http://localhost:9090"}
+	// configMap is a map of configuration values
+	configMap = map[string]int{"timeout": 30, "retries": 3}
+	// buffer is created with make
+	buffer = make([]byte, 1024)
+	// cache is a map created with make
+	cache = make(map[string]string)
+)
+
+// Cas 3: Type visible via conversion de type → pas de type explicite
+var (
+	// convertedInt is a type conversion
+	convertedInt = int(42)
+	// convertedStr is a type conversion
+	convertedStr = string([]byte{72, 101, 108, 108, 111})
+	// convertedFloat is a type conversion
+	convertedFloat = float64(3)
 )
 
 // goodFunction demonstrates correct local variable usage (not checked by VAR-001).

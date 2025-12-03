@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktnstruct package.
 package ktnstruct
 
 import "golang.org/x/tools/go/analysis"

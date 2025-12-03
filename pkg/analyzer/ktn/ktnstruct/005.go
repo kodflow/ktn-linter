@@ -1,3 +1,4 @@
+// Analyzer 005 for the ktnstruct package.
 package ktnstruct
 
 import (
@@ -11,7 +12,7 @@ import (
 )
 
 // Analyzer005 vérifie que les structs exportées avec méthodes ont un constructeur
-var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer005 = &analysis.Analyzer{
 	Name:     "ktnstruct005",
 	Doc:      "KTN-STRUCT-005: Struct exportée avec méthodes doit avoir un constructeur NewX()",
 	Run:      runStruct005,
@@ -53,6 +54,12 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 				continue
 			}
 
+			// Exception: les DTOs n'ont pas besoin de constructeur
+			if shared.IsSerializableStruct(s.structType, s.name) {
+				// DTO - pas besoin de constructeur
+				continue
+			}
+
 			// Chercher un constructeur pour cette struct
 			expectedName := "New" + s.name
 			// Vérification si constructeur trouvé
@@ -81,7 +88,7 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - []structWithMethods: liste des structs avec méthodes
-func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
+func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
 	// Collecter les méthodes
 	methodsByStruct := collectMethodsByStruct(file, pass)
 
@@ -97,13 +104,14 @@ func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, insp
 		}
 
 		// Vérifier si c'est une struct
-		_, isStruct := typeSpec.Type.(*ast.StructType)
+		structType, isStruct := typeSpec.Type.(*ast.StructType)
 		// Si c'est une struct ET exportée
 		if isStruct && ast.IsExported(typeSpec.Name.Name) {
 			structs = append(structs, structWithMethods{
-				name:    typeSpec.Name.Name,
-				node:    typeSpec,
-				methods: methodsByStruct[typeSpec.Name.Name],
+				name:       typeSpec.Name.Name,
+				node:       typeSpec,
+				structType: structType,
+				methods:    methodsByStruct[typeSpec.Name.Name],
 			})
 		}
 

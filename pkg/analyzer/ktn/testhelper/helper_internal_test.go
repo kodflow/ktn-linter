@@ -3,6 +3,7 @@ package testhelper
 import (
 	"errors"
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"os"
 	"path/filepath"
@@ -23,8 +24,9 @@ func createTempGoFile(t *testing.T, content string) string {
 	return tmpFile
 }
 
-// TestRunAnalyzer teste la fonction RunAnalyzer.
-func TestRunAnalyzer(t *testing.T) {
+// Test_runAnalyzerInternal teste le comportement interne de RunAnalyzer.
+// Note: Public API tests are in helper_external_test.go
+func Test_runAnalyzerInternal(t *testing.T) {
 	// Création d'un analyzer de test simple
 	testAnalyzer := &analysis.Analyzer{
 		Name: "test",
@@ -219,8 +221,9 @@ func createTestDataStructure(t *testing.T, testDir, goodContent, badContent stri
 	return tmpDir
 }
 
-// TestTestGoodBad teste la fonction TestGoodBad.
-func TestTestGoodBad(t *testing.T) {
+// Test_testGoodBadInternal teste le comportement interne de TestGoodBad.
+// Note: Public API tests are in helper_external_test.go
+func Test_testGoodBadInternal(t *testing.T) {
 	mockT := &MockTestingT{}
 
 	// Analyzer simple qui ne génère pas de diagnostic
@@ -465,8 +468,9 @@ func (m *MockTestingT) Logf(format string, args ...any) {
 	m.LogfCalled = true
 }
 
-// TestTestGoodBadWithFiles teste la fonction TestGoodBadWithFiles.
-func TestTestGoodBadWithFiles(t *testing.T) {
+// Test_testGoodBadWithFilesInternal teste le comportement interne de TestGoodBadWithFiles.
+// Note: Public API tests are in helper_external_test.go
+func Test_testGoodBadWithFilesInternal(t *testing.T) {
 	tests := []struct {
 		name         string
 		goodContent  string
@@ -673,8 +677,9 @@ func TestParsePackageFiles(t *testing.T) {
 	}
 }
 
-// TestRunAnalyzerOnPackage teste la fonction RunAnalyzerOnPackage.
-func TestRunAnalyzerOnPackage(t *testing.T) {
+// Test_runAnalyzerOnPackageInternal teste le comportement interne de RunAnalyzerOnPackage.
+// Note: Public API tests are in helper_external_test.go
+func Test_runAnalyzerOnPackageInternal(t *testing.T) {
 	const EXPECTED_DIAG_COUNT int = 0
 
 	tests := []struct {
@@ -826,8 +831,9 @@ func TestRunAnalyzerOnPackage(t *testing.T) {
 	}
 }
 
-// TestTestGoodBadPackage teste la fonction TestGoodBadPackage.
-func TestTestGoodBadPackage(t *testing.T) {
+// Test_testGoodBadPackageInternal teste le comportement interne de TestGoodBadPackage.
+// Note: Public API tests are in helper_external_test.go
+func Test_testGoodBadPackageInternal(t *testing.T) {
 	tests := []struct {
 		name           string
 		analyzerFunc   func() *analysis.Analyzer
@@ -992,6 +998,132 @@ func TestTestGoodBadPackage(t *testing.T) {
 				}
 			} else {
 				TestGoodBadPackage(t, testAnalyzer, tt.pkgName, tt.expectedErrors)
+			}
+		})
+	}
+}
+
+// Test_createTypeInfo tests the createTypeInfo private function.
+//
+// Params:
+//   - t: testing context
+func Test_createTypeInfo(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "error case - basic creation",
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			info := createTypeInfo()
+			// Vérification que l'info n'est pas nil
+			if info == nil {
+				t.Error("createTypeInfo() returned nil")
+			}
+			// Vérification que les maps sont initialisées
+			if info.Types == nil {
+				t.Error("Types map is nil")
+			}
+			// Vérification Defs
+			if info.Defs == nil {
+				t.Error("Defs map is nil")
+			}
+			// Vérification Uses
+			if info.Uses == nil {
+				t.Error("Uses map is nil")
+			}
+		})
+	}
+}
+
+// Test_createPass tests the createPass private function.
+//
+// Params:
+//   - t: testing context
+func Test_createPass(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "error case - basic pass creation",
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", "package test", 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			info := createTypeInfo()
+			var diagnostics []analysis.Diagnostic
+			pass := createPass(fset, file, nil, info, &diagnostics)
+
+			// Vérification que le pass n'est pas nil
+			if pass == nil {
+				t.Error("createPass() returned nil")
+			}
+			// Vérification Fset
+			if pass.Fset != fset {
+				t.Error("Pass Fset not set correctly")
+			}
+			// Vérification Files
+			if len(pass.Files) != 1 {
+				t.Errorf("expected 1 file, got %d", len(pass.Files))
+			}
+		})
+	}
+}
+
+// Test_createPassForPackage tests the createPassForPackage private function.
+//
+// Params:
+//   - t: testing context
+func Test_createPassForPackage(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "error case - basic package pass creation",
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", "package test", 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			files := []*ast.File{file}
+			var diagnostics []analysis.Diagnostic
+			pass := createPassForPackage(fset, files, &diagnostics)
+
+			// Vérification que le pass n'est pas nil
+			if pass == nil {
+				t.Error("createPassForPackage() returned nil")
+			}
+			// Vérification Fset
+			if pass.Fset != fset {
+				t.Error("Pass Fset not set correctly")
+			}
+			// Vérification Files
+			if len(pass.Files) != 1 {
+				t.Errorf("expected 1 file, got %d", len(pass.Files))
 			}
 		})
 	}

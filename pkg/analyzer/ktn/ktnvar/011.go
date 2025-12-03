@@ -1,3 +1,4 @@
+// Analyzer 011 for the ktnvar package.
 package ktnvar
 
 import (
@@ -9,7 +10,7 @@ import (
 )
 
 // Analyzer011 checks for strings.Builder/bytes.Buffer without Grow preallocate
-var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer011 = &analysis.Analyzer{
 	Name:     "ktnvar011",
 	Doc:      "KTN-VAR-011: Préallouer bytes.Buffer/strings.Builder avec Grow",
 	Run:      runVar011,

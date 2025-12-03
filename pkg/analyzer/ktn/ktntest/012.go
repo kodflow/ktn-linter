@@ -1,3 +1,4 @@
+// Analyzer 012 for the ktntest package.
 package ktntest
 
 import (
@@ -7,7 +8,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Analyzer012 detects test files not following _internal_test.go or _external_test.go naming convention.
+// Analyzer012 detects test files not following naming convention.
 var Analyzer012 = &analysis.Analyzer{
 	Name: "ktntest012",
 	Doc:  "KTN-TEST-012: fichier de test doit se terminer par _internal_test.go ou _external_test.go",

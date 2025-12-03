@@ -1,3 +1,4 @@
+// Analyzer 007 for the ktnfunc package.
 package ktnfunc
 
 import (
@@ -12,7 +13,7 @@ import (
 
 var (
 	// Analyzer007 checks that all functions have proper documentation
-	Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
+	Analyzer007 = &analysis.Analyzer{
 		Name:     "ktnfunc007",
 		Doc:      "KTN-FUNC-007: Toutes les fonctions doivent avoir une documentation au format strict (description, Params, Returns)",
 		Run:      runFunc007,
@@ -20,14 +21,14 @@ var (
 	}
 
 	// Pattern for Params section header
-	paramsHeaderPattern *regexp.Regexp = regexp.MustCompile(`^//\s*Params:\s*$`)
+	paramsHeaderPattern = regexp.MustCompile(`^//\s*Params:\s*$`)
 	// Pattern for individual Params items
-	paramItemPattern *regexp.Regexp = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
+	paramItemPattern = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
 
 	// Pattern for Returns section header
-	returnsHeaderPattern *regexp.Regexp = regexp.MustCompile(`^//\s*Returns:\s*$`)
+	returnsHeaderPattern = regexp.MustCompile(`^//\s*Returns:\s*$`)
 	// Pattern for individual Returns items
-	returnItemPattern *regexp.Regexp = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
+	returnItemPattern = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
 )
 
 // runFunc007 description à compléter.

@@ -1,3 +1,4 @@
+// Analyzer 004 for the ktnconst package.
 package ktnconst
 
 import (
@@ -11,7 +12,7 @@ import (
 )
 
 // Analyzer004 checks that every constant has an associated comment
-var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer004 = &analysis.Analyzer{
 	Name:     "ktnconst004",
 	Doc:      "KTN-CONST-004: Vérifie que chaque constante a un commentaire associé",
 	Run:      runConst004,

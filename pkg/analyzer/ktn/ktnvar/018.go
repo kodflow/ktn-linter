@@ -1,3 +1,4 @@
+// Analyzer 018 for the ktnvar package.
 package ktnvar
 
 import (
@@ -20,7 +21,7 @@ const (
 //
 // Les conversions string([]byte) répétées créent des allocations inutiles.
 // Il vaut mieux convertir une seule fois et réutiliser la variable.
-var Analyzer018 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer018 = &analysis.Analyzer{
 	Name:     "ktnvar018",
 	Doc:      "KTN-VAR-018: Vérifie les conversions string() répétées",
 	Run:      runVar018,

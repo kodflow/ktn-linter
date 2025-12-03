@@ -1,3 +1,4 @@
+// Analyzer 001 for the ktnpackage package.
 package ktnpackage
 
 import (
@@ -8,7 +9,12 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Analyzer001 vérifie que chaque fichier Go (non-test) a une description avant la déclaration package.
+const (
+	// MIN_COMMENT_LENGTH minimum length for a valid comment
+	MIN_COMMENT_LENGTH int = 3
+)
+
+// Analyzer001 checks that each Go file has a package description comment.
 var Analyzer001 = &analysis.Analyzer{
 	Name: "ktnpackage001",
 	Doc:  "KTN-PACKAGE-001: chaque fichier .go doit avoir un commentaire descriptif avant la déclaration package",
@@ -77,8 +83,8 @@ func checkFileComment(file *ast.File) bool {
 		text = strings.TrimSuffix(text, "*/")
 		text = strings.TrimSpace(text)
 
-		// Si le commentaire contient du texte (au moins 3 caractères), c'est valide
-		if len(text) >= 3 {
+		// Si le commentaire contient du texte (au moins MIN_COMMENT_LENGTH chars)
+		if len(text) >= MIN_COMMENT_LENGTH {
 			// Commentaire valide trouvé
 			return true
 		}

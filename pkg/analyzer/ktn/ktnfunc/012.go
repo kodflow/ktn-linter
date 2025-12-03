@@ -1,3 +1,4 @@
+// Analyzer 012 for the ktnfunc package.
 package ktnfunc
 
 import (
@@ -9,7 +10,7 @@ import (
 )
 
 // Analyzer012 checks for unnecessary else blocks after return/continue/break
-var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer012 = &analysis.Analyzer{
 	Name:     "ktnfunc012",
 	Doc:      "KTN-FUNC-012: Éviter else après return/continue/break (early return préféré)",
 	Run:      runFunc012,

@@ -1,8 +1,10 @@
+// Analyzer 002 for the ktncomment package.
 package ktncomment
 
 import (
 	"go/ast"
 	"go/token"
+	"slices"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -10,7 +12,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const maxCommentLength = 80
+const (
+	// MAX_COMMENT_LENGTH max chars for inline comments
+	MAX_COMMENT_LENGTH int = 80
+)
 
 // Analyzer002 detects inline comments exceeding 80 characters.
 var Analyzer002 = &analysis.Analyzer{
@@ -54,11 +59,11 @@ func runComment002(pass *analysis.Pass) (any, error) {
 				text = strings.TrimSuffix(text, "*/")
 
 				// Check length exceeds limit
-				if len(text) > maxCommentLength {
+				if len(text) > MAX_COMMENT_LENGTH {
 					pass.Reportf(
 						comment.Pos(),
 						"KTN-COMMENT-002: commentaire inline trop long (>%d chars)",
-						maxCommentLength,
+						MAX_COMMENT_LENGTH,
 					)
 				}
 			}
@@ -69,51 +74,43 @@ func runComment002(pass *analysis.Pass) (any, error) {
 }
 
 // isDocComment checks if comment is documentation comment.
+//
 // Params:
 //   - pass: Analysis pass
 //   - file: File containing comment
 //   - comment: Comment to check
+//
+// Returns:
+//   - bool: true if comment is documentation comment
 func isDocComment(
 	pass *analysis.Pass,
 	file *ast.File,
 	comment *ast.Comment,
 ) bool {
-	pos := pass.Fset.Position(comment.Pos())
-	line := pos.Line
+	// Get comment line using helper function
+	line := getCommentLine(pass.Fset, comment)
 
 	// Check if comment is at start of line
 	for _, decl := range file.Decls {
-		declPos := pass.Fset.Position(decl.Pos())
+		declLine := pass.Fset.Position(decl.Pos()).Line
 		// Check if comment precedes declaration
-		if declPos.Line == line+1 || declPos.Line == line {
+		if declLine == line+1 || declLine == line {
 			return true
 		}
 
 		// Check function declarations
 		if funcDecl, ok := decl.(*ast.FuncDecl); ok {
 			// Check if comment is doc comment
-			if funcDecl.Doc != nil {
-				// Verification de la condition
-				for _, c := range funcDecl.Doc.List {
-					// Verification de la condition
-					if c == comment {
-						return true
-					}
-				}
+			if funcDecl.Doc != nil && slices.Contains(funcDecl.Doc.List, comment) {
+				return true
 			}
 		}
 
 		// Check general declarations
 		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			// Check if comment is doc comment
-			if genDecl.Doc != nil {
-				// Verification de la condition
-				for _, c := range genDecl.Doc.List {
-					// Verification de la condition
-					if c == comment {
-						return true
-					}
-				}
+			if genDecl.Doc != nil && slices.Contains(genDecl.Doc.List, comment) {
+				return true
 			}
 		}
 	}
@@ -126,17 +123,25 @@ func isDocComment(
 // Params:
 //   - pass: Analysis pass
 //   - comment: Comment to check
+//
+// Returns:
+//   - bool: true if at line start
 func isCommentAtLineStart(pass *analysis.Pass, comment *ast.Comment) bool {
 	pos := pass.Fset.Position(comment.Pos())
 	// Check if comment is at column 1
 	return pos.Column == 1
 }
 
-// getCommentLine returns line number of comment.
+// getCommentLine returns line number of a comment.
+//
 // Params:
 //   - fset: File set
-//   - comment: Comment to check
+//   - comment: Comment to get line for
+//
+// Returns:
+//   - int: line number of the comment
 func getCommentLine(fset *token.FileSet, comment *ast.Comment) int {
-	// Verification de la condition
+	// Return the line number
 	return fset.Position(comment.Pos()).Line
 }
+

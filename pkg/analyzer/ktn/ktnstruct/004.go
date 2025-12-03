@@ -1,3 +1,4 @@
+// Analyzer 004 for the ktnstruct package.
 package ktnstruct
 
 import (
@@ -16,7 +17,7 @@ const (
 )
 
 // Analyzer004 vérifie que les structs exportées ont une documentation
-var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer004 = &analysis.Analyzer{
 	Name:     "ktnstruct004",
 	Doc:      "KTN-STRUCT-004: Toute struct exportée doit avoir une documentation complète",
 	Run:      runStruct004,

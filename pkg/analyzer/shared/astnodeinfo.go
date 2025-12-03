@@ -1,3 +1,4 @@
+// Shared utilities for astnodeinfo handling.
 package shared
 
 import "go/ast"

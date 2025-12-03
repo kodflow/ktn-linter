@@ -1,3 +1,4 @@
+// Shared utilities for comments handling.
 package shared
 
 import "go/ast"

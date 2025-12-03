@@ -1,3 +1,4 @@
+// Analyzer 015 for the ktnvar package.
 package ktnvar
 
 import (
@@ -10,7 +11,7 @@ import (
 )
 
 // Analyzer015 checks for repeated buffer allocations in loops
-var Analyzer015 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer015 = &analysis.Analyzer{
 	Name:     "ktnvar015",
 	Doc:      "KTN-VAR-015: Vérifie que les buffers répétés utilisent sync.Pool",
 	Run:      runVar015,

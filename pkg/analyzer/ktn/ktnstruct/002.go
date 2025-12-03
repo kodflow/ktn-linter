@@ -1,3 +1,4 @@
+// Analyzer 002 for the ktnstruct package.
 package ktnstruct
 
 import (
@@ -12,7 +13,7 @@ import (
 )
 
 // Analyzer002 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
-var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer002 = &analysis.Analyzer{
 	Name:     "ktnstruct002",
 	Doc:      "KTN-STRUCT-002: Chaque struct doit avoir une interface reprenant 100% de ses méthodes publiques",
 	Run:      runStruct002,
@@ -21,9 +22,10 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 
 // structWithMethods stocke une struct et ses méthodes publiques
 type structWithMethods struct {
-	name    string
-	node    *ast.TypeSpec
-	methods []shared.MethodSignature
+	name       string
+	node       *ast.TypeSpec
+	structType *ast.StructType
+	methods    []shared.MethodSignature
 }
 
 // runStruct002 exécute l'analyse KTN-STRUCT-002.
@@ -58,6 +60,12 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 			// Si la struct n'a pas de méthodes publiques, skip
 			if len(s.methods) == 0 {
 				// Continuer avec la struct suivante
+				continue
+			}
+
+			// Exception: les DTOs n'ont pas besoin d'interface
+			if shared.IsSerializableStruct(s.structType, s.name) {
+				// DTO - pas besoin d'interface
 				continue
 			}
 
@@ -225,7 +233,7 @@ func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]sh
 //
 // Returns:
 //   - []structWithMethods: liste des structs avec méthodes
-func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
+func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
 	// Collecter les méthodes
 	methodsByStruct := collectMethodsByStruct(file, pass)
 
@@ -241,13 +249,14 @@ func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspec
 		}
 
 		// Vérifier si c'est une struct
-		_, isStruct := typeSpec.Type.(*ast.StructType)
+		structType, isStruct := typeSpec.Type.(*ast.StructType)
 		// Si c'est une struct
 		if isStruct {
 			structs = append(structs, structWithMethods{
-				name:    typeSpec.Name.Name,
-				node:    typeSpec,
-				methods: methodsByStruct[typeSpec.Name.Name],
+				name:       typeSpec.Name.Name,
+				node:       typeSpec,
+				structType: structType,
+				methods:    methodsByStruct[typeSpec.Name.Name],
 			})
 		}
 
@@ -322,7 +331,7 @@ func interfaceCoversAllMethods(structMethods []shared.MethodSignature, ifaceMeth
 //
 // Returns:
 //   - string: représentation string
-func formatFieldList(fields *ast.FieldList, pass *analysis.Pass) string {
+func formatFieldList(fields *ast.FieldList, _pass *analysis.Pass) string {
 	// Si pas de champs
 	if fields == nil {
 		// Retour vide

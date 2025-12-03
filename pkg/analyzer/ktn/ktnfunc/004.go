@@ -12,12 +12,12 @@ import (
 
 // Analyzer004 checks that functions don't use naked returns (except for very short functions)
 const (
-	// MAX_LINES_FOR_NAKED_RETURN définit le nombre maximum de lignes pour autoriser un naked return
+	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
 	MAX_LINES_FOR_NAKED_RETURN int = 5
 )
 
 // Analyzer004 checks that naked returns are only used in very short functions
-var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer004 = &analysis.Analyzer{
 	Name:     "ktnfunc004",
 	Doc:      "KTN-FUNC-004: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
 	Run:      runFunc004,

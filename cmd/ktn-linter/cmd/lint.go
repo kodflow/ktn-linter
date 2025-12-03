@@ -1,3 +1,4 @@
+// Lint command implementation for analyzing Go code.
 package cmd
 
 import (
@@ -16,6 +17,13 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+const (
+	// INITIAL_FILE_EDITS_CAP initial capacity for file edits map
+	INITIAL_FILE_EDITS_CAP int = 16
+	// FILE_PERMISSION_RW read-write permission for file operations
+	FILE_PERMISSION_RW os.FileMode = 0644
+)
+
 // diagWithFset associe un diagnostic avec son FileSet et son analyseur
 type diagWithFset struct {
 	diag         analysis.Diagnostic
@@ -24,7 +32,7 @@ type diagWithFset struct {
 }
 
 // lintCmd represents the lint command
-var lintCmd *cobra.Command = &cobra.Command{
+var lintCmd = &cobra.Command{
 	Use:   "lint [packages...]",
 	Short: "Lint Go packages using KTN rules",
 	Long: `Lint analyzes Go packages and reports issues based on KTN conventions.
@@ -54,7 +62,7 @@ func init() {
 //   - args: arguments de la ligne de commande
 //
 // Returns: aucun
-func runLint(cmd *cobra.Command, args []string) {
+func runLint(_cmd *cobra.Command, args []string) {
 	pkgs := loadPackages(args)
 	diagnostics := runAnalyzers(pkgs)
 
@@ -160,7 +168,7 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	if Category != "" {
 		analyzers = ktn.GetRulesByCategory(Category)
 		// Vérification de la condition
-		if analyzers == nil {
+		if len(analyzers) == 0 {
 			fmt.Fprintf(os.Stderr, "Unknown category: %s\n", Category)
 			OsExit(1)
 		}
@@ -376,6 +384,51 @@ func filterDiagnostics(diagnostics []diagWithFset) []diagWithFset {
 	return filtered
 }
 
+// isModernizeAnalyzer vérifie si un analyseur est un analyseur modernize.
+//
+// Params:
+//   - name: nom de l'analyseur
+//
+// Returns:
+//   - bool: true si c'est un analyseur modernize
+func isModernizeAnalyzer(name string) bool {
+	// Liste des analyseurs modernize de golang.org/x/tools (mise à jour)
+	modernizeAnalyzers := map[string]bool{
+		"any":              true,
+		"bloop":            true,
+		"fmtappendf":       true,
+		"forvar":           true,
+		"mapsloop":         true,
+		"minmax":           true,
+		"newexpr":          true,
+		"omitzero":         true,
+		"rangeint":         true,
+		"reflecttypefor":   true,
+		"slicescontains":   true,
+		"slicessort":       true,
+		"stditerators":     true,
+		"stringscutprefix": true,
+		"stringsseq":       true,
+		"stringsbuilder":   true,
+		"testingcontext":   true,
+		"waitgroup":        true,
+	}
+	// Retour du résultat
+	return modernizeAnalyzers[name]
+}
+
+// formatModernizeCode formate un nom d'analyseur en code KTN-MDRNZ.
+//
+// Params:
+//   - name: nom de l'analyseur
+//
+// Returns:
+//   - string: code formaté (ex: "KTN-MDRNZ-ANY")
+func formatModernizeCode(name string) string {
+	// Retour du code formaté en majuscules
+	return "KTN-MDRNZ-" + strings.ToUpper(name)
+}
+
 // extractDiagnostics extrait et déduplique les diagnostics.
 //
 // Params:
@@ -403,17 +456,16 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	diags := make([]analysis.Diagnostic, 0, len(deduped))
 	// Itération sur les éléments
 	for _, d := range deduped {
-		diags = append(diags, d.diag)
+		diag := d.diag
+		// Préfixer les messages modernize avec le code KTN-MDRNZ
+		if isModernizeAnalyzer(d.analyzerName) && !strings.HasPrefix(diag.Message, "KTN-") {
+			code := formatModernizeCode(d.analyzerName)
+			diag.Message = code + ": " + diag.Message
+		}
+		diags = append(diags, diag)
 	}
 	// Early return from function.
 	return diags
-}
-
-// textEdit représente une modification de texte avec position.
-type textEdit struct {
-	start   int
-	end     int
-	newText []byte
 }
 
 // applyFixes applique les fixes suggérés aux fichiers source.
@@ -453,7 +505,7 @@ func applyFixes(diagnostics []diagWithFset) int {
 //   - map[string][]textEdit: éditions groupées par fichier
 //   - int: nombre de fixes skippés
 func collectSafeEdits(diagnostics []diagWithFset, safeAnalyzers map[string]bool) (map[string][]textEdit, int) {
-	fileEdits := make(map[string][]textEdit)
+	fileEdits := make(map[string][]textEdit, INITIAL_FILE_EDITS_CAP)
 	skippedCount := 0
 
 	// Parcourir tous les diagnostics
@@ -597,7 +649,7 @@ func applyEditsToFile(filename string, edits []textEdit) bool {
 	}
 
 	// Write back to file with same permissions
-	err = os.WriteFile(filename, result, 0644)
+	err = os.WriteFile(filename, result, FILE_PERMISSION_RW)
 	// Vérification de la condition
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", filename, err)

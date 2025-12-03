@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktncomment package.
 package ktncomment
 
 import "golang.org/x/tools/go/analysis"
