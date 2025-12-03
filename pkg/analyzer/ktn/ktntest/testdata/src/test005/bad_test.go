@@ -6,6 +6,19 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test005"
 )
 
+// TestCalculatorTwoAssertions teste avec 2 assertions sans table-driven (PAS BIEN)
+func TestCalculatorTwoAssertions(t *testing.T) {
+	result, err := test005.Calculator("+", 2, 3)
+	// Vérification pas d'erreur
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	// Vérification résultat - 2ème assertion déclenche la règle
+	if result != 5 {
+		t.Errorf("got %d, want 5", result)
+	}
+}
+
 // TestStringLengthMultipleCases teste plusieurs cas sans table-driven (PAS BIEN)
 func TestStringLengthMultipleCases(t *testing.T) {
 	// Test cas 1

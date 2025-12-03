@@ -473,13 +473,13 @@ func TestExample(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "2 assertions t.Error (ne devrait pas déclencher)",
+			name: "2 assertions t.Error (devrait déclencher avec MIN_TEST_CASES=2)",
 			code: `package test
 func TestExample(t *testing.T) {
 	t.Error("error 1")
 	t.Error("error 2")
 }`,
-			want: false,
+			want: true,
 		},
 		{
 			name: "3 assertions assert.Equal (devrait déclencher)",

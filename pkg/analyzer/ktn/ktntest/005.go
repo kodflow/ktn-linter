@@ -14,9 +14,8 @@ import (
 
 const (
 	// MIN_TEST_CASES est le nombre minimum de cas de test pour table-driven
-	// Note: 3 assertions = pattern répétitif qui devrait utiliser table-driven
-	// 2 assertions = normal (ex: vérifier erreur + résultat)
-	MIN_TEST_CASES int = 3
+	// Note: 2 assertions = pattern répétitif qui devrait utiliser table-driven
+	MIN_TEST_CASES int = 2
 )
 
 // Analyzer005 checks that tests use table-driven test pattern

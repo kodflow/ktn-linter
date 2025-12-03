@@ -6,14 +6,10 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test005"
 )
 
-// TestCalculatorSingleCase teste un seul cas simple (BIEN - une seule assertion)
-func TestCalculatorSingleCase(t *testing.T) {
-	result, err := test005.Calculator("+", 2, 3)
-	// Vérification pas d'erreur
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Vérification résultat
+// TestCalculatorSingleAssertion teste un seul cas avec une seule assertion (BIEN)
+func TestCalculatorSingleAssertion(t *testing.T) {
+	result, _ := test005.Calculator("+", 2, 3)
+	// Vérification résultat uniquement
 	if result != 5 {
 		t.Errorf("got %d, want 5", result)
 	}

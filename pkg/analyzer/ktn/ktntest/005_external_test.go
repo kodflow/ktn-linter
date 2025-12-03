@@ -8,7 +8,8 @@ import (
 )
 
 func TestTest005(t *testing.T) {
-	// 7 erreurs: tests sans table-driven pattern
+	// 8 erreurs: tests sans table-driven pattern (>= 2 assertions)
+	// - TestCalculatorTwoAssertions (2 assertions)
 	// - TestStringLengthMultipleCases
 	// - TestIsEmptyRepeatedAssertions
 	// - TestToUpperManyScenarios
@@ -16,5 +17,5 @@ func TestTest005(t *testing.T) {
 	// - TestCountWordsMultipleInputs
 	// - TestWithAssertManyScenarios (testify/assert)
 	// - TestWithRequireManyScenarios (testify/require)
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer005, "test005", "good_test.go", "bad_test.go", 7)
+	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer005, "test005", "good_test.go", "bad_test.go", 8)
 }
