@@ -1,3 +1,4 @@
+// Analyzer 012 for the ktnfunc package.
 package ktnfunc
 
 import (

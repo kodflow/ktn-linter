@@ -12,7 +12,7 @@ import (
 
 // Analyzer002 checks that functions don't have too many parameters
 const (
-	// MAX_PARAMS définit le nombre maximum de paramètres autorisés dans une fonction
+	// MAX_PARAMS max params allowed in a function
 	MAX_PARAMS int = 5
 )
 

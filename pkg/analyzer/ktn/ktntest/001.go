@@ -1,8 +1,10 @@
+// Analyzer 001 for the ktntest package.
 package ktntest
 
 import (
 	"go/ast"
 	"path/filepath"
+	"slices"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -91,15 +93,6 @@ func isExemptPackage(pkgName string) bool {
 		"ktnvar",    // registry tests need same package for KTN-TEST-003
 	}
 
-	// Parcours des packages exemptés
-	for _, exempt := range exemptPkgs {
-		// Vérification de la condition
-		if pkgName == exempt {
-			// Package exempté
-			return true
-		}
-	}
-
-	// Package non exempté
-	return false
+	// Vérifier si le package est exempté
+	return slices.Contains(exemptPkgs, pkgName)
 }

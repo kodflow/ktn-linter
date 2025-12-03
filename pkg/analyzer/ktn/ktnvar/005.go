@@ -1,3 +1,4 @@
+// Analyzer 005 for the ktnvar package.
 package ktnvar
 
 import (

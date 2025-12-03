@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktnreturn package.
 package ktnreturn
 
 import "golang.org/x/tools/go/analysis"

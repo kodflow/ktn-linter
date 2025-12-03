@@ -1,3 +1,4 @@
+// Analyzer 002 for the ktnstruct package.
 package ktnstruct
 
 import (
@@ -225,7 +226,7 @@ func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]sh
 //
 // Returns:
 //   - []structWithMethods: liste des structs avec méthodes
-func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
+func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
 	// Collecter les méthodes
 	methodsByStruct := collectMethodsByStruct(file, pass)
 
@@ -322,7 +323,7 @@ func interfaceCoversAllMethods(structMethods []shared.MethodSignature, ifaceMeth
 //
 // Returns:
 //   - string: représentation string
-func formatFieldList(fields *ast.FieldList, pass *analysis.Pass) string {
+func formatFieldList(fields *ast.FieldList, _pass *analysis.Pass) string {
 	// Si pas de champs
 	if fields == nil {
 		// Retour vide

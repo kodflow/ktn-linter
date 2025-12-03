@@ -1,3 +1,4 @@
+// Analyzer 004 for the ktnconst package.
 package ktnconst
 
 import (

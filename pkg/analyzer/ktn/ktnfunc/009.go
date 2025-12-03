@@ -1,3 +1,4 @@
+// Analyzer 009 for the ktnfunc package.
 package ktnfunc
 
 import (

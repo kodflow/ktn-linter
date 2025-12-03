@@ -1,3 +1,4 @@
+// Shared utilities for types handling.
 package shared
 
 import (

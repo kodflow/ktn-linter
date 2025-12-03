@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// INITIAL_ALLOWED_LITERALS_CAP définit la capacité initiale pour allowed literals map
+	// INITIAL_ALLOWED_LITERALS_CAP initial cap for allowed literals
 	INITIAL_ALLOWED_LITERALS_CAP int = 32
 )
 

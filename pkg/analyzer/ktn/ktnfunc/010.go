@@ -12,7 +12,7 @@ import (
 
 // Analyzer010 checks that functions with >3 return values use named returns
 const (
-	// MAX_UNNAMED_RETURNS définit le nombre maximum de retours non-nommés autorisés
+	// MAX_UNNAMED_RETURNS max unnamed returns allowed
 	MAX_UNNAMED_RETURNS int = 3
 )
 

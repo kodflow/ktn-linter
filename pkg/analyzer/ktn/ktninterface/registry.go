@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktninterface package.
 package ktninterface
 
 import "golang.org/x/tools/go/analysis"

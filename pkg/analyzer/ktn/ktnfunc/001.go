@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	// MAX_PURE_CODE_LINES définit le nombre maximum de lignes de code pur autorisées dans une fonction
+	// MAX_PURE_CODE_LINES max lines of pure code in a function
 	MAX_PURE_CODE_LINES int = 35
 )
 

@@ -12,7 +12,7 @@ import (
 
 // Analyzer005 checks that functions don't exceed cyclomatic complexity of 10
 const (
-	// MAX_CYCLOMATIC_COMPLEXITY définit la complexité cyclomatique maximale autorisée
+	// MAX_CYCLOMATIC_COMPLEXITY max cyclomatic complexity
 	MAX_CYCLOMATIC_COMPLEXITY int = 10
 )
 

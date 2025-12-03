@@ -43,7 +43,7 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 		// Collecter toutes les structs du fichier
 		structs := collectStructs(file)
 
-		// Si plus d'une struct, reporter une erreur pour chaque struct après la première
+		// If more than one struct, report error for each
 		if len(structs) > 1 {
 			// Itération sur les structs (à partir de la 2ème)
 			for i := 1; i < len(structs); i++ {

@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktnvar package.
 package ktnvar
 
 import "golang.org/x/tools/go/analysis"

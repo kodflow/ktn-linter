@@ -1,3 +1,4 @@
+// Analyzer 003 for the ktntest package.
 package ktntest
 
 import (
@@ -6,6 +7,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -16,6 +18,8 @@ import (
 const (
 	// MIN_PUBLIC_FUNCS est le nombre minimum de fonctions publiques
 	MIN_PUBLIC_FUNCS int = 1
+	// MAX_TEST_NAMES maximum number of test names to check per function
+	MAX_TEST_NAMES int = 2
 )
 
 // funcInfo stores information about a function (public or private)
@@ -92,6 +96,33 @@ func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[st
 //   - error: erreur éventuelle
 func runTest003(pass *analysis.Pass) (any, error) {
 	// Vérifier s'il y a des fichiers de test dans ce pass
+	hasTestFiles, testFileCount := countTestFiles(pass)
+
+	// Si pas de fichiers de test ou que des fichiers de test, skip
+	if !hasTestFiles || testFileCount == len(pass.Files) {
+		// Early return from function
+		return nil, nil
+	}
+
+	// Collecter toutes les fonctions et les tests
+	allFuncs, testedFuncs := collectAllFunctionsAndTests(pass)
+
+	// Vérifier que chaque fonction a un test
+	checkFunctionsHaveTests(pass, allFuncs, testedFuncs)
+
+	// Retour de la fonction
+	return nil, nil
+}
+
+// countTestFiles compte les fichiers de test dans le pass.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si des fichiers de test existent
+//   - int: nombre de fichiers de test
+func countTestFiles(pass *analysis.Pass) (bool, int) {
 	hasTestFiles := false
 	testFileCount := 0
 	// Parcourir les fichiers pour compter les tests
@@ -103,102 +134,166 @@ func runTest003(pass *analysis.Pass) (any, error) {
 			testFileCount++
 		}
 	}
+	// Retour des compteurs
+	return hasTestFiles, testFileCount
+}
 
-	// Si pas de fichiers de test, skip cette analyse
-	// (cela arrive quand le package est analysé sans son variant de test)
-	if !hasTestFiles {
-		// Early return from function.
-		return nil, nil
-	}
-
-	// If we only have test files, this is probably a separate test package - skip it
-	if testFileCount == len(pass.Files) {
-		// Early return from function.
-		return nil, nil
-	}
-
-	// Liste de toutes les fonctions (publiques et privées) avec leurs positions
+// collectAllFunctionsAndTests collecte les fonctions et les tests.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - []funcInfo: liste des fonctions
+//   - map[string]bool: map des fonctions testées
+func collectAllFunctionsAndTests(pass *analysis.Pass) ([]funcInfo, map[string]bool) {
 	var allFuncs []funcInfo
-	// Map des fonctions testées
 	testedFuncs := make(map[string]bool, 0)
 
 	// Collecter toutes les fonctions et les tests
 	collectFunctions(pass, &allFuncs, testedFuncs)
 
-	// Toujours scanner les packages _test externes (XTestGoFiles)
-	// pour détecter tous les tests, même si on a des tests internes
+	// Scanner les packages _test externes
 	collectExternalTestFunctions(pass, testedFuncs)
 
-	// Vérifier que chaque fonction (publique ou privée) a un test
+	// Retour des collections
+	return allFuncs, testedFuncs
+}
+
+// checkFunctionsHaveTests vérifie que chaque fonction a un test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - allFuncs: liste des fonctions
+//   - testedFuncs: map des fonctions testées
+func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFuncs map[string]bool) {
+	// Pré-allouer le slice pour les noms de test
+	testNames := make([]string, 0, MAX_TEST_NAMES)
+
+	// Vérifier chaque fonction
 	for _, fn := range allFuncs {
-		// Construire les noms possibles pour le test
-		testNames := []string{fn.name}
-		// Si c'est une méthode, ajouter aussi le pattern Receiver_Method
-		if fn.receiverName != "" {
-			testNames = append(testNames, fn.receiverName+"_"+fn.name)
-		}
+		// Réinitialiser et construire les noms de test possibles
+		testNames = buildTestNames(testNames[:0], fn)
 
 		// Vérifier si au moins un des noms possibles a un test
-		hasTest := false
-		// Parcours des noms de test possibles
-		for _, testName := range testNames {
-			// Vérification de la condition
-			if testedFuncs[testName] {
-				hasTest = true
-				// Test trouvé
-				break
-			}
-		}
-
-		// Vérification de la condition
-		if !hasTest && !isExemptFunction(fn.name) {
-			// Construire le nom du test suggéré
-			suggestedTestName := "Test" + fn.name
-			// Si c'est une fonction privée (lowercase), ajouter underscore pour respect Go conventions
-			if !fn.isExported && fn.receiverName == "" {
-				suggestedTestName = "Test_" + fn.name
-			}
-			// Si c'est une méthode, suggérer le pattern Type_Method
-			if fn.receiverName != "" {
-				suggestedTestName = "Test" + fn.receiverName + "_" + fn.name
-			}
-
-			// Extraire le nom de base du fichier pour construire le nom du fichier de test
-			baseName := filepath.Base(fn.filename)
-			fileBase := strings.TrimSuffix(baseName, ".go")
-
-			// Déterminer le fichier et le type de test selon si la fonction est exportée
-			var suggestedTestFile string
-			var testType string
-			var funcType string
-			// Vérification du type de fonction
-			if fn.isExported {
-				// Fonction publique → test black-box dans _external_test.go
-				suggestedTestFile = fileBase + "_external_test.go"
-				testType = "black-box testing avec package xxx_test"
-				funcType = "publique"
-			} else {
-				// Fonction privée → test white-box dans _internal_test.go
-				suggestedTestFile = fileBase + "_internal_test.go"
-				testType = "white-box testing avec package xxx"
-				funcType = "privée"
-			}
-
-			// Fonction non testée - reporter à la position de la fonction
-			pass.Reportf(
-				fn.pos,
-				"KTN-TEST-003: fonction %s '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (%s)",
-				funcType,
-				fn.name,
-				suggestedTestName,
-				suggestedTestFile,
-				testType,
-			)
+		if !hasMatchingTest(testNames, testedFuncs) && !isExemptFunction(fn.name) {
+			reportMissingTest(pass, fn)
 		}
 	}
+}
 
-	// Retour de la fonction
-	return nil, nil
+// buildTestNames construit les noms de test possibles pour une fonction.
+//
+// Params:
+//   - testNames: slice à remplir (doit être vide)
+//   - fn: information sur la fonction
+//
+// Returns:
+//   - []string: noms de test possibles
+func buildTestNames(testNames []string, fn funcInfo) []string {
+	// Ajouter le nom simple
+	testNames = append(testNames, fn.name)
+	// Si c'est une méthode, ajouter aussi le pattern Receiver_Method
+	if fn.receiverName != "" {
+		testNames = append(testNames, fn.receiverName+"_"+fn.name)
+	}
+	// Retour des noms
+	return testNames
+}
+
+// hasMatchingTest vérifie si un test existe pour les noms donnés.
+//
+// Params:
+//   - testNames: noms de test à chercher
+//   - testedFuncs: map des fonctions testées
+//
+// Returns:
+//   - bool: true si un test existe
+func hasMatchingTest(testNames []string, testedFuncs map[string]bool) bool {
+	// Parcours des noms de test possibles
+	for _, testName := range testNames {
+		// Vérification de la condition (case-sensitive)
+		if testedFuncs[testName] {
+			// Test trouvé
+			return true
+		}
+		// Vérification case-insensitive pour les méthodes
+		for testedName := range testedFuncs {
+			// Comparaison insensible à la casse
+			if strings.EqualFold(testName, testedName) {
+				// Test trouvé
+				return true
+			}
+		}
+	}
+	// Pas de test trouvé
+	return false
+}
+
+// reportMissingTest reporte une fonction sans test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - fn: information sur la fonction
+func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
+	// Construire le nom du test suggéré
+	suggestedTestName := buildSuggestedTestName(fn)
+
+	// Extraire le nom de base du fichier
+	baseName := filepath.Base(fn.filename)
+	fileBase := strings.TrimSuffix(baseName, ".go")
+
+	// Déterminer le fichier et le type de test
+	suggestedTestFile, testType, funcType := getTestFileInfo(fn.isExported, fileBase)
+
+	// Reporter la fonction non testée
+	pass.Reportf(
+		fn.pos,
+		"KTN-TEST-003: fonction %s '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (%s)",
+		funcType, fn.name, suggestedTestName, suggestedTestFile, testType,
+	)
+}
+
+// buildSuggestedTestName construit le nom de test suggéré.
+//
+// Params:
+//   - fn: information sur la fonction
+//
+// Returns:
+//   - string: nom de test suggéré
+func buildSuggestedTestName(fn funcInfo) string {
+	// Si c'est une méthode, suggérer le pattern Type_Method
+	if fn.receiverName != "" {
+		// Retour du pattern méthode
+		return "Test" + fn.receiverName + "_" + fn.name
+	}
+	// Private function: add underscore per Go conventions
+	if !fn.isExported {
+		// Retour du pattern privé
+		return "Test_" + fn.name
+	}
+	// Public function: simple pattern
+	return "Test" + fn.name
+}
+
+// getTestFileInfo retourne les informations sur le fichier de test.
+//
+// Params:
+//   - isExported: true si fonction publique
+//   - fileBase: nom de base du fichier
+//
+// Returns:
+//   - string: nom du fichier de test suggéré
+//   - string: type de test
+//   - string: type de fonction
+func getTestFileInfo(isExported bool, fileBase string) (string, string, string) {
+	// Vérification du type de fonction
+	if isExported {
+		// Fonction publique → test black-box
+		return fileBase + "_external_test.go", "black-box testing avec package xxx_test", "publique"
+	}
+	// Fonction privée → test white-box
+	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
 }
 
 // isPublicFunction vérifie si une fonction est publique.
@@ -240,7 +335,7 @@ func collectTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool)
 
 	// Extraire le nom de la fonction testée
 	testedName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
-	// Gérer le format Test_functionName pour les fonctions privées (enlever l'underscore)
+	// Handle Test_functionName format for private funcs
 	testedName = strings.TrimPrefix(testedName, "_")
 
 	// Vérification de la condition
@@ -320,7 +415,8 @@ func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bo
 
 		// Parser le fichier pour extraire les tests
 		fset := token.NewFileSet()
-		node, err := parser.ParseFile(fset, fullPath, nil, 0)
+		var node *ast.File
+		node, err = parser.ParseFile(fset, fullPath, nil, 0)
 		// Si erreur de parsing, continuer avec le prochain fichier
 		if err != nil {
 			// Continuer avec le prochain
@@ -358,15 +454,6 @@ func isExemptFunction(funcName string) bool {
 		"main",
 	}
 
-	// Parcours des fonctions exemptées
-	for _, exempt := range exemptFuncs {
-		// Vérification de la condition
-		if funcName == exempt {
-			// Fonction exemptée
-			return true
-		}
-	}
-
-	// Fonction non exemptée
-	return false
+	// Vérifier si la fonction est exemptée
+	return slices.Contains(exemptFuncs, funcName)
 }

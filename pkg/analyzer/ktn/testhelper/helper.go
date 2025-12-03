@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	// INITIAL_TYPE_MAP_CAP définit la capacité initiale pour Types, Defs, Uses
+	// INITIAL_TYPE_MAP_CAP initial cap for Types/Defs/Uses
 	INITIAL_TYPE_MAP_CAP int = 64
-	// INITIAL_SELECTOR_MAP_CAP définit la capacité initiale pour Implicits, Selections, Scopes
+	// INITIAL_SELECTOR_MAP_CAP initial cap for Implicits/Selections
 	INITIAL_SELECTOR_MAP_CAP int = 16
-	// INITIAL_ANALYZER_MAP_CAP définit la capacité initiale pour ResultOf
+	// INITIAL_ANALYZER_MAP_CAP initial cap for ResultOf
 	INITIAL_ANALYZER_MAP_CAP int = 8
 )
 
@@ -84,7 +84,7 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 		// Retour de la fonction avec erreur fatale
 		t.Fatalf("failed to parse %s: %v", filename, err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return nil
+		return []analysis.Diagnostic{}
 	}
 
 	// Création de la configuration de type checking
@@ -108,7 +108,7 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 			// Retour de la fonction avec erreur fatale
 			t.Fatalf("required analyzer %s failed: %v", req.Name, err)
 			// Retour anticipé pour les mocks qui ne terminent pas le test
-			return nil
+			return []analysis.Diagnostic{}
 		}
 		pass.ResultOf[req] = result
 	}
@@ -119,7 +119,7 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 		// Retour de la fonction avec erreur fatale
 		t.Fatalf("analyzer failed: %v", err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return nil
+		return []analysis.Diagnostic{}
 	}
 
 	// Retour de la fonction avec les diagnostics
@@ -188,7 +188,7 @@ func parsePackageFiles(t TestingT, dir string, fset *token.FileSet) []*ast.File 
 	if err != nil {
 		t.Fatalf("failed to read directory %s: %v", dir, err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return nil
+		return []*ast.File{}
 	}
 
 	var files []*ast.File
@@ -206,7 +206,7 @@ func parsePackageFiles(t TestingT, dir string, fset *token.FileSet) []*ast.File 
 		if parseErr != nil {
 			t.Fatalf("failed to parse %s: %v", filepath, parseErr)
 			// Retour anticipé pour les mocks qui ne terminent pas le test
-			return nil
+			return []*ast.File{}
 		}
 		files = append(files, file)
 	}
@@ -215,7 +215,7 @@ func parsePackageFiles(t TestingT, dir string, fset *token.FileSet) []*ast.File 
 	if len(files) == 0 {
 		t.Fatalf("no .go files found in %s", dir)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return nil
+		return []*ast.File{}
 	}
 
 	// Retour de la liste des fichiers parsés
@@ -281,7 +281,7 @@ func RunAnalyzerOnPackage(t TestingT, analyzer *analysis.Analyzer, dir string) [
 		if err != nil {
 			t.Fatalf("required analyzer %s failed: %v", req.Name, err)
 			// Retour anticipé pour les mocks qui ne terminent pas le test
-			return nil
+			return []analysis.Diagnostic{}
 		}
 		pass.ResultOf[req] = result
 	}
@@ -291,7 +291,7 @@ func RunAnalyzerOnPackage(t TestingT, analyzer *analysis.Analyzer, dir string) [
 	if err != nil {
 		t.Fatalf("analyzer failed: %v", err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return nil
+		return []analysis.Diagnostic{}
 	}
 
 	// Retour de la liste des diagnostics

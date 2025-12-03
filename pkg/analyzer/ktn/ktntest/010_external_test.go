@@ -12,23 +12,27 @@ import (
 // Params:
 //   - t: instance de test
 func TestTest010(t *testing.T) {
-	// Test du package good (doit avoir 0 erreur - les tests sont dans les bons fichiers)
-	goodDir := "testdata/src/test010/good"
-	diags := testhelper.RunAnalyzerOnPackage(t, ktntest.Analyzer010, goodDir)
-	if len(diags) != 0 {
-		t.Errorf("%s should have 0 errors, got %d", goodDir, len(diags))
-		for _, d := range diags {
-			t.Logf("  %v", d.Message)
-		}
+	tests := []struct {
+		name           string
+		dir            string
+		expectedErrors int
+	}{
+		{"good - tests in correct files", "testdata/src/test010/good", 0},
+		{"bad - private test in external error case", "testdata/src/test010/bad", 1},
 	}
 
-	// Test bad (doit avoir 1 erreur - test de fonction privée dans _external_test.go)
-	badDir := "testdata/src/test010/bad"
-	diags = testhelper.RunAnalyzerOnPackage(t, ktntest.Analyzer010, badDir)
-	if len(diags) != 1 {
-		t.Errorf("%s should have 1 error, got %d", badDir, len(diags))
-		for _, d := range diags {
-			t.Logf("  %v", d.Message)
-		}
+	// Itération sur les cas de test
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			diags := testhelper.RunAnalyzerOnPackage(t, ktntest.Analyzer010, tc.dir)
+			// Vérification du nombre de diagnostics
+			if len(diags) != tc.expectedErrors {
+				t.Errorf("%s should have %d errors, got %d", tc.dir, tc.expectedErrors, len(diags))
+				// Affichage des diagnostics
+				for _, d := range diags {
+					t.Logf("  %v", d.Message)
+				}
+			}
+		})
 	}
 }

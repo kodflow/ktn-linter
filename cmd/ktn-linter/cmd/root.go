@@ -1,3 +1,4 @@
+// Root command configuration for the ktn-linter CLI.
 package cmd
 
 import (

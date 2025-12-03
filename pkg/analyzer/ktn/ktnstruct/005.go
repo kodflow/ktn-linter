@@ -1,3 +1,4 @@
+// Analyzer 005 for the ktnstruct package.
 package ktnstruct
 
 import (
@@ -81,7 +82,7 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - []structWithMethods: liste des structs avec méthodes
-func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, insp *inspector.Inspector) []structWithMethods {
+func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
 	// Collecter les méthodes
 	methodsByStruct := collectMethodsByStruct(file, pass)
 

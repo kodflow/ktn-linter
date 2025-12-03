@@ -1,3 +1,4 @@
+// Shared utilities for funcinfo handling.
 package shared
 
 import "go/token"

@@ -1,3 +1,4 @@
+// Analyzer 003 for the ktnstruct package.
 package ktnstruct
 
 import (

@@ -48,8 +48,8 @@ func runConst001(pass *analysis.Pass) (any, error) {
 
 			// Check if the constant has an explicit type
 			if valueSpec.Type == nil {
-				// If there are values, it's an error (not inheriting from iota pattern)
-				// If there are no values, it's OK (inheriting type and value from previous line - iota pattern)
+				// Error if value present (not iota inheritance)
+				// OK if no value (inherits from previous)
 				if len(valueSpec.Values) > 0 {
 					// Itération sur les éléments
 					for _, name := range valueSpec.Names {

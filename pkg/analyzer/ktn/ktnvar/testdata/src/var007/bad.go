@@ -93,3 +93,17 @@ func badMakeByteSlice() []byte {
 	// Retour de la fonction
 	return buffer
 }
+
+// badEmptyLiteralWithAppend creates empty literal then appends
+//
+// Returns:
+//   - []int: slice that should use make with capacity
+func badEmptyLiteralWithAppend() []int {
+	// Bad: []T{} with subsequent append should use make
+	numbers := []int{}
+	// Ajout d'éléments
+	numbers = append(numbers, SMALL_LOOP_COUNT)
+	numbers = append(numbers, MAX_SIZE)
+	// Retour de la fonction
+	return numbers
+}

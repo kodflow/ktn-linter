@@ -1,3 +1,4 @@
+// Implementation of the formatter interface.
 package formatter
 
 import (

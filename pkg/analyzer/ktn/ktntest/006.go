@@ -26,7 +26,7 @@ var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest006(pass *analysis.Pass) (any, error) {
-	// Ignorer les packages xxx_test (ils testent le package entier, pas des fichiers spécifiques)
+	// Ignore xxx_test packages (test entire package)
 	packageName := pass.Pkg.Name()
 	// Vérification de la condition
 	if strings.HasSuffix(packageName, "_test") {
@@ -46,17 +46,19 @@ func runTest006(pass *analysis.Pass) (any, error) {
 
 		// Vérification si fichier de test
 		if shared.IsTestFile(basename) {
-			// Extraire le nom de base sans suffixe de test (support convention internal/external)
+			// Extract base name without test suffix
 			var baseName string
+			var base string
+			var ok bool
 			// Vérification du suffixe
-			if strings.HasSuffix(basename, "_internal_test.go") {
+			if base, ok = strings.CutSuffix(basename, "_internal_test.go"); ok {
 				// Fichier _internal_test.go → chercher .go
-				baseName = strings.TrimSuffix(basename, "_internal_test.go")
-				// Verification de la condition
-				// Alternative path handling
-			} else if strings.HasSuffix(basename, "_external_test.go") {
+				baseName = base
+				// Cas alternatif: external test
+			} else if base, ok = strings.CutSuffix(basename, "_external_test.go"); ok {
 				// Fichier _external_test.go → chercher .go
-				baseName = strings.TrimSuffix(basename, "_external_test.go")
+				baseName = base
+				// Cas par défaut: standard test
 			} else {
 				// Fichier _test.go standard → chercher .go
 				baseName = strings.TrimSuffix(basename, "_test.go")

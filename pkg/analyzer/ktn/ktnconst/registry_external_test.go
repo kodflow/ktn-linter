@@ -1,7 +1,9 @@
-package ktnconst
+package ktnconst_test
 
 import (
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst"
 )
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
@@ -21,7 +23,7 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "returns expected count",
 			check: func(t *testing.T) {
-				analyzers := GetAnalyzers()
+				analyzers := ktnconst.GetAnalyzers()
 				// Vérification nombre
 				if len(analyzers) != EXPECTED_COUNT {
 					t.Errorf("GetAnalyzers() returned %d analyzers, expected %d", len(analyzers), EXPECTED_COUNT)
@@ -31,7 +33,7 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "all analyzers are non-nil",
 			check: func(t *testing.T) {
-				analyzers := GetAnalyzers()
+				analyzers := ktnconst.GetAnalyzers()
 				// Vérification non-nil
 				for i, analyzer := range analyzers {
 					// Vérification analyzer
@@ -42,9 +44,9 @@ func TestGetAnalyzers(t *testing.T) {
 			},
 		},
 		{
-			name: "analyzers have expected names",
+			name: "analyzers have expected names error cases",
 			check: func(t *testing.T) {
-				analyzers := GetAnalyzers()
+				analyzers := ktnconst.GetAnalyzers()
 				// Vérification noms
 				for i, analyzer := range analyzers {
 					// Vérification nom

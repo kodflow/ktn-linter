@@ -1,3 +1,4 @@
+// Utility functions for naming operations.
 package utils
 
 import (

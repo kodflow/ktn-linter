@@ -1,3 +1,4 @@
+// Analyzer 002 for the ktnreturn package.
 package ktnreturn
 
 import (
@@ -10,7 +11,7 @@ import (
 )
 
 // Analyzer002 detects nil returns for slice and map types.
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnreturn002",
 	Doc:      "KTN-RETURN-002: préférer slice/map vide à nil",
 	Run:      runReturn002,
@@ -54,9 +55,13 @@ func runReturn002(pass *analysis.Pass) (any, error) {
 }
 
 // isSliceOrMapType checks if expression is slice or map type.
+//
 // Params:
 //   - pass: Analysis pass
 //   - expr: Expression to check
+//
+// Returns:
+//   - bool: true if expression is slice or map type
 func isSliceOrMapType(pass *analysis.Pass, expr ast.Expr) bool {
 	typeInfo := pass.TypesInfo.TypeOf(expr)
 	// Return false if type information is unavailable
@@ -106,8 +111,12 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 }
 
 // isNilIdent checks if expression is nil identifier.
+//
 // Params:
 //   - expr: Expression to check
+//
+// Returns:
+//   - bool: true if expression is nil identifier
 func isNilIdent(expr ast.Expr) bool {
 	ident, ok := expr.(*ast.Ident)
 	// Return false if not identifier

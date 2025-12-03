@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// INITIAL_VALUE_RECEIVERS_CAP est la capacité initiale pour la map des value receivers
+	// INITIAL_VALUE_RECEIVERS_CAP initial cap for value receivers
 	INITIAL_VALUE_RECEIVERS_CAP int = 10
 )
 
@@ -65,7 +65,7 @@ func runVar019(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - map[string]bool: map des types avec receivers par valeur
-func collectTypesWithValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
+func collectTypesWithValueReceivers(_pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
 	// Map pour stocker les types
 	typesWithValueRecv := make(map[string]bool, INITIAL_VALUE_RECEIVERS_CAP)
 
@@ -405,9 +405,8 @@ func hasMutexInType(t types.Type) bool {
 		return false
 	}
 
-	// Parcours des champs
-	for i := 0; i < st.NumFields(); i++ {
-		field := st.Field(i)
+	// Parcours des champs avec itérateur standard
+	for field := range st.Fields() {
 		// Vérification de la condition
 		if getMutexTypeName(field.Type()) != "" {
 			// Traitement
@@ -453,9 +452,8 @@ func getMutexTypeFromType(pass *analysis.Pass, expr ast.Expr) string {
 		return ""
 	}
 
-	// Parcours des champs
-	for i := 0; i < st.NumFields(); i++ {
-		field := st.Field(i)
+	// Parcours des champs avec itérateur standard
+	for field := range st.Fields() {
 		// Vérification de la condition
 		if mutexType := getMutexTypeName(field.Type()); mutexType != "" {
 			// Traitement
@@ -500,7 +498,7 @@ func getTypeName(expr ast.Expr) string {
 //
 // Returns:
 //   - bool: true si copie de mutex
-func isMutexCopy(pass *analysis.Pass, lhs, rhs ast.Expr) bool {
+func isMutexCopy(pass *analysis.Pass, _lhs, rhs ast.Expr) bool {
 	// Récupération du type RHS
 	tv, ok := pass.TypesInfo.Types[rhs]
 	// Vérification de la condition

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// Analyzer003 checks that package variables use camelCase naming (not SCREAMING_SNAKE_CASE)
+	// Analyzer003 checks package vars use camelCase
 	Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 		Name:     "ktnvar003",
 		Doc:      "KTN-VAR-003: Vérifie que les variables de package utilisent camelCase (pas SCREAMING_SNAKE_CASE)",
@@ -20,8 +20,7 @@ var (
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 	}
 
-	// screamingSnakeCasePattern matches SCREAMING_SNAKE_CASE names
-	// Must contain at least one uppercase letter followed by an underscore or vice versa
+	// screamingSnakeCasePattern matches SCREAMING_SNAKE_CASE
 	screamingSnakeCasePattern *regexp.Regexp = regexp.MustCompile(`^[A-Z][A-Z0-9_]*[A-Z0-9]$|^[A-Z][A-Z0-9_]*_[A-Z0-9_]*$`)
 )
 

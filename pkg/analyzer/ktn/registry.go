@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktn package.
 package ktn
 
 import (
@@ -45,6 +46,26 @@ func GetAllRules() []*analysis.Analyzer {
 	return all
 }
 
+// categoryAnalyzers retourne la map des catégories vers leurs analyseurs.
+//
+// Returns:
+//   - map[string]func() []*analysis.Analyzer: map des fonctions d'analyseurs par catégorie
+func categoryAnalyzers() map[string]func() []*analysis.Analyzer {
+	// Retour de la map des catégories
+	return map[string]func() []*analysis.Analyzer{
+		"const":     ktnconst.GetAnalyzers,
+		"func":      ktnfunc.GetAnalyzers,
+		"struct":    ktnstruct.GetAnalyzers,
+		"var":       ktnvar.Analyzers,
+		"test":      ktntest.Analyzers,
+		"return":    ktnreturn.Analyzers,
+		"interface": ktninterface.Analyzers,
+		"comment":   ktncomment.Analyzers,
+		"package":   ktnpackage.Analyzers,
+		"modernize": modernize.Analyzers,
+	}
+}
+
 // GetRulesByCategory retourne les règles d'une catégorie spécifique.
 //
 // Params:
@@ -53,51 +74,17 @@ func GetAllRules() []*analysis.Analyzer {
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs de la catégorie demandée
 func GetRulesByCategory(category string) []*analysis.Analyzer {
-	// Sélection de la catégorie
-	switch category {
-	// Traitement
-	case "const":
-		// Retourne les analyseurs de constantes
-		return ktnconst.GetAnalyzers()
-	// Traitement
-	case "func":
-		// Retourne les analyseurs de fonctions
-		return ktnfunc.GetAnalyzers()
-	// Traitement
-	case "struct":
-		// Retourne les analyseurs de structures
-		return ktnstruct.GetAnalyzers()
-	// Traitement
-	case "var":
-		// Retourne les analyseurs de variables
-		return ktnvar.Analyzers()
-	// Traitement
-	case "test":
-		// Retourne les analyseurs de tests
-		return ktntest.Analyzers()
-	// Traitement
-	case "return":
-		// Retourne les analyseurs de retours
-		return ktnreturn.Analyzers()
-	// Traitement
-	case "interface":
-		// Retourne les analyseurs d'interfaces
-		return ktninterface.Analyzers()
-	// Traitement
-	case "comment":
-		// Retourne les analyseurs de commentaires
-		return ktncomment.Analyzers()
-	// Traitement
-	case "package":
-		// Retourne les analyseurs de packages
-		return ktnpackage.Analyzers()
-	// Traitement
-	case "modernize":
-		// Retourne les analyseurs modernize (golang.org/x/tools)
-		return modernize.Analyzers()
-	// Traitement
-	default:
-		// Catégorie inconnue
-		return nil
+	// Récupérer la map des catégories
+	categories := categoryAnalyzers()
+
+	// Rechercher la fonction d'analyseurs pour cette catégorie
+	analyzerFunc, exists := categories[category]
+	// Vérification de la condition
+	if !exists {
+		// Catégorie inconnue - retourner slice vide
+		return []*analysis.Analyzer{}
 	}
+
+	// Retour des analyseurs de la catégorie
+	return analyzerFunc()
 }

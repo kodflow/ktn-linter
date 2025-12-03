@@ -19,6 +19,12 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Run:  runTest008,
 }
 
+// fileAnalysisResult contient le résultat de l'analyse d'un fichier.
+type fileAnalysisResult struct {
+	hasPublic  bool
+	hasPrivate bool
+}
+
 // runTest008 exécute l'analyse KTN-TEST-008.
 //
 // Params:
@@ -34,151 +40,224 @@ func runTest008(pass *analysis.Pass) (any, error) {
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
-			// Ignorer les fichiers de test
 			continue
 		}
 
-		// Analyser le contenu du fichier pour détecter les fonctions
-		hasPublicFuncs := false
-		hasPrivateFuncs := false
+		// Ignorer le package main (ne peut pas avoir de tests externes)
+		if file.Name.Name == "main" {
+			continue
+		}
 
-		// Parcourir l'AST du fichier
-		ast.Inspect(file, func(n ast.Node) bool {
-			funcDecl, ok := n.(*ast.FuncDecl)
-			// Si ce n'est pas une fonction, continuer
-			if !ok {
-				// Continue traversal
-				return true
-			}
-
-			// Ignorer les fonctions sans nom
-			if funcDecl.Name == nil {
-				// Continue traversal
-				return true
-			}
-
-			funcName := funcDecl.Name.Name
-			// Ignorer les fonctions exemptées (init, main)
-			if isExemptFunction(funcName) {
-				// Continue traversal
-				return true
-			}
-
-			// Vérifier si la fonction est publique ou privée
-			if len(funcName) > 0 && unicode.IsUpper(rune(funcName[0])) {
-				// Fonction publique
-				hasPublicFuncs = true
-			} else {
-				// Fonction privée
-				hasPrivateFuncs = true
-			}
-
-			// Continue traversal
-			return true
-		})
+		// Analyser le contenu du fichier
+		result := analyzeFileFunctions(file)
 
 		// Si le fichier n'a ni fonctions publiques ni privées, pas de test requis
-		if !hasPublicFuncs && !hasPrivateFuncs {
-			// Pas de fonctions, pas de tests requis
+		if !result.hasPublic && !result.hasPrivate {
 			continue
 		}
 
-		// Extraire le répertoire et le nom de base
-		dir := filepath.Dir(filename)
-		baseName := filepath.Base(filename)
-		fileBase := strings.TrimSuffix(baseName, ".go")
+		// Vérifier les fichiers de test existants
+		status := checkTestFilesExist(filename)
 
-		// Construire les chemins attendus pour les fichiers de test
-		internalTestPath := filepath.Join(dir, fileBase+"_internal_test.go")
-		externalTestPath := filepath.Join(dir, fileBase+"_external_test.go")
-
-		// Vérifier si les fichiers existent sur le disque
-		hasInternal := fileExistsOnDisk(internalTestPath)
-		hasExternal := fileExistsOnDisk(externalTestPath)
-
-		// Vérifier les fichiers manquants selon le contenu
-		if hasPublicFuncs && hasPrivateFuncs {
-			// Fichier avec fonctions publiques ET privées → besoin des deux fichiers
-			if !hasInternal && !hasExternal {
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient des fonctions publiques ET privées. Il doit avoir DEUX fichiers de test : '%s_internal_test.go' (white-box) ET '%s_external_test.go' (black-box)",
-					baseName,
-					fileBase,
-					fileBase,
-				)
-				// Verification de la condition
-				// Alternative path handling
-			} else if !hasInternal {
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
-					baseName,
-					fileBase,
-				)
-				// Alternative path handling
-				// Verification de la condition
-			} else if !hasExternal {
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
-					baseName,
-					fileBase,
-				)
-			}
-			// Alternative path handling
-			// Verification de la condition
-		} else if hasPublicFuncs {
-			// Fichier avec UNIQUEMENT des fonctions publiques
-			if !hasExternal {
-				// Manque _external_test.go
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
-					baseName,
-					fileBase,
-				)
-				// Verification de la condition
-				// Alternative path handling
-			} else if hasInternal {
-				// A _external (correct) mais aussi _internal (inutile) → demander de supprimer _internal
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions publiques. Le fichier '%s_internal_test.go' est inutile et doit être supprimé (utilisez '%s_external_test.go' pour tester l'API publique)",
-					baseName,
-					fileBase,
-					fileBase,
-				)
-			}
-			// Verification de la condition
-			// Alternative path handling
-		} else if hasPrivateFuncs {
-			// Fichier avec UNIQUEMENT des fonctions privées
-			if !hasInternal {
-				// Manque _internal_test.go
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
-					baseName,
-					fileBase,
-				)
-				// Alternative path handling
-				// Verification de la condition
-			} else if hasExternal {
-				// A _internal (correct) mais aussi _external (inutile) → demander de supprimer _external
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions privées. Le fichier '%s_external_test.go' est inutile et doit être supprimé (utilisez '%s_internal_test.go' pour tester les fonctions privées)",
-					baseName,
-					fileBase,
-					fileBase,
-				)
-			}
-		}
+		// Reporter les problèmes
+		reportTestFileIssues(pass, file, result, status)
 	}
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// analyzeFileFunctions analyse un fichier pour détecter les fonctions/variables publiques/privées.
+//
+// Params:
+//   - file: fichier AST à analyser
+//
+// Returns:
+//   - fileAnalysisResult: résultat de l'analyse
+func analyzeFileFunctions(file *ast.File) fileAnalysisResult {
+	result := fileAnalysisResult{}
+
+	// Parcourir l'AST du fichier
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérifier les déclarations de fonctions
+		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Name != nil {
+			funcName := funcDecl.Name.Name
+			// Ignorer les fonctions exemptées (init, main)
+			if !isExemptFunction(funcName) {
+				// Vérifier si la fonction est publique ou privée
+				if len(funcName) > 0 && unicode.IsUpper(rune(funcName[0])) {
+					result.hasPublic = true
+				} else {
+					// Fonction privée (commence par minuscule)
+					result.hasPrivate = true
+				}
+			}
+			// Continuer l'itération
+			return true
+		}
+
+		// Vérifier les déclarations de variables (publiques et privées)
+		if genDecl, ok := n.(*ast.GenDecl); ok {
+			checkVariables(genDecl, &result)
+		}
+
+		// Continuer l'itération
+		return true
+	})
+
+	// Retour du résultat d'analyse
+	return result
+}
+
+// checkVariables vérifie si une déclaration contient des variables publiques ou privées.
+//
+// Params:
+//   - genDecl: déclaration générique
+//   - result: résultat de l'analyse à mettre à jour
+func checkVariables(genDecl *ast.GenDecl, result *fileAnalysisResult) {
+	// Parcourir les spécifications de la déclaration
+	for _, spec := range genDecl.Specs {
+		// Vérifier si c'est une spécification de valeur (var ou const)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		// Si ce n'est pas une valeur, continuer
+		if !ok {
+			continue
+		}
+		// Vérifier chaque nom dans la spécification
+		for _, name := range valueSpec.Names {
+			varName := name.Name
+			// Ignorer les variables blank (_)
+			if varName == "_" {
+				continue
+			}
+			// Classifier la variable comme publique ou privée
+			if len(varName) > 0 && unicode.IsUpper(rune(varName[0])) {
+				// Variable publique (commence par majuscule)
+				result.hasPublic = true
+			} else {
+				// Variable privée (commence par minuscule)
+				result.hasPrivate = true
+			}
+		}
+	}
+}
+
+// checkTestFilesExist vérifie l'existence des fichiers de test pour un fichier source.
+//
+// Params:
+//   - filename: chemin du fichier source
+//
+// Returns:
+//   - testFilesStatus: état des fichiers de test
+func checkTestFilesExist(filename string) testFilesStatus {
+	dir := filepath.Dir(filename)
+	baseName := filepath.Base(filename)
+	fileBase := strings.TrimSuffix(baseName, ".go")
+
+	// Retour de l'état des fichiers de test
+	return testFilesStatus{
+		baseName:    baseName,
+		fileBase:    fileBase,
+		hasInternal: fileExistsOnDisk(filepath.Join(dir, fileBase+"_internal_test.go")),
+		hasExternal: fileExistsOnDisk(filepath.Join(dir, fileBase+"_external_test.go")),
+	}
+}
+
+// reportTestFileIssues reporte les problèmes de fichiers de test manquants ou superflus.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - file: fichier AST
+//   - result: résultat de l'analyse des fonctions
+//   - status: état des fichiers de test
+func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result fileAnalysisResult, status testFilesStatus) {
+	// Vérification selon le type de fichier
+	switch {
+	// Cas fichier mixte avec fonctions publiques ET privées
+	case result.hasPublic && result.hasPrivate:
+		reportMixedFunctionsIssues(pass, file, status)
+	// Cas fichier avec fonctions publiques uniquement
+	case result.hasPublic:
+		reportPublicOnlyIssues(pass, file, status)
+	// Cas fichier avec fonctions privées uniquement
+	case result.hasPrivate:
+		reportPrivateOnlyIssues(pass, file, status)
+	}
+}
+
+// reportMixedFunctionsIssues reporte les problèmes pour fichiers avec fonctions publiques ET privées.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - file: fichier AST
+//   - status: état des fichiers de test
+func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, status testFilesStatus) {
+	// Fichier avec fonctions publiques ET privées → besoin des deux fichiers
+	if !status.hasInternal && !status.hasExternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient des fonctions publiques ET privées. Il doit avoir DEUX fichiers de test : '%s_internal_test.go' (white-box) ET '%s_external_test.go' (black-box)",
+			status.baseName, status.fileBase, status.fileBase)
+		return
+	}
+
+	// Vérifier les fichiers manquants individuellement
+	if !status.hasInternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
+			status.baseName, status.fileBase)
+	}
+	// Vérification du fichier externe
+	if !status.hasExternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
+			status.baseName, status.fileBase)
+	}
+}
+
+// reportPublicOnlyIssues reporte les problèmes pour fichiers avec UNIQUEMENT des fonctions publiques.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - file: fichier AST
+//   - status: état des fichiers de test
+func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, status testFilesStatus) {
+	// Vérification du fichier externe manquant
+	if !status.hasExternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
+			status.baseName, status.fileBase)
+		return
+	}
+
+	// Vérification du fichier interne superflu
+	if status.hasInternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions publiques. Le fichier '%s_internal_test.go' est inutile et doit être supprimé (utilisez '%s_external_test.go' pour tester l'API publique)",
+			status.baseName, status.fileBase, status.fileBase)
+	}
+}
+
+// reportPrivateOnlyIssues reporte les problèmes pour fichiers avec UNIQUEMENT des fonctions privées.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - file: fichier AST
+//   - status: état des fichiers de test
+func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, status testFilesStatus) {
+	// Vérification du fichier interne manquant
+	if !status.hasInternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
+			status.baseName, status.fileBase)
+		return
+	}
+
+	// Vérification du fichier externe superflu
+	if status.hasExternal {
+		pass.Reportf(file.Name.Pos(),
+			"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions privées. Le fichier '%s_external_test.go' est inutile et doit être supprimé (utilisez '%s_internal_test.go' pour tester les fonctions privées)",
+			status.baseName, status.fileBase, status.fileBase)
+	}
 }
 
 // fileExistsOnDisk vérifie si un fichier existe sur le disque.

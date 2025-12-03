@@ -1,3 +1,4 @@
+// Severity levels for linter diagnostics.
 package severity
 
 // Level représente le niveau de sévérité d'une règle

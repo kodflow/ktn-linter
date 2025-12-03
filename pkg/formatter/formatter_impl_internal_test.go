@@ -666,7 +666,7 @@ func TestFormatHumanModeEmpty(t *testing.T) {
 		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
 	}
 }
-// TestformatterImpl_formatForHuman tests formatForHuman private method
+// TestFormatterImpl_formatForHuman tests formatForHuman private method
 func TestFormatterImpl_formatForHuman(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, false).(*formatterImpl)
@@ -685,7 +685,7 @@ func TestFormatterImpl_formatForHuman(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_formatForAI tests formatForAI private method
+// TestFormatterImpl_formatForAI tests formatForAI private method
 func TestFormatterImpl_formatForAI(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, true, false, false).(*formatterImpl)
@@ -704,7 +704,7 @@ func TestFormatterImpl_formatForAI(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_formatSimple tests formatSimple private method
+// TestFormatterImpl_formatSimple tests formatSimple private method
 func TestFormatterImpl_formatSimple(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := NewFormatter(buf, false, false, true).(*formatterImpl)
@@ -723,7 +723,7 @@ func TestFormatterImpl_formatSimple(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_groupByFile tests groupByFile private method
+// TestFormatterImpl_groupByFile tests groupByFile private method
 func TestFormatterImpl_groupByFile(t *testing.T) {
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
@@ -743,7 +743,7 @@ func TestFormatterImpl_groupByFile(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_filterAndSortDiagnostics tests filterAndSortDiagnostics
+// TestFormatterImpl_filterAndSortDiagnostics tests filterAndSortDiagnostics
 func TestFormatterImpl_filterAndSortDiagnostics(t *testing.T) {
 	formatter := &formatterImpl{}
 	fset := token.NewFileSet()
@@ -767,7 +767,7 @@ func TestFormatterImpl_filterAndSortDiagnostics(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_printHeader tests printHeader private method
+// TestFormatterImpl_printHeader tests printHeader private method
 func TestFormatterImpl_printHeader(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := &formatterImpl{writer: buf, noColor: true}
@@ -780,7 +780,7 @@ func TestFormatterImpl_printHeader(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_printFileHeader tests printFileHeader private method
+// TestFormatterImpl_printFileHeader tests printFileHeader private method
 func TestFormatterImpl_printFileHeader(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := &formatterImpl{writer: buf, noColor: true}
@@ -793,7 +793,7 @@ func TestFormatterImpl_printFileHeader(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_printDiagnostic tests printDiagnostic private method
+// TestFormatterImpl_printDiagnostic tests printDiagnostic private method
 func TestFormatterImpl_printDiagnostic(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := &formatterImpl{writer: buf, noColor: true}
@@ -814,7 +814,7 @@ func TestFormatterImpl_printDiagnostic(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_printSuccess tests printSuccess private method
+// TestFormatterImpl_printSuccess tests printSuccess private method
 func TestFormatterImpl_printSuccess(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := &formatterImpl{writer: buf, noColor: true}
@@ -827,7 +827,7 @@ func TestFormatterImpl_printSuccess(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_printSummary tests printSummary private method
+// TestFormatterImpl_printSummary tests printSummary private method
 func TestFormatterImpl_printSummary(t *testing.T) {
 	buf := &bytes.Buffer{}
 	formatter := &formatterImpl{writer: buf, noColor: true}
@@ -840,7 +840,7 @@ func TestFormatterImpl_printSummary(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_getCodeColor tests getCodeColor private method
+// TestFormatterImpl_getCodeColor tests getCodeColor private method
 func TestFormatterImpl_getCodeColor(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -867,7 +867,7 @@ func TestFormatterImpl_getCodeColor(t *testing.T) {
 	}
 }
 
-// TestformatterImpl_getSymbol tests getSymbol private method
+// TestFormatterImpl_getSymbol tests getSymbol private method
 func TestFormatterImpl_getSymbol(t *testing.T) {
 	formatter := &formatterImpl{}
 

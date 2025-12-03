@@ -1,3 +1,4 @@
+// Utility functions for slice operations.
 package utils
 
 import (

@@ -1,3 +1,4 @@
+// Analyzer 007 for the ktntest package.
 package ktntest
 
 import (

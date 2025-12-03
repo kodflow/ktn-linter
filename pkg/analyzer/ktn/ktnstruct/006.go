@@ -1,7 +1,9 @@
+// Analyzer 006 for the ktnstruct package.
 package ktnstruct
 
 import (
 	"go/ast"
+	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -10,7 +12,14 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer006 vérifie que les getters n'ont pas de préfixe "Get" (convention Go idiomatique)
+const (
+	// INITIAL_STRUCT_TYPES_CAP initial capacity for struct types map
+	INITIAL_STRUCT_TYPES_CAP int = 32
+	// GET_PREFIX_LEN length of "Get" prefix
+	GET_PREFIX_LEN int = 3
+)
+
+// Analyzer006 checks getters don't have "Get" prefix (Go idiom)
 var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct006",
 	Doc:      "KTN-STRUCT-006: Les getters ne doivent pas avoir le préfixe 'Get' (convention Go idiomatique)",
@@ -77,7 +86,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier qu'il y a au moins un caractère après "Get"
-		if len(methodName) <= 3 {
+		if len(methodName) <= GET_PREFIX_LEN {
 			// Juste "Get", pas un getter
 			return
 		}
@@ -89,7 +98,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 		}
 
 		// Construire le nom suggéré sans le préfixe "Get"
-		suggestedName := methodName[3:]
+		suggestedName := methodName[GET_PREFIX_LEN:]
 
 		// Reporter la violation
 		pass.Reportf(
@@ -112,7 +121,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string][]string: map du nom du type vers la liste des champs
 func collectStructTypes(pass *analysis.Pass) map[string][]string {
-	result := make(map[string][]string)
+	result := make(map[string][]string, INITIAL_STRUCT_TYPES_CAP)
 
 	// Parcourir chaque fichier
 	for _, file := range pass.Files {
@@ -190,7 +199,7 @@ func isSimpleGetter(funcDecl *ast.FuncDecl, structTypes map[string][]string) boo
 
 	// Vérifier si le champ correspondant existe dans la struct
 	methodName := funcDecl.Name.Name
-	expectedFieldName := strings.ToLower(methodName[3:])
+	expectedFieldName := strings.ToLower(methodName[GET_PREFIX_LEN:])
 
 	// Obtenir les champs du type receiver
 	fields, ok := structTypes[receiverType]
@@ -200,13 +209,10 @@ func isSimpleGetter(funcDecl *ast.FuncDecl, structTypes map[string][]string) boo
 		return true
 	}
 
-	// Vérifier si le champ existe
-	for _, field := range fields {
-		// Comparaison insensible à la casse
-		if field == expectedFieldName {
-			// Champ trouvé, c'est un getter
-			return true
-		}
+	// Vérifier si le champ existe (comparaison directe)
+	if slices.Contains(fields, expectedFieldName) {
+		// Champ trouvé, c'est un getter
+		return true
 	}
 
 	// Champ non trouvé, mais c'est quand même une méthode Get sans paramètres

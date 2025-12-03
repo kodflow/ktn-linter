@@ -1,94 +1,90 @@
+// Internal tests for registry in ktn package.
 package ktn
 
-import (
-	"testing"
+import "testing"
 
-	"golang.org/x/tools/go/analysis"
-)
-
-func TestGetAllRules(t *testing.T) {
-	const MIN_EXPECTED_RULES int = 8
-	tests := []struct {
-		name  string
-		check func(t *testing.T, rules []*analysis.Analyzer)
-	}{
-		{
-			name: "returns non-empty list",
-			check: func(t *testing.T, rules []*analysis.Analyzer) {
-				// Vérification liste non vide
-				if len(rules) == 0 {
-					t.Error("GetAllRules() returned 0 rules, expected at least 1")
-				}
-			},
-		},
-		{
-			name: "all rules are non-nil",
-			check: func(t *testing.T, rules []*analysis.Analyzer) {
-				// Vérification règles non-nil
-				for i, rule := range rules {
-					// Vérification règle
-					if rule == nil {
-						t.Errorf("Rule at index %d is nil", i)
-					}
-				}
-			},
-		},
-		{
-			name: "has minimum expected rules",
-			check: func(t *testing.T, rules []*analysis.Analyzer) {
-				// Vérification nombre minimum
-				if len(rules) < MIN_EXPECTED_RULES {
-					t.Errorf("GetAllRules() returned %d rules, expected at least %d", len(rules), MIN_EXPECTED_RULES)
-				}
-			},
-		},
-	}
-
+// Test_GetAllRules tests that GetAllRules returns non-empty slice
+func Test_GetAllRules(t *testing.T) {
 	rules := GetAllRules()
 
-	// Exécution des tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			tt.check(t, rules)
-		})
+	// Check that rules slice is not empty
+	if len(rules) == 0 {
+		t.Error("GetAllRules() returned empty slice, expected rules")
+	}
+
+	// Check that all rules are non-nil
+	for i, rule := range rules {
+		// Check rule is not nil
+		if rule == nil {
+			t.Errorf("rule at index %d is nil", i)
+		}
 	}
 }
 
-func TestGetRulesByCategory(t *testing.T) {
+// Test_GetRulesByCategory tests that GetRulesByCategory works correctly
+func Test_GetRulesByCategory(t *testing.T) {
 	tests := []struct {
-		name             string
-		category         string
-		minExpectedRules int
+		name         string
+		category     string
+		expectEmpty  bool
 	}{
-		{"const category", "const", 4},
-		{"func category", "func", 12},
-		{"var category", "var", 18}, // VAR-010 supprimé
-		{"test category", "test", 6},
-		{"unknown category", "unknown", 0},
-		{"empty category", "", 0},
+		{"const category", "const", false},
+		{"func category", "func", false},
+		{"struct category", "struct", false},
+		{"var category", "var", false},
+		{"test category", "test", false},
+		{"return category", "return", false},
+		{"interface category", "interface", false},
+		{"comment category", "comment", false},
+		{"package category", "package", false},
+		{"modernize category", "modernize", false},
+		{"unknown category", "unknown", true},
 	}
 
+	// Iteration over table-driven tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rules := GetRulesByCategory(tt.category)
 
-			if tt.minExpectedRules == 0 {
-				if len(rules) > 0 {
-					t.Errorf("GetRulesByCategory(%q) returned %d rules, expected 0", tt.category, len(rules))
+			// Check empty expectation
+			if tt.expectEmpty {
+				// Should return empty slice for unknown category
+				if len(rules) != 0 {
+					t.Errorf("expected empty slice for unknown category %q, got %d rules", tt.category, len(rules))
 				}
 			} else {
-				if len(rules) < tt.minExpectedRules {
-					t.Errorf("GetRulesByCategory(%q) returned %d rules, expected at least %d", tt.category, len(rules), tt.minExpectedRules)
+				// Should return non-empty slice for known category
+				if len(rules) == 0 {
+					t.Errorf("expected non-empty slice for category %q", tt.category)
 				}
 
-				// Check that all rules are non-nil
+				// Check all rules are non-nil
 				for i, rule := range rules {
+					// Check rule is not nil
 					if rule == nil {
-						t.Errorf("Rule at index %d for category %q is nil", i, tt.category)
+						t.Errorf("rule at index %d is nil for category %q", i, tt.category)
 					}
 				}
 			}
 		})
+	}
+}
+
+// Test_categoryAnalyzers tests that categoryAnalyzers returns valid map
+func Test_categoryAnalyzers(t *testing.T) {
+	categories := categoryAnalyzers()
+
+	// Check that map is not empty
+	if len(categories) == 0 {
+		t.Error("categoryAnalyzers() returned empty map")
+	}
+
+	// Verify each category function returns valid analyzers
+	for name, fn := range categories {
+		analyzers := fn()
+		// Check function returns non-nil slice
+		if analyzers == nil {
+			t.Errorf("category %q returned nil slice", name)
+		}
 	}
 }

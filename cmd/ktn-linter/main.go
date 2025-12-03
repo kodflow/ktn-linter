@@ -1,3 +1,4 @@
+// Entry point for the ktn-linter CLI tool.
 package main
 
 import (

@@ -12,7 +12,7 @@ import (
 
 // Analyzer004 checks that functions don't use naked returns (except for very short functions)
 const (
-	// MAX_LINES_FOR_NAKED_RETURN définit le nombre maximum de lignes pour autoriser un naked return
+	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
 	MAX_LINES_FOR_NAKED_RETURN int = 5
 )
 

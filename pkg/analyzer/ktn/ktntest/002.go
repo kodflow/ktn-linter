@@ -1,9 +1,11 @@
+// Analyzer 002 for the ktntest package.
 package ktntest
 
 import (
 	"go/ast"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -42,15 +44,17 @@ func runTest002(pass *analysis.Pass) (any, error) {
 
 		// Extraire le nom du fichier source correspondant
 		var sourceFile string
+		var base string
+		var ok bool
 		// Vérification du suffixe (convention internal/external)
-		if strings.HasSuffix(filename, "_internal_test.go") {
+		if base, ok = strings.CutSuffix(filename, "_internal_test.go"); ok {
 			// Fichier _internal_test.go → chercher .go
-			sourceFile = strings.TrimSuffix(filename, "_internal_test.go") + ".go"
-			// Verification de la condition
-			// Alternative path handling
-		} else if strings.HasSuffix(filename, "_external_test.go") {
+			sourceFile = base + ".go"
+			// Cas alternatif: external test
+		} else if base, ok = strings.CutSuffix(filename, "_external_test.go"); ok {
 			// Fichier _external_test.go → chercher .go
-			sourceFile = strings.TrimSuffix(filename, "_external_test.go") + ".go"
+			sourceFile = base + ".go"
+			// Cas par défaut: standard test
 		} else {
 			// Fichier _test.go standard → chercher .go
 			sourceFile = strings.TrimSuffix(filename, "_test.go") + ".go"
@@ -115,15 +119,6 @@ func isExemptTestFile(filename string) bool {
 		"main_test.go",
 	}
 
-	// Parcours des patterns exemptés
-	for _, pattern := range exemptPatterns {
-		// Vérification de la condition
-		if baseName == pattern {
-			// Fichier exempté
-			return true
-		}
-	}
-
-	// Fichier non exempté
-	return false
+	// Vérifier si le fichier est exempté
+	return slices.Contains(exemptPatterns, baseName)
 }

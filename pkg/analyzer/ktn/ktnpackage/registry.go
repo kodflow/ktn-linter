@@ -1,3 +1,4 @@
+// Registry of analyzers for the ktnpackage package.
 package ktnpackage
 
 import "golang.org/x/tools/go/analysis"

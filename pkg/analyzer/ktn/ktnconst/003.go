@@ -20,9 +20,8 @@ var (
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 	}
 
-	// validConstNamePattern matches valid CAPITAL_UNDERSCORE constant names
-	// Must start with uppercase letter, followed by uppercase letters, digits, or underscores
-	// Must contain at least one underscore for multi-word constants
+	// validConstNamePattern matches CAPITAL_UNDERSCORE names
+	// Starts with uppercase, then uppercase/digits/underscores
 	validConstNamePattern *regexp.Regexp = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 )
 
@@ -87,7 +86,7 @@ func runConst003(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - bool: true si le nom est valide
 func isValidConstantName(name string) bool {
-	// Must match the pattern: starts with uppercase, contains only uppercase, digits, underscores
+	// Must match pattern: uppercase + digits/underscores
 	if !validConstNamePattern.MatchString(name) {
 		// Retour de la fonction
 		return false
