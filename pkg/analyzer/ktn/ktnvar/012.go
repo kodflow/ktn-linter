@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer012 checks for string concatenation in loops
-var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer012 = &analysis.Analyzer{
 	Name:     "ktnvar012",
 	Doc:      "KTN-VAR-012: Utiliser strings.Builder pour >2 concaténations",
 	Run:      runVar012,

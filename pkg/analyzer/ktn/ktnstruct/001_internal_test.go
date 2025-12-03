@@ -1,6 +1,7 @@
 package ktnstruct
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -121,6 +122,75 @@ type User struct {
 			}
 			if s.node == nil {
 				t.Error("expected non-nil node")
+			}
+		})
+	}
+}
+
+// Test_allStructsAreSerializable tests the allStructsAreSerializable function.
+//
+// Params:
+//   - t: testing context
+func Test_allStructsAreSerializable(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      string
+		expected bool
+	}{
+		{
+			name: "all DTOs by suffix",
+			src: `package test
+type UserConfig struct { Name string }
+type AppSettings struct { Port int }`,
+			expected: true,
+		},
+		{
+			name: "all DTOs by tag",
+			src: `package test
+type User struct { Name string ` + "`json:\"name\"`" + ` }
+type Admin struct { Role string ` + "`yaml:\"role\"`" + ` }`,
+			expected: true,
+		},
+		{
+			name: "not all DTOs",
+			src: `package test
+type User struct { Name string }
+type Admin struct { Role string }`,
+			expected: false,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			// Vérification erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse source: %v", err)
+			}
+
+			// Collecter les structs avec structType
+			var structs []structInfo
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérifier TypeSpec
+				if ts, ok := n.(*ast.TypeSpec); ok {
+					// Vérifier StructType
+					if st, ok := ts.Type.(*ast.StructType); ok {
+						structs = append(structs, structInfo{
+							name:       ts.Name.Name,
+							node:       ts,
+							structType: st,
+						})
+					}
+				}
+				return true
+			})
+
+			result := allStructsAreSerializable(structs)
+			// Vérification résultat
+			if result != tt.expected {
+				t.Errorf("allStructsAreSerializable() = %v, want %v", result, tt.expected)
 			}
 		})
 	}

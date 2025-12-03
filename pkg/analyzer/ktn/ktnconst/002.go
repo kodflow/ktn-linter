@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer002 checks that constants are grouped together and placed above var declarations
-var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer002 = &analysis.Analyzer{
 	Name: "ktnconst002",
 	Doc:  "KTN-CONST-002: Vérifie que les constantes sont groupées ensemble et placées au-dessus des déclarations var",
 	Run:  runConst002,

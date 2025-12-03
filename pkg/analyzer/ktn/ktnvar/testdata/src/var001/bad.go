@@ -1,7 +1,6 @@
 package var001
 
-// Bad: Package-level variables WITHOUT explicit types (violates KTN-VAR-001)
-// But respects other rules: proper naming, comments, grouping, after const
+// Bad: Variables with incorrect type visibility (violates KTN-VAR-001)
 
 const (
 	// MAX_RETRIES defines maximum retries
@@ -12,23 +11,38 @@ const (
 	RATIO_VALUE float64 = 1.5
 )
 
-// Variables without explicit types (violates KTN-VAR-001 only)
+// Cas 1: Type non visible sans type explicite → ERREUR
 var (
 	// badRetries has inferred type (should be explicit)
-	badRetries = MAX_RETRIES
+	badRetries = MAX_RETRIES // want "KTN-VAR-001: la variable 'badRetries' doit avoir un type explicite"
 
 	// badConfig has inferred type (should be explicit)
-	badConfig = "config"
+	badConfig = "config" // want "KTN-VAR-001: la variable 'badConfig' doit avoir un type explicite"
 
 	// badPort has inferred type
-	badPort = PORT_VALUE
+	badPort = PORT_VALUE // want "KTN-VAR-001: la variable 'badPort' doit avoir un type explicite"
 
 	// badHost has inferred type
-	badHost = "localhost"
+	badHost = "localhost" // want "KTN-VAR-001: la variable 'badHost' doit avoir un type explicite"
 
 	// badEnabled has inferred type
-	badEnabled = true
+	badEnabled = true // want "KTN-VAR-001: la variable 'badEnabled' doit avoir un type explicite"
 
 	// badRatio has inferred type
-	badRatio = RATIO_VALUE
+	badRatio = RATIO_VALUE // want "KTN-VAR-001: la variable 'badRatio' doit avoir un type explicite"
+)
+
+// Cas 2: Type redondant (type visible + type explicite) → ERREUR
+var (
+	// redundantSlice has redundant type
+	redundantSlice []string = []string{"a", "b"} // want "KTN-VAR-001: la variable 'redundantSlice' a un type redondant"
+
+	// redundantMap has redundant type
+	redundantMap map[string]int = map[string]int{"x": 1} // want "KTN-VAR-001: la variable 'redundantMap' a un type redondant"
+
+	// redundantMake has redundant type
+	redundantMake []byte = make([]byte, 10) // want "KTN-VAR-001: la variable 'redundantMake' a un type redondant"
+
+	// redundantConv has redundant type
+	redundantConv int = int(42) // want "KTN-VAR-001: la variable 'redundantConv' a un type redondant"
 )

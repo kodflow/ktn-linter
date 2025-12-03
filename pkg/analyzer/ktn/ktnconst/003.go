@@ -13,7 +13,7 @@ import (
 
 var (
 	// Analyzer003 checks that constants use CAPITAL_UNDERSCORE naming convention
-	Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
+	Analyzer003 = &analysis.Analyzer{
 		Name:     "ktnconst003",
 		Doc:      "KTN-CONST-003: Vérifie que les constantes utilisent la convention CAPITAL_UNDERSCORE",
 		Run:      runConst003,
@@ -22,7 +22,7 @@ var (
 
 	// validConstNamePattern matches CAPITAL_UNDERSCORE names
 	// Starts with uppercase, then uppercase/digits/underscores
-	validConstNamePattern *regexp.Regexp = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+	validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 )
 
 // runConst003 description à compléter.

@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer005 checks that local variables use := instead of var
-var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer005 = &analysis.Analyzer{
 	Name:     "ktnvar005",
 	Doc:      "KTN-VAR-005: Vérifie que les variables locales utilisent ':=' au lieu de 'var'",
 	Run:      runVar005,

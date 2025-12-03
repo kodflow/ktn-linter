@@ -19,7 +19,7 @@ const (
 )
 
 // Analyzer014 checks that all private functions are used in production.
-var Analyzer014 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer014 = &analysis.Analyzer{
 	Name:     "ktnfunc014",
 	Doc:      "KTN-FUNC-014: fonctions privées non utilisées dans le code de production (code mort)",
 	Run:      runFunc014,

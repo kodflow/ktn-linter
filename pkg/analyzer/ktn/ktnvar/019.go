@@ -19,7 +19,7 @@ const (
 //
 // Copier un mutex crée des bugs de concurrence car la copie ne partage pas
 // le même état de verrouillage.
-var Analyzer019 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer019 = &analysis.Analyzer{
 	Name:     "ktnvar019",
 	Doc:      "KTN-VAR-019: Vérifie les copies de mutex (sync.Mutex, sync.RWMutex, atomic.Value)",
 	Run:      runVar019,

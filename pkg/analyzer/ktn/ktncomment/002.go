@@ -18,7 +18,7 @@ const (
 )
 
 // Analyzer002 detects inline comments exceeding 80 characters.
-var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer002 = &analysis.Analyzer{
 	Name:     "ktncomment002",
 	Doc:      "KTN-COMMENT-002: commentaire inline trop long (>80 chars)",
 	Run:      runComment002,

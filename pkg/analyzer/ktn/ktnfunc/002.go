@@ -17,7 +17,7 @@ const (
 )
 
 // Analyzer002 checks that functions don't have more than MAX_PARAMS parameters
-var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer002 = &analysis.Analyzer{
 	Name:     "ktnfunc002",
 	Doc:      "KTN-FUNC-002: Les fonctions ne doivent pas dépasser 5 paramètres",
 	Run:      runFunc002,

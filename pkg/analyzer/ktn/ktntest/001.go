@@ -13,7 +13,7 @@ import (
 )
 
 // Analyzer001 checks that test files use external test packages (xxx_test)
-var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer001 = &analysis.Analyzer{
 	Name:     "ktntest001",
 	Doc:      "KTN-TEST-001: Les fichiers de test doivent utiliser le package xxx_test",
 	Run:      runTest001,

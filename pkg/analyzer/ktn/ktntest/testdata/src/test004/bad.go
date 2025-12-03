@@ -2,44 +2,44 @@ package test004
 
 import "errors"
 
-const (
-	// ZERO_VALUE valeur zéro
-	ZERO_VALUE int = 0
-	// POSITIVE_THRESHOLD seuil positif
-	POSITIVE_THRESHOLD int = 0
-)
-
-// CheckPositive vérifie si un nombre est positif.
+// ParseConfig parse une configuration.
+// Retourne error → le test DOIT avoir des cas d'erreur.
 //
 // Params:
-//   - n: nombre à vérifier
+//   - path: chemin du fichier
 //
 // Returns:
-//   - error: erreur si négatif ou zéro, nil sinon
-func CheckPositive(n int) error {
-	// Vérification nombre positif
-	if n <= POSITIVE_THRESHOLD {
-		// Retour erreur
-		return errors.New("number must be positive")
+//   - string: contenu
+//   - error: erreur si échec
+func ParseConfig(path string) (string, error) {
+	// Vérification chemin vide
+	if path == "" {
+		return "", errors.New("empty path")
 	}
-	// Retour succès
+	return "config:" + path, nil
+}
+
+// ValidateInput valide une entrée.
+// Retourne error → le test DOIT avoir des cas d'erreur.
+//
+// Params:
+//   - input: valeur à valider
+//
+// Returns:
+//   - error: erreur si invalide
+func ValidateInput(input int) error {
+	// Vérification valeur positive
+	if input <= 0 {
+		return errors.New("input must be positive")
+	}
 	return nil
 }
 
-// FormatString formate une string.
-//
-// Params:
-//   - s: string à formater
+// GetVersion retourne la version.
+// NE retourne PAS error → test table-driven avec erreur = over-engineering.
 //
 // Returns:
-//   - string: string formatée
-//   - error: erreur si vide
-func FormatString(s string) (string, error) {
-	// Vérification string vide
-	if s == "" {
-		// Retour erreur
-		return "", errors.New("empty string")
-	}
-	// Retour résultat
-	return "[" + s + "]", nil
+//   - string: version
+func GetVersion() string {
+	return "1.0.0"
 }

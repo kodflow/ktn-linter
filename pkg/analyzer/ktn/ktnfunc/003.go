@@ -16,7 +16,7 @@ const (
 )
 
 // Analyzer003 checks for magic numbers (hardcoded numeric literals)
-var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnfunc003",
 	Doc:      "KTN-FUNC-003: Les nombres littéraux doivent être des constantes nommées (pas de magic numbers)",
 	Run:      runFunc003,

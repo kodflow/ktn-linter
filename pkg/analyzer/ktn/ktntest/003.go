@@ -32,7 +32,7 @@ type funcInfo struct {
 }
 
 // Analyzer003 checks that all functions (public and private) have corresponding tests
-var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer003 = &analysis.Analyzer{
 	Name: "ktntest003",
 	Doc:  "KTN-TEST-003: Toutes les fonctions (publiques et privées) doivent avoir des tests",
 	Run:  runTest003,

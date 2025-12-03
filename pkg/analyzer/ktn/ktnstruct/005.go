@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer005 vérifie que les structs exportées avec méthodes ont un constructeur
-var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer005 = &analysis.Analyzer{
 	Name:     "ktnstruct005",
 	Doc:      "KTN-STRUCT-005: Struct exportée avec méthodes doit avoir un constructeur NewX()",
 	Run:      runStruct005,
@@ -51,6 +51,12 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 			// Si la struct n'a pas de méthodes publiques, skip
 			if len(s.methods) == 0 {
 				// Continuer avec la struct suivante
+				continue
+			}
+
+			// Exception: les DTOs n'ont pas besoin de constructeur
+			if shared.IsSerializableStruct(s.structType, s.name) {
+				// DTO - pas besoin de constructeur
 				continue
 			}
 
@@ -98,13 +104,14 @@ func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, _ins
 		}
 
 		// Vérifier si c'est une struct
-		_, isStruct := typeSpec.Type.(*ast.StructType)
+		structType, isStruct := typeSpec.Type.(*ast.StructType)
 		// Si c'est une struct ET exportée
 		if isStruct && ast.IsExported(typeSpec.Name.Name) {
 			structs = append(structs, structWithMethods{
-				name:    typeSpec.Name.Name,
-				node:    typeSpec,
-				methods: methodsByStruct[typeSpec.Name.Name],
+				name:       typeSpec.Name.Name,
+				node:       typeSpec,
+				structType: structType,
+				methods:    methodsByStruct[typeSpec.Name.Name],
 			})
 		}
 

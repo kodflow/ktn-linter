@@ -40,7 +40,7 @@ func (l Level) String() string {
 }
 
 // rulesSeverity mappe chaque règle à son niveau de sévérité
-var rulesSeverity map[string]Level = map[string]Level{
+var rulesSeverity = map[string]Level{
 	// CONST - Constantes
 	"KTN-CONST-001": SEVERITY_WARNING, // Nommage ALL_CAPS (convention importante)
 	"KTN-CONST-002": SEVERITY_INFO,    // Groupement iota/valeur (style)

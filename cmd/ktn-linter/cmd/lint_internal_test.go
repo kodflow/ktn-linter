@@ -234,7 +234,8 @@ func Test_checkLoadErrorsNoErrors(t *testing.T) {
 	}
 
 	checkLoadErrors([]*packages.Package{pkg})
-	// Si on arrive ici, le test passe
+	// Vérification: si on arrive ici sans panic, le test réussit
+	t.Log("checkLoadErrors completed without panic")
 }
 
 // TestRunAnalyzers teste runAnalyzers
@@ -445,8 +446,12 @@ func Test_runAnalyzersWithError(t *testing.T) {
 	stderr.ReadFrom(r)
 	os.Stderr = oldStderr
 
-	// Le test passe si la fonction ne panique pas
-	_ = diagnostics
+	// Vérification: diagnostics doit être non nil
+	if diagnostics == nil {
+		t.Error("runAnalyzers returned nil diagnostics")
+	}
+	// Vérification: la fonction ne doit pas paniquer
+	t.Log("runAnalyzers completed without panic")
 }
 
 // TestFilterDiagnostics teste le filtrage des diagnostics

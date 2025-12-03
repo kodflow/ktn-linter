@@ -21,7 +21,7 @@ const (
 )
 
 // Analyzer016 checks for make([]T, N) with small constant N
-var Analyzer016 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer016 = &analysis.Analyzer{
 	Name:     "ktnvar016",
 	Doc:      "KTN-VAR-016: Vérifie l'utilisation de [N]T au lieu de make([]T, N)",
 	Run:      runVar016,

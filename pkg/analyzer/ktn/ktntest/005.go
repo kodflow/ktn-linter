@@ -20,7 +20,7 @@ const (
 )
 
 // Analyzer005 checks that tests use table-driven test pattern
-var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer005 = &analysis.Analyzer{
 	Name:     "ktntest005",
 	Doc:      "KTN-TEST-005: Les tests avec plusieurs cas doivent utiliser table-driven tests",
 	Run:      runTest005,

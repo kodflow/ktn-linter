@@ -30,7 +30,7 @@ var (
 	OsExit func(int) = os.Exit
 
 	// rootCmd represents the base command when called without any subcommands
-	rootCmd *cobra.Command = &cobra.Command{
+	rootCmd = &cobra.Command{
 		Use:   "ktn-linter",
 		Short: "KTN-Linter - Linter for Go code following KTN conventions",
 		Long: `KTN-Linter is a specialized linter that enforces naming conventions and code quality standards for Go projects.

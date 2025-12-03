@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer013 checks for slice/map allocations inside loops
-var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer013 = &analysis.Analyzer{
 	Name:     "ktnvar013",
 	Doc:      "KTN-VAR-013: Évite les allocations de slices/maps dans les boucles chaudes",
 	Run:      runVar013,

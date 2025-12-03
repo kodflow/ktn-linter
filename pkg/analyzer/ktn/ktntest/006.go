@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer006 checks that each test file has a corresponding source file (1:1 pattern)
-var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer006 = &analysis.Analyzer{
 	Name: "ktntest006",
 	Doc:  "KTN-TEST-006: Chaque fichier _test.go doit correspondre à un fichier source (pattern 1:1)",
 	Run:  runTest006,

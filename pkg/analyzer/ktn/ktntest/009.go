@@ -19,7 +19,7 @@ const (
 )
 
 // Analyzer009 checks that public function tests are in external test files
-var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer009 = &analysis.Analyzer{
 	Name:     "ktntest009",
 	Doc:      "KTN-TEST-009: Les tests de fonctions publiques (exportées) doivent être dans _external_test.go uniquement (black-box testing)",
 	Run:      runTest009,

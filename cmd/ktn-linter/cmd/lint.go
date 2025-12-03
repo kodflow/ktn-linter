@@ -32,7 +32,7 @@ type diagWithFset struct {
 }
 
 // lintCmd represents the lint command
-var lintCmd *cobra.Command = &cobra.Command{
+var lintCmd = &cobra.Command{
 	Use:   "lint [packages...]",
 	Short: "Lint Go packages using KTN rules",
 	Long: `Lint analyzes Go packages and reports issues based on KTN conventions.

@@ -16,7 +16,7 @@ import (
 // Le shadowing se produit quand on redéclare une variable avec := alors
 // qu'elle existe déjà dans un scope parent, créant une nouvelle variable
 // locale qui masque l'originale.
-var Analyzer017 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer017 = &analysis.Analyzer{
 	Name:     "ktnvar017",
 	Doc:      "KTN-VAR-017: Vérifie le shadowing de variables avec := au lieu de =",
 	Run:      runVar017,

@@ -13,7 +13,7 @@ import (
 )
 
 // Analyzer008 checks that each source file has appropriate test files based on its content
-var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer008 = &analysis.Analyzer{
 	Name: "ktntest008",
 	Doc:  "KTN-TEST-008: Chaque fichier .go doit avoir les fichiers de test appropriés (xxx_internal_test.go si fonctions privées, xxx_external_test.go si fonctions publiques)",
 	Run:  runTest008,

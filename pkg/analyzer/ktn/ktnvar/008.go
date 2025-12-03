@@ -16,7 +16,7 @@ const (
 )
 
 // Analyzer008 checks that make with length > 0 is avoided when append is used
-var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer008 = &analysis.Analyzer{
 	Name:     "ktnvar008",
 	Doc:      "KTN-VAR-008: Vérifie d'éviter make([]T, length) si utilisation avec append",
 	Run:      runVar008,

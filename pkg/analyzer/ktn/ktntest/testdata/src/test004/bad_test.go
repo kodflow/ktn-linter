@@ -6,49 +6,40 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test004"
 )
 
-// TestCheckPositiveOnlyValid teste SEULEMENT le cas valide (PAS BIEN).
-// Ne teste pas les cas d'erreur (valeurs négatives, zéro).
+// TestParseConfig teste ParseConfig SANS cas d'erreur.
+// ParseConfig retourne error → devrait avoir des cas d'erreur.
 //
 // Params:
 //   - t: contexte de test
-func TestCheckPositiveOnlyValid(t *testing.T) {
-	// Appel uniquement avec valeur valide
-	test004.CheckPositive(10)
-	// Manque: test avec valeur négative ou zéro (cas d'erreur)
-}
-
-// TestFormatStringJustHappyPath teste seulement le chemin heureux (PAS BIEN).
-// Aucune vérification des cas limites ou exceptionnels.
-//
-// Params:
-//   - t: contexte de test
-func TestFormatStringJustHappyPath(t *testing.T) {
-	const EXPECTED_OUTPUT string = "[hello]"
-	// Appel avec donnée valide uniquement
-	output := formatAndIgnore("hello")
-	// Vérification basique
-	if output != EXPECTED_OUTPUT {
-		t.Logf("unexpected output")
-	}
-	// Manque: vérification des cas limites (vide, spéciaux, etc.)
-}
-
-// formatAndIgnore formatte une string sans gérer les cas spéciaux.
-//
-// Params:
-//   - s: string à formater
-//
-// Returns:
-//   - string: résultat formaté
-func formatAndIgnore(s string) string {
-	const EMPTY_RESULT string = ""
-	// Appel de la fonction
-	output, _ := test004.FormatString(s)
+func TestParseConfig(t *testing.T) { // want "KTN-TEST-004: le test 'TestParseConfig' teste une fonction qui retourne error, il devrait couvrir les cas d'erreur"
+	// Test uniquement le cas valide
+	result, _ := test004.ParseConfig("config.yaml")
 	// Vérification résultat
-	if output == EMPTY_RESULT {
-		// Retour vide
-		return EMPTY_RESULT
+	if result == "" {
+		t.Log("empty result")
 	}
-	// Retour résultat
-	return output
+}
+
+// TestValidateInput teste ValidateInput SANS cas d'erreur.
+// ValidateInput retourne error → devrait avoir des cas d'erreur.
+//
+// Params:
+//   - t: contexte de test
+func TestValidateInput(t *testing.T) { // want "KTN-TEST-004: le test 'TestValidateInput' teste une fonction qui retourne error, il devrait couvrir les cas d'erreur"
+	// Test uniquement le cas valide
+	_ = test004.ValidateInput(10)
+}
+
+// TestGetVersion teste GetVersion.
+// GetVersion NE retourne PAS error → pas d'erreur attendue.
+//
+// Params:
+//   - t: contexte de test
+func TestGetVersion(t *testing.T) {
+	// Test simple - pas d'erreur attendue car GetVersion ne retourne pas error
+	got := test004.GetVersion()
+	// Vérification résultat
+	if got != "1.0.0" {
+		t.Logf("got %s, want 1.0.0", got)
+	}
 }

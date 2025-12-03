@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer007 checks that tests don't use t.Skip()
-var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer007 = &analysis.Analyzer{
 	Name:     "ktntest007",
 	Doc:      "KTN-TEST-007: Interdiction d'utiliser t.Skip() dans les tests",
 	Run:      runTest007,

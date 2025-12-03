@@ -13,7 +13,7 @@ import (
 )
 
 // Analyzer011 checks package naming convention for internal/external test files
-var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer011 = &analysis.Analyzer{
 	Name:     "ktntest011",
 	Doc:      "KTN-TEST-011: Les fichiers _internal_test.go doivent utiliser 'package xxx', les fichiers _external_test.go doivent utiliser 'package xxx_test'",
 	Run:      runTest011,

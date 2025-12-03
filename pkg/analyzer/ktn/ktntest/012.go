@@ -9,7 +9,7 @@ import (
 )
 
 // Analyzer012 detects test files not following naming convention.
-var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
+var Analyzer012 = &analysis.Analyzer{
 	Name: "ktntest012",
 	Doc:  "KTN-TEST-012: fichier de test doit se terminer par _internal_test.go ou _external_test.go",
 	Run:  runTest012,
