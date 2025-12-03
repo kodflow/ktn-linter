@@ -1,73 +1,76 @@
+// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
+// Ce fichier démontre les getters non idiomatiques avec préfixe "Get".
 package struct006
 
-// User struct avec getters utilisant le préfixe Get (non idiomatique)
-type User struct {
+// BadUser représente un utilisateur avec getters non idiomatiques.
+// Les getters utilisent le préfixe "Get" contrairement à la convention Go.
+type BadUser struct {
 	id    int
 	name  string
 	email string
 }
 
-// GetID retourne l'identifiant - VIOLATION: devrait être ID()
-func (u *User) GetID() int { // want "KTN-STRUCT-006"
+// BadUserInterface définit le contrat public de BadUser.
+type BadUserInterface interface {
+	GetID() int
+	GetName() string
+	GetEmail() string
+	Save() error
+}
+
+// NewBadUser crée une nouvelle instance de BadUser.
+//
+// Params:
+//   - id: identifiant unique de l'utilisateur
+//   - name: nom de l'utilisateur
+//   - email: adresse email de l'utilisateur
+//
+// Returns:
+//   - *BadUser: nouvelle instance initialisée
+func NewBadUser(id int, name, email string) *BadUser {
+	// Retourne une nouvelle instance avec les valeurs fournies
+	return &BadUser{
+		id:    id,
+		name:  name,
+		email: email,
+	}
+}
+
+// GetID retourne l'identifiant de l'utilisateur.
+// VIOLATION: devrait être ID() selon la convention Go.
+//
+// Returns:
+//   - int: identifiant unique
+func (u *BadUser) GetID() int { // want "KTN-STRUCT-006"
 	// Retourne le champ id
 	return u.id
 }
 
-// GetName retourne le nom - VIOLATION: devrait être Name()
-func (u *User) GetName() string { // want "KTN-STRUCT-006"
+// GetName retourne le nom de l'utilisateur.
+// VIOLATION: devrait être Name() selon la convention Go.
+//
+// Returns:
+//   - string: nom de l'utilisateur
+func (u *BadUser) GetName() string { // want "KTN-STRUCT-006"
 	// Retourne le champ name
 	return u.name
 }
 
-// GetEmail retourne l'email - VIOLATION: devrait être Email()
-func (u *User) GetEmail() string { // want "KTN-STRUCT-006"
+// GetEmail retourne l'adresse email de l'utilisateur.
+// VIOLATION: devrait être Email() selon la convention Go.
+//
+// Returns:
+//   - string: adresse email
+func (u *BadUser) GetEmail() string { // want "KTN-STRUCT-006"
 	// Retourne le champ email
 	return u.email
 }
 
-// Save sauvegarde l'utilisateur - OK (pas un getter)
-func (u *User) Save() error {
+// Save sauvegarde l'utilisateur.
+//
+// Returns:
+//   - error: erreur éventuelle
+func (u *BadUser) Save() error {
 	// Retourne nil si succès
 	return nil
 }
-
-// Config struct de configuration avec getters
-type Config struct {
-	host string
-	port int
-	tls  bool
-}
-
-// GetHost retourne l'hôte - VIOLATION: devrait être Host()
-func (c *Config) GetHost() string { // want "KTN-STRUCT-006"
-	// Retourne le champ host
-	return c.host
-}
-
-// GetPort retourne le port - VIOLATION: devrait être Port()
-func (c *Config) GetPort() int { // want "KTN-STRUCT-006"
-	// Retourne le champ port
-	return c.port
-}
-
-// Repository struct avec getters
-type Repository struct {
-	db     Database
-	logger Logger
-}
-
-// GetDB retourne la base de données - VIOLATION: devrait être DB()
-func (r *Repository) GetDB() Database { // want "KTN-STRUCT-006"
-	// Retourne le champ db
-	return r.db
-}
-
-// GetLogger retourne le logger - VIOLATION: devrait être Logger()
-func (r *Repository) GetLogger() Logger { // want "KTN-STRUCT-006"
-	// Retourne le champ logger
-	return r.logger
-}
-
-// Types pour compilation
-type Database interface{}
-type Logger interface{}

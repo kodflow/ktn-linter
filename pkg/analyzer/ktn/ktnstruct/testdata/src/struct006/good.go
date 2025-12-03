@@ -1,103 +1,73 @@
+// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
+// Ce fichier démontre les getters idiomatiques Go (sans préfixe Get).
 package struct006
 
-// GoodUser struct avec getters idiomatiques Go (sans préfixe Get)
+// GoodUser représente un utilisateur avec encapsulation correcte.
+// Les getters suivent la convention Go idiomatique sans préfixe "Get".
 type GoodUser struct {
 	id    int
 	name  string
 	email string
 }
 
-// ID retourne l'identifiant - OK (convention Go idiomatique)
+// GoodUserInterface définit le contrat public de GoodUser.
+type GoodUserInterface interface {
+	ID() int
+	Name() string
+	Email() string
+	SetName(name string)
+}
+
+// NewGoodUser crée une nouvelle instance de GoodUser.
+//
+// Params:
+//   - id: identifiant unique de l'utilisateur
+//   - name: nom de l'utilisateur
+//   - email: adresse email de l'utilisateur
+//
+// Returns:
+//   - *GoodUser: nouvelle instance initialisée
+func NewGoodUser(id int, name, email string) *GoodUser {
+	// Retourne une nouvelle instance avec les valeurs fournies
+	return &GoodUser{
+		id:    id,
+		name:  name,
+		email: email,
+	}
+}
+
+// ID retourne l'identifiant de l'utilisateur.
+//
+// Returns:
+//   - int: identifiant unique
 func (u *GoodUser) ID() int {
 	// Retourne le champ id
 	return u.id
 }
 
-// Name retourne le nom - OK (convention Go idiomatique)
+// Name retourne le nom de l'utilisateur.
+//
+// Returns:
+//   - string: nom de l'utilisateur
 func (u *GoodUser) Name() string {
 	// Retourne le champ name
 	return u.name
 }
 
-// Email retourne l'email - OK (convention Go idiomatique)
+// Email retourne l'adresse email de l'utilisateur.
+//
+// Returns:
+//   - string: adresse email
 func (u *GoodUser) Email() string {
 	// Retourne le champ email
 	return u.email
 }
 
-// SetName définit le nom - OK (setter garde le préfixe Set)
+// SetName définit le nom de l'utilisateur.
+//
+// Params:
+//   - name: nouveau nom à définir
 func (u *GoodUser) SetName(name string) {
 	// Modifie le champ name
 	u.name = name
 }
-
-// GoodConfig struct de configuration avec getters idiomatiques
-type GoodConfig struct {
-	host string
-	port int
-	tls  bool
-}
-
-// Host retourne l'hôte - OK (convention Go idiomatique)
-func (c *GoodConfig) Host() string {
-	// Retourne le champ host
-	return c.host
-}
-
-// Port retourne le port - OK (convention Go idiomatique)
-func (c *GoodConfig) Port() int {
-	// Retourne le champ port
-	return c.port
-}
-
-// TLS retourne si TLS est activé - OK (convention Go idiomatique)
-func (c *GoodConfig) TLS() bool {
-	// Retourne le champ tls
-	return c.tls
-}
-
-// GoodRepository struct avec getters idiomatiques
-type GoodRepository struct {
-	db     GoodDatabase
-	logger GoodLogger
-}
-
-// DB retourne la base de données - OK (convention Go idiomatique)
-func (r *GoodRepository) DB() GoodDatabase {
-	// Retourne le champ db
-	return r.db
-}
-
-// Logger retourne le logger - OK (convention Go idiomatique)
-func (r *GoodRepository) Logger() GoodLogger {
-	// Retourne le champ logger
-	return r.logger
-}
-
-// Find recherche une entité - OK (pas un getter)
-func (r *GoodRepository) Find(id int) (interface{}, error) {
-	// Retourne nil si non trouvé
-	return nil, nil
-}
-
-// GetByID est une méthode de recherche, pas un getter - OK
-// Elle prend un paramètre, donc ce n'est pas un getter simple
-func (r *GoodRepository) GetByID(id int) (interface{}, error) {
-	// Retourne nil si non trouvé
-	return nil, nil
-}
-
-// privateStruct struct privée - PAS DE VÉRIFICATION
-type privateStruct struct {
-	value string
-}
-
-// GetValue méthode sur struct privée - OK (struct non exportée)
-func (p *privateStruct) GetValue() string {
-	// Retourne le champ value
-	return p.value
-}
-
-// Types pour compilation
-type GoodDatabase interface{}
-type GoodLogger interface{}
