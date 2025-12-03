@@ -57,3 +57,42 @@ func GetHelper() string {
 	// Appel du helper via la variable
 	return helperFunc()
 }
+
+// Mux simule un ServeMux HTTP.
+type Mux struct{}
+
+// HandleFunc simule http.ServeMux.HandleFunc.
+func (m *Mux) HandleFunc(pattern string, handler func()) {
+	// Simulation d'enregistrement
+	_ = pattern
+	_ = handler
+}
+
+// App simule une application web avec des handlers.
+type App struct {
+	mux *Mux
+}
+
+// handleLiveness est un handler HTTP passé comme argument.
+func (a *App) handleLiveness() {
+	// Handler de liveness
+}
+
+// handleReadiness est un handler HTTP passé comme argument.
+func (a *App) handleReadiness() {
+	// Handler de readiness
+}
+
+// registerHandlers est passé comme fonction à un appel.
+func registerHandlers() {
+	// Enregistrement des handlers
+}
+
+// RegisterRoutes enregistre les routes en passant les handlers comme arguments.
+func (a *App) RegisterRoutes() {
+	// Les handlers sont passés comme arguments à HandleFunc
+	a.mux.HandleFunc("/live", a.handleLiveness)
+	a.mux.HandleFunc("/ready", a.handleReadiness)
+	// Fonction passée comme argument
+	a.mux.HandleFunc("/register", registerHandlers)
+}

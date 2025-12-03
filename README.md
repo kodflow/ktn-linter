@@ -252,6 +252,8 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - ✅ **KTN-VAR-014 amélioré** : Ignore les types externes (frameworks comme Terraform)
 - ✅ **KTN-VAR-007 amélioré** : Ignore `[]T{}` (faux positifs), vérifie seulement `make([]T, 0)` sans capacity
 - ✅ **KTN-FUNC-011 amélioré** : Ignore returns triviaux (nil, true, false, `[]T{}`)
+- ✅ **KTN-FUNC-014 amélioré** : Détecte méthodes passées comme arguments (`mux.HandleFunc("/", a.handler)`)
+- ✅ **KTN-TEST-008 amélioré** : Messages enrichis avec liste des fonctions concernées
 
 ## Structure
 

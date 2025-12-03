@@ -462,7 +462,14 @@ func Test_reportMixedFunctionsIssues(t *testing.T) {
 				hasExternal: false,
 			}
 
-			reportMixedFunctionsIssues(pass, file, status)
+			result := &fileAnalysisResult{
+				hasPublic:    true,
+				hasPrivate:   true,
+				publicFuncs:  []string{"PublicFunc"},
+				privateFuncs: []string{"privateFunc"},
+			}
+
+			reportMixedFunctionsIssues(pass, file, result, status)
 
 			// Vérification rapport généré
 			if reportCount < 1 {
@@ -511,7 +518,14 @@ func Test_reportPublicOnlyIssues(t *testing.T) {
 				hasExternal: false,
 			}
 
-			reportPublicOnlyIssues(pass, file, status)
+			result := &fileAnalysisResult{
+				hasPublic:    true,
+				hasPrivate:   false,
+				publicFuncs:  []string{"PublicFunc"},
+				privateFuncs: []string{},
+			}
+
+			reportPublicOnlyIssues(pass, file, result, status)
 
 			// Vérification rapport généré
 			if reportCount != 1 {
@@ -560,11 +574,258 @@ func Test_reportPrivateOnlyIssues(t *testing.T) {
 				hasExternal: false,
 			}
 
-			reportPrivateOnlyIssues(pass, file, status)
+			result := &fileAnalysisResult{
+				hasPublic:    false,
+				hasPrivate:   true,
+				publicFuncs:  []string{},
+				privateFuncs: []string{"privateFunc"},
+			}
+
+			reportPrivateOnlyIssues(pass, file, result, status)
 
 			// Vérification rapport généré
 			if reportCount != 1 {
 				t.Errorf("expected 1 report, got %d", reportCount)
+			}
+		})
+	}
+}
+
+// Test_formatFuncList tests the formatFuncList function.
+func Test_formatFuncList(t *testing.T) {
+	tests := []struct {
+		name     string
+		funcs    []string
+		expected string
+	}{
+		{
+			name:     "empty list",
+			funcs:    []string{},
+			expected: "",
+		},
+		{
+			name:     "single function",
+			funcs:    []string{"Func1"},
+			expected: "Func1",
+		},
+		{
+			name:     "two functions",
+			funcs:    []string{"Func1", "Func2"},
+			expected: "Func1, Func2",
+		},
+		{
+			name:     "three functions (max)",
+			funcs:    []string{"Func1", "Func2", "Func3"},
+			expected: "Func1, Func2, Func3",
+		},
+		{
+			name:     "four functions (truncated)",
+			funcs:    []string{"Func1", "Func2", "Func3", "Func4"},
+			expected: "Func1, Func2, Func3, ... (+1)",
+		},
+		{
+			name:     "five functions (truncated)",
+			funcs:    []string{"Func1", "Func2", "Func3", "Func4", "Func5"},
+			expected: "Func1, Func2, Func3, ... (+2)",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatFuncList(tt.funcs)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("formatFuncList() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_formatCount tests the formatCount function.
+func Test_formatCount(t *testing.T) {
+	tests := []struct {
+		name     string
+		count    int
+		expected string
+	}{
+		{name: "zero", count: 0, expected: "0"},
+		{name: "one", count: 1, expected: "1"},
+		{name: "ten", count: 10, expected: "10"},
+		{name: "hundred", count: 100, expected: "100"},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatCount(tt.count)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("formatCount() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_classifyFunction tests the classifyFunction function.
+func Test_classifyFunction(t *testing.T) {
+	tests := []struct {
+		name           string
+		funcDecl       *ast.FuncDecl
+		expectPublic   bool
+		expectPrivate  bool
+		expectedPubLen int
+		expectedPriLen int
+	}{
+		{
+			name: "public function",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "PublicFunc"},
+				Type: &ast.FuncType{},
+			},
+			expectPublic:   true,
+			expectPrivate:  false,
+			expectedPubLen: 1,
+			expectedPriLen: 0,
+		},
+		{
+			name: "private function",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "privateFunc"},
+				Type: &ast.FuncType{},
+			},
+			expectPublic:   false,
+			expectPrivate:  true,
+			expectedPubLen: 0,
+			expectedPriLen: 1,
+		},
+		{
+			name: "exempt function (init)",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "init"},
+				Type: &ast.FuncType{},
+			},
+			expectPublic:   false,
+			expectPrivate:  false,
+			expectedPubLen: 0,
+			expectedPriLen: 0,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := fileAnalysisResult{
+				publicFuncs:  []string{},
+				privateFuncs: []string{},
+			}
+			classifyFunction(tt.funcDecl, &result)
+			// Vérification du résultat
+			if result.hasPublic != tt.expectPublic {
+				t.Errorf("hasPublic = %v, want %v", result.hasPublic, tt.expectPublic)
+			}
+			// Vérification du résultat privé
+			if result.hasPrivate != tt.expectPrivate {
+				t.Errorf("hasPrivate = %v, want %v", result.hasPrivate, tt.expectPrivate)
+			}
+			// Vérification des longueurs
+			if len(result.publicFuncs) != tt.expectedPubLen {
+				t.Errorf("publicFuncs len = %d, want %d", len(result.publicFuncs), tt.expectedPubLen)
+			}
+			// Vérification des longueurs privées
+			if len(result.privateFuncs) != tt.expectedPriLen {
+				t.Errorf("privateFuncs len = %d, want %d", len(result.privateFuncs), tt.expectedPriLen)
+			}
+		})
+	}
+}
+
+// Test_buildFunctionDisplayName tests the buildFunctionDisplayName function.
+func Test_buildFunctionDisplayName(t *testing.T) {
+	tests := []struct {
+		name     string
+		funcDecl *ast.FuncDecl
+		expected string
+	}{
+		{
+			name: "simple function",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "myFunc"},
+				Type: &ast.FuncType{},
+			},
+			expected: "myFunc",
+		},
+		{
+			name: "method with value receiver",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{Type: &ast.Ident{Name: "Type"}},
+					},
+				},
+				Type: &ast.FuncType{},
+			},
+			expected: "Type.Method",
+		},
+		{
+			name: "method with pointer receiver",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{Type: &ast.StarExpr{X: &ast.Ident{Name: "Type"}}},
+					},
+				},
+				Type: &ast.FuncType{},
+			},
+			expected: "(*Type).Method",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildFunctionDisplayName(tt.funcDecl)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("buildFunctionDisplayName() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_extractReceiverTypeString tests the extractReceiverTypeString function.
+func Test_extractReceiverTypeString(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected string
+	}{
+		{
+			name:     "simple type",
+			expr:     &ast.Ident{Name: "MyType"},
+			expected: "MyType",
+		},
+		{
+			name:     "pointer type",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "MyType"}},
+			expected: "(*MyType)",
+		},
+		{
+			name:     "unsupported type",
+			expr:     &ast.BasicLit{},
+			expected: "",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractReceiverTypeString(tt.expr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("extractReceiverTypeString() = %q, want %q", result, tt.expected)
 			}
 		})
 	}

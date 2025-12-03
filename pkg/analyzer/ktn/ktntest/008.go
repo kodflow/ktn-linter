@@ -5,11 +5,19 @@ import (
 	"go/ast"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	// MAX_FUNCS_TO_DISPLAY nombre max de fonctions affichées.
+	MAX_FUNCS_TO_DISPLAY int = 3
+	// INITIAL_FUNCS_CAP capacité initiale des listes.
+	INITIAL_FUNCS_CAP int = 8
 )
 
 // Analyzer008 checks that each source file has appropriate test files based on its content
@@ -21,8 +29,10 @@ var Analyzer008 = &analysis.Analyzer{
 
 // fileAnalysisResult contient le résultat de l'analyse d'un fichier.
 type fileAnalysisResult struct {
-	hasPublic  bool
-	hasPrivate bool
+	hasPublic    bool
+	hasPrivate   bool
+	publicFuncs  []string
+	privateFuncs []string
 }
 
 // runTest008 exécute l'analyse KTN-TEST-008.
@@ -73,40 +83,112 @@ func runTest008(pass *analysis.Pass) (any, error) {
 //   - file: fichier AST à analyser
 //
 // Returns:
-//   - fileAnalysisResult: résultat de l'analyse
-func analyzeFileFunctions(file *ast.File) fileAnalysisResult {
-	result := fileAnalysisResult{}
+//   - *fileAnalysisResult: pointeur vers le résultat de l'analyse
+func analyzeFileFunctions(file *ast.File) *fileAnalysisResult {
+	// Initialisation du résultat avec capacité définie
+	result := &fileAnalysisResult{
+		publicFuncs:  make([]string, 0, INITIAL_FUNCS_CAP),
+		privateFuncs: make([]string, 0, INITIAL_FUNCS_CAP),
+	}
 
 	// Parcourir l'AST du fichier
 	ast.Inspect(file, func(n ast.Node) bool {
 		// Vérifier les déclarations de fonctions
 		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Name != nil {
-			funcName := funcDecl.Name.Name
-			// Ignorer les fonctions exemptées (init, main)
-			if !isExemptFunction(funcName) {
-				// Vérifier si la fonction est publique ou privée
-				if len(funcName) > 0 && unicode.IsUpper(rune(funcName[0])) {
-					result.hasPublic = true
-				} else {
-					// Fonction privée (commence par minuscule)
-					result.hasPrivate = true
-				}
-			}
-			// Continuer l'itération
+			classifyFunction(funcDecl, result)
 			return true
 		}
 
 		// Vérifier les déclarations de variables (publiques et privées)
 		if genDecl, ok := n.(*ast.GenDecl); ok {
-			checkVariables(genDecl, &result)
+			checkVariables(genDecl, result)
 		}
 
 		// Continuer l'itération
 		return true
 	})
 
-	// Retour du résultat d'analyse
+	// Retour du pointeur vers le résultat
 	return result
+}
+
+// classifyFunction classifie une fonction comme publique ou privée.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//   - result: résultat à mettre à jour
+func classifyFunction(funcDecl *ast.FuncDecl, result *fileAnalysisResult) {
+	funcName := funcDecl.Name.Name
+	// Ignorer les fonctions exemptées (init, main)
+	if isExemptFunction(funcName) {
+		return
+	}
+
+	// Construire le nom complet (avec receiver si méthode)
+	displayName := buildFunctionDisplayName(funcDecl)
+
+	// Classifier la fonction
+	if len(funcName) > 0 && unicode.IsUpper(rune(funcName[0])) {
+		result.hasPublic = true
+		result.publicFuncs = append(result.publicFuncs, displayName)
+	} else {
+		// Fonction privée (commence par minuscule)
+		result.hasPrivate = true
+		result.privateFuncs = append(result.privateFuncs, displayName)
+	}
+}
+
+// buildFunctionDisplayName construit le nom d'affichage d'une fonction.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - string: nom d'affichage (ex: "Func" ou "(*Type).Method")
+func buildFunctionDisplayName(funcDecl *ast.FuncDecl) string {
+	funcName := funcDecl.Name.Name
+
+	// Vérifier si c'est une méthode avec receiver
+	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+		receiverType := extractReceiverTypeString(funcDecl.Recv.List[0].Type)
+		// Vérifier si le receiver a un type valide
+		if receiverType != "" {
+			// Retour du nom avec receiver (ex: "(*Type).Method")
+			return receiverType + "." + funcName
+		}
+	}
+
+	// Retour du nom simple (fonction sans receiver)
+	return funcName
+}
+
+// extractReceiverTypeString extrait le type du receiver sous forme de string.
+//
+// Params:
+//   - expr: expression du type
+//
+// Returns:
+//   - string: type formaté (ex: "*App" ou "App")
+func extractReceiverTypeString(expr ast.Expr) string {
+	// Vérifier si c'est un pointeur (*Type)
+	if starExpr, isPointer := expr.(*ast.StarExpr); isPointer {
+		// Vérifier si l'expression pointée est un identifiant
+		if innerIdent, isIdent := starExpr.X.(*ast.Ident); isIdent {
+			// Retour du nom avec notation pointeur
+			return "(*" + innerIdent.Name + ")"
+		}
+		// Type pointeur non supporté (ex: *pkg.Type)
+		return ""
+	}
+
+	// Vérifier si c'est un identifiant simple (Type)
+	if ident, isIdent := expr.(*ast.Ident); isIdent {
+		// Retour du nom simple
+		return ident.Name
+	}
+
+	// Type non géré (retour vide)
+	return ""
 }
 
 // checkVariables vérifie si une déclaration contient des variables publiques ou privées.
@@ -168,21 +250,60 @@ func checkTestFilesExist(filename string) testFilesStatus {
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
-//   - result: résultat de l'analyse des fonctions
+//   - result: pointeur vers le résultat de l'analyse des fonctions
 //   - status: état des fichiers de test
-func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result fileAnalysisResult, status testFilesStatus) {
+func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
 	// Vérification selon le type de fichier
 	switch {
 	// Cas fichier mixte avec fonctions publiques ET privées
 	case result.hasPublic && result.hasPrivate:
-		reportMixedFunctionsIssues(pass, file, status)
+		reportMixedFunctionsIssues(pass, file, result, status)
 	// Cas fichier avec fonctions publiques uniquement
 	case result.hasPublic:
-		reportPublicOnlyIssues(pass, file, status)
+		reportPublicOnlyIssues(pass, file, result, status)
 	// Cas fichier avec fonctions privées uniquement
 	case result.hasPrivate:
-		reportPrivateOnlyIssues(pass, file, status)
+		reportPrivateOnlyIssues(pass, file, result, status)
 	}
+}
+
+// formatFuncList formate une liste de fonctions pour l'affichage.
+//
+// Params:
+//   - funcs: liste des noms de fonctions
+//
+// Returns:
+//   - string: liste formatée (ex: "Func1, Func2, Func3, ...")
+func formatFuncList(funcs []string) string {
+	// Vérifier si la liste est vide
+	if len(funcs) == 0 {
+		// Retour d'une chaîne vide pour liste vide
+		return ""
+	}
+
+	// Vérifier si le nombre de fonctions est dans la limite
+	if len(funcs) <= MAX_FUNCS_TO_DISPLAY {
+		// Retour de la liste complète séparée par des virgules
+		return strings.Join(funcs, ", ")
+	}
+
+	// Calcul du nombre de fonctions restantes
+	displayed := funcs[:MAX_FUNCS_TO_DISPLAY]
+	remaining := len(funcs) - MAX_FUNCS_TO_DISPLAY
+	// Retour de la liste tronquée avec indicateur du reste
+	return strings.Join(displayed, ", ") + ", ... (+" + formatCount(remaining) + ")"
+}
+
+// formatCount formate un nombre pour l'affichage.
+//
+// Params:
+//   - count: nombre à formater
+//
+// Returns:
+//   - string: nombre formaté
+func formatCount(count int) string {
+	// Retour du nombre sous forme de string
+	return strconv.Itoa(count)
 }
 
 // reportMixedFunctionsIssues reporte les problèmes pour fichiers avec fonctions publiques ET privées.
@@ -190,27 +311,31 @@ func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result fileAnalys
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
+//   - result: pointeur vers le résultat de l'analyse
 //   - status: état des fichiers de test
-func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, status testFilesStatus) {
+func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
+	pubList := formatFuncList(result.publicFuncs)
+	privList := formatFuncList(result.privateFuncs)
+
 	// Fichier avec fonctions publiques ET privées → besoin des deux fichiers
 	if !status.hasInternal && !status.hasExternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient des fonctions publiques ET privées. Il doit avoir DEUX fichiers de test : '%s_internal_test.go' (white-box) ET '%s_external_test.go' (black-box)",
-			status.baseName, status.fileBase, status.fileBase)
+			"KTN-TEST-008: '%s' contient %d fonction(s) publique(s) [%s] et %d fonction(s) privée(s) [%s]. Créez '%s_external_test.go' (black-box, package xxx_test) ET '%s_internal_test.go' (white-box, package xxx)",
+			status.baseName, len(result.publicFuncs), pubList, len(result.privateFuncs), privList, status.fileBase, status.fileBase)
 		return
 	}
 
 	// Vérifier les fichiers manquants individuellement
 	if !status.hasInternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
-			status.baseName, status.fileBase)
+			"KTN-TEST-008: '%s' contient %d fonction(s) privée(s) [%s] → créez '%s_internal_test.go' (white-box, package xxx) pour les tester",
+			status.baseName, len(result.privateFuncs), privList, status.fileBase)
 	}
-	// Vérification du fichier externe
+	// Vérification du fichier externe manquant
 	if !status.hasExternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
-			status.baseName, status.fileBase)
+			"KTN-TEST-008: '%s' contient %d fonction(s) publique(s) [%s] → créez '%s_external_test.go' (black-box, package xxx_test) pour les tester",
+			status.baseName, len(result.publicFuncs), pubList, status.fileBase)
 	}
 }
 
@@ -219,21 +344,24 @@ func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, status test
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
+//   - result: pointeur vers le résultat de l'analyse
 //   - status: état des fichiers de test
-func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, status testFilesStatus) {
+func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
+	pubList := formatFuncList(result.publicFuncs)
+
 	// Vérification du fichier externe manquant
 	if !status.hasExternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient des fonctions publiques. Il doit avoir un fichier '%s_external_test.go' (black-box)",
-			status.baseName, status.fileBase)
+			"KTN-TEST-008: '%s' contient UNIQUEMENT %d fonction(s) publique(s) [%s] → créez '%s_external_test.go' (black-box, package xxx_test)",
+			status.baseName, len(result.publicFuncs), pubList, status.fileBase)
 		return
 	}
 
 	// Vérification du fichier interne superflu
 	if status.hasInternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions publiques. Le fichier '%s_internal_test.go' est inutile et doit être supprimé (utilisez '%s_external_test.go' pour tester l'API publique)",
-			status.baseName, status.fileBase, status.fileBase)
+			"KTN-TEST-008: '%s' contient UNIQUEMENT des fonctions publiques [%s]. Supprimez '%s_internal_test.go' (inutile) et utilisez '%s_external_test.go'",
+			status.baseName, pubList, status.fileBase, status.fileBase)
 	}
 }
 
@@ -242,21 +370,24 @@ func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, status testFile
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
+//   - result: pointeur vers le résultat de l'analyse
 //   - status: état des fichiers de test
-func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, status testFilesStatus) {
+func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
+	privList := formatFuncList(result.privateFuncs)
+
 	// Vérification du fichier interne manquant
 	if !status.hasInternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient des fonctions privées. Il doit avoir un fichier '%s_internal_test.go' (white-box)",
-			status.baseName, status.fileBase)
+			"KTN-TEST-008: '%s' contient UNIQUEMENT %d fonction(s) privée(s) [%s] → créez '%s_internal_test.go' (white-box, package xxx)",
+			status.baseName, len(result.privateFuncs), privList, status.fileBase)
 		return
 	}
 
 	// Vérification du fichier externe superflu
 	if status.hasExternal {
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: le fichier '%s' contient UNIQUEMENT des fonctions privées. Le fichier '%s_external_test.go' est inutile et doit être supprimé (utilisez '%s_internal_test.go' pour tester les fonctions privées)",
-			status.baseName, status.fileBase, status.fileBase)
+			"KTN-TEST-008: '%s' contient UNIQUEMENT des fonctions privées [%s]. Supprimez '%s_external_test.go' (inutile) et utilisez '%s_internal_test.go'",
+			status.baseName, privList, status.fileBase, status.fileBase)
 	}
 }
 

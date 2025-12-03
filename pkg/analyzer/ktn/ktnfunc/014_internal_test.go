@@ -249,3 +249,168 @@ func Test_extractCalledFuncName(t *testing.T) {
 		})
 	}
 }
+
+// Test_collectCallExprCallbacks vérifie la détection des callbacks dans les CallExpr.
+func Test_collectCallExprCallbacks(t *testing.T) {
+	tests := []struct {
+		name         string
+		callExpr     *ast.CallExpr
+		privateFuncs map[string][]*privateFuncInfo
+		expected     []string
+	}{
+		{
+			name: "function as argument",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "HandleFunc"},
+				Args: []ast.Expr{
+					&ast.BasicLit{Value: `"/path"`},
+					&ast.Ident{Name: "handler"},
+				},
+			},
+			privateFuncs: map[string][]*privateFuncInfo{
+				"handler": {{name: "handler"}},
+			},
+			expected: []string{"handler"},
+		},
+		{
+			name: "method as argument",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "mux"},
+					Sel: &ast.Ident{Name: "HandleFunc"},
+				},
+				Args: []ast.Expr{
+					&ast.BasicLit{Value: `"/live"`},
+					&ast.SelectorExpr{
+						X:   &ast.Ident{Name: "a"},
+						Sel: &ast.Ident{Name: "handleLiveness"},
+					},
+				},
+			},
+			privateFuncs: map[string][]*privateFuncInfo{
+				"handleLiveness": {{name: "handleLiveness", receiverType: "App"}},
+			},
+			expected: []string{"handleLiveness"},
+		},
+		{
+			name: "unknown function as argument",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "Register"},
+				Args: []ast.Expr{
+					&ast.Ident{Name: "unknownFunc"},
+				},
+			},
+			privateFuncs: map[string][]*privateFuncInfo{
+				"handler": {{name: "handler"}},
+			},
+			expected: []string{},
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			calledInProduction := make(map[string]bool)
+			collectCallExprCallbacks(tt.callExpr, tt.privateFuncs, calledInProduction)
+
+			// Vérification des résultats
+			for _, expectedFunc := range tt.expected {
+				// Vérifier si la fonction est marquée comme appelée
+				if !calledInProduction[expectedFunc] {
+					t.Errorf("expected %s to be marked as called", expectedFunc)
+				}
+			}
+		})
+	}
+}
+
+// Test_markIfPrivateFunc vérifie le marquage d'une fonction comme appelée.
+func Test_markIfPrivateFunc(t *testing.T) {
+	tests := []struct {
+		name         string
+		funcName     string
+		privateFuncs map[string][]*privateFuncInfo
+		shouldMark   bool
+	}{
+		{
+			name:     "known private function",
+			funcName: "privateHelper",
+			privateFuncs: map[string][]*privateFuncInfo{
+				"privateHelper": {{name: "privateHelper"}},
+			},
+			shouldMark: true,
+		},
+		{
+			name:     "unknown function",
+			funcName: "unknownFunc",
+			privateFuncs: map[string][]*privateFuncInfo{
+				"privateHelper": {{name: "privateHelper"}},
+			},
+			shouldMark: false,
+		},
+		{
+			name:         "empty private funcs map",
+			funcName:     "anyFunc",
+			privateFuncs: map[string][]*privateFuncInfo{},
+			shouldMark:   false,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			calledInProduction := make(map[string]bool)
+			markIfPrivateFunc(tt.funcName, tt.privateFuncs, calledInProduction)
+
+			// Vérification du résultat
+			if calledInProduction[tt.funcName] != tt.shouldMark {
+				t.Errorf("markIfPrivateFunc() marked = %v, want %v", calledInProduction[tt.funcName], tt.shouldMark)
+			}
+		})
+	}
+}
+
+// Test_collectIdentCallbacks vérifie la collecte des identifiants de callbacks.
+func Test_collectIdentCallbacks(t *testing.T) {
+	tests := []struct {
+		name         string
+		privateFuncs map[string][]*privateFuncInfo
+		node         ast.Node
+		expected     []string
+	}{
+		{
+			name: "ident in composite lit",
+			privateFuncs: map[string][]*privateFuncInfo{
+				"callback": {{name: "callback"}},
+			},
+			node: &ast.CompositeLit{
+				Elts: []ast.Expr{
+					&ast.KeyValueExpr{
+						Key:   &ast.Ident{Name: "RunE"},
+						Value: &ast.Ident{Name: "callback"},
+					},
+				},
+			},
+			expected: []string{"callback"},
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			calledInProduction := make(map[string]bool)
+			collectIdentCallbacks(tt.node, tt.privateFuncs, calledInProduction)
+
+			// Vérification des résultats
+			for _, expectedFunc := range tt.expected {
+				// Vérifier si la fonction est marquée comme appelée
+				if !calledInProduction[expectedFunc] {
+					t.Errorf("expected %s to be marked as called", expectedFunc)
+				}
+			}
+		})
+	}
+}
