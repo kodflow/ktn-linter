@@ -1,224 +1,73 @@
+// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
+// Ce fichier démontre les getters idiomatiques Go (sans préfixe Get).
 package struct006
 
-// UserEntity entité avec encapsulation correcte - OK.
-// Représente une entité utilisateur avec champs privés et getters publics.
-type UserEntity struct {
+// GoodUser représente un utilisateur avec encapsulation correcte.
+// Les getters suivent la convention Go idiomatique sans préfixe "Get".
+type GoodUser struct {
 	id    int
 	name  string
 	email string
 }
 
-// UserEntityInterface définit les méthodes publiques de UserEntity.
-type UserEntityInterface interface {
-	GetID() int
-	GetName() string
-	GetEmail() string
-	Save() error
+// GoodUserInterface définit le contrat public de GoodUser.
+type GoodUserInterface interface {
+	ID() int
+	Name() string
+	Email() string
+	SetName(name string)
 }
 
-// NewUserEntity crée une nouvelle entité utilisateur.
+// NewGoodUser crée une nouvelle instance de GoodUser.
 //
 // Params:
-//   - id: identifiant
-//   - name: nom
-//   - email: email
+//   - id: identifiant unique de l'utilisateur
+//   - name: nom de l'utilisateur
+//   - email: adresse email de l'utilisateur
 //
 // Returns:
-//   - *UserEntity: instance
-func NewUserEntity(id int, name, email string) *UserEntity {
-	// Retourne nouvelle instance avec champs initialisés
-	return &UserEntity{
+//   - *GoodUser: nouvelle instance initialisée
+func NewGoodUser(id int, name, email string) *GoodUser {
+	// Retourne une nouvelle instance avec les valeurs fournies
+	return &GoodUser{
 		id:    id,
 		name:  name,
 		email: email,
 	}
 }
 
-// GetID retourne l'identifiant.
+// ID retourne l'identifiant de l'utilisateur.
 //
 // Returns:
-//   - int: identifiant
-func (u *UserEntity) GetID() int {
+//   - int: identifiant unique
+func (u *GoodUser) ID() int {
 	// Retourne le champ id
 	return u.id
 }
 
-// GetName retourne le nom.
+// Name retourne le nom de l'utilisateur.
 //
 // Returns:
-//   - string: nom
-func (u *UserEntity) GetName() string {
+//   - string: nom de l'utilisateur
+func (u *GoodUser) Name() string {
 	// Retourne le champ name
 	return u.name
 }
 
-// GetEmail retourne l'email.
+// Email retourne l'adresse email de l'utilisateur.
 //
 // Returns:
-//   - string: email
-func (u *UserEntity) GetEmail() string {
+//   - string: adresse email
+func (u *GoodUser) Email() string {
 	// Retourne le champ email
 	return u.email
 }
 
-// Save sauvegarde l'entité.
-//
-// Returns:
-//   - error: erreur éventuelle
-func (u *UserEntity) Save() error {
-	// Retourne nil si succès
-	return nil
-}
-
-// SimpleDTO struct sans méthodes (DTO) - PAS BESOIN DE GETTERS.
-// Structure de transfert de données simple.
-type SimpleDTO struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-// Config configuration simple (≤3 champs) - PAS BESOIN DE GETTERS.
-// Contient les paramètres de configuration réseau.
-type Config struct {
-	Host string
-	Port int
-	TLS  bool
-}
-
-// internalService service privé - PAS DE RÈGLE
-type internalService struct {
-	Data string
-}
-
-// process traite les données.
-//
-// Returns:
-//   - error: erreur éventuelle
-func (i *internalService) process() error {
-	// Retourne nil si succès
-	return nil
-}
-
-// Repository entité avec encapsulation complète.
-// Service de persistance avec dépendances et méthodes publiques.
-type Repository struct {
-	db     Database
-	logger Logger
-	cache  Cache
-}
-
-// RepositoryInterface définit les méthodes publiques de Repository.
-type RepositoryInterface interface {
-	GetDB() Database
-	GetLogger() Logger
-	GetCache() Cache
-	Find(id int) (interface{}, error)
-}
-
-// NewRepository crée un nouveau repository.
+// SetName définit le nom de l'utilisateur.
 //
 // Params:
-//   - db: base de données
-//   - logger: logger
-//   - cache: cache
-//
-// Returns:
-//   - *Repository: instance
-func NewRepository(db Database, logger Logger, cache Cache) *Repository {
-	// Retourne nouvelle instance avec dépendances
-	return &Repository{
-		db:     db,
-		logger: logger,
-		cache:  cache,
-	}
+//   - name: nouveau nom à définir
+func (u *GoodUser) SetName(name string) {
+	// Modifie le champ name
+	u.name = name
 }
-
-// GetDB retourne la base de données.
-//
-// Returns:
-//   - Database: base
-func (r *Repository) GetDB() Database {
-	// Retourne le champ db
-	return r.db
-}
-
-// GetLogger retourne le logger.
-//
-// Returns:
-//   - Logger: logger
-func (r *Repository) GetLogger() Logger {
-	// Retourne le champ logger
-	return r.logger
-}
-
-// GetCache retourne le cache.
-//
-// Returns:
-//   - Cache: cache
-func (r *Repository) GetCache() Cache {
-	// Retourne le champ cache
-	return r.cache
-}
-
-// Find recherche une entité.
-//
-// Params:
-//   - id: identifiant de l'entité
-//
-// Returns:
-//   - interface{}: entité trouvée
-//   - error: erreur éventuelle
-func (r *Repository) Find(id int) (interface{}, error) {
-	// Retourne nil si non trouvé
-	return nil, nil
-}
-
-// EmailService service avec encapsulation partielle OK (≤3 champs).
-// Service d'envoi d'emails avec configuration réseau.
-type EmailService struct {
-	host string
-	port int
-	tls  bool
-}
-
-// EmailServiceInterface définit les méthodes de EmailService.
-type EmailServiceInterface interface {
-	Send(to, subject, body string) error
-}
-
-// NewEmailService crée un service email.
-//
-// Params:
-//   - host: hôte
-//   - port: port
-//   - tls: TLS activé
-//
-// Returns:
-//   - *EmailService: instance
-func NewEmailService(host string, port int, tls bool) *EmailService {
-	// Retourne nouvelle instance avec configuration
-	return &EmailService{
-		host: host,
-		port: port,
-		tls:  tls,
-	}
-}
-
-// Send envoie un email.
-//
-// Params:
-//   - to: destinataire
-//   - subject: sujet
-//   - body: corps du message
-//
-// Returns:
-//   - error: erreur éventuelle
-func (e *EmailService) Send(to, subject, body string) error {
-	// Retourne nil si succès
-	return nil
-}
-
-// Types pour compilation
-type Database interface{}
-type Logger interface{}
-type Cache interface{}

@@ -1,93 +1,76 @@
+// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
+// Ce fichier démontre les getters non idiomatiques avec préfixe "Get".
 package struct006
 
-// BadUser champs publics alors qu'il a des méthodes - VIOLATION
-type BadUser struct { // want "KTN-STRUCT-006"
-	ID    int
-	Name  string
-	Email string
-	Role  string
-}
-
-// Save méthode présente mais champs publics
-func (b *BadUser) Save() error {
-	return nil
-}
-
-// Delete méthode présente
-func (b *BadUser) Delete() error {
-	return nil
-}
-
-// MixedVisibility mélange champs publics/privés avec méthodes - VIOLATION
-type MixedVisibility struct { // want "KTN-STRUCT-006"
-	ID       int
-	name     string
-	Email    string
-	password string
-}
-
-// Validate méthode présente
-func (m *MixedVisibility) Validate() bool {
-	return true
-}
-
-// ProductEntity entité avec champs publics - VIOLATION
-type ProductEntity struct { // want "KTN-STRUCT-006"
-	ID          int
-	Name        string
-	Description string
-	Price       float64
-}
-
-// GetFormattedPrice méthode présente
-func (p *ProductEntity) GetFormattedPrice() string {
-	return ""
-}
-
-// UpdatePrice méthode présente
-func (p *ProductEntity) UpdatePrice(newPrice float64) {
-	p.Price = newPrice
-}
-
-// NoGetters champs privés MAIS pas de getters - VIOLATION
-type NoGetters struct { // want "KTN-STRUCT-006"
+// BadUser représente un utilisateur avec getters non idiomatiques.
+// Les getters utilisent le préfixe "Get" contrairement à la convention Go.
+type BadUser struct {
 	id    int
 	name  string
 	email string
-	role  string
 }
 
-// Save méthode présente
-func (n *NoGetters) Save() error {
-	return nil
+// BadUserInterface définit le contrat public de BadUser.
+type BadUserInterface interface {
+	GetID() int
+	GetName() string
+	GetEmail() string
+	Save() error
 }
 
-// Update méthode présente mais pas de getters pour les champs
-func (n *NoGetters) Update(name string) {
-	n.name = name
+// NewBadUser crée une nouvelle instance de BadUser.
+//
+// Params:
+//   - id: identifiant unique de l'utilisateur
+//   - name: nom de l'utilisateur
+//   - email: adresse email de l'utilisateur
+//
+// Returns:
+//   - *BadUser: nouvelle instance initialisée
+func NewBadUser(id int, name, email string) *BadUser {
+	// Retourne une nouvelle instance avec les valeurs fournies
+	return &BadUser{
+		id:    id,
+		name:  name,
+		email: email,
+	}
 }
 
-// PartialGetters champs privés avec getters incomplets - VIOLATION
-type PartialGetters struct { // want "KTN-STRUCT-006"
-	id    int
-	name  string
-	email string
-	role  string
+// GetID retourne l'identifiant de l'utilisateur.
+// VIOLATION: devrait être ID() selon la convention Go.
+//
+// Returns:
+//   - int: identifiant unique
+func (u *BadUser) GetID() int { // want "KTN-STRUCT-006"
+	// Retourne le champ id
+	return u.id
 }
 
-// GetID getter présent
-func (p *PartialGetters) GetID() int {
-	return p.id
+// GetName retourne le nom de l'utilisateur.
+// VIOLATION: devrait être Name() selon la convention Go.
+//
+// Returns:
+//   - string: nom de l'utilisateur
+func (u *BadUser) GetName() string { // want "KTN-STRUCT-006"
+	// Retourne le champ name
+	return u.name
 }
 
-// GetName getter présent
-func (p *PartialGetters) GetName() string {
-	return p.name
+// GetEmail retourne l'adresse email de l'utilisateur.
+// VIOLATION: devrait être Email() selon la convention Go.
+//
+// Returns:
+//   - string: adresse email
+func (u *BadUser) GetEmail() string { // want "KTN-STRUCT-006"
+	// Retourne le champ email
+	return u.email
 }
 
-// Manque GetEmail et GetRole - VIOLATION
-
-// Process méthode présente
-func (p *PartialGetters) Process() error {
+// Save sauvegarde l'utilisateur.
+//
+// Returns:
+//   - error: erreur éventuelle
+func (u *BadUser) Save() error {
+	// Retourne nil si succès
 	return nil
 }
