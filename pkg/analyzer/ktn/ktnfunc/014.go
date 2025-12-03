@@ -171,6 +171,7 @@ func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, priva
 		(*ast.CompositeLit)(nil),
 		(*ast.AssignStmt)(nil),
 		(*ast.ValueSpec)(nil),
+		(*ast.CallExpr)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
@@ -181,19 +182,67 @@ func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, priva
 			return
 		}
 
-		// Parcourir tous les identifiants
-		ast.Inspect(n, func(node ast.Node) bool {
-			// Vérifier si c'est un identifiant
-			if ident, ok := node.(*ast.Ident); ok {
-				// Vérifier si c'est une fonction privée connue
-				if _, exists := privateFuncs[ident.Name]; exists {
-					calledInProduction[ident.Name] = true
-				}
-			}
-			// Continuer la traversée
-			return true
-		})
+		// Traitement spécial pour les CallExpr (méthodes passées en arguments)
+		if callExpr, ok := n.(*ast.CallExpr); ok {
+			collectCallExprCallbacks(callExpr, privateFuncs, calledInProduction)
+			return
+		}
+
+		// Parcourir tous les identifiants pour les autres types de noeuds
+		collectIdentCallbacks(n, privateFuncs, calledInProduction)
 	})
+}
+
+// collectCallExprCallbacks détecte les callbacks passés comme arguments à des appels.
+//
+// Params:
+//   - callExpr: expression d'appel de fonction
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+func collectCallExprCallbacks(callExpr *ast.CallExpr, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	// Parcourir tous les arguments de l'appel
+	for _, arg := range callExpr.Args {
+		// Cas 1: fonction directe (ex: handler)
+		if ident, ok := arg.(*ast.Ident); ok {
+			markIfPrivateFunc(ident.Name, privateFuncs, calledInProduction)
+			continue
+		}
+
+		// Cas 2: méthode (ex: a.handleLiveness, obj.Method)
+		if selExpr, ok := arg.(*ast.SelectorExpr); ok {
+			markIfPrivateFunc(selExpr.Sel.Name, privateFuncs, calledInProduction)
+		}
+	}
+}
+
+// collectIdentCallbacks parcourt un noeud pour détecter les identifiants de callbacks.
+//
+// Params:
+//   - n: noeud AST à parcourir
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+func collectIdentCallbacks(n ast.Node, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	ast.Inspect(n, func(node ast.Node) bool {
+		// Vérifier si c'est un identifiant
+		if ident, ok := node.(*ast.Ident); ok {
+			markIfPrivateFunc(ident.Name, privateFuncs, calledInProduction)
+		}
+		// Continuer la traversée
+		return true
+	})
+}
+
+// markIfPrivateFunc marque une fonction comme appelée si elle est privée.
+//
+// Params:
+//   - funcName: nom de la fonction
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+func markIfPrivateFunc(funcName string, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	// Vérifier si c'est une fonction privée connue
+	if _, exists := privateFuncs[funcName]; exists {
+		calledInProduction[funcName] = true
+	}
 }
 
 // reportUnusedPrivateFuncs reporte les fonctions privées non utilisées.
