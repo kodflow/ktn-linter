@@ -13,6 +13,9 @@ import (
 // Params:
 //   - t: testing context
 func TestComment006(t *testing.T) {
-	// good.go: 0 errors, bad.go: 8 errors for missing/invalid function docs
-	testhelper.TestGoodBad(t, ktncomment.Analyzer006, "comment006", 8)
+	// good.go: 0 errors, bad.go: 6 errors for missing/invalid function docs
+	// - badNoDoc: no doc, badWrongFormat: wrong format, badMissingParams: no Params
+	// - badMissingReturns: no Returns, badEmptyParamsSection: empty Params
+	// - badEmptyReturnsSection: empty Returns
+	testhelper.TestGoodBad(t, ktncomment.Analyzer006, "comment006", 6)
 }
