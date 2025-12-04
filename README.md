@@ -110,80 +110,92 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 **Configuration** : `.vscode/settings.json`, `.vscode/tasks.json`, `.vscode/keybindings.json`
 **Wrapper** : `bin/golangci-lint-wrapper` (format simple, inclut testdata)
 
-## Règles Implémentées
+## Règles Implémentées (ordonnées par criticité)
 
-### Constantes (4 règles) ✅ 100%
+### Commentaires (1 règle) - INFO
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-COMMENT-001 | INFO | Commentaires inline trop longs (>80 caractères) |
 
-- **KTN-CONST-001**: Type explicite obligatoire
-- **KTN-CONST-002**: Groupement et placement avant var
-- **KTN-CONST-003**: Nommage SCREAMING_SNAKE_CASE
-- **KTN-CONST-004**: Commentaire obligatoire
+### Constantes (4 règles) - WARNING/INFO
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-CONST-001 | WARNING | Type explicite obligatoire |
+| KTN-CONST-002 | WARNING | Commentaire obligatoire |
+| KTN-CONST-003 | INFO | Groupement et placement avant var |
+| KTN-CONST-004 | INFO | Nommage SCREAMING_SNAKE_CASE |
 
-### Variables (6 règles) ✅ 100%
+### Variables (18 règles) - ERROR/WARNING/INFO
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-VAR-001 | ERROR | Variables package en camelCase (pas SCREAMING_SNAKE) |
+| KTN-VAR-002 | ERROR | Commentaire obligatoire pour var package |
+| KTN-VAR-003 | WARNING | Type explicite obligatoire |
+| KTN-VAR-004 | WARNING | Utiliser := pour variables locales |
+| KTN-VAR-005 | WARNING | Préallocation slices avec capacité connue |
+| KTN-VAR-006 | WARNING | Éviter make([]T, length) avec append |
+| KTN-VAR-007 | WARNING | Préallocation bytes.Buffer/strings.Builder avec Grow |
+| KTN-VAR-008 | WARNING | Utiliser strings.Builder pour >2 concaténations |
+| KTN-VAR-009 | WARNING | Éviter allocations dans boucles chaudes |
+| KTN-VAR-010 | WARNING | Pointeurs pour structs >64 bytes |
+| KTN-VAR-011 | WARNING | sync.Pool pour buffers répétés |
+| KTN-VAR-012 | WARNING | Shadowing de variables |
+| KTN-VAR-013 | WARNING | Conversions string() répétées |
+| KTN-VAR-014 | INFO | Groupement dans un seul bloc var() |
+| KTN-VAR-015 | INFO | Variables après constantes (ordre déclarations) |
+| KTN-VAR-016 | INFO | Préallocation maps avec capacité connue |
+| KTN-VAR-017 | INFO | Utiliser [N]T au lieu de make([]T, N) |
+| KTN-VAR-018 | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
 
-- **KTN-VAR-001**: Type explicite obligatoire
-- **KTN-VAR-002**: Groupement dans un seul bloc var ()
-- **KTN-VAR-003**: Nommage camelCase/PascalCase (pas SCREAMING_SNAKE_CASE)
-- **KTN-VAR-004**: Commentaire obligatoire
-- **KTN-VAR-005**: Pas d'initialisation multiple sur une ligne
-- **KTN-VAR-006**: Variables déclarées après les constantes (ordre imports → const → var → types → fonctions)
+### Fonctions (14 règles) - ERROR/WARNING/INFO
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-FUNC-001 | ERROR | Erreur toujours en dernière position retour |
+| KTN-FUNC-002 | ERROR | Context toujours en premier paramètre |
+| KTN-FUNC-003 | ERROR | Éviter else après return/continue/break |
+| KTN-FUNC-004 | ERROR | Fonctions privées non utilisées (code mort) |
+| KTN-FUNC-005 | WARNING | Longueur max 35 lignes de code pur |
+| KTN-FUNC-006 | WARNING | Max 5 paramètres par fonction |
+| KTN-FUNC-007 | WARNING | Documentation stricte (Params/Returns) |
+| KTN-FUNC-008 | WARNING | Pas de side effects dans les getters |
+| KTN-FUNC-009 | WARNING | Commentaires sur branches/returns/logique |
+| KTN-FUNC-010 | WARNING | Paramètres non utilisés préfixés par _ |
+| KTN-FUNC-011 | INFO | Pas de magic numbers (constantes nommées) |
+| KTN-FUNC-012 | INFO | Pas de naked returns (sauf <5 lignes) |
+| KTN-FUNC-013 | INFO | Complexité cyclomatique max 10 |
+| KTN-FUNC-014 | INFO | Named returns pour >3 valeurs de retour |
 
-### Fonctions (14 règles) ✅ 100%
+### Structures (6 règles) - WARNING/INFO
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-STRUCT-001 | WARNING | Interface obligatoire (100% méthodes publiques) |
+| KTN-STRUCT-002 | WARNING | Documentation obligatoire (≥2 lignes) |
+| KTN-STRUCT-003 | WARNING | Constructeur NewX() requis |
+| KTN-STRUCT-004 | WARNING | Pas de préfixe Get pour getters |
+| KTN-STRUCT-005 | INFO | Un fichier Go par struct |
+| KTN-STRUCT-006 | INFO | Ordre des champs (exportés avant privés) |
 
-- **KTN-FUNC-001**: Longueur max 35 lignes de code pur
-- **KTN-FUNC-002**: Max 5 paramètres par fonction
-- **KTN-FUNC-003**: Pas de magic numbers (constantes nommées)
-- **KTN-FUNC-004**: Pas de naked returns (sauf <5 lignes)
-- **KTN-FUNC-005**: Complexité cyclomatique max 10
-- **KTN-FUNC-006**: Erreur toujours en dernière position
-- **KTN-FUNC-007**: Documentation stricte (Params/Returns)
-- **KTN-FUNC-008**: Context toujours en premier paramètre
-- **KTN-FUNC-009**: Pas de side effects dans les getters
-- **KTN-FUNC-010**: Named returns pour >3 valeurs de retour
-- **KTN-FUNC-011**: Commentaires sur branches/returns/logique
-- **KTN-FUNC-012**: Éviter else après return/continue/break
-- **KTN-FUNC-013**: Paramètres non utilisés doivent être préfixés par _ ou assignés à _
-- **KTN-FUNC-014**: Fonctions privées doivent être utilisées dans le code de production (détecte code mort créé pour contourner les règles)
+### Tests (13 règles) - ERROR/WARNING/INFO
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-TEST-001 | ERROR | Fichiers test doivent finir par _internal/_external_test.go |
+| KTN-TEST-002 | WARNING | Package xxx_test obligatoire (désactivée) |
+| KTN-TEST-003 | WARNING | Fichier test sans fichier source correspondant |
+| KTN-TEST-004 | WARNING | Fonctions publiques sans tests |
+| KTN-TEST-005 | WARNING | Tests sans table-driven pattern |
+| KTN-TEST-006 | WARNING | Pattern 1:1 fichiers test/source |
+| KTN-TEST-007 | WARNING | Interdiction t.Skip() |
+| KTN-TEST-008 | WARNING | Règle 1:2 (_internal_test.go ET _external_test.go) |
+| KTN-TEST-009 | WARNING | Tests publics dans _external_test.go uniquement |
+| KTN-TEST-010 | WARNING | Tests privés dans _internal_test.go uniquement |
+| KTN-TEST-011 | WARNING | Convention package (white-box/black-box) |
+| KTN-TEST-012 | WARNING | Tests doivent contenir des assertions |
+| KTN-TEST-013 | INFO | Coverage cas d'erreur |
 
-### Structures (6 règles) ✅ 100%
-
-- **KTN-STRUCT-001**: Un fichier Go par struct (évite fichiers de 10000 lignes)
-- **KTN-STRUCT-002**: Interface obligatoire reprenant 100% des méthodes publiques de chaque struct
-- **KTN-STRUCT-003**: Ordre des champs (exportés avant privés)
-- **KTN-STRUCT-004**: Documentation obligatoire pour structs exportées (≥2 lignes)
-- **KTN-STRUCT-005**: Constructeur NewX() requis pour structs avec méthodes
-- **KTN-STRUCT-006**: Champs privés + getters pour structs avec méthodes (>3 champs)
-
-### Retours (1 règle) ✅ 100%
-
-- **KTN-RETURN-002**: Préférer slice/map vide à nil pour éviter nil pointer dereference
-
-### Interfaces (1 règle) ✅ 100%
-
-- **KTN-INTERFACE-001**: Interface déclarée mais jamais utilisée (code mort)
-
-### Commentaires (1 règle) ✅ 100%
-
-- **KTN-COMMENT-002**: Commentaires inline trop verbeux (>80 caractères)
-
-### Package (1 règle) ✅ 100%
-
-- **KTN-PACKAGE-001**: Chaque fichier .go (non-test) doit avoir un commentaire descriptif avant la déclaration `package`
-
-### Tests (11 règles) ✅ 100%
-
-- **KTN-TEST-001**: ~~Package xxx_test obligatoire~~ (désactivée: remplacée par KTN-TEST-008+009+010+011)
-- **KTN-TEST-002**: Fichier test sans fichier source correspondant
-- **KTN-TEST-003**: Fonctions publiques sans tests (détecte pattern Type_Method)
-- **KTN-TEST-004**: Tests sans couverture cas d'erreur
-- **KTN-TEST-005**: Tests sans table-driven pattern (détecte t.*, assert.*, require.*)
-- **KTN-TEST-006**: Tests Benchmark sans *testing.B
-- **KTN-TEST-007**: Interdiction t.Skip() / t.Skipf() / t.SkipNow()
-- **KTN-TEST-008**: Règle 1:2 - Chaque fichier .go doit avoir DEUX fichiers de test (_internal_test.go ET _external_test.go)
-- **KTN-TEST-009**: Tests de fonctions publiques (exportées) doivent être dans _external_test.go uniquement (black-box testing)
-- **KTN-TEST-010**: Tests de fonctions privées (non-exportées) doivent être dans _internal_test.go uniquement (white-box testing)
-- **KTN-TEST-011**: Fichiers _internal_test.go doivent utiliser package xxx (white-box), _external_test.go doivent utiliser package xxx_test (black-box)
-- **KTN-TEST-012**: Interdiction fichiers *_test.go sans suffixe _internal ou _external (doivent être renommés ou dispatchés)
+### Package (1 règle) - WARNING
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-PACKAGE-001 | WARNING | Commentaire descriptif avant `package` |
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
@@ -226,34 +238,12 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 
 ## Statistiques
 
-- **Couverture globale**: 89.9% 🟡
+- **Couverture globale**: 91.6% 🟡
 - **Packages 100%**: utils, formatter 🟢
-- **Package const**: 92.9% 🟡
-- **Package func**: Conforme 🟡
-- **Package return**: 100% 🟢
-- **Package interface**: 100% 🟢 (ignores struct interfaces)
-- **Package comment**: 100% 🟢
 - **Go version**: 1.25
-- **Total règles**: 74 (45 KTN + 17 modernize actifs + 12 désactivées/remplacées)
-  - **KTN**: 4 const + 19 var + 14 func + 6 struct + 1 return + 1 interface + 1 comment + 1 package + 11 test
-  - **Modernize**: 17 analyseurs actifs / 18 totaux golang.org/x/tools (Go 1.18-1.25, newexpr désactivé)
-- **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD) pour le détail des fonctions < 100%
-
-## Corrections des Contradictions
-
-- ✅ **KTN-VAR-010 supprimé** : Contradictoire avec KTN-RETURN-002
-- ✅ **KTN-COMMENT-001 supprimé** : Contradictoire avec KTN-FUNC-011 (demandait commentaires puis les marquait redondants)
-- ✅ **KTN-TEST-001 remplacé par KTN-TEST-008+009+010+011** : Incompatible avec white-box testing. Les 4 nouvelles règles imposent une convention stricte :
-  - **008** : Règle 1:2 (chaque .go → _internal_test.go ET _external_test.go)
-  - **009** : Tests fonctions publiques → _external_test.go UNIQUEMENT
-  - **010** : Tests fonctions privées → _internal_test.go UNIQUEMENT
-  - **011** : Convention package (_internal → package xxx, _external → package xxx_test)
-- ✅ **KTN-INTERFACE-001 amélioré** : Ignore les interfaces qui suivent le pattern `XXXInterface` pour struct `XXX` (KTN-STRUCT-002)
-- ✅ **KTN-VAR-014 amélioré** : Ignore les types externes (frameworks comme Terraform)
-- ✅ **KTN-VAR-007 amélioré** : Ignore `[]T{}` (faux positifs), vérifie seulement `make([]T, 0)` sans capacity
-- ✅ **KTN-FUNC-011 amélioré** : Ignore returns triviaux (nil, true, false, `[]T{}`)
-- ✅ **KTN-FUNC-014 amélioré** : Détecte méthodes passées comme arguments (`mux.HandleFunc("/", a.handler)`)
-- ✅ **KTN-TEST-008 amélioré** : Messages enrichis avec liste des fonctions concernées
+- **Total règles KTN**: 57 (1 comment + 4 const + 18 var + 14 func + 6 struct + 13 test + 1 package)
+- **Total modernize**: 17 analyseurs actifs / 18 totaux
+- **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 
 ## Structure
 
