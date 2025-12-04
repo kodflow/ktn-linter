@@ -4,20 +4,34 @@ package var010
 // Bad: Creating []byte buffers repeatedly in loops without sync.Pool
 
 const (
-	LOOP_ITERATIONS         int = 100
-	BUFFER_SIZE             int = 1024
-	SMALL_BUFFER_SIZE       int = 512
-	TINY_BUFFER_SIZE        int = 128
-	MEDIUM_BUFFER_SIZE      int = 256
-	CONST_BUFFER_SIZE       int = 2048
-	OUTER_ITERATIONS        int = 10
-	INNER_ITERATIONS        int = 10
-	NESTED_BUFFER_SIZE      int = 64
-	LARGE_BUFFER_SIZE       int = 512
-	LARGE_BUFFER_CAPACITY   int = 1024
-	ITEMS_COUNT             int = 3
-	COUNTER_LIMIT           int = 100
-	RANGE_ITERATIONS        int = 50
+	// LOOP_ITERATIONS est le nombre d'itérations de boucle
+	LOOP_ITERATIONS int = 100
+	// BUFFER_SIZE est la taille du buffer
+	BUFFER_SIZE int = 1024
+	// SMALL_BUFFER_SIZE est la taille du petit buffer
+	SMALL_BUFFER_SIZE int = 512
+	// TINY_BUFFER_SIZE est la taille du très petit buffer
+	TINY_BUFFER_SIZE int = 128
+	// MEDIUM_BUFFER_SIZE est la taille moyenne du buffer
+	MEDIUM_BUFFER_SIZE int = 256
+	// CONST_BUFFER_SIZE est la taille constante du buffer
+	CONST_BUFFER_SIZE int = 2048
+	// OUTER_ITERATIONS est le nombre d'itérations externes
+	OUTER_ITERATIONS int = 10
+	// INNER_ITERATIONS est le nombre d'itérations internes
+	INNER_ITERATIONS int = 10
+	// NESTED_BUFFER_SIZE est la taille du buffer imbriqué
+	NESTED_BUFFER_SIZE int = 64
+	// LARGE_BUFFER_SIZE est la taille du grand buffer
+	LARGE_BUFFER_SIZE int = 512
+	// LARGE_BUFFER_CAPACITY est la capacité du grand buffer
+	LARGE_BUFFER_CAPACITY int = 1024
+	// ITEMS_COUNT est le nombre d'éléments
+	ITEMS_COUNT int = 3
+	// COUNTER_LIMIT est la limite du compteur
+	COUNTER_LIMIT int = 100
+	// RANGE_ITERATIONS est le nombre d'itérations de range
+	RANGE_ITERATIONS int = 50
 )
 
 // badProcessInLoop creates buffer in loop without sync.Pool
@@ -97,8 +111,8 @@ func badMakeWithCapacity() {
 	results := make([]int, 0, LOOP_ITERATIONS)
 	// Loop processes items
 	for range LOOP_ITERATIONS {
-		// Buffer with both length and capacity
-		buffer := make([]byte, LARGE_BUFFER_SIZE, LARGE_BUFFER_CAPACITY)
+		// Buffer with capacity allocated in loop
+		buffer := make([]byte, 0, LARGE_BUFFER_CAPACITY)
 		results = append(results, len(buffer))
 	}
 }

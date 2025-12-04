@@ -1,94 +1,94 @@
-// Bad examples for the const004 test case.
+// Bad examples for the const003 test case.
 package const003
 
 // Bad: Invalid naming (violates KTN-CONST-003)
 // But respects: explicit types, comments, and single-block grouping
 const (
 	// camelCase naming (INVALID)
-	// maxSize in camelCase
-	maxSize int = 100
-	// apiKey in camelCase
-	apiKey string = "secret"
-	// httpTimeout in camelCase
-	httpTimeout int = 30
+	// badMaxSize in camelCase
+	badMaxSize int = 100 // want "KTN-CONST-003: la constante 'badMaxSize' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badApiKey in camelCase
+	badApiKey string = "secret" // want "KTN-CONST-003: la constante 'badApiKey' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badHttpTimeout in camelCase
+	badHttpTimeout int = 30 // want "KTN-CONST-003: la constante 'badHttpTimeout' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// PascalCase naming (INVALID)
-	// MaxSize in PascalCase
-	MaxSize int = 100
-	// ApiKey in PascalCase
-	ApiKey string = "secret"
-	// HttpTimeout in PascalCase
-	HttpTimeout int = 30
+	// BadMaxSizePascal in PascalCase
+	BadMaxSizePascal int = 100 // want "KTN-CONST-003: la constante 'BadMaxSizePascal' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// BadApiKeyPascal in PascalCase
+	BadApiKeyPascal string = "secret" // want "KTN-CONST-003: la constante 'BadApiKeyPascal' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// BadHttpTimeoutPascal in PascalCase
+	BadHttpTimeoutPascal int = 30 // want "KTN-CONST-003: la constante 'BadHttpTimeoutPascal' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// snake_case (lowercase with underscores) - INVALID
-	// max_size in snake_case
-	max_size int = 100
-	// api_key in snake_case
-	api_key string = "secret"
-	// http_timeout in snake_case
-	http_timeout int = 30
+	// bad_max_size in snake_case
+	bad_max_size int = 100 // want "KTN-CONST-003: la constante 'bad_max_size' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// bad_api_key in snake_case
+	bad_api_key string = "secret" // want "KTN-CONST-003: la constante 'bad_api_key' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// bad_http_timeout in snake_case
+	bad_http_timeout int = 30 // want "KTN-CONST-003: la constante 'bad_http_timeout' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// Mixed case with underscores - INVALID
-	// Max_Size mixed case
-	Max_Size int = 100
-	// Api_Key mixed case
-	Api_Key string = "secret"
-	// Http_Timeout mixed case
-	Http_Timeout int = 30
+	// Bad_Max_Size mixed case
+	Bad_Max_Size int = 100 // want "KTN-CONST-003: la constante 'Bad_Max_Size' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// Bad_Api_Key mixed case
+	Bad_Api_Key string = "secret" // want "KTN-CONST-003: la constante 'Bad_Api_Key' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// Bad_Http_Timeout mixed case
+	Bad_Http_Timeout int = 30 // want "KTN-CONST-003: la constante 'Bad_Http_Timeout' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// More camelCase examples
-	// statusOk in camelCase
-	statusOk int = 200
-	// statusCreated in camelCase
-	statusCreated int = 201
-	// statusError in camelCase
-	statusError int = 500
+	// badStatusOk in camelCase
+	badStatusOk int = 200 // want "KTN-CONST-003: la constante 'badStatusOk' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badStatusCreated in camelCase
+	badStatusCreated int = 201 // want "KTN-CONST-003: la constante 'badStatusCreated' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badStatusError in camelCase
+	badStatusError int = 500 // want "KTN-CONST-003: la constante 'badStatusError' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// More PascalCase examples
-	// StateIdle in PascalCase
-	StateIdle int = 0
-	// StateRunning in PascalCase
-	StateRunning int = 1
-	// StatePaused in PascalCase
-	StatePaused int = 2
+	// BadStateIdle in PascalCase
+	BadStateIdle int = 0 // want "KTN-CONST-003: la constante 'BadStateIdle' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// BadStateRunning in PascalCase
+	BadStateRunning int = 1 // want "KTN-CONST-003: la constante 'BadStateRunning' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// BadStatePaused in PascalCase
+	BadStatePaused int = 2 // want "KTN-CONST-003: la constante 'BadStatePaused' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// Mixed variations
-	// ErrorNotFound PascalCase
-	ErrorNotFound string = "not found"
-	// errorUnauthorized camelCase
-	errorUnauthorized string = "unauthorized"
-	// Error_Internal mixed
-	Error_Internal string = "internal"
+	// BadErrorNotFound PascalCase
+	BadErrorNotFound string = "not found" // want "KTN-CONST-003: la constante 'BadErrorNotFound' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badErrorUnauthorized camelCase
+	badErrorUnauthorized string = "unauthorized" // want "KTN-CONST-003: la constante 'badErrorUnauthorized' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// Bad_Error_Internal mixed
+	Bad_Error_Internal string = "internal" // want "KTN-CONST-003: la constante 'Bad_Error_Internal' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// Starting with lowercase
-	// defaultPort lowercase start
-	defaultPort int = 8080
-	// defaultHost lowercase start
-	defaultHost string = "localhost"
-	// defaultProtocol lowercase start
-	defaultProtocol string = "http"
+	// badDefaultPort lowercase start
+	badDefaultPort int = 8080 // want "KTN-CONST-003: la constante 'badDefaultPort' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badDefaultHost lowercase start
+	badDefaultHost string = "localhost" // want "KTN-CONST-003: la constante 'badDefaultHost' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badDefaultProtocol lowercase start
+	badDefaultProtocol string = "http" // want "KTN-CONST-003: la constante 'badDefaultProtocol' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// Complex camelCase
-	// maxConnectionPoolSize complex camelCase
-	maxConnectionPoolSize int = 50
-	// defaultRequestTimeout complex camelCase
-	defaultRequestTimeout int = 60
-	// apiKeyHeaderName complex camelCase
-	apiKeyHeaderName string = "X-API-Key"
+	// badMaxConnectionPoolSize complex camelCase
+	badMaxConnectionPoolSize int = 50 // want "KTN-CONST-003: la constante 'badMaxConnectionPoolSize' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badDefaultRequestTimeout complex camelCase
+	badDefaultRequestTimeout int = 60 // want "KTN-CONST-003: la constante 'badDefaultRequestTimeout' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// badApiKeyHeaderName complex camelCase
+	badApiKeyHeaderName string = "X-API-Key" // want "KTN-CONST-003: la constante 'badApiKeyHeaderName' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// Partially correct (mixed) - INVALID
-	// MAX_Size partially correct
-	MAX_Size int = 100
-	// Api_KEY partially correct
-	Api_KEY string = "key"
-	// HTTP_timeout partially correct
-	HTTP_timeout int = 30
+	// BAD_Max_Size partially correct
+	BAD_Max_Size int = 100 // want "KTN-CONST-003: la constante 'BAD_Max_Size' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// Bad_Api_KEY partially correct
+	Bad_Api_KEY string = "key" // want "KTN-CONST-003: la constante 'Bad_Api_KEY' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// BAD_HTTP_timeout partially correct
+	BAD_HTTP_timeout int = 30 // want "KTN-CONST-003: la constante 'BAD_HTTP_timeout' doit utiliser la convention CAPITAL_UNDERSCORE"
 
 	// Database constants with wrong naming
-	// dbMaxConnections database setting
-	dbMaxConnections int = 100
-	// DbMinConnections database setting
-	DbMinConnections int = 10
-	// db_timeout database setting
-	db_timeout int = 30
+	// badDbMaxConnections database setting
+	badDbMaxConnections int = 100 // want "KTN-CONST-003: la constante 'badDbMaxConnections' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// BadDbMinConnections database setting
+	BadDbMinConnections int = 10 // want "KTN-CONST-003: la constante 'BadDbMinConnections' doit utiliser la convention CAPITAL_UNDERSCORE"
+	// bad_db_timeout database setting
+	bad_db_timeout int = 30 // want "KTN-CONST-003: la constante 'bad_db_timeout' doit utiliser la convention CAPITAL_UNDERSCORE"
 )

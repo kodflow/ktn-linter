@@ -1,3 +1,4 @@
+// Package test013 provides data processing utilities.
 package test013
 
 import "errors"
@@ -14,8 +15,10 @@ import "errors"
 func ProcessData(data string) (string, error) {
 	// Vérification données vides
 	if data == "" {
+		// Retour erreur
 		return "", errors.New("empty data")
 	}
+	// Retour du résultat
 	return "processed:" + data, nil
 }
 
@@ -25,6 +28,7 @@ func ProcessData(data string) (string, error) {
 // Returns:
 //   - string: nom
 func GetName() string {
+	// Retour du nom
 	return "test"
 }
 
@@ -34,5 +38,6 @@ func GetName() string {
 // Returns:
 //   - int: compteur
 func GetCount() int {
+	// Retour du compteur
 	return 42
 }

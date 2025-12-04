@@ -115,83 +115,93 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 ### Commentaires et Documentation (7 règles) - INFO/WARNING
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| KTN-COMMENT-001 | INFO | Commentaires inline trop longs (>80 caractères) |
-| KTN-COMMENT-002 | WARNING | Commentaire descriptif avant `package` |
-| KTN-COMMENT-003 | WARNING | Commentaire obligatoire pour constantes |
-| KTN-COMMENT-004 | WARNING | Commentaire obligatoire pour var package |
-| KTN-COMMENT-005 | WARNING | Documentation obligatoire pour struct (≥2 lignes) |
-| KTN-COMMENT-006 | WARNING | Documentation fonction (Params/Returns) |
-| KTN-COMMENT-007 | WARNING | Commentaires sur branches/returns/logique |
+| [KTN-COMMENT-001](docs/rules/KTN-COMMENT-001.md) | INFO | Commentaires inline trop longs (>80 caractères) |
+| [KTN-COMMENT-002](docs/rules/KTN-COMMENT-002.md) | WARNING | Commentaire descriptif avant `package` |
+| [KTN-COMMENT-003](docs/rules/KTN-COMMENT-003.md) | WARNING | Commentaire obligatoire pour constantes |
+| [KTN-COMMENT-004](docs/rules/KTN-COMMENT-004.md) | WARNING | Commentaire obligatoire pour var package |
+| [KTN-COMMENT-005](docs/rules/KTN-COMMENT-005.md) | WARNING | Documentation obligatoire pour struct (≥2 lignes) |
+| [KTN-COMMENT-006](docs/rules/KTN-COMMENT-006.md) | WARNING | Documentation fonction (Params/Returns) |
+| [KTN-COMMENT-007](docs/rules/KTN-COMMENT-007.md) | WARNING | Commentaires sur branches/returns/logique |
 
 ### Constantes (3 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| KTN-CONST-001 | WARNING | Type explicite obligatoire |
-| KTN-CONST-002 | INFO | Groupement et placement avant var |
-| KTN-CONST-003 | INFO | Nommage SCREAMING_SNAKE_CASE |
+| [KTN-CONST-001](docs/rules/KTN-CONST-001.md) | WARNING | Type explicite obligatoire |
+| [KTN-CONST-002](docs/rules/KTN-CONST-002.md) | INFO | Groupement et placement avant var |
+| [KTN-CONST-003](docs/rules/KTN-CONST-003.md) | INFO | Nommage SCREAMING_SNAKE_CASE |
 
 ### Variables (17 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| KTN-VAR-001 | ERROR | Variables package en camelCase (pas SCREAMING_SNAKE) |
-| KTN-VAR-002 | WARNING | Type explicite obligatoire |
-| KTN-VAR-003 | WARNING | Utiliser := pour variables locales |
-| KTN-VAR-004 | WARNING | Préallocation slices avec capacité connue |
-| KTN-VAR-005 | WARNING | Éviter make([]T, length) avec append |
-| KTN-VAR-006 | WARNING | Préallocation bytes.Buffer/strings.Builder avec Grow |
-| KTN-VAR-007 | WARNING | Utiliser strings.Builder pour >2 concaténations |
-| KTN-VAR-008 | WARNING | Éviter allocations dans boucles chaudes |
-| KTN-VAR-009 | WARNING | Pointeurs pour structs >64 bytes |
-| KTN-VAR-010 | WARNING | sync.Pool pour buffers répétés |
-| KTN-VAR-011 | WARNING | Shadowing de variables |
-| KTN-VAR-012 | WARNING | Conversions string() répétées |
-| KTN-VAR-013 | INFO | Groupement dans un seul bloc var() |
-| KTN-VAR-014 | INFO | Variables après constantes (ordre déclarations) |
-| KTN-VAR-015 | INFO | Préallocation maps avec capacité connue |
-| KTN-VAR-016 | INFO | Utiliser [N]T au lieu de make([]T, N) |
-| KTN-VAR-017 | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
+| [KTN-VAR-001](docs/rules/KTN-VAR-001.md) | ERROR | Variables package en camelCase (pas SCREAMING_SNAKE) |
+| [KTN-VAR-002](docs/rules/KTN-VAR-002.md) | WARNING | Type explicite obligatoire |
+| [KTN-VAR-003](docs/rules/KTN-VAR-003.md) | WARNING | Utiliser := pour variables locales |
+| [KTN-VAR-004](docs/rules/KTN-VAR-004.md) | WARNING | Préallocation slices avec capacité connue |
+| [KTN-VAR-005](docs/rules/KTN-VAR-005.md) | WARNING | Éviter make([]T, length) avec append |
+| [KTN-VAR-006](docs/rules/KTN-VAR-006.md) | WARNING | Préallocation bytes.Buffer/strings.Builder avec Grow |
+| [KTN-VAR-007](docs/rules/KTN-VAR-007.md) | WARNING | Utiliser strings.Builder pour >2 concaténations |
+| [KTN-VAR-008](docs/rules/KTN-VAR-008.md) | WARNING | Éviter allocations dans boucles chaudes |
+| [KTN-VAR-009](docs/rules/KTN-VAR-009.md) | WARNING | Pointeurs pour structs >64 bytes |
+| [KTN-VAR-010](docs/rules/KTN-VAR-010.md) | WARNING | sync.Pool pour buffers répétés |
+| [KTN-VAR-011](docs/rules/KTN-VAR-011.md) | WARNING | Shadowing de variables |
+| [KTN-VAR-012](docs/rules/KTN-VAR-012.md) | WARNING | Conversions string() répétées |
+| [KTN-VAR-013](docs/rules/KTN-VAR-013.md) | INFO | Groupement dans un seul bloc var() |
+| [KTN-VAR-014](docs/rules/KTN-VAR-014.md) | INFO | Variables après constantes (ordre déclarations) |
+| [KTN-VAR-015](docs/rules/KTN-VAR-015.md) | INFO | Préallocation maps avec capacité connue |
+| [KTN-VAR-016](docs/rules/KTN-VAR-016.md) | INFO | Utiliser [N]T au lieu de make([]T, N) |
+| [KTN-VAR-017](docs/rules/KTN-VAR-017.md) | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
 
 ### Fonctions (12 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| KTN-FUNC-001 | ERROR | Erreur toujours en dernière position retour |
-| KTN-FUNC-002 | ERROR | Context toujours en premier paramètre |
-| KTN-FUNC-003 | ERROR | Éviter else après return/continue/break |
-| KTN-FUNC-004 | ERROR | Fonctions privées non utilisées (code mort) |
-| KTN-FUNC-005 | WARNING | Longueur max 35 lignes de code pur |
-| KTN-FUNC-006 | WARNING | Max 5 paramètres par fonction |
-| KTN-FUNC-007 | WARNING | Pas de side effects dans les getters |
-| KTN-FUNC-008 | WARNING | Paramètres non utilisés préfixés par _ |
-| KTN-FUNC-009 | INFO | Pas de magic numbers (constantes nommées) |
-| KTN-FUNC-010 | INFO | Pas de naked returns (sauf <5 lignes) |
-| KTN-FUNC-011 | INFO | Complexité cyclomatique max 10 |
-| KTN-FUNC-012 | INFO | Named returns pour >3 valeurs de retour |
+| [KTN-FUNC-001](docs/rules/KTN-FUNC-001.md) | ERROR | Erreur toujours en dernière position retour |
+| [KTN-FUNC-002](docs/rules/KTN-FUNC-002.md) | ERROR | Context toujours en premier paramètre |
+| [KTN-FUNC-003](docs/rules/KTN-FUNC-003.md) | ERROR | Éviter else après return/continue/break |
+| [KTN-FUNC-004](docs/rules/KTN-FUNC-004.md) | ERROR | Fonctions privées non utilisées (code mort) |
+| [KTN-FUNC-005](docs/rules/KTN-FUNC-005.md) | WARNING | Longueur max 35 lignes de code pur |
+| [KTN-FUNC-006](docs/rules/KTN-FUNC-006.md) | WARNING | Max 5 paramètres par fonction |
+| [KTN-FUNC-007](docs/rules/KTN-FUNC-007.md) | WARNING | Pas de side effects dans les getters |
+| [KTN-FUNC-008](docs/rules/KTN-FUNC-008.md) | WARNING | Paramètres non utilisés préfixés par _ |
+| [KTN-FUNC-009](docs/rules/KTN-FUNC-009.md) | INFO | Pas de magic numbers (constantes nommées) |
+| [KTN-FUNC-010](docs/rules/KTN-FUNC-010.md) | INFO | Pas de naked returns (sauf <5 lignes) |
+| [KTN-FUNC-011](docs/rules/KTN-FUNC-011.md) | INFO | Complexité cyclomatique max 10 |
+| [KTN-FUNC-012](docs/rules/KTN-FUNC-012.md) | INFO | Named returns pour >3 valeurs de retour |
 
 ### Structures (5 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| KTN-STRUCT-001 | WARNING | Interface obligatoire (100% méthodes publiques) |
-| KTN-STRUCT-002 | WARNING | Constructeur NewX() requis |
-| KTN-STRUCT-003 | WARNING | Pas de préfixe Get pour getters |
-| KTN-STRUCT-004 | INFO | Un fichier Go par struct |
-| KTN-STRUCT-005 | INFO | Ordre des champs (exportés avant privés) |
+| [KTN-STRUCT-001](docs/rules/KTN-STRUCT-001.md) | WARNING | Interface obligatoire (100% méthodes publiques) |
+| [KTN-STRUCT-002](docs/rules/KTN-STRUCT-002.md) | WARNING | Constructeur NewX() requis |
+| [KTN-STRUCT-003](docs/rules/KTN-STRUCT-003.md) | WARNING | Pas de préfixe Get pour getters |
+| [KTN-STRUCT-004](docs/rules/KTN-STRUCT-004.md) | INFO | Un fichier Go par struct |
+| [KTN-STRUCT-005](docs/rules/KTN-STRUCT-005.md) | INFO | Ordre des champs (exportés avant privés) |
 
 ### Tests (13 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| KTN-TEST-001 | ERROR | Fichiers test doivent finir par _internal/_external_test.go |
-| KTN-TEST-002 | WARNING | Package xxx_test obligatoire (désactivée) |
-| KTN-TEST-003 | WARNING | Fichier test sans fichier source correspondant |
-| KTN-TEST-004 | WARNING | Fonctions publiques sans tests |
-| KTN-TEST-005 | WARNING | Tests sans table-driven pattern |
-| KTN-TEST-006 | WARNING | Pattern 1:1 fichiers test/source |
-| KTN-TEST-007 | WARNING | Interdiction t.Skip() |
-| KTN-TEST-008 | WARNING | Règle 1:2 (_internal_test.go ET _external_test.go) |
-| KTN-TEST-009 | WARNING | Tests publics dans _external_test.go uniquement |
-| KTN-TEST-010 | WARNING | Tests privés dans _internal_test.go uniquement |
-| KTN-TEST-011 | WARNING | Convention package (white-box/black-box) |
-| KTN-TEST-012 | WARNING | Tests doivent contenir des assertions |
-| KTN-TEST-013 | INFO | Coverage cas d'erreur |
+| [KTN-TEST-001](docs/rules/KTN-TEST-001.md) | ERROR | Fichiers test doivent finir par _internal/_external_test.go |
+| [KTN-TEST-002](docs/rules/KTN-TEST-002.md) | WARNING | Package xxx_test obligatoire (désactivée) |
+| [KTN-TEST-003](docs/rules/KTN-TEST-003.md) | WARNING | Fichier test sans fichier source correspondant |
+| [KTN-TEST-004](docs/rules/KTN-TEST-004.md) | WARNING | Fonctions publiques sans tests |
+| [KTN-TEST-005](docs/rules/KTN-TEST-005.md) | WARNING | Tests sans table-driven pattern |
+| [KTN-TEST-006](docs/rules/KTN-TEST-006.md) | WARNING | Pattern 1:1 fichiers test/source |
+| [KTN-TEST-007](docs/rules/KTN-TEST-007.md) | WARNING | Interdiction t.Skip() |
+| [KTN-TEST-008](docs/rules/KTN-TEST-008.md) | WARNING | Règle 1:2 (_internal_test.go ET _external_test.go) |
+| [KTN-TEST-009](docs/rules/KTN-TEST-009.md) | WARNING | Tests publics dans _external_test.go uniquement |
+| [KTN-TEST-010](docs/rules/KTN-TEST-010.md) | WARNING | Tests privés dans _internal_test.go uniquement |
+| [KTN-TEST-011](docs/rules/KTN-TEST-011.md) | WARNING | Convention package (white-box/black-box) |
+| [KTN-TEST-012](docs/rules/KTN-TEST-012.md) | WARNING | Tests doivent contenir des assertions |
+| [KTN-TEST-013](docs/rules/KTN-TEST-013.md) | INFO | Coverage cas d'erreur |
+
+### Interfaces (1 règle) - WARNING
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| [KTN-INTERFACE-001](docs/rules/KTN-INTERFACE-001.md) | WARNING | Interface non utilisée |
+
+### Retours (1 règle) - WARNING
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| [KTN-RETURN-002](docs/rules/KTN-RETURN-002.md) | WARNING | Préférer slice/map vide à nil |
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
@@ -237,7 +247,7 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - **Couverture globale**: 91.6% 🟡
 - **Packages 100%**: utils, formatter 🟢
 - **Go version**: 1.25
-- **Total règles KTN**: 57 (7 comment + 3 const + 17 var + 12 func + 5 struct + 13 test)
+- **Total règles KTN**: 59 (7 comment + 3 const + 17 var + 12 func + 5 struct + 13 test + 1 interface + 1 return)
 - **Total modernize**: 17 analyseurs actifs / 18 totaux
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 

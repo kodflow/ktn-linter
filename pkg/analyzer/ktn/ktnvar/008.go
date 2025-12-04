@@ -156,6 +156,7 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 }
 
 // isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
+// Exclut les []byte qui sont gérés par VAR-010.
 //
 // Params:
 //   - expr: expression à vérifier
@@ -167,19 +168,36 @@ func isSliceOrMapAlloc(expr ast.Expr) bool {
 	switch e := expr.(type) {
 	// Cas d'un littéral composite
 	case *ast.CompositeLit:
-		// Vérification du type composite
-		if utils.IsSliceOrMapType(e.Type) {
+		// Vérification du type composite (exclut []byte géré par VAR-010)
+		if utils.IsSliceOrMapType(e.Type) && !utils.IsByteSlice(e.Type) {
 			// Allocation de slice/map sous forme de littéral
 			return true
 		}
 	// Cas d'un appel de fonction
 	case *ast.CallExpr:
-		// Vérification des appels make()
-		if utils.IsMakeCall(e) {
+		// Vérification des appels make() (exclut []byte géré par VAR-010)
+		if utils.IsMakeCall(e) && !isByteSliceMake(e) {
 			// Appel à make() détecté
 			return true
 		}
 	}
 	// Pas d'allocation détectée
 	return false
+}
+
+// isByteSliceMake vérifie si make crée un []byte.
+//
+// Params:
+//   - call: expression d'appel make
+//
+// Returns:
+//   - bool: true si make([]byte, ...)
+func isByteSliceMake(call *ast.CallExpr) bool {
+	// Vérification des arguments
+	if len(call.Args) == 0 {
+		// Pas d'arguments
+		return false
+	}
+	// Vérification du type
+	return utils.IsByteSlice(call.Args[0])
 }

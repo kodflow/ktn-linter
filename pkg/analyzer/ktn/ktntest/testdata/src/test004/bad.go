@@ -1,4 +1,14 @@
+// Package test004 provides test cases for untested functions.
 package test004
+
+// BadResourceInterface defines the public API for BadResource.
+type BadResourceInterface interface {
+	GetData() string
+	Process(input string) string
+}
+
+// Ensure BadResource implements BadResourceInterface.
+var _ BadResourceInterface = (*BadResource)(nil)
 
 // BadResource représente une ressource sans tests.
 // Les méthodes publiques n'ont PAS de tests correspondants.
@@ -11,8 +21,12 @@ type BadResource struct {
 // Returns:
 //   - *BadResource: nouvelle instance
 func NewBadResource() *BadResource {
+	r := &BadResource{}
+	// Use private functions
+	r.name = r.formatOutput("init")
+	_ = validateInput(r.name)
 	// Retour de la nouvelle instance
-	return &BadResource{}
+	return r
 }
 
 // GetData retourne des données. // want "KTN-TEST-004: fonction publique 'GetData' n'a pas de test correspondant. Créer un test nommé 'TestBadResource_GetData' dans le fichier 'bad_external_test.go' \\(black-box testing avec package xxx_test\\)"

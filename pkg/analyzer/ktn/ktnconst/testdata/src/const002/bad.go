@@ -1,78 +1,63 @@
-// Bad examples for the const003 test case.
+// Bad examples for the const002 test case.
 package const002
 
-// Bad: Multiple const blocks (scattered) - violates KTN-CONST-002
+// Bad: Multiple scattered const blocks (violates KTN-CONST-002)
 
-// First group of constants
+// First group of constants (OK - first block)
 const (
-	// FIRST_GROUP_A is in the first group
-	FIRST_GROUP_A string = "first"
-	// FIRST_GROUP_B is in the first group
-	FIRST_GROUP_B string = "group"
+	// BAD_FIRST_GROUP_A is in the first group
+	BAD_FIRST_GROUP_A string = "first"
+	// BAD_FIRST_GROUP_B is in the first group
+	BAD_FIRST_GROUP_B string = "group"
 )
 
-// Second group - scattered (ERROR #1)
+// Second scattered const group (ERROR #1)
 const (
-	// SECOND_GROUP is in a second group
-	SECOND_GROUP string = "scattered"
+	// BAD_SECOND_GROUP is in a second group
+	BAD_SECOND_GROUP string = "scattered" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Third scattered const group (ERROR #2)
 const (
 	// BAD_SCATTERED_A is scattered
-	BAD_SCATTERED_A string = "bad"
+	BAD_SCATTERED_A string = "bad" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Fourth scattered const group (ERROR #3)
 const (
-	// SCATTERED_ONE in another block
-	SCATTERED_ONE string = "one"
+	// BAD_SCATTERED_ONE in another block
+	BAD_SCATTERED_ONE string = "one" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Fifth scattered const group (ERROR #4)
 const (
-	// SCATTERED_TWO in yet another block
-	SCATTERED_TWO string = "two"
+	// BAD_SCATTERED_TWO in yet another block
+	BAD_SCATTERED_TWO string = "two" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Sixth scattered const group (ERROR #5)
 const (
-	// THIRD_SCATTERED also scattered
-	THIRD_SCATTERED int = 1
+	// BAD_THIRD_SCATTERED also scattered
+	BAD_THIRD_SCATTERED int = 1 // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Seventh scattered const group (ERROR #6)
 const (
-	// FOURTH_SCATTERED also scattered
-	FOURTH_SCATTERED int = 2
+	// BAD_FOURTH_SCATTERED also scattered
+	BAD_FOURTH_SCATTERED int = 2 // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Eighth scattered const group (ERROR #7)
 const (
-	// CONST_FINAL is yet another scattered const
-	CONST_FINAL string = "final"
+	// BAD_CONST_FINAL is yet another scattered const
+	BAD_CONST_FINAL string = "final" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
 // Ninth scattered const group (ERROR #8)
 const (
-	// CONST_EXTRA yet another scattered const block
-	CONST_EXTRA string = "extra"
+	// BAD_CONST_EXTRA yet another scattered const block
+	BAD_CONST_EXTRA string = "extra" // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
 )
 
-// Variable declaration (après toutes les constantes)
-var GlobalVar string = "some var"
-
-// helperFunction is used to demonstrate const blocks separated by other declarations.
-//
-// Returns:
-//   - string: a helper message
-func helperFunction() string {
-	// Retour de la fonction
-	return "helper"
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de helperFunction
-	helperFunction()
-}
+// Variable declaration (after all constants)
+var badGlobalVar string = "some var"

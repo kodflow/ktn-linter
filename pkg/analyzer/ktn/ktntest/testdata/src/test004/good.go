@@ -1,4 +1,12 @@
+// Package test004 provides resource management utilities.
 package test004
+
+// GoodResourceInterface defines the public API for GoodResource.
+type GoodResourceInterface interface {
+	Metadata() string
+	Schema() map[string]string
+	Configure(config string) error
+}
 
 // GoodResource représente une ressource avec des méthodes publiques.
 // Toutes les méthodes ont des tests correspondants.
@@ -11,8 +19,12 @@ type GoodResource struct {
 // Returns:
 //   - *GoodResource: nouvelle instance
 func NewGoodResource() *GoodResource {
+	r := &GoodResource{}
+	// Use private functions to avoid dead code
+	r.name = r.sanitize("init")
+	_ = validateConfig(r.name)
 	// Retour de la nouvelle instance
-	return &GoodResource{}
+	return r
 }
 
 // Metadata retourne les métadonnées.

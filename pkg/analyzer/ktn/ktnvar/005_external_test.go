@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar005(t *testing.T) {
-	// 9 make calls with length > 0 (3 original + 6 edge cases)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer005, "var005", 9)
+	// 8 make calls with length > 0 (VAR-016 cases excluded)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer005, "var005", 8)
 }

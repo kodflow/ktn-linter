@@ -1,4 +1,4 @@
-// Good examples for the const003 test case.
+// Good examples for the const002 test case.
 package const002
 
 // Good: All constants grouped in a single block before vars
@@ -25,3 +25,9 @@ var (
 	// AdditionalVar is an additional variable
 	AdditionalVar string = "var3"
 )
+
+// myType is a type for demonstration
+type myType struct {
+	// Field is a field
+	Field string
+}

@@ -1,3 +1,4 @@
+// Package test003 provides item processing utilities.
 package test003
 
 import "errors"

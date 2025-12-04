@@ -1,3 +1,4 @@
+// Package test002 provides test cases for error scenarios.
 package test002
 
 import "errors"

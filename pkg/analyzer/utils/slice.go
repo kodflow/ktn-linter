@@ -3,6 +3,7 @@ package utils
 
 import (
 	"go/ast"
+	"go/constant"
 	"go/types"
 
 	"golang.org/x/tools/go/analysis"
@@ -163,3 +164,36 @@ func IsByteSlice(expr ast.Expr) bool {
 	// Not a byte slice
 	return false
 }
+
+// IsSmallConstantSize vérifie si une expression est une constante <= 1024.
+// Utilisé pour éviter que VAR-004/VAR-005 se déclenchent quand VAR-016 s'applique.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - expr: expression de taille à vérifier
+//
+// Returns:
+//   - bool: true si c'est une constante positive <= 1024
+func IsSmallConstantSize(pass *analysis.Pass, expr ast.Expr) bool {
+	// Check via TypesInfo
+	tv := pass.TypesInfo.Types[expr]
+	// Vérification de la condition
+	if tv.Value == nil {
+		// Not a constant
+		return false
+	}
+	// Get constant value
+	val, ok := constant.Int64Val(tv.Value)
+	// Vérification de la condition
+	if !ok {
+		// Not an int constant
+		return false
+	}
+	// Check if small positive constant
+	return val > 0 && val <= MAX_ARRAY_SIZE
+}
+
+const (
+	// MAX_ARRAY_SIZE seuil pour VAR-016 (préférer array)
+	MAX_ARRAY_SIZE int64 = 1024
+)

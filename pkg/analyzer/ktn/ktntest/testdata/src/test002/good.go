@@ -1,3 +1,4 @@
+// Package test002 provides validation utilities for testing.
 package test002
 
 import "errors"

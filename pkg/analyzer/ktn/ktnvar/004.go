@@ -166,6 +166,12 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 		return
 	}
 
+	// Skip si VAR-016 s'applique (constante <= 1024, suggère array)
+	if utils.IsSmallConstantSize(pass, call.Args[1]) {
+		// VAR-016 gère ce cas
+		return
+	}
+
 	// Signalement de l'erreur
 	pass.Reportf(
 		call.Pos(),

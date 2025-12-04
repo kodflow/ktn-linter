@@ -131,3 +131,58 @@ func Test_checkDeclForAlloc(t *testing.T) {
 		})
 	}
 }
+
+// Test_isByteSliceMake tests the private isByteSliceMake helper function.
+func Test_isByteSliceMake(t *testing.T) {
+	tests := []struct {
+		name     string
+		call     *ast.CallExpr
+		expected bool
+	}{
+		{
+			name: "make with []byte",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "byte"}},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "make with []uint8",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "uint8"}},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "make with []int",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+				},
+			},
+			expected: false,
+		},
+		{
+			name:     "make with no args",
+			call:     &ast.CallExpr{Fun: &ast.Ident{Name: "make"}},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isByteSliceMake(tt.call)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isByteSliceMake() = %v, expected %v", result, tt.expected)
+			}
+		})
+	}
+}

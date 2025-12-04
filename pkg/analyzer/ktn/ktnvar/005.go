@@ -53,6 +53,12 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 		return
 	}
 
+	// Skip si VAR-016 s'applique (constante <= 1024 sans capacité)
+	if len(call.Args) == MIN_MAKE_ARGS_VAR008 && utils.IsSmallConstantSize(pass, call.Args[1]) {
+		// VAR-016 gère ce cas
+		return
+	}
+
 	// Signalement de l'erreur
 	pass.Reportf(
 		call.Pos(),

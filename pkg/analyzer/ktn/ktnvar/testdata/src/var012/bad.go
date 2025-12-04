@@ -1,35 +1,29 @@
-// Bad examples for the var013 test case.
+// Bad examples for the var012 test case.
 package var012
 
-// IDataHolder est l'interface pour DataHolder.
-// Cette interface définit le contrat pour accéder aux données.
-type IDataHolder interface {
-	Bytes() []byte
-}
-
-// DataHolder contient des données en bytes.
-// Cette structure implémente IDataHolder pour gérer les données.
-type DataHolder struct {
+// dataHolder contient des données en bytes.
+// Cette structure est utilisée pour tester les conversions répétées.
+type dataHolder struct {
 	content []byte
 }
 
-// NewDataHolder crée un nouveau DataHolder.
+// newDataHolder crée un nouveau dataHolder.
 //
 // Params:
 //   - data: données initiales
 //
 // Returns:
-//   - *DataHolder: nouveau DataHolder
-func NewDataHolder(data []byte) *DataHolder {
+//   - *dataHolder: nouveau dataHolder
+func newDataHolder(data []byte) *dataHolder {
 	// Retour d'une nouvelle instance
-	return &DataHolder{content: data}
+	return &dataHolder{content: data}
 }
 
-// Bytes retourne le contenu en bytes.
+// bytes retourne le contenu en bytes.
 //
 // Returns:
 //   - []byte: contenu
-func (d *DataHolder) Bytes() []byte {
+func (d *dataHolder) bytes() []byte {
 	// Retour du contenu
 	return d.content
 }
@@ -134,7 +128,7 @@ func badNestedIndexConversion(matrix [][][]byte) {
 //
 // Params:
 //   - holders: liste de conteneurs
-func badStructFieldConversion(holders []DataHolder) {
+func badStructFieldConversion(holders []dataHolder) {
 	// Parcours des conteneurs
 	for _, h := range holders {
 		// Vérification - CONVERSION RÉPÉTÉE
@@ -148,11 +142,11 @@ func badStructFieldConversion(holders []DataHolder) {
 //
 // Params:
 //   - holders: liste de conteneurs
-func badMethodResultConversion(holders []*DataHolder) {
+func badMethodResultConversion(holders []*dataHolder) {
 	// Parcours des conteneurs
 	for _, h := range holders {
 		// Vérification avec appel de méthode - CONVERSION RÉPÉTÉE
-		if string(h.Bytes()) == "test" {
+		if string(h.bytes()) == "test" {
 			println("found")
 		}
 	}
@@ -179,7 +173,7 @@ func badActualNestedIndex(matrix [][][]byte) {
 //
 // Params:
 //   - items: liste d'éléments
-func badSelectorConversion(items []DataHolder) {
+func badSelectorConversion(items []dataHolder) {
 	// Parcours des éléments
 	for _, item := range items {
 		// Vérification a - CONVERSION #1
@@ -224,6 +218,8 @@ func badCallExprConversion() {
 
 // init utilise les fonctions privées
 func init() {
+	// Appel de newDataHolder
+	_ = newDataHolder(nil)
 	// Appel de badRepeatedConversionInLoop
 	_ = badRepeatedConversionInLoop(nil, "")
 	// Appel de badMultipleConversionsInFunction

@@ -123,9 +123,16 @@ check_bad_file() {
         return 0
     fi
 
-    total_checks=$((total_checks + 1))
+    # Pour les règles TEST-xxx, skip car testées via analysistest (want comments)
+    # Les règles TEST analysent les fichiers *_test.go, pas les .go normaux
+    if [[ "$expected_code" == KTN-TEST-* ]]; then
+        echo -e "  ${GREEN}✅ ${testname} (testé via analysistest)${NC}"
+        return 0
+    fi
 
     echo -n "  Checking ${testname}/bad.go (expect ${expected_code})... "
+
+    total_checks=$((total_checks + 1))
 
     # Exécuter le linter en direct sur le fichier
     output=$($LINTER lint "$file" 2>&1 || true)

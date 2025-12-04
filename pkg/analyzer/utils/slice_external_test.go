@@ -410,3 +410,32 @@ func TestIsByteSliceNonIdent(t *testing.T) {
 		t.Errorf("utils.IsByteSlice([]pkg.Type) = %v, want false", got)
 	}
 }
+
+// TestIsSmallConstantSize tests the IsSmallConstantSize function
+func TestIsSmallConstantSize(t *testing.T) {
+	tests := []struct {
+		name string
+		want bool
+	}{
+		{name: "nil value", want: false},
+		{name: "non-constant", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
+
+			// Create a variable expression (non-constant)
+			expr := &ast.Ident{Name: "n"}
+
+			got := utils.IsSmallConstantSize(pass, expr)
+			if got != tt.want {
+				t.Errorf("utils.IsSmallConstantSize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

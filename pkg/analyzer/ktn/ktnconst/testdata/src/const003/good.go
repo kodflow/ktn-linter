@@ -1,7 +1,7 @@
-// Good examples for the const004 test case.
+// Good examples for the const003 test case.
 package const003
 
-// Good: All constants use CAPITAL_UNDERSCORE naming, explicit types, comments, single block
+// Good: All constants use CAPITAL_UNDERSCORE naming
 const (
 	// Single letter constants are valid
 	// A represents the first value
@@ -45,6 +45,16 @@ const (
 	// API_V2_ENDPOINT version 2 endpoint
 	API_V2_ENDPOINT string = "/api/v2"
 
+	// Edge cases with numbers
+	// HTTP2_TIMEOUT for HTTP2 timeout
+	HTTP2_TIMEOUT int = 60
+	// TLS1_2_VERSION TLS version constant
+	TLS1_2_VERSION string = "1.2"
+	// HTTP200 HTTP OK status
+	HTTP200 int = 200
+	// MAX_2 maximum value 2
+	MAX_2 int = 2
+
 	// Complex multi-word constants
 	// MAX_CONNECTION_POOL_SIZE defines pool size
 	MAX_CONNECTION_POOL_SIZE int = 50
@@ -61,31 +71,15 @@ const (
 	// STATUS_ACCEPTED request accepted
 	STATUS_ACCEPTED int = 202
 
-	// State constants
-	// STATE_IDLE idle state
-	STATE_IDLE int = 0
-	// STATE_RUNNING running state
-	STATE_RUNNING int = 1
-	// STATE_PAUSED paused state
-	STATE_PAUSED int = 2
-
-	// Database settings
-	// DB_MAX_CONNECTIONS maximum connections
-	DB_MAX_CONNECTIONS int = 100
-	// DB_MIN_CONNECTIONS minimum connections
-	DB_MIN_CONNECTIONS int = 10
-	// DB_TIMEOUT database timeout
-	DB_TIMEOUT int = 30
-
-	// Blank identifier (valid edge case - should be skipped by naming rules)
+	// Blank identifier (valid - should be skipped by naming rules)
 	_ int = 999
 
-	// TEST_VALUE used for testing var declarations
+	// TEST_VALUE used for testing
 	TEST_VALUE int = 123
 )
 
 // Variable declaration to test that only const are checked
 var (
-	// This variable should be ignored by const004 rule
+	// variableNotConst should be ignored by const003 rule
 	variableNotConst int = TEST_VALUE
 )

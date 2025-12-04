@@ -1,4 +1,4 @@
-// Bad examples for the var018 test case.
+// Bad examples for the var017 test case.
 package var017
 
 import (
@@ -6,94 +6,76 @@ import (
 	"sync/atomic"
 )
 
-// ICounter est l'interface pour Counter.
-// Cette interface définit le contrat pour incrémenter le compteur.
-type ICounter interface {
-	Increment()
-}
-
-// Counter avec mutex embarqué (problème si copié).
+// counter avec mutex embarqué (problème si copié).
 // Cette structure contient un mutex qui ne doit pas être copié.
-type Counter struct {
+type counter struct {
 	mu    sync.Mutex
 	value int
 }
 
-// NewCounter crée un nouveau Counter.
+// newCounter crée un nouveau counter.
 //
 // Returns:
-//   - *Counter: nouveau compteur
-func NewCounter() *Counter {
+//   - *counter: nouveau compteur
+func newCounter() *counter {
 	// Retour d'une nouvelle instance
-	return &Counter{}
+	return &counter{}
 }
 
-// Increment incrémente le compteur (receiver par valeur - copie le mutex).
-func (c Counter) Increment() {
+// increment incrémente le compteur (receiver par valeur - copie le mutex).
+func (c counter) increment() {
 	c.mu.Lock()
 	c.value++
 	c.mu.Unlock()
 }
 
-// ISafeCounter est l'interface pour SafeCounter.
-// Cette interface définit le contrat pour lire le compteur.
-type ISafeCounter interface {
-	Read() int
-}
-
-// SafeCounter avec RWMutex embarqué.
+// safeCounter avec RWMutex embarqué.
 // Cette structure contient un RWMutex qui ne doit pas être copié.
-type SafeCounter struct {
+type safeCounter struct {
 	mu    sync.RWMutex
 	value int
 }
 
-// NewSafeCounter crée un nouveau SafeCounter.
+// newSafeCounter crée un nouveau safeCounter.
 //
 // Returns:
-//   - *SafeCounter: nouveau compteur sécurisé
-func NewSafeCounter() *SafeCounter {
+//   - *safeCounter: nouveau compteur sécurisé
+func newSafeCounter() *safeCounter {
 	// Retour d'une nouvelle instance
-	return &SafeCounter{}
+	return &safeCounter{}
 }
 
-// Read retourne la valeur du compteur (receiver par valeur - copie le RWMutex).
+// read retourne la valeur du compteur (receiver par valeur - copie le RWMutex).
 //
 // Returns:
 //   - int: valeur du compteur.
-func (c SafeCounter) Read() int {
+func (c safeCounter) read() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	// Retourne la valeur actuelle
 	return c.value
 }
 
-// IConfig est l'interface pour Config.
-// Cette interface définit le contrat pour charger la configuration.
-type IConfig interface {
-	Load() any
-}
-
-// Config avec atomic.Value embarqué.
+// config avec atomic.Value embarqué.
 // Cette structure contient une valeur atomique qui ne doit pas être copiée.
-type Config struct {
+type config struct {
 	data atomic.Value
 }
 
-// NewConfig crée un nouveau Config.
+// newConfig crée un nouveau config.
 //
 // Returns:
-//   - *Config: nouvelle configuration
-func NewConfig() *Config {
+//   - *config: nouvelle configuration
+func newConfig() *config {
 	// Retour d'une nouvelle instance
-	return &Config{}
+	return &config{}
 }
 
-// Load charge la configuration (receiver par valeur - copie l'atomic.Value).
+// load charge la configuration (receiver par valeur - copie l'atomic.Value).
 //
 // Returns:
 //   - any: configuration chargée.
-func (c Config) Load() any {
+func (c config) load() any {
 	// Retourne la donnée chargée
 	return c.data.Load()
 }
@@ -114,129 +96,105 @@ func badAssignment() {
 	_ = mu2
 }
 
-// IContainer est l'interface pour Container.
-// Cette interface définit le contrat pour accéder aux valeurs atomiques.
-type IContainer interface {
-	Values() (int32, int64, uint32)
-}
-
-// Container avec plusieurs types atomiques.
+// container avec plusieurs types atomiques.
 // Cette structure contient plusieurs valeurs atomiques qui ne doivent pas être copiées.
-type Container struct {
+type container struct {
 	val1 atomic.Int32
 	val2 atomic.Int64
 	val3 atomic.Uint32
 }
 
-// NewContainer crée un nouveau Container.
+// newContainer crée un nouveau container.
 //
 // Returns:
-//   - *Container: nouveau conteneur
-func NewContainer() *Container {
+//   - *container: nouveau conteneur
+func newContainer() *container {
 	// Retour d'une nouvelle instance
-	return &Container{}
+	return &container{}
 }
 
-// Values retourne toutes les valeurs atomiques (receiver par valeur).
+// values retourne toutes les valeurs atomiques (receiver par valeur).
 //
 // Returns:
 //   - int32: première valeur.
 //   - int64: deuxième valeur.
 //   - uint32: troisième valeur.
-func (c Container) Values() (int32, int64, uint32) {
+func (c container) values() (int32, int64, uint32) {
 	// Retourne les trois valeurs atomiques
 	return c.val1.Load(), c.val2.Load(), c.val3.Load()
 }
 
-// Inner avec mutex imbriqué dans un champ.
+// inner avec mutex imbriqué dans un champ.
 // Cette structure contient un mutex qui ne doit pas être copié.
-type Inner struct {
+type inner struct {
 	mu sync.Mutex
 }
 
-// IOuter est l'interface pour Outer.
-// Cette interface définit le contrat pour exécuter une action.
-type IOuter interface {
-	DoSomething()
+// outer avec mutex imbriqué.
+// Cette structure contient une struct inner avec mutex.
+type outer struct {
+	inner inner
 }
 
-// Outer avec mutex imbriqué.
-// Cette structure contient une struct Inner avec mutex.
-type Outer struct {
-	inner Inner
-}
-
-// NewOuter crée un nouveau Outer.
+// newOuter crée un nouveau outer.
 //
 // Returns:
-//   - *Outer: nouvelle instance
-func NewOuter() *Outer {
+//   - *outer: nouvelle instance
+func newOuter() *outer {
 	// Retour d'une nouvelle instance
-	return &Outer{}
+	return &outer{}
 }
 
-// DoSomething exécute une action avec le mutex imbriqué (receiver par valeur).
-func (o Outer) DoSomething() {
+// doSomething exécute une action avec le mutex imbriqué (receiver par valeur).
+func (o outer) doSomething() {
 	o.inner.mu.Lock()
 	defer o.inner.mu.Unlock()
 }
 
-// IFlag est l'interface pour Flag.
-// Cette interface définit le contrat pour vérifier l'état du flag.
-type IFlag interface {
-	IsActive() bool
-}
-
-// Flag utilise atomic.Bool.
+// flag utilise atomic.Bool.
 // Cette structure contient un booléen atomique qui ne doit pas être copié.
-type Flag struct {
+type flag struct {
 	active atomic.Bool
 }
 
-// NewFlag crée un nouveau Flag.
+// newFlag crée un nouveau flag.
 //
 // Returns:
-//   - *Flag: nouveau flag
-func NewFlag() *Flag {
+//   - *flag: nouveau flag
+func newFlag() *flag {
 	// Retour d'une nouvelle instance
-	return &Flag{}
+	return &flag{}
 }
 
-// IsActive vérifie si le flag est actif (receiver par valeur - copie atomic.Bool).
+// isActive vérifie si le flag est actif (receiver par valeur - copie atomic.Bool).
 //
 // Returns:
 //   - bool: état du flag.
-func (f Flag) IsActive() bool {
+func (f flag) isActive() bool {
 	// Retourne l'état actif
 	return f.active.Load()
 }
 
-// IStats est l'interface pour Stats.
-// Cette interface définit le contrat pour accéder au compteur.
-type IStats interface {
-	Count() uint64
-}
-
-// Stats utilise atomic.Uint64.
+// stats utilise atomic.Uint64.
 // Cette structure contient un compteur atomique qui ne doit pas être copié.
-type Stats struct {
+type stats struct {
 	counter atomic.Uint64
 }
 
-// NewStats crée un nouveau Stats.
+// newStats crée un nouveau stats.
 //
 // Returns:
-//   - *Stats: nouvelles statistiques
-func NewStats() *Stats {
+//   - *stats: nouvelles statistiques
+func newStats() *stats {
 	// Retour d'une nouvelle instance
-	return &Stats{}
+	return &stats{}
 }
 
-// Count retourne le compteur actuel (receiver par valeur - copie atomic.Uint64).
+// count retourne le compteur actuel (receiver par valeur - copie atomic.Uint64).
 //
 // Returns:
 //   - uint64: valeur du compteur.
-func (s Stats) Count() uint64 {
+func (s stats) count() uint64 {
 	// Retourne la valeur du compteur
 	return s.counter.Load()
 }
@@ -274,6 +232,34 @@ func badAtomicValueAssignment() {
 
 // init utilise les fonctions privées
 func init() {
+	// Appel de newCounter
+	c := newCounter()
+	// Appel de increment
+	c.increment()
+	// Appel de newSafeCounter
+	sc := newSafeCounter()
+	// Appel de read
+	_ = sc.read()
+	// Appel de newConfig
+	cfg := newConfig()
+	// Appel de load
+	_ = cfg.load()
+	// Appel de newContainer
+	cont := newContainer()
+	// Appel de values
+	_, _, _ = cont.values()
+	// Appel de newOuter
+	o := newOuter()
+	// Appel de doSomething
+	o.doSomething()
+	// Appel de newFlag
+	f := newFlag()
+	// Appel de isActive
+	_ = f.isActive()
+	// Appel de newStats
+	st := newStats()
+	// Appel de count
+	_ = st.count()
 	// Appel de badMutexCopy
 	badMutexCopy(sync.Mutex{})
 	// Appel de badAssignment
