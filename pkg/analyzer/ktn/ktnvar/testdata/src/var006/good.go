@@ -1,3 +1,4 @@
+// Good examples for the var006 test case.
 package var006
 
 const (

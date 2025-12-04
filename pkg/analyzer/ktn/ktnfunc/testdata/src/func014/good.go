@@ -1,4 +1,10 @@
+// Package func014 contient des exemples de fonctions privées utilisées correctement.
 package func014
+
+const (
+	// MULTIPLIER est le facteur de multiplication utilisé dans compute.
+	MULTIPLIER int = 2
+)
 
 // PublicFunction est une fonction publique.
 //
@@ -23,9 +29,27 @@ func privateHelper() string {
 	return "helper"
 }
 
-// Calculator est une struct.
+// Calculator est une struct pour effectuer des calculs.
+// Elle stocke une valeur interne et permet de la multiplier.
 type Calculator struct {
 	value int
+}
+
+// CalculatorInterface définit les méthodes publiques de Calculator.
+type CalculatorInterface interface {
+	Calculate() int
+}
+
+// NewCalculator crée une nouvelle instance de Calculator.
+//
+// Params:
+//   - value: la valeur initiale
+//
+// Returns:
+//   - *Calculator: nouvelle instance
+func NewCalculator(value int) *Calculator {
+	// Retour de la nouvelle instance
+	return &Calculator{value: value}
 }
 
 // Calculate appelle la méthode privée.
@@ -42,8 +66,8 @@ func (c *Calculator) Calculate() int {
 // Returns:
 //   - int: résultat
 func (c *Calculator) compute() int {
-	// Retour de la valeur
-	return c.value * 2
+	// Retour de la valeur multipliée par la constante
+	return c.value * MULTIPLIER
 }
 
 // processData utilise validate en interne.

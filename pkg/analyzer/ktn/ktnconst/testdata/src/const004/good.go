@@ -1,3 +1,4 @@
+// Good examples for the const004 test case.
 package const004
 
 // Good: All constants have comments, explicit types, proper naming, single-block grouping

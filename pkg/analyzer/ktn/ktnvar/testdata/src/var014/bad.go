@@ -1,3 +1,4 @@
+// Bad examples for the var014 test case.
 package var014
 
 // Constantes pour les valeurs de test
@@ -11,20 +12,12 @@ const (
 )
 
 // LargeStruct est une structure avec plus de 3 champs.
+// Cette structure contient plusieurs champs et est utilisée dans les tests.
 type LargeStruct struct {
 	Field1 int
 	Field2 string
 	Field3 bool
 	Field4 float64
-}
-
-// AnotherLargeStruct est une autre grande structure.
-type AnotherLargeStruct struct {
-	Name    string
-	Age     int
-	Email   string
-	Active  bool
-	Balance float64
 }
 
 // badLargeStructValue utilise une structure par valeur.
@@ -39,15 +32,14 @@ func badLargeStructValue() {
 	_ = data
 }
 
-// badAnotherLargeStructValue utilise une autre grande structure par valeur.
-func badAnotherLargeStructValue() {
+// badLargeStructValue2 utilise une autre grande structure par valeur.
+func badLargeStructValue2() {
 	// Variable locale de grande structure
-	user := AnotherLargeStruct{
-		Name:    "John",
-		Age:     TEST_AGE_VALUE,
-		Email:   "john@example.com",
-		Active:  true,
-		Balance: TEST_BALANCE_VALUE,
+	user := LargeStruct{
+		Field1: TEST_AGE_VALUE,
+		Field2: "John",
+		Field3: true,
+		Field4: TEST_BALANCE_VALUE,
 	}
 	_ = user
 }
@@ -57,7 +49,7 @@ func badMultipleVars() {
 	// Première variable
 	a := LargeStruct{Field1: TEST_STRUCT1_FIELD1}
 	// Deuxième variable
-	b := AnotherLargeStruct{Name: "test"}
+	b := LargeStruct{Field2: "test"}
 	_, _ = a, b
 }
 
@@ -67,4 +59,16 @@ func badVarDecl() {
 	var config LargeStruct
 	config.Field1 = TEST_CONFIG_FIELD1
 	_ = config
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badLargeStructValue
+	badLargeStructValue()
+	// Appel de badLargeStructValue2
+	badLargeStructValue2()
+	// Appel de badMultipleVars
+	badMultipleVars()
+	// Appel de badVarDecl
+	badVarDecl()
 }

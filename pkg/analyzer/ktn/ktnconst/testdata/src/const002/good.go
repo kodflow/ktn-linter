@@ -1,3 +1,4 @@
+// Good examples for the const002 test case.
 package const002
 
 // Good: All constants grouped in a single block before vars

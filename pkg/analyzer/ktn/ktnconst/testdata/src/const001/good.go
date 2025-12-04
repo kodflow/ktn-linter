@@ -1,3 +1,4 @@
+// Good examples for the const001 test case.
 package const001
 
 // Custom type for status

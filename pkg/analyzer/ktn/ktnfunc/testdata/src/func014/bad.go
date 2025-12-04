@@ -1,3 +1,5 @@
+// Package func014 demonstrates violations of KTN-FUNC-014 rule.
+// Contains examples of unused private functions that should trigger warnings.
 package func014
 
 // validateTagName is dead code created to bypass KTN-TEST-008.
@@ -11,20 +13,6 @@ package func014
 func validateTagName(name string) bool {
 	// Cette fonction n'est JAMAIS appelée dans le code de production!
 	return len(name) > 0
-}
-
-// TagResource has methods.
-type TagResource struct {
-	tags []string
-}
-
-// GetTags returns tags.
-//
-// Returns:
-//   - []string: tags
-func (t *TagResource) GetTags() []string {
-	// Retourne les tags
-	return t.tags
 }
 
 // unusedHelper is dead code created to bypass linting.

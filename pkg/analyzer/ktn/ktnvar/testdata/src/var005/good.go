@@ -1,3 +1,4 @@
+// Good examples for the var005 test case.
 package var005
 
 const (
@@ -98,4 +99,20 @@ func goodReassignment() {
 	count = NEW_COUNT // Regular assignment is fine
 
 	_ = count
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodShortDeclaration
+	goodShortDeclaration()
+	// Appel de goodMultipleAssignment
+	goodMultipleAssignment()
+	// Appel de goodExplicitTypeWhenNeeded
+	goodExplicitTypeWhenNeeded()
+	// Appel de goodVarWithoutInit
+	goodVarWithoutInit()
+	// Appel de goodMultipleVarWithoutInit
+	goodMultipleVarWithoutInit()
+	// Appel de goodReassignment
+	goodReassignment()
 }

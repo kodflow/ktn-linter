@@ -1,3 +1,4 @@
+// Good examples for the func010 test case.
 package func010
 
 const (
@@ -124,9 +125,15 @@ func GetFourValuesCompact() (x, y int, name string, err error) {
 	return 1, TWO_INT, "point", nil
 }
 
-// TestSomething est une fonction de test.
-func TestSomething() {
+// testSomething est une fonction de test.
+func testSomething() {
 	// Les fonctions de test ne sont pas vérifiées
 	x := 1
 	_ = x
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de testSomething
+	testSomething()
 }

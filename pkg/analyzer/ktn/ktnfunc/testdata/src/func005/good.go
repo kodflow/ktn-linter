@@ -1,3 +1,4 @@
+// Good examples for the func005 test case.
 package func005
 
 const (

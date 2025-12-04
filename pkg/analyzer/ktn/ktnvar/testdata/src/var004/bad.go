@@ -1,3 +1,4 @@
+// Bad examples for the var004 test case.
 package var004
 
 const (

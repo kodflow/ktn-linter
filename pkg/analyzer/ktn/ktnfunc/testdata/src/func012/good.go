@@ -1,3 +1,4 @@
+// Good examples for the func012 test case.
 package func012
 
 const (
@@ -163,4 +164,26 @@ func emptyIfBody(x int) {
 	if x > 0 {
 	}
 	// Retour de la fonction
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de checkPositive
+	_ = checkPositive(0)
+	// Appel de processValue
+	_ = processValue(0)
+	// Appel de findMax
+	_ = findMax(1, 0)
+	// Appel de loopExample
+	loopExample()
+	// Appel de switchExample
+	switchExample(0)
+	// Appel de validateInput
+	_ = validateInput("")
+	// Appel de complexLogic
+	_ = complexLogic(0)
+	// Appel de nestedConditions
+	_ = nestedConditions(1, 0)
+	// Appel de emptyIfBody
+	emptyIfBody(0)
 }

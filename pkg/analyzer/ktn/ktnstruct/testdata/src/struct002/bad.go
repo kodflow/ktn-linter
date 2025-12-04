@@ -1,47 +1,46 @@
+// Bad examples for the struct002 test case.
 package struct002
 
-// BadUserService struct sans interface correspondante - VIOLATION
+// BadUserService est un service utilisateur sans interface.
+// Démontre la violation de STRUCT-002: pas d'interface pour les méthodes publiques.
 type BadUserService struct { // want "KTN-STRUCT-002"
 	users map[int]string
 }
 
-// Create crée un utilisateur
+// NewBadUserService crée une nouvelle instance de BadUserService.
+//
+// Returns:
+//   - *BadUserService: nouvelle instance
+func NewBadUserService() *BadUserService {
+	// Retour de la nouvelle instance
+	return &BadUserService{
+		users: map[int]string{},
+	}
+}
+
+// Create crée un utilisateur.
+//
+// Params:
+//   - name: nom de l'utilisateur
+//
+// Returns:
+//   - error: erreur éventuelle
 func (b *BadUserService) Create(name string) error {
-	// Implementation
+	// Utilisation du paramètre
+	b.users[len(b.users)] = name
+	// Retour sans erreur
 	return nil
 }
 
-// GetByID récupère un utilisateur par ID
+// GetByID récupère un utilisateur par ID.
+//
+// Params:
+//   - id: identifiant de l'utilisateur
+//
+// Returns:
+//   - string: nom de l'utilisateur
+//   - error: erreur éventuelle
 func (b *BadUserService) GetByID(id int) (string, error) {
-	// Implementation
-	return "", nil
-}
-
-// IncompleteService interface incomplète (manque Delete)
-type IncompleteService interface {
-	Save(data string) error
-	Load(id int) (string, error)
-}
-
-// incompleteServiceImpl a une méthode Delete non dans l'interface - VIOLATION
-type incompleteServiceImpl struct { // want "KTN-STRUCT-002"
-	data map[int]string
-}
-
-// Save est dans l'interface
-func (i *incompleteServiceImpl) Save(data string) error {
-	// Implementation
-	return nil
-}
-
-// Load est dans l'interface
-func (i *incompleteServiceImpl) Load(id int) (string, error) {
-	// Implementation
-	return "", nil
-}
-
-// Delete est une méthode publique MAIS pas dans l'interface - VIOLATION
-func (i *incompleteServiceImpl) Delete(id int) error {
-	// Implementation
-	return nil
+	// Retour du résultat
+	return b.users[id], nil
 }

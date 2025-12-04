@@ -1,3 +1,4 @@
+// Package func008 contient des exemples de fonctions utilisant context.Context.
 package func008
 
 import "context"
@@ -5,26 +6,26 @@ import "context"
 // ProcessWithContext demonstrates context.Context as first parameter.
 //
 // Params:
-//   - ctx: context for cancellation
-//   - data: input data string
-func ProcessWithContext(ctx context.Context, data string) {
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+//   - _data: input data string (non utilisé dans cet exemple)
+func ProcessWithContext(_ctx context.Context, _data string) {
 }
 
 // HandleRequestGood demonstrates context as first parameter with multiple params.
 //
 // Params:
-//   - ctx: context for cancellation
-//   - id: identifier
-//   - name: name string
-func HandleRequestGood(ctx context.Context, id int, name string) {
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+//   - _id: identifier (non utilisé dans cet exemple)
+//   - _name: name string (non utilisé dans cet exemple)
+func HandleRequestGood(_ctx context.Context, _id int, _name string) {
 }
 
 // SimpleFunctionGood demonstrates no context parameter at all.
 //
 // Params:
-//   - id: identifier
-//   - name: name string
-func SimpleFunctionGood(id int, name string) {
+//   - _id: identifier (non utilisé dans cet exemple)
+//   - _name: name string (non utilisé dans cet exemple)
+func SimpleFunctionGood(_id int, _name string) {
 }
 
 // ServiceGood demonstrates a service type.
@@ -48,9 +49,9 @@ func NewServiceGood() *ServiceGood {
 // ProcessData demonstrates method with context as first parameter after receiver.
 //
 // Params:
-//   - ctx: context for cancellation
-//   - data: input data string
-func (s *ServiceGood) ProcessData(ctx context.Context, data string) {
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+//   - _data: input data string (non utilisé dans cet exemple)
+func (s *ServiceGood) ProcessData(_ctx context.Context, _data string) {
 }
 
 // NoParams demonstrates a function with no parameters.
@@ -60,8 +61,8 @@ func NoParams() {
 // OnlyContextParam demonstrates context first with only one parameter.
 //
 // Params:
-//   - ctx: context for cancellation
-func OnlyContextParam(ctx context.Context) {
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func OnlyContextParam(_ctx context.Context) {
 }
 
 // UseContextBackground demonstrates using context.Background() - not a type but tests context package usage.
@@ -72,31 +73,31 @@ func UseContextBackground() {
 // TakesCancelFunc demonstrates a function that takes context.CancelFunc (different from context.Context).
 //
 // Params:
-//   - id: identifier
-//   - cancel: cancellation function
-func TakesCancelFunc(id int, cancel context.CancelFunc) {
+//   - _id: identifier (non utilisé dans cet exemple)
+//   - _cancel: cancellation function (non utilisée dans cet exemple)
+func TakesCancelFunc(_id int, _cancel context.CancelFunc) {
 }
 
 // TestSomething demonstrates test functions should be ignored even if context is not first.
 //
 // Params:
-//   - t: testing interface
-//   - ctx: context for cancellation
-func TestSomething(t interface{}, ctx context.Context) {
+//   - _t: testing interface (non utilisé dans cet exemple)
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func TestSomething(_t any, _ctx context.Context) {
 }
 
 // TestAnotherThing demonstrates another test function.
 //
 // Params:
-//   - data: test data string
-//   - ctx: context for cancellation
-func TestAnotherThing(data string, ctx context.Context) {
+//   - _data: test data string (non utilisé dans cet exemple)
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func TestAnotherThing(_data string, _ctx context.Context) {
 }
 
 // BenchmarkProcess demonstrates a benchmark function.
 //
 // Params:
-//   - b: benchmark interface
-//   - ctx: context for cancellation
-func BenchmarkProcess(b interface{}, ctx context.Context) {
+//   - _b: benchmark interface (non utilisé dans cet exemple)
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func BenchmarkProcess(_b any, _ctx context.Context) {
 }

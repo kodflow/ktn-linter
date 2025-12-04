@@ -1,3 +1,4 @@
+// Good examples for the var015 test case.
 package var015
 
 import "sync"
@@ -16,7 +17,7 @@ const (
 // Good: Using sync.Pool or creating buffers outside loops
 
 // bufferPool is a sync.Pool for byte buffers
-var bufferPool *sync.Pool = &sync.Pool{
+var bufferPool = &sync.Pool{
 	New: func() any {
 		// Buffer size optimized for common use case
 		buffer := make([]byte, 0, VALUE_1024)
@@ -28,12 +29,14 @@ var bufferPool *sync.Pool = &sync.Pool{
 // goodWithPool uses sync.Pool for buffer reuse
 func goodWithPool() {
 	// Loop processes items
-	for i := 0; i < VALUE_HUNDRED; i++ {
+	for i := range VALUE_HUNDRED {
 		// Get buffer from pool
 		buffer := bufferPool.Get().([]byte)
 		_ = buffer
 		// Put buffer back to pool
 		bufferPool.Put(buffer)
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
 }
 
@@ -42,8 +45,10 @@ func goodOutsideLoop() {
 	// Buffer allocated once before loop with array
 	var buffer [VALUE_1024]byte
 	// Loop reuses buffer
-	for i := 0; i < VALUE_HUNDRED; i++ {
+	for i := range VALUE_HUNDRED {
 		_ = buffer
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
 }
 
@@ -59,8 +64,20 @@ func goodSmallLoop() {
 	// Small fixed iteration count where pool overhead may not help with array
 	var buffer [VALUE_SIXTY_FOUR]byte
 	// Very small fixed loop
-	for i := 0; i < VALUE_THREE; i++ {
+	for i := range VALUE_THREE {
 		_ = buffer
 		_ = i
 	}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodWithPool
+	goodWithPool()
+	// Appel de goodOutsideLoop
+	goodOutsideLoop()
+	// Appel de goodNoLoop
+	goodNoLoop()
+	// Appel de goodSmallLoop
+	goodSmallLoop()
 }

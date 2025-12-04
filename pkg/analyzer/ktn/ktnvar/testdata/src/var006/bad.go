@@ -1,3 +1,4 @@
+// Bad examples for the var006 test case.
 package var006
 
 // Vars come first (good placement)

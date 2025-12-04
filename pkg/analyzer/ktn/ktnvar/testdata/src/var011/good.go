@@ -1,3 +1,4 @@
+// Good examples for the var011 test case.
 package var011
 
 import (
@@ -98,4 +99,18 @@ func goodShortFormNew() string {
 
 	// Return the result
 	return sb.String()
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodStringsBuilderTypeDecl
+	goodStringsBuilderTypeDecl()
+	// Appel de goodBytesBufferTypeDecl
+	goodBytesBufferTypeDecl()
+	// Appel de goodBuilderPointer
+	goodBuilderPointer()
+	// Appel de goodNoLoopTypeDecl
+	goodNoLoopTypeDecl()
+	// Appel de goodShortFormNew
+	goodShortFormNew()
 }

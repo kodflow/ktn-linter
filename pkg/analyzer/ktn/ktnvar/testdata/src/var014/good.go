@@ -1,3 +1,4 @@
+// Good examples for the var014 test case.
 package var014
 
 const (
@@ -94,4 +95,18 @@ func goodNewAlloc() {
 	data := new(GoodLargeStruct)
 	data.Field1 = ANSWER
 	_ = data
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodSmallStructValue
+	goodSmallStructValue()
+	// Appel de goodLargeStructPointer
+	goodLargeStructPointer()
+	// Appel de goodAnotherLargeStructPointer
+	goodAnotherLargeStructPointer()
+	// Appel de goodPointerDecl
+	goodPointerDecl()
+	// Appel de goodNewAlloc
+	goodNewAlloc()
 }

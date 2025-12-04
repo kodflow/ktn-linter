@@ -1,3 +1,4 @@
+// Good examples for the const003 test case.
 package const003
 
 // Good: All constants use CAPITAL_UNDERSCORE naming, explicit types, comments, single block

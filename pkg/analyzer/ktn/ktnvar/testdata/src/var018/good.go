@@ -1,3 +1,4 @@
+// Good examples for the var018 test case.
 package var018
 
 import "bytes"
@@ -48,7 +49,7 @@ func goodSingleConversion(data []byte) {
 func goodBytesEqual(items [][]byte) {
 	target := []byte("test")
 	// Parcours des éléments
-	for i := 0; i < len(items); i++ {
+	for i := range len(items) {
 		// Vérification de la condition
 		if bytes.Equal(items[i], target) { // OK: Pas de conversion string
 			println("found")
@@ -95,4 +96,20 @@ func goodDifferentVariables(a []byte, b []byte, c []byte) {
 	println(string(a)) // OK: Chaque variable convertie une seule fois
 	println(string(b))
 	println(string(c))
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodPreallocatedConversion
+	_ = goodPreallocatedConversion(nil, "")
+	// Appel de goodSingleConversion
+	goodSingleConversion(nil)
+	// Appel de goodBytesEqual
+	goodBytesEqual(nil)
+	// Appel de goodNestedWithPrealloc
+	goodNestedWithPrealloc(nil)
+	// Appel de goodSingleUseConversion
+	goodSingleUseConversion(nil)
+	// Appel de goodDifferentVariables
+	goodDifferentVariables(nil, nil, nil)
 }

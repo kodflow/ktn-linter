@@ -1,3 +1,4 @@
+// Bad examples for the var005 test case.
 package var005
 
 // Constants to avoid magic numbers
@@ -191,4 +192,30 @@ func badVarInSelect() {
 		// Using variable to avoid unused warning
 		_ = msg
 	}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badSimpleVar
+	badSimpleVar()
+	// Appel de badMultipleVars
+	badMultipleVars()
+	// Appel de badBoolVar
+	badBoolVar()
+	// Appel de badStringVar
+	badStringVar()
+	// Appel de badSliceVar
+	badSliceVar()
+	// Appel de badMapVar
+	badMapVar()
+	// Appel de badVarInIf
+	badVarInIf()
+	// Appel de badVarInFor
+	badVarInFor()
+	// Appel de badVarInRange
+	badVarInRange()
+	// Appel de badVarInSwitch
+	badVarInSwitch()
+	// Appel de badVarInSelect
+	badVarInSelect()
 }

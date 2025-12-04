@@ -1,3 +1,4 @@
+// Good examples for the var012 test case.
 package var012
 
 import "strings"
@@ -90,4 +91,18 @@ func goodNoStringConcat(n int) int {
 
 	// Return the result
 	return result
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodStringsBuilder
+	_ = goodStringsBuilder(nil)
+	// Appel de goodStringsBuilderWithGrow
+	_ = goodStringsBuilderWithGrow(nil)
+	// Appel de goodStringsJoin
+	_ = goodStringsJoin(nil)
+	// Appel de goodSingleConcat
+	_ = goodSingleConcat("", "")
+	// Appel de goodNoStringConcat
+	_ = goodNoStringConcat(0)
 }

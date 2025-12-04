@@ -1,3 +1,4 @@
+// Good examples for the comment002 test case.
 package comment002
 
 const (
@@ -46,4 +47,18 @@ func goodExactly80Chars() {
 // each individual line stays within the 80 character limit.
 func goodMultiLineDocComment() {
 	return
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodFunctionWithShortComments
+	goodFunctionWithShortComments()
+	// Appel de goodMultipleShortComments
+	goodMultipleShortComments()
+	// Appel de goodNoInlineComments
+	goodNoInlineComments()
+	// Appel de goodExactly80Chars
+	goodExactly80Chars()
+	// Appel de goodMultiLineDocComment
+	goodMultiLineDocComment()
 }

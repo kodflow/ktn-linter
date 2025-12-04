@@ -1,3 +1,4 @@
+// Bad examples for the var002 test case.
 package var002
 
 // Bad: Multiple separate var declarations (violates KTN-VAR-002)

@@ -1,3 +1,4 @@
+// Bad examples for the func009 test case.
 package func009
 
 const (
@@ -11,39 +12,61 @@ const (
 	ITEM_VALUE int = 200
 )
 
-// Counter est un compteur avec cache
-type Counter struct {
+// CounterData contient un compteur et des données.
+// Utilisé pour tester les violations de getters avec side effects.
+type CounterData struct {
 	count int
 	cache int
+	data  []int
+	items map[string]int
 }
 
-// GetCount retourne le compteur incrémenté (side effect: modification de count)
+// CounterDataInterface définit les méthodes publiques de CounterData.
+type CounterDataInterface interface {
+	IsCountPositive() bool
+	IsCacheReady() bool
+	IsReady() bool
+	HasData() bool
+	IsFirstElementSet() bool
+	HasItem() bool
+}
+
+// NewCounterData crée une nouvelle instance de CounterData.
 //
 // Returns:
-//   - int: la valeur du compteur après incrémentation
-func (c *Counter) GetCount() int {
+//   - *CounterData: nouvelle instance
+func NewCounterData() *CounterData {
+	// Retour de la nouvelle instance
+	return &CounterData{}
+}
+
+// IsCountPositive vérifie si le compteur est positif (side effect: modification de count)
+//
+// Returns:
+//   - bool: true si le compteur est positif après incrémentation
+func (c *CounterData) IsCountPositive() bool {
 	// Incrémentation du compteur (side effect volontaire pour bad.go)
 	c.count++
-	// Retourne le compteur incrémenté
-	return c.count
+	// Retourne vrai si le compteur est positif
+	return c.count > 0
 }
 
-// GetCachedValue retourne la valeur en cache calculée (side effect: modification de cache)
+// IsCacheReady vérifie si le cache est prêt (side effect: modification de cache)
 //
 // Returns:
-//   - int: la valeur en cache calculée
-func (c *Counter) GetCachedValue() int {
+//   - bool: true si le cache est positif
+func (c *CounterData) IsCacheReady() bool {
 	// Calcul et assignation du cache (side effect volontaire pour bad.go)
 	c.cache = c.count * CACHE_MULTIPLIER
-	// Retourne la valeur en cache
-	return c.cache
+	// Retourne vrai si le cache est positif
+	return c.cache > 0
 }
 
 // IsReady vérifie si le compteur est prêt (side effect: modification de cache)
 //
 // Returns:
 //   - bool: true si le compteur est positif
-func (c *Counter) IsReady() bool {
+func (c *CounterData) IsReady() bool {
 	// Assignation du cache (side effect volontaire pour bad.go)
 	c.cache = DEFAULT_CACHE_VALUE
 	// Retourne vrai si le compteur est positif
@@ -54,37 +77,31 @@ func (c *Counter) IsReady() bool {
 //
 // Returns:
 //   - bool: true si le compteur est positif après incrémentation
-func (c *Counter) HasData() bool {
+func (c *CounterData) HasData() bool {
 	// Incrémentation du compteur (side effect volontaire pour bad.go)
 	c.count++
 	// Retourne vrai si le compteur est positif
 	return c.count > 0
 }
 
-// DataStore stocke des données dans un slice et une map
-type DataStore struct {
-	data  []int
-	items map[string]int
-}
-
-// GetFirstElement retourne le premier élément (side effect: modification du slice)
+// IsFirstElementSet vérifie si le premier élément est défini (side effect: modification du slice)
 //
 // Returns:
-//   - int: la valeur du premier élément
-func (d *DataStore) GetFirstElement() int {
+//   - bool: true si le premier élément est défini
+func (c *CounterData) IsFirstElementSet() bool {
 	// Modification du premier élément (side effect volontaire pour bad.go)
-	d.data[0] = FIRST_ELEMENT_VALUE
-	// Retourne le premier élément
-	return d.data[0]
+	c.data[0] = FIRST_ELEMENT_VALUE
+	// Retourne vrai si le premier élément est défini
+	return c.data[0] > 0
 }
 
-// GetItem retourne un item de la map (side effect: modification de la map)
+// HasItem vérifie si un item existe (side effect: modification de la map)
 //
 // Returns:
-//   - int: la valeur de l'item
-func (d *DataStore) GetItem() int {
+//   - bool: true si l'item existe
+func (c *CounterData) HasItem() bool {
 	// Modification de l'item (side effect volontaire pour bad.go)
-	d.items["key"] = ITEM_VALUE
-	// Retourne l'item
-	return d.items["key"]
+	c.items["key"] = ITEM_VALUE
+	// Retourne vrai si l'item existe
+	return c.items["key"] > 0
 }

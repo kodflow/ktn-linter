@@ -1,3 +1,4 @@
+// Bad examples for the func003 test case.
 package func003
 
 // badProcessSixItems creates a slice with magic number 6 (violates KTN-FUNC-003).
@@ -79,4 +80,24 @@ func badSetPort() {
 	// Set port with magic number 8080 (should be a constant)
 	port := 8080
 	_ = port
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badProcessSixItems
+	badProcessSixItems()
+	// Appel de badValidateAge
+	_ = badValidateAge(0)
+	// Appel de badCalculateDiscount
+	_ = badCalculateDiscount(0)
+	// Appel de badProcessRetries
+	badProcessRetries()
+	// Appel de badSetBufferSize
+	badSetBufferSize()
+	// Appel de badCheckThreshold
+	_ = badCheckThreshold(0)
+	// Appel de badWaitTimeout
+	badWaitTimeout()
+	// Appel de badSetPort
+	badSetPort()
 }

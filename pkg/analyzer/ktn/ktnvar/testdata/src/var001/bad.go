@@ -1,3 +1,4 @@
+// Bad examples for the var001 test case.
 package var001
 
 // Bad: Variables with incorrect type visibility (violates KTN-VAR-001)
@@ -9,9 +10,14 @@ const (
 	PORT_VALUE int = 8080
 	// RATIO_VALUE is ratio value
 	RATIO_VALUE float64 = 1.5
+	// CAP_VALUE for slice capacity
+	CAP_VALUE int = 10
+	// MAGIC_VALUE for conversion
+	MAGIC_VALUE int = 42
 )
 
 // Cas 1: Type non visible sans type explicite → ERREUR
+// Cas 2: Type redondant (type visible + type explicite) → ERREUR
 var (
 	// badRetries has inferred type (should be explicit)
 	badRetries = MAX_RETRIES // want "KTN-VAR-001: la variable 'badRetries' doit avoir un type explicite"
@@ -30,10 +36,7 @@ var (
 
 	// badRatio has inferred type
 	badRatio = RATIO_VALUE // want "KTN-VAR-001: la variable 'badRatio' doit avoir un type explicite"
-)
 
-// Cas 2: Type redondant (type visible + type explicite) → ERREUR
-var (
 	// redundantSlice has redundant type
 	redundantSlice []string = []string{"a", "b"} // want "KTN-VAR-001: la variable 'redundantSlice' a un type redondant"
 
@@ -41,8 +44,8 @@ var (
 	redundantMap map[string]int = map[string]int{"x": 1} // want "KTN-VAR-001: la variable 'redundantMap' a un type redondant"
 
 	// redundantMake has redundant type
-	redundantMake []byte = make([]byte, 10) // want "KTN-VAR-001: la variable 'redundantMake' a un type redondant"
+	redundantMake []byte = make([]byte, 0, CAP_VALUE) // want "KTN-VAR-001: la variable 'redundantMake' a un type redondant"
 
 	// redundantConv has redundant type
-	redundantConv int = int(42) // want "KTN-VAR-001: la variable 'redundantConv' a un type redondant"
+	redundantConv int = int(MAGIC_VALUE) // want "KTN-VAR-001: la variable 'redundantConv' a un type redondant"
 )

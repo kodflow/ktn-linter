@@ -1,3 +1,4 @@
+// Bad examples for the func001 test case.
 package func001
 
 const (
@@ -164,4 +165,11 @@ func processWithThirtySevenLines() int {
 	aj := VALUE_THIRTY_SIX
 	// Retour de la fonction avec calcul final
 	return a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah + ai + aj
+}
+
+// init utilise les fonctions pour éviter les erreurs de code mort
+func init() {
+	// Appel des fonctions
+	_ = calculateWithThirtySixLines()
+	_ = processWithThirtySevenLines()
 }

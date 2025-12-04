@@ -1,3 +1,4 @@
+// Good examples for the var003 test case.
 package var003
 
 // Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)
@@ -57,4 +58,10 @@ func goodFunction() int {
 	ANOTHER_LOCAL := GOOD_MAX_CONNECTIONS
 	// Continue traversing AST nodes.
 	return localVar + ANOTHER_LOCAL
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodFunction
+	goodFunction()
 }

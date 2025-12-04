@@ -1,3 +1,4 @@
+// Bad examples for the var003 test case.
 package var003
 
 // Bad: Package-level variables using SCREAMING_SNAKE_CASE (violates KTN-VAR-003)

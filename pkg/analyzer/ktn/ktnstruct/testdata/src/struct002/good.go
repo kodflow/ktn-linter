@@ -1,3 +1,4 @@
+// Good examples for the struct002 test case.
 package struct002
 
 // UserService interface reprend toutes les méthodes publiques de userServiceImpl
@@ -77,4 +78,10 @@ type DataModel struct {
 	ID   int
 	Name string
 	Tags []string
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de useUserService
+	_ = useUserService(UserService{})
 }

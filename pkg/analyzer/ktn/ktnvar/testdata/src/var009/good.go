@@ -1,3 +1,4 @@
+// Good examples for the var009 test case.
 package var009
 
 // Good examples: maps with capacity hints (compliant with KTN-VAR-009)
@@ -73,4 +74,18 @@ func mapLiteral() {
 	}
 	// Utilisation de la map
 	_ = data
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de initUsers
+	initUsers()
+	// Appel de initConfig
+	initConfig()
+	// Appel de processData
+	processData()
+	// Appel de nestedMap
+	nestedMap()
+	// Appel de mapLiteral
+	mapLiteral()
 }

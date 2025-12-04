@@ -1,3 +1,4 @@
+// Good examples for the var017 test case.
 package var017
 
 import (
@@ -144,11 +145,11 @@ func goodLocalScopeErr() error {
 // goodValidateData valide les données.
 //
 // Params:
-//   - data: données à valider
+//   - _data: données à valider (non utilisées dans cet exemple)
 //
 // Returns:
 //   - error: erreur éventuelle
-func goodValidateData(data []byte) error {
+func goodValidateData(_data []byte) error {
 	// Retour de la fonction
 	return nil
 }
@@ -156,12 +157,12 @@ func goodValidateData(data []byte) error {
 // goodDial établit une connexion.
 //
 // Params:
-//   - url: URL de connexion
+//   - _url: URL de connexion (non utilisée dans cet exemple)
 //
 // Returns:
-//   - interface{}: connexion
+//   - any: connexion
 //   - error: erreur éventuelle
-func goodDial(url string) (interface{}, error) {
+func goodDial(_url string) (any, error) {
 	// Retour de la fonction
 	return nil, nil
 }
@@ -169,11 +170,11 @@ func goodDial(url string) (interface{}, error) {
 // goodProcessFile traite un fichier.
 //
 // Params:
-//   - file: fichier à traiter
+//   - _file: fichier à traiter (non utilisé dans cet exemple)
 //
 // Returns:
 //   - error: erreur éventuelle
-func goodProcessFile(file string) error {
+func goodProcessFile(_file string) error {
 	// Retour de la fonction
 	return nil
 }
@@ -213,4 +214,32 @@ func goodDoAnotherThing() error {
 func goodFinalCheck() error {
 	// Retour de la fonction
 	return nil
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodNoShadowingInIf
+	_ = goodNoShadowingInIf("")
+	// Appel de goodFmtErrorf
+	_ = goodFmtErrorf("")
+	// Appel de goodInFor
+	_ = goodInFor(nil)
+	// Appel de goodNewVariable
+	goodNewVariable()
+	// Appel de goodLocalScopeErr
+	goodLocalScopeErr()
+	// Appel de goodValidateData
+	_ = goodValidateData(nil)
+	// Appel de goodDial
+	_, _ = goodDial("")
+	// Appel de goodProcessFile
+	_ = goodProcessFile("")
+	// Appel de goodDoSomething
+	goodDoSomething()
+	// Appel de goodDoSomething2
+	goodDoSomething2()
+	// Appel de goodDoAnotherThing
+	goodDoAnotherThing()
+	// Appel de goodFinalCheck
+	goodFinalCheck()
 }

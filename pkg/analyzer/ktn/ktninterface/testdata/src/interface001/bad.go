@@ -1,3 +1,4 @@
+// Bad examples for the interface001 test case.
 package interface001
 
 // badUnusedInterface is never used anywhere.

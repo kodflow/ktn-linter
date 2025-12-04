@@ -1,3 +1,4 @@
+// Bad examples for the const003 test case.
 package const003
 
 // Bad: Invalid naming (violates KTN-CONST-003)

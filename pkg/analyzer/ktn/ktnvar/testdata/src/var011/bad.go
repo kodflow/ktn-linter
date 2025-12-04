@@ -1,3 +1,4 @@
+// Bad examples for the var011 test case.
 package var011
 
 import (
@@ -77,4 +78,16 @@ func badShortFormBuffer() []byte {
 
 	// Return the result
 	return buf.Bytes()
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badStringsBuilderNoGrow
+	badStringsBuilderNoGrow()
+	// Appel de badBytesBufferNoGrow
+	badBytesBufferNoGrow()
+	// Appel de badShortFormBuilder
+	badShortFormBuilder()
+	// Appel de badShortFormBuffer
+	badShortFormBuffer()
 }

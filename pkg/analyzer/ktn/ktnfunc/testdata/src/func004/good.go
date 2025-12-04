@@ -1,3 +1,4 @@
+// Good examples for the func004 test case.
 package func004
 
 import "unsafe"
@@ -186,3 +187,13 @@ func externalLinkedFunc(v int) (result unsafe.Pointer)
 //
 //go:linkname anotherExternal runtime.convTstring
 func anotherExternal(v string) (ptr unsafe.Pointer)
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de useCalculator
+	_ = useCalculator(Calculator{})
+	// Appel de externalLinkedFunc
+	_ = externalLinkedFunc(0)
+	// Appel de anotherExternal
+	_ = anotherExternal("")
+}

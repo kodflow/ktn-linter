@@ -1,3 +1,4 @@
+// Bad examples for the func012 test case.
 package func012
 
 const (
@@ -114,4 +115,20 @@ func badValidateInput(input string) error {
 		// Return nil for non-empty input
 		return nil
 	}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badCheckPositive
+	_ = badCheckPositive(0)
+	// Appel de badProcessValue
+	_ = badProcessValue(0)
+	// Appel de badFindMax
+	_ = badFindMax(1, 0)
+	// Appel de badLoopExample
+	badLoopExample()
+	// Appel de badSwitchExample
+	badSwitchExample(0)
+	// Appel de badValidateInput
+	_ = badValidateInput("")
 }

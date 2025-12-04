@@ -1,3 +1,4 @@
+// Bad examples for the var017 test case.
 package var017
 
 import (
@@ -123,8 +124,8 @@ func badMultipleShadowing() error {
 func badShadowingOtherVar() {
 	count := 0
 	// Boucle sur les itérations
-	for i := 0; i < LOOP_MAX_ITERATIONS; i++ {
-		count := i * MULTIPLIER_VALUE
+	for range LOOP_MAX_ITERATIONS {
+		count := count * MULTIPLIER_VALUE
 		_ = count
 	}
 	_ = count
@@ -133,11 +134,11 @@ func badShadowingOtherVar() {
 // validateData valide les données.
 //
 // Params:
-//   - data: données à valider
+//   - _data: données à valider (non utilisé)
 //
 // Returns:
 //   - error: erreur éventuelle
-func validateData(data []byte) error {
+func validateData(_data []byte) error {
 	// Retour sans erreur
 	return nil
 }
@@ -145,12 +146,12 @@ func validateData(data []byte) error {
 // dial établit une connexion.
 //
 // Params:
-//   - url: URL de connexion
+//   - _url: URL de connexion (non utilisé)
 //
 // Returns:
-//   - interface{}: connexion établie
+//   - any: connexion établie
 //   - error: erreur éventuelle
-func dial(url string) (interface{}, error) {
+func dial(_url string) (any, error) {
 	// Retour sans erreur
 	return nil, nil
 }
@@ -158,11 +159,11 @@ func dial(url string) (interface{}, error) {
 // processFile traite un fichier.
 //
 // Params:
-//   - file: chemin du fichier
+//   - _file: chemin du fichier (non utilisé)
 //
 // Returns:
 //   - error: erreur éventuelle
-func processFile(file string) error {
+func processFile(_file string) error {
 	// Retour sans erreur
 	return nil
 }
@@ -193,4 +194,30 @@ func doAnotherThing() error {
 func finalCheck() error {
 	// Retour sans erreur
 	return nil
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badShadowingInIf
+	_ = badShadowingInIf("")
+	// Appel de badShadowingFmtErrorf
+	_ = badShadowingFmtErrorf("")
+	// Appel de badShadowingInFor
+	_ = badShadowingInFor(nil)
+	// Appel de badMultipleShadowing
+	badMultipleShadowing()
+	// Appel de badShadowingOtherVar
+	badShadowingOtherVar()
+	// Appel de validateData
+	_ = validateData(nil)
+	// Appel de dial
+	_, _ = dial("")
+	// Appel de processFile
+	_ = processFile("")
+	// Appel de doSomething
+	doSomething()
+	// Appel de doAnotherThing
+	doAnotherThing()
+	// Appel de finalCheck
+	finalCheck()
 }

@@ -1,3 +1,4 @@
+// Good examples for the func006 test case.
 package func006
 
 // Good examples: error is always last
@@ -158,9 +159,9 @@ func GoodCustomError() (string, error) {
 // GoodInterface returns an interface and a string (not error).
 //
 // Returns:
-//   - interface{}: nil value
+//   - any: nil value
 //   - string: empty string
-func GoodInterface() (interface{}, string) {
+func GoodInterface() (any, string) {
 	// Return nil interface and empty string
 	return nil, ""
 }

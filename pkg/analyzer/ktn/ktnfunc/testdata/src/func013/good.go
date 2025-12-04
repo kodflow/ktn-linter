@@ -1,3 +1,4 @@
+// Good examples for the func013 test case.
 package func013
 
 import "context"

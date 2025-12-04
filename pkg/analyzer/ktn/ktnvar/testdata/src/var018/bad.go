@@ -1,15 +1,35 @@
+// Bad examples for the var018 test case.
 package var018
 
+// IDataHolder est l'interface pour DataHolder.
+// Cette interface définit le contrat pour accéder aux données.
+type IDataHolder interface {
+	Bytes() []byte
+}
+
 // DataHolder contient des données en bytes.
+// Cette structure implémente IDataHolder pour gérer les données.
 type DataHolder struct {
 	content []byte
 }
 
-// GetBytes retourne le contenu en bytes.
+// NewDataHolder crée un nouveau DataHolder.
+//
+// Params:
+//   - data: données initiales
+//
+// Returns:
+//   - *DataHolder: nouveau DataHolder
+func NewDataHolder(data []byte) *DataHolder {
+	// Retour d'une nouvelle instance
+	return &DataHolder{content: data}
+}
+
+// Bytes retourne le contenu en bytes.
 //
 // Returns:
 //   - []byte: contenu
-func (d *DataHolder) GetBytes() []byte {
+func (d *DataHolder) Bytes() []byte {
 	// Retour du contenu
 	return d.content
 }
@@ -58,9 +78,9 @@ func badMultipleConversionsInFunction(data []byte) {
 //   - items: éléments à parcourir
 func badConversionInForLoop(items [][]byte) {
 	// Parcours des éléments
-	for i := 0; i < len(items); i++ {
+	for range items {
 		// Vérification - CONVERSION RÉPÉTÉE
-		if string(items[i]) == "test" {
+		if string(items[0]) == "test" {
 			println("found")
 		}
 	}
@@ -132,7 +152,7 @@ func badMethodResultConversion(holders []*DataHolder) {
 	// Parcours des conteneurs
 	for _, h := range holders {
 		// Vérification avec appel de méthode - CONVERSION RÉPÉTÉE
-		if string(h.GetBytes()) == "test" {
+		if string(h.Bytes()) == "test" {
 			println("found")
 		}
 	}
@@ -144,11 +164,11 @@ func badMethodResultConversion(holders []*DataHolder) {
 //   - matrix: matrice de données
 func badActualNestedIndex(matrix [][][]byte) {
 	// Boucle sur la matrice
-	for i := 0; i < len(matrix); i++ {
+	for range matrix {
 		// Boucle sur les lignes
-		for j := 0; j < len(matrix[i]); j++ {
+		for range matrix[0] {
 			// Conversion avec double index - CONVERSION RÉPÉTÉE
-			if string(matrix[i][j]) == "test" {
+			if string(matrix[0][0]) == "test" {
 				println("found")
 			}
 		}
@@ -200,4 +220,32 @@ func badCallExprConversion() {
 	if string(helperFunc()) == "c" {
 		println("c")
 	}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badRepeatedConversionInLoop
+	_ = badRepeatedConversionInLoop(nil, "")
+	// Appel de badMultipleConversionsInFunction
+	badMultipleConversionsInFunction(nil)
+	// Appel de badConversionInForLoop
+	badConversionInForLoop(nil)
+	// Appel de badNestedLoopConversion
+	badNestedLoopConversion(nil)
+	// Appel de badMapKeyConversion
+	badMapKeyConversion(nil, nil)
+	// Appel de badNestedIndexConversion
+	badNestedIndexConversion(nil)
+	// Appel de badStructFieldConversion
+	badStructFieldConversion(nil)
+	// Appel de badMethodResultConversion
+	badMethodResultConversion(nil)
+	// Appel de badActualNestedIndex
+	badActualNestedIndex(nil)
+	// Appel de badSelectorConversion
+	badSelectorConversion(nil)
+	// Appel de helperFunc
+	helperFunc()
+	// Appel de badCallExprConversion
+	badCallExprConversion()
 }

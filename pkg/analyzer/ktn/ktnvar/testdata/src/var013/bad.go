@@ -1,3 +1,4 @@
+// Bad examples for the var013 test case.
 package var013
 
 // Constantes pour les tests
@@ -83,4 +84,22 @@ func badVarMapDeclInLoop() {
 		_ = stringCache
 		_ = mapIndex
 	}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badLoopSliceAlloc
+	badLoopSliceAlloc()
+	// Appel de badLoopMapAlloc
+	badLoopMapAlloc()
+	// Appel de badRangeSliceAlloc
+	badRangeSliceAlloc()
+	// Appel de badRangeMapAlloc
+	badRangeMapAlloc()
+	// Appel de badNestedLoopAlloc
+	badNestedLoopAlloc()
+	// Appel de badVarDeclInLoop
+	badVarDeclInLoop()
+	// Appel de badVarMapDeclInLoop
+	badVarMapDeclInLoop()
 }

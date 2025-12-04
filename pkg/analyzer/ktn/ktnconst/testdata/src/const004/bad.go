@@ -1,3 +1,4 @@
+// Bad examples for the const004 test case.
 package const004
 
 const (
@@ -21,17 +22,11 @@ const (
 	SCHEMA_NAME        string  = "public"
 	ADMIN_USER         string  = "root"
 	MISSING_COMMENT    int     = 999
+	//want "KTN-CONST-004"
+	ONLY_WANT_DIRECTIVE int = 42
+	// want "some directive"
+	SPACE_WANT_DIRECTIVE int = 43
 )
 
 // Valid edge case: File with only variables (no const) should not trigger errors
 var OnlyVar2 string = "test"
-
-const (
-	//want "KTN-CONST-004"
-	ONLY_WANT_DIRECTIVE int = 42
-)
-
-const (
-	// want "some directive"
-	SPACE_WANT_DIRECTIVE int = 43
-)

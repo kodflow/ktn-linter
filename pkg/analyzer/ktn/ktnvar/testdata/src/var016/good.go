@@ -1,3 +1,4 @@
+// Good examples for the var016 test case.
 package var016
 
 // Good: Using arrays for small fixed sizes or slices when appropriate
@@ -63,4 +64,20 @@ func goodMakeWithCapacity() {
 	items := make([]int, 0, CAPACITY_SMALL)
 	items = append(items, LENGTH_SMALL)
 	_ = items
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodArray
+	goodArray()
+	// Appel de goodArrayBuffer
+	goodArrayBuffer()
+	// Appel de goodDynamicSize
+	goodDynamicSize(0)
+	// Appel de goodLargeSlice
+	goodLargeSlice()
+	// Appel de goodGrowingSlice
+	goodGrowingSlice()
+	// Appel de goodMakeWithCapacity
+	goodMakeWithCapacity()
 }

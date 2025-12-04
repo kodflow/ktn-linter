@@ -4,6 +4,7 @@ package func014_special
 import "fmt"
 
 // Command est une structure avec un callback.
+// Utilisée pour simuler des commandes CLI avec des callbacks.
 type Command struct {
 	RunE func() error
 }
@@ -21,15 +22,23 @@ func init() {
 }
 
 // run est passée comme callback - doit être détectée.
+//
+// Returns:
+//   - error: erreur éventuelle
 func run() error {
 	// Exécution
 	return nil
 }
 
-// rootCmd utilise run comme callback.
-var rootCmd = &Command{
-	RunE: run, // ← run est utilisée comme callback
-}
+var (
+	// rootCmd utilise run comme callback.
+	rootCmd = &Command{
+		RunE: run, // ← run est utilisée comme callback
+	}
+
+	// helperFunc est assignée à une variable.
+	helperFunc func() string = helper
+)
 
 // Execute exécute la commande.
 //
@@ -41,13 +50,13 @@ func Execute() error {
 }
 
 // helper est utilisée dans une assignation.
+//
+// Returns:
+//   - string: message helper
 func helper() string {
 	// Retour du message
 	return "helper"
 }
-
-// usageHelper est assignée à une variable.
-var helperFunc = helper
 
 // GetHelper retourne le helper.
 //
@@ -59,9 +68,28 @@ func GetHelper() string {
 }
 
 // Mux simule un ServeMux HTTP.
+// Permet d'enregistrer des handlers HTTP sur des patterns.
 type Mux struct{}
 
+// MuxInterface définit les méthodes publiques de Mux.
+type MuxInterface interface {
+	HandleFunc(pattern string, handler func())
+}
+
+// NewMux crée une nouvelle instance de Mux.
+//
+// Returns:
+//   - *Mux: nouvelle instance
+func NewMux() *Mux {
+	// Retour de la nouvelle instance
+	return &Mux{}
+}
+
 // HandleFunc simule http.ServeMux.HandleFunc.
+//
+// Params:
+//   - pattern: le pattern HTTP
+//   - handler: le handler à enregistrer
 func (m *Mux) HandleFunc(pattern string, handler func()) {
 	// Simulation d'enregistrement
 	_ = pattern
@@ -69,8 +97,26 @@ func (m *Mux) HandleFunc(pattern string, handler func()) {
 }
 
 // App simule une application web avec des handlers.
+// Contient un multiplexeur HTTP pour router les requêtes.
 type App struct {
 	mux *Mux
+}
+
+// AppInterface définit les méthodes publiques de App.
+type AppInterface interface {
+	RegisterRoutes()
+}
+
+// NewApp crée une nouvelle instance de App.
+//
+// Params:
+//   - mux: le multiplexeur HTTP
+//
+// Returns:
+//   - *App: nouvelle instance
+func NewApp(mux *Mux) *App {
+	// Retour de la nouvelle instance
+	return &App{mux: mux}
 }
 
 // handleLiveness est un handler HTTP passé comme argument.

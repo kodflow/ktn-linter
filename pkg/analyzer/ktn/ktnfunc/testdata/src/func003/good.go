@@ -1,3 +1,4 @@
+// Good examples for the func003 test case.
 package func003
 
 // Constantes bien définies
@@ -104,4 +105,30 @@ func stringLiterals() {
 	code := "CODE123"
 	_ = message
 	_ = code
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de processSixItems
+	processSixItems()
+	// Appel de validateAge
+	_ = validateAge(0)
+	// Appel de calculateDiscount
+	_ = calculateDiscount(0)
+	// Appel de processRetries
+	processRetries()
+	// Appel de setBufferSize
+	setBufferSize()
+	// Appel de checkThreshold
+	_ = checkThreshold(0)
+	// Appel de waitTimeout
+	waitTimeout()
+	// Appel de setPort
+	setPort()
+	// Appel de allowedNumbers
+	allowedNumbers()
+	// Appel de arraySize
+	arraySize()
+	// Appel de stringLiterals
+	stringLiterals()
 }

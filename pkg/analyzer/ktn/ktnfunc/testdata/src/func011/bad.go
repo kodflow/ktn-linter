@@ -1,3 +1,4 @@
+// Bad examples for the func011 test case.
 package func011
 
 // Bad: Missing comments on branches and returns
@@ -92,7 +93,7 @@ func BadMixedComments(x int) bool {
 //
 // Returns:
 //   - string: name of the type
-func BadTypeSwitchNoComment(v interface{}) string {
+func BadTypeSwitchNoComment(v any) string {
 	switch v.(type) {
 	case string:
 		return "string"
@@ -220,6 +221,12 @@ func BadMultipleNonTrivialReturns(x int) string {
 	return "success"
 }
 
+// Result contient le résultat d'une opération.
+// Utilisé pour tester les returns de struct sans commentaire.
+type Result struct {
+	Value int
+}
+
 // BadReturnStruct has struct return without comment.
 //
 // Params:
@@ -227,10 +234,6 @@ func BadMultipleNonTrivialReturns(x int) string {
 //
 // Returns:
 //   - Result: result struct
-type Result struct {
-	Value int
-}
-
 func BadReturnStruct(x int) Result {
 	// Check if x is positive
 	if x > 0 {

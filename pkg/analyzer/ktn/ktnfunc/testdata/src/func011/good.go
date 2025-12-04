@@ -1,3 +1,4 @@
+// Good examples for the func011 test case.
 package func011
 
 // Good: All branches and returns have comments
@@ -410,4 +411,10 @@ func GoodEmptySliceReturn(x int) []int {
 		return []int{}
 	}
 	return []int{}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de useGoodInterface
+	_ = useGoodInterface(GoodInterface{})
 }

@@ -14,19 +14,19 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **91.4%** |
+| 🟡 | **TOTAL (Global)** | **91.6%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🔴 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 74.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 96.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.9% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.8% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 88.7% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnpackage` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 90.6% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 91.8% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 91.0% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 87.1% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 93.8% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 92.1% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 91.3% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 87.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 97.7% |
@@ -61,11 +61,11 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `002.go:isDocComment` | 91.7% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.9%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟡 `001.go:runFunc001` | 93.3% |
+| 🔴 `001.go:runFunc001` | 86.7% |
 | 🔴 `001.go:countPureCodeLines` | 88.2% |
 | 🟡 `005.go:runFunc005` | 92.3% |
 | 🔴 `007.go:validateDocFormat` | 86.4% |
@@ -79,7 +79,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `014.go:collectPrivateFunctions` | 90.9% |
 | 🟡 `014.go:extractPrivateFuncInfo` | 91.7% |
 | 🟡 `014.go:collectCalledFunctions` | 90.0% |
-| 🟡 `014.go:collectCallbackUsages` | 90.0% |
+| 🔴 `014.go:collectCallbackUsages` | 88.9% |
 | 🔴 `014.go:reportUnusedFunc` | 50.0% |
 
 ### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` - 88.7%
@@ -90,15 +90,14 @@ Rapport de couverture généré automatiquement.
 | 🔴 `001.go:checkEmbeddedInterfaces` | 80.0% |
 | 🔴 `001.go:checkType` | 37.5% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 90.6%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 93.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟡 `002.go:runReturn002` | 90.9% |
 | 🔴 `002.go:isSliceOrMapType` | 83.3% |
 | 🟡 `002.go:checkNilReturns` | 90.0% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 91.8%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 92.1%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -109,13 +108,13 @@ Rapport de couverture généré automatiquement.
 | 🔴 `003.go:runStruct003` | 83.3% |
 | 🔴 `004.go:runStruct004` | 84.2% |
 | 🟡 `004.go:hasValidDocumentation` | 92.9% |
-| 🔴 `005.go:runStruct005` | 87.5% |
+| 🟡 `005.go:runStruct005` | 93.8% |
 | 🔴 `005.go:extractReturnTypeName` | 87.5% |
 | 🔴 `006.go:runStruct006` | 80.0% |
 | 🔴 `006.go:isSimpleGetter` | 80.0% |
 | 🔴 `006.go:getReceiverTypeName` | 85.7% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 91.0%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 91.3%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -142,11 +141,12 @@ Rapport de couverture généré automatiquement.
 | 🔴 `006.go:runTest006` | 87.5% |
 | 🔴 `007.go:runTest007` | 88.9% |
 | 🔴 `008.go:runTest008` | 83.3% |
+| 🔴 `008.go:extractReceiverTypeString` | 85.7% |
 | 🟡 `008.go:checkVariables` | 90.9% |
 | 🔴 `008.go:reportTestFileIssues` | 75.0% |
-| 🔴 `008.go:reportMixedFunctionsIssues` | 85.7% |
-| 🔴 `008.go:reportPublicOnlyIssues` | 60.0% |
-| 🔴 `008.go:reportPrivateOnlyIssues` | 60.0% |
+| 🔴 `008.go:reportMixedFunctionsIssues` | 88.9% |
+| 🔴 `008.go:reportPublicOnlyIssues` | 66.7% |
+| 🔴 `008.go:reportPrivateOnlyIssues` | 66.7% |
 | 🟡 `009.go:addPublicFunction` | 90.0% |
 | 🔴 `009.go:checkAndReportPublicFunctionTest` | 80.0% |
 | 🔴 `009.go:extractReceiverType` | 80.0% |
@@ -155,7 +155,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `013.go:isTestingMethodCall` | 75.0% |
 | 🔴 `013.go:isAssertLibraryCall` | 75.0% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 87.1%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 87.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -172,9 +172,9 @@ Rapport de couverture généré automatiquement.
 | 🔴 `007.go:checkMakeCalls` | 83.3% |
 | 🔴 `007.go:checkMakeCall` | 85.7% |
 | 🟡 `007.go:checkEmptySliceLiterals` | 92.9% |
-| 🔴 `007.go:checkCompositeLit` | 68.8% |
+| 🔴 `007.go:checkCompositeLit` | 62.5% |
 | 🔴 `008.go:checkMakeCallVar008` | 77.8% |
-| 🔴 `009.go:runVar009` | 83.3% |
+| 🟡 `009.go:runVar009` | 91.7% |
 | 🔴 `011.go:checkValueSpec` | 71.4% |
 | 🔴 `011.go:reportMissingGrow` | 83.3% |
 | ⚫ `011.go:extractTypeString` | 0.0% |
@@ -190,7 +190,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `014.go:checkTypeForLargeStruct` | 76.9% |
 | 🔴 `014.go:isExternalType` | 71.4% |
 | 🔴 `015.go:checkLoopBodyVar015` | 83.3% |
-| 🔴 `015.go:checkMakeCallForByteSlice` | 60.0% |
+| 🔴 `015.go:checkMakeCallForByteSlice` | 80.0% |
 | 🔴 `016.go:shouldUseArray` | 75.0% |
 | 🔴 `016.go:getConstantSize` | 66.7% |
 | 🔴 `017.go:checkShortVarDecl` | 88.9% |
@@ -223,4 +223,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-03 21:45:12*
+*Généré le: 2025-12-04 19:03:24*

@@ -1,3 +1,4 @@
+// Good examples for the var004 test case.
 package var004
 
 // Good: All variables have comments, explicit types, proper naming, single-block grouping

@@ -1,3 +1,4 @@
+// Bad examples for the func004 test case.
 package func004
 
 const (
@@ -78,4 +79,14 @@ func badMultipleNakedReturns() (result int) {
 	result += INCREMENT_FIFTY
 	// Retour naked interdit car >= 5 lignes
 	return
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badLongWithNakedReturn
+	badLongWithNakedReturn()
+	// Appel de badVeryLongNakedReturn
+	badVeryLongNakedReturn()
+	// Appel de badMultipleNakedReturns
+	badMultipleNakedReturns()
 }

@@ -1,3 +1,4 @@
+// Bad examples for the var012 test case.
 package var012
 
 // badStringConcatInForLoop concatenates strings in a for loop.
@@ -81,4 +82,16 @@ func badClassicForLoop(n int) string {
 
 	// Return the result
 	return result
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badStringConcatInForLoop
+	_ = badStringConcatInForLoop(nil)
+	// Appel de badStringConcatWithSeparator
+	_ = badStringConcatWithSeparator(nil)
+	// Appel de badNestedLoopConcat
+	_ = badNestedLoopConcat(nil)
+	// Appel de badClassicForLoop
+	_ = badClassicForLoop(0)
 }

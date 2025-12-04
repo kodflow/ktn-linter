@@ -1,3 +1,4 @@
+// Bad examples for the var007 test case.
 package var007
 
 // Bad: Slices created without capacity when it could be known
@@ -38,7 +39,7 @@ func badMakeInLoop() []int {
 	// Bad: Known size but no capacity
 	numbers := make([]int, 0)
 	// Itération sur les éléments
-	for i := 0; i < MAX_SIZE; i++ {
+	for i := range MAX_SIZE {
 		numbers = append(numbers, i)
 	}
 	// Retour de la fonction
@@ -59,15 +60,16 @@ func badMakeFloatSlice() []float64 {
 // badMakeInterfaceSlice creates an interface slice without capacity
 //
 // Returns:
-//   - []interface{}: interface slice without capacity
-func badMakeInterfaceSlice() []interface{} {
-	// Bad: make for interface{} without capacity
-	items := make([]interface{}, 0)
+//   - []any: interface slice without capacity
+func badMakeInterfaceSlice() []any {
+	// Bad: make for any without capacity
+	items := make([]any, 0)
 	// Retour de la fonction
 	return items
 }
 
-// Item is a test struct
+// Item represents a test item with a single value field.
+// This struct is used for testing slice allocation patterns.
 type Item struct {
 	value int
 }
@@ -99,11 +101,31 @@ func badMakeByteSlice() []byte {
 // Returns:
 //   - []int: slice that should use make with capacity
 func badEmptyLiteralWithAppend() []int {
-	// Bad: []T{} with subsequent append should use make
-	numbers := []int{}
+	// Bad: make([]T, 0) without capacity when size could be known
+	numbers := make([]int, 0)
 	// Ajout d'éléments
 	numbers = append(numbers, SMALL_LOOP_COUNT)
 	numbers = append(numbers, MAX_SIZE)
 	// Retour de la fonction
 	return numbers
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badMakeStringSlice
+	badMakeStringSlice()
+	// Appel de badMakeWithoutCapacity
+	badMakeWithoutCapacity()
+	// Appel de badMakeInLoop
+	badMakeInLoop()
+	// Appel de badMakeFloatSlice
+	badMakeFloatSlice()
+	// Appel de badMakeInterfaceSlice
+	badMakeInterfaceSlice()
+	// Appel de badMakeStructSlice
+	badMakeStructSlice()
+	// Appel de badMakeByteSlice
+	badMakeByteSlice()
+	// Appel de badEmptyLiteralWithAppend
+	badEmptyLiteralWithAppend()
 }

@@ -1,3 +1,4 @@
+// Bad examples for the const002 test case.
 package const002
 
 // Bad: Multiple const blocks (scattered) - violates KTN-CONST-002
@@ -52,14 +53,14 @@ const (
 	CONST_FINAL string = "final"
 )
 
-// Variable declaration
-var GlobalVar string = "some var"
-
-// Bad: Const after var (ERROR #8)
+// Ninth scattered const group (ERROR #8)
 const (
-	// CONST_AFTER_VAR appears after a var declaration
-	CONST_AFTER_VAR string = "after var"
+	// CONST_EXTRA yet another scattered const block
+	CONST_EXTRA string = "extra"
 )
+
+// Variable declaration (après toutes les constantes)
+var GlobalVar string = "some var"
 
 // helperFunction is used to demonstrate const blocks separated by other declarations.
 //
@@ -68,4 +69,10 @@ const (
 func helperFunction() string {
 	// Retour de la fonction
 	return "helper"
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de helperFunction
+	helperFunction()
 }

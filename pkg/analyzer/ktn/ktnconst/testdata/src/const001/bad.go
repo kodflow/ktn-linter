@@ -1,3 +1,4 @@
+// Bad examples for the const001 test case.
 package const001
 
 // Bad: All constants in a single grouped block WITHOUT explicit types (violates KTN-CONST-001)

@@ -1,3 +1,4 @@
+// Bad examples for the var009 test case.
 package var009
 
 const (
@@ -52,4 +53,16 @@ func badNestedMap() {
 	nested["key"] = make(map[int]string)
 	// Utilisation de la map
 	_ = nested
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badInitUsers
+	badInitUsers()
+	// Appel de badInitConfig
+	badInitConfig()
+	// Appel de badProcessData
+	badProcessData()
+	// Appel de badNestedMap
+	badNestedMap()
 }

@@ -1,3 +1,4 @@
+// Good examples for the var007 test case.
 package var007
 
 // Good: Slices preallocated with capacity when known
@@ -34,8 +35,10 @@ func goodPreallocatedLoop() []string {
 	// Good: Capacity specified based on known size
 	result := make([]string, 0, CAPACITY_TEN)
 	// Itération sur les éléments
-	for i := 0; i < CAPACITY_TEN; i++ {
+	for i := range CAPACITY_TEN {
 		result = append(result, "item")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
 	// Retour de la fonction
 	return result
@@ -111,13 +114,15 @@ func goodSliceOfSlices() [][]int {
 	return [][]int{}
 }
 
-// Item is a test struct
-type Item struct {
+// GoodItem is a test struct.
+// Utilisé pour démontrer les slices de structs.
+type GoodItem struct {
 	value int
 }
 
-// Container is a test struct with slice fields
-type Container struct {
+// GoodContainer is a test struct with slice fields.
+// Contient des slices pour démontrer l'initialisation.
+type GoodContainer struct {
 	items  []int
 	values []string
 }
@@ -125,20 +130,20 @@ type Container struct {
 // goodSliceOfStructs creates empty slice of structs
 //
 // Returns:
-//   - []Item: empty slice of structs
-func goodSliceOfStructs() []Item {
+//   - []GoodItem: empty slice of structs
+func goodSliceOfStructs() []GoodItem {
 	// Good: []T{} for structs is acceptable
 	// Retour de la fonction
-	return []Item{}
+	return []GoodItem{}
 }
 
 // goodEmptySliceInStructInit initializes struct with empty slices
 //
 // Returns:
-//   - Container: struct with empty slices
-func goodEmptySliceInStructInit() Container {
+//   - GoodContainer: struct with empty slices
+func goodEmptySliceInStructInit() GoodContainer {
 	// Good: []T{} in struct initialization is acceptable
-	c := Container{
+	c := GoodContainer{
 		items:  []int{},
 		values: []string{},
 	}
@@ -155,4 +160,30 @@ func goodEmptySliceNotAppended() []int {
 	numbers := []int{}
 	// Retour de la fonction
 	return numbers
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodPreallocatedSlice
+	goodPreallocatedSlice()
+	// Appel de goodPreallocatedLoop
+	goodPreallocatedLoop()
+	// Appel de goodLiteralWithValues
+	goodLiteralWithValues()
+	// Appel de goodNonSliceComposite
+	goodNonSliceComposite()
+	// Appel de goodDynamicSize
+	_ = goodDynamicSize(nil)
+	// Appel de goodEmptySliceLiteral
+	goodEmptySliceLiteral()
+	// Appel de goodEmptyLiteralForReturn
+	goodEmptyLiteralForReturn()
+	// Appel de goodSliceOfSlices
+	goodSliceOfSlices()
+	// Appel de goodSliceOfStructs
+	goodSliceOfStructs()
+	// Appel de goodEmptySliceInStructInit
+	goodEmptySliceInStructInit()
+	// Appel de goodEmptySliceNotAppended
+	goodEmptySliceNotAppended()
 }

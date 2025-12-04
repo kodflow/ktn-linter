@@ -1,3 +1,4 @@
+// Good examples for the var008 test case.
 package var008
 
 // Good: Proper use of make with capacity or without length
@@ -25,7 +26,7 @@ func goodMakeWithCapacity() []int {
 	// Good: Capacity specified, length is 0
 	items := make([]int, 0, BUFFER_SIZE)
 	// Itération sur les éléments
-	for i := 0; i < LOOP_COUNT; i++ {
+	for i := range LOOP_COUNT {
 		items = append(items, i)
 	}
 	// Retour de la fonction
@@ -40,8 +41,10 @@ func goodMakeWithIndexing() []string {
 	// Good: Using make([]T, 0, cap) with append is the proper way
 	items := make([]string, 0, BUFFER_SIZE)
 	// Itération sur les éléments
-	for i := 0; i < BUFFER_SIZE; i++ {
+	for i := range BUFFER_SIZE {
 		items = append(items, "value")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
 	// Retour de la fonction
 	return items
@@ -84,4 +87,18 @@ func goodEmptySliceForDynamic(data []string) []string {
 func goodMakeZeroLength() []int {
 	// Good: Length is 0, capacity is specified
 	return make([]int, 0, CAPACITY_FIFTY)
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodMakeWithCapacity
+	goodMakeWithCapacity()
+	// Appel de goodMakeWithIndexing
+	goodMakeWithIndexing()
+	// Appel de goodLiteralWithValues
+	goodLiteralWithValues()
+	// Appel de goodEmptySliceForDynamic
+	_ = goodEmptySliceForDynamic(nil)
+	// Appel de goodMakeZeroLength
+	goodMakeZeroLength()
 }

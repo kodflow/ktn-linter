@@ -1,3 +1,4 @@
+// Good examples for the var002 test case.
 package var002
 
 // Good: All package-level variables are grouped in a single var block
@@ -45,4 +46,10 @@ func goodFunction() int {
 	localVar := ANSWER
 	// Continue traversing AST nodes.
 	return localVar
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodFunction
+	goodFunction()
 }

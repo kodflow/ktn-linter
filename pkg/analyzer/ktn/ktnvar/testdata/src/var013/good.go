@@ -1,3 +1,4 @@
+// Good examples for the var013 test case.
 package var013
 
 const (
@@ -68,4 +69,18 @@ func goodNestedLoopReuse() {
 		}
 	}
 	_ = temp
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodLoopSliceReuse
+	goodLoopSliceReuse()
+	// Appel de goodLoopMapReuse
+	goodLoopMapReuse()
+	// Appel de goodRangeSliceReuse
+	goodRangeSliceReuse()
+	// Appel de goodNoLoopAlloc
+	goodNoLoopAlloc()
+	// Appel de goodNestedLoopReuse
+	goodNestedLoopReuse()
 }

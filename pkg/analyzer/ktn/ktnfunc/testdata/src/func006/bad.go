@@ -1,3 +1,4 @@
+// Bad examples for the func006 test case.
 package func006
 
 // Bad examples: error is not last
@@ -34,8 +35,23 @@ func BadErrorFirstOfThree() (error, int, string) {
 	return nil, 0, ""
 }
 
-// BadType is a test type for method examples
+// BadType is a test type for method examples.
+// Used to demonstrate error position in method return values.
 type BadType struct{}
+
+// BadTypeInterface defines the public methods of BadType.
+type BadTypeInterface interface {
+	BadMethod() (error, string)
+}
+
+// NewBadType creates a new instance of BadType.
+//
+// Returns:
+//   - *BadType: new instance
+func NewBadType() *BadType {
+	// Return new instance
+	return &BadType{}
+}
 
 // BadMethod demonstrates error in first position for a method.
 //

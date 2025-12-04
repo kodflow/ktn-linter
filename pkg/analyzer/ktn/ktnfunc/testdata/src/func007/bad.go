@@ -1,3 +1,4 @@
+// Bad examples for the func007 test case.
 package func007
 
 func TotallyNoDoc() string {
@@ -19,7 +20,8 @@ func WrongFormat() {
 
 // BadMissingParams has params but no Params section
 func BadMissingParams(x int) {
-	// Body
+	// Utilisation du paramètre
+	_ = x
 }
 
 // BadMissingReturns has returns but no Returns section
@@ -40,6 +42,8 @@ func BlockCommentOnly() {
 // Returns:
 //   - string: résultat
 func BadEmptyParamsSection(x int) string {
+	// Utilisation du paramètre
+	_ = x
 	// Retourne une chaîne vide
 	return ""
 }
@@ -51,6 +55,8 @@ func BadEmptyParamsSection(x int) string {
 //
 // Returns:
 func BadEmptyReturnsSection(x int) string {
+	// Utilisation du paramètre
+	_ = x
 	// Retourne une chaîne vide
 	return ""
 }

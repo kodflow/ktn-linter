@@ -1,3 +1,4 @@
+// Package func002 contient des exemples de fonctions avec différents nombres de paramètres.
 package func002
 
 // processNoParams fonction sans paramètre
@@ -54,6 +55,26 @@ type MyType struct{}
 func (m MyType) processMethodFourParams(a, b, c, d int) {
 	// Utilisation des paramètres
 	_ = a + b + c + d
+}
+
+const (
+	// ZERO_FLOAT constante pour les tests de type float64.
+	ZERO_FLOAT float64 = 0.0
+)
+
+// init appelle les fonctions privées pour éviter FUNC-014.
+func init() {
+	// Appel des fonctions privées pour éviter FUNC-014
+	processNoParams()
+	calculateOneParam(0)
+	buildFiveParams(0, 0, 0, 0, 0)
+	createFiveParamsMixed(0, "", false, ZERO_FLOAT, nil)
+	var m MyType
+	m.processMethodFourParams(0, 0, 0, 0)
+	formatThreeParams(0, 0, 0)
+	convertTwoParamsMixed(0, "")
+	validateFourParamsGrouped(0, 0, "", "")
+	convertWithVariadic(0, 0, 0, 0)
 }
 
 // TestWithManyParams les fonctions de test sont exemptées

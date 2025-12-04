@@ -1,3 +1,4 @@
+// Bad examples for the func010 test case.
 package func010
 
 const (

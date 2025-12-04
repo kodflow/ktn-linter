@@ -1,3 +1,4 @@
+// Good examples for the return002 test case.
 package return002
 
 const (
@@ -86,4 +87,24 @@ func goodReturnMakeSlice(size int) []int {
 func goodReturnMakeMap() map[string]bool {
 	// Retourne map avec capacité par défaut
 	return make(map[string]bool, DEFAULT_MAP_CAPACITY)
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodReturnEmptySlice
+	goodReturnEmptySlice()
+	// Appel de goodReturnEmptyMap
+	goodReturnEmptyMap()
+	// Appel de goodReturnEmptySliceConditional
+	_ = goodReturnEmptySliceConditional(0)
+	// Appel de goodReturnPointerNil
+	goodReturnPointerNil()
+	// Appel de goodReturnInterfaceNil
+	goodReturnInterfaceNil()
+	// Appel de goodReturnError
+	goodReturnError()
+	// Appel de goodReturnMakeSlice
+	_ = goodReturnMakeSlice(0)
+	// Appel de goodReturnMakeMap
+	goodReturnMakeMap()
 }

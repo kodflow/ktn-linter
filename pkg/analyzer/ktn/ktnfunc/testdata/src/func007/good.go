@@ -1,3 +1,4 @@
+// Good examples for the func007 test case.
 package func007
 
 // GoodNoParams effectue une action simple sans paramètres
@@ -12,13 +13,13 @@ func GoodNoParams() string {
 // GoodWithParams traite des données avec des paramètres
 //
 // Params:
-//   - data: les données à traiter
-//   - count: le nombre d'itérations
+//   - _data: les données à traiter (non utilisées dans cet exemple)
+//   - _count: le nombre d'itérations (non utilisé dans cet exemple)
 //
 // Returns:
 //   - bool: true si le traitement a réussi
 //   - error: une erreur si le traitement a échoué
-func GoodWithParams(data string, count int) (bool, error) {
+func GoodWithParams(_data string, _count int) (bool, error) {
 	// Retourne succès du traitement sans erreur
 	return true, nil
 }
@@ -26,8 +27,8 @@ func GoodWithParams(data string, count int) (bool, error) {
 // GoodNoReturn effectue une action sans retourner de valeur
 //
 // Params:
-//   - msg: le message à afficher
-func GoodNoReturn(msg string) {
+//   - _msg: le message à afficher (non utilisé dans cet exemple)
+func GoodNoReturn(_msg string) {
 	// Do something
 }
 

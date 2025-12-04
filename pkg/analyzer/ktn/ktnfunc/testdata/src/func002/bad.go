@@ -1,3 +1,4 @@
+// Bad examples for the func002 test case.
 package func002
 
 // processSixParams dépasse la limite avec 6 paramètres
@@ -99,8 +100,19 @@ var (
 		// Fonction vide
 	}
 
-	// badLiteralSixUnnamed fonction littérale avec 6 paramètres non nommés identiques
+	// badLiteralSixUnnamed 6 paramètres non nommés identiques
 	badLiteralSixUnnamed func(int, int, int, int, int, int) = func(int, int, int, int, int, int) {
 		// Fonction vide
 	}
 )
+
+// init utilise les fonctions privées
+func init() {
+	// Appel des fonctions
+	processSixParams(0, 0, 0, 0, 0, 0)
+	calculateSevenParams(0, "", false, 0, nil, nil, nil)
+	buildTenParams(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	createEightParams(0, "", "", false, false, false, 0, 0)
+	formatSixParams(0, 0, 0, 0, 0, 0)
+	convertWithVariadicBad(0, 0, 0, 0, 0)
+}

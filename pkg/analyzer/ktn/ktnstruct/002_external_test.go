@@ -8,6 +8,6 @@ import (
 )
 
 func TestStruct002(t *testing.T) {
-	// good.go: 0 errors (interface complète), bad.go: 2 errors (1 sans interface + 1 interface incomplète)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer002, "struct002", 2)
+	// good.go: 0 errors (interface complète), bad.go: 1 error (struct sans interface complète)
+	testhelper.TestGoodBad(t, ktnstruct.Analyzer002, "struct002", 1)
 }

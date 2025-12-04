@@ -4,10 +4,53 @@
 
 1. ❌ **INTERDICTION** : Créer des fichiers .md sauf `/workspace/README.md`
 2. ❌ **INTERDICTION** : Générer des rapports/docs dans des dossiers
-3. ✅ **SEULE EXCEPTION** : Mettre à jour `/workspace/README.md` avec format :
+3. ❌ **INTERDICTION FORMELLE** : Utiliser des exclusions basées sur les chemins (IsTestdataPath, isTestdataFile, etc.) qui réduisent artificiellement les tests. Les fichiers testdata doivent être RÉELLEMENT conformes aux règles, pas exclus artificiellement.
+4. ✅ **SEULE EXCEPTION** : Mettre à jour `/workspace/README.md` avec format :
    - `KTN-XXX-YYY: Description minimaliste`
    - Informations pertinentes uniquement
    - Pas de contenu superflu
+
+## ⚠️ CONTRAINTE CRITIQUE : TESTDATA = ÉCHANTILLONS RÉELS
+
+### Pourquoi testdata est un cas particulier
+
+Le pattern `go list ./...` **exclut automatiquement** les dossiers `testdata`. Cela signifie que `make lint` n'analyse PAS les fichiers testdata. **MAIS** les testdata sont des **échantillons RÉELS** qui doivent représenter le comportement exact du linter.
+
+### Règle fondamentale
+
+Chaque fichier testdata **DOIT** être analysé en DIRECT par le linter :
+- `./builds/ktn-linter lint bad.go` doit retourner **UNIQUEMENT** les erreurs de sa règle spécifique
+- `./builds/ktn-linter lint good.go` doit retourner **0 erreur**
+
+### Comment valider
+
+```bash
+# Valider TOUS les testdata en direct
+make validate
+
+# Ou manuellement pour un fichier spécifique
+cd pkg/analyzer/ktn/ktnfunc/testdata/src/func001
+../../../../../../builds/ktn-linter lint bad.go   # Doit avoir SEULEMENT KTN-FUNC-001
+../../../../../../builds/ktn-linter lint good.go  # Doit avoir 0 erreur
+```
+
+### Pas de fichiers _test.go dans testdata
+
+Les fichiers `*_internal_test.go` et `*_external_test.go` dans testdata sont **INUTILES** car :
+- `analysistest.Run()` n'en a pas besoin
+- `go list ./...` exclut testdata donc ils ne sont jamais lintés
+- Ce sont des coquilles vides sans valeur
+
+**Ne JAMAIS créer de fichiers *_test.go dans les dossiers testdata.**
+
+### Interdiction des réductions artificielles
+
+Il est **STRICTEMENT INTERDIT** d'ajouter dans le code du linter :
+- Des fonctions `IsTestdataPath()`, `isTestdataFile()`, `skipTestdata()`
+- Des conditions `if strings.Contains(path, "testdata")` pour ignorer des fichiers
+- Toute logique qui réduit artificiellement le nombre d'erreurs retournées
+
+**Les fichiers testdata doivent être RÉELLEMENT conformes, pas exclus artificiellement.**
 
 ## Workflow Itératif Obligatoire
 

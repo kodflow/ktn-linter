@@ -1,3 +1,4 @@
+// Good examples for the struct001 test case.
 package struct001
 
 // User représente un utilisateur avec une seule struct par fichier.

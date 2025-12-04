@@ -1,3 +1,4 @@
+// Good examples for the func009 test case.
 package func009
 
 const (
@@ -270,4 +271,10 @@ func (m *MyStruct) GetDecrementedValue() int {
 	count--
 	// Retourne le compteur décrémenté
 	return count
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de useDataReader
+	_ = useDataReader(DataReader{})
 }

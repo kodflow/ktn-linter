@@ -1,3 +1,4 @@
+// Good examples for the var019 test case.
 package var019
 
 import (
@@ -82,8 +83,8 @@ type GoodConfig struct {
 
 // GoodConfigInterface définit les méthodes de GoodConfig.
 type GoodConfigInterface interface {
-	Load() interface{}
-	Store(v interface{})
+	Load() any
+	Store(v any)
 }
 
 // NewGoodSafeCounter crée un nouveau compteur safe.
@@ -107,8 +108,8 @@ func NewGoodConfig() *GoodConfig {
 // Load utilise un receiver par pointeur (correct).
 //
 // Returns:
-//   - interface{}: valeur chargée depuis la configuration
-func (c *GoodConfig) Load() interface{} {
+//   - any: valeur chargée depuis la configuration
+func (c *GoodConfig) Load() any {
 	// Retour de la fonction
 	return c.data.Load()
 }
@@ -117,7 +118,7 @@ func (c *GoodConfig) Load() interface{} {
 //
 // Params:
 //   - v: valeur à stocker dans la configuration
-func (c *GoodConfig) Store(v interface{}) {
+func (c *GoodConfig) Store(v any) {
 	c.data.Store(v)
 }
 
@@ -224,4 +225,16 @@ type goodNonStructType int
 func (g goodNonStructType) Process() int {
 	// Retour de la fonction
 	return int(g) * MULTIPLIER_VALUE
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodMutexPointer
+	goodMutexPointer(nil)
+	// Appel de goodNoAssignment
+	goodNoAssignment()
+	// Appel de useGoodInterfaceType
+	useGoodInterfaceType(nil)
+	// Appel de goodFuncNoParams
+	goodFuncNoParams()
 }

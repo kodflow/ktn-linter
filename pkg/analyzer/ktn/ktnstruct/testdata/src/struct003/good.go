@@ -1,42 +1,43 @@
+// Good examples for the struct003 test case.
 package struct003
 
-// User champs exportés avant privés - CONFORME.
+// UserModel champs exportés avant privés - CONFORME.
 // Représente un utilisateur avec champs publics et privés.
-type User struct {
-	Name  string // exporté
-	Age   int    // exporté
-	id    int    // privé
-	email string // privé
+type UserModel struct {
+	Name  string `json:"name"`  // exporté
+	Age   int    `json:"age"`   // exporté
+	id    int    `json:"-"`     // privé
+	email string `json:"-"`     // privé
 }
 
-// AllPublic tous exportés - CONFORME.
+// AllPublicModel tous exportés - CONFORME.
 // Structure avec uniquement des champs publics.
-type AllPublic struct {
-	Name    string
-	Age     int
-	Address string
+type AllPublicModel struct {
+	Name    string `json:"name"`
+	Age     int    `json:"age"`
+	Address string `json:"address"`
 }
 
-// AllPrivate tous privés - CONFORME.
+// AllPrivateModel tous privés - CONFORME.
 // Structure avec uniquement des champs privés.
-type AllPrivate struct {
-	name    string
-	age     int
-	address string
+type AllPrivateModel struct {
+	name    string `json:"-"`
+	age     int    `json:"-"`
+	address string `json:"-"`
 }
 
-// EmptyStruct struct vide - CONFORME.
+// EmptyData struct vide - CONFORME.
 // Structure vide utilisée comme marqueur.
-type EmptyStruct struct{}
+type EmptyData struct{}
 
-// OnlyPublic un seul champ exporté - CONFORME.
+// OnlyPublicModel un seul champ exporté - CONFORME.
 // Structure avec un seul champ public.
-type OnlyPublic struct {
-	Name string
+type OnlyPublicModel struct {
+	Name string `json:"name"`
 }
 
-// OnlyPrivate un seul champ privé - CONFORME.
+// OnlyPrivateModel un seul champ privé - CONFORME.
 // Structure avec un seul champ privé.
-type OnlyPrivate struct {
-	name string
+type OnlyPrivateModel struct {
+	name string `json:"-"`
 }
