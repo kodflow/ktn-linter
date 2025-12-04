@@ -32,9 +32,15 @@ func TestAnalyzers(t *testing.T) {
 				}
 			}
 
-			// Vérifier que Analyzer001 est présent
+			// Vérifier que tous les analyseurs sont présents
 			expectedNames := map[string]bool{
 				"ktncomment001": true,
+				"ktncomment002": true,
+				"ktncomment003": true,
+				"ktncomment004": true,
+				"ktncomment005": true,
+				"ktncomment006": true,
+				"ktncomment007": true,
 			}
 
 			// Vérification noms attendus

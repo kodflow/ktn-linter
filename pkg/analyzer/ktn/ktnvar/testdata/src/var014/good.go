@@ -1,55 +1,21 @@
-// Good examples for the var014 test case.
+// Good examples for the var015 test case.
 package var014
 
-// Good: All package-level variables are grouped in a single var block
-
 const (
-	// MAX_RETRIES defines maximum retries
+	// MAX_RETRIES définit le nombre maximum de tentatives
 	MAX_RETRIES int = 3
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// SERVER_PORT is the server port number
-	SERVER_PORT int = 8080
-	// MAX_CONNECTIONS is the maximum connections
-	MAX_CONNECTIONS int = 100
-	// ANSWER is the answer to life
-	ANSWER int = 42
+
+	// TIMEOUT définit le délai d'attente en secondes
+	TIMEOUT int = 30
 )
 
-// All variables grouped in a single block
 var (
-	// defaultRetries defines the default number of retries
-	defaultRetries int = MAX_RETRIES
+	// counter est un compteur global
+	counter int = 0
 
-	// configuration holds the app configuration
-	configuration string = "default"
+	// isEnabled indique si la fonctionnalité est activée
+	isEnabled bool = true
 
-	// serverPort is the server port number
-	serverPort int = SERVER_PORT
-
-	// serverHost is the server hostname
-	serverHost string = "localhost"
-
-	// isEnabled indicates if feature is enabled
-	isEnabled bool = false
-
-	// maxConnections is the maximum connections
-	maxConnections int = MAX_CONNECTIONS
+	// userName stocke le nom de l'utilisateur
+	userName string = "admin"
 )
-
-// goodFunction demonstrates local variable usage (not checked by VAR-002).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-002
-	localVar := ANSWER
-	// Continue traversing AST nodes.
-	return localVar
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de goodFunction
-	goodFunction()
-}

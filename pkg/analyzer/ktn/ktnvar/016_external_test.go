@@ -8,6 +8,5 @@ import (
 )
 
 func TestVar016(t *testing.T) {
-	// 7 maps without capacity hints
-	testhelper.TestGoodBad(t, ktnvar.Analyzer016, "var016", 7)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer016, "var016", 5)
 }

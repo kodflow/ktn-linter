@@ -8,6 +8,6 @@ import (
 )
 
 func TestFunc012(t *testing.T) {
-	// func012/bad.go doit avoir 4 erreurs (naked returns dans fonctions trop longues)
+	// Placeholder: will calculate error count by running test
 	testhelper.TestGoodBad(t, ktnfunc.Analyzer012, "func012", 4)
 }

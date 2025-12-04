@@ -1,83 +1,245 @@
-// Good examples for the var011 test case.
+// Good examples for the var012 test case.
 package var011
 
-import "sync"
-
-const (
-	// VALUE_THREE is constant value 3
-	VALUE_THREE int = 3
-	// VALUE_SIXTY_FOUR is constant value 64
-	VALUE_SIXTY_FOUR int = 64
-	// VALUE_HUNDRED is constant value 100
-	VALUE_HUNDRED int = 100
-	// VALUE_1024 is constant value 1024
-	VALUE_1024 int = 1024
+import (
+	"fmt"
+	"io"
+	"os"
 )
 
-// Good: Using sync.Pool or creating buffers outside loops
-
-// bufferPool is a sync.Pool for byte buffers
-var bufferPool = &sync.Pool{
-	New: func() any {
-		// Buffer size optimized for common use case
-		buffer := make([]byte, 0, VALUE_1024)
-		// Return preallocated buffer
-		return buffer
-	},
-}
-
-// goodWithPool uses sync.Pool for buffer reuse
-func goodWithPool() {
-	// Loop processes items
-	for i := range VALUE_HUNDRED {
-		// Get buffer from pool
-		buffer := bufferPool.Get().([]byte)
-		_ = buffer
-		// Put buffer back to pool
-		bufferPool.Put(buffer)
-		// Utilisation de i pour éviter le warning
-		_ = i
+// goodNoShadowingInIf utilise la réassignation correcte.
+//
+// Params:
+//   - path: chemin du fichier
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodNoShadowingInIf(path string) error {
+	file, err := os.Open(path)
+	// Vérification de la condition
+	if err != nil {
+		// Retour de la fonction
+		return err
 	}
-}
+	defer file.Close()
 
-// goodOutsideLoop creates buffer outside the loop
-func goodOutsideLoop() {
-	// Buffer allocated once before loop with array
-	var buffer [VALUE_1024]byte
-	// Loop reuses buffer
-	for i := range VALUE_HUNDRED {
-		_ = buffer
-		// Utilisation de i pour éviter le warning
-		_ = i
+	data, err := io.ReadAll(file)
+	// Vérification de la condition
+	if err != nil {
+		// Retour de la fonction
+		return err
 	}
-}
 
-// goodNoLoop creates buffer outside loop context
-func goodNoLoop() {
-	// Not in a loop, no pool needed, use array
-	var buffer [VALUE_1024]byte
-	_ = buffer
-}
-
-// goodSmallLoop creates buffer where pooling overhead not justified
-func goodSmallLoop() {
-	// Small fixed iteration count where pool overhead may not help with array
-	var buffer [VALUE_SIXTY_FOUR]byte
-	// Very small fixed loop
-	for i := range VALUE_THREE {
-		_ = buffer
-		_ = i
+	// Vérification de la condition
+	if len(data) > 0 {
+		err = goodValidateData(data) // OK: réassignation avec '='
+		// Vérification de la condition
+		if err != nil {
+			// Retour de la fonction
+			return err
+		}
 	}
+
+	// Retour de la fonction
+	return err
+}
+
+// goodFmtErrorf utilise la réassignation correcte.
+//
+// Params:
+//   - url: URL de connexion
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodFmtErrorf(url string) error {
+	conn, err := goodDial(url)
+	// Vérification de la condition
+	if err != nil {
+		err = fmt.Errorf("failed to connect: %w", err) // OK: réassignation
+		_ = conn
+		// Retour de la fonction
+		return err
+	}
+	// Retour de la fonction
+	return nil
+}
+
+// goodInFor utilise la réassignation correcte dans une boucle.
+//
+// Params:
+//   - files: liste de fichiers
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodInFor(files []string) error {
+	var err error
+	// Parcours des éléments
+	for _, file := range files {
+		err = goodProcessFile(file) // OK: réassignation
+		// Vérification de la condition
+		if err != nil {
+			// Retour de la fonction
+			return err
+		}
+	}
+	// Retour de la fonction
+	return err
+}
+
+// goodNewVariable déclare une nouvelle variable avec un nom différent.
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodNewVariable() error {
+	result, err := goodDoSomething()
+	// Vérification de la condition
+	if err != nil {
+		// Retour de la fonction
+		return err
+	}
+
+	// Vérification de la condition
+	if result > 0 {
+		err2 := goodDoAnotherThing() // OK: nouvelle variable avec nom différent
+		// Vérification de la condition
+		if err2 != nil {
+			// Retour de la fonction
+			return err2
+		}
+	}
+
+	err = goodFinalCheck() // OK: réassignation
+	// Retour de la fonction
+	return err
+}
+
+// goodLocalScopeErr déclare err dans un scope différent (OK).
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodLocalScopeErr() error {
+	// Vérification de la condition
+	if true {
+		err := goodDoSomething2() // OK: première déclaration dans ce scope
+		// Vérification de la condition
+		if err != nil {
+			// Retour de la fonction
+			return err
+		}
+	}
+
+	// Vérification de la condition
+	if false {
+		err := goodDoAnotherThing() // OK: première déclaration dans ce scope
+		// Vérification de la condition
+		if err != nil {
+			// Retour de la fonction
+			return err
+		}
+	}
+
+	// Retour de la fonction
+	return nil
+}
+
+// goodValidateData valide les données.
+//
+// Params:
+//   - _data: données à valider (non utilisées dans cet exemple)
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodValidateData(_data []byte) error {
+	// Retour de la fonction
+	return nil
+}
+
+// goodDial établit une connexion.
+//
+// Params:
+//   - _url: URL de connexion (non utilisée dans cet exemple)
+//
+// Returns:
+//   - any: connexion
+//   - error: erreur éventuelle
+func goodDial(_url string) (any, error) {
+	// Retour de la fonction
+	return nil, nil
+}
+
+// goodProcessFile traite un fichier.
+//
+// Params:
+//   - _file: fichier à traiter (non utilisé dans cet exemple)
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodProcessFile(_file string) error {
+	// Retour de la fonction
+	return nil
+}
+
+// goodDoSomething effectue une opération.
+//
+// Returns:
+//   - int: résultat
+//   - error: erreur éventuelle
+func goodDoSomething() (int, error) {
+	// Retour de la fonction
+	return 0, nil
+}
+
+// goodDoSomething2 effectue une autre opération.
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodDoSomething2() error {
+	// Retour de la fonction
+	return nil
+}
+
+// goodDoAnotherThing effectue encore une autre opération.
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodDoAnotherThing() error {
+	// Retour de la fonction
+	return nil
+}
+
+// goodFinalCheck effectue une vérification finale.
+//
+// Returns:
+//   - error: erreur éventuelle
+func goodFinalCheck() error {
+	// Retour de la fonction
+	return nil
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodWithPool
-	goodWithPool()
-	// Appel de goodOutsideLoop
-	goodOutsideLoop()
-	// Appel de goodNoLoop
-	goodNoLoop()
-	// Appel de goodSmallLoop
-	goodSmallLoop()
+	// Appel de goodNoShadowingInIf
+	_ = goodNoShadowingInIf("")
+	// Appel de goodFmtErrorf
+	_ = goodFmtErrorf("")
+	// Appel de goodInFor
+	_ = goodInFor(nil)
+	// Appel de goodNewVariable
+	goodNewVariable()
+	// Appel de goodLocalScopeErr
+	goodLocalScopeErr()
+	// Appel de goodValidateData
+	_ = goodValidateData(nil)
+	// Appel de goodDial
+	_, _ = goodDial("")
+	// Appel de goodProcessFile
+	_ = goodProcessFile("")
+	// Appel de goodDoSomething
+	goodDoSomething()
+	// Appel de goodDoSomething2
+	goodDoSomething2()
+	// Appel de goodDoAnotherThing
+	goodDoAnotherThing()
+	// Appel de goodFinalCheck
+	goodFinalCheck()
 }

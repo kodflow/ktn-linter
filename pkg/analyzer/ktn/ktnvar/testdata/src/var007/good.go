@@ -1,116 +1,108 @@
-// Good examples for the var007 test case.
+// Good examples for the var008 test case.
 package var007
 
-import (
-	"bytes"
-	"strings"
-)
+import "strings"
 
 const (
-	// GROW_SIZE_LARGE is large grow size
-	GROW_SIZE_LARGE int = 400
-	// LOOP_COUNT_LARGE is large loop count
-	LOOP_COUNT_LARGE int = 100
-	// LOOP_COUNT_SMALL is small loop count
-	LOOP_COUNT_SMALL int = 10
-	// GROW_SIZE_SMALL is small grow size
-	GROW_SIZE_SMALL int = 50
+	// AVG_ITEM_LENGTH is the average item length estimate
+	AVG_ITEM_LENGTH int = 10
 )
 
-// goodStringsBuilderTypeDecl uses type declaration (not composite literal).
+// goodStringsBuilder uses strings.Builder for concatenation.
+//
+// Params:
+//   - items: slice of strings
 //
 // Returns:
 //   - string: concatenated result
-func goodStringsBuilderTypeDecl() string {
-	// Good: var declaration without composite literal is allowed
+func goodStringsBuilder(items []string) string {
+	// sb is the strings builder
 	var sb strings.Builder
-	sb.Grow(GROW_SIZE_LARGE)
 
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
-		sb.WriteString("item")
+	// Good: using strings.Builder
+	for _, item := range items {
+		sb.WriteString(item)
 	}
 
 	// Return the result
 	return sb.String()
 }
 
-// goodBytesBufferTypeDecl uses type declaration (not composite literal).
+// goodStringsBuilderWithGrow uses strings.Builder with Grow.
 //
-// Returns:
-//   - []byte: concatenated result
-func goodBytesBufferTypeDecl() []byte {
-	// Good: var declaration without composite literal is allowed
-	var buf bytes.Buffer
-	buf.Grow(GROW_SIZE_LARGE)
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
-		buf.WriteString("item")
-	}
-
-	// Return the result
-	return buf.Bytes()
-}
-
-// goodBuilderPointer uses a pointer to strings.Builder (allowed).
+// Params:
+//   - items: slice of strings
 //
 // Returns:
 //   - string: concatenated result
-func goodBuilderPointer() string {
-	// Good: pointer type is allowed (different use case)
-	sb := &strings.Builder{}
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_SMALL; i++ {
-		sb.WriteString("x")
-	}
-
-	// Return the result
-	return sb.String()
-}
-
-// goodNoLoopTypeDecl uses type declaration without loop (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodNoLoopTypeDecl() string {
-	// Good: var declaration without composite literal
+func goodStringsBuilderWithGrow(items []string) string {
+	// sb is the strings builder
 	var sb strings.Builder
-	sb.WriteString("single")
+	sb.Grow(len(items) * AVG_ITEM_LENGTH)
+
+	// Good: using strings.Builder with preallocated size
+	for _, item := range items {
+		sb.WriteString(item)
+	}
 
 	// Return the result
 	return sb.String()
 }
 
-// goodShortFormNew uses new() to create Builder (allowed).
+// goodStringsJoin uses strings.Join for simple concatenation.
+//
+// Params:
+//   - items: slice of strings
 //
 // Returns:
 //   - string: concatenated result
-func goodShortFormNew() string {
-	// Good: using new() instead of composite literal
-	sb := new(strings.Builder)
-	sb.Grow(GROW_SIZE_SMALL)
+func goodStringsJoin(items []string) string {
+	// Good: using strings.Join for simple cases
+	return strings.Join(items, "")
+}
 
-	// Iteration over data to append
-	for i := 0; i < GROW_SIZE_SMALL; i++ {
-		sb.WriteString("x")
+// goodSingleConcat performs single concatenation outside loop.
+//
+// Params:
+//   - a: first string
+//   - b: second string
+//
+// Returns:
+//   - string: concatenated result
+func goodSingleConcat(a string, b string) string {
+	// Good: single concatenation, not in a loop
+	return a + b
+}
+
+// goodNoStringConcat uses int concatenation in loop (allowed).
+//
+// Params:
+//   - n: number of iterations
+//
+// Returns:
+//   - int: sum result
+func goodNoStringConcat(n int) int {
+	result := 0
+
+	// Good: not string concatenation
+	for i := 0; i < n; i++ {
+		result += i
 	}
 
 	// Return the result
-	return sb.String()
+	return result
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodStringsBuilderTypeDecl
-	goodStringsBuilderTypeDecl()
-	// Appel de goodBytesBufferTypeDecl
-	goodBytesBufferTypeDecl()
-	// Appel de goodBuilderPointer
-	goodBuilderPointer()
-	// Appel de goodNoLoopTypeDecl
-	goodNoLoopTypeDecl()
-	// Appel de goodShortFormNew
-	goodShortFormNew()
+	// Appel de goodStringsBuilder
+	_ = goodStringsBuilder(nil)
+	// Appel de goodStringsBuilderWithGrow
+	_ = goodStringsBuilderWithGrow(nil)
+	// Appel de goodStringsJoin
+	_ = goodStringsJoin(nil)
+	// Appel de goodSingleConcat
+	_ = goodSingleConcat("", "")
+	// Appel de goodNoStringConcat
+	_ = goodNoStringConcat(0)
 }

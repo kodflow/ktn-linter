@@ -41,7 +41,7 @@ func Test_rulesSeverityCompleteness(t *testing.T) {
 		name       string
 		categories []string
 	}{
-		{name: "all categories covered", categories: []string{"COMMENT", "CONST", "VAR", "FUNC", "STRUCT", "TEST", "PACKAGE"}},
+		{name: "all categories covered", categories: []string{"COMMENT", "CONST", "VAR", "FUNC", "STRUCT", "TEST"}},
 	}
 
 	for _, tt := range tests {

@@ -31,9 +31,9 @@ func Test_GetAllRules(t *testing.T) {
 // Test_GetRulesByCategory tests that GetRulesByCategory works correctly
 func Test_GetRulesByCategory(t *testing.T) {
 	tests := []struct {
-		name         string
-		category     string
-		expectEmpty  bool
+		name        string
+		category    string
+		expectEmpty bool
 	}{
 		{"const category", "const", false},
 		{"func category", "func", false},
@@ -43,7 +43,6 @@ func Test_GetRulesByCategory(t *testing.T) {
 		{"return category", "return", false},
 		{"interface category", "interface", false},
 		{"comment category", "comment", false},
-		{"package category", "package", false},
 		{"modernize category", "modernize", false},
 		{"unknown category", "unknown", true},
 	}

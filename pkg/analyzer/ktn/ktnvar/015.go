@@ -3,17 +3,17 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer015 checks that package-level variables are declared after constants
+// Analyzer015 detects map allocations without capacity hints
 var Analyzer015 = &analysis.Analyzer{
 	Name:     "ktnvar015",
-	Doc:      "KTN-VAR-015: Vérifie que les variables de package sont déclarées après les constantes",
+	Doc:      "KTN-VAR-015: Préallouer maps avec capacité si connue",
 	Run:      runVar015,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -30,35 +30,35 @@ func runVar015(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.File)(nil),
+		(*ast.CallExpr)(nil),
 	}
 
-	// Process each file
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file := n.(*ast.File)
-		varSeen := false
+		callExpr := n.(*ast.CallExpr)
 
-		// Check declarations in order
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			// Skip non-GenDecl (functions, etc.)
-			if !ok {
-				continue
-			}
-
-			// Track variable declarations
-			if genDecl.Tok == token.VAR {
-				varSeen = true
-			}
-
-			// Error: const after var
-			if genDecl.Tok == token.CONST && varSeen {
-				pass.Reportf(
-					genDecl.Pos(),
-					"KTN-VAR-015: les constantes doivent être déclarées avant les variables",
-				)
-			}
+		// Vérification que c'est un appel à "make"
+		if !utils.IsMakeCall(callExpr) {
+			// Continue traversing AST nodes
+			return
 		}
+
+		// Vérification que le type est une map
+		if len(callExpr.Args) == 0 || !utils.IsMapTypeWithPass(pass, callExpr.Args[0]) {
+			// Continue traversing AST nodes
+			return
+		}
+
+		// Vérification que make a exactement 1 argument (type seulement)
+		if len(callExpr.Args) != 1 {
+			// make() avec capacité fournie, conforme
+			return
+		}
+
+		// Signaler l'erreur
+		pass.Reportf(
+			callExpr.Pos(),
+			"KTN-VAR-015: préallouer la map avec une capacité (make(map[K]V, capacity))",
+		)
 	})
 
 	// Retour de la fonction

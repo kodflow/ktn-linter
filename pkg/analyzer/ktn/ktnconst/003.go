@@ -1,20 +1,29 @@
-// Analyzer 003 for the ktnconst package.
+// Package ktnconst implements KTN linter rules.
 package ktnconst
 
 import (
 	"go/ast"
 	"go/token"
+	"regexp"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer003 checks that constants are grouped together and placed above var declarations
-var Analyzer003 = &analysis.Analyzer{
-	Name: "ktnconst003",
-	Doc:  "KTN-CONST-003: Vérifie que les constantes sont groupées ensemble et placées au-dessus des déclarations var",
-	Run:  runConst003,
-}
+var (
+	// Analyzer003 checks that constants use CAPITAL_UNDERSCORE naming convention
+	Analyzer003 = &analysis.Analyzer{
+		Name:     "ktnconst003",
+		Doc:      "KTN-CONST-003: Vérifie que les constantes utilisent la convention CAPITAL_UNDERSCORE",
+		Run:      runConst003,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+
+	// validConstNamePattern matches CAPITAL_UNDERSCORE names
+	// Starts with uppercase, then uppercase/digits/underscores
+	validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+)
 
 // runConst003 description à compléter.
 //
@@ -25,111 +34,75 @@ var Analyzer003 = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runConst003(pass *analysis.Pass) (any, error) {
-	// Analyze each file independently
-	for _, file := range pass.Files {
-		var constGroups []shared.DeclGroup
-		var varGroups []shared.DeclGroup
-		tracker := &declTracker{
-			constGroups: constGroups,
-			varGroups:   varGroups,
-		}
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-		// Collect const and var declarations
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			// Vérification de la condition
-			if !ok {
-				continue
-			}
-
-			// Sélection selon la valeur
-			switch genDecl.Tok {
-			// Traitement
-			case token.CONST:
-				tracker.constGroups = append(tracker.constGroups, shared.DeclGroup{
-					Decl: genDecl,
-					Pos:  genDecl.Pos(),
-				})
-			// Traitement
-			case token.VAR:
-				tracker.varGroups = append(tracker.varGroups, shared.DeclGroup{
-					Decl: genDecl,
-					Pos:  genDecl.Pos(),
-				})
-			}
-		}
-
-		// Check violations
-		checkConstGrouping(pass, tracker)
+	nodeFilter := []ast.Node{
+		(*ast.GenDecl)(nil),
 	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		genDecl := n.(*ast.GenDecl)
+
+		// Only check const declarations
+		if genDecl.Tok != token.CONST {
+			// Retour de la fonction
+			return
+		}
+
+		// Itération sur les éléments
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+
+			// Itération sur les éléments
+			for _, name := range valueSpec.Names {
+				constName := name.Name
+
+				// Skip blank identifiers
+				if constName == "_" {
+					continue
+				}
+
+				// Check if the constant name follows CAPITAL_UNDERSCORE convention
+				if !isValidConstantName(constName) {
+					pass.Reportf(
+						name.Pos(),
+						"KTN-CONST-003: la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
+						constName,
+					)
+				}
+			}
+		}
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-type declTracker struct {
-	constGroups []shared.DeclGroup
-	varGroups   []shared.DeclGroup
-}
-
-// checkConstGrouping description à compléter.
+// isValidConstantName checks if a constant name follows CAPITAL_UNDERSCORE convention.
 //
 // Params:
-//   - pass: contexte d'analyse
-func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
-	// If no var declarations, only check if consts are scattered
-	if len(tracker.varGroups) == 0 {
-		checkScatteredConsts(pass, tracker.constGroups)
-		// Retour de la fonction
-		return
-	}
-
-	// Find the position of the first var declaration
-	firstVarPos := tracker.varGroups[0].Pos
-
-	// Separate consts into those before and after first var
-	var constGroupsBeforeVar []shared.DeclGroup
-	var constGroupsAfterVar []shared.DeclGroup
-
-	// Itération sur les éléments
-	for _, constGroup := range tracker.constGroups {
-		// Vérification de la condition
-		if constGroup.Pos < firstVarPos {
-			constGroupsBeforeVar = append(constGroupsBeforeVar, constGroup)
-			// Cas alternatif
-		} else {
-			constGroupsAfterVar = append(constGroupsAfterVar, constGroup)
-		}
-	}
-
-	// Report consts that appear after var
-	for _, constGroup := range constGroupsAfterVar {
-		pass.Reportf(
-			constGroup.Pos,
-			"KTN-CONST-003: les constantes doivent être groupées et placées au-dessus des déclarations var",
-		)
-	}
-
-	// Check if consts before vars are scattered
-	checkScatteredConsts(pass, constGroupsBeforeVar)
-}
-
-// checkScatteredConsts description à compléter.
+//   - name: nom de la constante à vérifier
 //
-// Params:
-//   - pass: contexte d'analyse
-func checkScatteredConsts(pass *analysis.Pass, constGroups []shared.DeclGroup) {
-	// If 0 or 1 const group, they're not scattered
-	if len(constGroups) <= 1 {
+// Returns:
+//   - bool: true si le nom est valide
+func isValidConstantName(name string) bool {
+	// Must match pattern: uppercase + digits/underscores
+	if !validConstNamePattern.MatchString(name) {
 		// Retour de la fonction
-		return
+		return false
 	}
 
-	// Report all const groups except the first as scattered
-	for i := 1; i < len(constGroups); i++ {
-		pass.Reportf(
-			constGroups[i].Pos,
-			"KTN-CONST-003: les constantes doivent être groupées ensemble dans un seul bloc",
-		)
+	// Single letter constants are valid (e.g., A, B, C)
+	if len(name) == 1 {
+		// Retour de la fonction
+		return true
 	}
+
+	// Pattern already validates SCREAMING_SNAKE_CASE:
+	// - Single letters: A, B, C
+	// - Acronyms: API, HTTP, URL, HTTPS, EOF
+	// - Underscored names: MAX_SIZE, API_KEY, HTTP_TIMEOUT
+	// - With numbers: HTTP2, TLS1_2_VERSION
+	// Retour de la fonction
+	return true
 }

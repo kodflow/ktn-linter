@@ -7,7 +7,11 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestVar011 vérifie la détection du shadowing de variables.
+//
+// Params:
+//   - t: contexte de test
 func TestVar011(t *testing.T) {
-	// 8 buffers créés dans des boucles (4 original + 4 nouveaux edge cases)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer011, "var011", 8)
+	// 5 cas de shadowing attendus
+	testhelper.TestGoodBad(t, ktnvar.Analyzer011, "var011", 5)
 }

@@ -24,26 +24,45 @@ func Test_runStruct003(t *testing.T) {
 	}
 }
 
-// Test_collectExportedStructsWithMethods tests the private collectExportedStructsWithMethods function.
-func Test_collectExportedStructsWithMethods(t *testing.T) {
+// Test_collectStructTypes tests the private collectStructTypes function.
+func Test_collectStructTypes(t *testing.T) {
 	tests := []struct {
-		name           string
-		src            string
-		expectedCount  int
-		checkStruct    string
-		expectedMethod int
+		name     string
+		src      string
+		expected map[string]int // map of struct name to number of fields
 	}{
 		{
-			name: "collect exported structs with methods",
+			name: "no structs",
 			src: `package test
-type User struct{}
-func (u *User) GetName() string { return "" }
-
-type Admin struct{}
-func (a *Admin) GetRole() string { return "" }`,
-			expectedCount:  2,
-			checkStruct:    "User",
-			expectedMethod: 1,
+func main() {}`,
+			expected: map[string]int{},
+		},
+		{
+			name: "struct with fields",
+			src: `package test
+type User struct {
+	Name string
+	Age  int
+}`,
+			expected: map[string]int{"User": 2},
+		},
+		{
+			name: "multiple structs",
+			src: `package test
+type User struct {
+	Name string
+}
+type Admin struct {
+	Role string
+	Level int
+}`,
+			expected: map[string]int{"User": 1, "Admin": 2},
+		},
+		{
+			name: "empty struct",
+			src: `package test
+type Empty struct{}`,
+			expected: map[string]int{"Empty": 0},
 		},
 	}
 
@@ -55,66 +74,64 @@ func (a *Admin) GetRole() string { return "" }`,
 				t.Fatalf("failed to parse source: %v", err)
 			}
 
-			pass := &analysis.Pass{Fset: fset}
-			structs := collectExportedStructsWithMethods(file, pass, nil)
-
-			if len(structs) != tt.expectedCount {
-				t.Errorf("expected %d exported structs, got %d", tt.expectedCount, len(structs))
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
 			}
 
-			// Find User struct
-			var userStruct *structWithMethods
-			for i := range structs {
-				if structs[i].name == tt.checkStruct {
-					userStruct = &structs[i]
-					break
+			result := collectStructTypes(pass)
+
+			if len(result) != len(tt.expected) {
+				t.Errorf("expected %d structs, got %d", len(tt.expected), len(result))
+			}
+
+			for name, expectedFields := range tt.expected {
+				fields, ok := result[name]
+				if !ok {
+					t.Errorf("expected struct '%s' not found", name)
+					continue
+				}
+				if len(fields) != expectedFields {
+					t.Errorf("expected %d fields for '%s', got %d", expectedFields, name, len(fields))
 				}
 			}
-
-			if userStruct == nil {
-				t.Fatalf("%s struct not found", tt.checkStruct)
-			}
-
-			if len(userStruct.methods) != tt.expectedMethod {
-				t.Errorf("expected %d method for %s, got %d", tt.expectedMethod, tt.checkStruct, len(userStruct.methods))
-			}
 		})
 	}
 }
 
-// Test_collectConstructors tests the private collectConstructors function.
-func Test_collectConstructors(t *testing.T) {
+// Test_isSimpleGetter tests the private isSimpleGetter function.
+func Test_isSimpleGetter(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      string
-		expected int
+		expected bool
 	}{
 		{
-			name: "no constructors",
+			name: "simple getter",
 			src: `package test
-func Helper() {}`,
-			expected: 0,
+type User struct {
+	name string
+}
+func (u *User) GetName() string { return u.name }`,
+			expected: true,
 		},
 		{
-			name: "one constructor",
+			name: "getter with params",
 			src: `package test
-type User struct{}
-func NewUser() *User { return &User{} }`,
-			expected: 1,
+type User struct {
+	name string
+}
+func (u *User) GetName(prefix string) string { return prefix + u.name }`,
+			expected: false,
 		},
 		{
-			name: "multiple constructors",
+			name: "getter without return",
 			src: `package test
-type User struct{}
-func NewUser() *User { return &User{} }
-func NewAdmin() *User { return &User{} }`,
-			expected: 2,
-		},
-		{
-			name: "constructor with no return",
-			src: `package test
-func NewUser() {}`,
-			expected: 0,
+type User struct {
+	name string
+}
+func (u *User) GetName() {}`,
+			expected: false,
 		},
 	}
 
@@ -126,56 +143,18 @@ func NewUser() {}`,
 				t.Fatalf("failed to parse source: %v", err)
 			}
 
-			constructors := collectConstructors(file)
-
-			if len(constructors) != tt.expected {
-				t.Errorf("expected %d constructors, got %d", tt.expected, len(constructors))
-			}
-		})
-	}
-}
-
-// Test_extractReturnTypeName tests the private extractReturnTypeName function.
-func Test_extractReturnTypeName(t *testing.T) {
-	tests := []struct {
-		name     string
-		src      string
-		expected string
-	}{
-		{
-			name: "pointer return",
-			src: `package test
-type User struct{}
-func NewUser() *User { return nil }`,
-			expected: "User",
-		},
-		{
-			name: "value return",
-			src: `package test
-type User struct{}
-func NewUser() User { return User{} }`,
-			expected: "User",
-		},
-		{
-			name: "no return",
-			src: `package test
-func NewUser() {}`,
-			expected: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
-			if err != nil {
-				t.Fatalf("failed to parse source: %v", err)
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
 			}
 
-			// Find the function declaration
+			// Collect struct types first
+			structTypes := collectStructTypes(pass)
+
+			// Find the method
 			var funcDecl *ast.FuncDecl
 			ast.Inspect(file, func(n ast.Node) bool {
-				if fd, ok := n.(*ast.FuncDecl); ok {
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Recv != nil {
 					funcDecl = fd
 					return false
 				}
@@ -183,10 +162,64 @@ func NewUser() {}`,
 			})
 
 			if funcDecl == nil {
-				t.Fatal("no function found")
+				t.Fatal("no method found")
 			}
 
-			result := extractReturnTypeName(funcDecl.Type.Results)
+			result := isSimpleGetter(funcDecl, structTypes)
+
+			if result != tt.expected {
+				t.Errorf("expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
+// Test_getReceiverTypeName tests the private getReceiverTypeName function.
+func Test_getReceiverTypeName(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      string
+		expected string
+	}{
+		{
+			name: "pointer receiver",
+			src: `package test
+type User struct{}
+func (u *User) Method() {}`,
+			expected: "User",
+		},
+		{
+			name: "value receiver",
+			src: `package test
+type User struct{}
+func (u User) Method() {}`,
+			expected: "User",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			if err != nil {
+				t.Fatalf("failed to parse source: %v", err)
+			}
+
+			// Find the method
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Recv != nil {
+					funcDecl = fd
+					return false
+				}
+				return true
+			})
+
+			if funcDecl == nil || funcDecl.Recv == nil {
+				t.Fatal("no method found")
+			}
+
+			result := getReceiverTypeName(funcDecl.Recv.List[0].Type)
 
 			if result != tt.expected {
 				t.Errorf("expected '%s', got '%s'", tt.expected, result)
@@ -195,78 +228,21 @@ func NewUser() {}`,
 	}
 }
 
-// Test_hasConstructor tests the private hasConstructor function.
-func Test_hasConstructor(t *testing.T) {
+// Test_constants tests the constant values.
+func Test_constants(t *testing.T) {
 	tests := []struct {
-		name         string
-		constructors []constructorInfo
-		funcName     string
-		typeName     string
-		want         bool
+		name     string
+		got      int
+		expected int
 	}{
-		{
-			name: "found matching constructor",
-			constructors: []constructorInfo{
-				{name: "NewUser", returnType: "User"},
-				{name: "NewAdmin", returnType: "Admin"},
-			},
-			funcName: "NewUser",
-			typeName: "User",
-			want:     true,
-		},
-		{
-			name: "wrong type for constructor",
-			constructors: []constructorInfo{
-				{name: "NewUser", returnType: "User"},
-				{name: "NewAdmin", returnType: "Admin"},
-			},
-			funcName: "NewUser",
-			typeName: "Admin",
-			want:     false,
-		},
-		{
-			name: "constructor not found",
-			constructors: []constructorInfo{
-				{name: "NewUser", returnType: "User"},
-				{name: "NewAdmin", returnType: "Admin"},
-			},
-			funcName: "NewManager",
-			typeName: "Manager",
-			want:     false,
-		},
+		{name: "INITIAL_STRUCT_TYPES_CAP", got: INITIAL_STRUCT_TYPES_CAP, expected: 32},
+		{name: "GET_PREFIX_LEN", got: GET_PREFIX_LEN, expected: 3},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := hasConstructor(tt.constructors, tt.funcName, tt.typeName)
-			if got != tt.want {
-				t.Errorf("hasConstructor() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-// Test_constructorInfo tests the constructorInfo type.
-func Test_constructorInfo(t *testing.T) {
-	tests := []struct {
-		name           string
-		ci             constructorInfo
-		expectedName   string
-		expectedReturn string
-	}{
-		{
-			name:           "valid constructor info",
-			ci:             constructorInfo{name: "NewUser", returnType: "User"},
-			expectedName:   "NewUser",
-			expectedReturn: "User",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.ci.name != tt.expectedName || tt.ci.returnType != tt.expectedReturn {
-				t.Errorf("expected name=%s returnType=%s, got name=%s returnType=%s",
-					tt.expectedName, tt.expectedReturn, tt.ci.name, tt.ci.returnType)
+			if tt.got != tt.expected {
+				t.Errorf("expected %s to be %d, got %d", tt.name, tt.expected, tt.got)
 			}
 		})
 	}

@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar008(t *testing.T) {
-	// 6 string concatenation errors detected
-	testhelper.TestGoodBad(t, ktnvar.Analyzer008, "var008", 6)
+	// 7 allocations dans des boucles (5 assignements + 2 déclarations var)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer008, "var008", 7)
 }

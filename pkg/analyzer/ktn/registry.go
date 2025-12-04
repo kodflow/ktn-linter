@@ -8,7 +8,6 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface"
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnpackage"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest"
@@ -38,8 +37,6 @@ func GetAllRules() []*analysis.Analyzer {
 	all = append(all, ktninterface.Analyzers()...)
 	// Ajoute les analyseurs de commentaires
 	all = append(all, ktncomment.Analyzers()...)
-	// Ajoute les analyseurs de packages
-	all = append(all, ktnpackage.Analyzers()...)
 	// Ajoute les analyseurs modernize (golang.org/x/tools)
 	all = append(all, modernize.Analyzers()...)
 	// Retourne la liste complète
@@ -61,7 +58,6 @@ func categoryAnalyzers() map[string]func() []*analysis.Analyzer {
 		"return":    ktnreturn.Analyzers,
 		"interface": ktninterface.Analyzers,
 		"comment":   ktncomment.Analyzers,
-		"package":   ktnpackage.Analyzers,
 		"modernize": modernize.Analyzers,
 	}
 }
@@ -69,7 +65,7 @@ func categoryAnalyzers() map[string]func() []*analysis.Analyzer {
 // GetRulesByCategory retourne les règles d'une catégorie spécifique.
 //
 // Params:
-//   - category: nom de la catégorie ("const", "func", "struct", "var", "test", "return", "interface", "comment", "package" ou "modernize")
+//   - category: nom de la catégorie ("const", "func", "struct", "var", "test", "return", "interface", "comment" ou "modernize")
 //
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs de la catégorie demandée

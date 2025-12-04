@@ -1,122 +1,223 @@
-// Bad examples for the var011 test case.
+// Bad examples for the var012 test case.
 package var011
 
-// Bad: Creating []byte buffers repeatedly in loops without sync.Pool
-
-const (
-	LOOP_ITERATIONS         int = 100
-	BUFFER_SIZE             int = 1024
-	SMALL_BUFFER_SIZE       int = 512
-	TINY_BUFFER_SIZE        int = 128
-	MEDIUM_BUFFER_SIZE      int = 256
-	CONST_BUFFER_SIZE       int = 2048
-	OUTER_ITERATIONS        int = 10
-	INNER_ITERATIONS        int = 10
-	NESTED_BUFFER_SIZE      int = 64
-	LARGE_BUFFER_SIZE       int = 512
-	LARGE_BUFFER_CAPACITY   int = 1024
-	ITEMS_COUNT             int = 3
-	COUNTER_LIMIT           int = 100
-	RANGE_ITERATIONS        int = 50
+import (
+	"fmt"
+	"io"
+	"os"
 )
 
-// badProcessInLoop creates buffer in loop without sync.Pool
-func badProcessInLoop() {
-	items := make([]int, 0, LOOP_ITERATIONS)
-	// Loop processes items
-	for range LOOP_ITERATIONS {
-		// Buffer created repeatedly in loop
-		buffer := make([]byte, 0, BUFFER_SIZE)
-		items = append(items, len(buffer))
-	}
-}
+const (
+	// LOOP_MAX_ITERATIONS est le nombre maximum d'itérations
+	LOOP_MAX_ITERATIONS int = 10
+	// MULTIPLIER_VALUE est le multiplicateur utilisé
+	MULTIPLIER_VALUE int = 2
+)
 
-// badRangeLoop creates buffer in range loop without sync.Pool
-func badRangeLoop() {
-	items := [ITEMS_COUNT]string{"a", "b", "c"}
-	results := make([]int, 0, ITEMS_COUNT)
-	// Loop processes items
-	for _, item := range items {
-		// Buffer created in each iteration
-		buf := make([]byte, 0, SMALL_BUFFER_SIZE)
-		_ = item
-		results = append(results, len(buf))
+// badShadowingInIf démontre le shadowing d'erreur dans un if.
+//
+// Params:
+//   - path: chemin du fichier à ouvrir
+//
+// Returns:
+//   - error: erreur éventuelle
+func badShadowingInIf(path string) error {
+	file, err := os.Open(path)
+	// Vérification d'erreur
+	if err != nil {
+		// Retour avec erreur
+		return err
 	}
-}
+	defer file.Close()
 
-// badInfiniteLoop creates buffer in infinite loop
-func badInfiniteLoop() {
-	// Infinite loop processing
-	for {
-		// Buffer allocated every iteration
-		b := make([]byte, 0, TINY_BUFFER_SIZE)
-		_ = b
-		break
+	data, err := io.ReadAll(file)
+	// Vérification d'erreur
+	if err != nil {
+		// Retour avec erreur
+		return err
 	}
-}
 
-// badWhileStyle creates buffer in while-style loop
-func badWhileStyle() {
-	counter := 0
-	results := make([]int, 0, COUNTER_LIMIT)
-	// While-style loop
-	for counter < COUNTER_LIMIT {
-		// Buffer created each iteration
-		data := make([]byte, 0, MEDIUM_BUFFER_SIZE)
-		results = append(results, len(data))
-		counter++
-	}
-}
-
-// badConstSizeBuffer creates buffer with const size in loop
-func badConstSizeBuffer() {
-	results := make([]int, 0, RANGE_ITERATIONS)
-	// Loop processes items
-	for range RANGE_ITERATIONS {
-		// Buffer with const size
-		buf := make([]byte, 0, CONST_BUFFER_SIZE)
-		results = append(results, len(buf))
-	}
-}
-
-// badNestedLoop creates buffer in nested loop
-func badNestedLoop() {
-	// Outer loop
-	for range OUTER_ITERATIONS {
-		// Inner loop
-		for range INNER_ITERATIONS {
-			// Buffer allocated in nested loop
-			temp := make([]byte, 0, NESTED_BUFFER_SIZE)
-			_ = temp
+	// Vérification de la longueur des données
+	if len(data) > 0 {
+		err := validateData(data)
+		// Vérification d'erreur
+		if err != nil {
+			// Retour avec erreur
+			return err
 		}
 	}
+
+	// Retour avec dernière erreur
+	return err
 }
 
-// badMakeWithCapacity creates buffer with capacity in loop
-func badMakeWithCapacity() {
-	results := make([]int, 0, LOOP_ITERATIONS)
-	// Loop processes items
-	for range LOOP_ITERATIONS {
-		// Buffer with both length and capacity
-		buffer := make([]byte, LARGE_BUFFER_SIZE, LARGE_BUFFER_CAPACITY)
-		results = append(results, len(buffer))
+// badShadowingFmtErrorf démontre le shadowing dans fmt.Errorf.
+//
+// Params:
+//   - url: URL de connexion
+//
+// Returns:
+//   - error: erreur éventuelle
+func badShadowingFmtErrorf(url string) error {
+	conn, err := dial(url)
+	// Vérification d'erreur
+	if err != nil {
+		err := fmt.Errorf("failed to connect: %w", err) // SHADOWING: err redéclaré
+		_ = conn
+		// Retour avec erreur wrappée
+		return err
 	}
+	// Retour sans erreur
+	return nil
+}
+
+// badShadowingInFor démontre le shadowing dans une boucle.
+//
+// Params:
+//   - files: liste des fichiers à traiter
+//
+// Returns:
+//   - error: erreur éventuelle
+func badShadowingInFor(files []string) error {
+	var err error
+	// Traitement de chaque fichier
+	for _, file := range files {
+		err := processFile(file)
+		// Vérification d'erreur
+		if err != nil {
+			// Retour avec erreur
+			return err
+		}
+	}
+	// Retour avec dernière erreur
+	return err
+}
+
+// badMultipleShadowing démontre plusieurs shadowings.
+//
+// Returns:
+//   - error: erreur éventuelle
+func badMultipleShadowing() error {
+	result, err := doSomething()
+	// Vérification d'erreur
+	if err != nil {
+		// Retour avec erreur
+		return err
+	}
+
+	// Vérification du résultat
+	if result > 0 {
+		err := doAnotherThing()
+		// Vérification d'erreur
+		if err != nil {
+			// Retour avec erreur
+			return err
+		}
+	}
+
+	err = finalCheck()
+	// Retour avec dernière erreur
+	return err
+}
+
+// badShadowingOtherVar démontre le shadowing d'autres variables.
+func badShadowingOtherVar() {
+	count := 0
+	// Boucle sur les itérations
+	for range LOOP_MAX_ITERATIONS {
+		count := count * MULTIPLIER_VALUE
+		_ = count
+	}
+	_ = count
+}
+
+// validateData valide les données.
+//
+// Params:
+//   - _data: données à valider (non utilisé)
+//
+// Returns:
+//   - error: erreur éventuelle
+func validateData(_data []byte) error {
+	// Retour sans erreur
+	return nil
+}
+
+// dial établit une connexion.
+//
+// Params:
+//   - _url: URL de connexion (non utilisé)
+//
+// Returns:
+//   - any: connexion établie
+//   - error: erreur éventuelle
+func dial(_url string) (any, error) {
+	// Retour sans erreur
+	return nil, nil
+}
+
+// processFile traite un fichier.
+//
+// Params:
+//   - _file: chemin du fichier (non utilisé)
+//
+// Returns:
+//   - error: erreur éventuelle
+func processFile(_file string) error {
+	// Retour sans erreur
+	return nil
+}
+
+// doSomething effectue une opération.
+//
+// Returns:
+//   - int: résultat de l'opération
+//   - error: erreur éventuelle
+func doSomething() (int, error) {
+	// Retour avec résultat
+	return 0, nil
+}
+
+// doAnotherThing effectue une autre opération.
+//
+// Returns:
+//   - error: erreur éventuelle
+func doAnotherThing() error {
+	// Retour sans erreur
+	return nil
+}
+
+// finalCheck effectue une vérification finale.
+//
+// Returns:
+//   - error: erreur éventuelle
+func finalCheck() error {
+	// Retour sans erreur
+	return nil
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badProcessInLoop
-	badProcessInLoop()
-	// Appel de badRangeLoop
-	badRangeLoop()
-	// Appel de badInfiniteLoop
-	badInfiniteLoop()
-	// Appel de badWhileStyle
-	badWhileStyle()
-	// Appel de badConstSizeBuffer
-	badConstSizeBuffer()
-	// Appel de badNestedLoop
-	badNestedLoop()
-	// Appel de badMakeWithCapacity
-	badMakeWithCapacity()
+	// Appel de badShadowingInIf
+	_ = badShadowingInIf("")
+	// Appel de badShadowingFmtErrorf
+	_ = badShadowingFmtErrorf("")
+	// Appel de badShadowingInFor
+	_ = badShadowingInFor(nil)
+	// Appel de badMultipleShadowing
+	badMultipleShadowing()
+	// Appel de badShadowingOtherVar
+	badShadowingOtherVar()
+	// Appel de validateData
+	_ = validateData(nil)
+	// Appel de dial
+	_, _ = dial("")
+	// Appel de processFile
+	_ = processFile("")
+	// Appel de doSomething
+	doSomething()
+	// Appel de doAnotherThing
+	doAnotherThing()
+	// Appel de finalCheck
+	finalCheck()
 }

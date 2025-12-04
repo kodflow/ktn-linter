@@ -1,86 +1,112 @@
-// Good examples for the var009 test case.
+// Good examples for the var010 test case.
 package var009
 
 const (
-	// VALUE_TWO is constant value 2
-	VALUE_TWO int = 2
-	// VALUE_THREE is constant value 3
-	VALUE_THREE int = 3
-	// VALUE_FIVE is constant value 5
-	VALUE_FIVE int = 5
-	// VALUE_TEN is constant value 10
-	VALUE_TEN int = 10
+	// ANSWER is the answer
+	ANSWER int = 42
+	// AGE_VALUE is age value
+	AGE_VALUE int = 25
+	// ID_VALUE is id value
+	ID_VALUE int = 1
+	// USER_AGE is user age
+	USER_AGE int = 30
+	// USER_BALANCE is user balance
+	USER_BALANCE float64 = 100.0
+	// PI_VALUE is pi value
+	PI_VALUE float64 = 3.14
+	// CONFIG_VALUE is config value
+	CONFIG_VALUE int = 10
 )
 
-// goodLoopSliceReuse réutilise un slice déclaré avant la boucle.
-func goodLoopSliceReuse() {
-	// Déclaration avant la boucle
-	data := make([]int, 0, VALUE_TEN)
-	// Loop appends values to reused slice
-	for i := 0; i < VALUE_TEN; i++ {
-		// Append current iteration value
-		data = append(data, i)
+// GoodSmallStruct est une petite structure (≤3 champs).
+// Utilisée pour tester l'allocation par valeur.
+type GoodSmallStruct struct {
+	ID   int
+	Name string
+	Age  int
+}
+
+// GoodLargeStruct est une grande structure (>3 champs).
+// Doit être utilisée avec un pointeur pour éviter copies coûteuses.
+type GoodLargeStruct struct {
+	Field1 int
+	Field2 string
+	Field3 bool
+	Field4 float64
+}
+
+// GoodAnotherLargeStruct est une autre grande structure.
+// Contient plusieurs champs et doit être manipulée par pointeur.
+type GoodAnotherLargeStruct struct {
+	Name    string
+	Age     int
+	Email   string
+	Active  bool
+	Balance float64
+}
+
+// goodSmallStructValue utilise une petite structure par valeur.
+func goodSmallStructValue() {
+	// Petite structure, OK par valeur
+	data := GoodSmallStruct{
+		ID:   ID_VALUE,
+		Name: "test",
+		Age:  AGE_VALUE,
 	}
 	_ = data
 }
 
-// goodLoopMapReuse réutilise une map déclarée avant la boucle.
-func goodLoopMapReuse() {
-	// Déclaration avant la boucle avec capacité
-	cache := make(map[string]int, VALUE_TEN)
-	// Loop reuses map
-	for i := 0; i < VALUE_TEN; i++ {
-		// Store current value
-		cache["key"] = i
+// goodLargeStructPointer utilise un pointeur pour une grande structure.
+func goodLargeStructPointer() {
+	// Grande structure avec pointeur
+	data := &GoodLargeStruct{
+		Field1: ANSWER,
+		Field2: "test",
+		Field3: true,
+		Field4: PI_VALUE,
 	}
-	_ = cache
-}
-
-// goodRangeSliceReuse réutilise un slice dans une boucle range.
-func goodRangeSliceReuse() {
-	items := []int{1, VALUE_TWO, VALUE_THREE}
-	// Déclaration avant la boucle avec capacité
-	buffer := make([]byte, 0, VALUE_THREE)
-	// Range loop reuses buffer
-	for _, item := range items {
-		// Convert and append item
-		buffer = append(buffer, byte(item))
-	}
-	_ = buffer
-}
-
-// goodNoLoopAlloc alloue hors d'une boucle.
-func goodNoLoopAlloc() {
-	// Pas de boucle, allocation OK avec array
-	var data [VALUE_TEN]int
 	_ = data
 }
 
-// goodNestedLoopReuse réutilise dans une boucle imbriquée.
-func goodNestedLoopReuse() {
-	// Déclaration avant la boucle avec array
-	var temp [VALUE_TEN]int
-	// Outer loop iterates
-	for i := 0; i < VALUE_FIVE; i++ {
-		// Inner loop modifies temp
-		for j := 0; j < VALUE_FIVE; j++ {
-			// Store multiplication result
-			temp[j] = i * j
-		}
+// goodAnotherLargeStructPointer utilise un pointeur.
+func goodAnotherLargeStructPointer() {
+	// Grande structure avec pointeur
+	user := &GoodAnotherLargeStruct{
+		Name:    "John",
+		Age:     USER_AGE,
+		Email:   "john@example.com",
+		Active:  true,
+		Balance: USER_BALANCE,
 	}
-	_ = temp
+	_ = user
+}
+
+// goodPointerDecl déclare un pointeur avec var.
+func goodPointerDecl() {
+	// Déclaration de pointeur
+	var config *GoodLargeStruct
+	config = &GoodLargeStruct{Field1: CONFIG_VALUE}
+	_ = config
+}
+
+// goodNewAlloc utilise new pour allouer.
+func goodNewAlloc() {
+	// Allocation avec new
+	data := new(GoodLargeStruct)
+	data.Field1 = ANSWER
+	_ = data
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodLoopSliceReuse
-	goodLoopSliceReuse()
-	// Appel de goodLoopMapReuse
-	goodLoopMapReuse()
-	// Appel de goodRangeSliceReuse
-	goodRangeSliceReuse()
-	// Appel de goodNoLoopAlloc
-	goodNoLoopAlloc()
-	// Appel de goodNestedLoopReuse
-	goodNestedLoopReuse()
+	// Appel de goodSmallStructValue
+	goodSmallStructValue()
+	// Appel de goodLargeStructPointer
+	goodLargeStructPointer()
+	// Appel de goodAnotherLargeStructPointer
+	goodAnotherLargeStructPointer()
+	// Appel de goodPointerDecl
+	goodPointerDecl()
+	// Appel de goodNewAlloc
+	goodNewAlloc()
 }

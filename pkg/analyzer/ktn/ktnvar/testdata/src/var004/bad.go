@@ -1,221 +1,131 @@
-// Bad examples for the var004 test case.
+// Bad examples for the var005 test case.
 package var004
 
-// Constants to avoid magic numbers
+// Bad: Slices created without capacity when it could be known
+
+// Constantes pour les tests
 const (
-	// TEST_AGE is the test age value
-	TEST_AGE int = 25
-	// TEST_X is the test x coordinate
-	TEST_X int = 10
-	// TEST_Y is the test y coordinate
-	TEST_Y int = 20
-	// TEST_ANSWER is the answer value
-	TEST_ANSWER int = 42
-	// TEST_ONE is the value one
-	TEST_ONE int = 1
-	// TEST_TWO is the value two
-	TEST_TWO int = 2
-	// TEST_THREE is the value three
-	TEST_THREE int = 3
-	// THRESHOLD_VALUE is the threshold for comparison
-	THRESHOLD_VALUE int = 5
-	// MULTIPLIER is the multiplication factor
-	MULTIPLIER int = 2
-	// ZERO_INDEX is the starting index
-	ZERO_INDEX int = 0
+	MAX_SIZE         int = 50
+	SMALL_LOOP_COUNT int = 20
 )
 
-// Package-level variables with explicit types (OK, not checked by VAR-005)
-var (
-	// PackageLevel is a package-level variable
-	PackageLevel string = "ok"
-	// AnotherGlobal is another package-level variable
-	AnotherGlobal int = TEST_ANSWER
-)
-
-// badSimpleVar shows incorrect use of var with initialization.
-// Should use := instead of var for local variables.
-func badSimpleVar() {
-	// Variable declarations with initialization (should use :=)
-	var name = "Bob"
-	// age variable with initialization
-	var age = TEST_AGE
-
-	// Using variables to avoid unused warnings
-	_ = name
-	_ = age
+// badMakeStringSlice creates a string slice without capacity
+//
+// Returns:
+//   - []string: slice without preallocated capacity
+func badMakeStringSlice() []string {
+	// Bad: make without capacity argument
+	items := make([]string, 0)
+	// Retour de la fonction
+	return items
 }
 
-// badMultipleVars shows incorrect use of var with multiple variables.
-// Should use := instead of var for local variables.
-func badMultipleVars() {
-	// x variable with initialization
-	var x = TEST_X
-	// y variable with initialization
-	var y = TEST_Y
-
-	// Using variables to avoid unused warnings
-	_ = x
-	_ = y
+// badMakeWithoutCapacity creates a slice using make without capacity
+//
+// Returns:
+//   - []string: slice without preallocated capacity
+func badMakeWithoutCapacity() []string {
+	// Bad: make without capacity argument
+	result := make([]string, 0)
+	// Retour de la fonction
+	return result
 }
 
-// badBoolVar shows incorrect use of var with bool.
-// Should use := instead of var for local variables.
-func badBoolVar() {
-	// Boolean variable declaration (should use :=)
-	var isEnabled = true
-
-	// Using variable to avoid unused warning
-	_ = isEnabled
-}
-
-// badStringVar shows incorrect use of var with string.
-// Should use := instead of var for local variables.
-func badStringVar() {
-	// String variable declaration (should use :=)
-	var message = "Hello"
-
-	// Using variable to avoid unused warning
-	_ = message
-}
-
-// badSliceVar shows incorrect use of var with slice.
-// Should use := instead of var for local variables.
-func badSliceVar() {
-	// Slice variable declaration (should use :=)
-	var numbers = []int{TEST_ONE, TEST_TWO, TEST_THREE}
-
-	// Using variable to avoid unused warning
-	_ = numbers
-}
-
-// badMapVar shows incorrect use of var with map.
-// Should use := instead of var for local variables.
-func badMapVar() {
-	// Map variable declaration (should use :=)
-	var config = map[string]int{"key": TEST_ONE}
-
-	// Using variable to avoid unused warning
-	_ = config
-}
-
-// badVarInIf shows incorrect use of var in if block.
-// Local variables should use := even inside control structures.
-func badVarInIf() {
-	// Initialize test variable
-	x := TEST_X
-
-	// Check if x exceeds threshold
-	if x > THRESHOLD_VALUE {
-		// Variable in if block (should use :=)
-		var result = "big"
-
-		// Using variable to avoid unused warning
-		_ = result
+// badMakeInLoop creates a slice without capacity in loop
+//
+// Returns:
+//   - []int: slice without preallocated capacity
+func badMakeInLoop() []int {
+	// Bad: Known size but no capacity
+	numbers := make([]int, 0)
+	// Itération sur les éléments
+	for i := range MAX_SIZE {
+		numbers = append(numbers, i)
 	}
+	// Retour de la fonction
+	return numbers
 }
 
-// badVarInFor shows incorrect use of var in for loop.
-// Local variables should use := even inside loops.
-func badVarInFor() {
-	// Loop through range
-	for i := ZERO_INDEX; i < TEST_THREE; i++ {
-		// Variable in for loop (should use :=)
-		var item = i * MULTIPLIER
-
-		// Using variable to avoid unused warning
-		_ = item
-	}
+// badMakeFloatSlice creates a float slice without capacity
+//
+// Returns:
+//   - []float64: slice without preallocated capacity
+func badMakeFloatSlice() []float64 {
+	// Bad: make for float64 without capacity
+	values := make([]float64, 0)
+	// Retour de la fonction
+	return values
 }
 
-// badVarInRange shows incorrect use of var in range loop.
-// Local variables should use := even inside range loops.
-func badVarInRange() {
-	// Initialize slice for iteration
-	nums := []int{TEST_ONE, TEST_TWO, TEST_THREE}
-
-	// Iterate over slice
-	for _, n := range nums {
-		// Variable in range loop (should use :=)
-		var doubled = n * MULTIPLIER
-
-		// Using variable to avoid unused warning
-		_ = doubled
-	}
+// badMakeInterfaceSlice creates an interface slice without capacity
+//
+// Returns:
+//   - []any: interface slice without capacity
+func badMakeInterfaceSlice() []any {
+	// Bad: make for any without capacity
+	items := make([]any, 0)
+	// Retour de la fonction
+	return items
 }
 
-// badVarInSwitch shows incorrect use of var in switch.
-// Local variables should use := even in switch cases.
-func badVarInSwitch() {
-	// Initialize test value
-	x := THRESHOLD_VALUE
-
-	// Switch on value
-	switch x {
-	// Case when x equals threshold
-	case THRESHOLD_VALUE:
-		// Variable in case block (should use :=)
-		var msg = "five"
-
-		// Using variable to avoid unused warning
-		_ = msg
-	// Default case for other values
-	default:
-		// Variable in default block (should use :=)
-		var other = "other"
-
-		// Using variable to avoid unused warning
-		_ = other
-	}
+// Item represents a test item with a single value field.
+// This struct is used for testing slice allocation patterns.
+type Item struct {
+	value int
 }
 
-// badVarInSelect shows incorrect use of var in select.
-// Local variables should use := even in select cases.
-func badVarInSelect() {
-	// Create channels for testing
-	ch := make(chan int)
+// badMakeStructSlice creates a slice of structs without capacity
+//
+// Returns:
+//   - []Item: slice of structs without capacity
+func badMakeStructSlice() []Item {
+	// Bad: make for struct slice without capacity
+	items := make([]Item, 0)
+	// Retour de la fonction
+	return items
+}
 
-	// Select on channel operations
-	select {
-	// Case when receiving from channel
-	case val := <-ch:
-		// Variable in select case (should use :=)
-		var result = val * MULTIPLIER
+// badMakeByteSlice creates a byte slice without capacity
+//
+// Returns:
+//   - []byte: byte slice without capacity
+func badMakeByteSlice() []byte {
+	// Bad: Byte slice without capacity
+	buffer := make([]byte, 0)
+	// Retour de la fonction
+	return buffer
+}
 
-		// Using variable to avoid unused warning
-		_ = result
-	// Default case when no channel operation is ready
-	default:
-		// Variable in default block (should use :=)
-		var msg = "no data"
-
-		// Using variable to avoid unused warning
-		_ = msg
-	}
+// badEmptyLiteralWithAppend creates empty literal then appends
+//
+// Returns:
+//   - []int: slice that should use make with capacity
+func badEmptyLiteralWithAppend() []int {
+	// Bad: make([]T, 0) without capacity when size could be known
+	numbers := make([]int, 0)
+	// Ajout d'éléments
+	numbers = append(numbers, SMALL_LOOP_COUNT)
+	numbers = append(numbers, MAX_SIZE)
+	// Retour de la fonction
+	return numbers
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badSimpleVar
-	badSimpleVar()
-	// Appel de badMultipleVars
-	badMultipleVars()
-	// Appel de badBoolVar
-	badBoolVar()
-	// Appel de badStringVar
-	badStringVar()
-	// Appel de badSliceVar
-	badSliceVar()
-	// Appel de badMapVar
-	badMapVar()
-	// Appel de badVarInIf
-	badVarInIf()
-	// Appel de badVarInFor
-	badVarInFor()
-	// Appel de badVarInRange
-	badVarInRange()
-	// Appel de badVarInSwitch
-	badVarInSwitch()
-	// Appel de badVarInSelect
-	badVarInSelect()
+	// Appel de badMakeStringSlice
+	badMakeStringSlice()
+	// Appel de badMakeWithoutCapacity
+	badMakeWithoutCapacity()
+	// Appel de badMakeInLoop
+	badMakeInLoop()
+	// Appel de badMakeFloatSlice
+	badMakeFloatSlice()
+	// Appel de badMakeInterfaceSlice
+	badMakeInterfaceSlice()
+	// Appel de badMakeStructSlice
+	badMakeStructSlice()
+	// Appel de badMakeByteSlice
+	badMakeByteSlice()
+	// Appel de badEmptyLiteralWithAppend
+	badEmptyLiteralWithAppend()
 }

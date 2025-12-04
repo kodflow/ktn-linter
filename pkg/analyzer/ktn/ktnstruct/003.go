@@ -3,6 +3,7 @@ package ktnstruct
 
 import (
 	"go/ast"
+	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -11,10 +12,17 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer003 vérifie que les structs exportées avec méthodes ont un constructeur
+const (
+	// INITIAL_STRUCT_TYPES_CAP initial capacity for struct types map
+	INITIAL_STRUCT_TYPES_CAP int = 32
+	// GET_PREFIX_LEN length of "Get" prefix
+	GET_PREFIX_LEN int = 3
+)
+
+// Analyzer003 checks getters don't have "Get" prefix (Go idiom)
 var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnstruct003",
-	Doc:      "KTN-STRUCT-003: Struct exportée avec méthodes doit avoir un constructeur NewX()",
+	Doc:      "KTN-STRUCT-003: Les getters ne doivent pas avoir le préfixe 'Get' (convention Go idiomatique)",
 	Run:      runStruct003,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -30,216 +38,211 @@ var Analyzer003 = &analysis.Analyzer{
 func runStruct003(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Parcourir chaque fichier du package
-	for _, file := range pass.Files {
-		filename := pass.Fset.Position(file.Pos()).Filename
+	// Collecter les types struct pour pouvoir vérifier les méthodes
+	structTypes := collectStructTypes(pass)
 
+	// Filtrer les déclarations de fonctions
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
+
+	// Parcourir les déclarations
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		funcDecl := n.(*ast.FuncDecl)
+
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
-			// Continuer avec le fichier suivant
-			continue
+			// Continuer avec le noeud suivant
+			return
 		}
 
-		// Collecter les structs exportées et leurs méthodes
-		structs := collectExportedStructsWithMethods(file, pass, insp)
-
-		// Collecter les constructeurs disponibles
-		constructors := collectConstructors(file)
-
-		// Vérifier chaque struct
-		for _, s := range structs {
-			// Si la struct n'a pas de méthodes publiques, skip
-			if len(s.methods) == 0 {
-				// Continuer avec la struct suivante
-				continue
-			}
-
-			// Exception: les DTOs n'ont pas besoin de constructeur
-			if shared.IsSerializableStruct(s.structType, s.name) {
-				// DTO - pas besoin de constructeur
-				continue
-			}
-
-			// Chercher un constructeur pour cette struct
-			expectedName := "New" + s.name
-			// Vérification si constructeur trouvé
-			if !hasConstructor(constructors, expectedName, s.name) {
-				pass.Reportf(
-					s.node.Pos(),
-					"KTN-STRUCT-003: la struct exportée '%s' a %d méthode(s) publique(s) mais aucun constructeur '%s'. Créer une fonction constructeur dans le même fichier",
-					s.name,
-					len(s.methods),
-					expectedName,
-				)
-			}
+		// Vérifier si c'est une méthode (a un receiver)
+		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
+			// Pas une méthode, continuer
+			return
 		}
-	}
+
+		// Vérifier si la méthode est exportée
+		if !ast.IsExported(funcDecl.Name.Name) {
+			// Méthode privée, continuer
+			return
+		}
+
+		// Vérifier si la struct receiver est exportée
+		receiverTypeName := getReceiverTypeName(funcDecl.Recv.List[0].Type)
+		// Ignorer les méthodes sur structs privées
+		if receiverTypeName != "" && !ast.IsExported(receiverTypeName) {
+			// Struct privée, continuer
+			return
+		}
+
+		// Vérifier si le nom commence par "Get"
+		methodName := funcDecl.Name.Name
+		// Vérifier préfixe Get
+		if !strings.HasPrefix(methodName, "Get") {
+			// Ne commence pas par Get, continuer
+			return
+		}
+
+		// Vérifier qu'il y a au moins un caractère après "Get"
+		if len(methodName) <= GET_PREFIX_LEN {
+			// Juste "Get", pas un getter
+			return
+		}
+
+		// Vérifier si c'est un getter simple (retourne un champ de la struct)
+		if !isSimpleGetter(funcDecl, structTypes) {
+			// Pas un getter simple, continuer
+			return
+		}
+
+		// Construire le nom suggéré sans le préfixe "Get"
+		suggestedName := methodName[GET_PREFIX_LEN:]
+
+		// Reporter la violation
+		pass.Reportf(
+			funcDecl.Name.Pos(),
+			"KTN-STRUCT-003: la méthode '%s' devrait être renommée '%s' (convention Go idiomatique, voir https://go.dev/doc/effective_go#Getters)",
+			methodName,
+			suggestedName,
+		)
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectExportedStructsWithMethods collecte les structs exportées et leurs méthodes.
+// collectStructTypes collecte les types struct et leurs champs.
 //
 // Params:
-//   - file: fichier AST
 //   - pass: contexte d'analyse
-//   - insp: inspector
 //
 // Returns:
-//   - []structWithMethods: liste des structs avec méthodes
-func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
-	// Collecter les méthodes
-	methodsByStruct := collectMethodsByStruct(file, pass)
+//   - map[string][]string: map du nom du type vers la liste des champs
+func collectStructTypes(pass *analysis.Pass) map[string][]string {
+	result := make(map[string][]string, INITIAL_STRUCT_TYPES_CAP)
 
-	// Collecter les structs exportées du fichier
-	var structs []structWithMethods
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier si c'est une TypeSpec
-		typeSpec, ok := n.(*ast.TypeSpec)
-		// Si ce n'est pas une TypeSpec, continuer
-		if !ok {
-			// Continue traversal
+	// Parcourir chaque fichier
+	for _, file := range pass.Files {
+		// Parcourir l'AST du fichier
+		ast.Inspect(file, func(n ast.Node) bool {
+			// Vérifier si c'est une déclaration de type
+			typeSpec, ok := n.(*ast.TypeSpec)
+			// Si ce n'est pas une TypeSpec, continuer
+			if !ok {
+				// Continuer traversal
+				return true
+			}
+
+			// Vérifier si c'est une struct
+			structType, ok := typeSpec.Type.(*ast.StructType)
+			// Si ce n'est pas une struct, continuer
+			if !ok {
+				// Continuer traversal
+				return true
+			}
+
+			// Collecter les noms des champs
+			var fields []string
+			// Vérifier si la struct a des champs
+			if structType.Fields != nil {
+				// Parcourir les champs
+				for _, field := range structType.Fields.List {
+					// Parcourir les noms de champs
+					for _, name := range field.Names {
+						fields = append(fields, strings.ToLower(name.Name))
+					}
+				}
+			}
+
+			// Stocker le type et ses champs
+			result[typeSpec.Name.Name] = fields
+
+			// Continuer traversal
 			return true
-		}
+		})
+	}
 
-		// Vérifier si c'est une struct
-		structType, isStruct := typeSpec.Type.(*ast.StructType)
-		// Si c'est une struct ET exportée
-		if isStruct && ast.IsExported(typeSpec.Name.Name) {
-			structs = append(structs, structWithMethods{
-				name:       typeSpec.Name.Name,
-				node:       typeSpec,
-				structType: structType,
-				methods:    methodsByStruct[typeSpec.Name.Name],
-			})
-		}
-
-		// Continue traversal
-		return true
-	})
-
-	// Retour de la liste
-	return structs
+	// Retourner le résultat
+	return result
 }
 
-// constructorInfo stocke les informations d'un constructeur.
-type constructorInfo struct {
-	name       string
-	returnType string
-}
-
-// collectConstructors collecte tous les constructeurs du fichier.
+// isSimpleGetter vérifie si une méthode est un getter simple.
 //
 // Params:
-//   - file: fichier AST
+//   - funcDecl: déclaration de fonction
+//   - structTypes: map des types struct et leurs champs
 //
 // Returns:
-//   - []constructorInfo: liste des constructeurs
-func collectConstructors(file *ast.File) []constructorInfo {
-	var constructors []constructorInfo
+//   - bool: true si c'est un getter simple
+func isSimpleGetter(funcDecl *ast.FuncDecl, structTypes map[string][]string) bool {
+	// Vérifier que la méthode a un retour
+	if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) == 0 {
+		// Pas de retour, pas un getter
+		return false
+	}
 
-	// Parcourir les fonctions du fichier
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier FuncDecl
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Vérification si FuncDecl
-		if !ok {
-			// Continue traversal
-			return true
-		}
+	// Vérifier que la méthode n'a pas de paramètres
+	if funcDecl.Type.Params != nil && len(funcDecl.Type.Params.List) > 0 {
+		// A des paramètres, pas un getter simple
+		return false
+	}
 
-		// Ignorer les méthodes (avec receiver)
-		if funcDecl.Recv != nil {
-			// Continue traversal
-			return true
-		}
-
-		// Vérifier que le nom commence par "New"
-		if !strings.HasPrefix(funcDecl.Name.Name, "New") {
-			// Continue traversal
-			return true
-		}
-
-		// Vérifier qu'il y a un type de retour
-		if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) == 0 {
-			// Continue traversal
-			return true
-		}
-
-		// Extraire le type de retour
-		returnType := extractReturnTypeName(funcDecl.Type.Results)
-		// Si type de retour valide
-		if returnType != "" {
-			constructors = append(constructors, constructorInfo{
-				name:       funcDecl.Name.Name,
-				returnType: returnType,
-			})
-		}
-
-		// Continue traversal
+	// Extraire le nom du type receiver
+	receiverType := getReceiverTypeName(funcDecl.Recv.List[0].Type)
+	// Vérifier si le type est connu
+	if receiverType == "" {
+		// Type inconnu, considérer comme getter
 		return true
-	})
+	}
 
-	// Retour de la liste
-	return constructors
+	// Vérifier si le champ correspondant existe dans la struct
+	methodName := funcDecl.Name.Name
+	expectedFieldName := strings.ToLower(methodName[GET_PREFIX_LEN:])
+
+	// Obtenir les champs du type receiver
+	fields, ok := structTypes[receiverType]
+	// Si type non trouvé, considérer comme getter
+	if !ok {
+		// Type non trouvé
+		return true
+	}
+
+	// Vérifier si le champ existe (comparaison directe)
+	if slices.Contains(fields, expectedFieldName) {
+		// Champ trouvé, c'est un getter
+		return true
+	}
+
+	// Champ non trouvé, mais c'est quand même une méthode Get sans paramètres
+	return true
 }
 
-// extractReturnTypeName extrait le nom du type de retour.
+// getReceiverTypeName extrait le nom du type du receiver.
 //
 // Params:
-//   - results: liste des résultats
+//   - expr: expression du type
 //
 // Returns:
 //   - string: nom du type
-func extractReturnTypeName(results *ast.FieldList) string {
-	// Si pas de résultats
-	if results == nil || len(results.List) == 0 {
-		// Retour vide
-		return ""
+func getReceiverTypeName(expr ast.Expr) string {
+	// Gérer le cas *Type
+	starExpr, ok := expr.(*ast.StarExpr)
+	// Si c'est un pointeur
+	if ok {
+		// Récursion pour obtenir le type sous-jacent
+		return getReceiverTypeName(starExpr.X)
 	}
 
-	// Prendre le premier type de retour
-	firstResult := results.List[0].Type
-
-	// Gérer les différents types
-	switch t := firstResult.(type) {
-	// Traitement du pointeur
-	case *ast.StarExpr:
-		// Retour de type pointeur (*T)
-		if ident, ok := t.X.(*ast.Ident); ok {
-			// Retour du nom du type extrait
-			return ident.Name
-		}
-	// Traitement de l'identifiant
-	case *ast.Ident:
-		// Retour de type direct (T)
-		return t.Name
+	// Gérer le cas Type
+	ident, ok := expr.(*ast.Ident)
+	// Si c'est un identifiant
+	if ok {
+		// Retourner le nom
+		return ident.Name
 	}
 
-	// Type non géré
+	// Type non reconnu
 	return ""
-}
-
-// hasConstructor vérifie si un constructeur existe pour la struct.
-//
-// Params:
-//   - constructors: liste des constructeurs
-//   - expectedName: nom attendu du constructeur
-//   - structName: nom de la struct
-//
-// Returns:
-//   - bool: true si constructeur trouvé
-func hasConstructor(constructors []constructorInfo, expectedName string, structName string) bool {
-	// Parcourir les constructeurs
-	for _, c := range constructors {
-		// Vérifier le nom ET le type de retour
-		if c.name == expectedName && c.returnType == structName {
-			// Constructeur trouvé
-			return true
-		}
-	}
-
-	// Constructeur non trouvé
-	return false
 }

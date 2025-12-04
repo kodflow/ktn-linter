@@ -1,23 +1,17 @@
-// Bad examples for the struct001 test case.
+// Bad examples for the struct003 test case.
 package struct005
 
-// BadProduct représente un produit de test.
-// Utilisé pour démontrer la violation de une struct par fichier.
-type BadProduct struct { // want "KTN-STRUCT-005"
-	ID    int
-	Price float64
-}
-
-// BadOrder représente une commande de test.
-// Démontre la violation avec une deuxième struct dans le même fichier.
-type BadOrder struct { // want "KTN-STRUCT-005"
-	OrderID   int
-	ProductID int
-}
-
-// BadCustomer représente un client de test.
-// Démontre la violation avec une troisième struct dans le même fichier.
-type BadCustomer struct { // want "KTN-STRUCT-005"
-	Name  string
-	Email string
+// BadMixedFields représente une struct avec mauvais ordre des champs.
+// Les champs exportés sont mélangés avec les champs privés (violation STRUCT-003).
+type BadMixedFields struct {
+	id        int
+	Name      string // want "KTN-STRUCT-005"
+	email     string
+	Age       int // want "KTN-STRUCT-005"
+	visible   bool
+	Public    string // want "KTN-STRUCT-005"
+	hidden    int
+	Exported  bool // want "KTN-STRUCT-005"
+	another   string
+	LastField int // want "KTN-STRUCT-005"
 }

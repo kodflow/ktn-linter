@@ -1,131 +1,176 @@
-// Bad examples for the var005 test case.
+// Bad examples for the var006 test case.
 package var005
 
-// Bad: Slices created without capacity when it could be known
+// Bad: Using make with length > 0 when append is used
 
-// Constantes pour les tests
 const (
-	MAX_SIZE         int = 50
-	SMALL_LOOP_COUNT int = 20
+	// SIZE_LIMIT defines the size limit
+	SIZE_LIMIT int = 50
+	// LOOP_ITERATIONS defines loop count
+	LOOP_ITERATIONS int = 10
+	// FIVE_ITEMS defines five items
+	FIVE_ITEMS int = 5
+	// SMALL_COUNT defines small count
+	SMALL_COUNT int = 3
+	// TWO_VALUE defines two value
+	TWO_VALUE int = 2
+	// BAD_BUFFER_SIZE defines bad buffer size
+	BAD_BUFFER_SIZE int = 100
+	// FINAL_VALUE defines final value
+	FINAL_VALUE int = 99
 )
 
-// badMakeStringSlice creates a string slice without capacity
+// badMakeWithLength creates a slice with length then uses append
 //
 // Returns:
-//   - []string: slice without preallocated capacity
-func badMakeStringSlice() []string {
-	// Bad: make without capacity argument
-	items := make([]string, 0)
+//   - []int: slice with wasted zero values
+func badMakeWithLength() []int {
+	// Bad: Length > 0 creates zero values that will be unused
+	items := make([]int, SIZE_LIMIT)
+	// Itération sur les éléments
+	for i := range LOOP_ITERATIONS {
+		items = append(items, i)
+	}
 	// Retour de la fonction
 	return items
 }
 
-// badMakeWithoutCapacity creates a slice using make without capacity
+// badMakeWithLengthAndCapacity creates a slice with length then append
 //
 // Returns:
-//   - []string: slice without preallocated capacity
-func badMakeWithoutCapacity() []string {
-	// Bad: make without capacity argument
-	result := make([]string, 0)
+//   - []string: slice with wasted zero values
+func badMakeWithLengthAndCapacity() []string {
+	// Bad: Length > 0 even with capacity
+	result := make([]string, LOOP_ITERATIONS, LOOP_ITERATIONS*TWO_VALUE)
+	// Itération sur les éléments
+	for range FIVE_ITEMS {
+		result = append(result, "value")
+	}
 	// Retour de la fonction
 	return result
 }
 
-// badMakeInLoop creates a slice without capacity in loop
+// badMakeWithSmallLength creates a slice with small length then append
 //
 // Returns:
-//   - []int: slice without preallocated capacity
-func badMakeInLoop() []int {
-	// Bad: Known size but no capacity
-	numbers := make([]int, 0)
+//   - []int: slice with wasted zero values
+func badMakeWithSmallLength() []int {
+	// Bad: Even small length > 0 is wasteful
+	numbers := make([]int, FIVE_ITEMS)
 	// Itération sur les éléments
-	for i := range MAX_SIZE {
-		numbers = append(numbers, i)
+	for i := range SMALL_COUNT {
+		numbers = append(numbers, i*TWO_VALUE)
 	}
 	// Retour de la fonction
 	return numbers
 }
 
-// badMakeFloatSlice creates a float slice without capacity
+// badMakeWithConstLength creates a slice with const length then append
 //
 // Returns:
-//   - []float64: slice without preallocated capacity
-func badMakeFloatSlice() []float64 {
-	// Bad: make for float64 without capacity
-	values := make([]float64, 0)
-	// Retour de la fonction
-	return values
-}
-
-// badMakeInterfaceSlice creates an interface slice without capacity
-//
-// Returns:
-//   - []any: interface slice without capacity
-func badMakeInterfaceSlice() []any {
-	// Bad: make for any without capacity
-	items := make([]any, 0)
+//   - []string: slice with wasted zero values
+func badMakeWithConstLength() []string {
+	// Bad: Length from constant > 0
+	items := make([]string, LOOP_ITERATIONS)
+	// Itération sur les éléments
+	for range FIVE_ITEMS {
+		items = append(items, "value")
+	}
 	// Retour de la fonction
 	return items
 }
 
-// Item represents a test item with a single value field.
-// This struct is used for testing slice allocation patterns.
-type Item struct {
-	value int
-}
-
-// badMakeStructSlice creates a slice of structs without capacity
+// badMakeByteSliceWithLength creates a byte slice with length then append
 //
 // Returns:
-//   - []Item: slice of structs without capacity
-func badMakeStructSlice() []Item {
-	// Bad: make for struct slice without capacity
-	items := make([]Item, 0)
-	// Retour de la fonction
-	return items
-}
-
-// badMakeByteSlice creates a byte slice without capacity
-//
-// Returns:
-//   - []byte: byte slice without capacity
-func badMakeByteSlice() []byte {
-	// Bad: Byte slice without capacity
-	buffer := make([]byte, 0)
+//   - []byte: byte slice with wasted zero values
+func badMakeByteSliceWithLength() []byte {
+	// Bad: Byte slice with length > 0
+	buffer := make([]byte, BAD_BUFFER_SIZE)
+	// Ajout de données
+	buffer = append(buffer, "test"...)
 	// Retour de la fonction
 	return buffer
 }
 
-// badEmptyLiteralWithAppend creates empty literal then appends
+// badMakeInterfaceSlice creates a slice of interfaces with length then append
 //
 // Returns:
-//   - []int: slice that should use make with capacity
-func badEmptyLiteralWithAppend() []int {
-	// Bad: make([]T, 0) without capacity when size could be known
-	numbers := make([]int, 0)
-	// Ajout d'éléments
-	numbers = append(numbers, SMALL_LOOP_COUNT)
-	numbers = append(numbers, MAX_SIZE)
+//   - []any: slice with wasted zero values
+func badMakeInterfaceSlice() []any {
+	// Bad: any slice with length > 0
+	items := make([]any, FIVE_ITEMS)
+	// Itération sur les éléments
+	for i := range SMALL_COUNT {
+		items = append(items, i)
+	}
 	// Retour de la fonction
-	return numbers
+	return items
+}
+
+// badMakeWithVariable creates a slice with variable length
+//
+// Params:
+//   - n: size parameter
+//
+// Returns:
+//   - []int: slice with wasted zero values
+func badMakeWithVariable(n int) []int {
+	// Bad: Using variable length (assumed positive)
+	data := make([]int, n)
+	// Ajout de données
+	data = append(data, LOOP_ITERATIONS, TWO_VALUE, SMALL_COUNT)
+	// Retour de la fonction
+	return data
+}
+
+// badMakeWithExpression creates a slice with expression length
+//
+// Params:
+//   - items: input items
+//
+// Returns:
+//   - []string: slice with wasted zero values
+func badMakeWithExpression(items []string) []string {
+	// Bad: Using len() expression (assumed positive)
+	result := make([]string, len(items))
+	// Ajout de données
+	result = append(result, "extra")
+	// Retour de la fonction
+	return result
+}
+
+// badMakeWithOperation creates a slice with arithmetic expression
+//
+// Returns:
+//   - []int: slice with wasted zero values
+func badMakeWithOperation() []int {
+	// Bad: Using arithmetic expression
+	nums := make([]int, SMALL_COUNT+TWO_VALUE)
+	// Ajout de données
+	nums = append(nums, FINAL_VALUE)
+	// Retour de la fonction
+	return nums
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badMakeStringSlice
-	badMakeStringSlice()
-	// Appel de badMakeWithoutCapacity
-	badMakeWithoutCapacity()
-	// Appel de badMakeInLoop
-	badMakeInLoop()
-	// Appel de badMakeFloatSlice
-	badMakeFloatSlice()
+	// Appel de badMakeWithLength
+	badMakeWithLength()
+	// Appel de badMakeWithLengthAndCapacity
+	badMakeWithLengthAndCapacity()
+	// Appel de badMakeWithSmallLength
+	badMakeWithSmallLength()
+	// Appel de badMakeWithConstLength
+	badMakeWithConstLength()
+	// Appel de badMakeByteSliceWithLength
+	badMakeByteSliceWithLength()
 	// Appel de badMakeInterfaceSlice
 	badMakeInterfaceSlice()
-	// Appel de badMakeStructSlice
-	badMakeStructSlice()
-	// Appel de badMakeByteSlice
-	badMakeByteSlice()
-	// Appel de badEmptyLiteralWithAppend
-	badEmptyLiteralWithAppend()
+	// Appel de badMakeWithVariable
+	_ = badMakeWithVariable(0)
+	// Appel de badMakeWithExpression
+	_ = badMakeWithExpression(nil)
+	// Appel de badMakeWithOperation
+	badMakeWithOperation()
 }

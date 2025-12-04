@@ -1,25 +1,22 @@
-// Package ktnstruct implements KTN linter rules.
+// Analyzer 005 for the ktnstruct package.
 package ktnstruct
 
 import (
 	"go/ast"
+	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer005 vérifie qu'il n'y a qu'une seule struct par fichier Go
+// Analyzer005 vérifie que les champs exportés sont avant les champs privés
 var Analyzer005 = &analysis.Analyzer{
-	Name: "ktnstruct005",
-	Doc:  "KTN-STRUCT-005: Un fichier Go ne doit contenir qu'une seule struct (évite les fichiers de 10000 lignes)",
-	Run:  runStruct005,
-}
-
-// structInfo stocke les informations d'une struct trouvée
-type structInfo struct {
-	name       string
-	node       *ast.TypeSpec
-	structType *ast.StructType
+	Name:     "ktnstruct005",
+	Doc:      "KTN-STRUCT-005: Les champs exportés doivent être placés avant les champs privés dans une struct",
+	Run:      runStruct005,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
 // runStruct005 exécute l'analyse KTN-STRUCT-005.
@@ -31,109 +28,93 @@ type structInfo struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct005(pass *analysis.Pass) (any, error) {
-	// Parcourir chaque fichier du package
-	for _, file := range pass.Files {
-		filename := pass.Fset.Position(file.Pos()).Filename
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	// Filtrer les nœuds de type TypeSpec
+	nodeFilter := []ast.Node{
+		(*ast.TypeSpec)(nil),
+	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast vers TypeSpec
+		typeSpec := n.(*ast.TypeSpec)
+
+		// Vérifier que c'est une struct
+		structType, ok := typeSpec.Type.(*ast.StructType)
+		// Si ce n'est pas une struct, continuer
+		if !ok {
+			// Continue avec le nœud suivant
+			return
+		}
 
 		// Ignorer les fichiers de test
+		filename := pass.Fset.Position(typeSpec.Pos()).Filename
+		// Vérification si fichier test
 		if shared.IsTestFile(filename) {
-			// Continuer avec le fichier suivant
-			continue
+			// Continue avec le nœud suivant
+			return
 		}
 
-		// Collecter toutes les structs du fichier
-		structs := collectStructs(file)
-
-		// If more than one struct, check if they are all DTOs
-		if len(structs) > 1 {
-			// Exception: si toutes les structs sont des DTOs/serializable liés
-			if allStructsAreSerializable(structs) {
-				// DTOs groupés sont autorisés
-				continue
-			}
-
-			// Itération sur les structs (à partir de la 2ème)
-			for i := 1; i < len(structs); i++ {
-				s := structs[i]
-				pass.Reportf(
-					s.node.Pos(),
-					"KTN-STRUCT-005: le fichier contient plusieurs structs (%d au total). Déplacer '%s' dans un fichier séparé pour respecter le principe 'une struct par fichier'",
-					len(structs),
-					s.name,
-				)
-			}
-		}
-	}
+		// Vérifier l'ordre des champs
+		checkFieldOrder(pass, typeSpec, structType)
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// allStructsAreSerializable vérifie si toutes les structs sont des DTOs.
+// checkFieldOrder vérifie que les champs exportés sont avant les privés.
 //
 // Params:
-//   - structs: liste des structs à vérifier
+//   - pass: contexte d'analyse
+//   - typeSpec: spécification de type
+//   - structType: type struct
 //
-// Returns:
-//   - bool: true si toutes sont des DTOs
-func allStructsAreSerializable(structs []structInfo) bool {
-	// Parcourir les structs
-	for _, s := range structs {
-		// Vérifier si c'est un DTO
-		if !shared.IsSerializableStruct(s.structType, s.name) {
-			// Une struct n'est pas un DTO
-			return false
+// Returns: aucun
+func checkFieldOrder(pass *analysis.Pass, typeSpec *ast.TypeSpec, structType *ast.StructType) {
+	// Si pas de champs
+	if structType.Fields == nil || len(structType.Fields.List) == 0 {
+		// Retour anticipé
+		return
+	}
+
+	var fields []fieldInfo
+	// Parcourir tous les champs
+	for _, field := range structType.Fields.List {
+		// Pour chaque nom de champ
+		for _, name := range field.Names {
+			fields = append(fields, fieldInfo{
+				name:     name.Name,
+				exported: ast.IsExported(name.Name),
+				pos:      name.Pos(),
+			})
 		}
 	}
-	// Toutes sont des DTOs
-	return true
+
+	// Vérifier l'ordre
+	foundPrivate := false
+	// Parcourir les champs
+	for _, f := range fields {
+		// Si on trouve un champ exporté après un privé
+		if f.exported && foundPrivate {
+			pass.Reportf(
+				f.pos,
+				"KTN-STRUCT-005: le champ exporté '%s' de la struct '%s' doit être placé avant les champs privés",
+				f.name,
+				typeSpec.Name.Name,
+			)
+		}
+
+		// Marquer qu'on a trouvé un champ privé
+		if !f.exported {
+			foundPrivate = true
+		}
+	}
 }
 
-// collectStructs collecte toutes les déclarations de struct d'un fichier.
-//
-// Params:
-//   - file: fichier AST à analyser
-//
-// Returns:
-//   - []structInfo: liste des structs trouvées
-func collectStructs(file *ast.File) []structInfo {
-	var structs []structInfo
-
-	// Parcourir l'AST du fichier
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier si c'est une déclaration de type générale
-		genDecl, ok := n.(*ast.GenDecl)
-		// Si ce n'est pas une GenDecl, continuer
-		if !ok {
-			// Continue traversal
-			return true
-		}
-
-		// Parcourir les specs de la déclaration
-		for _, spec := range genDecl.Specs {
-			typeSpec, isTypeSpec := spec.(*ast.TypeSpec)
-			// Si ce n'est pas une TypeSpec, continuer
-			if !isTypeSpec {
-				// Continue with next spec
-				continue
-			}
-
-			// Vérifier si le type est une struct
-			structType, isStruct := typeSpec.Type.(*ast.StructType)
-			// Si c'est une struct, l'ajouter à la liste
-			if isStruct {
-				structs = append(structs, structInfo{
-					name:       typeSpec.Name.Name,
-					node:       typeSpec,
-					structType: structType,
-				})
-			}
-		}
-
-		// Continue traversal
-		return true
-	})
-
-	// Retour de la liste des structs
-	return structs
+// fieldInfo stocke les informations d'un champ.
+type fieldInfo struct {
+	name     string
+	exported bool
+	pos      token.Pos
 }

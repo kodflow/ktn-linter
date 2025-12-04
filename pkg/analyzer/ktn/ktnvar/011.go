@@ -3,112 +3,161 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
+	"go/types"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer011 checks for repeated buffer allocations in loops
+// Analyzer011 détecte le shadowing de variables avec := au lieu de =.
+//
+// Le shadowing se produit quand on redéclare une variable avec := alors
+// qu'elle existe déjà dans un scope parent, créant une nouvelle variable
+// locale qui masque l'originale.
 var Analyzer011 = &analysis.Analyzer{
 	Name:     "ktnvar011",
-	Doc:      "KTN-VAR-011: Vérifie que les buffers répétés utilisent sync.Pool",
+	Doc:      "KTN-VAR-011: Vérifie le shadowing de variables avec := au lieu de =",
 	Run:      runVar011,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runVar011 exécute l'analyse KTN-VAR-011.
+// runVar011 exécute l'analyse de détection du shadowing.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - interface{}: toujours nil
 //   - error: erreur éventuelle
 func runVar011(pass *analysis.Pass) (any, error) {
+	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
-		(*ast.ForStmt)(nil),
-		(*ast.RangeStmt)(nil),
+		(*ast.AssignStmt)(nil),
 	}
 
+	// Parcours des assignations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Check different loop types
-		switch loop := n.(type) {
-		// For loop: check body for buffer allocations
-		case *ast.ForStmt:
-			checkLoopBodyVar015(pass, loop.Body)
-		// Range loop: check body for buffer allocations
-		case *ast.RangeStmt:
-			checkLoopBodyVar015(pass, loop.Body)
-		}
+		// Vérification de l'assignation courte
+		checkShortVarDecl(pass, n)
 	})
 
-	// Return analysis result
+	// Traitement
 	return nil, nil
 }
 
-// checkLoopBodyVar015 vérifie le corps d'une boucle.
+// checkShortVarDecl vérifie si une assignation courte fait du shadowing.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la boucle
-func checkLoopBodyVar015(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Check if body exists
-	if body == nil {
-		// No body to check
-		return
+//   - n: nœud AST à analyser
+func checkShortVarDecl(pass *analysis.Pass, n ast.Node) {
+	// Cast en assignation
+	assign, ok := n.(*ast.AssignStmt)
+	// Vérification de la condition
+	if !ok || assign.Tok != token.DEFINE {
+		return // Pas une assignation courte (:=)
 	}
 
-	// Inspect all statements in loop body
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Check for assignment statements
-		if assignStmt, ok := n.(*ast.AssignStmt); ok {
-			checkAssignmentForBuffer(pass, assignStmt)
+	// Pour chaque variable assignée
+	for _, lhs := range assign.Lhs {
+		// Récupération de l'identifiant
+		ident := extractIdent(lhs)
+		// Vérification de la condition
+		if ident == nil {
+			continue
 		}
-		// Continue traversal
+
+		// Vérification du shadowing
+		if isShadowing(pass, ident) {
+			// Rapport d'erreur
+			pass.Reportf(
+				assign.Pos(),
+				"KTN-VAR-011: shadowing de la variable '%s' avec ':=' au lieu de '='",
+				ident.Name,
+			)
+		}
+	}
+}
+
+// extractIdent extrait l'identifiant d'une expression.
+//
+// Params:
+//   - expr: expression à analyser
+//
+// Returns:
+//   - *ast.Ident: identifiant extrait ou nil
+func extractIdent(expr ast.Expr) *ast.Ident {
+	// Si c'est directement un identifiant
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Traitement
+		return ident
+	}
+	// Traitement
+	return nil
+}
+
+// isShadowing vérifie si un identifiant fait du shadowing.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - ident: identifiant à vérifier
+//
+// Returns:
+//   - bool: true si shadowing détecté
+func isShadowing(pass *analysis.Pass, ident *ast.Ident) bool {
+	// Ignorer les blank identifiers
+	if ident.Name == "_" {
+		// Traitement
+		return false
+	}
+
+	// Récupération de l'objet défini (nouvelle définition avec :=)
+	obj := pass.TypesInfo.Defs[ident]
+	// Vérification de la condition
+	if obj == nil {
+		return false // Pas une nouvelle définition
+	}
+
+	// Récupération du scope de l'objet
+	scope := obj.Parent()
+	// Vérification de la condition
+	if scope == nil {
+		// Traitement
+		return false
+	}
+
+	// Vérification dans le scope parent
+	return lookupInParentScope(scope.Parent(), ident.Name)
+}
+
+// lookupInParentScope cherche une variable dans le scope parent.
+//
+// Params:
+//   - scope: scope parent à vérifier
+//   - name: nom de la variable
+//
+// Returns:
+//   - bool: true si la variable existe dans le scope parent
+func lookupInParentScope(scope *types.Scope, name string) bool {
+	// Vérification de nil
+	if scope == nil {
+		// Traitement
+		return false
+	}
+
+	// Recherche de la variable dans le scope courant
+	obj := scope.Lookup(name)
+	// Vérification de la condition
+	if obj != nil {
+		// Traitement
 		return true
-	})
-}
-
-// checkAssignmentForBuffer vérifie si une assignation crée un buffer.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - stmt: statement d'assignation
-func checkAssignmentForBuffer(pass *analysis.Pass, stmt *ast.AssignStmt) {
-	// Check each right-hand side value
-	for _, rhs := range stmt.Rhs {
-		// Check if it's a make call
-		if callExpr, ok := rhs.(*ast.CallExpr); ok {
-			checkMakeCallForByteSlice(pass, callExpr)
-		}
-	}
-}
-
-// checkMakeCallForByteSlice vérifie si un make crée un []byte.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: expression d'appel
-func checkMakeCallForByteSlice(pass *analysis.Pass, call *ast.CallExpr) {
-	// Check if it's a call to 'make'
-	if !utils.IsMakeCall(call) {
-		// Not a make call
-		return
 	}
 
-	// Check if making a byte slice
-	if len(call.Args) == 0 || !utils.IsByteSlice(call.Args[0]) {
-		// Not a byte slice
-		return
-	}
-
-	// Report the issue
-	pass.Reportf(
-		call.Pos(),
-		"KTN-VAR-011: buffer créé dans boucle, utiliser sync.Pool",
-	)
+	// Recherche récursive dans le scope parent
+	return lookupInParentScope(scope.Parent(), name)
 }

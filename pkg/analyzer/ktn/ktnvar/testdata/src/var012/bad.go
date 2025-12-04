@@ -1,223 +1,251 @@
-// Bad examples for the var012 test case.
+// Bad examples for the var013 test case.
 package var012
 
-import (
-	"fmt"
-	"io"
-	"os"
-)
+// IDataHolder est l'interface pour DataHolder.
+// Cette interface définit le contrat pour accéder aux données.
+type IDataHolder interface {
+	Bytes() []byte
+}
 
-const (
-	// LOOP_MAX_ITERATIONS est le nombre maximum d'itérations
-	LOOP_MAX_ITERATIONS int = 10
-	// MULTIPLIER_VALUE est le multiplicateur utilisé
-	MULTIPLIER_VALUE int = 2
-)
+// DataHolder contient des données en bytes.
+// Cette structure implémente IDataHolder pour gérer les données.
+type DataHolder struct {
+	content []byte
+}
 
-// badShadowingInIf démontre le shadowing d'erreur dans un if.
+// NewDataHolder crée un nouveau DataHolder.
 //
 // Params:
-//   - path: chemin du fichier à ouvrir
+//   - data: données initiales
 //
 // Returns:
-//   - error: erreur éventuelle
-func badShadowingInIf(path string) error {
-	file, err := os.Open(path)
-	// Vérification d'erreur
-	if err != nil {
-		// Retour avec erreur
-		return err
-	}
-	defer file.Close()
-
-	data, err := io.ReadAll(file)
-	// Vérification d'erreur
-	if err != nil {
-		// Retour avec erreur
-		return err
-	}
-
-	// Vérification de la longueur des données
-	if len(data) > 0 {
-		err := validateData(data)
-		// Vérification d'erreur
-		if err != nil {
-			// Retour avec erreur
-			return err
-		}
-	}
-
-	// Retour avec dernière erreur
-	return err
+//   - *DataHolder: nouveau DataHolder
+func NewDataHolder(data []byte) *DataHolder {
+	// Retour d'une nouvelle instance
+	return &DataHolder{content: data}
 }
 
-// badShadowingFmtErrorf démontre le shadowing dans fmt.Errorf.
+// Bytes retourne le contenu en bytes.
+//
+// Returns:
+//   - []byte: contenu
+func (d *DataHolder) Bytes() []byte {
+	// Retour du contenu
+	return d.content
+}
+
+// badRepeatedConversionInLoop convertit plusieurs fois dans une boucle.
 //
 // Params:
-//   - url: URL de connexion
+//   - data: données à parcourir
+//   - target: valeur cible recherchée
 //
 // Returns:
-//   - error: erreur éventuelle
-func badShadowingFmtErrorf(url string) error {
-	conn, err := dial(url)
-	// Vérification d'erreur
-	if err != nil {
-		err := fmt.Errorf("failed to connect: %w", err) // SHADOWING: err redéclaré
-		_ = conn
-		// Retour avec erreur wrappée
-		return err
-	}
-	// Retour sans erreur
-	return nil
-}
-
-// badShadowingInFor démontre le shadowing dans une boucle.
-//
-// Params:
-//   - files: liste des fichiers à traiter
-//
-// Returns:
-//   - error: erreur éventuelle
-func badShadowingInFor(files []string) error {
-	var err error
-	// Traitement de chaque fichier
-	for _, file := range files {
-		err := processFile(file)
-		// Vérification d'erreur
-		if err != nil {
-			// Retour avec erreur
-			return err
-		}
-	}
-	// Retour avec dernière erreur
-	return err
-}
-
-// badMultipleShadowing démontre plusieurs shadowings.
-//
-// Returns:
-//   - error: erreur éventuelle
-func badMultipleShadowing() error {
-	result, err := doSomething()
-	// Vérification d'erreur
-	if err != nil {
-		// Retour avec erreur
-		return err
-	}
-
-	// Vérification du résultat
-	if result > 0 {
-		err := doAnotherThing()
-		// Vérification d'erreur
-		if err != nil {
-			// Retour avec erreur
-			return err
-		}
-	}
-
-	err = finalCheck()
-	// Retour avec dernière erreur
-	return err
-}
-
-// badShadowingOtherVar démontre le shadowing d'autres variables.
-func badShadowingOtherVar() {
+//   - int: nombre d'occurrences
+func badRepeatedConversionInLoop(data [][]byte, target string) int {
 	count := 0
-	// Boucle sur les itérations
-	for range LOOP_MAX_ITERATIONS {
-		count := count * MULTIPLIER_VALUE
-		_ = count
+	// Parcours des données
+	for _, item := range data {
+		// Vérification de correspondance - CONVERSION RÉPÉTÉE
+		if string(item) == target {
+			count++
+		}
 	}
-	_ = count
+	// Retour du compteur
+	return count
 }
 
-// validateData valide les données.
+// badMultipleConversionsInFunction convertit plusieurs fois la même variable.
 //
 // Params:
-//   - _data: données à valider (non utilisé)
-//
-// Returns:
-//   - error: erreur éventuelle
-func validateData(_data []byte) error {
-	// Retour sans erreur
-	return nil
+//   - data: données à analyser
+func badMultipleConversionsInFunction(data []byte) {
+	// Vérification hello - CONVERSION #1
+	if string(data) == "hello" {
+		println("found hello")
+	}
+	// Vérification world - CONVERSION #2
+	if string(data) == "world" {
+		println("found world")
+	}
+	// Affichage - CONVERSION #3
+	println(string(data))
 }
 
-// dial établit une connexion.
+// badConversionInForLoop convertit dans un for classique.
 //
 // Params:
-//   - _url: URL de connexion (non utilisé)
-//
-// Returns:
-//   - any: connexion établie
-//   - error: erreur éventuelle
-func dial(_url string) (any, error) {
-	// Retour sans erreur
-	return nil, nil
+//   - items: éléments à parcourir
+func badConversionInForLoop(items [][]byte) {
+	// Parcours des éléments
+	for range items {
+		// Vérification - CONVERSION RÉPÉTÉE
+		if string(items[0]) == "test" {
+			println("found")
+		}
+	}
 }
 
-// processFile traite un fichier.
+// badNestedLoopConversion convertit dans une boucle imbriquée.
 //
 // Params:
-//   - _file: chemin du fichier (non utilisé)
-//
-// Returns:
-//   - error: erreur éventuelle
-func processFile(_file string) error {
-	// Retour sans erreur
-	return nil
+//   - row: ligne de données
+func badNestedLoopConversion(row [][]byte) {
+	// Parcours des cellules
+	for _, cell := range row {
+		// Vérification - CONVERSION RÉPÉTÉE
+		if string(cell) == "x" {
+			println("found x")
+		}
+	}
 }
 
-// doSomething effectue une opération.
+// badMapKeyConversion utilise string() répété pour les clés de map.
 //
-// Returns:
-//   - int: résultat de l'opération
-//   - error: erreur éventuelle
-func doSomething() (int, error) {
-	// Retour avec résultat
-	return 0, nil
+// Params:
+//   - cache: map de cache
+//   - keys: clés à chercher
+func badMapKeyConversion(cache map[string]int, keys [][]byte) {
+	// Parcours des clés
+	for _, key := range keys {
+		// Accès à la map - CONVERSION RÉPÉTÉE
+		_ = cache[string(key)]
+	}
 }
 
-// doAnotherThing effectue une autre opération.
+// badNestedIndexConversion teste la conversion avec index imbriqué.
 //
-// Returns:
-//   - error: erreur éventuelle
-func doAnotherThing() error {
-	// Retour sans erreur
-	return nil
+// Params:
+//   - matrix: matrice de données
+func badNestedIndexConversion(matrix [][][]byte) {
+	// Parcours des lignes
+	for _, row := range matrix {
+		// Parcours des cellules
+		for _, cell := range row {
+			// Vérification - CONVERSION RÉPÉTÉE
+			if string(cell) == "test" {
+				println("found")
+			}
+		}
+	}
 }
 
-// finalCheck effectue une vérification finale.
+// badStructFieldConversion teste la conversion d'un champ de struct.
+//
+// Params:
+//   - holders: liste de conteneurs
+func badStructFieldConversion(holders []DataHolder) {
+	// Parcours des conteneurs
+	for _, h := range holders {
+		// Vérification - CONVERSION RÉPÉTÉE
+		if string(h.content) == "test" {
+			println("found")
+		}
+	}
+}
+
+// badMethodResultConversion teste la conversion du résultat d'une méthode.
+//
+// Params:
+//   - holders: liste de conteneurs
+func badMethodResultConversion(holders []*DataHolder) {
+	// Parcours des conteneurs
+	for _, h := range holders {
+		// Vérification avec appel de méthode - CONVERSION RÉPÉTÉE
+		if string(h.Bytes()) == "test" {
+			println("found")
+		}
+	}
+}
+
+// badActualNestedIndex teste l'index imbriqué dans la conversion elle-même.
+//
+// Params:
+//   - matrix: matrice de données
+func badActualNestedIndex(matrix [][][]byte) {
+	// Boucle sur la matrice
+	for range matrix {
+		// Boucle sur les lignes
+		for range matrix[0] {
+			// Conversion avec double index - CONVERSION RÉPÉTÉE
+			if string(matrix[0][0]) == "test" {
+				println("found")
+			}
+		}
+	}
+}
+
+// badSelectorConversion teste la conversion avec sélecteur de struct.
+//
+// Params:
+//   - items: liste d'éléments
+func badSelectorConversion(items []DataHolder) {
+	// Parcours des éléments
+	for _, item := range items {
+		// Vérification a - CONVERSION #1
+		if string(item.content) == "a" {
+			println("a")
+		}
+		// Vérification b - CONVERSION #2
+		if string(item.content) == "b" {
+			println("b")
+		}
+		// Vérification c - CONVERSION #3
+		if string(item.content) == "c" {
+			println("c")
+		}
+	}
+}
+
+// helperFunc retourne des données de test.
 //
 // Returns:
-//   - error: erreur éventuelle
-func finalCheck() error {
-	// Retour sans erreur
-	return nil
+//   - []byte: données de test
+func helperFunc() []byte {
+	// Retour de données
+	return []byte("test")
+}
+
+// badCallExprConversion teste avec un appel de fonction.
+func badCallExprConversion() {
+	// Vérification a - CONVERSION #1
+	if string(helperFunc()) == "a" {
+		println("a")
+	}
+	// Vérification b - CONVERSION #2
+	if string(helperFunc()) == "b" {
+		println("b")
+	}
+	// Vérification c - CONVERSION #3
+	if string(helperFunc()) == "c" {
+		println("c")
+	}
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badShadowingInIf
-	_ = badShadowingInIf("")
-	// Appel de badShadowingFmtErrorf
-	_ = badShadowingFmtErrorf("")
-	// Appel de badShadowingInFor
-	_ = badShadowingInFor(nil)
-	// Appel de badMultipleShadowing
-	badMultipleShadowing()
-	// Appel de badShadowingOtherVar
-	badShadowingOtherVar()
-	// Appel de validateData
-	_ = validateData(nil)
-	// Appel de dial
-	_, _ = dial("")
-	// Appel de processFile
-	_ = processFile("")
-	// Appel de doSomething
-	doSomething()
-	// Appel de doAnotherThing
-	doAnotherThing()
-	// Appel de finalCheck
-	finalCheck()
+	// Appel de badRepeatedConversionInLoop
+	_ = badRepeatedConversionInLoop(nil, "")
+	// Appel de badMultipleConversionsInFunction
+	badMultipleConversionsInFunction(nil)
+	// Appel de badConversionInForLoop
+	badConversionInForLoop(nil)
+	// Appel de badNestedLoopConversion
+	badNestedLoopConversion(nil)
+	// Appel de badMapKeyConversion
+	badMapKeyConversion(nil, nil)
+	// Appel de badNestedIndexConversion
+	badNestedIndexConversion(nil)
+	// Appel de badStructFieldConversion
+	badStructFieldConversion(nil)
+	// Appel de badMethodResultConversion
+	badMethodResultConversion(nil)
+	// Appel de badActualNestedIndex
+	badActualNestedIndex(nil)
+	// Appel de badSelectorConversion
+	badSelectorConversion(nil)
+	// Appel de helperFunc
+	helperFunc()
+	// Appel de badCallExprConversion
+	badCallExprConversion()
 }

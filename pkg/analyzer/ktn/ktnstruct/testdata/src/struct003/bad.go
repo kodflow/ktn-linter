@@ -1,40 +1,76 @@
-// Bad examples for the struct005 test case.
+// Package struct006 contient les exemples de test pour KTN-STRUCT-003.
+// Ce fichier démontre les getters non idiomatiques avec préfixe "Get".
 package struct003
 
-// BadUserService est un service utilisateur sans constructeur.
-// Démontre la violation STRUCT-005: pas de NewBadUserService().
-type BadUserService struct { // want "KTN-STRUCT-003"
-	users map[int]string
+// BadUser représente un utilisateur avec getters non idiomatiques.
+// Les getters utilisent le préfixe "Get" contrairement à la convention Go.
+type BadUser struct {
+	id    int
+	name  string
+	email string
 }
 
-// BadUserServiceInterface définit les méthodes de BadUserService.
-type BadUserServiceInterface interface {
-	Create(name string) error
-	GetByID(id int) string
+// BadUserInterface définit le contrat public de BadUser.
+type BadUserInterface interface {
+	GetID() int
+	GetName() string
+	GetEmail() string
+	Save() error
 }
 
-// Create crée un utilisateur.
+// NewBadUser crée une nouvelle instance de BadUser.
 //
 // Params:
+//   - id: identifiant unique de l'utilisateur
 //   - name: nom de l'utilisateur
+//   - email: adresse email de l'utilisateur
 //
 // Returns:
-//   - error: erreur éventuelle
-func (b *BadUserService) Create(name string) error {
-	// Utilisation du paramètre
-	b.users[len(b.users)] = name
-	// Retour sans erreur
-	return nil
+//   - *BadUser: nouvelle instance initialisée
+func NewBadUser(id int, name, email string) *BadUser {
+	// Retourne une nouvelle instance avec les valeurs fournies
+	return &BadUser{
+		id:    id,
+		name:  name,
+		email: email,
+	}
 }
 
-// GetByID récupère un utilisateur par ID.
+// GetID retourne l'identifiant de l'utilisateur.
+// VIOLATION: devrait être ID() selon la convention Go.
 //
-// Params:
-//   - id: identifiant de l'utilisateur
+// Returns:
+//   - int: identifiant unique
+func (u *BadUser) GetID() int { // want "KTN-STRUCT-003"
+	// Retourne le champ id
+	return u.id
+}
+
+// GetName retourne le nom de l'utilisateur.
+// VIOLATION: devrait être Name() selon la convention Go.
 //
 // Returns:
 //   - string: nom de l'utilisateur
-func (b *BadUserService) GetByID(id int) string {
-	// Retour du résultat
-	return b.users[id]
+func (u *BadUser) GetName() string { // want "KTN-STRUCT-003"
+	// Retourne le champ name
+	return u.name
+}
+
+// GetEmail retourne l'adresse email de l'utilisateur.
+// VIOLATION: devrait être Email() selon la convention Go.
+//
+// Returns:
+//   - string: adresse email
+func (u *BadUser) GetEmail() string { // want "KTN-STRUCT-003"
+	// Retourne le champ email
+	return u.email
+}
+
+// Save sauvegarde l'utilisateur.
+//
+// Returns:
+//   - error: erreur éventuelle
+func (u *BadUser) Save() error {
+	// Retourne nil si succès
+	return nil
 }

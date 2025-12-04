@@ -8,22 +8,20 @@ import (
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
 func TestGetAnalyzers(t *testing.T) {
-	const MIN_EXPECTED_COUNT int = 14
+	const MIN_EXPECTED_COUNT int = 12 // FUNC-007 et FUNC-009 déplacés vers COMMENT
 	expectedNames := map[string]bool{
-		"ktnfunc001": true, // Max 35 lines
-		"ktnfunc002": true, // Max 5 parameters
-		"ktnfunc003": true, // No magic numbers
-		"ktnfunc004": true, // No naked returns
-		"ktnfunc005": true, // Max cyclomatic complexity 10
-		"ktnfunc006": true, // Error last
-		"ktnfunc007": true, // Documentation stricte
-		"ktnfunc008": true, // Context must be first parameter
-		"ktnfunc009": true, // No side effects in getters
-		"ktnfunc010": true, // Named returns for >3 return values
-		"ktnfunc011": true, // Comments on branches/returns
-		"ktnfunc012": true, // No else after return/continue/break
-		"ktnfunc013": true, // Unused parameters must be marked
-		"ktnfunc014": true, // Private functions must be used in production
+		"ktnfunc001": true, // Error last
+		"ktnfunc002": true, // Context first
+		"ktnfunc003": true, // No else after return
+		"ktnfunc004": true, // Private functions used
+		"ktnfunc005": true, // Max 35 lines
+		"ktnfunc006": true, // Max 5 parameters
+		"ktnfunc007": true, // No side effects in getters (ex-008)
+		"ktnfunc008": true, // Unused parameters prefixed (ex-010)
+		"ktnfunc009": true, // No magic numbers (ex-011)
+		"ktnfunc010": true, // No naked returns (ex-012)
+		"ktnfunc011": true, // Max cyclomatic complexity (ex-013)
+		"ktnfunc012": true, // Named returns >3 values (ex-014)
 	}
 
 	tests := []struct {

@@ -21,62 +21,100 @@ func Test_runVar012(t *testing.T) {
 	}
 }
 
-// Test_extractIdent tests the private extractIdent helper function.
-func Test_extractIdent(t *testing.T) {
+// Test_extractLoop tests the private extractLoop helper function.
+func Test_extractLoop(t *testing.T) {
 	tests := []struct {
 		name     string
-		expr     ast.Expr
-		expected *ast.Ident
+		node     ast.Node
+		expected bool
 	}{
 		{
-			name:     "ident",
-			expr:     &ast.Ident{Name: "x"},
-			expected: &ast.Ident{Name: "x"},
+			name:     "for stmt",
+			node:     &ast.ForStmt{Body: &ast.BlockStmt{}},
+			expected: true,
 		},
 		{
-			name:     "not ident",
-			expr:     &ast.BasicLit{Value: "1"},
-			expected: nil,
+			name:     "range stmt",
+			node:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
+			expected: true,
+		},
+		{
+			name:     "other node",
+			node:     &ast.IfStmt{},
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractIdent(tt.expr)
+			result := extractLoop(tt.node)
 			// Vérification du résultat
-			if tt.expected == nil {
-				// Vérification que result est nil
-				if result != nil {
-					t.Errorf("extractIdent() = %v, expected nil", result)
-				}
-			} else {
-				// Vérification que result n'est pas nil et a le bon nom
-				if result == nil {
-					t.Errorf("extractIdent() = nil, expected ident with name %s", tt.expected.Name)
-				} else if result.Name != tt.expected.Name {
-					t.Errorf("extractIdent() = %s, expected %s", result.Name, tt.expected.Name)
-				}
+			if (result != nil) != tt.expected {
+				t.Errorf("extractLoop() returned %v, expected non-nil: %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkShortVarDecl tests the private checkShortVarDecl function.
-func Test_checkShortVarDecl(t *testing.T) {
+// Test_isStringConversion tests the private isStringConversion helper function.
+func Test_isStringConversion(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		node     ast.Node
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name: "string conversion",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "string"},
+				Args: []ast.Expr{&ast.Ident{Name: "b"}},
+			},
+			expected: true,
+		},
+		{
+			name: "other function",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "len"},
+				Args: []ast.Expr{&ast.Ident{Name: "s"}},
+			},
+			expected: false,
+		},
+		{
+			name: "no args",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "string"},
+				Args: []ast.Expr{},
+			},
+			expected: false,
+		},
+		{
+			name: "multiple args",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "string"},
+				Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
+			},
+			expected: false,
+		},
+		{
+			name:     "not call expr",
+			node:     &ast.Ident{Name: "x"},
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks short var declarations
+			result := isStringConversion(tt.node)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isStringConversion() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_isShadowing tests the private isShadowing function.
-func Test_isShadowing(t *testing.T) {
+// Test_checkFuncForRepeatedConversions tests the private checkFuncForRepeatedConversions function.
+func Test_checkFuncForRepeatedConversions(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -84,13 +122,13 @@ func Test_isShadowing(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if shadowing
+			// Test passthrough - function checks for repeated conversions
 		})
 	}
 }
 
-// Test_lookupInParentScope tests the private lookupInParentScope function.
-func Test_lookupInParentScope(t *testing.T) {
+// Test_checkLoopsForStringConversion tests the private checkLoopsForStringConversion function.
+func Test_checkLoopsForStringConversion(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -98,7 +136,35 @@ func Test_lookupInParentScope(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function looks up in parent scope
+			// Test passthrough - function checks loops for string conversion
+		})
+	}
+}
+
+// Test_hasStringConversion tests the private hasStringConversion function.
+func Test_hasStringConversion(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if has string conversion
+		})
+	}
+}
+
+// Test_checkMultipleConversions tests the private checkMultipleConversions function.
+func Test_checkMultipleConversions(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks for multiple conversions
 		})
 	}
 }

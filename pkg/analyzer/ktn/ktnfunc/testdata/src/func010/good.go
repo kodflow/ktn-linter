@@ -1,68 +1,199 @@
-// Good examples for the func010 test case.
+// Good examples for the func012 test case.
 package func010
 
-import "context"
+import "unsafe"
 
-// AllParamsUsed utilise tous les paramètres.
-//
-// Params:
-//   - ctx: context
-//   - name: nom
-//   - value: valeur
+// NoNamedReturns vérifie le cas sans returns nommés
 //
 // Returns:
-//   - string: résultat
-func AllParamsUsed(ctx context.Context, name string, value int) string {
-	// Utilise ctx
-	_ = ctx.Done()
-	// Retourne avec name et value
-	return name + string(rune(value))
+//   - int: résultat
+func NoNamedReturns() int {
+	// Retour de 1
+	return 1
 }
 
-// UnusedWithUnderscore préfixe les params non utilisés.
-//
-// Params:
-//   - _ctx: context (non utilisé)
-//   - name: nom
-//   - _value: valeur (non utilisée)
+// ShortWithNakedReturn utilise naked return car courte
 //
 // Returns:
-//   - string: nom
-func UnusedWithUnderscore(_ctx context.Context, name string, _value int) string {
-	// Retourne uniquement name
-	return name
+//   - result: résultat
+func ShortWithNakedReturn() (result int) {
+	result = 1
+	// Retour naked autorisé car < 5 lignes
+	return
 }
 
-// UnusedWithBlankAssign assigne à _ les params non utilisés.
-//
-// Params:
-//   - ctx: context
-//   - req: requête
-//   - resp: réponse
+// ExplicitReturn utilise return explicite
 //
 // Returns:
-//   - string: résultat
-func UnusedWithBlankAssign(ctx context.Context, req string, resp string) string {
-	// Ignore explicitement ctx et resp
-	_ = ctx
-	_ = resp
-	// Retourne uniquement req
-	return req
+//   - result: résultat
+//   - err: erreur potentielle
+func ExplicitReturn() (result int, err error) {
+	result = 1
+	err = nil
+	// Retour explicite
+	return result, err
 }
 
-// MixedApproach mélange les deux approches.
-//
-// Params:
-//   - ctx: context
-//   - _unused1: non utilisé
-//   - used: utilisé
-//   - unused2: non utilisé
+// ShortFourLines a 4 lignes donc naked return OK
 //
 // Returns:
-//   - string: résultat
-func MixedApproach(ctx context.Context, _unused1 string, used string, unused2 int) string {
-	_ = ctx
-	_ = unused2
-	// Retourne used
-	return used
+//   - x: valeur calculée
+func ShortFourLines() (x int) {
+	x = 1
+	x = x + 1
+	x = x + 1
+	// Retour naked autorisé
+	return
+}
+
+// MultipleExplicit retourne explicitement plusieurs valeurs
+//
+// Returns:
+//   - a: premier entier
+//   - b: chaîne
+//   - c: booléen
+func MultipleExplicit() (a int, b string, c bool) {
+	a = 1
+	b = "test"
+	c = true
+	// Retour explicite
+	return a, b, c
+}
+
+// NoReturnValues n'a pas de valeur de retour
+func NoReturnValues() {
+	x := 1
+	_ = x
+}
+
+// UnnamedReturn utilise return sans nom
+//
+// Returns:
+//   - int: valeur
+func UnnamedReturn() int {
+	// Retour de 1
+	return 1
+}
+
+// TestNakedReturn est exempté car fonction test
+//
+// Params:
+//   - t: paramètre de test
+//
+// Returns:
+//   - result: résultat
+func TestNakedReturn(t int) (result int) {
+	result = 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car test
+	return
+}
+
+// BenchmarkNakedReturn est exempté car fonction benchmark
+//
+// Params:
+//   - b: paramètre de benchmark
+//
+// Returns:
+//   - result: résultat
+func BenchmarkNakedReturn(b int) (result int) {
+	result = 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car benchmark
+	return
+}
+
+// Calculator est une interface de test.
+// Utilisée pour démontrer l'utilisation d'interfaces.
+type Calculator interface {
+	Calculate() (int, error)
+}
+
+// simpleCalculator implémente Calculator
+type simpleCalculator struct{}
+
+// Calculate implémente l'interface Calculator
+//
+// Returns:
+//   - int: résultat du calcul
+//   - error: erreur éventuelle
+func (s simpleCalculator) Calculate() (int, error) {
+	// Retour du résultat
+	return 0, nil
+}
+
+// useCalculator utilise l'interface Calculator
+//
+// Params:
+//   - calc: calculateur à utiliser
+//
+// Returns:
+//   - int: résultat
+//   - error: erreur éventuelle
+func useCalculator(calc Calculator) (int, error) {
+	// Utilisation du calculateur
+	return calc.Calculate()
+}
+
+// SingleUnnamedReturn retourne une valeur sans nom
+//
+// Returns:
+//   - int: valeur
+func SingleUnnamedReturn() int {
+	// Retour de 1
+	return 1
+}
+
+// MultipleUnnamedReturns retourne plusieurs valeurs sans nom
+//
+// Returns:
+//   - int: entier
+//   - string: chaîne
+//   - bool: booléen
+func MultipleUnnamedReturns() (int, string, bool) {
+	// Retour de plusieurs valeurs
+	return 1, "test", true
+}
+
+// Prevent "unsafe imported but not used" error
+var _ unsafe.Pointer = unsafe.Pointer(nil)
+
+// externalLinkedFunc est une fonction externe liée
+//
+// Params:
+//   - v: valeur d'entrée
+//
+// Returns:
+//   - result: pointeur résultat
+//
+//go:linkname externalLinkedFunc runtime.convT64
+func externalLinkedFunc(v int) (result unsafe.Pointer)
+
+// anotherExternal est une autre fonction externe
+//
+// Params:
+//   - v: chaîne d'entrée
+//
+// Returns:
+//   - ptr: pointeur résultat
+//
+//go:linkname anotherExternal runtime.convTstring
+func anotherExternal(v string) (ptr unsafe.Pointer)
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de useCalculator
+	_ = useCalculator(Calculator{})
+	// Appel de externalLinkedFunc
+	_ = externalLinkedFunc(0)
+	// Appel de anotherExternal
+	_ = anotherExternal("")
 }

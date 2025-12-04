@@ -1,112 +1,83 @@
-// Good examples for the var010 test case.
+// Good examples for the var011 test case.
 package var010
 
+import "sync"
+
 const (
-	// ANSWER is the answer
-	ANSWER int = 42
-	// AGE_VALUE is age value
-	AGE_VALUE int = 25
-	// ID_VALUE is id value
-	ID_VALUE int = 1
-	// USER_AGE is user age
-	USER_AGE int = 30
-	// USER_BALANCE is user balance
-	USER_BALANCE float64 = 100.0
-	// PI_VALUE is pi value
-	PI_VALUE float64 = 3.14
-	// CONFIG_VALUE is config value
-	CONFIG_VALUE int = 10
+	// VALUE_THREE is constant value 3
+	VALUE_THREE int = 3
+	// VALUE_SIXTY_FOUR is constant value 64
+	VALUE_SIXTY_FOUR int = 64
+	// VALUE_HUNDRED is constant value 100
+	VALUE_HUNDRED int = 100
+	// VALUE_1024 is constant value 1024
+	VALUE_1024 int = 1024
 )
 
-// GoodSmallStruct est une petite structure (≤3 champs).
-// Utilisée pour tester l'allocation par valeur.
-type GoodSmallStruct struct {
-	ID   int
-	Name string
-	Age  int
+// Good: Using sync.Pool or creating buffers outside loops
+
+// bufferPool is a sync.Pool for byte buffers
+var bufferPool = &sync.Pool{
+	New: func() any {
+		// Buffer size optimized for common use case
+		buffer := make([]byte, 0, VALUE_1024)
+		// Return preallocated buffer
+		return buffer
+	},
 }
 
-// GoodLargeStruct est une grande structure (>3 champs).
-// Doit être utilisée avec un pointeur pour éviter copies coûteuses.
-type GoodLargeStruct struct {
-	Field1 int
-	Field2 string
-	Field3 bool
-	Field4 float64
-}
-
-// GoodAnotherLargeStruct est une autre grande structure.
-// Contient plusieurs champs et doit être manipulée par pointeur.
-type GoodAnotherLargeStruct struct {
-	Name    string
-	Age     int
-	Email   string
-	Active  bool
-	Balance float64
-}
-
-// goodSmallStructValue utilise une petite structure par valeur.
-func goodSmallStructValue() {
-	// Petite structure, OK par valeur
-	data := GoodSmallStruct{
-		ID:   ID_VALUE,
-		Name: "test",
-		Age:  AGE_VALUE,
+// goodWithPool uses sync.Pool for buffer reuse
+func goodWithPool() {
+	// Loop processes items
+	for i := range VALUE_HUNDRED {
+		// Get buffer from pool
+		buffer := bufferPool.Get().([]byte)
+		_ = buffer
+		// Put buffer back to pool
+		bufferPool.Put(buffer)
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
-	_ = data
 }
 
-// goodLargeStructPointer utilise un pointeur pour une grande structure.
-func goodLargeStructPointer() {
-	// Grande structure avec pointeur
-	data := &GoodLargeStruct{
-		Field1: ANSWER,
-		Field2: "test",
-		Field3: true,
-		Field4: PI_VALUE,
+// goodOutsideLoop creates buffer outside the loop
+func goodOutsideLoop() {
+	// Buffer allocated once before loop with array
+	var buffer [VALUE_1024]byte
+	// Loop reuses buffer
+	for i := range VALUE_HUNDRED {
+		_ = buffer
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
-	_ = data
 }
 
-// goodAnotherLargeStructPointer utilise un pointeur.
-func goodAnotherLargeStructPointer() {
-	// Grande structure avec pointeur
-	user := &GoodAnotherLargeStruct{
-		Name:    "John",
-		Age:     USER_AGE,
-		Email:   "john@example.com",
-		Active:  true,
-		Balance: USER_BALANCE,
+// goodNoLoop creates buffer outside loop context
+func goodNoLoop() {
+	// Not in a loop, no pool needed, use array
+	var buffer [VALUE_1024]byte
+	_ = buffer
+}
+
+// goodSmallLoop creates buffer where pooling overhead not justified
+func goodSmallLoop() {
+	// Small fixed iteration count where pool overhead may not help with array
+	var buffer [VALUE_SIXTY_FOUR]byte
+	// Very small fixed loop
+	for i := range VALUE_THREE {
+		_ = buffer
+		_ = i
 	}
-	_ = user
-}
-
-// goodPointerDecl déclare un pointeur avec var.
-func goodPointerDecl() {
-	// Déclaration de pointeur
-	var config *GoodLargeStruct
-	config = &GoodLargeStruct{Field1: CONFIG_VALUE}
-	_ = config
-}
-
-// goodNewAlloc utilise new pour allouer.
-func goodNewAlloc() {
-	// Allocation avec new
-	data := new(GoodLargeStruct)
-	data.Field1 = ANSWER
-	_ = data
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodSmallStructValue
-	goodSmallStructValue()
-	// Appel de goodLargeStructPointer
-	goodLargeStructPointer()
-	// Appel de goodAnotherLargeStructPointer
-	goodAnotherLargeStructPointer()
-	// Appel de goodPointerDecl
-	goodPointerDecl()
-	// Appel de goodNewAlloc
-	goodNewAlloc()
+	// Appel de goodWithPool
+	goodWithPool()
+	// Appel de goodOutsideLoop
+	goodOutsideLoop()
+	// Appel de goodNoLoop
+	goodNoLoop()
+	// Appel de goodSmallLoop
+	goodSmallLoop()
 }

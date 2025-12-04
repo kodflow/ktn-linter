@@ -8,6 +8,6 @@ import (
 )
 
 func TestConst002(t *testing.T) {
-	// good.go: 0 errors (includes edge cases), bad.go: 22 errors (missing comments + want directives)
-	testhelper.TestGoodBad(t, ktnconst.Analyzer002, "const002", 22)
+	// good.go: 0 errors, bad.go: 8 errors (7 scattered + 1 after var)
+	testhelper.TestGoodBad(t, ktnconst.Analyzer002, "const002", 8)
 }

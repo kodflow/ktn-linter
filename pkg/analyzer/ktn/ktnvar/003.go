@@ -10,10 +10,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer003 checks that package-level variables have explicit types
+// Analyzer003 checks that local variables use := instead of var
 var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnvar003",
-	Doc:      "KTN-VAR-003: Vérifie que les variables de package ont un type explicite",
+	Doc:      "KTN-VAR-003: Vérifie que les variables locales utilisent ':=' au lieu de 'var'",
 	Run:      runVar003,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -29,191 +29,208 @@ var Analyzer003 = &analysis.Analyzer{
 func runVar003(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Filter for File nodes to access package-level declarations
+	// We need to track function bodies to check local variables only
 	nodeFilter := []ast.Node{
-		(*ast.File)(nil),
+		(*ast.FuncDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file := n.(*ast.File)
+		funcDecl := n.(*ast.FuncDecl)
 
-		// Check package-level declarations only
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			// Skip if not a GenDecl
-			if !ok {
-				// Not a general declaration
-				continue
-			}
-
-			// Only check var declarations
-			if genDecl.Tok != token.VAR {
-				// Continue traversing AST nodes.
-				continue
-			}
-
-			// Itération sur les spécifications
-			for _, spec := range genDecl.Specs {
-				valueSpec := spec.(*ast.ValueSpec)
-				// Vérifier si le type est explicite ou visible dans la valeur
-				checkVarSpec(pass, valueSpec)
-			}
+		// Check if function has a body
+		if funcDecl.Body == nil {
+			// Continue to next node
+			return
 		}
+
+		// Inspect all statements in the function body
+		checkFunctionBody(pass, funcDecl.Body)
 	})
 
-	// Retour de la fonction
+	// Return analysis result
 	return nil, nil
 }
 
-// checkVarSpec vérifie une spécification de variable.
+// checkFunctionBody parcourt le corps d'une fonction pour détecter les var.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - valueSpec: spécification de variable
-func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
-	hasExplicitType := valueSpec.Type != nil
-	hasVisible := hasVisibleType(valueSpec.Values)
+//   - body: corps de la fonction
+func checkFunctionBody(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Iterate through all statements
+	for _, stmt := range body.List {
+		checkStatement(pass, stmt)
+	}
+}
 
-	// Cas 1: Type explicite + type visible = redondant
-	if hasExplicitType && hasVisible {
-		// Parcourir les noms
-		for _, name := range valueSpec.Names {
-			pass.Reportf(
-				valueSpec.Type.Pos(),
-				"KTN-VAR-003: la variable '%s' a un type redondant (le type est déjà visible dans la valeur)",
-				name.Name,
-			)
-		}
+// checkStatement vérifie si un statement contient un var avec initialisation.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+func checkStatement(pass *analysis.Pass, stmt ast.Stmt) {
+	declStmt, ok := stmt.(*ast.DeclStmt)
+	// If not a declaration, check for nested blocks
+	if !ok {
+		checkNestedBlocks(pass, stmt)
+		// Early return for non-declarations
 		return
 	}
 
-	// Cas 2: Pas de type explicite + pas de type visible = erreur
-	if !hasExplicitType && !hasVisible {
-		// Parcourir les noms
-		for _, name := range valueSpec.Names {
-			pass.Reportf(
-				name.Pos(),
-				"KTN-VAR-003: la variable '%s' doit avoir un type explicite",
-				name.Name,
-			)
+	genDecl, ok := declStmt.Decl.(*ast.GenDecl)
+	// If not a GenDecl, return early
+	if !ok {
+		// Not a GenDecl, skip
+		return
+	}
+
+	// Only check var declarations, skip others
+	if genDecl.Tok != token.VAR {
+		// Not a var declaration, skip
+		return
+	}
+
+	// Check each variable specification
+	checkVarSpecs(pass, genDecl)
+}
+
+// checkNestedBlocks vérifie les blocs imbriqués (if, for, switch, etc.).
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+func checkNestedBlocks(pass *analysis.Pass, stmt ast.Stmt) {
+	// Check different types of statements with nested blocks
+	switch s := stmt.(type) {
+	// If statement: check body and else
+	case *ast.IfStmt:
+		checkIfStmt(pass, s)
+	// For statement: check loop body
+	case *ast.ForStmt:
+		checkBlockIfNotNil(pass, s.Body)
+	// Range statement: check loop body
+	case *ast.RangeStmt:
+		checkBlockIfNotNil(pass, s.Body)
+	// Switch statement: check switch body
+	case *ast.SwitchStmt:
+		checkBlockIfNotNil(pass, s.Body)
+	// Type switch: check switch body
+	case *ast.TypeSwitchStmt:
+		checkBlockIfNotNil(pass, s.Body)
+	// Select statement: check select body
+	case *ast.SelectStmt:
+		checkBlockIfNotNil(pass, s.Body)
+	// Nested block: check directly
+	case *ast.BlockStmt:
+		checkFunctionBody(pass, s)
+	// Case clause: iterate through statements
+	case *ast.CaseClause:
+		checkCaseClause(pass, s)
+	// Comm clause: iterate through statements
+	case *ast.CommClause:
+		checkCommClause(pass, s)
+	}
+}
+
+// checkIfStmt vérifie un if statement.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: if statement
+func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
+	// Check if body exists
+	if stmt.Body != nil {
+		checkFunctionBody(pass, stmt.Body)
+	}
+	// Check else clause if exists
+	if stmt.Else != nil {
+		checkStatement(pass, stmt.Else)
+	}
+}
+
+// checkBlockIfNotNil vérifie un bloc s'il n'est pas nil.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - block: bloc à vérifier
+func checkBlockIfNotNil(pass *analysis.Pass, block *ast.BlockStmt) {
+	// Check if block exists
+	if block != nil {
+		checkFunctionBody(pass, block)
+	}
+}
+
+// checkCaseClause vérifie une case clause.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - clause: case clause
+func checkCaseClause(pass *analysis.Pass, clause *ast.CaseClause) {
+	// Iterate through case statements
+	for _, caseStmt := range clause.Body {
+		checkStatement(pass, caseStmt)
+	}
+}
+
+// checkCommClause vérifie une comm clause.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - clause: comm clause
+func checkCommClause(pass *analysis.Pass, clause *ast.CommClause) {
+	// Iterate through comm statements
+	for _, commStmt := range clause.Body {
+		checkStatement(pass, commStmt)
+	}
+}
+
+// checkVarSpecs vérifie les spécifications de variables.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - genDecl: déclaration générale
+func checkVarSpecs(pass *analysis.Pass, genDecl *ast.GenDecl) {
+	// Iterate through specifications
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+
+		// Check if variable has initialization without explicit type
+		if hasInitWithoutType(valueSpec) {
+			// Report error for each variable
+			reportVarErrors(pass, valueSpec)
 		}
 	}
-	// Cas 3: Type explicite sans type visible = OK
-	// Cas 4: Pas de type explicite mais type visible = OK
 }
 
-// hasVisibleType vérifie si le type est visible dans les expressions.
-// Exemples de types visibles:
-//   - Composite literal: []string{}, map[K]V{}, Struct{}
-//   - Unary &: &Struct{}
-//   - Call make/new: make([]int, 10), new(Struct)
+// hasInitWithoutType vérifie si une variable a une initialisation sans type.
 //
 // Params:
-//   - values: expressions de valeurs
+//   - spec: spécification de variable
 //
 // Returns:
-//   - bool: true si type visible
-func hasVisibleType(values []ast.Expr) bool {
-	// Pas de valeurs = type non visible
-	if len(values) == 0 {
-		return false
-	}
+//   - bool: true si initialisation sans type
+func hasInitWithoutType(spec *ast.ValueSpec) bool {
+	// Has values (initialization)
+	hasValues := len(spec.Values) > 0
+	// No explicit type
+	noType := spec.Type == nil
 
-	// Vérifier chaque valeur
-	for _, val := range values {
-		// Vérifier si le type est visible
-		if !isTypeVisible(val) {
-			return false
-		}
-	}
-	// Toutes les valeurs ont un type visible
-	return true
+	// Return true if both conditions are met
+	return hasValues && noType
 }
 
-// isTypeVisible vérifie si le type est visible dans une expression.
+// reportVarErrors rapporte les erreurs pour chaque variable.
 //
 // Params:
-//   - expr: expression à vérifier
-//
-// Returns:
-//   - bool: true si type visible
-func isTypeVisible(expr ast.Expr) bool {
-	// Switch sur le type d'expression
-	switch e := expr.(type) {
-	// Composite literal: []string{}, map[K]V{}, Struct{}
-	case *ast.CompositeLit:
-		return true
-	// Unary &: &Struct{}, &value
-	case *ast.UnaryExpr:
-		// &CompositeLit = type visible
-		if e.Op == token.AND {
-			_, ok := e.X.(*ast.CompositeLit)
-			// Retour du résultat
-			return ok
-		}
-		// Pas un & sur composite literal
-		return false
-	// Appel de fonction: make(), new(), Type()
-	case *ast.CallExpr:
-		// Déléguer à isTypedCall
-		return isTypedCall(e)
-	// Pas un type visible
-	default:
-		return false
-	}
-}
-
-// isTypedCall vérifie si un appel a un type visible.
-// Détecte: make(T), new(T), Type(x), pkg.Type(x)
-//
-// Params:
-//   - call: expression d'appel
-//
-// Returns:
-//   - bool: true si type visible
-func isTypedCall(call *ast.CallExpr) bool {
-	// Vérifier le type de fonction
-	switch fn := call.Fun.(type) {
-	// make(T, ...) ou new(T) ou type conversion: int(x), string(y)
-	case *ast.Ident:
-		// Vérifier si c'est make, new ou un type de base
-		return isBuiltinOrTypeConversion(fn.Name)
-	// Type conversion: []byte(x), map[K]V(x), chan T(x)
-	case *ast.ArrayType, *ast.MapType, *ast.ChanType, *ast.StructType:
-		// Conversion vers type composite
-		return true
-	// pkg.Type(x) ou Type(x) via selector
-	case *ast.SelectorExpr:
-		// Appel qualifié = type visible
-		return true
-	// Pas un appel typé connu
-	default:
-		// Type inconnu
-		return false
-	}
-}
-
-// isBuiltinOrTypeConversion vérifie si un identifiant est make/new ou un type.
-//
-// Params:
-//   - name: nom de l'identifiant
-//
-// Returns:
-//   - bool: true si c'est make, new ou un type de base
-func isBuiltinOrTypeConversion(name string) bool {
-	// Liste des builtins et types de base
-	switch name {
-	// Builtins qui créent des types
-	case "make", "new":
-		return true
-	// Types de base Go (conversions)
-	case "bool", "byte", "rune", "string",
-		"int", "int8", "int16", "int32", "int64",
-		"uint", "uint8", "uint16", "uint32", "uint64", "uintptr",
-		"float32", "float64", "complex64", "complex128":
-		return true
-	// Pas un builtin ou type connu
-	default:
-		return false
+//   - pass: contexte d'analyse
+//   - spec: spécification de variable
+func reportVarErrors(pass *analysis.Pass, spec *ast.ValueSpec) {
+	// Iterate through variable names
+	for _, name := range spec.Names {
+		pass.Reportf(
+			name.Pos(),
+			"KTN-VAR-003: préférer ':=' au lieu de 'var' pour la variable '%s'",
+			name.Name,
+		)
 	}
 }

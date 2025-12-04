@@ -3,18 +3,17 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/token"
-	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer008 checks for string concatenation in loops
+// Analyzer008 checks for slice/map allocations inside loops
 var Analyzer008 = &analysis.Analyzer{
 	Name:     "ktnvar008",
-	Doc:      "KTN-VAR-008: Utiliser strings.Builder pour >2 concaténations",
+	Doc:      "KTN-VAR-008: Évite les allocations de slices/maps dans les boucles chaudes",
 	Run:      runVar008,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -36,86 +35,151 @@ func runVar008(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		checkStringConcatInLoop(pass, n)
+		// Récupération du corps de la boucle
+		var body *ast.BlockStmt
+		// Vérification du type de boucle
+		switch loop := n.(type) {
+		// Cas d'une boucle for classique
+		case *ast.ForStmt:
+			// Boucle for classique
+			body = loop.Body
+		// Cas d'une boucle range
+		case *ast.RangeStmt:
+			// Boucle range
+			body = loop.Body
+		// Cas par défaut
+		default:
+			// Type de boucle non supporté
+			return
+		}
+
+		// Parcours des instructions du corps
+		checkLoopBodyForAlloc(pass, body)
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// checkStringConcatInLoop checks for string += in loops.
+// checkLoopBodyForAlloc vérifie les allocations dans le corps d'une boucle.
 //
 // Params:
-//   - pass: analysis pass context
-//   - n: AST node (ForStmt or RangeStmt)
-func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
-	// Body of the loop
-	var loopBody *ast.BlockStmt
-
-	// Check type of loop
-	switch node := n.(type) {
-	// Case: for loop
-	case *ast.ForStmt:
-		loopBody = node.Body
-	// Case: range loop
-	case *ast.RangeStmt:
-		loopBody = node.Body
-	}
-
-	// Check if loop body exists
-	if loopBody == nil {
-		// Return early if no body
+//   - pass: contexte d'analyse
+//   - body: corps de la boucle à vérifier
+func checkLoopBodyForAlloc(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Vérification du corps de la boucle
+	if body == nil {
+		// Corps de boucle vide
 		return
 	}
 
-	// Traverse statements in loop body
-	ast.Inspect(loopBody, func(child ast.Node) bool {
-		// Check if assignment statement
-		if assign, ok := child.(*ast.AssignStmt); ok {
-			// Check if += operator
-			if assign.Tok == token.ADD_ASSIGN {
-				// Check if string concatenation
-				if isStringConcatenation(pass, assign) {
-					pass.Reportf(
-						assign.Pos(),
-						"KTN-VAR-008: utiliser strings.Builder au lieu de += pour concaténer des strings dans une boucle",
-					)
-				}
-			}
-		}
-		// Continue traversing
-		return true
-	})
+	// Parcours des instructions
+	for _, stmt := range body.List {
+		checkStmtForAlloc(pass, stmt)
+	}
 }
 
-// isStringConcatenation checks if += operates on string.
+// checkStmtForAlloc vérifie une instruction pour détecter allocations.
 //
 // Params:
-//   - pass: analysis pass context
-//   - assign: assignment statement to check
-//
-// Returns:
-//   - bool: true if string concatenation
-func isStringConcatenation(pass *analysis.Pass, assign *ast.AssignStmt) bool {
-	// Check if left-hand side exists
-	if len(assign.Lhs) == 0 {
-		// Return false if no left-hand side
-		return false
+//   - pass: contexte d'analyse
+//   - stmt: instruction à vérifier
+func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
+	// Vérification du type d'instruction
+	switch s := stmt.(type) {
+	// Cas d'une affectation
+	case *ast.AssignStmt:
+		// Vérification des affectations
+		checkAssignForAlloc(pass, s)
+	// Cas d'une déclaration
+	case *ast.DeclStmt:
+		// Vérification des déclarations
+		checkDeclForAlloc(pass, s)
+		// Note: les boucles imbriquées sont déjà gérées par Preorder
 	}
+}
 
-	// Get first left-hand side expression
-	lhs := assign.Lhs[0]
-
-	// Get type information
-	if tv, ok := pass.TypesInfo.Types[lhs]; ok {
-		var basic *types.Basic
-		// Check if type is string
-		if basic, ok = tv.Type.Underlying().(*types.Basic); ok {
-			// Return true if string type
-			return basic.Kind() == types.String
+// checkAssignForAlloc vérifie une affectation pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - assign: affectation à vérifier
+func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
+	// Parcours des valeurs affectées
+	for _, rhs := range assign.Rhs {
+		// Vérification si allocation de slice ou map
+		if isSliceOrMapAlloc(rhs) {
+			// Allocation de slice/map détectée
+			pass.Reportf(
+				rhs.Pos(),
+				"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle",
+			)
 		}
 	}
+}
 
-	// Return false if not string
+// checkDeclForAlloc vérifie une déclaration pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - decl: déclaration à vérifier
+func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
+	genDecl, ok := decl.Decl.(*ast.GenDecl)
+	// Vérification du type de déclaration
+	if !ok {
+		// Pas une déclaration générale
+		return
+	}
+
+	var valueSpec *ast.ValueSpec
+	// Parcours des spécifications
+	for _, spec := range genDecl.Specs {
+		valueSpec, ok = spec.(*ast.ValueSpec)
+		// Vérification de la spécification de valeur
+		if !ok {
+			// Pas une spécification de valeur
+			continue
+		}
+
+		// Parcours des valeurs
+		for _, value := range valueSpec.Values {
+			// Vérification si allocation de slice ou map
+			if isSliceOrMapAlloc(value) {
+				// Allocation de slice/map détectée
+				pass.Reportf(
+					value.Pos(),
+					"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle",
+				)
+			}
+		}
+	}
+}
+
+// isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si allocation détectée
+func isSliceOrMapAlloc(expr ast.Expr) bool {
+	// Vérification du type d'expression
+	switch e := expr.(type) {
+	// Cas d'un littéral composite
+	case *ast.CompositeLit:
+		// Vérification du type composite
+		if utils.IsSliceOrMapType(e.Type) {
+			// Allocation de slice/map sous forme de littéral
+			return true
+		}
+	// Cas d'un appel de fonction
+	case *ast.CallExpr:
+		// Vérification des appels make()
+		if utils.IsMakeCall(e) {
+			// Appel à make() détecté
+			return true
+		}
+	}
+	// Pas d'allocation détectée
 	return false
 }

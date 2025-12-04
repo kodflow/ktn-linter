@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar010(t *testing.T) {
-	// 5 grandes structures sans pointeur
-	testhelper.TestGoodBad(t, ktnvar.Analyzer010, "var010", 5)
+	// 8 buffers créés dans des boucles (4 original + 4 nouveaux edge cases)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer010, "var010", 8)
 }

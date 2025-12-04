@@ -8,6 +8,6 @@ import (
 )
 
 func TestStruct005(t *testing.T) {
-	// good.go: 0 errors (1 struct), bad.go: 2 errors (3 structs - les 2 dernières sont en violation)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer005, "struct005", 2)
+	// good.go: 0 errors (champs exportés avant privés), bad.go: 5 errors (champs mélangés)
+	testhelper.TestGoodBad(t, ktnstruct.Analyzer005, "struct005", 5)
 }

@@ -112,42 +112,46 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 
 ## Règles Implémentées (ordonnées par criticité)
 
-### Commentaires (1 règle) - INFO
+### Commentaires et Documentation (7 règles) - INFO/WARNING
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | KTN-COMMENT-001 | INFO | Commentaires inline trop longs (>80 caractères) |
+| KTN-COMMENT-002 | WARNING | Commentaire descriptif avant `package` |
+| KTN-COMMENT-003 | WARNING | Commentaire obligatoire pour constantes |
+| KTN-COMMENT-004 | WARNING | Commentaire obligatoire pour var package |
+| KTN-COMMENT-005 | WARNING | Documentation obligatoire pour struct (≥2 lignes) |
+| KTN-COMMENT-006 | WARNING | Documentation fonction (Params/Returns) |
+| KTN-COMMENT-007 | WARNING | Commentaires sur branches/returns/logique |
 
-### Constantes (4 règles) - WARNING/INFO
+### Constantes (3 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | KTN-CONST-001 | WARNING | Type explicite obligatoire |
-| KTN-CONST-002 | WARNING | Commentaire obligatoire |
-| KTN-CONST-003 | INFO | Groupement et placement avant var |
-| KTN-CONST-004 | INFO | Nommage SCREAMING_SNAKE_CASE |
+| KTN-CONST-002 | INFO | Groupement et placement avant var |
+| KTN-CONST-003 | INFO | Nommage SCREAMING_SNAKE_CASE |
 
-### Variables (18 règles) - ERROR/WARNING/INFO
+### Variables (17 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | KTN-VAR-001 | ERROR | Variables package en camelCase (pas SCREAMING_SNAKE) |
-| KTN-VAR-002 | ERROR | Commentaire obligatoire pour var package |
-| KTN-VAR-003 | WARNING | Type explicite obligatoire |
-| KTN-VAR-004 | WARNING | Utiliser := pour variables locales |
-| KTN-VAR-005 | WARNING | Préallocation slices avec capacité connue |
-| KTN-VAR-006 | WARNING | Éviter make([]T, length) avec append |
-| KTN-VAR-007 | WARNING | Préallocation bytes.Buffer/strings.Builder avec Grow |
-| KTN-VAR-008 | WARNING | Utiliser strings.Builder pour >2 concaténations |
-| KTN-VAR-009 | WARNING | Éviter allocations dans boucles chaudes |
-| KTN-VAR-010 | WARNING | Pointeurs pour structs >64 bytes |
-| KTN-VAR-011 | WARNING | sync.Pool pour buffers répétés |
-| KTN-VAR-012 | WARNING | Shadowing de variables |
-| KTN-VAR-013 | WARNING | Conversions string() répétées |
-| KTN-VAR-014 | INFO | Groupement dans un seul bloc var() |
-| KTN-VAR-015 | INFO | Variables après constantes (ordre déclarations) |
-| KTN-VAR-016 | INFO | Préallocation maps avec capacité connue |
-| KTN-VAR-017 | INFO | Utiliser [N]T au lieu de make([]T, N) |
-| KTN-VAR-018 | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
+| KTN-VAR-002 | WARNING | Type explicite obligatoire |
+| KTN-VAR-003 | WARNING | Utiliser := pour variables locales |
+| KTN-VAR-004 | WARNING | Préallocation slices avec capacité connue |
+| KTN-VAR-005 | WARNING | Éviter make([]T, length) avec append |
+| KTN-VAR-006 | WARNING | Préallocation bytes.Buffer/strings.Builder avec Grow |
+| KTN-VAR-007 | WARNING | Utiliser strings.Builder pour >2 concaténations |
+| KTN-VAR-008 | WARNING | Éviter allocations dans boucles chaudes |
+| KTN-VAR-009 | WARNING | Pointeurs pour structs >64 bytes |
+| KTN-VAR-010 | WARNING | sync.Pool pour buffers répétés |
+| KTN-VAR-011 | WARNING | Shadowing de variables |
+| KTN-VAR-012 | WARNING | Conversions string() répétées |
+| KTN-VAR-013 | INFO | Groupement dans un seul bloc var() |
+| KTN-VAR-014 | INFO | Variables après constantes (ordre déclarations) |
+| KTN-VAR-015 | INFO | Préallocation maps avec capacité connue |
+| KTN-VAR-016 | INFO | Utiliser [N]T au lieu de make([]T, N) |
+| KTN-VAR-017 | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
 
-### Fonctions (14 règles) - ERROR/WARNING/INFO
+### Fonctions (12 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | KTN-FUNC-001 | ERROR | Erreur toujours en dernière position retour |
@@ -156,24 +160,21 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | KTN-FUNC-004 | ERROR | Fonctions privées non utilisées (code mort) |
 | KTN-FUNC-005 | WARNING | Longueur max 35 lignes de code pur |
 | KTN-FUNC-006 | WARNING | Max 5 paramètres par fonction |
-| KTN-FUNC-007 | WARNING | Documentation stricte (Params/Returns) |
-| KTN-FUNC-008 | WARNING | Pas de side effects dans les getters |
-| KTN-FUNC-009 | WARNING | Commentaires sur branches/returns/logique |
-| KTN-FUNC-010 | WARNING | Paramètres non utilisés préfixés par _ |
-| KTN-FUNC-011 | INFO | Pas de magic numbers (constantes nommées) |
-| KTN-FUNC-012 | INFO | Pas de naked returns (sauf <5 lignes) |
-| KTN-FUNC-013 | INFO | Complexité cyclomatique max 10 |
-| KTN-FUNC-014 | INFO | Named returns pour >3 valeurs de retour |
+| KTN-FUNC-007 | WARNING | Pas de side effects dans les getters |
+| KTN-FUNC-008 | WARNING | Paramètres non utilisés préfixés par _ |
+| KTN-FUNC-009 | INFO | Pas de magic numbers (constantes nommées) |
+| KTN-FUNC-010 | INFO | Pas de naked returns (sauf <5 lignes) |
+| KTN-FUNC-011 | INFO | Complexité cyclomatique max 10 |
+| KTN-FUNC-012 | INFO | Named returns pour >3 valeurs de retour |
 
-### Structures (6 règles) - WARNING/INFO
+### Structures (5 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | KTN-STRUCT-001 | WARNING | Interface obligatoire (100% méthodes publiques) |
-| KTN-STRUCT-002 | WARNING | Documentation obligatoire (≥2 lignes) |
-| KTN-STRUCT-003 | WARNING | Constructeur NewX() requis |
-| KTN-STRUCT-004 | WARNING | Pas de préfixe Get pour getters |
-| KTN-STRUCT-005 | INFO | Un fichier Go par struct |
-| KTN-STRUCT-006 | INFO | Ordre des champs (exportés avant privés) |
+| KTN-STRUCT-002 | WARNING | Constructeur NewX() requis |
+| KTN-STRUCT-003 | WARNING | Pas de préfixe Get pour getters |
+| KTN-STRUCT-004 | INFO | Un fichier Go par struct |
+| KTN-STRUCT-005 | INFO | Ordre des champs (exportés avant privés) |
 
 ### Tests (13 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
@@ -191,11 +192,6 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | KTN-TEST-011 | WARNING | Convention package (white-box/black-box) |
 | KTN-TEST-012 | WARNING | Tests doivent contenir des assertions |
 | KTN-TEST-013 | INFO | Coverage cas d'erreur |
-
-### Package (1 règle) - WARNING
-| Code | Sévérité | Description |
-|------|----------|-------------|
-| KTN-PACKAGE-001 | WARNING | Commentaire descriptif avant `package` |
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
@@ -241,7 +237,7 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - **Couverture globale**: 91.6% 🟡
 - **Packages 100%**: utils, formatter 🟢
 - **Go version**: 1.25
-- **Total règles KTN**: 57 (1 comment + 4 const + 18 var + 14 func + 6 struct + 13 test + 1 package)
+- **Total règles KTN**: 57 (7 comment + 3 const + 17 var + 12 func + 5 struct + 13 test)
 - **Total modernize**: 17 analyseurs actifs / 18 totaux
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 

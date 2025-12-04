@@ -2,7 +2,12 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_runVar013 tests the private runVar013 function.
@@ -21,150 +26,103 @@ func Test_runVar013(t *testing.T) {
 	}
 }
 
-// Test_extractLoop tests the private extractLoop helper function.
-func Test_extractLoop(t *testing.T) {
+// Test_collectVarGroups tests the private collectVarGroups helper function.
+func Test_collectVarGroups(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     ast.Node
-		expected bool
+		code     string
+		expected int
 	}{
 		{
-			name:     "for stmt",
-			node:     &ast.ForStmt{Body: &ast.BlockStmt{}},
-			expected: true,
+			name: "single var group",
+			code: `package test
+var (
+	x int
+	y string
+)`,
+			expected: 1,
 		},
 		{
-			name:     "range stmt",
-			node:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
-			expected: true,
+			name: "multiple var groups",
+			code: `package test
+var x int
+var y string`,
+			expected: 2,
 		},
 		{
-			name:     "other node",
-			node:     &ast.IfStmt{},
-			expected: false,
+			name: "no vars",
+			code: `package test
+const x = 1`,
+			expected: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractLoop(tt.node)
-			// Vérification du résultat
-			if (result != nil) != tt.expected {
-				t.Errorf("extractLoop() returned %v, expected non-nil: %v", result, tt.expected)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification de l'erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			groups := collectVarGroups(file)
+			// Vérification du nombre de groupes
+			if len(groups) != tt.expected {
+				t.Errorf("collectVarGroups() returned %d groups, expected %d", len(groups), tt.expected)
 			}
 		})
 	}
 }
 
-// Test_isStringConversion tests the private isStringConversion helper function.
-func Test_isStringConversion(t *testing.T) {
+// Test_checkVarGrouping tests the private checkVarGrouping helper function.
+func Test_checkVarGrouping(t *testing.T) {
 	tests := []struct {
-		name     string
-		node     ast.Node
-		expected bool
+		name          string
+		groupCount    int
+		expectReports int
 	}{
 		{
-			name: "string conversion",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "b"}},
-			},
-			expected: true,
+			name:          "no groups",
+			groupCount:    0,
+			expectReports: 0,
 		},
 		{
-			name: "other function",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "len"},
-				Args: []ast.Expr{&ast.Ident{Name: "s"}},
-			},
-			expected: false,
+			name:          "one group",
+			groupCount:    1,
+			expectReports: 0,
 		},
 		{
-			name: "no args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{},
-			},
-			expected: false,
-		},
-		{
-			name: "multiple args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
-			},
-			expected: false,
-		},
-		{
-			name:     "not call expr",
-			node:     &ast.Ident{Name: "x"},
-			expected: false,
+			name:          "multiple groups",
+			groupCount:    3,
+			expectReports: 2,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isStringConversion(tt.node)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isStringConversion() = %v, expected %v", result, tt.expected)
+			reports := 0
+			mockPass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {
+					reports++
+				},
 			}
-		})
-	}
-}
 
-// Test_checkFuncForRepeatedConversions tests the private checkFuncForRepeatedConversions function.
-func Test_checkFuncForRepeatedConversions(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for repeated conversions
-		})
-	}
-}
+			// Create fake groups
+			var groups []shared.DeclGroup
+			for i := 0; i < tt.groupCount; i++ {
+				groups = append(groups, shared.DeclGroup{
+					Decl: &ast.GenDecl{TokPos: token.Pos(i + 1)},
+					Pos:  token.Pos(i + 1),
+				})
+			}
 
-// Test_checkLoopsForStringConversion tests the private checkLoopsForStringConversion function.
-func Test_checkLoopsForStringConversion(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks loops for string conversion
-		})
-	}
-}
+			checkVarGrouping(mockPass, groups)
 
-// Test_hasStringConversion tests the private hasStringConversion function.
-func Test_hasStringConversion(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if has string conversion
-		})
-	}
-}
-
-// Test_checkMultipleConversions tests the private checkMultipleConversions function.
-func Test_checkMultipleConversions(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for multiple conversions
+			// Vérification du nombre de rapports
+			if reports != tt.expectReports {
+				t.Errorf("checkVarGrouping() reported %d issues, expected %d", reports, tt.expectReports)
+			}
 		})
 	}
 }

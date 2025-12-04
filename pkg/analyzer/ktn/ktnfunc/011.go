@@ -3,137 +3,130 @@ package ktnfunc
 
 import (
 	"go/ast"
-	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Analyzer011 checks that functions don't exceed cyclomatic complexity of 10
 const (
-	// INITIAL_ALLOWED_LITERALS_CAP initial cap for allowed literals
-	INITIAL_ALLOWED_LITERALS_CAP int = 32
+	// MAX_CYCLOMATIC_COMPLEXITY max cyclomatic complexity
+	MAX_CYCLOMATIC_COMPLEXITY int = 10
 )
 
-// Analyzer011 checks for magic numbers (hardcoded numeric literals)
+// Analyzer011 checks that functions don't exceed maximum cyclomatic complexity
 var Analyzer011 = &analysis.Analyzer{
 	Name:     "ktnfunc011",
-	Doc:      "KTN-FUNC-011: Les nombres littéraux doivent être des constantes nommées (pas de magic numbers)",
+	Doc:      "KTN-FUNC-011: La complexité cyclomatique ne doit pas dépasser 10",
 	Run:      runFunc011,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc011 exécute l'analyse KTN-FUNC-011.
+// runFunc011 description à compléter.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - any: résultat
 //   - error: erreur éventuelle
 func runFunc011(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Map des valeurs autorisées (non magic numbers)
-	allowedValues := getAllowedValues()
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
 
-	// Collecter les littéraux autorisés (const, array sizes)
-	allowedLiterals := collectAllowedLiterals(insp)
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// runFunc011 exécute l'analyse KTN-FUNC-011.
+		//
+		// Params:
+		//   - pass: contexte d'analyse
+		//
+		// Returns:
+		//   - any: résultat de l'analyse
+		//   - error: erreur éventuelle
+		funcDecl := n.(*ast.FuncDecl)
 
-	// Vérifier les magic numbers
-	checkMagicNumbers(insp, pass, allowedValues, allowedLiterals)
+		// Skip if no body (external functions)
+		if funcDecl.Body == nil {
+			// Retour de la fonction
+			return
+		}
 
-	// Retour succès
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
+			return
+		}
+
+		funcName := funcDecl.Name.Name
+
+		// Calculate cyclomatic complexity
+		complexity := calculateComplexity(funcDecl.Body)
+
+		// Vérification de la condition
+		if complexity > MAX_CYCLOMATIC_COMPLEXITY {
+			pass.Reportf(
+				funcDecl.Name.Pos(),
+				"KTN-FUNC-011: la fonction '%s' a une complexité cyclomatique de %d (max: %d)",
+				funcName,
+				complexity,
+				MAX_CYCLOMATIC_COMPLEXITY,
+			)
+		}
+	})
+
+	// Retour de la fonction
 	return nil, nil
 }
 
-// getAllowedValues retourne les valeurs numériques autorisées (non magic).
-//
-// Returns:
-//   - map[string]bool: map des valeurs autorisées
-func getAllowedValues() map[string]bool {
-	// Retour de la map des valeurs autorisées
-	return map[string]bool{
-		"0":  true,
-		"1":  true,
-		"-1": true,
-	}
-}
-
-// collectAllowedLiterals collecte les littéraux dans const declarations.
-//
+// calculateComplexity calculates the cyclomatic complexity of a function
 // Params:
-//   - inspect: inspecteur AST
-//
-// Returns:
-//   - map[ast.Node]bool: map des littéraux autorisés
-func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
-	allowedLiterals := make(map[ast.Node]bool, INITIAL_ALLOWED_LITERALS_CAP)
-
-	// Filter pour GenDecl seulement
-	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
-	}
-
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
-
-		// Si c'est une déclaration const
-		if genDecl.Tok == token.CONST {
-			ast.Inspect(genDecl, func(inner ast.Node) bool {
-				// Si c'est un littéral
-				if lit, ok := inner.(*ast.BasicLit); ok {
-					allowedLiterals[lit] = true
-				}
-				// Continuer l'inspection
-				return true
-			})
-		}
-	})
-
-	// Retour de la map
-	return allowedLiterals
-}
-
-// checkMagicNumbers vérifie et rapporte les magic numbers.
-//
-// Params:
-//   - inspect: inspecteur AST
 //   - pass: contexte d'analyse
-//   - allowedValues: valeurs autorisées
-//   - allowedLiterals: littéraux autorisés
-func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool) {
-	// Filter pour les littéraux
-	nodeFilter := []ast.Node{
-		(*ast.BasicLit)(nil),
-	}
+//
+// Returns:
+//   - int: complexité calculée
+func calculateComplexity(body *ast.BlockStmt) int {
+	// Start with complexity of 1 (the function itself)
+	complexity := 1
 
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		lit := n.(*ast.BasicLit)
-
-		// Vérifier si c'est un nombre (INT ou FLOAT)
-		if lit.Kind != token.INT && lit.Kind != token.FLOAT {
-			// Pas un nombre, ignorer
-			return
+	ast.Inspect(body, func(n ast.Node) bool {
+		// Sélection selon la valeur
+		switch node := n.(type) {
+		// Traitement
+		case *ast.IfStmt:
+			// +1 for if
+			complexity++
+		// Traitement
+		case *ast.ForStmt, *ast.RangeStmt:
+			// +1 for each loop
+			complexity++
+		// Traitement
+		case *ast.CaseClause:
+			// +1 for each case (except default)
+			if node.List != nil {
+				complexity++
+			}
+		// Traitement
+		case *ast.CommClause:
+			// +1 for each comm case in select
+			if node.Comm != nil {
+				complexity++
+			}
+		// Traitement
+		case *ast.BinaryExpr:
+			// +1 for && and ||
+			if node.Op.String() == "&&" || node.Op.String() == "||" {
+				complexity++
+			}
 		}
-
-		// Vérifier si c'est une valeur autorisée
-		if allowedValues[lit.Value] {
-			// Valeur autorisée, ignorer
-			return
-		}
-
-		// Vérifier si c'est dans les littéraux autorisés
-		if allowedLiterals[lit] {
-			// Littéral autorisé, ignorer
-			return
-		}
-
-		// Reporter l'erreur
-		pass.Reportf(
-			lit.Pos(),
-			"KTN-FUNC-011: le nombre '%s' devrait être une constante nommée (magic number)",
-			lit.Value,
-		)
+		// Retour de la fonction
+		return true
 	})
+
+	// Retour de la fonction
+	return complexity
 }

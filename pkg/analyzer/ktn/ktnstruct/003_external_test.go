@@ -8,6 +8,6 @@ import (
 )
 
 func TestStruct003(t *testing.T) {
-	// good.go: 0 errors (constructeur NewX présent), bad.go: 1 error (constructeur manquant)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer003, "struct003", 1)
+	// good.go: 0 errors (getters idiomatiques sans Get), bad.go: 3 errors (getters avec préfixe Get)
+	testhelper.TestGoodBad(t, ktnstruct.Analyzer003, "struct003", 3)
 }

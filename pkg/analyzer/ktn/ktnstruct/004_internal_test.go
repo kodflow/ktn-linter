@@ -5,8 +5,6 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
-
-	"golang.org/x/tools/go/analysis"
 )
 
 // Test_runStruct004 tests the private runStruct004 function.
@@ -24,27 +22,26 @@ func Test_runStruct004(t *testing.T) {
 	}
 }
 
-// Test_collectStructTypes tests the private collectStructTypes function.
-func Test_collectStructTypes(t *testing.T) {
+// Test_collectStructs tests the private collectStructs function.
+func Test_collectStructs(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      string
-		expected map[string]int // map of struct name to number of fields
+		expected int
 	}{
 		{
 			name: "no structs",
 			src: `package test
 func main() {}`,
-			expected: map[string]int{},
+			expected: 0,
 		},
 		{
-			name: "struct with fields",
+			name: "one struct",
 			src: `package test
 type User struct {
 	Name string
-	Age  int
 }`,
-			expected: map[string]int{"User": 2},
+			expected: 1,
 		},
 		{
 			name: "multiple structs",
@@ -54,15 +51,19 @@ type User struct {
 }
 type Admin struct {
 	Role string
-	Level int
 }`,
-			expected: map[string]int{"User": 1, "Admin": 2},
+			expected: 2,
 		},
 		{
-			name: "empty struct",
+			name: "struct with interface",
 			src: `package test
-type Empty struct{}`,
-			expected: map[string]int{"Empty": 0},
+type User struct {
+	Name string
+}
+type Reader interface {
+	Read() error
+}`,
+			expected: 1,
 		},
 	}
 
@@ -74,175 +75,122 @@ type Empty struct{}`,
 				t.Fatalf("failed to parse source: %v", err)
 			}
 
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-			}
+			structs := collectStructs(file)
 
-			result := collectStructTypes(pass)
-
-			if len(result) != len(tt.expected) {
-				t.Errorf("expected %d structs, got %d", len(tt.expected), len(result))
-			}
-
-			for name, expectedFields := range tt.expected {
-				fields, ok := result[name]
-				if !ok {
-					t.Errorf("expected struct '%s' not found", name)
-					continue
-				}
-				if len(fields) != expectedFields {
-					t.Errorf("expected %d fields for '%s', got %d", expectedFields, name, len(fields))
-				}
+			if len(structs) != tt.expected {
+				t.Errorf("expected %d structs, got %d", tt.expected, len(structs))
 			}
 		})
 	}
 }
 
-// Test_isSimpleGetter tests the private isSimpleGetter function.
-func Test_isSimpleGetter(t *testing.T) {
+// Test_structInfo tests the structInfo type.
+func Test_structInfo(t *testing.T) {
+	tests := []struct {
+		name           string
+		src            string
+		expectedName   string
+		expectedCount  int
+	}{
+		{
+			name: "verify struct info fields",
+			src: `package test
+type User struct {
+	Name string
+}`,
+			expectedName:  "User",
+			expectedCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			if err != nil {
+				t.Fatalf("failed to parse source: %v", err)
+			}
+
+			structs := collectStructs(file)
+			if len(structs) != tt.expectedCount {
+				t.Fatalf("expected %d struct, got %d", tt.expectedCount, len(structs))
+			}
+
+			s := structs[0]
+			if s.name != tt.expectedName {
+				t.Errorf("expected struct name '%s', got '%s'", tt.expectedName, s.name)
+			}
+			if s.node == nil {
+				t.Error("expected non-nil node")
+			}
+		})
+	}
+}
+
+// Test_allStructsAreSerializable tests the allStructsAreSerializable function.
+//
+// Params:
+//   - t: testing context
+func Test_allStructsAreSerializable(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      string
 		expected bool
 	}{
 		{
-			name: "simple getter",
+			name: "all DTOs by suffix",
 			src: `package test
-type User struct {
-	name string
-}
-func (u *User) GetName() string { return u.name }`,
+type UserConfig struct { Name string }
+type AppSettings struct { Port int }`,
 			expected: true,
 		},
 		{
-			name: "getter with params",
+			name: "all DTOs by tag",
 			src: `package test
-type User struct {
-	name string
-}
-func (u *User) GetName(prefix string) string { return prefix + u.name }`,
-			expected: false,
+type User struct { Name string ` + "`json:\"name\"`" + ` }
+type Admin struct { Role string ` + "`yaml:\"role\"`" + ` }`,
+			expected: true,
 		},
 		{
-			name: "getter without return",
+			name: "not all DTOs",
 			src: `package test
-type User struct {
-	name string
-}
-func (u *User) GetName() {}`,
+type User struct { Name string }
+type Admin struct { Role string }`,
 			expected: false,
 		},
 	}
 
+	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			// Vérification erreur de parsing
 			if err != nil {
 				t.Fatalf("failed to parse source: %v", err)
 			}
 
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-			}
-
-			// Collect struct types first
-			structTypes := collectStructTypes(pass)
-
-			// Find the method
-			var funcDecl *ast.FuncDecl
+			// Collecter les structs avec structType
+			var structs []structInfo
 			ast.Inspect(file, func(n ast.Node) bool {
-				if fd, ok := n.(*ast.FuncDecl); ok && fd.Recv != nil {
-					funcDecl = fd
-					return false
+				// Vérifier TypeSpec
+				if ts, ok := n.(*ast.TypeSpec); ok {
+					// Vérifier StructType
+					if st, ok := ts.Type.(*ast.StructType); ok {
+						structs = append(structs, structInfo{
+							name:       ts.Name.Name,
+							node:       ts,
+							structType: st,
+						})
+					}
 				}
 				return true
 			})
 
-			if funcDecl == nil {
-				t.Fatal("no method found")
-			}
-
-			result := isSimpleGetter(funcDecl, structTypes)
-
+			result := allStructsAreSerializable(structs)
+			// Vérification résultat
 			if result != tt.expected {
-				t.Errorf("expected %v, got %v", tt.expected, result)
-			}
-		})
-	}
-}
-
-// Test_getReceiverTypeName tests the private getReceiverTypeName function.
-func Test_getReceiverTypeName(t *testing.T) {
-	tests := []struct {
-		name     string
-		src      string
-		expected string
-	}{
-		{
-			name: "pointer receiver",
-			src: `package test
-type User struct{}
-func (u *User) Method() {}`,
-			expected: "User",
-		},
-		{
-			name: "value receiver",
-			src: `package test
-type User struct{}
-func (u User) Method() {}`,
-			expected: "User",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
-			if err != nil {
-				t.Fatalf("failed to parse source: %v", err)
-			}
-
-			// Find the method
-			var funcDecl *ast.FuncDecl
-			ast.Inspect(file, func(n ast.Node) bool {
-				if fd, ok := n.(*ast.FuncDecl); ok && fd.Recv != nil {
-					funcDecl = fd
-					return false
-				}
-				return true
-			})
-
-			if funcDecl == nil || funcDecl.Recv == nil {
-				t.Fatal("no method found")
-			}
-
-			result := getReceiverTypeName(funcDecl.Recv.List[0].Type)
-
-			if result != tt.expected {
-				t.Errorf("expected '%s', got '%s'", tt.expected, result)
-			}
-		})
-	}
-}
-
-// Test_constants tests the constant values.
-func Test_constants(t *testing.T) {
-	tests := []struct {
-		name     string
-		got      int
-		expected int
-	}{
-		{name: "INITIAL_STRUCT_TYPES_CAP", got: INITIAL_STRUCT_TYPES_CAP, expected: 32},
-		{name: "GET_PREFIX_LEN", got: GET_PREFIX_LEN, expected: 3},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.expected {
-				t.Errorf("expected %s to be %d, got %d", tt.name, tt.expected, tt.got)
+				t.Errorf("allStructsAreSerializable() = %v, want %v", result, tt.expected)
 			}
 		})
 	}

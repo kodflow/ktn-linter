@@ -1,32 +1,78 @@
-// Bad examples for the const002 test case.
+// Bad examples for the const003 test case.
 package const002
 
+// Bad: Multiple const blocks (scattered) - violates KTN-CONST-002
+
+// First group of constants
 const (
-	SMTP_PORT          int     = 25
-	SSH_PORT           int     = 22
-	TELNET_PORT        int     = 23
-	POOL_MAX_SIZE      int     = 500
-	POOL_MIN_SIZE      int     = 5
-	CONNECTION_TIMEOUT int     = 60
-	SERVER_VERSION     string  = "v2.0"
-	BASE_PATH          string  = "/base"
-	AUTH_TOKEN         string  = "token123"
-	AUTO_RELOAD        bool    = false
-	STRICT_MODE        bool    = true
-	LOG_ENABLED        bool    = true
-	ATTEMPTS_LIMIT     int     = 3
-	WAIT_TIME_MS       int     = 500
-	SCALE_FACTOR       float64 = 2.0
-	CACHE_HOST         string  = "127.0.0.1"
-	CACHE_PORT         int     = 6379
-	SCHEMA_NAME        string  = "public"
-	ADMIN_USER         string  = "root"
-	MISSING_COMMENT    int     = 999
-	//want "KTN-CONST-002"
-	ONLY_WANT_DIRECTIVE int = 42
-	// want "some directive"
-	SPACE_WANT_DIRECTIVE int = 43
+	// FIRST_GROUP_A is in the first group
+	FIRST_GROUP_A string = "first"
+	// FIRST_GROUP_B is in the first group
+	FIRST_GROUP_B string = "group"
 )
 
-// Valid edge case: File with only variables (no const) should not trigger errors
-var OnlyVar2 string = "test"
+// Second group - scattered (ERROR #1)
+const (
+	// SECOND_GROUP is in a second group
+	SECOND_GROUP string = "scattered"
+)
+
+// Third scattered const group (ERROR #2)
+const (
+	// BAD_SCATTERED_A is scattered
+	BAD_SCATTERED_A string = "bad"
+)
+
+// Fourth scattered const group (ERROR #3)
+const (
+	// SCATTERED_ONE in another block
+	SCATTERED_ONE string = "one"
+)
+
+// Fifth scattered const group (ERROR #4)
+const (
+	// SCATTERED_TWO in yet another block
+	SCATTERED_TWO string = "two"
+)
+
+// Sixth scattered const group (ERROR #5)
+const (
+	// THIRD_SCATTERED also scattered
+	THIRD_SCATTERED int = 1
+)
+
+// Seventh scattered const group (ERROR #6)
+const (
+	// FOURTH_SCATTERED also scattered
+	FOURTH_SCATTERED int = 2
+)
+
+// Eighth scattered const group (ERROR #7)
+const (
+	// CONST_FINAL is yet another scattered const
+	CONST_FINAL string = "final"
+)
+
+// Ninth scattered const group (ERROR #8)
+const (
+	// CONST_EXTRA yet another scattered const block
+	CONST_EXTRA string = "extra"
+)
+
+// Variable declaration (après toutes les constantes)
+var GlobalVar string = "some var"
+
+// helperFunction is used to demonstrate const blocks separated by other declarations.
+//
+// Returns:
+//   - string: a helper message
+func helperFunction() string {
+	// Retour de la fonction
+	return "helper"
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de helperFunction
+	helperFunction()
+}

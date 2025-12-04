@@ -2,6 +2,7 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/types"
 	"testing"
 )
 
@@ -21,117 +22,108 @@ func Test_runVar017(t *testing.T) {
 	}
 }
 
-// Test_hasDifferentCapacity tests the private hasDifferentCapacity helper function.
-func Test_hasDifferentCapacity(t *testing.T) {
+// Test_isPointerType tests the private isPointerType helper function.
+func Test_isPointerType(t *testing.T) {
 	tests := []struct {
 		name     string
-		call     *ast.CallExpr
+		expr     ast.Expr
 		expected bool
 	}{
 		{
-			name: "two args - no capacity",
-			call: &ast.CallExpr{
-				Args: []ast.Expr{
-					&ast.Ident{Name: "T"},
-					&ast.BasicLit{Value: "10"},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "three args - has capacity",
-			call: &ast.CallExpr{
-				Args: []ast.Expr{
-					&ast.Ident{Name: "T"},
-					&ast.BasicLit{Value: "10"},
-					&ast.BasicLit{Value: "20"},
-				},
-			},
+			name:     "pointer type",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "T"}},
 			expected: true,
 		},
 		{
-			name: "one arg - no capacity",
-			call: &ast.CallExpr{
-				Args: []ast.Expr{
-					&ast.Ident{Name: "T"},
-				},
-			},
+			name:     "non-pointer type",
+			expr:     &ast.Ident{Name: "T"},
+			expected: false,
+		},
+		{
+			name:     "selector expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "pkg"}, Sel: &ast.Ident{Name: "Type"}},
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := hasDifferentCapacity(tt.call)
+			result := isPointerType(tt.expr)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("hasDifferentCapacity() = %v, expected %v", result, tt.expected)
+				t.Errorf("isPointerType() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_isSmallConstant tests the private isSmallConstant helper function.
-func Test_isSmallConstant(t *testing.T) {
+// Test_getTypeName tests the private getTypeName helper function.
+func Test_getTypeName(t *testing.T) {
 	tests := []struct {
 		name     string
-		size     int64
-		expected bool
+		expr     ast.Expr
+		expected string
 	}{
 		{
-			name:     "negative",
-			size:     -1,
-			expected: false,
+			name:     "ident",
+			expr:     &ast.Ident{Name: "MyStruct"},
+			expected: "MyStruct",
 		},
 		{
-			name:     "zero",
-			size:     0,
-			expected: false,
+			name:     "star expr",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "MyStruct"}},
+			expected: "MyStruct",
 		},
 		{
-			name:     "small positive",
-			size:     10,
-			expected: true,
-		},
-		{
-			name:     "max allowed",
-			size:     MAX_ARRAY_SIZE_VAR016,
-			expected: true,
-		},
-		{
-			name:     "too large",
-			size:     MAX_ARRAY_SIZE_VAR016 + 1,
-			expected: false,
+			name:     "selector expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "pkg"}, Sel: &ast.Ident{Name: "Type"}},
+			expected: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isSmallConstant(tt.size)
+			result := getTypeName(tt.expr)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("isSmallConstant(%d) = %v, expected %v", tt.size, result, tt.expected)
+				t.Errorf("getTypeName() = %q, expected %q", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_shouldUseArray tests the private shouldUseArray function.
-func Test_shouldUseArray(t *testing.T) {
+// Test_getMutexTypeName tests the private getMutexTypeName helper function.
+func Test_getMutexTypeName(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typ      types.Type
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "not named type",
+			typ:      types.Typ[types.Int],
+			expected: "",
+		},
+		{
+			name:     "named type without package",
+			typ:      types.NewNamed(types.NewTypeName(0, nil, "Test", nil), types.Typ[types.Int], nil),
+			expected: "",
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if array should be used
+			result := getMutexTypeName(tt.typ)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("getMutexTypeName() = %q, expected %q", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_getConstantSize tests the private getConstantSize function.
-func Test_getConstantSize(t *testing.T) {
+// Test_collectTypesWithValueReceivers tests the private collectTypesWithValueReceivers function.
+func Test_collectTypesWithValueReceivers(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -139,13 +131,13 @@ func Test_getConstantSize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function gets constant size
+			// Test passthrough - function collects types with value receivers
 		})
 	}
 }
 
-// Test_reportArraySuggestion tests the private reportArraySuggestion function.
-func Test_reportArraySuggestion(t *testing.T) {
+// Test_checkStructsWithMutex tests the private checkStructsWithMutex function.
+func Test_checkStructsWithMutex(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -153,7 +145,119 @@ func Test_reportArraySuggestion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function reports array suggestions
+			// Test passthrough - function checks structs with mutex
+		})
+	}
+}
+
+// Test_checkValueReceivers tests the private checkValueReceivers function.
+func Test_checkValueReceivers(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks value receivers
+		})
+	}
+}
+
+// Test_checkValueParams tests the private checkValueParams function.
+func Test_checkValueParams(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks value params
+		})
+	}
+}
+
+// Test_checkAssignments tests the private checkAssignments function.
+func Test_checkAssignments(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks assignments
+		})
+	}
+}
+
+// Test_getMutexType tests the private getMutexType function.
+func Test_getMutexType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function gets mutex type
+		})
+	}
+}
+
+// Test_hasMutex tests the private hasMutex function.
+func Test_hasMutex(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if has mutex
+		})
+	}
+}
+
+// Test_hasMutexInType tests the private hasMutexInType function.
+func Test_hasMutexInType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if has mutex in type
+		})
+	}
+}
+
+// Test_getMutexTypeFromType tests the private getMutexTypeFromType function.
+func Test_getMutexTypeFromType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function gets mutex type from type
+		})
+	}
+}
+
+// Test_isMutexCopy tests the private isMutexCopy function.
+func Test_isMutexCopy(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if is mutex copy
 		})
 	}
 }

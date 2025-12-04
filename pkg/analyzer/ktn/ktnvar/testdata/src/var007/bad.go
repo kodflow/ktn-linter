@@ -1,93 +1,97 @@
-// Bad examples for the var007 test case.
+// Bad examples for the var008 test case.
 package var007
 
-import (
-	"bytes"
-	"strings"
-)
-
-// Constantes pour les tests
-const (
-	BAD_LOOP_COUNT_LARGE int = 100
-	BAD_LOOP_COUNT_SMALL int = 50
-)
-
-// badStringsBuilderNoGrow creates a strings.Builder without Grow.
+// badStringConcatInForLoop concatenates strings in a for loop.
+//
+// Params:
+//   - items: slice of strings
 //
 // Returns:
 //   - string: concatenated result
-func badStringsBuilderNoGrow() string {
-	// Bad: composite literal without Grow() call
-	sb := strings.Builder{}
+func badStringConcatInForLoop(items []string) string {
+	result := ""
 
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
-		sb.WriteString("item")
+	// Bad: string concatenation in loop
+	for _, item := range items {
+		result += item
 	}
 
 	// Return the result
-	return sb.String()
+	return result
 }
 
-// badBytesBufferNoGrow creates a bytes.Buffer without Grow.
+// badStringConcatWithSeparator concatenates with separator in loop.
 //
-// Returns:
-//   - []byte: concatenated result
-func badBytesBufferNoGrow() []byte {
-	// Bad: composite literal without Grow() call
-	buf := bytes.Buffer{}
-
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
-		buf.WriteString("item")
-	}
-
-	// Return the result
-	return buf.Bytes()
-}
-
-// badShortFormBuilder uses short form without Grow.
+// Params:
+//   - items: slice of strings
 //
 // Returns:
 //   - string: concatenated result
-func badShortFormBuilder() string {
-	// Bad: short declaration without Grow
-	sb := strings.Builder{}
+func badStringConcatWithSeparator(items []string) string {
+	result := ""
 
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
-		sb.WriteString("x")
+	// Bad: string concatenation in loop
+	for i, item := range items {
+		// Check if separator is needed
+		if i > 0 {
+			result += ", "
+		}
+		result += item
 	}
 
 	// Return the result
-	return sb.String()
+	return result
 }
 
-// badShortFormBuffer uses short form bytes.Buffer without Grow.
+// badNestedLoopConcat concatenates in nested loop.
+//
+// Params:
+//   - matrix: 2D slice of strings
 //
 // Returns:
-//   - []byte: concatenated result
-func badShortFormBuffer() []byte {
-	// Bad: short declaration without Grow
-	buf := bytes.Buffer{}
+//   - string: concatenated result
+func badNestedLoopConcat(matrix [][]string) string {
+	result := ""
 
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
-		buf.Write([]byte("x"))
+	// Iteration over rows
+	for _, row := range matrix {
+		// Bad: string concatenation in nested loop
+		for _, cell := range row {
+			result += cell
+		}
 	}
 
 	// Return the result
-	return buf.Bytes()
+	return result
+}
+
+// badClassicForLoop uses classic for loop with concatenation.
+//
+// Params:
+//   - n: number of iterations
+//
+// Returns:
+//   - string: concatenated result
+func badClassicForLoop(n int) string {
+	result := ""
+
+	// Bad: string concatenation in classic for loop
+	for i := 0; i < n; i++ {
+		result += "x"
+	}
+
+	// Return the result
+	return result
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badStringsBuilderNoGrow
-	badStringsBuilderNoGrow()
-	// Appel de badBytesBufferNoGrow
-	badBytesBufferNoGrow()
-	// Appel de badShortFormBuilder
-	badShortFormBuilder()
-	// Appel de badShortFormBuffer
-	badShortFormBuffer()
+	// Appel de badStringConcatInForLoop
+	_ = badStringConcatInForLoop(nil)
+	// Appel de badStringConcatWithSeparator
+	_ = badStringConcatWithSeparator(nil)
+	// Appel de badNestedLoopConcat
+	_ = badNestedLoopConcat(nil)
+	// Appel de badClassicForLoop
+	_ = badClassicForLoop(0)
 }

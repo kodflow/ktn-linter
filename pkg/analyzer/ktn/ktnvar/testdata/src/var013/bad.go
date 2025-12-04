@@ -1,251 +1,41 @@
-// Bad examples for the var013 test case.
+// Bad examples for the var014 test case.
 package var013
 
-// IDataHolder est l'interface pour DataHolder.
-// Cette interface définit le contrat pour accéder aux données.
-type IDataHolder interface {
-	Bytes() []byte
-}
+// Bad: Multiple separate var declarations (violates KTN-VAR-013)
+// But respects: VAR-001 (explicit types), VAR-003 (camelCase), VAR-004 (comments), VAR-006 (const before var)
 
-// DataHolder contient des données en bytes.
-// Cette structure implémente IDataHolder pour gérer les données.
-type DataHolder struct {
-	content []byte
-}
+const (
+	// BAD_MAX_RETRIES defines maximum retries
+	BAD_MAX_RETRIES int = 3
+	// PORT_VALUE is port value
+	PORT_VALUE int = 8080
+	// RATIO_VALUE is ratio value
+	RATIO_VALUE float64 = 1.5
+)
 
-// NewDataHolder crée un nouveau DataHolder.
-//
-// Params:
-//   - data: données initiales
-//
-// Returns:
-//   - *DataHolder: nouveau DataHolder
-func NewDataHolder(data []byte) *DataHolder {
-	// Retour d'une nouvelle instance
-	return &DataHolder{content: data}
-}
+// badRetries is the first var declaration
+var badRetries int = BAD_MAX_RETRIES
 
-// Bytes retourne le contenu en bytes.
-//
-// Returns:
-//   - []byte: contenu
-func (d *DataHolder) Bytes() []byte {
-	// Retour du contenu
-	return d.content
-}
+// badConfig is a separate var declaration
+var badConfig string = "config"
 
-// badRepeatedConversionInLoop convertit plusieurs fois dans une boucle.
-//
-// Params:
-//   - data: données à parcourir
-//   - target: valeur cible recherchée
-//
-// Returns:
-//   - int: nombre d'occurrences
-func badRepeatedConversionInLoop(data [][]byte, target string) int {
-	count := 0
-	// Parcours des données
-	for _, item := range data {
-		// Vérification de correspondance - CONVERSION RÉPÉTÉE
-		if string(item) == target {
-			count++
-		}
-	}
-	// Retour du compteur
-	return count
-}
+// Multiple variables in a group (still separate from other vars)
+var (
+	// badPort is the server port
+	badPort int = PORT_VALUE
 
-// badMultipleConversionsInFunction convertit plusieurs fois la même variable.
-//
-// Params:
-//   - data: données à analyser
-func badMultipleConversionsInFunction(data []byte) {
-	// Vérification hello - CONVERSION #1
-	if string(data) == "hello" {
-		println("found hello")
-	}
-	// Vérification world - CONVERSION #2
-	if string(data) == "world" {
-		println("found world")
-	}
-	// Affichage - CONVERSION #3
-	println(string(data))
-}
+	// badHost is the server hostname
+	badHost string = "localhost"
+)
 
-// badConversionInForLoop convertit dans un for classique.
-//
-// Params:
-//   - items: éléments à parcourir
-func badConversionInForLoop(items [][]byte) {
-	// Parcours des éléments
-	for range items {
-		// Vérification - CONVERSION RÉPÉTÉE
-		if string(items[0]) == "test" {
-			println("found")
-		}
-	}
-}
+// Another separate var declaration
+var badEnabled bool = true
 
-// badNestedLoopConversion convertit dans une boucle imbriquée.
-//
-// Params:
-//   - row: ligne de données
-func badNestedLoopConversion(row [][]byte) {
-	// Parcours des cellules
-	for _, cell := range row {
-		// Vérification - CONVERSION RÉPÉTÉE
-		if string(cell) == "x" {
-			println("found x")
-		}
-	}
-}
+// Yet another separate var block
+var (
+	// badRatio is a ratio value
+	badRatio float64 = RATIO_VALUE
 
-// badMapKeyConversion utilise string() répété pour les clés de map.
-//
-// Params:
-//   - cache: map de cache
-//   - keys: clés à chercher
-func badMapKeyConversion(cache map[string]int, keys [][]byte) {
-	// Parcours des clés
-	for _, key := range keys {
-		// Accès à la map - CONVERSION RÉPÉTÉE
-		_ = cache[string(key)]
-	}
-}
-
-// badNestedIndexConversion teste la conversion avec index imbriqué.
-//
-// Params:
-//   - matrix: matrice de données
-func badNestedIndexConversion(matrix [][][]byte) {
-	// Parcours des lignes
-	for _, row := range matrix {
-		// Parcours des cellules
-		for _, cell := range row {
-			// Vérification - CONVERSION RÉPÉTÉE
-			if string(cell) == "test" {
-				println("found")
-			}
-		}
-	}
-}
-
-// badStructFieldConversion teste la conversion d'un champ de struct.
-//
-// Params:
-//   - holders: liste de conteneurs
-func badStructFieldConversion(holders []DataHolder) {
-	// Parcours des conteneurs
-	for _, h := range holders {
-		// Vérification - CONVERSION RÉPÉTÉE
-		if string(h.content) == "test" {
-			println("found")
-		}
-	}
-}
-
-// badMethodResultConversion teste la conversion du résultat d'une méthode.
-//
-// Params:
-//   - holders: liste de conteneurs
-func badMethodResultConversion(holders []*DataHolder) {
-	// Parcours des conteneurs
-	for _, h := range holders {
-		// Vérification avec appel de méthode - CONVERSION RÉPÉTÉE
-		if string(h.Bytes()) == "test" {
-			println("found")
-		}
-	}
-}
-
-// badActualNestedIndex teste l'index imbriqué dans la conversion elle-même.
-//
-// Params:
-//   - matrix: matrice de données
-func badActualNestedIndex(matrix [][][]byte) {
-	// Boucle sur la matrice
-	for range matrix {
-		// Boucle sur les lignes
-		for range matrix[0] {
-			// Conversion avec double index - CONVERSION RÉPÉTÉE
-			if string(matrix[0][0]) == "test" {
-				println("found")
-			}
-		}
-	}
-}
-
-// badSelectorConversion teste la conversion avec sélecteur de struct.
-//
-// Params:
-//   - items: liste d'éléments
-func badSelectorConversion(items []DataHolder) {
-	// Parcours des éléments
-	for _, item := range items {
-		// Vérification a - CONVERSION #1
-		if string(item.content) == "a" {
-			println("a")
-		}
-		// Vérification b - CONVERSION #2
-		if string(item.content) == "b" {
-			println("b")
-		}
-		// Vérification c - CONVERSION #3
-		if string(item.content) == "c" {
-			println("c")
-		}
-	}
-}
-
-// helperFunc retourne des données de test.
-//
-// Returns:
-//   - []byte: données de test
-func helperFunc() []byte {
-	// Retour de données
-	return []byte("test")
-}
-
-// badCallExprConversion teste avec un appel de fonction.
-func badCallExprConversion() {
-	// Vérification a - CONVERSION #1
-	if string(helperFunc()) == "a" {
-		println("a")
-	}
-	// Vérification b - CONVERSION #2
-	if string(helperFunc()) == "b" {
-		println("b")
-	}
-	// Vérification c - CONVERSION #3
-	if string(helperFunc()) == "c" {
-		println("c")
-	}
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de badRepeatedConversionInLoop
-	_ = badRepeatedConversionInLoop(nil, "")
-	// Appel de badMultipleConversionsInFunction
-	badMultipleConversionsInFunction(nil)
-	// Appel de badConversionInForLoop
-	badConversionInForLoop(nil)
-	// Appel de badNestedLoopConversion
-	badNestedLoopConversion(nil)
-	// Appel de badMapKeyConversion
-	badMapKeyConversion(nil, nil)
-	// Appel de badNestedIndexConversion
-	badNestedIndexConversion(nil)
-	// Appel de badStructFieldConversion
-	badStructFieldConversion(nil)
-	// Appel de badMethodResultConversion
-	badMethodResultConversion(nil)
-	// Appel de badActualNestedIndex
-	badActualNestedIndex(nil)
-	// Appel de badSelectorConversion
-	badSelectorConversion(nil)
-	// Appel de helperFunc
-	helperFunc()
-	// Appel de badCallExprConversion
-	badCallExprConversion()
-}
+	// badCount is a counter
+	badCount int = 0
+)

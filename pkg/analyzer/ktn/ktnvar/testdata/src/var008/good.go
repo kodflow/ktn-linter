@@ -1,108 +1,86 @@
-// Good examples for the var008 test case.
+// Good examples for the var009 test case.
 package var008
 
-import "strings"
-
 const (
-	// AVG_ITEM_LENGTH is the average item length estimate
-	AVG_ITEM_LENGTH int = 10
+	// VALUE_TWO is constant value 2
+	VALUE_TWO int = 2
+	// VALUE_THREE is constant value 3
+	VALUE_THREE int = 3
+	// VALUE_FIVE is constant value 5
+	VALUE_FIVE int = 5
+	// VALUE_TEN is constant value 10
+	VALUE_TEN int = 10
 )
 
-// goodStringsBuilder uses strings.Builder for concatenation.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilder(items []string) string {
-	// sb is the strings builder
-	var sb strings.Builder
+// goodLoopSliceReuse réutilise un slice déclaré avant la boucle.
+func goodLoopSliceReuse() {
+	// Déclaration avant la boucle
+	data := make([]int, 0, VALUE_TEN)
+	// Loop appends values to reused slice
+	for i := 0; i < VALUE_TEN; i++ {
+		// Append current iteration value
+		data = append(data, i)
+	}
+	_ = data
+}
 
-	// Good: using strings.Builder
+// goodLoopMapReuse réutilise une map déclarée avant la boucle.
+func goodLoopMapReuse() {
+	// Déclaration avant la boucle avec capacité
+	cache := make(map[string]int, VALUE_TEN)
+	// Loop reuses map
+	for i := 0; i < VALUE_TEN; i++ {
+		// Store current value
+		cache["key"] = i
+	}
+	_ = cache
+}
+
+// goodRangeSliceReuse réutilise un slice dans une boucle range.
+func goodRangeSliceReuse() {
+	items := []int{1, VALUE_TWO, VALUE_THREE}
+	// Déclaration avant la boucle avec capacité
+	buffer := make([]byte, 0, VALUE_THREE)
+	// Range loop reuses buffer
 	for _, item := range items {
-		sb.WriteString(item)
+		// Convert and append item
+		buffer = append(buffer, byte(item))
 	}
-
-	// Return the result
-	return sb.String()
+	_ = buffer
 }
 
-// goodStringsBuilderWithGrow uses strings.Builder with Grow.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilderWithGrow(items []string) string {
-	// sb is the strings builder
-	var sb strings.Builder
-	sb.Grow(len(items) * AVG_ITEM_LENGTH)
+// goodNoLoopAlloc alloue hors d'une boucle.
+func goodNoLoopAlloc() {
+	// Pas de boucle, allocation OK avec array
+	var data [VALUE_TEN]int
+	_ = data
+}
 
-	// Good: using strings.Builder with preallocated size
-	for _, item := range items {
-		sb.WriteString(item)
+// goodNestedLoopReuse réutilise dans une boucle imbriquée.
+func goodNestedLoopReuse() {
+	// Déclaration avant la boucle avec array
+	var temp [VALUE_TEN]int
+	// Outer loop iterates
+	for i := 0; i < VALUE_FIVE; i++ {
+		// Inner loop modifies temp
+		for j := 0; j < VALUE_FIVE; j++ {
+			// Store multiplication result
+			temp[j] = i * j
+		}
 	}
-
-	// Return the result
-	return sb.String()
-}
-
-// goodStringsJoin uses strings.Join for simple concatenation.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsJoin(items []string) string {
-	// Good: using strings.Join for simple cases
-	return strings.Join(items, "")
-}
-
-// goodSingleConcat performs single concatenation outside loop.
-//
-// Params:
-//   - a: first string
-//   - b: second string
-//
-// Returns:
-//   - string: concatenated result
-func goodSingleConcat(a string, b string) string {
-	// Good: single concatenation, not in a loop
-	return a + b
-}
-
-// goodNoStringConcat uses int concatenation in loop (allowed).
-//
-// Params:
-//   - n: number of iterations
-//
-// Returns:
-//   - int: sum result
-func goodNoStringConcat(n int) int {
-	result := 0
-
-	// Good: not string concatenation
-	for i := 0; i < n; i++ {
-		result += i
-	}
-
-	// Return the result
-	return result
+	_ = temp
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodStringsBuilder
-	_ = goodStringsBuilder(nil)
-	// Appel de goodStringsBuilderWithGrow
-	_ = goodStringsBuilderWithGrow(nil)
-	// Appel de goodStringsJoin
-	_ = goodStringsJoin(nil)
-	// Appel de goodSingleConcat
-	_ = goodSingleConcat("", "")
-	// Appel de goodNoStringConcat
-	_ = goodNoStringConcat(0)
+	// Appel de goodLoopSliceReuse
+	goodLoopSliceReuse()
+	// Appel de goodLoopMapReuse
+	goodLoopMapReuse()
+	// Appel de goodRangeSliceReuse
+	goodRangeSliceReuse()
+	// Appel de goodNoLoopAlloc
+	goodNoLoopAlloc()
+	// Appel de goodNestedLoopReuse
+	goodNestedLoopReuse()
 }

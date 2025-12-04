@@ -3,17 +3,21 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
+	"go/types"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer009 checks for slice/map allocations inside loops
+// MAX_STRUCT_FIELDS définit le nombre maximal de champs pour une struct sans pointeur.
+const MAX_STRUCT_FIELDS int = 3
+
+// Analyzer009 checks for large struct usage without pointers
 var Analyzer009 = &analysis.Analyzer{
 	Name:     "ktnvar009",
-	Doc:      "KTN-VAR-009: Évite les allocations de slices/maps dans les boucles chaudes",
+	Doc:      "KTN-VAR-009: Utilise des pointeurs pour les structs >64 bytes",
 	Run:      runVar009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -30,100 +34,75 @@ func runVar009(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.ForStmt)(nil),
-		(*ast.RangeStmt)(nil),
+		(*ast.FuncDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Récupération du corps de la boucle
-		var body *ast.BlockStmt
-		// Vérification du type de boucle
-		switch loop := n.(type) {
-		// Cas d'une boucle for classique
-		case *ast.ForStmt:
-			// Boucle for classique
-			body = loop.Body
-		// Cas d'une boucle range
-		case *ast.RangeStmt:
-			// Boucle range
-			body = loop.Body
-		// Cas par défaut
-		default:
-			// Type de boucle non supporté
+		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérification du corps de la fonction
+		if funcDecl.Body == nil {
+			// Pas de corps de fonction
 			return
 		}
 
 		// Parcours des instructions du corps
-		checkLoopBodyForAlloc(pass, body)
+		checkFuncBody(pass, funcDecl.Body)
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// checkLoopBodyForAlloc vérifie les allocations dans le corps d'une boucle.
+// checkFuncBody vérifie le corps d'une fonction.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la boucle à vérifier
-func checkLoopBodyForAlloc(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Vérification du corps de la boucle
-	if body == nil {
-		// Corps de boucle vide
-		return
-	}
-
+//   - body: corps de la fonction
+func checkFuncBody(pass *analysis.Pass, body *ast.BlockStmt) {
 	// Parcours des instructions
 	for _, stmt := range body.List {
-		checkStmtForAlloc(pass, stmt)
+		checkStmtForLargeStruct(pass, stmt)
 	}
 }
 
-// checkStmtForAlloc vérifie une instruction pour détecter allocations.
+// checkStmtForLargeStruct vérifie une instruction.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - stmt: instruction à vérifier
-func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
+func checkStmtForLargeStruct(pass *analysis.Pass, stmt ast.Stmt) {
 	// Vérification du type d'instruction
 	switch s := stmt.(type) {
 	// Cas d'une affectation
 	case *ast.AssignStmt:
 		// Vérification des affectations
-		checkAssignForAlloc(pass, s)
+		checkAssignForLargeStruct(pass, s)
 	// Cas d'une déclaration
 	case *ast.DeclStmt:
 		// Vérification des déclarations
-		checkDeclForAlloc(pass, s)
-		// Note: les boucles imbriquées sont déjà gérées par Preorder
+		checkDeclForLargeStruct(pass, s)
 	}
 }
 
-// checkAssignForAlloc vérifie une affectation pour détecter allocations.
+// checkAssignForLargeStruct vérifie une affectation.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - assign: affectation à vérifier
-func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
+func checkAssignForLargeStruct(pass *analysis.Pass, assign *ast.AssignStmt) {
 	// Parcours des valeurs affectées
 	for _, rhs := range assign.Rhs {
-		// Vérification si allocation de slice ou map
-		if isSliceOrMapAlloc(rhs) {
-			// Allocation de slice/map détectée
-			pass.Reportf(
-				rhs.Pos(),
-				"KTN-VAR-009: évitez d'allouer des slices/maps dans une boucle",
-			)
-		}
+		checkExprForLargeStruct(pass, rhs)
 	}
 }
 
-// checkDeclForAlloc vérifie une déclaration pour détecter allocations.
+// checkDeclForLargeStruct vérifie une déclaration.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - decl: déclaration à vérifier
-func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
+func checkDeclForLargeStruct(pass *analysis.Pass, decl *ast.DeclStmt) {
 	genDecl, ok := decl.Decl.(*ast.GenDecl)
 	// Vérification du type de déclaration
 	if !ok {
@@ -141,45 +120,105 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 			continue
 		}
 
+		// Vérification du type de variable
+		if valueSpec.Type != nil {
+			checkTypeForLargeStruct(pass, valueSpec.Type, valueSpec.Pos())
+		}
+
 		// Parcours des valeurs
 		for _, value := range valueSpec.Values {
-			// Vérification si allocation de slice ou map
-			if isSliceOrMapAlloc(value) {
-				// Allocation de slice/map détectée
-				pass.Reportf(
-					value.Pos(),
-					"KTN-VAR-009: évitez d'allouer des slices/maps dans une boucle",
-				)
-			}
+			checkExprForLargeStruct(pass, value)
 		}
 	}
 }
 
-// isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
+// checkExprForLargeStruct vérifie une expression.
 //
 // Params:
+//   - pass: contexte d'analyse
 //   - expr: expression à vérifier
+func checkExprForLargeStruct(pass *analysis.Pass, expr ast.Expr) {
+	compositeLit, ok := expr.(*ast.CompositeLit)
+	// Vérification du littéral composite
+	if !ok {
+		// Pas un littéral composite
+		return
+	}
+
+	// Vérification du type
+	checkTypeForLargeStruct(pass, compositeLit.Type, compositeLit.Pos())
+}
+
+// checkTypeForLargeStruct vérifie un type.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - typ: type à vérifier
+//   - pos: position du type
+func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
+	// Vérification que ce n'est pas un pointeur
+	if _, isPointer := typ.(*ast.StarExpr); isPointer {
+		// C'est un pointeur, OK
+		return
+	}
+
+	// Récupération du type réel
+	typeInfo := pass.TypesInfo.TypeOf(typ)
+	// Vérification du type
+	if typeInfo == nil {
+		// Type inconnu
+		return
+	}
+
+	// Ignorer les types externes (frameworks comme Terraform)
+	if isExternalType(typeInfo, pass) {
+		return
+	}
+
+	// Vérification que c'est une struct
+	structType, ok := typeInfo.Underlying().(*types.Struct)
+	// Vérification du type struct
+	if !ok {
+		// Pas une struct
+		return
+	}
+
+	// Comptage des champs
+	numFields := structType.NumFields()
+	// Vérification du nombre de champs
+	if numFields > MAX_STRUCT_FIELDS {
+		// Grande struct détectée
+		pass.Reportf(
+			pos,
+			"KTN-VAR-009: utilisez un pointeur pour les structs >64 bytes (%d champs détectés)",
+			numFields,
+		)
+	}
+}
+
+// isExternalType checks if type is from external package.
+//
+// Params:
+//   - typeInfo: Type to check
+//   - pass: Analysis pass
 //
 // Returns:
-//   - bool: true si allocation détectée
-func isSliceOrMapAlloc(expr ast.Expr) bool {
-	// Vérification du type d'expression
-	switch e := expr.(type) {
-	// Cas d'un littéral composite
-	case *ast.CompositeLit:
-		// Vérification du type composite
-		if utils.IsSliceOrMapType(e.Type) {
-			// Allocation de slice/map sous forme de littéral
-			return true
-		}
-	// Cas d'un appel de fonction
-	case *ast.CallExpr:
-		// Vérification des appels make()
-		if utils.IsMakeCall(e) {
-			// Appel à make() détecté
-			return true
-		}
+//   - bool: true if type is from external package
+func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
+	// Check if it's a named type
+	named, ok := typeInfo.(*types.Named)
+	// Verification de la condition
+	if !ok {
+		return false
 	}
-	// Pas d'allocation détectée
-	return false
+
+	// Get package of the type
+	obj := named.Obj()
+	// Verification de la condition
+	if obj == nil || obj.Pkg() == nil {
+		return false
+	}
+
+	// Check if type is from current package
+	return obj.Pkg().Path() != pass.Pkg.Path()
 }

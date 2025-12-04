@@ -3,21 +3,17 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/token"
-	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// MAX_STRUCT_FIELDS définit le nombre maximal de champs pour une struct sans pointeur.
-const MAX_STRUCT_FIELDS int = 3
-
-// Analyzer010 checks for large struct usage without pointers
+// Analyzer010 checks for repeated buffer allocations in loops
 var Analyzer010 = &analysis.Analyzer{
 	Name:     "ktnvar010",
-	Doc:      "KTN-VAR-010: Utilise des pointeurs pour les structs >64 bytes",
+	Doc:      "KTN-VAR-010: Vérifie que les buffers répétés utilisent sync.Pool",
 	Run:      runVar010,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -34,191 +30,85 @@ func runVar010(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+		(*ast.ForStmt)(nil),
+		(*ast.RangeStmt)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-
-		// Vérification du corps de la fonction
-		if funcDecl.Body == nil {
-			// Pas de corps de fonction
-			return
+		// Check different loop types
+		switch loop := n.(type) {
+		// For loop: check body for buffer allocations
+		case *ast.ForStmt:
+			checkLoopBodyVar015(pass, loop.Body)
+		// Range loop: check body for buffer allocations
+		case *ast.RangeStmt:
+			checkLoopBodyVar015(pass, loop.Body)
 		}
-
-		// Parcours des instructions du corps
-		checkFuncBody(pass, funcDecl.Body)
 	})
 
-	// Retour de la fonction
+	// Return analysis result
 	return nil, nil
 }
 
-// checkFuncBody vérifie le corps d'une fonction.
+// checkLoopBodyVar015 vérifie le corps d'une boucle.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkFuncBody(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Parcours des instructions
-	for _, stmt := range body.List {
-		checkStmtForLargeStruct(pass, stmt)
-	}
-}
-
-// checkStmtForLargeStruct vérifie une instruction.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - stmt: instruction à vérifier
-func checkStmtForLargeStruct(pass *analysis.Pass, stmt ast.Stmt) {
-	// Vérification du type d'instruction
-	switch s := stmt.(type) {
-	// Cas d'une affectation
-	case *ast.AssignStmt:
-		// Vérification des affectations
-		checkAssignForLargeStruct(pass, s)
-	// Cas d'une déclaration
-	case *ast.DeclStmt:
-		// Vérification des déclarations
-		checkDeclForLargeStruct(pass, s)
-	}
-}
-
-// checkAssignForLargeStruct vérifie une affectation.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - assign: affectation à vérifier
-func checkAssignForLargeStruct(pass *analysis.Pass, assign *ast.AssignStmt) {
-	// Parcours des valeurs affectées
-	for _, rhs := range assign.Rhs {
-		checkExprForLargeStruct(pass, rhs)
-	}
-}
-
-// checkDeclForLargeStruct vérifie une déclaration.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - decl: déclaration à vérifier
-func checkDeclForLargeStruct(pass *analysis.Pass, decl *ast.DeclStmt) {
-	genDecl, ok := decl.Decl.(*ast.GenDecl)
-	// Vérification du type de déclaration
-	if !ok {
-		// Pas une déclaration générale
+//   - body: corps de la boucle
+func checkLoopBodyVar015(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Check if body exists
+	if body == nil {
+		// No body to check
 		return
 	}
 
-	var valueSpec *ast.ValueSpec
-	// Parcours des spécifications
-	for _, spec := range genDecl.Specs {
-		valueSpec, ok = spec.(*ast.ValueSpec)
-		// Vérification de la spécification de valeur
-		if !ok {
-			// Pas une spécification de valeur
-			continue
+	// Inspect all statements in loop body
+	ast.Inspect(body, func(n ast.Node) bool {
+		// Check for assignment statements
+		if assignStmt, ok := n.(*ast.AssignStmt); ok {
+			checkAssignmentForBuffer(pass, assignStmt)
 		}
+		// Continue traversal
+		return true
+	})
+}
 
-		// Vérification du type de variable
-		if valueSpec.Type != nil {
-			checkTypeForLargeStruct(pass, valueSpec.Type, valueSpec.Pos())
-		}
-
-		// Parcours des valeurs
-		for _, value := range valueSpec.Values {
-			checkExprForLargeStruct(pass, value)
+// checkAssignmentForBuffer vérifie si une assignation crée un buffer.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement d'assignation
+func checkAssignmentForBuffer(pass *analysis.Pass, stmt *ast.AssignStmt) {
+	// Check each right-hand side value
+	for _, rhs := range stmt.Rhs {
+		// Check if it's a make call
+		if callExpr, ok := rhs.(*ast.CallExpr); ok {
+			checkMakeCallForByteSlice(pass, callExpr)
 		}
 	}
 }
 
-// checkExprForLargeStruct vérifie une expression.
+// checkMakeCallForByteSlice vérifie si un make crée un []byte.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - expr: expression à vérifier
-func checkExprForLargeStruct(pass *analysis.Pass, expr ast.Expr) {
-	compositeLit, ok := expr.(*ast.CompositeLit)
-	// Vérification du littéral composite
-	if !ok {
-		// Pas un littéral composite
+//   - call: expression d'appel
+func checkMakeCallForByteSlice(pass *analysis.Pass, call *ast.CallExpr) {
+	// Check if it's a call to 'make'
+	if !utils.IsMakeCall(call) {
+		// Not a make call
 		return
 	}
 
-	// Vérification du type
-	checkTypeForLargeStruct(pass, compositeLit.Type, compositeLit.Pos())
-}
-
-// checkTypeForLargeStruct vérifie un type.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - typ: type à vérifier
-//   - pos: position du type
-func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
-	// Vérification que ce n'est pas un pointeur
-	if _, isPointer := typ.(*ast.StarExpr); isPointer {
-		// C'est un pointeur, OK
+	// Check if making a byte slice
+	if len(call.Args) == 0 || !utils.IsByteSlice(call.Args[0]) {
+		// Not a byte slice
 		return
 	}
 
-	// Récupération du type réel
-	typeInfo := pass.TypesInfo.TypeOf(typ)
-	// Vérification du type
-	if typeInfo == nil {
-		// Type inconnu
-		return
-	}
-
-	// Ignorer les types externes (frameworks comme Terraform)
-	if isExternalType(typeInfo, pass) {
-		return
-	}
-
-	// Vérification que c'est une struct
-	structType, ok := typeInfo.Underlying().(*types.Struct)
-	// Vérification du type struct
-	if !ok {
-		// Pas une struct
-		return
-	}
-
-	// Comptage des champs
-	numFields := structType.NumFields()
-	// Vérification du nombre de champs
-	if numFields > MAX_STRUCT_FIELDS {
-		// Grande struct détectée
-		pass.Reportf(
-			pos,
-			"KTN-VAR-010: utilisez un pointeur pour les structs >64 bytes (%d champs détectés)",
-			numFields,
-		)
-	}
-}
-
-// isExternalType checks if type is from external package.
-//
-// Params:
-//   - typeInfo: Type to check
-//   - pass: Analysis pass
-//
-// Returns:
-//   - bool: true if type is from external package
-func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
-	// Check if it's a named type
-	named, ok := typeInfo.(*types.Named)
-	// Verification de la condition
-	if !ok {
-		return false
-	}
-
-	// Get package of the type
-	obj := named.Obj()
-	// Verification de la condition
-	if obj == nil || obj.Pkg() == nil {
-		return false
-	}
-
-	// Check if type is from current package
-	return obj.Pkg().Path() != pass.Pkg.Path()
+	// Report the issue
+	pass.Reportf(
+		call.Pos(),
+		"KTN-VAR-010: buffer créé dans boucle, utiliser sync.Pool",
+	)
 }

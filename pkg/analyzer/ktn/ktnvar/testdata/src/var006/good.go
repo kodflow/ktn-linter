@@ -1,104 +1,116 @@
-// Good examples for the var006 test case.
+// Good examples for the var007 test case.
 package var006
 
-// Good: Proper use of make with capacity or without length
-
-const (
-	// BUFFER_SIZE defines the buffer size
-	BUFFER_SIZE int = 100
-	// LOOP_COUNT is the loop count
-	LOOP_COUNT int = 10
-	// VALUE_ONE is value one
-	VALUE_ONE int = 1
-	// VALUE_TWO is value two
-	VALUE_TWO int = 2
-	// VALUE_THREE is value three
-	VALUE_THREE int = 3
-	// CAPACITY_FIFTY is capacity of 50
-	CAPACITY_FIFTY int = 50
+import (
+	"bytes"
+	"strings"
 )
 
-// goodMakeWithCapacity creates a slice with capacity for append
+const (
+	// GROW_SIZE_LARGE is large grow size
+	GROW_SIZE_LARGE int = 400
+	// LOOP_COUNT_LARGE is large loop count
+	LOOP_COUNT_LARGE int = 100
+	// LOOP_COUNT_SMALL is small loop count
+	LOOP_COUNT_SMALL int = 10
+	// GROW_SIZE_SMALL is small grow size
+	GROW_SIZE_SMALL int = 50
+)
+
+// goodStringsBuilderTypeDecl uses type declaration (not composite literal).
 //
 // Returns:
-//   - []int: slice with preallocated capacity
-func goodMakeWithCapacity() []int {
-	// Good: Capacity specified, length is 0
-	items := make([]int, 0, BUFFER_SIZE)
-	// Itération sur les éléments
-	for i := range LOOP_COUNT {
-		items = append(items, i)
+//   - string: concatenated result
+func goodStringsBuilderTypeDecl() string {
+	// Good: var declaration without composite literal is allowed
+	var sb strings.Builder
+	sb.Grow(GROW_SIZE_LARGE)
+
+	// Iteration over data to append
+	for i := 0; i < LOOP_COUNT_LARGE; i++ {
+		sb.WriteString("item")
 	}
-	// Retour de la fonction
-	return items
+
+	// Return the result
+	return sb.String()
 }
 
-// goodMakeWithIndexing creates a slice using indexing instead of append
+// goodBytesBufferTypeDecl uses type declaration (not composite literal).
 //
 // Returns:
-//   - []string: slice with initial zero values
-func goodMakeWithIndexing() []string {
-	// Good: Using make([]T, 0, cap) with append is the proper way
-	items := make([]string, 0, BUFFER_SIZE)
-	// Itération sur les éléments
-	for i := range BUFFER_SIZE {
-		items = append(items, "value")
-		// Utilisation de i pour éviter le warning
-		_ = i
+//   - []byte: concatenated result
+func goodBytesBufferTypeDecl() []byte {
+	// Good: var declaration without composite literal is allowed
+	var buf bytes.Buffer
+	buf.Grow(GROW_SIZE_LARGE)
+
+	// Iteration over data to append
+	for i := 0; i < LOOP_COUNT_LARGE; i++ {
+		buf.WriteString("item")
 	}
-	// Retour de la fonction
-	return items
+
+	// Return the result
+	return buf.Bytes()
 }
 
-// goodLiteralWithValues creates a slice with initial values
+// goodBuilderPointer uses a pointer to strings.Builder (allowed).
 //
 // Returns:
-//   - []int: slice with initial values
-func goodLiteralWithValues() []int {
-	// Good: Literal with values
-	return []int{VALUE_ONE, VALUE_TWO, VALUE_THREE}
-}
+//   - string: concatenated result
+func goodBuilderPointer() string {
+	// Good: pointer type is allowed (different use case)
+	sb := &strings.Builder{}
 
-// goodEmptySliceForDynamic creates a slice for dynamic append
-//
-// Params:
-//   - data: input data
-//
-// Returns:
-//   - []string: filtered data
-func goodEmptySliceForDynamic(data []string) []string {
-	// Good: Use make with capacity based on input length
-	result := make([]string, 0, len(data))
-	// Itération sur les données
-	for _, item := range data {
-		// Vérification d'une condition
-		if len(item) > 0 {
-			result = append(result, item)
-		}
+	// Iteration over data to append
+	for i := 0; i < LOOP_COUNT_SMALL; i++ {
+		sb.WriteString("x")
 	}
-	// Retour de la fonction
-	return result
+
+	// Return the result
+	return sb.String()
 }
 
-// goodMakeZeroLength creates a slice with explicit zero length
+// goodNoLoopTypeDecl uses type declaration without loop (allowed).
 //
 // Returns:
-//   - []int: slice with capacity for append
-func goodMakeZeroLength() []int {
-	// Good: Length is 0, capacity is specified
-	return make([]int, 0, CAPACITY_FIFTY)
+//   - string: concatenated result
+func goodNoLoopTypeDecl() string {
+	// Good: var declaration without composite literal
+	var sb strings.Builder
+	sb.WriteString("single")
+
+	// Return the result
+	return sb.String()
+}
+
+// goodShortFormNew uses new() to create Builder (allowed).
+//
+// Returns:
+//   - string: concatenated result
+func goodShortFormNew() string {
+	// Good: using new() instead of composite literal
+	sb := new(strings.Builder)
+	sb.Grow(GROW_SIZE_SMALL)
+
+	// Iteration over data to append
+	for i := 0; i < GROW_SIZE_SMALL; i++ {
+		sb.WriteString("x")
+	}
+
+	// Return the result
+	return sb.String()
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodMakeWithCapacity
-	goodMakeWithCapacity()
-	// Appel de goodMakeWithIndexing
-	goodMakeWithIndexing()
-	// Appel de goodLiteralWithValues
-	goodLiteralWithValues()
-	// Appel de goodEmptySliceForDynamic
-	_ = goodEmptySliceForDynamic(nil)
-	// Appel de goodMakeZeroLength
-	goodMakeZeroLength()
+	// Appel de goodStringsBuilderTypeDecl
+	goodStringsBuilderTypeDecl()
+	// Appel de goodBytesBufferTypeDecl
+	goodBytesBufferTypeDecl()
+	// Appel de goodBuilderPointer
+	goodBuilderPointer()
+	// Appel de goodNoLoopTypeDecl
+	goodNoLoopTypeDecl()
+	// Appel de goodShortFormNew
+	goodShortFormNew()
 }

@@ -1,89 +1,78 @@
-// Good examples for the var002 test case.
+// Good examples for the var003 test case.
 package var002
 
-// Good: All variables have comments, explicit types, proper naming, single-block grouping
+// Good: Variables with correct type visibility
 
 const (
 	// DEFAULT_TIMEOUT is the default timeout
 	DEFAULT_TIMEOUT int = 30
-	// HTTP_PORT is the default HTTP port
-	HTTP_PORT int = 80
-	// HTTPS_PORT is the default HTTPS port
-	HTTPS_PORT int = 443
-	// FTP_PORT is the default FTP port
-	FTP_PORT int = 21
-	// MAX_CONNECTIONS defines maximum concurrent connections
-	MAX_CONNECTIONS int = 1000
-	// MIN_CONNECTIONS defines minimum concurrent connections
-	MIN_CONNECTIONS int = 10
-	// MAX_RETRY_COUNT defines maximum number of retries
-	MAX_RETRY_COUNT int = 5
-	// RETRY_DELAY_MS defines delay between retries in milliseconds
-	RETRY_DELAY_MS int = 1000
-	// BACKOFF_MULTIPLIER defines the backoff multiplier
-	BACKOFF_MULTIPLIER float64 = 1.5
-	// DB_PORT is the database port
-	DB_PORT int = 5432
-	// ONLY_CONST is valid edge case
-	ONLY_CONST int = 999
+	// DEFAULT_PORT is the default port
+	DEFAULT_PORT int = 8080
+	// MAX_CONNECTIONS is the maximum connections
+	MAX_CONNECTIONS int = 100
+	// ANSWER is the answer to everything
+	ANSWER int = 42
+	// RETRIES_MULTIPLIER is the multiplier for retries
+	RETRIES_MULTIPLIER int = 3
+	// BUFFER_SIZE is the buffer size
+	BUFFER_SIZE int = 1024
+	// BYTE_H is the byte value for H
+	BYTE_H byte = 72
+	// BYTE_E is the byte value for e
+	BYTE_E byte = 101
+	// BYTE_L is the byte value for l
+	BYTE_L byte = 108
+	// BYTE_O is the byte value for o
+	BYTE_O byte = 111
+	// FLOAT_MULTIPLIER is the float multiplier
+	FLOAT_MULTIPLIER int = 3
 )
 
-// All package-level variables grouped in a single block
+// Cas 1: Type non visible (constante, variable) → type explicite requis
+// Cas 2: Type visible dans composite literal → pas de type explicite
+// Cas 3: Type visible via conversion de type → pas de type explicite
 var (
-	// httpPort is the default HTTP port
-	httpPort int = HTTP_PORT
-
-	// httpsPort is the default HTTPS port
-	httpsPort int = HTTPS_PORT
-
-	// ftpPort is the default FTP port
-	ftpPort int = FTP_PORT
-
-	// maxConnections defines maximum concurrent connections
+	// defaultRetries defines the default number of retries
+	defaultRetries int = DEFAULT_TIMEOUT
+	// configuration holds the app configuration
+	configuration string = "default"
+	// isEnabled indicates if feature is enabled
+	isEnabled bool = false
+	// serverPort is the server port number
+	serverPort int = DEFAULT_PORT
+	// serverHost is the server hostname
+	serverHost string = "localhost"
+	// maxConnections is the maximum connections
 	maxConnections int = MAX_CONNECTIONS
-
-	// minConnections defines minimum concurrent connections
-	minConnections int = MIN_CONNECTIONS
-
-	// defaultTimeout defines the default timeout in seconds
-	defaultTimeout int = DEFAULT_TIMEOUT
-
-	// apiVersion is the current API version
-	apiVersion string = "v1.0"
-
-	// apiEndpoint is the base API endpoint
-	apiEndpoint string = "/api"
-
-	// apiKey is the authentication key
-	apiKey string = "secret"
-
-	// featureEnabled indicates if the feature is enabled
-	featureEnabled bool = true
-
-	// debugMode indicates if debug mode is active
-	debugMode bool = false
-
-	// verboseLogging indicates if verbose logging is enabled
-	verboseLogging bool = false
-
-	// maxRetryCount defines maximum number of retries
-	maxRetryCount int = MAX_RETRY_COUNT
-
-	// retryDelayMs defines delay between retries in milliseconds
-	retryDelayMs int = RETRY_DELAY_MS
-
-	// backoffMultiplier defines the backoff multiplier
-	backoffMultiplier float64 = BACKOFF_MULTIPLIER
-
-	// dbHost is the database host
-	dbHost string = "localhost"
-
-	// dbPort is the database port
-	dbPort int = DB_PORT
-
-	// dbName is the database name
-	dbName string = "mydb"
-
-	// dbUser is the database user
-	dbUser string = "admin"
+	// endpoints is a list of endpoints
+	endpoints = []string{"http://localhost:8080", "http://localhost:9090"}
+	// configMap is a map of configuration values
+	configMap = map[string]int{"timeout": DEFAULT_TIMEOUT, "retries": RETRIES_MULTIPLIER}
+	// buffer is created with make
+	buffer = make([]byte, 0, BUFFER_SIZE)
+	// cache is a map created with make
+	cache = make(map[string]string)
+	// convertedInt is a type conversion
+	convertedInt = int(ANSWER)
+	// convertedStr is a type conversion
+	convertedStr = string([]byte{BYTE_H, BYTE_E, BYTE_L, BYTE_L, BYTE_O})
+	// convertedFloat is a type conversion
+	convertedFloat = float64(FLOAT_MULTIPLIER)
 )
+
+// goodFunction demonstrates correct local variable usage (not checked by VAR-001).
+//
+// Returns:
+//   - int: calculated value
+func goodFunction() int {
+	// Local variables are not checked by VAR-001
+	localVar := ANSWER
+	// Continue traversing AST nodes.
+	return localVar
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodFunction
+	goodFunction()
+}

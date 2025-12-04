@@ -10,16 +10,16 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer012 checks that functions don't use naked returns (except for very short functions)
+// Analyzer012 checks that functions with >3 return values use named returns
 const (
-	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
-	MAX_LINES_FOR_NAKED_RETURN int = 5
+	// MAX_UNNAMED_RETURNS max unnamed returns allowed
+	MAX_UNNAMED_RETURNS int = 3
 )
 
-// Analyzer012 checks that naked returns are only used in very short functions
+// Analyzer012 checks that functions with >3 return values use named returns
 var Analyzer012 = &analysis.Analyzer{
 	Name:     "ktnfunc012",
-	Doc:      "KTN-FUNC-012: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
+	Doc:      "KTN-FUNC-012: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
 	Run:      runFunc012,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -42,12 +42,6 @@ func runFunc012(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip if no body (external functions)
-		if funcDecl.Body == nil {
-			// Retour de la fonction
-			return
-		}
-
 		// Skip test functions
 		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
@@ -56,69 +50,41 @@ func runFunc012(pass *analysis.Pass) (any, error) {
 
 		funcName := funcDecl.Name.Name
 
-		// Skip if function doesn't have named return values
-		if !hasNamedReturns(funcDecl.Type.Results) {
+		// Vérification de la condition
+		if funcDecl.Type.Results == nil {
 			// Retour de la fonction
 			return
 		}
 
-		// Count the lines of the function
-		pureLines := countPureCodeLines(pass, funcDecl.Body)
+		// Count total return values
+		returnCount := 0
+		hasUnnamedReturns := false
 
-		// Check for naked returns
-		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
-			ret, ok := node.(*ast.ReturnStmt)
+		// Itération sur les éléments
+		for _, field := range funcDecl.Type.Results.List {
 			// Vérification de la condition
-			if !ok {
-				// Retour de la fonction
-				return true
+			if len(field.Names) == 0 {
+				// Unnamed return
+				hasUnnamedReturns = true
+				returnCount++
+			} else {
+				// Named returns
+				returnCount += len(field.Names)
 			}
+		}
 
-			// Naked return has no results specified
-			if len(ret.Results) == 0 {
-				// Allow naked returns in very short functions
-				if pureLines >= MAX_LINES_FOR_NAKED_RETURN {
-					pass.Reportf(
-						ret.Pos(),
-						"KTN-FUNC-012: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
-						funcName,
-						pureLines,
-						MAX_LINES_FOR_NAKED_RETURN-1,
-					)
-				}
-			}
-
-			// Retour de la fonction
-			return true
-		})
+		// If more than 3 returns and has unnamed returns, report error
+		if returnCount > MAX_UNNAMED_RETURNS && hasUnnamedReturns {
+			pass.Reportf(
+				funcDecl.Type.Results.Pos(),
+				"KTN-FUNC-012: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
+				funcName,
+				returnCount,
+				MAX_UNNAMED_RETURNS,
+			)
+		}
 	})
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// hasNamedReturns checks if the function has named return values
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - bool: true si retours nommés
-func hasNamedReturns(results *ast.FieldList) bool {
-	// Vérification de la condition
-	if results == nil || len(results.List) == 0 {
-		// Retour de la fonction
-		return false
-	}
-
-	// Itération sur les éléments
-	for _, field := range results.List {
-		// Vérification de la condition
-		if len(field.Names) > 0 {
-			// Retour de la fonction
-			return true
-		}
-	}
-
-	// Retour de la fonction
-	return false
 }

@@ -8,6 +8,6 @@ import (
 )
 
 func TestStruct004(t *testing.T) {
-	// good.go: 0 errors (getters idiomatiques sans Get), bad.go: 3 errors (getters avec préfixe Get)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer004, "struct004", 3)
+	// good.go: 0 errors (1 struct), bad.go: 2 errors (3 structs - les 2 dernières sont en violation)
+	testhelper.TestGoodBad(t, ktnstruct.Analyzer004, "struct004", 2)
 }

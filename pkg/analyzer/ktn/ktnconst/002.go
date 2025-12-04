@@ -7,16 +7,13 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer002 checks that every constant has an associated comment
+// Analyzer002 checks that constants are grouped together and placed above var declarations
 var Analyzer002 = &analysis.Analyzer{
-	Name:     "ktnconst002",
-	Doc:      "KTN-CONST-002: Vérifie que chaque constante a un commentaire associé",
-	Run:      runConst002,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
+	Name: "ktnconst002",
+	Doc:  "KTN-CONST-002: Vérifie que les constantes sont groupées ensemble et placées au-dessus des déclarations var",
+	Run:  runConst002,
 }
 
 // runConst002 description à compléter.
@@ -28,54 +25,111 @@ var Analyzer002 = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runConst002(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
-	}
-
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
-
-		// Only check const declarations
-		if genDecl.Tok != token.CONST {
-			// Retour de la fonction
-			return
+	// Analyze each file independently
+	for _, file := range pass.Files {
+		var constGroups []shared.DeclGroup
+		var varGroups []shared.DeclGroup
+		tracker := &declTracker{
+			constGroups: constGroups,
+			varGroups:   varGroups,
 		}
 
-		// Check if the GenDecl has a doc comment (applies to all constants in the group)
-		// Filter out "want" directives used by analysistest
-		hasGenDeclDoc := shared.HasValidComment(genDecl.Doc)
-
-		// Itération sur les éléments
-		for _, spec := range genDecl.Specs {
-			valueSpec := spec.(*ast.ValueSpec)
-
-			// Check if this specific ValueSpec has a doc comment or line comment
-			// Filter out "want" directives used by analysistest
-			hasValueSpecDoc := shared.HasValidComment(valueSpec.Doc)
-			hasValueSpecComment := shared.HasValidComment(valueSpec.Comment)
-
-			// A constant is considered documented if:
-			// 1. The GenDecl has a doc comment (group documentation), OR
-			// 2. The ValueSpec has a doc comment (above the constant), OR
-			// 3. The ValueSpec has a line comment (on the same line)
-			hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
-
+		// Collect const and var declarations
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
 			// Vérification de la condition
-			if !hasComment {
-				// Itération sur les éléments
-				for _, name := range valueSpec.Names {
-					pass.Reportf(
-						name.Pos(),
-						"KTN-CONST-002: la constante '%s' doit avoir un commentaire associé",
-						name.Name,
-					)
-				}
+			if !ok {
+				continue
+			}
+
+			// Sélection selon la valeur
+			switch genDecl.Tok {
+			// Traitement
+			case token.CONST:
+				tracker.constGroups = append(tracker.constGroups, shared.DeclGroup{
+					Decl: genDecl,
+					Pos:  genDecl.Pos(),
+				})
+			// Traitement
+			case token.VAR:
+				tracker.varGroups = append(tracker.varGroups, shared.DeclGroup{
+					Decl: genDecl,
+					Pos:  genDecl.Pos(),
+				})
 			}
 		}
-	})
+
+		// Check violations
+		checkConstGrouping(pass, tracker)
+	}
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+type declTracker struct {
+	constGroups []shared.DeclGroup
+	varGroups   []shared.DeclGroup
+}
+
+// checkConstGrouping description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
+	// If no var declarations, only check if consts are scattered
+	if len(tracker.varGroups) == 0 {
+		checkScatteredConsts(pass, tracker.constGroups)
+		// Retour de la fonction
+		return
+	}
+
+	// Find the position of the first var declaration
+	firstVarPos := tracker.varGroups[0].Pos
+
+	// Separate consts into those before and after first var
+	var constGroupsBeforeVar []shared.DeclGroup
+	var constGroupsAfterVar []shared.DeclGroup
+
+	// Itération sur les éléments
+	for _, constGroup := range tracker.constGroups {
+		// Vérification de la condition
+		if constGroup.Pos < firstVarPos {
+			constGroupsBeforeVar = append(constGroupsBeforeVar, constGroup)
+			// Cas alternatif
+		} else {
+			constGroupsAfterVar = append(constGroupsAfterVar, constGroup)
+		}
+	}
+
+	// Report consts that appear after var
+	for _, constGroup := range constGroupsAfterVar {
+		pass.Reportf(
+			constGroup.Pos,
+			"KTN-CONST-002: les constantes doivent être groupées et placées au-dessus des déclarations var",
+		)
+	}
+
+	// Check if consts before vars are scattered
+	checkScatteredConsts(pass, constGroupsBeforeVar)
+}
+
+// checkScatteredConsts description à compléter.
+//
+// Params:
+//   - pass: contexte d'analyse
+func checkScatteredConsts(pass *analysis.Pass, constGroups []shared.DeclGroup) {
+	// If 0 or 1 const group, they're not scattered
+	if len(constGroups) <= 1 {
+		// Retour de la fonction
+		return
+	}
+
+	// Report all const groups except the first as scattered
+	for i := 1; i < len(constGroups); i++ {
+		pass.Reportf(
+			constGroups[i].Pos,
+			"KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc",
+		)
+	}
 }

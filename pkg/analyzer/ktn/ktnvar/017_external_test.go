@@ -7,6 +7,11 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestVar017 vérifie la détection des copies de mutex.
+//
+// Params:
+//   - t: contexte de test
 func TestVar017(t *testing.T) {
-	testhelper.TestGoodBad(t, ktnvar.Analyzer017, "var017", 5)
+	// 15 cas de copies de mutex attendus
+	testhelper.TestGoodBad(t, ktnvar.Analyzer017, "var017", 15)
 }

@@ -60,9 +60,9 @@ func TestGetSeverity(t *testing.T) {
 			want:     severity.SEVERITY_WARNING,
 		},
 		{
-			name:     "Known rule KTN-CONST-002 is WARNING",
+			name:     "Known rule KTN-CONST-002 is INFO (groupement)",
 			ruleCode: "KTN-CONST-002",
-			want:     severity.SEVERITY_WARNING,
+			want:     severity.SEVERITY_INFO,
 		},
 		{
 			name:     "Unknown rule defaults to WARNING",

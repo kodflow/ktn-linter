@@ -1,245 +1,115 @@
-// Good examples for the var012 test case.
+// Good examples for the var013 test case.
 package var012
 
-import (
-	"fmt"
-	"io"
-	"os"
-)
+import "bytes"
 
-// goodNoShadowingInIf utilise la réassignation correcte.
+// goodPreallocatedConversion préalloue la conversion hors de la boucle.
 //
 // Params:
-//   - path: chemin du fichier
+//   - data: données à traiter
+//   - target: cible à rechercher
 //
 // Returns:
-//   - error: erreur éventuelle
-func goodNoShadowingInIf(path string) error {
-	file, err := os.Open(path)
-	// Vérification de la condition
-	if err != nil {
-		// Retour de la fonction
-		return err
-	}
-	defer file.Close()
-
-	data, err := io.ReadAll(file)
-	// Vérification de la condition
-	if err != nil {
-		// Retour de la fonction
-		return err
-	}
-
-	// Vérification de la condition
-	if len(data) > 0 {
-		err = goodValidateData(data) // OK: réassignation avec '='
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-
-	// Retour de la fonction
-	return err
-}
-
-// goodFmtErrorf utilise la réassignation correcte.
-//
-// Params:
-//   - url: URL de connexion
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodFmtErrorf(url string) error {
-	conn, err := goodDial(url)
-	// Vérification de la condition
-	if err != nil {
-		err = fmt.Errorf("failed to connect: %w", err) // OK: réassignation
-		_ = conn
-		// Retour de la fonction
-		return err
-	}
-	// Retour de la fonction
-	return nil
-}
-
-// goodInFor utilise la réassignation correcte dans une boucle.
-//
-// Params:
-//   - files: liste de fichiers
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodInFor(files []string) error {
-	var err error
+//   - int: nombre d'occurrences
+func goodPreallocatedConversion(data [][]byte, target string) int {
+	count := 0
+	targetBytes := []byte(target) // OK: Conversion une seule fois
 	// Parcours des éléments
-	for _, file := range files {
-		err = goodProcessFile(file) // OK: réassignation
+	for _, item := range data {
 		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
+		if bytes.Equal(item, targetBytes) {
+			count++
 		}
 	}
 	// Retour de la fonction
-	return err
+	return count
 }
 
-// goodNewVariable déclare une nouvelle variable avec un nom différent.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodNewVariable() error {
-	result, err := goodDoSomething()
-	// Vérification de la condition
-	if err != nil {
-		// Retour de la fonction
-		return err
-	}
-
-	// Vérification de la condition
-	if result > 0 {
-		err2 := goodDoAnotherThing() // OK: nouvelle variable avec nom différent
-		// Vérification de la condition
-		if err2 != nil {
-			// Retour de la fonction
-			return err2
-		}
-	}
-
-	err = goodFinalCheck() // OK: réassignation
-	// Retour de la fonction
-	return err
-}
-
-// goodLocalScopeErr déclare err dans un scope différent (OK).
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodLocalScopeErr() error {
-	// Vérification de la condition
-	if true {
-		err := goodDoSomething2() // OK: première déclaration dans ce scope
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-
-	// Vérification de la condition
-	if false {
-		err := goodDoAnotherThing() // OK: première déclaration dans ce scope
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-
-	// Retour de la fonction
-	return nil
-}
-
-// goodValidateData valide les données.
+// goodSingleConversion convertit une seule fois.
 //
 // Params:
-//   - _data: données à valider (non utilisées dans cet exemple)
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodValidateData(_data []byte) error {
-	// Retour de la fonction
-	return nil
+//   - data: données à convertir
+func goodSingleConversion(data []byte) {
+	str := string(data) // OK: Conversion une seule fois puis réutilisation
+	// Vérification de la condition
+	if str == "hello" {
+		println("found hello")
+	}
+	// Vérification de la condition
+	if str == "world" {
+		println("found world")
+	}
+	println(str)
 }
 
-// goodDial établit une connexion.
+// goodBytesEqual utilise bytes.Equal au lieu de string().
 //
 // Params:
-//   - _url: URL de connexion (non utilisée dans cet exemple)
-//
-// Returns:
-//   - any: connexion
-//   - error: erreur éventuelle
-func goodDial(_url string) (any, error) {
-	// Retour de la fonction
-	return nil, nil
+//   - items: éléments à comparer
+func goodBytesEqual(items [][]byte) {
+	target := []byte("test")
+	// Parcours des éléments
+	for i := range len(items) {
+		// Vérification de la condition
+		if bytes.Equal(items[i], target) { // OK: Pas de conversion string
+			println("found")
+		}
+	}
 }
 
-// goodProcessFile traite un fichier.
+// goodNestedWithPrealloc préalloue dans la boucle externe.
 //
 // Params:
-//   - _file: fichier à traiter (non utilisé dans cet exemple)
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodProcessFile(_file string) error {
-	// Retour de la fonction
-	return nil
+//   - matrix: matrice à parcourir
+func goodNestedWithPrealloc(matrix [][][]byte) {
+	target := []byte("x")
+	// Parcours des éléments
+	for _, row := range matrix {
+		// Parcours des éléments
+		for _, cell := range row {
+			// Vérification de la condition
+			if bytes.Equal(cell, target) { // OK: Pas de conversion
+				println("found x")
+			}
+		}
+	}
 }
 
-// goodDoSomething effectue une opération.
+// goodSingleUseConversion utilise string() une seule fois.
 //
-// Returns:
-//   - int: résultat
-//   - error: erreur éventuelle
-func goodDoSomething() (int, error) {
-	// Retour de la fonction
-	return 0, nil
+// Params:
+//   - data: données à vérifier
+func goodSingleUseConversion(data []byte) {
+	// Vérification de la condition
+	if string(data) == "unique" { // OK: Une seule utilisation
+		println("found unique")
+	}
 }
 
-// goodDoSomething2 effectue une autre opération.
+// goodDifferentVariables convertit des variables différentes.
 //
-// Returns:
-//   - error: erreur éventuelle
-func goodDoSomething2() error {
-	// Retour de la fonction
-	return nil
-}
-
-// goodDoAnotherThing effectue encore une autre opération.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodDoAnotherThing() error {
-	// Retour de la fonction
-	return nil
-}
-
-// goodFinalCheck effectue une vérification finale.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodFinalCheck() error {
-	// Retour de la fonction
-	return nil
+// Params:
+//   - a: première variable
+//   - b: deuxième variable
+//   - c: troisième variable
+func goodDifferentVariables(a []byte, b []byte, c []byte) {
+	println(string(a)) // OK: Chaque variable convertie une seule fois
+	println(string(b))
+	println(string(c))
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodNoShadowingInIf
-	_ = goodNoShadowingInIf("")
-	// Appel de goodFmtErrorf
-	_ = goodFmtErrorf("")
-	// Appel de goodInFor
-	_ = goodInFor(nil)
-	// Appel de goodNewVariable
-	goodNewVariable()
-	// Appel de goodLocalScopeErr
-	goodLocalScopeErr()
-	// Appel de goodValidateData
-	_ = goodValidateData(nil)
-	// Appel de goodDial
-	_, _ = goodDial("")
-	// Appel de goodProcessFile
-	_ = goodProcessFile("")
-	// Appel de goodDoSomething
-	goodDoSomething()
-	// Appel de goodDoSomething2
-	goodDoSomething2()
-	// Appel de goodDoAnotherThing
-	goodDoAnotherThing()
-	// Appel de goodFinalCheck
-	goodFinalCheck()
+	// Appel de goodPreallocatedConversion
+	_ = goodPreallocatedConversion(nil, "")
+	// Appel de goodSingleConversion
+	goodSingleConversion(nil)
+	// Appel de goodBytesEqual
+	goodBytesEqual(nil)
+	// Appel de goodNestedWithPrealloc
+	goodNestedWithPrealloc(nil)
+	// Appel de goodSingleUseConversion
+	goodSingleUseConversion(nil)
+	// Appel de goodDifferentVariables
+	goodDifferentVariables(nil, nil, nil)
 }

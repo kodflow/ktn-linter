@@ -8,7 +8,7 @@ import (
 // Test_runFunc007 tests the runFunc007 private function.
 func Test_runFunc007(t *testing.T) {
 	// Test cases pour la fonction privée runFunc007
-	// La logique principale est testée via l'API publique dans 007_external_test.go
+	// La logique principale est testée via l'API publique dans 009_external_test.go
 	// Ce test vérifie les cas edge de la fonction privée
 
 	tests := []struct {
@@ -26,51 +26,32 @@ func Test_runFunc007(t *testing.T) {
 	}
 }
 
-// Test_extractCommentLines vérifie l'extraction des lignes de commentaires.
-func Test_extractCommentLines(t *testing.T) {
+// Test_isGetter vérifie la détection des getters.
+func Test_isGetter(t *testing.T) {
 	tests := []struct {
 		name     string
-		comments *ast.CommentGroup
-		expected int
-	}{
-		{
-			name: "error case validation",
-			comments: &ast.CommentGroup{
-				List: []*ast.Comment{
-					{Text: "// First line"},
-					{Text: "// Second line"},
-				},
-			},
-			expected: 2,
-		},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			result := extractCommentLines(tt.comments)
-			// Vérification du nombre de lignes
-			if len(result) != tt.expected {
-				t.Errorf("extractCommentLines() returned %d lines, want %d", len(result), tt.expected)
-			}
-		})
-	}
-}
-
-// Test_validateDescriptionLine vérifie la validation de la ligne de description.
-func Test_validateDescriptionLine(t *testing.T) {
-	tests := []struct {
-		name     string
-		comments []string
 		funcName string
-		wantErr  bool
+		expected bool
 	}{
 		{
 			name:     "error case validation",
-			comments: []string{"// testFunc description"},
-			funcName: "testFunc",
-			wantErr:  false,
+			funcName: "GetValue",
+			expected: true,
+		},
+		{
+			name:     "IsValid getter",
+			funcName: "IsValid",
+			expected: true,
+		},
+		{
+			name:     "HasData getter",
+			funcName: "HasData",
+			expected: true,
+		},
+		{
+			name:     "NotGetter function",
+			funcName: "Calculate",
+			expected: false,
 		},
 	}
 
@@ -78,29 +59,44 @@ func Test_validateDescriptionLine(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateDescriptionLine(tt.comments, tt.funcName)
-			// Vérification de l'erreur
-			if (err != "") != tt.wantErr {
-				t.Errorf("validateDescriptionLine() error = %v, wantErr %v", err, tt.wantErr)
+			result := isGetter(tt.funcName)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isGetter(%s) = %v, want %v", tt.funcName, result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_validateParamsSection vérifie la validation de la section Params.
-func Test_validateParamsSection(t *testing.T) {
+// Test_hasSideEffect vérifie la détection des effets de bord.
+func Test_hasSideEffect(t *testing.T) {
 	tests := []struct {
 		name     string
-		comments []string
-		startIdx int
+		expr     ast.Expr
+		expected bool
 	}{
 		{
 			name: "error case validation",
-			comments: []string{
-				"// Params:",
-				"//   - param1: description",
+			expr: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "obj"},
+				Sel: &ast.Ident{Name: "field"},
 			},
-			startIdx: 0,
+			expected: true,
+		},
+		{
+			name: "simple identifier",
+			expr: &ast.Ident{Name: "x"},
+			expected: false,
+		},
+		{
+			name: "index on selector",
+			expr: &ast.IndexExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "obj"},
+					Sel: &ast.Ident{Name: "arr"},
+				},
+			},
+			expected: true,
 		},
 	}
 
@@ -108,52 +104,11 @@ func Test_validateParamsSection(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			_, _ = validateParamsSection(tt.comments, tt.startIdx)
-			// Test passthrough - la validation complète est testée via external tests
-		})
-	}
-}
-
-// Test_validateReturnsSection vérifie la validation de la section Returns.
-func Test_validateReturnsSection(t *testing.T) {
-	tests := []struct {
-		name     string
-		comments []string
-		startIdx int
-	}{
-		{
-			name: "error case validation",
-			comments: []string{
-				"// Returns:",
-				"//   - error: error description",
-			},
-			startIdx: 0,
-		},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			_, _ = validateReturnsSection(tt.comments, tt.startIdx)
-			// Test passthrough - la validation complète est testée via external tests
-		})
-	}
-}
-
-// Test_validateDocFormat vérifie la validation du format de la documentation.
-func Test_validateDocFormat(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - la logique est testée via external tests
+			result := hasSideEffect(tt.expr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("hasSideEffect() = %v, want %v", result, tt.expected)
+			}
 		})
 	}
 }

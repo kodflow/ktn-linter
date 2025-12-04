@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar007(t *testing.T) {
-	// 4 Builder/Buffer declarations without Grow
-	testhelper.TestGoodBad(t, ktnvar.Analyzer007, "var007", 4)
+	// 6 string concatenation errors detected
+	testhelper.TestGoodBad(t, ktnvar.Analyzer007, "var007", 6)
 }

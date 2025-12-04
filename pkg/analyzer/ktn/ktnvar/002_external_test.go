@@ -8,7 +8,6 @@ import (
 )
 
 func TestVar002(t *testing.T) {
-	// good.go: 0 errors (all variables have comments)
-	// bad.go: 20 errors (missing comments)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 20)
+	// 6 variables without explicit types + 4 variables with redundant types = 10
+	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 10)
 }

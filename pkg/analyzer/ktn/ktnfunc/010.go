@@ -1,42 +1,40 @@
-// Analyzer 010 for the ktnfunc package.
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
 	"go/ast"
-	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Analyzer010 checks that functions don't use naked returns (except for very short functions)
 const (
-	// INITIAL_PARAMS_CAP initial capacity for params map
-	INITIAL_PARAMS_CAP int = 8
-	// INITIAL_USED_VARS_CAP initial capacity for used vars map
-	INITIAL_USED_VARS_CAP int = 16
+	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
+	MAX_LINES_FOR_NAKED_RETURN int = 5
 )
 
-// Analyzer010 vérifie que les paramètres non utilisés sont explicitement ignorés.
+// Analyzer010 checks that naked returns are only used in very short functions
 var Analyzer010 = &analysis.Analyzer{
 	Name:     "ktnfunc010",
-	Doc:      "KTN-FUNC-010: paramètres non utilisés doivent être préfixés par _ ou assignés à _",
+	Doc:      "KTN-FUNC-010: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
 	Run:      runFunc010,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc010 exécute l'analyse KTN-FUNC-010.
+// runFunc010 description à compléter.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - any: résultat
 //   - error: erreur éventuelle
 func runFunc010(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Filtrer uniquement les déclarations de fonction
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
@@ -44,209 +42,83 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérification de la présence d'un corps de fonction
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
-			// Fonction sans corps (interface method signature)
+			// Retour de la fonction
 			return
 		}
 
-		// Collecter tous les paramètres
-		params := collectFunctionParams(funcDecl)
-
-		// Collecter les variables utilisées dans le corps
-		usedVars := collectUsedVariables(funcDecl.Body)
-
-		// Collecter les variables explicitement ignorées avec _ = var
-		ignoredVars := collectIgnoredVariables(funcDecl.Body)
-
-		// Vérifier chaque paramètre
-		for paramName, paramPos := range params {
-			// Ignorer les paramètres déjà préfixés par _
-			if len(paramName) > 0 && paramName[0] == '_' {
-				// Paramètre déjà marqué comme ignoré
-				continue
-			}
-
-			// Vérifier si le paramètre est utilisé
-			if usedVars[paramName] {
-				// Paramètre utilisé
-				continue
-			}
-
-			// Vérifier si le paramètre est explicitement ignoré
-			if ignoredVars[paramName] {
-				// Paramètre explicitement ignoré
-				continue
-			}
-
-			// Paramètre non utilisé et non ignoré - reporter l'erreur
-			pass.Reportf(
-				paramPos,
-				"KTN-FUNC-010: le paramètre '%s' n'est pas utilisé. Préfixez-le par _ (ex: _%s) ou ajoutez '_ = %s' dans le corps de la fonction",
-				paramName,
-				paramName,
-				paramName,
-			)
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
+			return
 		}
+
+		funcName := funcDecl.Name.Name
+
+		// Skip if function doesn't have named return values
+		if !hasNamedReturns(funcDecl.Type.Results) {
+			// Retour de la fonction
+			return
+		}
+
+		// Count the lines of the function
+		pureLines := countPureCodeLines(pass, funcDecl.Body)
+
+		// Check for naked returns
+		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+			ret, ok := node.(*ast.ReturnStmt)
+			// Vérification de la condition
+			if !ok {
+				// Retour de la fonction
+				return true
+			}
+
+			// Naked return has no results specified
+			if len(ret.Results) == 0 {
+				// Allow naked returns in very short functions
+				if pureLines >= MAX_LINES_FOR_NAKED_RETURN {
+					pass.Reportf(
+						ret.Pos(),
+						"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
+						funcName,
+						pureLines,
+						MAX_LINES_FOR_NAKED_RETURN-1,
+					)
+				}
+			}
+
+			// Retour de la fonction
+			return true
+		})
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectFunctionParams collecte tous les paramètres d'une fonction.
-//
+// hasNamedReturns checks if the function has named return values
 // Params:
-//   - funcDecl: déclaration de fonction
+//   - pass: contexte d'analyse
 //
 // Returns:
-//   - map[string]token.Pos: map des noms de paramètres vers leurs positions
-func collectFunctionParams(funcDecl *ast.FuncDecl) map[string]token.Pos {
-	params := make(map[string]token.Pos, INITIAL_PARAMS_CAP)
-
-	// Vérification de la présence de paramètres
-	if funcDecl.Type.Params == nil {
-		// Pas de paramètres
-		return params
+//   - bool: true si retours nommés
+func hasNamedReturns(results *ast.FieldList) bool {
+	// Vérification de la condition
+	if results == nil || len(results.List) == 0 {
+		// Retour de la fonction
+		return false
 	}
 
-	// Parcourir tous les paramètres
-	for _, field := range funcDecl.Type.Params.List {
-		// Parcourir tous les noms dans ce champ (peut y avoir plusieurs: x, y int)
-		for _, name := range field.Names {
-			// Vérification du nom
-			if name != nil && name.Name != "_" {
-				// Ajouter le paramètre
-				params[name.Name] = name.Pos()
-			}
+	// Itération sur les éléments
+	for _, field := range results.List {
+		// Vérification de la condition
+		if len(field.Names) > 0 {
+			// Retour de la fonction
+			return true
 		}
 	}
 
-	// Retour de la map des paramètres
-	return params
-}
-
-// collectUsedVariables collecte toutes les variables utilisées dans le corps.
-//
-// Params:
-//   - body: corps de fonction
-//
-// Returns:
-//   - map[string]bool: map des variables utilisées
-func collectUsedVariables(body *ast.BlockStmt) map[string]bool {
-	used := make(map[string]bool, INITIAL_USED_VARS_CAP)
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		ident, isIdent := n.(*ast.Ident)
-		// Vérifier si c'est un identifiant
-		if isIdent {
-			parent, found := findParentAssignToBlank(body, ident)
-			// Vérifier si dans une assignation à _
-			if found && parent {
-				// C'est dans une assignation à _ - ne pas compter comme utilisé
-				return true
-			}
-			// Ajouter comme variable utilisée
-			used[ident.Name] = true
-		}
-		// Continuer la traversée
-		return true
-	})
-
-	// Retour de la map des variables utilisées
-	return used
-}
-
-// collectIgnoredVariables collecte les variables explicitement ignorées avec _ = var.
-//
-// Params:
-//   - body: corps de fonction
-//
-// Returns:
-//   - map[string]bool: map des variables ignorées
-func collectIgnoredVariables(body *ast.BlockStmt) map[string]bool {
-	ignored := make(map[string]bool, INITIAL_PARAMS_CAP)
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		assign, isAssign := n.(*ast.AssignStmt)
-		// Vérifier si c'est une assignation
-		if !isAssign {
-			// Continuer la traversée
-			return true
-		}
-		// Vérifier si le côté gauche est _
-		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
-			// Continuer la traversée
-			return true
-		}
-		lhsIdent, isLhsIdent := assign.Lhs[0].(*ast.Ident)
-		// Vérification du côté gauche
-		if !isLhsIdent || lhsIdent.Name != "_" {
-			// Continuer la traversée
-			return true
-		}
-		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
-		// Vérification du côté droit
-		if isRhsIdent {
-			// Ajouter comme variable ignorée
-			ignored[rhsIdent.Name] = true
-		}
-		// Continuer la traversée
-		return true
-	})
-
-	// Retour de la map des variables ignorées
-	return ignored
-}
-
-// findParentAssignToBlank vérifie si un identifiant est dans une assignation à _.
-//
-// Params:
-//   - body: corps de fonction
-//   - target: identifiant cible
-//
-// Returns:
-//   - bool: true si dans une assignation à _
-//   - bool: true si trouvé
-func findParentAssignToBlank(body *ast.BlockStmt, target *ast.Ident) (bool, bool) {
-	found := false
-	inAssignToBlank := false
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		assign, isAssign := n.(*ast.AssignStmt)
-		// Vérifier si c'est une assignation
-		if !isAssign {
-			// Continuer la traversée
-			return true
-		}
-		// Vérifier la structure de l'assignation
-		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
-			// Continuer la traversée
-			return true
-		}
-		lhsIdent, isLhsIdent := assign.Lhs[0].(*ast.Ident)
-		// Vérification du côté gauche
-		if !isLhsIdent || lhsIdent.Name != "_" {
-			// Continuer la traversée
-			return true
-		}
-		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
-		// Vérification du côté droit
-		if !isRhsIdent {
-			// Continuer la traversée
-			return true
-		}
-		// Vérification si c'est notre target
-		if rhsIdent.Pos() == target.Pos() {
-			found = true
-			inAssignToBlank = true
-			// Arrêter la recherche
-			return false
-		}
-		// Continuer la traversée
-		return true
-	})
-
-	// Retour du résultat
-	return inAssignToBlank, found
+	// Retour de la fonction
+	return false
 }
