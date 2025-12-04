@@ -1,89 +1,118 @@
 // Good examples for the var004 test case.
 package var004
 
-// Good: All variables have comments, explicit types, proper naming, single-block grouping
-
 const (
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// HTTP_PORT is the default HTTP port
-	HTTP_PORT int = 80
-	// HTTPS_PORT is the default HTTPS port
-	HTTPS_PORT int = 443
-	// FTP_PORT is the default FTP port
-	FTP_PORT int = 21
-	// MAX_CONNECTIONS defines maximum concurrent connections
-	MAX_CONNECTIONS int = 1000
-	// MIN_CONNECTIONS defines minimum concurrent connections
-	MIN_CONNECTIONS int = 10
-	// MAX_RETRY_COUNT defines maximum number of retries
-	MAX_RETRY_COUNT int = 5
-	// RETRY_DELAY_MS defines delay between retries in milliseconds
-	RETRY_DELAY_MS int = 1000
-	// BACKOFF_MULTIPLIER defines the backoff multiplier
-	BACKOFF_MULTIPLIER float64 = 1.5
-	// DB_PORT is the database port
-	DB_PORT int = 5432
-	// ONLY_CONST is valid edge case
-	ONLY_CONST int = 999
+	// MAX_RETRIES_VALUE is the max retries value
+	MAX_RETRIES_VALUE int = 3
+	// ANSWER is the answer
+	ANSWER int = 42
+	// AGE is example age
+	AGE int = 30
+	// X_VALUE is example x value
+	X_VALUE int = 10
+	// Y_VALUE is example y value
+	Y_VALUE int = 20
+	// INT64_VALUE is int64 example
+	INT64_VALUE int64 = 5
+	// FLOAT_VALUE is float example
+	FLOAT_VALUE float64 = 3.14
 )
 
-// All package-level variables grouped in a single block
+// Package-level variables can use var with explicit type
 var (
-	// httpPort is the default HTTP port
-	httpPort int = HTTP_PORT
-
-	// httpsPort is the default HTTPS port
-	httpsPort int = HTTPS_PORT
-
-	// ftpPort is the default FTP port
-	ftpPort int = FTP_PORT
-
-	// maxConnections defines maximum concurrent connections
-	maxConnections int = MAX_CONNECTIONS
-
-	// minConnections defines minimum concurrent connections
-	minConnections int = MIN_CONNECTIONS
-
-	// defaultTimeout defines the default timeout in seconds
-	defaultTimeout int = DEFAULT_TIMEOUT
-
-	// apiVersion is the current API version
-	apiVersion string = "v1.0"
-
-	// apiEndpoint is the base API endpoint
-	apiEndpoint string = "/api"
-
-	// apiKey is the authentication key
-	apiKey string = "secret"
-
-	// featureEnabled indicates if the feature is enabled
-	featureEnabled bool = true
-
-	// debugMode indicates if debug mode is active
-	debugMode bool = false
-
-	// verboseLogging indicates if verbose logging is enabled
-	verboseLogging bool = false
-
-	// maxRetryCount defines maximum number of retries
-	maxRetryCount int = MAX_RETRY_COUNT
-
-	// retryDelayMs defines delay between retries in milliseconds
-	retryDelayMs int = RETRY_DELAY_MS
-
-	// backoffMultiplier defines the backoff multiplier
-	backoffMultiplier float64 = BACKOFF_MULTIPLIER
-
-	// dbHost is the database host
-	dbHost string = "localhost"
-
-	// dbPort is the database port
-	dbPort int = DB_PORT
-
-	// dbName is the database name
-	dbName string = "mydb"
-
-	// dbUser is the database user
-	dbUser string = "admin"
+	// GlobalConfig is the global configuration
+	GlobalConfig string = "default"
+	// MaxRetries is the maximum retries
+	MaxRetries int = MAX_RETRIES_VALUE
 )
+
+// goodShortDeclaration shows correct use of short declaration
+func goodShortDeclaration() {
+	// Use := for local variables
+	name := "Alice"
+	age := AGE
+	isActive := true
+
+	_ = name
+	_ = age
+	_ = isActive
+}
+
+// goodMultipleAssignment shows correct use of := with multiple variables
+func goodMultipleAssignment() {
+	// Use := for multiple variables
+	x, y := X_VALUE, Y_VALUE
+
+	_ = x
+	_ = y
+}
+
+// goodExplicitTypeWhenNeeded shows when var is acceptable with explicit type
+func goodExplicitTypeWhenNeeded() {
+	// This is OK: explicit type conversion is necessary
+	// x is an int64 value
+	var x int64 = INT64_VALUE
+	// y is a float64 value
+	var y float64 = FLOAT_VALUE
+
+	_ = x
+	_ = y
+}
+
+// goodVarWithoutInit shows var without initialization is OK
+func goodVarWithoutInit() {
+	// This is OK: no initialization
+	var result int
+	result = ANSWER
+
+	_ = result
+}
+
+// goodMultipleVarWithoutInit shows multiple var without init is OK
+func goodMultipleVarWithoutInit() {
+	const (
+		// A_VALUE is value for a
+		A_VALUE int = 1
+		// B_VALUE is value for b
+		B_VALUE int = 2
+		// C_VALUE is value for c
+		C_VALUE int = 3
+	)
+	// This is OK: no initialization
+	var a, b, c int
+	a, b, c = A_VALUE, B_VALUE, C_VALUE
+
+	_ = a
+	_ = b
+	_ = c
+}
+
+// goodReassignment shows that := is used for new variables
+func goodReassignment() {
+	const (
+		// INITIAL_COUNT is the initial count
+		INITIAL_COUNT int = 0
+		// NEW_COUNT is the new count
+		NEW_COUNT int = 5
+	)
+	count := INITIAL_COUNT
+	count = NEW_COUNT // Regular assignment is fine
+
+	_ = count
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodShortDeclaration
+	goodShortDeclaration()
+	// Appel de goodMultipleAssignment
+	goodMultipleAssignment()
+	// Appel de goodExplicitTypeWhenNeeded
+	goodExplicitTypeWhenNeeded()
+	// Appel de goodVarWithoutInit
+	goodVarWithoutInit()
+	// Appel de goodMultipleVarWithoutInit
+	goodMultipleVarWithoutInit()
+	// Appel de goodReassignment
+	goodReassignment()
+}

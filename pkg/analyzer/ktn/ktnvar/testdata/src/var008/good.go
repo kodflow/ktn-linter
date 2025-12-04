@@ -1,104 +1,108 @@
 // Good examples for the var008 test case.
 package var008
 
-// Good: Proper use of make with capacity or without length
+import "strings"
 
 const (
-	// BUFFER_SIZE defines the buffer size
-	BUFFER_SIZE int = 100
-	// LOOP_COUNT is the loop count
-	LOOP_COUNT int = 10
-	// VALUE_ONE is value one
-	VALUE_ONE int = 1
-	// VALUE_TWO is value two
-	VALUE_TWO int = 2
-	// VALUE_THREE is value three
-	VALUE_THREE int = 3
-	// CAPACITY_FIFTY is capacity of 50
-	CAPACITY_FIFTY int = 50
+	// AVG_ITEM_LENGTH is the average item length estimate
+	AVG_ITEM_LENGTH int = 10
 )
 
-// goodMakeWithCapacity creates a slice with capacity for append
-//
-// Returns:
-//   - []int: slice with preallocated capacity
-func goodMakeWithCapacity() []int {
-	// Good: Capacity specified, length is 0
-	items := make([]int, 0, BUFFER_SIZE)
-	// Itération sur les éléments
-	for i := range LOOP_COUNT {
-		items = append(items, i)
-	}
-	// Retour de la fonction
-	return items
-}
-
-// goodMakeWithIndexing creates a slice using indexing instead of append
-//
-// Returns:
-//   - []string: slice with initial zero values
-func goodMakeWithIndexing() []string {
-	// Good: Using make([]T, 0, cap) with append is the proper way
-	items := make([]string, 0, BUFFER_SIZE)
-	// Itération sur les éléments
-	for i := range BUFFER_SIZE {
-		items = append(items, "value")
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-	// Retour de la fonction
-	return items
-}
-
-// goodLiteralWithValues creates a slice with initial values
-//
-// Returns:
-//   - []int: slice with initial values
-func goodLiteralWithValues() []int {
-	// Good: Literal with values
-	return []int{VALUE_ONE, VALUE_TWO, VALUE_THREE}
-}
-
-// goodEmptySliceForDynamic creates a slice for dynamic append
+// goodStringsBuilder uses strings.Builder for concatenation.
 //
 // Params:
-//   - data: input data
+//   - items: slice of strings
 //
 // Returns:
-//   - []string: filtered data
-func goodEmptySliceForDynamic(data []string) []string {
-	// Good: Use make with capacity based on input length
-	result := make([]string, 0, len(data))
-	// Itération sur les données
-	for _, item := range data {
-		// Vérification d'une condition
-		if len(item) > 0 {
-			result = append(result, item)
-		}
+//   - string: concatenated result
+func goodStringsBuilder(items []string) string {
+	// sb is the strings builder
+	var sb strings.Builder
+
+	// Good: using strings.Builder
+	for _, item := range items {
+		sb.WriteString(item)
 	}
-	// Retour de la fonction
-	return result
+
+	// Return the result
+	return sb.String()
 }
 
-// goodMakeZeroLength creates a slice with explicit zero length
+// goodStringsBuilderWithGrow uses strings.Builder with Grow.
+//
+// Params:
+//   - items: slice of strings
 //
 // Returns:
-//   - []int: slice with capacity for append
-func goodMakeZeroLength() []int {
-	// Good: Length is 0, capacity is specified
-	return make([]int, 0, CAPACITY_FIFTY)
+//   - string: concatenated result
+func goodStringsBuilderWithGrow(items []string) string {
+	// sb is the strings builder
+	var sb strings.Builder
+	sb.Grow(len(items) * AVG_ITEM_LENGTH)
+
+	// Good: using strings.Builder with preallocated size
+	for _, item := range items {
+		sb.WriteString(item)
+	}
+
+	// Return the result
+	return sb.String()
+}
+
+// goodStringsJoin uses strings.Join for simple concatenation.
+//
+// Params:
+//   - items: slice of strings
+//
+// Returns:
+//   - string: concatenated result
+func goodStringsJoin(items []string) string {
+	// Good: using strings.Join for simple cases
+	return strings.Join(items, "")
+}
+
+// goodSingleConcat performs single concatenation outside loop.
+//
+// Params:
+//   - a: first string
+//   - b: second string
+//
+// Returns:
+//   - string: concatenated result
+func goodSingleConcat(a string, b string) string {
+	// Good: single concatenation, not in a loop
+	return a + b
+}
+
+// goodNoStringConcat uses int concatenation in loop (allowed).
+//
+// Params:
+//   - n: number of iterations
+//
+// Returns:
+//   - int: sum result
+func goodNoStringConcat(n int) int {
+	result := 0
+
+	// Good: not string concatenation
+	for i := 0; i < n; i++ {
+		result += i
+	}
+
+	// Return the result
+	return result
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodMakeWithCapacity
-	goodMakeWithCapacity()
-	// Appel de goodMakeWithIndexing
-	goodMakeWithIndexing()
-	// Appel de goodLiteralWithValues
-	goodLiteralWithValues()
-	// Appel de goodEmptySliceForDynamic
-	_ = goodEmptySliceForDynamic(nil)
-	// Appel de goodMakeZeroLength
-	goodMakeZeroLength()
+	// Appel de goodStringsBuilder
+	_ = goodStringsBuilder(nil)
+	// Appel de goodStringsBuilderWithGrow
+	_ = goodStringsBuilderWithGrow(nil)
+	// Appel de goodStringsJoin
+	_ = goodStringsJoin(nil)
+	// Appel de goodSingleConcat
+	_ = goodSingleConcat("", "")
+	// Appel de goodNoStringConcat
+	_ = goodNoStringConcat(0)
 }

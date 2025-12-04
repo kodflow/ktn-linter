@@ -9,5 +9,5 @@ import (
 
 func TestFunc002(t *testing.T) {
 	// Placeholder: will calculate error count by running test
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer002, "func002", 9)
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer002, "func002", 4)
 }

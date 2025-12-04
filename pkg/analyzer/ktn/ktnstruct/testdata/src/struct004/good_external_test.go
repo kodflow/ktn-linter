@@ -1,5 +1,5 @@
 // Package struct006_test contient les tests black-box pour struct006.
-package struct006_test
+package struct004_test
 
 import (
 	"testing"

@@ -3,6 +3,7 @@ package ktnfunc
 
 import (
 	"go/ast"
+	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -10,10 +11,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer008 checks that context.Context is always the first parameter
+// Analyzer008 checks that getter functions don't have side effects
 var Analyzer008 = &analysis.Analyzer{
 	Name:     "ktnfunc008",
-	Doc:      "KTN-FUNC-008: context.Context doit toujours être le premier paramètre (après le receiver pour les méthodes)",
+	Doc:      "KTN-FUNC-008: Les getters (Get*/Is*/Has*) ne doivent pas avoir de side effects (assignations, appels de fonctions modifiant l'état)",
 	Run:      runFunc008,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -44,52 +45,91 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 
 		funcName := funcDecl.Name.Name
 
-		// Vérification de la condition
-		if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
+		// Skip if not a getter (Get*, Is*, Has*)
+		if !isGetter(funcName) {
 			// Retour de la fonction
 			return
 		}
 
-		// Check each parameter
-		contextParamIndex := -1
-		// Itération sur les éléments
-		for i, field := range funcDecl.Type.Params.List {
-			// Vérification de la condition
-			if isContextType(field.Type) {
-				contextParamIndex = i
-				break
-			}
+		// Skip if no body (external functions)
+		if funcDecl.Body == nil {
+			// Retour de la fonction
+			return
 		}
 
-		// If there's a context parameter and it's not first, report error
-		if contextParamIndex > 0 {
-			pass.Reportf(
-				funcDecl.Type.Params.List[contextParamIndex].Pos(),
-				"KTN-FUNC-008: context.Context doit être le premier paramètre de la fonction '%s'",
-				funcName,
-			)
-		}
+		// Check for side effects
+		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+			// Sélection selon la valeur
+			switch stmt := node.(type) {
+			// Traitement
+			case *ast.AssignStmt:
+				// Check if it's assigning to a field or external variable
+				// Assignments to local variables (created in the function) are OK
+				for _, lhs := range stmt.Lhs {
+					// Vérification de la condition
+					if hasSideEffect(lhs) {
+						pass.Reportf(
+							stmt.Pos(),
+							"KTN-FUNC-008: le getter '%s' ne doit pas modifier l'état (assignation détectée)",
+							funcName,
+						)
+					}
+				}
+			// Traitement
+			case *ast.IncDecStmt:
+				// ++ or -- on fields
+				if hasSideEffect(stmt.X) {
+					pass.Reportf(
+						stmt.Pos(),
+						"KTN-FUNC-008: le getter '%s' ne doit pas modifier l'état (incrémentation/décrémentation détectée)",
+						funcName,
+					)
+				}
+			}
+			// Retour de la fonction
+			return true
+		})
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// isContextType checks if a type is context.Context
+// isGetter checks if a function name suggests it's a getter
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - bool: true si type context
-func isContextType(expr ast.Expr) bool {
-	sel, ok := expr.(*ast.SelectorExpr)
-	// Vérification de la condition
-	if !ok {
-		// Retour de la fonction
-		return false
-	}
-
-	ident, ok := sel.X.(*ast.Ident)
+//   - bool: true si fonction getter
+func isGetter(name string) bool {
 	// Retour de la fonction
-	return ok && ident.Name == "context" && sel.Sel.Name == "Context"
+	return strings.HasPrefix(name, "Get") ||
+		strings.HasPrefix(name, "Is") ||
+		strings.HasPrefix(name, "Has")
+}
+
+// hasSideEffect checks if an expression modifies external state
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si effet de bord détecté
+func hasSideEffect(expr ast.Expr) bool {
+	// Sélection selon la valeur
+	switch e := expr.(type) {
+	// Traitement
+	case *ast.SelectorExpr:
+		// Modifying a field is a side effect
+		return true
+	// Traitement
+	case *ast.IndexExpr:
+		// Modifying an index (array/map/slice element) could be a side effect
+		// Check if the base is a selector
+		if _, ok := e.X.(*ast.SelectorExpr); ok {
+			// Retour de la fonction
+			return true
+		}
+	}
+	// Retour de la fonction
+	return false
 }

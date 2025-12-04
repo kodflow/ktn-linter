@@ -25,12 +25,20 @@ func Test_typeFunctions(t *testing.T) {
 
 // Test_makeConstants tests internal constants.
 func Test_makeConstants(t *testing.T) {
-	// Test MAKE_ARGS constants
-	if MAKE_ARGS_WITH_LENGTH != 2 {
-		t.Errorf("MAKE_ARGS_WITH_LENGTH = %d, want 2", MAKE_ARGS_WITH_LENGTH)
+	tests := []struct {
+		name     string
+		got      int
+		expected int
+	}{
+		{name: "MAKE_ARGS_WITH_LENGTH", got: MAKE_ARGS_WITH_LENGTH, expected: 2},
+		{name: "MAKE_ARGS_WITH_CAPACITY", got: MAKE_ARGS_WITH_CAPACITY, expected: 3},
 	}
-	// Test MAKE_ARGS_WITH_CAPACITY
-	if MAKE_ARGS_WITH_CAPACITY != 3 {
-		t.Errorf("MAKE_ARGS_WITH_CAPACITY = %d, want 3", MAKE_ARGS_WITH_CAPACITY)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.got != tt.expected {
+				t.Errorf("%s = %d, want %d", tt.name, tt.got, tt.expected)
+			}
+		})
 	}
 }

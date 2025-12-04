@@ -1,28 +1,73 @@
-// Good examples for the struct004 test case.
+// Package struct006 contient les exemples de test pour KTN-STRUCT-004.
+// Ce fichier démontre les getters idiomatiques Go (sans préfixe Get).
 package struct004
 
-// User représente un utilisateur du système.
-// Stocke les informations de base d'un utilisateur.
-type User struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+// GoodUser représente un utilisateur avec encapsulation correcte.
+// Les getters suivent la convention Go idiomatique sans préfixe "Get".
+type GoodUser struct {
+	id    int
+	name  string
+	email string
 }
 
-// Config représente la configuration de l'application.
-// Contient les paramètres de connexion au serveur.
-type Config struct {
-	Host string `json:"host"`
-	Port int    `json:"port"`
+// GoodUserInterface définit le contrat public de GoodUser.
+type GoodUserInterface interface {
+	ID() int
+	Name() string
+	Email() string
+	SetName(name string)
 }
 
-// privateStruct n'a pas besoin de documentation car elle est privée
-type privateStruct struct {
-	data int `json:"-"`
+// NewGoodUser crée une nouvelle instance de GoodUser.
+//
+// Params:
+//   - id: identifiant unique de l'utilisateur
+//   - name: nom de l'utilisateur
+//   - email: adresse email de l'utilisateur
+//
+// Returns:
+//   - *GoodUser: nouvelle instance initialisée
+func NewGoodUser(id int, name, email string) *GoodUser {
+	// Retourne une nouvelle instance avec les valeurs fournies
+	return &GoodUser{
+		id:    id,
+		name:  name,
+		email: email,
+	}
 }
 
-// DataModel représente un modèle de données.
-// Utilisé pour le transfert d'informations entre les couches.
-type DataModel struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+// ID retourne l'identifiant de l'utilisateur.
+//
+// Returns:
+//   - int: identifiant unique
+func (u *GoodUser) ID() int {
+	// Retourne le champ id
+	return u.id
+}
+
+// Name retourne le nom de l'utilisateur.
+//
+// Returns:
+//   - string: nom de l'utilisateur
+func (u *GoodUser) Name() string {
+	// Retourne le champ name
+	return u.name
+}
+
+// Email retourne l'adresse email de l'utilisateur.
+//
+// Returns:
+//   - string: adresse email
+func (u *GoodUser) Email() string {
+	// Retourne le champ email
+	return u.email
+}
+
+// SetName définit le nom de l'utilisateur.
+//
+// Params:
+//   - name: nouveau nom à définir
+func (u *GoodUser) SetName(name string) {
+	// Modifie le champ name
+	u.name = name
 }

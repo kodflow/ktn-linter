@@ -5,19 +5,26 @@ import "testing"
 
 // Test_GetAllRules tests that GetAllRules returns non-empty slice
 func Test_GetAllRules(t *testing.T) {
-	rules := GetAllRules()
-
-	// Check that rules slice is not empty
-	if len(rules) == 0 {
-		t.Error("GetAllRules() returned empty slice, expected rules")
+	tests := []struct {
+		name string
+	}{
+		{name: "returns non-empty slice"},
 	}
 
-	// Check that all rules are non-nil
-	for i, rule := range rules {
-		// Check rule is not nil
-		if rule == nil {
-			t.Errorf("rule at index %d is nil", i)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rules := GetAllRules()
+			// Check rules slice is not empty and all rules are non-nil
+			if len(rules) == 0 {
+				t.Error("GetAllRules() returned empty slice, expected rules")
+				return
+			}
+			for i, rule := range rules {
+				if rule == nil {
+					t.Errorf("rule at index %d is nil", i)
+				}
+			}
+		})
 	}
 }
 
@@ -72,19 +79,26 @@ func Test_GetRulesByCategory(t *testing.T) {
 
 // Test_categoryAnalyzers tests that categoryAnalyzers returns valid map
 func Test_categoryAnalyzers(t *testing.T) {
-	categories := categoryAnalyzers()
-
-	// Check that map is not empty
-	if len(categories) == 0 {
-		t.Error("categoryAnalyzers() returned empty map")
+	tests := []struct {
+		name string
+	}{
+		{name: "returns valid map"},
 	}
 
-	// Verify each category function returns valid analyzers
-	for name, fn := range categories {
-		analyzers := fn()
-		// Check function returns non-nil slice
-		if analyzers == nil {
-			t.Errorf("category %q returned nil slice", name)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			categories := categoryAnalyzers()
+			// Check that map is not empty and all category functions work
+			if len(categories) == 0 {
+				t.Error("categoryAnalyzers() returned empty map")
+				return
+			}
+			for name, fn := range categories {
+				analyzers := fn()
+				if analyzers == nil {
+					t.Errorf("category %q returned nil slice", name)
+				}
+			}
+		})
 	}
 }

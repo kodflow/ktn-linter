@@ -2,6 +2,7 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/types"
 	"testing"
 )
 
@@ -21,128 +22,108 @@ func Test_runVar018(t *testing.T) {
 	}
 }
 
-// Test_extractLoop tests the private extractLoop helper function.
-func Test_extractLoop(t *testing.T) {
+// Test_isPointerType tests the private isPointerType helper function.
+func Test_isPointerType(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     ast.Node
+		expr     ast.Expr
 		expected bool
 	}{
 		{
-			name:     "for stmt",
-			node:     &ast.ForStmt{Body: &ast.BlockStmt{}},
+			name:     "pointer type",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "T"}},
 			expected: true,
 		},
 		{
-			name:     "range stmt",
-			node:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
-			expected: true,
+			name:     "non-pointer type",
+			expr:     &ast.Ident{Name: "T"},
+			expected: false,
 		},
 		{
-			name:     "other node",
-			node:     &ast.IfStmt{},
+			name:     "selector expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "pkg"}, Sel: &ast.Ident{Name: "Type"}},
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractLoop(tt.node)
-			// Vérification du résultat
-			if (result != nil) != tt.expected {
-				t.Errorf("extractLoop() returned %v, expected non-nil: %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isStringConversion tests the private isStringConversion helper function.
-func Test_isStringConversion(t *testing.T) {
-	tests := []struct {
-		name     string
-		node     ast.Node
-		expected bool
-	}{
-		{
-			name: "string conversion",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "b"}},
-			},
-			expected: true,
-		},
-		{
-			name: "other function",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "len"},
-				Args: []ast.Expr{&ast.Ident{Name: "s"}},
-			},
-			expected: false,
-		},
-		{
-			name: "no args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{},
-			},
-			expected: false,
-		},
-		{
-			name: "multiple args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
-			},
-			expected: false,
-		},
-		{
-			name:     "not call expr",
-			node:     &ast.Ident{Name: "x"},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isStringConversion(tt.node)
+			result := isPointerType(tt.expr)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("isStringConversion() = %v, expected %v", result, tt.expected)
+				t.Errorf("isPointerType() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkFuncForRepeatedConversions tests the private checkFuncForRepeatedConversions function.
-func Test_checkFuncForRepeatedConversions(t *testing.T) {
+// Test_getTypeName tests the private getTypeName helper function.
+func Test_getTypeName(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		expr     ast.Expr
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "ident",
+			expr:     &ast.Ident{Name: "MyStruct"},
+			expected: "MyStruct",
+		},
+		{
+			name:     "star expr",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "MyStruct"}},
+			expected: "MyStruct",
+		},
+		{
+			name:     "selector expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "pkg"}, Sel: &ast.Ident{Name: "Type"}},
+			expected: "",
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for repeated conversions
+			result := getTypeName(tt.expr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("getTypeName() = %q, expected %q", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkLoopsForStringConversion tests the private checkLoopsForStringConversion function.
-func Test_checkLoopsForStringConversion(t *testing.T) {
+// Test_getMutexTypeName tests the private getMutexTypeName helper function.
+func Test_getMutexTypeName(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typ      types.Type
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "not named type",
+			typ:      types.Typ[types.Int],
+			expected: "",
+		},
+		{
+			name:     "named type without package",
+			typ:      types.NewNamed(types.NewTypeName(0, nil, "Test", nil), types.Typ[types.Int], nil),
+			expected: "",
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks loops for string conversion
+			result := getMutexTypeName(tt.typ)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("getMutexTypeName() = %q, expected %q", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_hasStringConversion tests the private hasStringConversion function.
-func Test_hasStringConversion(t *testing.T) {
+// Test_collectTypesWithValueReceivers tests the private collectTypesWithValueReceivers function.
+func Test_collectTypesWithValueReceivers(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -150,13 +131,13 @@ func Test_hasStringConversion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if has string conversion
+			// Test passthrough - function collects types with value receivers
 		})
 	}
 }
 
-// Test_checkMultipleConversions tests the private checkMultipleConversions function.
-func Test_checkMultipleConversions(t *testing.T) {
+// Test_checkStructsWithMutex tests the private checkStructsWithMutex function.
+func Test_checkStructsWithMutex(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -164,7 +145,119 @@ func Test_checkMultipleConversions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for multiple conversions
+			// Test passthrough - function checks structs with mutex
+		})
+	}
+}
+
+// Test_checkValueReceivers tests the private checkValueReceivers function.
+func Test_checkValueReceivers(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks value receivers
+		})
+	}
+}
+
+// Test_checkValueParams tests the private checkValueParams function.
+func Test_checkValueParams(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks value params
+		})
+	}
+}
+
+// Test_checkAssignments tests the private checkAssignments function.
+func Test_checkAssignments(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks assignments
+		})
+	}
+}
+
+// Test_getMutexType tests the private getMutexType function.
+func Test_getMutexType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function gets mutex type
+		})
+	}
+}
+
+// Test_hasMutex tests the private hasMutex function.
+func Test_hasMutex(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if has mutex
+		})
+	}
+}
+
+// Test_hasMutexInType tests the private hasMutexInType function.
+func Test_hasMutexInType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if has mutex in type
+		})
+	}
+}
+
+// Test_getMutexTypeFromType tests the private getMutexTypeFromType function.
+func Test_getMutexTypeFromType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function gets mutex type from type
+		})
+	}
+}
+
+// Test_isMutexCopy tests the private isMutexCopy function.
+func Test_isMutexCopy(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if is mutex copy
 		})
 	}
 }

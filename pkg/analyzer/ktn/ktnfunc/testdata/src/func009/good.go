@@ -1,280 +1,420 @@
 // Good examples for the func009 test case.
 package func009
 
+// Good: All branches and returns have comments
+
 const (
-	// DOUBLE_MULTIPLIER représente le multiplicateur pour doubler une valeur.
+	// DOUBLE_MULTIPLIER is the multiplier used for doubling values
 	DOUBLE_MULTIPLIER int = 2
-	// ARRAY_SIZE représente la taille du tableau local.
-	ARRAY_SIZE int = 5
-	// INITIAL_COUNT représente le compteur initial.
-	INITIAL_COUNT int = 10
-	// SLICE_CAPACITY représente la capacité du slice.
-	SLICE_CAPACITY int = 10
+	// BENCHMARK_LIMIT is the iteration limit for benchmark tests
+	BENCHMARK_LIMIT int = 100
 )
 
-// MyStruct représente une structure de test pour les getters.
-// Elle fournit des méthodes pour accéder et modifier ses champs privés.
-type MyStruct struct {
-	value int
-	name  string
-}
-
-// MyStructInterface définit les méthodes publiques de MyStruct.
-type MyStructInterface interface {
-	GetValue() int
-	IsValid() bool
-	HasName() bool
-	GetDoubleValue() int
-	SetValue(v int)
-	UpdateValue(v int)
-	GetProcessed() []int
-	GetMap() map[string]int
-	GetLocalArray() []int
-	GetLocalMapValue() int
-	GetIncrementedValue() int
-	GetDecrementedValue() int
-}
-
-// NewMyStruct crée une nouvelle instance de MyStruct.
+// GoodExample demonstrates proper commenting.
 //
 // Params:
-//   - value: valeur initiale
-//   - name: nom initial
+//   - x: the integer to check
 //
 // Returns:
-//   - *MyStruct: nouvelle instance
-func NewMyStruct(value int, name string) *MyStruct {
-	// Retour de la nouvelle instance
-	return &MyStruct{
-		value: value,
-		name:  name,
-	}
-}
-
-// GetValue retourne la valeur du champ value.
-// Returns:
-//   - int: valeur actuelle
-func (m *MyStruct) GetValue() int {
-	// Retourne la valeur du champ
-	return m.value
-}
-
-// IsValid vérifie si la valeur est positive.
-// Returns:
-//   - bool: true si valeur > 0
-func (m *MyStruct) IsValid() bool {
-	// Vérifie si la valeur est strictement positive
-	if m.value > 0 {
-		// Valeur positive
+//   - bool: true if x is positive, false otherwise
+func GoodExample(x int) bool {
+	// Check if x is positive
+	if x > 0 {
+		// Return true because x is positive
 		return true
 	}
-	// Valeur négative ou nulle
+	// Return false because x is not positive
 	return false
 }
 
-// HasName vérifie si le nom n'est pas vide.
+// GoodSwitch demonstrates proper switch commenting.
+//
+// Params:
+//   - x: the integer to determine the result
+//
 // Returns:
-//   - bool: true si nom non vide
-func (m *MyStruct) HasName() bool {
-	// Vérifie si le nom n'est pas une chaîne vide
-	if m.name != "" {
-		// Nom non vide
+//   - string: "zero", "one", or "other"
+func GoodSwitch(x int) string {
+	// Determine result based on x value
+	switch x {
+	// Handle zero case
+	case 0:
+		// Return "zero" for zero value
+		return "zero"
+	// Handle positive case
+	case 1:
+		// Return "one" for one value
+		return "one"
+	// Handle all other cases
+	default:
+		// Return "other" for all other values
+		return "other"
+	}
+}
+
+// GoodLoop demonstrates proper loop commenting.
+//
+// Params:
+//   - items: the slice of integers to sum
+//
+// Returns:
+//   - int: the sum of all items
+func GoodLoop(items []int) int {
+	sum := 0
+	// Iterate through all items to calculate sum
+	for _, item := range items {
+		sum += item
+	}
+	// Return the total sum
+	return sum
+}
+
+// GoodInlineComment demonstrates inline comments on returns.
+//
+// Params:
+//   - x: the integer to double
+//
+// Returns:
+//   - int: double of x
+func GoodInlineComment(x int) int {
+	// Retour de la fonction
+	return x * DOUBLE_MULTIPLIER // Return double of x
+}
+
+// GoodMultipleReturns demonstrates multiple returns with comments.
+//
+// Params:
+//   - x: the integer to process
+//
+// Returns:
+//   - int: doubled value or 0
+//   - error: nil always
+func GoodMultipleReturns(x int) (int, error) {
+	// Check for negative input
+	if x < 0 {
+		// Return error for negative input
+		return 0, nil
+	}
+	// Return success with doubled value
+	return x * DOUBLE_MULTIPLIER, nil
+}
+
+// GoodTypeSwitch demonstrates proper type switch commenting.
+//
+// Params:
+//   - v: the interface value to check
+//
+// Returns:
+//   - string: the type name or "unknown"
+func GoodTypeSwitch(v interface{}) string {
+	// Determine type of value
+	switch v.(type) {
+	// Handle string type
+	case string:
+		// Return "string" for string type
+		return "string"
+	// Handle int type
+	case int:
+		// Return "int" for int type
+		return "int"
+	// Handle all other types
+	default:
+		// Return "unknown" for unknown types
+		return "unknown"
+	}
+}
+
+// GoodElseIf demonstrates proper else if commenting with early return.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: "negative", "positive", or "zero"
+func GoodElseIf(x int) string {
+	// Check if x is negative
+	if x < 0 {
+		// Return "negative" for negative values
+		return "negative"
+	}
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	}
+	// Return "zero" for zero value
+	return "zero"
+}
+
+// GoodElseCommentInside demonstrates else with comment inside block.
+//
+// Params:
+//   - x: the integer to check
+//
+// Returns:
+//   - string: "positive" or "non-positive"
+func GoodElseCommentInside(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	}
+	// Return "non-positive" for non-positive values
+	return "non-positive"
+}
+
+// GoodInterface defines an interface method (no body needed).
+type GoodInterface interface {
+	GoodNoBody(x int) bool
+}
+
+// goodImplementation implémente GoodInterface.
+type goodImplementation struct{}
+
+// GoodNoBody implémente la méthode de l'interface.
+//
+// Params:
+//   - x: valeur à tester
+//
+// Returns:
+//   - bool: true si x est positif
+func (g *goodImplementation) GoodNoBody(x int) bool {
+	// Vérifie si x est positif
+	if x > 0 {
+		// Retourne true pour valeur positive
 		return true
 	}
-	// Nom vide
+	// Retourne false pour valeur négative ou nulle
 	return false
 }
 
-// GetDoubleValue retourne le double de la valeur.
-// Returns:
-//   - int: valeur multipliée par 2
-func (m *MyStruct) GetDoubleValue() int {
-	// Calcule le double de la valeur
-	result := m.value * DOUBLE_MULTIPLIER
-	// Retourne le résultat
-	return result
-}
-
-// SetValue définit une nouvelle valeur.
+// useGoodInterface utilise l'interface.
+//
 // Params:
-//   - v: nouvelle valeur à assigner
-func (m *MyStruct) SetValue(v int) {
-	// Assigne la nouvelle valeur
-	m.value = v
+//   - gi: interface à utiliser
+//
+// Returns:
+//   - bool: résultat de GoodNoBody
+func useGoodInterface(gi GoodInterface) bool {
+	// Appelle la méthode de l'interface
+	return gi.GoodNoBody(0)
 }
 
-// UpdateValue met à jour la valeur.
+// GoodElseIfCommentBefore demonstrates else if with comment before the if part.
+//
 // Params:
-//   - v: nouvelle valeur à assigner
-func (m *MyStruct) UpdateValue(v int) {
-	// Met à jour la valeur du champ
-	m.value = v
-}
-
-// GetProcessed retourne un tableau avec la valeur traitée.
+//   - x: the integer to check
+//
 // Returns:
-//   - []int: tableau contenant la valeur
-func (m *MyStruct) GetProcessed() []int {
-	// Crée un tableau local
-	local := [SLICE_CAPACITY]int{}
-	// Assigne la valeur au premier élément
-	local[0] = m.value
-	// Retourne le tableau local
-	return local[:]
+//   - string: "negative", "positive", or "zero"
+func GoodElseIfCommentBefore(x int) string {
+	// Check if x is negative
+	if x < 0 {
+		// Return "negative" for negative values
+		return "negative"
+	}
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	}
+	// Return "zero" for zero value
+	return "zero"
 }
 
-// GetMap retourne une map contenant la valeur.
-// Returns:
-//   - map[string]int: map avec la valeur
-func (m *MyStruct) GetMap() map[string]int {
-	// Crée une map locale
-	result := make(map[string]int, 1)
-	// Stocke la valeur dans la map
-	result["value"] = m.value
-	// Retourne la map
-	return result
-}
-
-// TestGetValue fonction de test avec effet de bord.
+// GoodElseBlockWithCommentInside demonstrates else block with comment at the start.
+//
 // Params:
-//   - m: structure à tester
+//   - x: the integer to check
 //
 // Returns:
-//   - int: valeur incrémentée
-func TestGetValue(m *MyStruct) int {
-	// Incrémente la valeur pour le test
-	m.value++
-	// Retourne la nouvelle valeur
-	return m.value
+//   - string: "positive" or "non-positive"
+func GoodElseBlockWithCommentInside(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	}
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
-// BenchmarkGetValue fonction de benchmark avec effet de bord.
+// TestGoodFunction demonstrates that test functions are skipped by the analyzer.
+//
 // Params:
-//   - m: structure à benchmarker
+//   - t: the test interface
+func TestGoodFunction(t interface{}) {
+	// This is a test function, it should be skipped
+	if true {
+		// Retour de la fonction
+		return
+	}
+	// Retour de la fonction
+	return
+}
+
+// BenchmarkGoodFunction demonstrates that benchmark functions are skipped.
+//
+// Params:
+//   - b: the benchmark interface
+func BenchmarkGoodFunction(b interface{}) {
+	// This is a benchmark function, it should be skipped
+	for i := 0; i < BENCHMARK_LIMIT; i++ {
+		_ = i * DOUBLE_MULTIPLIER
+	}
+	// Retour de la fonction
+	return
+}
+
+// ExampleGoodFunction demonstrates that example functions are skipped.
+func ExampleGoodFunction() {
+	// This is an example function, it should be skipped
+	if true {
+		// Retour de la fonction
+		return
+	}
+	// Retour de la fonction
+	return
+}
+
+// FuzzGoodFunction demonstrates that fuzz functions are skipped.
+//
+// Params:
+//   - f: the fuzz interface
+func FuzzGoodFunction(f interface{}) {
+	// This is a fuzz function, it should be skipped
+	if true {
+		// Retour de la fonction
+		return
+	}
+	// Retour de la fonction
+	return
+}
+
+// GoodElseEmptyBlock demonstrates empty else block with comment.
+//
+// Params:
+//   - x: the integer to check
+func GoodElseEmptyBlock(x int) {
+	// Check if x is positive
+	if x > 0 {
+		// Return for positive values
+		return
+	}
+	// Handle non-positive case with empty block
+}
+
+// GoodElseWithCommentBefore demonstrates else with comment before.
+//
+// Params:
+//   - x: the integer to check
 //
 // Returns:
-//   - int: valeur incrémentée
-func BenchmarkGetValue(m *MyStruct) int {
-	// Incrémente la valeur pour le benchmark
-	m.value++
-	// Retourne la nouvelle valeur
-	return m.value
+//   - string: classification result
+func GoodElseWithCommentBefore(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	}
+	// Handle non-positive case
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
-// GetLocalArray retourne un tableau avec les valeurs calculées.
-// Returns:
-//   - []int: tableau de valeurs
-func (m *MyStruct) GetLocalArray() []int {
-	// Crée un tableau local de 5 éléments
-	arr := [ARRAY_SIZE]int{}
-	// Stocke la valeur actuelle
-	arr[0] = m.value
-	// Stocke le double de la valeur
-	arr[1] = m.value * DOUBLE_MULTIPLIER
-	// Retourne le tableau
-	return arr[:]
-}
-
-// GetLocalMapValue retourne une valeur depuis une map locale.
-// Returns:
-//   - int: valeur extraite de la map
-func (m *MyStruct) GetLocalMapValue() int {
-	// Crée une map locale
-	localMap := make(map[string]int, 1)
-	// Stocke la valeur dans la map
-	localMap["key"] = m.value
-	// Retourne la valeur depuis la map
-	return localMap["key"]
-}
-
-// DataReader interface pour la lecture de données.
-type DataReader interface {
-	GetData() string
-	IsReady() bool
-	HasItems() bool
-}
-
-// dataReaderImpl implémente DataReader.
-type dataReaderImpl struct {
-	data  string
-	ready bool
-}
-
-// GetData retourne les données.
+// GoodElseBlockWithCommentAtStart demonstrates else block with comment at start.
+//
+// Params:
+//   - x: the integer to check
 //
 // Returns:
-//   - string: les données stockées
-func (d *dataReaderImpl) GetData() string {
-	// Retourne les données
-	return d.data
+//   - string: classification result
+func GoodElseBlockWithCommentAtStart(x int) string {
+	// Check if x is positive
+	if x > 0 {
+		// Return "positive" for positive values
+		return "positive"
+	}
+	// Handle non-positive case - comment at start of block
+	// Return "non-positive" for non-positive values
+	return "non-positive"
 }
 
-// IsReady indique si prêt.
+// GoodInlineCommentSameLine demonstrates inline comments on same line as code.
+//
+// Params:
+//   - x: the integer to check
 //
 // Returns:
-//   - bool: état de préparation
-func (d *dataReaderImpl) IsReady() bool {
-	// Retourne l'état ready
-	return d.ready
+//   - int: doubled value
+func GoodInlineCommentSameLine(x int) int {
+	// Check if x is positive
+	if x > 0 {
+		return x * DOUBLE_MULTIPLIER // Inline comment: double the positive value
+	}
+	// Return zero for non-positive values
+	return 0
 }
 
-// HasItems vérifie si des items existent.
+// GoodTrivialBoolReturn demonstrates trivial bool returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
 //
 // Returns:
-//   - bool: true si données non vides
-func (d *dataReaderImpl) HasItems() bool {
-	// Vérifie si la chaîne n'est pas vide
-	if d.data != "" {
-		// Données présentes
+//   - bool: true if positive, false otherwise
+func GoodTrivialBoolReturn(x int) bool {
+	// Check if x is positive
+	if x > 0 {
 		return true
 	}
-	// Pas de données
 	return false
 }
 
-// useDataReader utilise l'interface DataReader.
+// GoodTrivialNilReturn demonstrates trivial nil returns don't need comments.
 //
 // Params:
-//   - dr: interface de lecture de données
+//   - x: the integer to check
 //
 // Returns:
-//   - string: données lues
-func useDataReader(dr DataReader) string {
-	// Vérifie si prêt
-	if dr.IsReady() && dr.HasItems() {
-		// Retourne les données
-		return dr.GetData()
+//   - error: nil always
+func GoodTrivialNilReturn(x int) error {
+	// Check if x is positive
+	if x > 0 {
+		return nil
 	}
-	// Retourne chaîne vide
-	return ""
+	return nil
 }
 
-// GetIncrementedValue retourne la valeur incrémentée localement.
-// Returns:
-//   - int: valeur + 1
-func (m *MyStruct) GetIncrementedValue() int {
-	// Copie la valeur dans une variable locale
-	local := m.value
-	// Incrémente la variable locale
-	local++
-	// Retourne la valeur incrémentée
-	return local
+// GoodBareReturn demonstrates bare returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
+func GoodBareReturn(x int) {
+	// Check if x is positive
+	if x > 0 {
+		return
+	}
+	return
 }
 
-// GetDecrementedValue retourne une valeur décrémentée.
+// GoodEmptySliceReturn demonstrates empty slice returns don't need comments.
+//
+// Params:
+//   - x: the integer to check
+//
 // Returns:
-//   - int: constante décrémentée
-func (m *MyStruct) GetDecrementedValue() int {
-	// Initialise un compteur
-	count := INITIAL_COUNT
-	// Décrémente le compteur
-	count--
-	// Retourne le compteur décrémenté
-	return count
+//   - []int: empty slice
+func GoodEmptySliceReturn(x int) []int {
+	// Check if x is positive
+	if x > 0 {
+		return []int{}
+	}
+	return []int{}
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de useDataReader
-	_ = useDataReader(DataReader{})
+	// Appel de useGoodInterface
+	_ = useGoodInterface(GoodInterface{})
 }

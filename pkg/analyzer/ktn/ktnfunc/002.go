@@ -1,4 +1,4 @@
-// Package ktnfunc implements KTN linter rules.
+// Analyzer 002 for the ktnfunc package.
 package ktnfunc
 
 import (
@@ -10,86 +10,86 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer002 checks that functions don't have too many parameters
-const (
-	// MAX_PARAMS max params allowed in a function
-	MAX_PARAMS int = 5
-)
-
-// Analyzer002 checks that functions don't have more than MAX_PARAMS parameters
+// Analyzer002 checks that context.Context is always the first parameter
 var Analyzer002 = &analysis.Analyzer{
 	Name:     "ktnfunc002",
-	Doc:      "KTN-FUNC-002: Les fonctions ne doivent pas dépasser 5 paramètres",
+	Doc:      "KTN-FUNC-002: context.Context doit toujours être le premier paramètre (après le receiver pour les méthodes)",
 	Run:      runFunc002,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc002 exécute l'analyse KTN-FUNC-002.
+// runFunc002 description à compléter.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - any: résultat
 //   - error: erreur éventuelle
 func runFunc002(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
-		(*ast.FuncLit)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		var funcType *ast.FuncType
-		var pos ast.Node
-		var name string
+		funcDecl := n.(*ast.FuncDecl)
 
-		// Sélection selon la valeur
-		switch fn := n.(type) {
-		// Traitement
-		case *ast.FuncDecl:
-			funcType = fn.Type
-			pos = fn.Name
-			name = fn.Name.Name
-
-			// Skip test functions
-			if shared.IsTestFunction(fn) {
-				// Retour de la fonction
-				return
-			}
-		// Traitement
-		case *ast.FuncLit:
-			funcType = fn.Type
-			pos = fn
-			name = "function literal"
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
+			return
 		}
 
-		// Count total parameters
-		paramCount := 0
-		// Itération sur les éléments
-		for _, field := range funcType.Params.List {
-			// Each field can declare multiple params: func(a, b, c int)
-			if len(field.Names) > 0 {
-				paramCount += len(field.Names)
-			} else {
-				// Unnamed parameter (e.g., in interface or func literal)
-				paramCount++
-			}
-		}
+		funcName := funcDecl.Name.Name
 
 		// Vérification de la condition
-		if paramCount > MAX_PARAMS {
+		if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
+			// Retour de la fonction
+			return
+		}
+
+		// Check each parameter
+		contextParamIndex := -1
+		// Itération sur les éléments
+		for i, field := range funcDecl.Type.Params.List {
+			// Vérification de la condition
+			if isContextType(field.Type) {
+				contextParamIndex = i
+				break
+			}
+		}
+
+		// If there's a context parameter and it's not first, report error
+		if contextParamIndex > 0 {
 			pass.Reportf(
-				pos.Pos(),
-				"KTN-FUNC-002: la fonction '%s' a %d paramètres (max: %d)",
-				name,
-				paramCount,
-				MAX_PARAMS,
+				funcDecl.Type.Params.List[contextParamIndex].Pos(),
+				"KTN-FUNC-002: context.Context doit être le premier paramètre de la fonction '%s'",
+				funcName,
 			)
 		}
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// isContextType checks if a type is context.Context
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si type context
+func isContextType(expr ast.Expr) bool {
+	sel, ok := expr.(*ast.SelectorExpr)
+	// Vérification de la condition
+	if !ok {
+		// Retour de la fonction
+		return false
+	}
+
+	ident, ok := sel.X.(*ast.Ident)
+	// Retour de la fonction
+	return ok && ident.Name == "context" && sel.Sel.Name == "Context"
 }

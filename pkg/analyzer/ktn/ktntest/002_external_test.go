@@ -8,6 +8,6 @@ import (
 )
 
 func TestTest002(t *testing.T) {
-	// 1 erreur: bad_test.go sans fichier bad.go correspondant
+	// 1 erreur: mauvais nom de package
 	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer002, "test002", "good_test.go", "bad_test.go", 1)
 }

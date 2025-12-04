@@ -21,199 +21,65 @@ func Test_runVar007(t *testing.T) {
 	}
 }
 
-// Test_isAppendCall tests the private isAppendCall helper function.
-func Test_isAppendCall(t *testing.T) {
+// Test_isBuilderCompositeLit tests the private isBuilderCompositeLit helper function.
+func Test_isBuilderCompositeLit(t *testing.T) {
 	tests := []struct {
 		name     string
-		expr     ast.Expr
+		lit      *ast.CompositeLit
 		expected bool
 	}{
 		{
-			name: "append call",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "append"},
+			name: "strings.Builder",
+			lit: &ast.CompositeLit{
+				Type: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "strings"},
+					Sel: &ast.Ident{Name: "Builder"},
+				},
 			},
 			expected: true,
 		},
 		{
-			name: "other function call",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "len"},
+			name: "bytes.Buffer",
+			lit: &ast.CompositeLit{
+				Type: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "bytes"},
+					Sel: &ast.Ident{Name: "Buffer"},
+				},
 			},
-			expected: false,
+			expected: true,
 		},
 		{
-			name:     "not a call expr",
-			expr:     &ast.BasicLit{Value: "1"},
-			expected: false,
-		},
-		{
-			name: "method call",
-			expr: &ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "s"},
-					Sel: &ast.Ident{Name: "append"},
+			name: "other type",
+			lit: &ast.CompositeLit{
+				Type: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "strings"},
+					Sel: &ast.Ident{Name: "Reader"},
 				},
 			},
 			expected: false,
 		},
+		{
+			name: "not selector expr",
+			lit: &ast.CompositeLit{
+				Type: &ast.Ident{Name: "MyStruct"},
+			},
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isAppendCall(tt.expr)
+			result := isBuilderCompositeLit(tt.lit)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("isAppendCall() = %v, expected %v", result, tt.expected)
+				t.Errorf("isBuilderCompositeLit() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_isSliceArrayOrMap tests the private isSliceArrayOrMap helper function.
-func Test_isSliceArrayOrMap(t *testing.T) {
-	tests := []struct {
-		name     string
-		typeExpr ast.Expr
-		expected bool
-	}{
-		{
-			name:     "nil type",
-			typeExpr: nil,
-			expected: false,
-		},
-		{
-			name:     "slice type",
-			typeExpr: &ast.ArrayType{Len: nil},
-			expected: true,
-		},
-		{
-			name:     "array type",
-			typeExpr: &ast.ArrayType{Len: &ast.BasicLit{Value: "10"}},
-			expected: true,
-		},
-		{
-			name:     "map type",
-			typeExpr: &ast.MapType{},
-			expected: true,
-		},
-		{
-			name:     "struct type",
-			typeExpr: &ast.StructType{},
-			expected: false,
-		},
-		{
-			name:     "ident type",
-			typeExpr: &ast.Ident{Name: "int"},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isSliceArrayOrMap(tt.typeExpr)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isSliceArrayOrMap() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isInReturnStatement tests the private isInReturnStatement helper function.
-func Test_isInReturnStatement(t *testing.T) {
-	tests := []struct {
-		name     string
-		stack    []ast.Node
-		expected bool
-	}{
-		{
-			name:     "empty stack",
-			stack:    []ast.Node{},
-			expected: false,
-		},
-		{
-			name: "has return in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.BlockStmt{},
-				&ast.ReturnStmt{},
-			},
-			expected: true,
-		},
-		{
-			name: "no return in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.BlockStmt{},
-				&ast.AssignStmt{},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isInReturnStatement(tt.stack)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isInReturnStatement() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isInStructLiteral tests the private isInStructLiteral helper function.
-func Test_isInStructLiteral(t *testing.T) {
-	tests := []struct {
-		name     string
-		stack    []ast.Node
-		expected bool
-	}{
-		{
-			name:     "empty stack",
-			stack:    []ast.Node{},
-			expected: false,
-		},
-		{
-			name: "has struct literal in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.CompositeLit{Type: &ast.Ident{Name: "MyStruct"}},
-			},
-			expected: true,
-		},
-		{
-			name: "has key-value expr in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.KeyValueExpr{},
-			},
-			expected: true,
-		},
-		{
-			name: "has slice literal in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.CompositeLit{Type: &ast.ArrayType{}},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isInStructLiteral(tt.stack)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isInStructLiteral() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_collectAppendVariables tests the private collectAppendVariables function.
-func Test_collectAppendVariables(t *testing.T) {
+// Test_checkBuilderWithoutGrow tests the private checkBuilderWithoutGrow function.
+func Test_checkBuilderWithoutGrow(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -221,13 +87,13 @@ func Test_collectAppendVariables(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function collects append variables
+			// Test passthrough - function checks builders without Grow
 		})
 	}
 }
 
-// Test_checkMakeCalls tests the private checkMakeCalls function.
-func Test_checkMakeCalls(t *testing.T) {
+// Test_checkValueSpec tests the private checkValueSpec function.
+func Test_checkValueSpec(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -235,13 +101,13 @@ func Test_checkMakeCalls(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks make calls
+			// Test passthrough - function checks value specs
 		})
 	}
 }
 
-// Test_checkMakeCall tests the private checkMakeCall function.
-func Test_checkMakeCall(t *testing.T) {
+// Test_checkAssignStmt tests the private checkAssignStmt function.
+func Test_checkAssignStmt(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -249,13 +115,13 @@ func Test_checkMakeCall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks single make call
+			// Test passthrough - function checks assign statements
 		})
 	}
 }
 
-// Test_checkEmptySliceLiterals tests the private checkEmptySliceLiterals function.
-func Test_checkEmptySliceLiterals(t *testing.T) {
+// Test_reportMissingGrow tests the private reportMissingGrow function.
+func Test_reportMissingGrow(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -263,13 +129,13 @@ func Test_checkEmptySliceLiterals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks empty slice literals
+			// Test passthrough - function reports missing Grow
 		})
 	}
 }
 
-// Test_checkCompositeLit tests the private checkCompositeLit function.
-func Test_checkCompositeLit(t *testing.T) {
+// Test_extractTypeString tests the private extractTypeString function.
+func Test_extractTypeString(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -277,7 +143,21 @@ func Test_checkCompositeLit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks composite literals
+			// Test passthrough - function extracts type strings
+		})
+	}
+}
+
+// Test_extractAssignTypeString tests the private extractAssignTypeString function.
+func Test_extractAssignTypeString(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function extracts assign type strings
 		})
 	}
 }

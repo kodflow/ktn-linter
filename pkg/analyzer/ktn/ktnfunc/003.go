@@ -1,24 +1,18 @@
-// Package ktnfunc implements KTN linter rules.
+// Analyzer 003 for the ktnfunc package.
 package ktnfunc
 
 import (
 	"go/ast"
-	"go/token"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const (
-	// INITIAL_ALLOWED_LITERALS_CAP initial cap for allowed literals
-	INITIAL_ALLOWED_LITERALS_CAP int = 32
-)
-
-// Analyzer003 checks for magic numbers (hardcoded numeric literals)
+// Analyzer003 checks for unnecessary else blocks after return/continue/break
 var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnfunc003",
-	Doc:      "KTN-FUNC-003: Les nombres littéraux doivent être des constantes nommées (pas de magic numbers)",
+	Doc:      "KTN-FUNC-003: Éviter else après return/continue/break (early return préféré)",
 	Run:      runFunc003,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -34,106 +28,74 @@ var Analyzer003 = &analysis.Analyzer{
 func runFunc003(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Map des valeurs autorisées (non magic numbers)
-	allowedValues := getAllowedValues()
+	nodeFilter := []ast.Node{
+		(*ast.IfStmt)(nil),
+	}
 
-	// Collecter les littéraux autorisés (const, array sizes)
-	allowedLiterals := collectAllowedLiterals(insp)
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		ifStmt := n.(*ast.IfStmt)
 
-	// Vérifier les magic numbers
-	checkMagicNumbers(insp, pass, allowedValues, allowedLiterals)
+		// Vérifier si le bloc if est vide
+		if ifStmt.Body == nil || len(ifStmt.Body.List) == 0 {
+			// Bloc vide, ignorer
+			return
+		}
+
+		// Vérifier s'il y a une clause else
+		if ifStmt.Else == nil {
+			// Pas de else, ignorer
+			return
+		}
+
+		// Récupérer la dernière instruction du bloc if
+		lastStmt := ifStmt.Body.List[len(ifStmt.Body.List)-1]
+
+		// Déterminer le type de sortie anticipée
+		hasEarlyExit, exitType := checkEarlyExit(lastStmt)
+
+		// Si sortie anticipée détectée, reporter l'erreur
+		if hasEarlyExit {
+			pass.Reportf(
+				ifStmt.Else.Pos(),
+				"KTN-FUNC-003: else inutile après %s, utiliser early return",
+				exitType,
+			)
+		}
+	})
 
 	// Retour succès
 	return nil, nil
 }
 
-// getAllowedValues retourne les valeurs numériques autorisées (non magic).
-//
-// Returns:
-//   - map[string]bool: map des valeurs autorisées
-func getAllowedValues() map[string]bool {
-	// Retour de la map des valeurs autorisées
-	return map[string]bool{
-		"0":  true,
-		"1":  true,
-		"-1": true,
-	}
-}
-
-// collectAllowedLiterals collecte les littéraux dans const declarations.
+// checkEarlyExit vérifie si une instruction est une sortie anticipée.
 //
 // Params:
-//   - inspect: inspecteur AST
+//   - stmt: instruction à vérifier
 //
 // Returns:
-//   - map[ast.Node]bool: map des littéraux autorisés
-func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
-	allowedLiterals := make(map[ast.Node]bool, INITIAL_ALLOWED_LITERALS_CAP)
-
-	// Filter pour GenDecl seulement
-	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
+//   - bool: true si sortie anticipée
+//   - string: type de sortie (return, continue, break)
+func checkEarlyExit(stmt ast.Stmt) (bool, string) {
+	// Switch sur le type d'instruction
+	switch s := stmt.(type) {
+	// Cas return
+	case *ast.ReturnStmt:
+		// Retour true car c'est une sortie anticipée de type return
+		return true, "return"
+	// Cas branch (continue/break)
+	case *ast.BranchStmt:
+		// Si c'est continue
+		if s.Tok.String() == "continue" {
+			// Retour true car c'est une sortie anticipée de type continue
+			return true, "continue"
+		}
+		// Si c'est break
+		if s.Tok.String() == "break" {
+			// Retour true car c'est une sortie anticipée de type break
+			return true, "break"
+		}
 	}
 
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
-
-		// Si c'est une déclaration const
-		if genDecl.Tok == token.CONST {
-			ast.Inspect(genDecl, func(inner ast.Node) bool {
-				// Si c'est un littéral
-				if lit, ok := inner.(*ast.BasicLit); ok {
-					allowedLiterals[lit] = true
-				}
-				// Continuer l'inspection
-				return true
-			})
-		}
-	})
-
-	// Retour de la map
-	return allowedLiterals
-}
-
-// checkMagicNumbers vérifie et rapporte les magic numbers.
-//
-// Params:
-//   - inspect: inspecteur AST
-//   - pass: contexte d'analyse
-//   - allowedValues: valeurs autorisées
-//   - allowedLiterals: littéraux autorisés
-func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool) {
-	// Filter pour les littéraux
-	nodeFilter := []ast.Node{
-		(*ast.BasicLit)(nil),
-	}
-
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		lit := n.(*ast.BasicLit)
-
-		// Vérifier si c'est un nombre (INT ou FLOAT)
-		if lit.Kind != token.INT && lit.Kind != token.FLOAT {
-			// Pas un nombre, ignorer
-			return
-		}
-
-		// Vérifier si c'est une valeur autorisée
-		if allowedValues[lit.Value] {
-			// Valeur autorisée, ignorer
-			return
-		}
-
-		// Vérifier si c'est dans les littéraux autorisés
-		if allowedLiterals[lit] {
-			// Littéral autorisé, ignorer
-			return
-		}
-
-		// Reporter l'erreur
-		pass.Reportf(
-			lit.Pos(),
-			"KTN-FUNC-003: le nombre '%s' devrait être une constante nommée (magic number)",
-			lit.Value,
-		)
-	})
+	// Pas de sortie anticipée
+	return false, ""
 }

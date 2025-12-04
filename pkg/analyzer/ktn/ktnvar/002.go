@@ -7,13 +7,16 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer002 checks that variables are grouped together in a single var block
+// Analyzer002 checks that every package-level variable has an associated comment
 var Analyzer002 = &analysis.Analyzer{
-	Name: "ktnvar002",
-	Doc:  "KTN-VAR-002: Vérifie que les variables de package sont groupées dans un seul bloc var ()",
-	Run:  runVar002,
+	Name:     "ktnvar002",
+	Doc:      "KTN-VAR-002: Vérifie que chaque variable de package a un commentaire associé",
+	Run:      runVar002,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
 // runVar002 exécute l'analyse KTN-VAR-002.
@@ -25,64 +28,63 @@ var Analyzer002 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar002(pass *analysis.Pass) (any, error) {
-	// Analyze each file independently
-	for _, file := range pass.Files {
-		varGroups := collectVarGroups(file)
-		checkVarGrouping(pass, varGroups)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	// Filter for File nodes to access package-level declarations only
+	nodeFilter := []ast.Node{
+		(*ast.File)(nil),
 	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		file := n.(*ast.File)
+
+		// Check package-level declarations only
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Skip if not a GenDecl
+			if !ok {
+				continue
+			}
+
+			// Only check var declarations
+			if genDecl.Tok != token.VAR {
+				continue
+			}
+
+			// Check if the GenDecl has a doc comment (applies to all variables in the group)
+			// Filter out "want" directives used by analysistest
+			hasGenDeclDoc := shared.HasValidComment(genDecl.Doc)
+
+			// Itération sur les éléments
+			for _, spec := range genDecl.Specs {
+				valueSpec := spec.(*ast.ValueSpec)
+
+				// Check if this specific ValueSpec has a doc comment or line comment
+				// Filter out "want" directives used by analysistest
+				hasValueSpecDoc := shared.HasValidComment(valueSpec.Doc)
+				hasValueSpecComment := shared.HasValidComment(valueSpec.Comment)
+
+				// A variable is considered documented if:
+				// 1. The GenDecl has a doc comment (group documentation), OR
+				// 2. The ValueSpec has a doc comment (above the variable), OR
+				// 3. The ValueSpec has a line comment (on the same line)
+				hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
+
+				// Vérification de la condition
+				if !hasComment {
+					// Itération sur les éléments
+					for _, name := range valueSpec.Names {
+						pass.Reportf(
+							name.Pos(),
+							"KTN-VAR-002: la variable '%s' doit avoir un commentaire associé",
+							name.Name,
+						)
+					}
+				}
+			}
+		}
+	})
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// collectVarGroups collecte les déclarations var du fichier.
-//
-// Params:
-//   - file: fichier à analyser
-//
-// Returns:
-//   - []shared.DeclGroup: liste des groupes de variables
-func collectVarGroups(file *ast.File) []shared.DeclGroup {
-	var varGroups []shared.DeclGroup
-
-	// Collect var declarations
-	for _, decl := range file.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
-		// Vérification de la condition
-		if !ok {
-			continue
-		}
-
-		// Only collect var declarations
-		if genDecl.Tok == token.VAR {
-			varGroups = append(varGroups, shared.DeclGroup{
-				Decl: genDecl,
-				Pos:  genDecl.Pos(),
-			})
-		}
-	}
-
-	// Retour de la fonction
-	return varGroups
-}
-
-// checkVarGrouping vérifie le groupement des variables.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - varGroups: groupes de variables à vérifier
-func checkVarGrouping(pass *analysis.Pass, varGroups []shared.DeclGroup) {
-	// If 0 or 1 var group, they're properly grouped
-	if len(varGroups) <= 1 {
-		// Retour de la fonction
-		return
-	}
-
-	// Report all var groups except the first as scattered
-	for i := 1; i < len(varGroups); i++ {
-		pass.Reportf(
-			varGroups[i].Pos,
-			"KTN-VAR-002: les variables doivent être groupées ensemble dans un seul bloc var ()",
-		)
-	}
 }

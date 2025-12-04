@@ -1,32 +1,94 @@
 // Bad examples for the const004 test case.
 package const004
 
+// Bad: Invalid naming (violates KTN-CONST-004)
+// But respects: explicit types, comments, and single-block grouping
 const (
-	SMTP_PORT          int     = 25
-	SSH_PORT           int     = 22
-	TELNET_PORT        int     = 23
-	POOL_MAX_SIZE      int     = 500
-	POOL_MIN_SIZE      int     = 5
-	CONNECTION_TIMEOUT int     = 60
-	SERVER_VERSION     string  = "v2.0"
-	BASE_PATH          string  = "/base"
-	AUTH_TOKEN         string  = "token123"
-	AUTO_RELOAD        bool    = false
-	STRICT_MODE        bool    = true
-	LOG_ENABLED        bool    = true
-	ATTEMPTS_LIMIT     int     = 3
-	WAIT_TIME_MS       int     = 500
-	SCALE_FACTOR       float64 = 2.0
-	CACHE_HOST         string  = "127.0.0.1"
-	CACHE_PORT         int     = 6379
-	SCHEMA_NAME        string  = "public"
-	ADMIN_USER         string  = "root"
-	MISSING_COMMENT    int     = 999
-	//want "KTN-CONST-004"
-	ONLY_WANT_DIRECTIVE int = 42
-	// want "some directive"
-	SPACE_WANT_DIRECTIVE int = 43
-)
+	// camelCase naming (INVALID)
+	// maxSize in camelCase
+	maxSize int = 100
+	// apiKey in camelCase
+	apiKey string = "secret"
+	// httpTimeout in camelCase
+	httpTimeout int = 30
 
-// Valid edge case: File with only variables (no const) should not trigger errors
-var OnlyVar2 string = "test"
+	// PascalCase naming (INVALID)
+	// MaxSize in PascalCase
+	MaxSize int = 100
+	// ApiKey in PascalCase
+	ApiKey string = "secret"
+	// HttpTimeout in PascalCase
+	HttpTimeout int = 30
+
+	// snake_case (lowercase with underscores) - INVALID
+	// max_size in snake_case
+	max_size int = 100
+	// api_key in snake_case
+	api_key string = "secret"
+	// http_timeout in snake_case
+	http_timeout int = 30
+
+	// Mixed case with underscores - INVALID
+	// Max_Size mixed case
+	Max_Size int = 100
+	// Api_Key mixed case
+	Api_Key string = "secret"
+	// Http_Timeout mixed case
+	Http_Timeout int = 30
+
+	// More camelCase examples
+	// statusOk in camelCase
+	statusOk int = 200
+	// statusCreated in camelCase
+	statusCreated int = 201
+	// statusError in camelCase
+	statusError int = 500
+
+	// More PascalCase examples
+	// StateIdle in PascalCase
+	StateIdle int = 0
+	// StateRunning in PascalCase
+	StateRunning int = 1
+	// StatePaused in PascalCase
+	StatePaused int = 2
+
+	// Mixed variations
+	// ErrorNotFound PascalCase
+	ErrorNotFound string = "not found"
+	// errorUnauthorized camelCase
+	errorUnauthorized string = "unauthorized"
+	// Error_Internal mixed
+	Error_Internal string = "internal"
+
+	// Starting with lowercase
+	// defaultPort lowercase start
+	defaultPort int = 8080
+	// defaultHost lowercase start
+	defaultHost string = "localhost"
+	// defaultProtocol lowercase start
+	defaultProtocol string = "http"
+
+	// Complex camelCase
+	// maxConnectionPoolSize complex camelCase
+	maxConnectionPoolSize int = 50
+	// defaultRequestTimeout complex camelCase
+	defaultRequestTimeout int = 60
+	// apiKeyHeaderName complex camelCase
+	apiKeyHeaderName string = "X-API-Key"
+
+	// Partially correct (mixed) - INVALID
+	// MAX_Size partially correct
+	MAX_Size int = 100
+	// Api_KEY partially correct
+	Api_KEY string = "key"
+	// HTTP_timeout partially correct
+	HTTP_timeout int = 30
+
+	// Database constants with wrong naming
+	// dbMaxConnections database setting
+	dbMaxConnections int = 100
+	// DbMinConnections database setting
+	DbMinConnections int = 10
+	// db_timeout database setting
+	db_timeout int = 30
+)

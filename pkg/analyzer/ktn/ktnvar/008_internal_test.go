@@ -20,18 +20,30 @@ func Test_runVar008(t *testing.T) {
 	}
 }
 
-// Test_checkMakeCallVar008 tests the private checkMakeCallVar008 helper function.
-func Test_checkMakeCallVar008(t *testing.T) {
+// Test_checkStringConcatInLoop tests the private checkStringConcatInLoop function.
+func Test_checkStringConcatInLoop(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"helper validation"},
 		{"error case validation"},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - complex logic tested via integration tests
+			// Test passthrough - function checks string concatenation in loops
+		})
+	}
+}
+
+// Test_isStringConcatenation tests the private isStringConcatenation function.
+func Test_isStringConcatenation(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if string concatenation
 		})
 	}
 }

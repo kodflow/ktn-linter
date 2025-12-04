@@ -1,7 +1,13 @@
 package ktnvar
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_runVar014 tests the private runVar014 function.
@@ -20,100 +26,103 @@ func Test_runVar014(t *testing.T) {
 	}
 }
 
-// Test_checkFuncBody tests the private checkFuncBody function.
-func Test_checkFuncBody(t *testing.T) {
+// Test_collectVarGroups tests the private collectVarGroups helper function.
+func Test_collectVarGroups(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		code     string
+		expected int
 	}{
-		{"error case validation"},
+		{
+			name: "single var group",
+			code: `package test
+var (
+	x int
+	y string
+)`,
+			expected: 1,
+		},
+		{
+			name: "multiple var groups",
+			code: `package test
+var x int
+var y string`,
+			expected: 2,
+		},
+		{
+			name: "no vars",
+			code: `package test
+const x = 1`,
+			expected: 0,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks function bodies
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification de l'erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			groups := collectVarGroups(file)
+			// Vérification du nombre de groupes
+			if len(groups) != tt.expected {
+				t.Errorf("collectVarGroups() returned %d groups, expected %d", len(groups), tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkStmtForLargeStruct tests the private checkStmtForLargeStruct function.
-func Test_checkStmtForLargeStruct(t *testing.T) {
+// Test_checkVarGrouping tests the private checkVarGrouping helper function.
+func Test_checkVarGrouping(t *testing.T) {
 	tests := []struct {
-		name string
+		name          string
+		groupCount    int
+		expectReports int
 	}{
-		{"error case validation"},
+		{
+			name:          "no groups",
+			groupCount:    0,
+			expectReports: 0,
+		},
+		{
+			name:          "one group",
+			groupCount:    1,
+			expectReports: 0,
+		},
+		{
+			name:          "multiple groups",
+			groupCount:    3,
+			expectReports: 2,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks statements for large structs
-		})
-	}
-}
 
-// Test_checkAssignForLargeStruct tests the private checkAssignForLargeStruct function.
-func Test_checkAssignForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks assignments for large structs
-		})
-	}
-}
+			reports := 0
+			mockPass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {
+					reports++
+				},
+			}
 
-// Test_checkDeclForLargeStruct tests the private checkDeclForLargeStruct function.
-func Test_checkDeclForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks declarations for large structs
-		})
-	}
-}
+			// Create fake groups
+			var groups []shared.DeclGroup
+			for i := 0; i < tt.groupCount; i++ {
+				groups = append(groups, shared.DeclGroup{
+					Decl: &ast.GenDecl{TokPos: token.Pos(i + 1)},
+					Pos:  token.Pos(i + 1),
+				})
+			}
 
-// Test_checkExprForLargeStruct tests the private checkExprForLargeStruct function.
-func Test_checkExprForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks expressions for large structs
-		})
-	}
-}
+			checkVarGrouping(mockPass, groups)
 
-// Test_checkTypeForLargeStruct tests the private checkTypeForLargeStruct function.
-func Test_checkTypeForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks types for large structs
-		})
-	}
-}
-
-// Test_isExternalType tests the private isExternalType function.
-func Test_isExternalType(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if type is external
+			// Vérification du nombre de rapports
+			if reports != tt.expectReports {
+				t.Errorf("checkVarGrouping() reported %d issues, expected %d", reports, tt.expectReports)
+			}
 		})
 	}
 }

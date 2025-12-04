@@ -1,103 +1,134 @@
 // Bad examples for the func003 test case.
 package func003
 
-// badProcessSixItems creates a slice with magic number 6 (violates KTN-FUNC-003).
-func badProcessSixItems() {
-	// Create slice with magic number 6 (should be a constant)
-	items := [6]int{}
-	_ = items
-}
+const (
+	// MULTIPLIER represents the multiplication factor
+	MULTIPLIER int = 2
+	// LOOP_MAX represents the maximum loop iterations
+	LOOP_MAX int = 10
+	// THRESHOLD represents the threshold value
+	THRESHOLD int = 10
+)
 
-// badValidateAge checks age validity using magic numbers 18 and 120 (violates KTN-FUNC-003).
+// badCheckPositive vérifie si un nombre est positif avec else inutile.
 //
 // Params:
-//   - age: the age to validate
+//   - x: nombre à vérifier
 //
 // Returns:
-//   - bool: true if age is between 18 and 120, false otherwise
-func badValidateAge(age int) bool {
-	// Check age range with magic numbers 18 and 120 (should be constants)
-	if age >= 18 && age <= 120 {
-		// Age is in valid range
-		return true
+//   - string: "positive" ou "negative"
+func badCheckPositive(x int) string {
+	// Check if number is positive
+	if x > 0 {
+		// Return positive case
+		return "positive"
+	} else {
+		// Return negative case
+		return "negative"
 	}
-	// Age is out of valid range
-	return false
 }
 
-// badCalculateDiscount applies discount using magic number 0.15 (violates KTN-FUNC-003).
+// badProcessValue traite une valeur avec else inutile après return.
 //
 // Params:
-//   - price: the original price
+//   - val: valeur à traiter
 //
 // Returns:
-//   - float64: the discount amount
-func badCalculateDiscount(price float64) float64 {
-	// Calculate discount with magic number 0.15 (should be a constant)
-	return price * 0.15
-}
-
-// badProcessRetries sets max retries using magic number 3 (violates KTN-FUNC-003).
-func badProcessRetries() {
-	// Set retries with magic number 3 (should be a constant)
-	maxRetries := 3
-	_ = maxRetries
-}
-
-// badSetBufferSize creates a buffer using magic number 1024 (violates KTN-FUNC-003).
-func badSetBufferSize() {
-	// Create buffer with magic number 1024 (should be a constant)
-	buffer := [1024]byte{}
-	_ = buffer
-}
-
-// badCheckThreshold verifies value against magic number 100 (violates KTN-FUNC-003).
-//
-// Params:
-//   - value: the value to check
-//
-// Returns:
-//   - bool: true if value exceeds 100, false otherwise
-func badCheckThreshold(value int) bool {
-	// Check threshold with magic number 100 (should be a constant)
-	if value > 100 {
-		// Value exceeds threshold
-		return true
+//   - int: 0 si négatif, sinon val doublée
+func badProcessValue(val int) int {
+	// Check if value is negative
+	if val < 0 {
+		// Return zero for negative values
+		return 0
+	} else {
+		// Return multiplied value
+		return val * MULTIPLIER
 	}
-	// Value is below or equal to threshold
-	return false
 }
 
-// badWaitTimeout sets a timeout using magic number 30 (violates KTN-FUNC-003).
-func badWaitTimeout() {
-	// Set timeout with magic number 30 (should be a constant)
-	timeout := 30
-	_ = timeout
+// badFindMax trouve le maximum avec else inutile après return.
+//
+// Params:
+//   - a: premier nombre
+//   - b: deuxième nombre
+//
+// Returns:
+//   - int: le maximum des deux
+func badFindMax(a, b int) int {
+	// Check if a is greater than b
+	if a > b {
+		// Return a if it's larger
+		return a
+	} else {
+		// Return b otherwise
+		return b
+	}
 }
 
-// badSetPort assigns a port using magic number 8080 (violates KTN-FUNC-003).
-func badSetPort() {
-	// Set port with magic number 8080 (should be a constant)
-	port := 8080
-	_ = port
+// badLoopExample demonstrates a loop with unnecessary else after continue.
+// This function violates KTN-FUNC-003 by using else after continue.
+func badLoopExample() {
+	// Iterate from 0 to LOOP_MAX
+	for i := 0; i < LOOP_MAX; i++ {
+		// Check if i is even
+		if i%MULTIPLIER == 0 {
+			// Skip even numbers
+			continue
+		} else {
+			// Process odd numbers
+			_ = i
+		}
+	}
+}
+
+// badSwitchExample illustre else inutile après break.
+//
+// Params:
+//   - x: valeur à traiter
+func badSwitchExample(x int) {
+	// Loop until x exceeds threshold
+	for {
+		// Check if threshold exceeded
+		if x > THRESHOLD {
+			// Exit loop when threshold exceeded
+			break
+		} else {
+			// Increment x otherwise
+			x++
+		}
+	}
+}
+
+// badValidateInput valide une entrée avec else inutile après return.
+//
+// Params:
+//   - input: chaîne à valider
+//
+// Returns:
+//   - error: erreur ou nil
+func badValidateInput(input string) error {
+	// Check if input is empty
+	if input == "" {
+		// Return nil for empty input
+		return nil
+	} else {
+		// Return nil for non-empty input
+		return nil
+	}
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badProcessSixItems
-	badProcessSixItems()
-	// Appel de badValidateAge
-	_ = badValidateAge(0)
-	// Appel de badCalculateDiscount
-	_ = badCalculateDiscount(0)
-	// Appel de badProcessRetries
-	badProcessRetries()
-	// Appel de badSetBufferSize
-	badSetBufferSize()
-	// Appel de badCheckThreshold
-	_ = badCheckThreshold(0)
-	// Appel de badWaitTimeout
-	badWaitTimeout()
-	// Appel de badSetPort
-	badSetPort()
+	// Appel de badCheckPositive
+	_ = badCheckPositive(0)
+	// Appel de badProcessValue
+	_ = badProcessValue(0)
+	// Appel de badFindMax
+	_ = badFindMax(1, 0)
+	// Appel de badLoopExample
+	badLoopExample()
+	// Appel de badSwitchExample
+	badSwitchExample(0)
+	// Appel de badValidateInput
+	_ = badValidateInput("")
 }

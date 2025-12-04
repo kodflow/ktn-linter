@@ -2,97 +2,56 @@
 package ktntest
 
 import (
-	"go/ast"
 	"path/filepath"
-	"slices"
+	"strings"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer001 checks that test files use external test packages (xxx_test)
+// Analyzer001 detects test files not following naming convention.
 var Analyzer001 = &analysis.Analyzer{
-	Name:     "ktntest001",
-	Doc:      "KTN-TEST-001: Les fichiers de test doivent utiliser le package xxx_test",
-	Run:      runTest001,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
+	Name: "ktntest001",
+	Doc:  "KTN-TEST-001: fichier de test doit se terminer par _internal_test.go ou _external_test.go",
+	Run:  runTest001,
 }
 
-// runTest001 exécute l'analyse KTN-TEST-001.
+// runTest001 analyzes test file naming conventions.
 //
 // Params:
-//   - pass: contexte d'analyse
+//   - pass: Analysis pass
 //
 // Returns:
-//   - any: résultat de l'analyse
-//   - error: erreur éventuelle
+//   - any: always nil
+//   - error: analysis error if any
 func runTest001(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Check each file in the package
+	// Itération sur les éléments
+	for _, file := range pass.Files {
+		filename := pass.Fset.Position(file.Pos()).Filename
+		base := filepath.Base(filename)
 
-	// Vérifier si on est dans un fichier de test
-	for _, f := range pass.Files {
-		filename := pass.Fset.Position(f.Pos()).Filename
-		// Vérification de la condition
-		if !shared.IsTestFile(filename) {
-			// Pas un fichier de test, continuer
+		// Skip if not a test file
+		if !strings.HasSuffix(base, "_test.go") {
 			continue
 		}
 
-		// Extraire le nom du package attendu
-		dir := filepath.Dir(filename)
-		expectedPkg := filepath.Base(dir) + "_test"
+		// Check if it follows the correct naming convention
+		hasInternalSuffix := strings.HasSuffix(base, "_internal_test.go")
+		hasExternalSuffix := strings.HasSuffix(base, "_external_test.go")
 
-		// Vérifier le nom du package
-		actualPkg := f.Name.Name
+		// Report error if it's a plain _test.go file
 		// Vérification de la condition
-		if actualPkg != expectedPkg && !isExemptPackage(actualPkg) {
-			// Signaler l'erreur
+		if !hasInternalSuffix && !hasExternalSuffix {
 			pass.Reportf(
-				f.Name.Pos(),
-				"KTN-TEST-001: le fichier de test doit utiliser le package '%s' au lieu de '%s'",
-				expectedPkg,
-				actualPkg,
+				file.Pos(),
+				"KTN-TEST-001: le fichier '%s' doit être renommé en '%s' (white-box) ou '%s' (black-box), ou son contenu doit être dispatché dans ces fichiers. Les tests publics doivent aller dans _external_test.go (package xxx_test), les tests de fonctions privées dans _internal_test.go (package xxx)",
+				base,
+				strings.Replace(base, "_test.go", "_internal_test.go", 1),
+				strings.Replace(base, "_test.go", "_external_test.go", 1),
 			)
 		}
 	}
 
-	nodeFilter := []ast.Node{
-		(*ast.File)(nil),
-	}
-
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Nothing to do in preorder, already handled above
-	})
-
-	// Retour de la fonction
+	// Early return from function.
 	return nil, nil
-}
-
-// isExemptPackage vérifie si un package est exempté de la règle.
-//
-// Params:
-//   - pkgName: nom du package
-//
-// Returns:
-//   - bool: true si le package est exempté
-func isExemptPackage(pkgName string) bool {
-	// Certains packages internes peuvent être exemptés
-	// (ceux qui testent des fonctions privées)
-	exemptPkgs := []string{
-		"main",
-		"testhelper",
-		"cmd",       // tests de fonctions privées cmd
-		"utils",     // tests de fonctions privées utils
-		"formatter", // tests de fonctions privées formatter
-		"ktn",       // registry tests need same package for KTN-TEST-003
-		"ktnconst",  // registry tests need same package for KTN-TEST-003
-		"ktnfunc",   // registry tests need same package for KTN-TEST-003
-		"ktntest",   // registry tests need same package for KTN-TEST-003
-		"ktnvar",    // registry tests need same package for KTN-TEST-003
-	}
-
-	// Vérifier si le package est exempté
-	return slices.Contains(exemptPkgs, pkgName)
 }

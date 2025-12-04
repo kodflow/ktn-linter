@@ -40,42 +40,61 @@ func TestFormatEmpty(t *testing.T) {
 
 // TestFormatHumanMode tests the functionality of the corresponding implementation.
 func TestFormatHumanMode(t *testing.T) {
-	buf := &bytes.Buffer{}
-	formatter := NewFormatter(buf, false, false, false)
-	fset := token.NewFileSet()
-
-	// Add a test file
-	fset.AddFile("test.go", 1, 1000)
-	diagnostics := createTestDiagnostics()
-
-	formatter.Format(fset, diagnostics)
-
-	output := buf.String()
-	if !strings.Contains(output, "KTN-LINTER REPORT") {
-		t.Error("Expected human-readable report header")
+	tests := []struct {
+		name     string
+		contains []string
+	}{
+		{name: "human mode output", contains: []string{"KTN-LINTER REPORT", "test.go"}},
 	}
-	if !strings.Contains(output, "test.go") {
-		t.Error("Expected filename in output")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			formatter := NewFormatter(buf, false, false, false)
+			fset := token.NewFileSet()
+
+			fset.AddFile("test.go", 1, 1000)
+			diagnostics := createTestDiagnostics()
+
+			formatter.Format(fset, diagnostics)
+
+			output := buf.String()
+			for _, expected := range tt.contains {
+				if !strings.Contains(output, expected) {
+					t.Errorf("Expected %q in output", expected)
+				}
+			}
+		})
 	}
 }
 
 // TestFormatAIMode tests the functionality of the corresponding implementation.
 func TestFormatAIMode(t *testing.T) {
-	buf := &bytes.Buffer{}
-	formatter := NewFormatter(buf, true, false, false)
-	fset := token.NewFileSet()
-
-	fset.AddFile("test.go", 1, 1000)
-	diagnostics := createTestDiagnostics()
-
-	formatter.Format(fset, diagnostics)
-
-	output := buf.String()
-	if !strings.Contains(output, "# KTN-Linter Report (AI Mode)") {
-		t.Error("Expected AI mode header")
+	tests := []struct {
+		name     string
+		contains []string
+	}{
+		{name: "AI mode output", contains: []string{"# KTN-Linter Report (AI Mode)", "## File:"}},
 	}
-	if !strings.Contains(output, "## File:") {
-		t.Error("Expected AI format file markers")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			formatter := NewFormatter(buf, true, false, false)
+			fset := token.NewFileSet()
+
+			fset.AddFile("test.go", 1, 1000)
+			diagnostics := createTestDiagnostics()
+
+			formatter.Format(fset, diagnostics)
+
+			output := buf.String()
+			for _, expected := range tt.contains {
+				if !strings.Contains(output, expected) {
+					t.Errorf("Expected %q in output", expected)
+				}
+			}
+		})
 	}
 }
 
@@ -295,11 +314,11 @@ func TestGetCodeColor(t *testing.T) {
 		code     string
 		expected string
 	}{
-		{"KTN-VAR-001", YELLOW},   // Toutes les règles = WARNING
-		{"KTN-FUNC-002", YELLOW},  // Toutes les règles = WARNING
-		{"KTN-TEST-003", YELLOW},  // Toutes les règles = WARNING
-		{"KTN-ALLOC-004", YELLOW}, // Toutes les règles = WARNING
-		{"KTN-OTHER-999", YELLOW}, // Toutes les règles = WARNING
+		{"KTN-VAR-001", RED},      // ERROR (camelCase pour var package)
+		{"KTN-FUNC-002", RED},     // ERROR (context.Context en premier)
+		{"KTN-TEST-003", YELLOW},  // WARNING
+		{"KTN-ALLOC-004", YELLOW}, // WARNING (unknown defaults to WARNING)
+		{"KTN-OTHER-999", YELLOW}, // WARNING (unknown defaults to WARNING)
 	}
 
 	for _, tt := range tests {
@@ -389,27 +408,36 @@ func TestGroupByFile(t *testing.T) {
 
 // TestGroupByFileFiltering tests the functionality of the corresponding implementation.
 func TestGroupByFileFiltering(t *testing.T) {
-	formatter := &formatterImpl{}
-	fset := token.NewFileSet()
-
-	// Add files including temp/cache files
-	file1 := fset.AddFile("normal.go", 1, 1000)
-	file2 := fset.AddFile("/.cache/go-build/temp.go", 1002, 1000)
-	file3 := fset.AddFile("/tmp/test.go", 2003, 1000)
-
-	diagnostics := []analysis.Diagnostic{
-		{Pos: file1.Pos(10), Message: "Issue 1", Category: "test"},
-		{Pos: file2.Pos(20), Message: "Issue 2", Category: "test"}, // Should be filtered
-		{Pos: file3.Pos(30), Message: "Issue 3", Category: "test"}, // Should be filtered
+	tests := []struct {
+		name             string
+		expectedGroups   int
+		expectedFilename string
+	}{
+		{name: "filters temp and cache files", expectedGroups: 1, expectedFilename: "normal.go"},
 	}
 
-	groups := formatter.groupByFile(fset, diagnostics)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			formatter := &formatterImpl{}
+			fset := token.NewFileSet()
 
-	if len(groups) != 1 {
-		t.Errorf("Expected 1 group after filtering, got %d", len(groups))
-	}
-	if groups[0].Filename != "normal.go" {
-		t.Errorf("Expected normal.go, got %s", groups[0].Filename)
+			file1 := fset.AddFile("normal.go", 1, 1000)
+			file2 := fset.AddFile("/.cache/go-build/temp.go", 1002, 1000)
+			file3 := fset.AddFile("/tmp/test.go", 2003, 1000)
+
+			diagnostics := []analysis.Diagnostic{
+				{Pos: file1.Pos(10), Message: "Issue 1", Category: "test"},
+				{Pos: file2.Pos(20), Message: "Issue 2", Category: "test"},
+				{Pos: file3.Pos(30), Message: "Issue 3", Category: "test"},
+			}
+
+			groups := formatter.groupByFile(fset, diagnostics)
+
+			if len(groups) != tt.expectedGroups || groups[0].Filename != tt.expectedFilename {
+				t.Errorf("Expected %d groups with filename %q, got %d groups",
+					tt.expectedGroups, tt.expectedFilename, len(groups))
+			}
+		})
 	}
 }
 
@@ -745,25 +773,32 @@ func TestFormatterImpl_groupByFile(t *testing.T) {
 
 // TestFormatterImpl_filterAndSortDiagnostics tests filterAndSortDiagnostics
 func TestFormatterImpl_filterAndSortDiagnostics(t *testing.T) {
-	formatter := &formatterImpl{}
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", 1, 100)
-
-	diags := []analysis.Diagnostic{
-		{Pos: file.Pos(50), Message: "error2"},
-		{Pos: file.Pos(10), Message: "error1"},
-		{Pos: file.Pos(90), Message: "error3"},
+	tests := []struct {
+		name          string
+		expectedCount int
+	}{
+		{name: "sorts and filters diagnostics", expectedCount: 3},
 	}
 
-	sorted := formatter.filterAndSortDiagnostics(fset, diags)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			formatter := &formatterImpl{}
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", 1, 100)
 
-	if len(sorted) != 3 {
-		t.Errorf("Expected 3 diagnostics, got %d", len(sorted))
-	}
+			diags := []analysis.Diagnostic{
+				{Pos: file.Pos(50), Message: "error2"},
+				{Pos: file.Pos(10), Message: "error1"},
+				{Pos: file.Pos(90), Message: "error3"},
+			}
 
-	// Check sorting by position
-	if sorted[0].Pos > sorted[1].Pos {
-		t.Errorf("Diagnostics not sorted by position")
+			sorted := formatter.filterAndSortDiagnostics(fset, diags)
+
+			// Check count and sorting
+			if len(sorted) != tt.expectedCount || (len(sorted) >= 2 && sorted[0].Pos > sorted[1].Pos) {
+				t.Errorf("Expected %d sorted diagnostics", tt.expectedCount)
+			}
+		})
 	}
 }
 
@@ -869,19 +904,21 @@ func TestFormatterImpl_getCodeColor(t *testing.T) {
 
 // TestFormatterImpl_getSymbol tests getSymbol private method
 func TestFormatterImpl_getSymbol(t *testing.T) {
-	formatter := &formatterImpl{}
-
-	symbol := formatter.getSymbol("KTN-VAR-001")
-
-	if symbol == "" {
-		t.Errorf("Expected non-empty symbol")
+	tests := []struct {
+		name string
+		code string
+	}{
+		{name: "warning symbol", code: "KTN-VAR-001"},
+		{name: "error symbol", code: "KTN-VAR-003"},
 	}
 
-	// Check different severity levels
-	errorSymbol := formatter.getSymbol("KTN-VAR-003") // ERROR level
-	warnSymbol := formatter.getSymbol("KTN-VAR-001")  // WARNING level
-
-	if errorSymbol == "" || warnSymbol == "" {
-		t.Errorf("Expected valid symbols for different severity levels")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			formatter := &formatterImpl{}
+			symbol := formatter.getSymbol(tt.code)
+			if symbol == "" {
+				t.Errorf("Expected non-empty symbol for %s", tt.code)
+			}
+		})
 	}
 }

@@ -35,13 +35,20 @@ func Test_runTest007(t *testing.T) {
 // Params:
 //   - t: testing context
 func Test_runTest007_integration(t *testing.T) {
-	// Test analyzer structure
-	if Analyzer007 == nil {
-		t.Fatal("Analyzer007 should not be nil")
+	tests := []struct {
+		name         string
+		expectedName string
+	}{
+		{name: "analyzer structure", expectedName: "ktntest007"},
 	}
-	// Vérification du nom
-	if Analyzer007.Name != "ktntest007" {
-		t.Errorf("Analyzer007.Name = %q, want %q", Analyzer007.Name, "ktntest007")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if Analyzer007 == nil || Analyzer007.Name != tt.expectedName {
+				t.Errorf("Analyzer007 invalid: nil=%v, Name=%q, want %q",
+					Analyzer007 == nil, Analyzer007.Name, tt.expectedName)
+			}
+		})
 	}
 }
 

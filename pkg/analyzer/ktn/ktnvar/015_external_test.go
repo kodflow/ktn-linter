@@ -7,7 +7,10 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestVar015 vérifie que les variables de package sont déclarées après les constantes.
+//
+// Params:
+//   - t: instance de test
 func TestVar015(t *testing.T) {
-	// 8 buffers créés dans des boucles (4 original + 4 nouveaux edge cases)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer015, "var015", 8)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer015, "var015", 1)
 }

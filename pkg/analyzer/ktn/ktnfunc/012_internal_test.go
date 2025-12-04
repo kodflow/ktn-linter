@@ -7,7 +7,7 @@ import (
 // Test_runFunc012 tests the runFunc012 private function.
 func Test_runFunc012(t *testing.T) {
 	// Test cases pour la fonction privée runFunc012
-	// La logique principale est testée via l'API publique dans 012_external_test.go
+	// La logique principale est testée via l'API publique dans 004_external_test.go
 	// Ce test vérifie les cas edge de la fonction privée
 
 	tests := []struct {
@@ -25,8 +25,8 @@ func Test_runFunc012(t *testing.T) {
 	}
 }
 
-// Test_checkEarlyExit tests the checkEarlyExit private function.
-func Test_checkEarlyExit(t *testing.T) {
+// Test_hasNamedReturns tests the hasNamedReturns private function.
+func Test_hasNamedReturns(t *testing.T) {
 	tests := []struct {
 		name string
 	}{

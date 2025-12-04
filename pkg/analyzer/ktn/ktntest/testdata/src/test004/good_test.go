@@ -1,60 +1,69 @@
-package test004_test
+package test004
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test004"
-)
+// TestNewGoodResource teste le constructeur
+func TestNewGoodResource(t *testing.T) {
+	r := NewGoodResource()
+	if r == nil {
+		t.Error("Expected non-nil resource")
+	}
+}
 
-// TestProcessData teste ProcessData AVEC cas d'erreur.
-// ProcessData retourne error → test avec cas d'erreur = OK.
-//
-// Params:
-//   - t: contexte de test
-func TestProcessData(t *testing.T) {
-	// Test cas valide
-	result, err := test004.ProcessData("hello")
-	// Vérification pas d'erreur
+// TestGoodResource_Metadata teste la méthode Metadata
+func TestGoodResource_Metadata(t *testing.T) {
+	r := NewGoodResource()
+	result := r.Metadata()
+	if result != "good_resource" {
+		t.Errorf("Expected 'good_resource', got '%s'", result)
+	}
+}
+
+// TestGoodResource_Schema teste la méthode Schema
+func TestGoodResource_Schema(t *testing.T) {
+	r := NewGoodResource()
+	schema := r.Schema()
+	if len(schema) == 0 {
+		t.Error("Expected non-empty schema")
+	}
+}
+
+// TestGoodResource_Configure teste la méthode Configure
+func TestGoodResource_Configure(t *testing.T) {
+	r := NewGoodResource()
+	err := r.Configure("test")
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	// Vérification résultat
-	if result != "processed:hello" {
-		t.Logf("got %s", result)
-	}
-
-	// Test cas d'erreur - données vides
-	_, err = test004.ProcessData("")
-	// Vérification erreur attendue
-	if err == nil {
-		t.Log("expected error for empty data")
+		t.Errorf("Expected no error, got %v", err)
 	}
 }
 
-// TestGetName teste GetName.
-// GetName NE retourne PAS error → test simple = OK.
-//
-// Params:
-//   - t: contexte de test
-func TestGetName(t *testing.T) {
-	// Test simple
-	name := test004.GetName()
-	// Vérification résultat
-	if name != "test" {
-		t.Logf("got %s", name)
+// TestvalidateConfig teste la fonction privée validateConfig
+func TestvalidateConfig(t *testing.T) {
+	tests := []struct {
+		name   string
+		config string
+		want   bool
+	}{
+		{"valid config", "test", true},
+		{"empty config", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := validateConfig(tt.config)
+			if result != tt.want {
+				t.Errorf("validateConfig() = %v, want %v", result, tt.want)
+			}
+		})
 	}
 }
 
-// TestGetCount teste GetCount.
-// GetCount NE retourne PAS error → pas de cas d'erreur = OK.
-//
-// Params:
-//   - t: contexte de test
-func TestGetCount(t *testing.T) {
-	// Test simple
-	got := test004.GetCount()
-	// Vérification résultat
-	if got != 42 {
-		t.Logf("got %d, want 42", got)
+// TestGoodResource_sanitize teste la méthode privée sanitize
+func TestGoodResource_sanitize(t *testing.T) {
+	r := NewGoodResource()
+	result := r.sanitize("test")
+	expected := "test_sanitized"
+	if result != expected {
+		t.Errorf("sanitize() = %v, want %v", result, expected)
 	}
 }

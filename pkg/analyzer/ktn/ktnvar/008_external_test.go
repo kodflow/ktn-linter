@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar008(t *testing.T) {
-	// 9 make calls with length > 0 (3 original + 6 edge cases)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer008, "var008", 9)
+	// 6 string concatenation errors detected
+	testhelper.TestGoodBad(t, ktnvar.Analyzer008, "var008", 6)
 }

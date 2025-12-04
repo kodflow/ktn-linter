@@ -48,31 +48,36 @@ func Test_runAnalyzerInternal(t *testing.T) {
 
 // TestRunAnalyzerWithDiagnostics teste RunAnalyzer qui génère des diagnostics.
 func TestRunAnalyzerWithDiagnostics(t *testing.T) {
-	// Création d'un analyzer qui génère un diagnostic
-	testAnalyzer := &analysis.Analyzer{
-		Name: "test",
-		Doc:  "Test analyzer",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Génération d'un diagnostic
-			pass.Report(analysis.Diagnostic{
-				Pos:     pass.Files[0].Package,
-				Message: "test diagnostic",
-			})
-			// Retour de la fonction
-			return nil, nil
-		},
+	tests := []struct {
+		name            string
+		expectedCount   int
+		expectedMessage string
+	}{
+		{name: "generates diagnostic", expectedCount: 1, expectedMessage: "test diagnostic"},
 	}
 
-	// Test avec un fichier Go valide
-	tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
-	diags := RunAnalyzer(t, testAnalyzer, tmpFile)
-	// Vérification qu'un diagnostic a été généré
-	if len(diags) != 1 {
-		t.Errorf("Expected 1 diagnostic, got %d", len(diags))
-	}
-	// Vérification du message
-	if len(diags) > 0 && diags[0].Message != "test diagnostic" {
-		t.Errorf("Expected message 'test diagnostic', got '%s'", diags[0].Message)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testAnalyzer := &analysis.Analyzer{
+				Name: "test",
+				Doc:  "Test analyzer",
+				Run: func(pass *analysis.Pass) (any, error) {
+					pass.Report(analysis.Diagnostic{
+						Pos:     pass.Files[0].Package,
+						Message: "test diagnostic",
+					})
+					return nil, nil
+				},
+			}
+
+			tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
+			diags := RunAnalyzer(t, testAnalyzer, tmpFile)
+			// Vérification combinée
+			if len(diags) != tt.expectedCount ||
+				(len(diags) > 0 && diags[0].Message != tt.expectedMessage) {
+				t.Errorf("Expected %d diagnostics with message %q", tt.expectedCount, tt.expectedMessage)
+			}
+		})
 	}
 }
 

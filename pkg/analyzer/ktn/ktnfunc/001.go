@@ -1,27 +1,65 @@
-// Package ktnfunc implements KTN linter rules.
+// Analyzer 001 for the ktnfunc package.
 package ktnfunc
 
 import (
 	"go/ast"
-	"strings"
+	"go/types"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const (
-	// MAX_PURE_CODE_LINES max lines of pure code in a function
-	MAX_PURE_CODE_LINES int = 35
-)
-
-// Analyzer001 checks that functions don't exceed 35 lines of pure code
+// Analyzer001 checks that error is always the last return value
 var Analyzer001 = &analysis.Analyzer{
 	Name:     "ktnfunc001",
-	Doc:      "KTN-FUNC-001: Les fonctions ne doivent pas dépasser 35 lignes de code pur (hors commentaires et lignes vides)",
+	Doc:      "KTN-FUNC-001: L'erreur doit toujours être en dernière position dans les valeurs de retour",
 	Run:      runFunc001,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
+
+// validateErrorInReturns vérifie que l'erreur est en dernière position.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcType: type de la fonction
+func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
+	// Vérification présence de résultats
+	if funcType == nil || funcType.Results == nil {
+		// Pas de résultats à vérifier
+		return
+	}
+
+	results := funcType.Results.List
+
+	// Recherche des positions d'erreur
+	var errorPositions []int
+	// Itération sur les résultats
+	for i, result := range results {
+		// Vérification si type error
+		if isErrorType(pass, result.Type) {
+			errorPositions = append(errorPositions, i)
+		}
+	}
+
+	// Vérification erreurs mal placées
+	if len(errorPositions) > 0 {
+		lastPos := len(results) - 1
+		// Itération sur les positions d'erreur
+		for _, pos := range errorPositions {
+			// Vérification position incorrecte
+			if pos != lastPos {
+				pass.Reportf(
+					funcType.Results.Pos(),
+					"KTN-FUNC-001: l'erreur doit être en dernière position dans les valeurs de retour (trouvée en position %d sur %d)",
+					pos+1,
+					len(results),
+				)
+				// Retour après premier rapport
+				return
+			}
+		}
+	}
 }
 
 // runFunc001 exécute l'analyse KTN-FUNC-001.
@@ -37,138 +75,45 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
+		(*ast.FuncLit)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-
-		// Skip if no body (external functions)
-		if funcDecl.Body == nil {
-			// Retour de la fonction
-			return
+		var funcType *ast.FuncType
+		// Sélection selon la valeur
+		switch node := n.(type) {
+		// Traitement FuncDecl
+		case *ast.FuncDecl:
+			funcType = node.Type
+		// Traitement FuncLit
+		case *ast.FuncLit:
+			funcType = node.Type
 		}
-
-		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
-		if shared.IsTestFunction(funcDecl) {
-			// Retour de la fonction
-			return
-		}
-
-		// Skip main function
-		funcName := funcDecl.Name.Name
-		// Vérification fonction main
-		if funcName == "main" {
-			// Retour de la fonction
-			return
-		}
-
-		// Count pure code lines
-		pureLines := countPureCodeLines(pass, funcDecl.Body)
-
-		// Vérification de la condition
-		if pureLines > MAX_PURE_CODE_LINES {
-			pass.Reportf(
-				funcDecl.Name.Pos(),
-				"KTN-FUNC-001: la fonction '%s' contient %d lignes de code pur (max: %d)",
-				funcName,
-				pureLines,
-				MAX_PURE_CODE_LINES,
-			)
-		}
+		validateErrorInReturns(pass, funcType)
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// isLineToSkip détermine si une ligne doit être ignorée du compte.
-//
-// Params:
-//   - trimmed: ligne trimée à vérifier
-//   - inBlockComment: pointeur vers l'état du commentaire bloc
-//
-// Returns:
-//   - bool: true si la ligne doit être ignorée
-func isLineToSkip(trimmed string, inBlockComment *bool) bool {
-	// Gestion des commentaires de bloc
-	if strings.Contains(trimmed, "/*") {
-		*inBlockComment = true
-	}
-	// Vérification fin de commentaire bloc
-	if strings.Contains(trimmed, "*/") {
-		*inBlockComment = false
-		// Ligne de fin de bloc à ignorer
-		return true
-	}
-
-	// Vérification si dans un commentaire bloc
-	if *inBlockComment {
-		// Ligne de commentaire bloc à ignorer
-		return true
-	}
-
-	// Vérification ligne vide
-	if trimmed == "" {
-		// Ligne vide à ignorer
-		return true
-	}
-
-	// Vérification commentaire ligne
-	if strings.HasPrefix(trimmed, "//") {
-		// Commentaire ligne à ignorer
-		return true
-	}
-
-	// Vérification accolade seule
-	if trimmed == "{" || trimmed == "}" {
-		// Accolade seule à ignorer
-		return true
-	}
-
-	// Ligne à compter
-	return false
-}
-
-// countPureCodeLines compte les lignes de code pur dans le corps d'une fonction.
-//
+// isErrorType checks if a type expression represents the error interface
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la fonction à analyser
 //
 // Returns:
-//   - int: nombre de lignes de code pur
-func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
-	startPos := pass.Fset.Position(body.Lbrace)
-	endPos := pass.Fset.Position(body.Rbrace)
+//   - bool: true si type error
+func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
+	tv := pass.TypesInfo.Types[expr]
 
-	// Lecture du fichier source
-	filename := startPos.Filename
-	// Vérification de ReadFile (peut être nil dans certains contextes)
-	if pass.ReadFile == nil {
-		// Retour si ReadFile indisponible
-		return 0
-	}
-	content, err := pass.ReadFile(filename)
-	// Vérification erreur lecture
-	if err != nil {
-		// Retour si erreur
-		return 0
-	}
-	lines := strings.Split(string(content), "\n")
-	pureCodeLines := 0
-	inBlockComment := false
-
-	// Itération sur les lignes de la fonction
-	for i := startPos.Line + 1; i < endPos.Line; i++ {
-		line := lines[i-1]
-		trimmed := strings.TrimSpace(line)
-
-		// Vérification si ligne doit être ignorée
-		if !isLineToSkip(trimmed, &inBlockComment) {
-			pureCodeLines++
-		}
+	// Check if it's the error interface
+	named, ok := tv.Type.(*types.Named)
+	// Vérification de la condition
+	if !ok {
+		// Retour de la fonction
+		return false
 	}
 
-	// Retour du compte
-	return pureCodeLines
+	obj := named.Obj()
+	// Retour de la fonction
+	return obj != nil && obj.Name() == "error" && obj.Pkg() == nil
 }

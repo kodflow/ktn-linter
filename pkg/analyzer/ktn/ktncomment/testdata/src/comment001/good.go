@@ -1,5 +1,5 @@
-// Good examples for the comment002 test case.
-package comment002
+// Good examples for the comment001 test case.
+package comment001
 
 const (
 	// DEFAULT_VALUE valeur par défaut pour les exemples

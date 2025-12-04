@@ -1,8 +1,6 @@
 // Good examples for the var009 test case.
 package var009
 
-// Good examples: maps with capacity hints (compliant with KTN-VAR-009)
-
 const (
 	// VALUE_TWO is constant value 2
 	VALUE_TWO int = 2
@@ -12,80 +10,77 @@ const (
 	VALUE_FIVE int = 5
 	// VALUE_TEN is constant value 10
 	VALUE_TEN int = 10
-	// VALUE_TWENTY is constant value 20
-	VALUE_TWENTY int = 20
-	// VALUE_FIFTY is constant value 50
-	VALUE_FIFTY int = 50
-	// VALUE_HUNDRED is constant value 100
-	VALUE_HUNDRED int = 100
 )
 
-// initUsers creates a map with capacity hint
-//
-// Returns:
-//   - map[string]int: initialized user map with capacity hint
-func initUsers() map[string]int {
-	// Map with capacity hint - good practice
-	users := make(map[string]int, VALUE_TEN)
-	users["alice"] = 1
-	users["bob"] = VALUE_TWO
-	// Retour du résultat
-	return users
-}
-
-// initConfig creates a map with capacity in var declaration
-func initConfig() {
-	// Map with capacity hint
-	config := make(map[string]string, VALUE_FIVE)
-	config["host"] = "localhost"
-	// Utilisation de la config
-	_ = config
-}
-
-// processData creates multiple maps with capacity
-func processData() {
-	// Multiple maps with capacity hints
-	data := make(map[int]string, VALUE_HUNDRED)
-	cache := make(map[string]bool, VALUE_FIFTY)
-	index := make(map[int][]string, VALUE_TWENTY)
-
-	// Utilisation des maps
-	data[1] = "test"
-	cache["key"] = true
-	index[0] = []string{"a", "b"}
-}
-
-// nestedMap creates a map of maps with capacity
-func nestedMap() {
-	// Map with capacity hint
-	nested := make(map[string]map[int]string, VALUE_TEN)
-	nested["key"] = make(map[int]string, VALUE_FIVE)
-	// Utilisation de la map
-	_ = nested
-}
-
-// mapLiteral uses map literal (not subject to this rule)
-func mapLiteral() {
-	// Map literal - not checked by this rule
-	data := map[string]int{
-		"one":   1,
-		"two":   VALUE_TWO,
-		"three": VALUE_THREE,
+// goodLoopSliceReuse réutilise un slice déclaré avant la boucle.
+func goodLoopSliceReuse() {
+	// Déclaration avant la boucle
+	data := make([]int, 0, VALUE_TEN)
+	// Loop appends values to reused slice
+	for i := 0; i < VALUE_TEN; i++ {
+		// Append current iteration value
+		data = append(data, i)
 	}
-	// Utilisation de la map
 	_ = data
+}
+
+// goodLoopMapReuse réutilise une map déclarée avant la boucle.
+func goodLoopMapReuse() {
+	// Déclaration avant la boucle avec capacité
+	cache := make(map[string]int, VALUE_TEN)
+	// Loop reuses map
+	for i := 0; i < VALUE_TEN; i++ {
+		// Store current value
+		cache["key"] = i
+	}
+	_ = cache
+}
+
+// goodRangeSliceReuse réutilise un slice dans une boucle range.
+func goodRangeSliceReuse() {
+	items := []int{1, VALUE_TWO, VALUE_THREE}
+	// Déclaration avant la boucle avec capacité
+	buffer := make([]byte, 0, VALUE_THREE)
+	// Range loop reuses buffer
+	for _, item := range items {
+		// Convert and append item
+		buffer = append(buffer, byte(item))
+	}
+	_ = buffer
+}
+
+// goodNoLoopAlloc alloue hors d'une boucle.
+func goodNoLoopAlloc() {
+	// Pas de boucle, allocation OK avec array
+	var data [VALUE_TEN]int
+	_ = data
+}
+
+// goodNestedLoopReuse réutilise dans une boucle imbriquée.
+func goodNestedLoopReuse() {
+	// Déclaration avant la boucle avec array
+	var temp [VALUE_TEN]int
+	// Outer loop iterates
+	for i := 0; i < VALUE_FIVE; i++ {
+		// Inner loop modifies temp
+		for j := 0; j < VALUE_FIVE; j++ {
+			// Store multiplication result
+			temp[j] = i * j
+		}
+	}
+	_ = temp
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de initUsers
-	initUsers()
-	// Appel de initConfig
-	initConfig()
-	// Appel de processData
-	processData()
-	// Appel de nestedMap
-	nestedMap()
-	// Appel de mapLiteral
-	mapLiteral()
+	// Appel de goodLoopSliceReuse
+	goodLoopSliceReuse()
+	// Appel de goodLoopMapReuse
+	goodLoopMapReuse()
+	// Appel de goodRangeSliceReuse
+	goodRangeSliceReuse()
+	// Appel de goodNoLoopAlloc
+	goodNoLoopAlloc()
+	// Appel de goodNestedLoopReuse
+	goodNestedLoopReuse()
 }

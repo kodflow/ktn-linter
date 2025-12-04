@@ -3,7 +3,7 @@ package ktnfunc
 
 import (
 	"go/ast"
-	"strings"
+	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -11,10 +11,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer009 checks that getter functions don't have side effects
+// Analyzer009 checks that all branches, returns, and significant logic blocks have comments
 var Analyzer009 = &analysis.Analyzer{
 	Name:     "ktnfunc009",
-	Doc:      "KTN-FUNC-009: Les getters (Get*/Is*/Has*) ne doivent pas avoir de side effects (assignations, appels de fonctions modifiant l'état)",
+	Doc:      "KTN-FUNC-009: Tous les blocs de contrôle (if/else/switch/for), returns et logique significative doivent être commentés",
 	Run:      runFunc009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -37,54 +37,37 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip test functions
-		if shared.IsTestFunction(funcDecl) {
-			// Retour de la fonction
-			return
-		}
-
-		funcName := funcDecl.Name.Name
-
-		// Skip if not a getter (Get*, Is*, Has*)
-		if !isGetter(funcName) {
-			// Retour de la fonction
-			return
-		}
-
 		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
 			// Retour de la fonction
 			return
 		}
 
-		// Check for side effects
+		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
+			return
+		}
+
+		// Check all statements in the function body
 		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
 			// Sélection selon la valeur
 			switch stmt := node.(type) {
 			// Traitement
-			case *ast.AssignStmt:
-				// Check if it's assigning to a field or external variable
-				// Assignments to local variables (created in the function) are OK
-				for _, lhs := range stmt.Lhs {
-					// Vérification de la condition
-					if hasSideEffect(lhs) {
-						pass.Reportf(
-							stmt.Pos(),
-							"KTN-FUNC-009: le getter '%s' ne doit pas modifier l'état (assignation détectée)",
-							funcName,
-						)
-					}
-				}
+			case *ast.IfStmt:
+				checkIfStmt(pass, stmt)
 			// Traitement
-			case *ast.IncDecStmt:
-				// ++ or -- on fields
-				if hasSideEffect(stmt.X) {
-					pass.Reportf(
-						stmt.Pos(),
-						"KTN-FUNC-009: le getter '%s' ne doit pas modifier l'état (incrémentation/décrémentation détectée)",
-						funcName,
-					)
-				}
+			case *ast.SwitchStmt:
+				checkSwitchStmt(pass, stmt)
+			// Traitement
+			case *ast.TypeSwitchStmt:
+				checkTypeSwitchStmt(pass, stmt)
+			// Traitement
+			case *ast.ForStmt, *ast.RangeStmt:
+				checkLoopStmt(pass, stmt)
+			// Traitement
+			case *ast.ReturnStmt:
+				checkReturnStmt(pass, stmt)
 			}
 			// Retour de la fonction
 			return true
@@ -95,41 +78,232 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// isGetter checks if a function name suggests it's a getter
+// checkIfStmt checks if an if statement has a comment
 // Params:
 //   - pass: contexte d'analyse
-//
-// Returns:
-//   - bool: true si fonction getter
-func isGetter(name string) bool {
-	// Retour de la fonction
-	return strings.HasPrefix(name, "Get") ||
-		strings.HasPrefix(name, "Is") ||
-		strings.HasPrefix(name, "Has")
+func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
+	// Vérification de la condition
+	if !hasCommentBefore(pass, stmt.Pos()) {
+		pass.Reportf(stmt.Pos(), "KTN-FUNC-009: le bloc 'if' doit avoir un commentaire explicatif")
+	}
+
+	// Check else clause
+	if stmt.Else != nil {
+		// For else, check if there's a comment before or at the start of the else block
+		if !hasCommentBeforeOrInside(pass, stmt.Else) {
+			pass.Reportf(stmt.Else.Pos(), "KTN-FUNC-009: le bloc 'else' doit avoir un commentaire explicatif")
+		}
+	}
 }
 
-// hasSideEffect checks if an expression modifies external state
+// checkSwitchStmt checks if a switch statement and its cases have comments
+// Params:
+//   - pass: contexte d'analyse
+func checkSwitchStmt(pass *analysis.Pass, stmt *ast.SwitchStmt) {
+	// Vérification de la condition
+	if !hasCommentBefore(pass, stmt.Pos()) {
+		pass.Reportf(stmt.Pos(), "KTN-FUNC-009: le bloc 'switch' doit avoir un commentaire explicatif")
+	}
+
+	// Check each case
+	if stmt.Body != nil {
+		// Itération sur les éléments
+		for _, caseClause := range stmt.Body.List {
+			// Vérification de la condition
+			if clause, ok := caseClause.(*ast.CaseClause); ok {
+				// Vérification de la condition
+				if !hasCommentBefore(pass, clause.Pos()) {
+					pass.Reportf(clause.Pos(), "KTN-FUNC-009: chaque 'case' doit avoir un commentaire explicatif")
+				}
+			}
+		}
+	}
+}
+
+// checkTypeSwitchStmt checks if a type switch statement and its cases have comments
+// Params:
+//   - pass: contexte d'analyse
+func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
+	// Vérification de la condition
+	if !hasCommentBefore(pass, stmt.Pos()) {
+		pass.Reportf(stmt.Pos(), "KTN-FUNC-009: le bloc 'switch' (type) doit avoir un commentaire explicatif")
+	}
+
+	// Check each case
+	if stmt.Body != nil {
+		// Itération sur les éléments
+		for _, caseClause := range stmt.Body.List {
+			// Vérification de la condition
+			if clause, ok := caseClause.(*ast.CaseClause); ok {
+				// Vérification de la condition
+				if !hasCommentBefore(pass, clause.Pos()) {
+					pass.Reportf(clause.Pos(), "KTN-FUNC-009: chaque 'case' doit avoir un commentaire explicatif")
+				}
+			}
+		}
+	}
+}
+
+// checkLoopStmt checks if a loop statement has a comment
+// Params:
+//   - pass: contexte d'analyse
+func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
+	// Vérification de la condition
+	if !hasCommentBefore(pass, stmt.Pos()) {
+		pass.Reportf(stmt.Pos(), "KTN-FUNC-009: le bloc de boucle doit avoir un commentaire explicatif")
+	}
+}
+
+// isTrivialReturn checks if return is trivial (nil, empty slice/map, bool).
+//
+// Params:
+//   - stmt: Return statement to check
+//
+// Returns:
+//   - bool: true if return is trivial (bare, nil, or simple literal)
+func isTrivialReturn(stmt *ast.ReturnStmt) bool {
+	// No return values (bare return)
+	if len(stmt.Results) == 0 {
+		return true
+	}
+
+	// Check each return value
+	for _, result := range stmt.Results {
+		// Check for nil
+		if ident, ok := result.(*ast.Ident); ok {
+			// Verification de la condition
+			if ident.Name == "nil" || ident.Name == "true" || ident.Name == "false" {
+				continue
+			}
+		}
+
+		// Check for empty composite literal ([]T{}, map[K]V{})
+		if comp, ok := result.(*ast.CompositeLit); ok {
+			// Verification de la condition
+			if len(comp.Elts) == 0 {
+				continue
+			}
+		}
+
+		// If we get here, return value is not trivial
+		return false
+	}
+
+	// All return values are trivial
+	return true
+}
+
+// checkReturnStmt checks if a return statement has a comment
+// Params:
+//   - pass: contexte d'analyse
+func checkReturnStmt(pass *analysis.Pass, stmt *ast.ReturnStmt) {
+	// Ignorer les returns triviaux (nil, []T{}, true, false, etc.)
+	if isTrivialReturn(stmt) {
+		return
+	}
+
+	// Vérification de la condition
+	if !hasCommentBefore(pass, stmt.Pos()) && !hasInlineComment(pass, stmt.Pos()) {
+		pass.Reportf(stmt.Pos(), "KTN-FUNC-009: le 'return' doit avoir un commentaire explicatif")
+	}
+}
+
+// hasCommentBefore checks if there's a comment on the line before the given position
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - bool: true si effet de bord détecté
-func hasSideEffect(expr ast.Expr) bool {
-	// Sélection selon la valeur
-	switch e := expr.(type) {
-	// Traitement
-	case *ast.SelectorExpr:
-		// Modifying a field is a side effect
-		return true
-	// Traitement
-	case *ast.IndexExpr:
-		// Modifying an index (array/map/slice element) could be a side effect
-		// Check if the base is a selector
-		if _, ok := e.X.(*ast.SelectorExpr); ok {
+//   - bool: true si commentaire présent
+func hasCommentBefore(pass *analysis.Pass, pos token.Pos) bool {
+	position := pass.Fset.Position(pos)
+	filename := position.Filename
+
+	// Find the file in the pass
+	var file *ast.File
+	// Itération sur les éléments
+	for _, f := range pass.Files {
+		// Vérification de la condition
+		if pass.Fset.Position(f.Pos()).Filename == filename {
+			file = f
+			break
+		}
+	}
+
+	// Check all comments in the file
+	for _, commentGroup := range file.Comments {
+		commentPos := pass.Fset.Position(commentGroup.End())
+		// Comment should be on the line immediately before the statement
+		if commentPos.Filename == filename && commentPos.Line == position.Line-1 {
 			// Retour de la fonction
 			return true
 		}
 	}
+
+	// Retour de la fonction
+	return false
+}
+
+// hasInlineComment checks if there's a comment on the same line as the given position
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si commentaire inline
+func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
+	position := pass.Fset.Position(pos)
+	filename := position.Filename
+
+	// Find the file in the pass
+	var file *ast.File
+	// Itération sur les éléments
+	for _, f := range pass.Files {
+		// Vérification de la condition
+		if pass.Fset.Position(f.Pos()).Filename == filename {
+			file = f
+			break
+		}
+	}
+
+	// Check all comments in the file
+	for _, commentGroup := range file.Comments {
+		// Itération sur les éléments
+		for _, comment := range commentGroup.List {
+			commentPos := pass.Fset.Position(comment.Pos())
+			// Comment should be on the same line as the statement
+			if commentPos.Filename == filename && commentPos.Line == position.Line {
+				// Retour de la fonction
+				return true
+			}
+		}
+	}
+
+	// Retour de la fonction
+	return false
+}
+
+// hasCommentBeforeOrInside checks if there's a comment before or at the start of an else block
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si commentaire avant
+func hasCommentBeforeOrInside(pass *analysis.Pass, elseStmt ast.Stmt) bool {
+	// Check if there's a comment before the else
+	if hasCommentBefore(pass, elseStmt.Pos()) {
+		// Retour de la fonction
+		return true
+	}
+
+	// If it's a block statement, check for a comment at the beginning
+	if blockStmt, ok := elseStmt.(*ast.BlockStmt); ok && len(blockStmt.List) > 0 {
+		firstStmt := blockStmt.List[0]
+		// Vérification de la condition
+		if hasCommentBefore(pass, firstStmt.Pos()) {
+			// Retour de la fonction
+			return true
+		}
+	}
+
 	// Retour de la fonction
 	return false
 }

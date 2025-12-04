@@ -21,62 +21,103 @@ func Test_runVar017(t *testing.T) {
 	}
 }
 
-// Test_extractIdent tests the private extractIdent helper function.
-func Test_extractIdent(t *testing.T) {
+// Test_hasDifferentCapacity tests the private hasDifferentCapacity helper function.
+func Test_hasDifferentCapacity(t *testing.T) {
 	tests := []struct {
 		name     string
-		expr     ast.Expr
-		expected *ast.Ident
+		call     *ast.CallExpr
+		expected bool
 	}{
 		{
-			name:     "ident",
-			expr:     &ast.Ident{Name: "x"},
-			expected: &ast.Ident{Name: "x"},
+			name: "two args - no capacity",
+			call: &ast.CallExpr{
+				Args: []ast.Expr{
+					&ast.Ident{Name: "T"},
+					&ast.BasicLit{Value: "10"},
+				},
+			},
+			expected: false,
 		},
 		{
-			name:     "not ident",
-			expr:     &ast.BasicLit{Value: "1"},
-			expected: nil,
+			name: "three args - has capacity",
+			call: &ast.CallExpr{
+				Args: []ast.Expr{
+					&ast.Ident{Name: "T"},
+					&ast.BasicLit{Value: "10"},
+					&ast.BasicLit{Value: "20"},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "one arg - no capacity",
+			call: &ast.CallExpr{
+				Args: []ast.Expr{
+					&ast.Ident{Name: "T"},
+				},
+			},
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractIdent(tt.expr)
+			result := hasDifferentCapacity(tt.call)
 			// Vérification du résultat
-			if tt.expected == nil {
-				// Vérification que result est nil
-				if result != nil {
-					t.Errorf("extractIdent() = %v, expected nil", result)
-				}
-			} else {
-				// Vérification que result n'est pas nil et a le bon nom
-				if result == nil {
-					t.Errorf("extractIdent() = nil, expected ident with name %s", tt.expected.Name)
-				} else if result.Name != tt.expected.Name {
-					t.Errorf("extractIdent() = %s, expected %s", result.Name, tt.expected.Name)
-				}
+			if result != tt.expected {
+				t.Errorf("hasDifferentCapacity() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkShortVarDecl tests the private checkShortVarDecl function.
-func Test_checkShortVarDecl(t *testing.T) {
+// Test_isSmallConstant tests the private isSmallConstant helper function.
+func Test_isSmallConstant(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		size     int64
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name:     "negative",
+			size:     -1,
+			expected: false,
+		},
+		{
+			name:     "zero",
+			size:     0,
+			expected: false,
+		},
+		{
+			name:     "small positive",
+			size:     10,
+			expected: true,
+		},
+		{
+			name:     "max allowed",
+			size:     MAX_ARRAY_SIZE_VAR016,
+			expected: true,
+		},
+		{
+			name:     "too large",
+			size:     MAX_ARRAY_SIZE_VAR016 + 1,
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks short var declarations
+			result := isSmallConstant(tt.size)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isSmallConstant(%d) = %v, expected %v", tt.size, result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_isShadowing tests the private isShadowing function.
-func Test_isShadowing(t *testing.T) {
+// Test_shouldUseArray tests the private shouldUseArray function.
+func Test_shouldUseArray(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -84,13 +125,13 @@ func Test_isShadowing(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if shadowing
+			// Test passthrough - function checks if array should be used
 		})
 	}
 }
 
-// Test_lookupInParentScope tests the private lookupInParentScope function.
-func Test_lookupInParentScope(t *testing.T) {
+// Test_getConstantSize tests the private getConstantSize function.
+func Test_getConstantSize(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -98,7 +139,21 @@ func Test_lookupInParentScope(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function looks up in parent scope
+			// Test passthrough - function gets constant size
+		})
+	}
+}
+
+// Test_reportArraySuggestion tests the private reportArraySuggestion function.
+func Test_reportArraySuggestion(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function reports array suggestions
 		})
 	}
 }

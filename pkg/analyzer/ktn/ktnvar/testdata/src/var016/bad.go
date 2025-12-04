@@ -1,66 +1,68 @@
 // Bad examples for the var016 test case.
 package var016
 
-// Bad: Using make([]T, N) where N is small constant
-
 const (
-	// FIXED_SIZE est la taille fixe pour le test
-	FIXED_SIZE int = 10
-	// SMALL_SIZE est la petite taille pour le test
-	SMALL_SIZE int = 64
-	// TINY_SIZE est la très petite taille pour le test
-	TINY_SIZE int = 5
-	// MEDIUM_SIZE est la taille moyenne pour le test
-	MEDIUM_SIZE int = 256
-	// MAX_SIZE est la taille maximale pour le test
-	MAX_SIZE int = 1024
+	// USER_ID_TWO est un ID d'utilisateur
+	USER_ID_TWO int = 2
+	// TEST_ID_ONE est un ID de test
+	TEST_ID_ONE int = 1
+	// TEST_INDEX_ZERO est un index de test
+	TEST_INDEX_ZERO int = 0
 )
 
-// badFixedSize uses make with small constant size
-func badFixedSize() {
-	// Small fixed size should use array
-	items := make([]int, FIXED_SIZE)
-	_ = items
+// badInitUsers creates a map without capacity.
+//
+// Returns:
+//   - map[string]int: map des utilisateurs
+func badInitUsers() map[string]int {
+	// Map without capacity hint - VIOLATES VAR-009
+	users := make(map[string]int)
+	users["alice"] = TEST_ID_ONE
+	users["bob"] = USER_ID_TWO
+	// Retour du résultat
+	return users
 }
 
-// badSmallBuffer creates slice with constant small size
-func badSmallBuffer() {
-	// Constant size 64 should be array
-	buffer := make([]byte, SMALL_SIZE)
-	_ = buffer
+// badInitConfig creates a map without capacity in var declaration.
+func badInitConfig() {
+	// Map without capacity hint - VIOLATES VAR-009
+	config := make(map[string]string)
+	config["host"] = "localhost"
+	// Utilisation de la config
+	_ = config
 }
 
-// badTinySlice creates very small slice
-func badTinySlice() {
-	// Very small size should use array
-	data := make([]string, TINY_SIZE)
-	_ = data
+// badProcessData creates multiple maps without capacity.
+func badProcessData() {
+	// Multiple maps without capacity hints - VIOLATES VAR-009 (3 times)
+	data := make(map[int]string)
+	cache := make(map[string]bool)
+	index := make(map[int][]string)
+
+	// Utilisation des maps
+	data[TEST_ID_ONE] = "test"
+	cache["key"] = true
+	index[TEST_INDEX_ZERO] = []string{"a", "b"}
 }
 
-// badMediumSlice creates medium-sized slice
-func badMediumSlice() {
-	// Size 256 still small enough for stack
-	values := make([]float64, MEDIUM_SIZE)
-	_ = values
-}
-
-// badMaxAllowed creates slice at boundary
-func badMaxAllowed() {
-	// Size 1024 is at the limit
-	large := make([]int32, MAX_SIZE)
-	_ = large
+// badNestedMap creates a map of maps without capacity.
+func badNestedMap() {
+	// Map without capacity hint - VIOLATES VAR-009
+	nested := make(map[string]map[int]string)
+	// Inner map also without capacity - VIOLATES VAR-009
+	nested["key"] = make(map[int]string)
+	// Utilisation de la map
+	_ = nested
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badFixedSize
-	badFixedSize()
-	// Appel de badSmallBuffer
-	badSmallBuffer()
-	// Appel de badTinySlice
-	badTinySlice()
-	// Appel de badMediumSlice
-	badMediumSlice()
-	// Appel de badMaxAllowed
-	badMaxAllowed()
+	// Appel de badInitUsers
+	badInitUsers()
+	// Appel de badInitConfig
+	badInitConfig()
+	// Appel de badProcessData
+	badProcessData()
+	// Appel de badNestedMap
+	badNestedMap()
 }

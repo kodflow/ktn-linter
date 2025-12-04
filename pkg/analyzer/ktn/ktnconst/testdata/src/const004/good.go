@@ -1,52 +1,91 @@
 // Good examples for the const004 test case.
 package const004
 
-// Good: All constants have comments, explicit types, proper naming, single-block grouping
+// Good: All constants use CAPITAL_UNDERSCORE naming, explicit types, comments, single block
 const (
-	// HTTP_PORT is the default HTTP port
-	HTTP_PORT int = 80
-	// HTTPS_PORT is the default HTTPS port
-	HTTPS_PORT int = 443
-	// FTP_PORT is the default FTP port
-	FTP_PORT int = 21
+	// Single letter constants are valid
+	// A represents the first value
+	A int = 1
+	// B represents the second value
+	B int = 2
+	// C represents the third value
+	C int = 3
 
-	// MAX_CONNECTIONS defines maximum concurrent connections
-	MAX_CONNECTIONS int = 1000
-	// MIN_CONNECTIONS defines minimum concurrent connections
-	MIN_CONNECTIONS int = 10
-	// DEFAULT_TIMEOUT defines the default timeout in seconds
-	DEFAULT_TIMEOUT int = 30
+	// Acronyms are valid
+	// API endpoint path
+	API string = "api"
+	// HTTP protocol
+	HTTP string = "http"
+	// URL format
+	URL string = "url"
+	// EOF end of file marker
+	EOF int = -1
+	// HTTPS secure protocol
+	HTTPS string = "https"
 
-	// API_VERSION is the current API version
-	API_VERSION string = "v1.0"
-	// API_ENDPOINT is the base API endpoint
-	API_ENDPOINT string = "/api"
+	// Multi-word constants with underscores
+	// MAX_SIZE defines the maximum size
+	MAX_SIZE int = 100
 	// API_KEY is the authentication key
 	API_KEY string = "secret"
+	// HTTP_TIMEOUT defines timeout in seconds
+	HTTP_TIMEOUT int = 30
+	// MAX_BUFFER_SIZE defines buffer size
+	MAX_BUFFER_SIZE int = 1024
+	// MIN_RETRY_COUNT defines minimum retries
+	MIN_RETRY_COUNT int = 3
 
-	// FEATURE_ENABLED indicates if the feature is enabled
-	FEATURE_ENABLED bool = true
-	// DEBUG_MODE indicates if debug mode is active
-	DEBUG_MODE bool = false
-	// VERBOSE_LOGGING indicates if verbose logging is enabled
-	VERBOSE_LOGGING bool = false
+	// Constants with numbers
+	// HTTP2 protocol version
+	HTTP2 string = "http/2"
+	// TLS1_2 TLS version
+	TLS1_2 string = "tls1.2"
+	// VERSION_1_0_0 software version
+	VERSION_1_0_0 string = "1.0.0"
+	// API_V2_ENDPOINT version 2 endpoint
+	API_V2_ENDPOINT string = "/api/v2"
 
-	// MAX_RETRY_COUNT defines maximum number of retries
-	MAX_RETRY_COUNT int = 5
-	// RETRY_DELAY_MS defines delay between retries in milliseconds
-	RETRY_DELAY_MS int = 1000
-	// BACKOFF_MULTIPLIER defines the backoff multiplier
-	BACKOFF_MULTIPLIER float64 = 1.5
+	// Complex multi-word constants
+	// MAX_CONNECTION_POOL_SIZE defines pool size
+	MAX_CONNECTION_POOL_SIZE int = 50
+	// DEFAULT_REQUEST_TIMEOUT_SECONDS timeout value
+	DEFAULT_REQUEST_TIMEOUT_SECONDS int = 60
+	// API_KEY_HEADER_NAME header name for API key
+	API_KEY_HEADER_NAME string = "X-API-Key"
 
-	// DB_HOST is the database host
-	DB_HOST string = "localhost"
-	// DB_PORT is the database port
-	DB_PORT int = 5432
-	// DB_NAME is the database name
-	DB_NAME string = "mydb"
-	// DB_USER is the database user
-	DB_USER string = "admin"
+	// Status codes
+	// STATUS_OK success status
+	STATUS_OK int = 200
+	// STATUS_CREATED resource created
+	STATUS_CREATED int = 201
+	// STATUS_ACCEPTED request accepted
+	STATUS_ACCEPTED int = 202
+
+	// State constants
+	// STATE_IDLE idle state
+	STATE_IDLE int = 0
+	// STATE_RUNNING running state
+	STATE_RUNNING int = 1
+	// STATE_PAUSED paused state
+	STATE_PAUSED int = 2
+
+	// Database settings
+	// DB_MAX_CONNECTIONS maximum connections
+	DB_MAX_CONNECTIONS int = 100
+	// DB_MIN_CONNECTIONS minimum connections
+	DB_MIN_CONNECTIONS int = 10
+	// DB_TIMEOUT database timeout
+	DB_TIMEOUT int = 30
+
+	// Blank identifier (valid edge case - should be skipped by naming rules)
+	_ int = 999
+
+	// TEST_VALUE used for testing var declarations
+	TEST_VALUE int = 123
 )
 
-// Valid edge case: File with only variables (no const) should not trigger errors
-var OnlyVar string = "test"
+// Variable declaration to test that only const are checked
+var (
+	// This variable should be ignored by const004 rule
+	variableNotConst int = TEST_VALUE
+)

@@ -10,6 +10,6 @@ import "golang.org/x/tools/go/analysis"
 func Analyzers() []*analysis.Analyzer {
 	// Verification de la condition
 	return []*analysis.Analyzer{
-		Analyzer002,
+		Analyzer001,
 	}
 }

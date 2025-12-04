@@ -1,23 +1,29 @@
-// Analyzer 004 for the ktnconst package.
+// Package ktnconst implements KTN linter rules.
 package ktnconst
 
 import (
 	"go/ast"
 	"go/token"
+	"regexp"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer004 checks that every constant has an associated comment
-var Analyzer004 = &analysis.Analyzer{
-	Name:     "ktnconst004",
-	Doc:      "KTN-CONST-004: Vérifie que chaque constante a un commentaire associé",
-	Run:      runConst004,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+var (
+	// Analyzer004 checks that constants use CAPITAL_UNDERSCORE naming convention
+	Analyzer004 = &analysis.Analyzer{
+		Name:     "ktnconst004",
+		Doc:      "KTN-CONST-004: Vérifie que les constantes utilisent la convention CAPITAL_UNDERSCORE",
+		Run:      runConst004,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+
+	// validConstNamePattern matches CAPITAL_UNDERSCORE names
+	// Starts with uppercase, then uppercase/digits/underscores
+	validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+)
 
 // runConst004 description à compléter.
 //
@@ -43,33 +49,25 @@ func runConst004(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Check if the GenDecl has a doc comment (applies to all constants in the group)
-		// Filter out "want" directives used by analysistest
-		hasGenDeclDoc := shared.HasValidComment(genDecl.Doc)
-
 		// Itération sur les éléments
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
-			// Check if this specific ValueSpec has a doc comment or line comment
-			// Filter out "want" directives used by analysistest
-			hasValueSpecDoc := shared.HasValidComment(valueSpec.Doc)
-			hasValueSpecComment := shared.HasValidComment(valueSpec.Comment)
+			// Itération sur les éléments
+			for _, name := range valueSpec.Names {
+				constName := name.Name
 
-			// A constant is considered documented if:
-			// 1. The GenDecl has a doc comment (group documentation), OR
-			// 2. The ValueSpec has a doc comment (above the constant), OR
-			// 3. The ValueSpec has a line comment (on the same line)
-			hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
+				// Skip blank identifiers
+				if constName == "_" {
+					continue
+				}
 
-			// Vérification de la condition
-			if !hasComment {
-				// Itération sur les éléments
-				for _, name := range valueSpec.Names {
+				// Check if the constant name follows CAPITAL_UNDERSCORE convention
+				if !isValidConstantName(constName) {
 					pass.Reportf(
 						name.Pos(),
-						"KTN-CONST-004: la constante '%s' doit avoir un commentaire associé",
-						name.Name,
+						"KTN-CONST-004: la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
+						constName,
 					)
 				}
 			}
@@ -78,4 +76,33 @@ func runConst004(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// isValidConstantName checks if a constant name follows CAPITAL_UNDERSCORE convention.
+//
+// Params:
+//   - name: nom de la constante à vérifier
+//
+// Returns:
+//   - bool: true si le nom est valide
+func isValidConstantName(name string) bool {
+	// Must match pattern: uppercase + digits/underscores
+	if !validConstNamePattern.MatchString(name) {
+		// Retour de la fonction
+		return false
+	}
+
+	// Single letter constants are valid (e.g., A, B, C)
+	if len(name) == 1 {
+		// Retour de la fonction
+		return true
+	}
+
+	// Pattern already validates SCREAMING_SNAKE_CASE:
+	// - Single letters: A, B, C
+	// - Acronyms: API, HTTP, URL, HTTPS, EOF
+	// - Underscored names: MAX_SIZE, API_KEY, HTTP_TIMEOUT
+	// - With numbers: HTTP2, TLS1_2_VERSION
+	// Retour de la fonction
+	return true
 }

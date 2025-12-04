@@ -1,101 +1,124 @@
-// Analyzer 012 for the ktnfunc package.
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer012 checks for unnecessary else blocks after return/continue/break
+// Analyzer012 checks that functions don't use naked returns (except for very short functions)
+const (
+	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
+	MAX_LINES_FOR_NAKED_RETURN int = 5
+)
+
+// Analyzer012 checks that naked returns are only used in very short functions
 var Analyzer012 = &analysis.Analyzer{
 	Name:     "ktnfunc012",
-	Doc:      "KTN-FUNC-012: Éviter else après return/continue/break (early return préféré)",
+	Doc:      "KTN-FUNC-012: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
 	Run:      runFunc012,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc012 exécute l'analyse KTN-FUNC-012.
+// runFunc012 description à compléter.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - any: résultat
 //   - error: erreur éventuelle
 func runFunc012(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.IfStmt)(nil),
+		(*ast.FuncDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		ifStmt := n.(*ast.IfStmt)
+		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérifier si le bloc if est vide
-		if ifStmt.Body == nil || len(ifStmt.Body.List) == 0 {
-			// Bloc vide, ignorer
+		// Skip if no body (external functions)
+		if funcDecl.Body == nil {
+			// Retour de la fonction
 			return
 		}
 
-		// Vérifier s'il y a une clause else
-		if ifStmt.Else == nil {
-			// Pas de else, ignorer
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
 			return
 		}
 
-		// Récupérer la dernière instruction du bloc if
-		lastStmt := ifStmt.Body.List[len(ifStmt.Body.List)-1]
+		funcName := funcDecl.Name.Name
 
-		// Déterminer le type de sortie anticipée
-		hasEarlyExit, exitType := checkEarlyExit(lastStmt)
-
-		// Si sortie anticipée détectée, reporter l'erreur
-		if hasEarlyExit {
-			pass.Reportf(
-				ifStmt.Else.Pos(),
-				"KTN-FUNC-012: else inutile après %s, utiliser early return",
-				exitType,
-			)
+		// Skip if function doesn't have named return values
+		if !hasNamedReturns(funcDecl.Type.Results) {
+			// Retour de la fonction
+			return
 		}
+
+		// Count the lines of the function
+		pureLines := countPureCodeLines(pass, funcDecl.Body)
+
+		// Check for naked returns
+		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+			ret, ok := node.(*ast.ReturnStmt)
+			// Vérification de la condition
+			if !ok {
+				// Retour de la fonction
+				return true
+			}
+
+			// Naked return has no results specified
+			if len(ret.Results) == 0 {
+				// Allow naked returns in very short functions
+				if pureLines >= MAX_LINES_FOR_NAKED_RETURN {
+					pass.Reportf(
+						ret.Pos(),
+						"KTN-FUNC-012: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
+						funcName,
+						pureLines,
+						MAX_LINES_FOR_NAKED_RETURN-1,
+					)
+				}
+			}
+
+			// Retour de la fonction
+			return true
+		})
 	})
 
-	// Retour succès
+	// Retour de la fonction
 	return nil, nil
 }
 
-// checkEarlyExit vérifie si une instruction est une sortie anticipée.
-//
+// hasNamedReturns checks if the function has named return values
 // Params:
-//   - stmt: instruction à vérifier
+//   - pass: contexte d'analyse
 //
 // Returns:
-//   - bool: true si sortie anticipée
-//   - string: type de sortie (return, continue, break)
-func checkEarlyExit(stmt ast.Stmt) (bool, string) {
-	// Switch sur le type d'instruction
-	switch s := stmt.(type) {
-	// Cas return
-	case *ast.ReturnStmt:
-		// Retour true car c'est une sortie anticipée de type return
-		return true, "return"
-	// Cas branch (continue/break)
-	case *ast.BranchStmt:
-		// Si c'est continue
-		if s.Tok.String() == "continue" {
-			// Retour true car c'est une sortie anticipée de type continue
-			return true, "continue"
-		}
-		// Si c'est break
-		if s.Tok.String() == "break" {
-			// Retour true car c'est une sortie anticipée de type break
-			return true, "break"
+//   - bool: true si retours nommés
+func hasNamedReturns(results *ast.FieldList) bool {
+	// Vérification de la condition
+	if results == nil || len(results.List) == 0 {
+		// Retour de la fonction
+		return false
+	}
+
+	// Itération sur les éléments
+	for _, field := range results.List {
+		// Vérification de la condition
+		if len(field.Names) > 0 {
+			// Retour de la fonction
+			return true
 		}
 	}
 
-	// Pas de sortie anticipée
-	return false, ""
+	// Retour de la fonction
+	return false
 }

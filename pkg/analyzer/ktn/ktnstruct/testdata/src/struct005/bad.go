@@ -1,40 +1,23 @@
-// Bad examples for the struct005 test case.
+// Bad examples for the struct001 test case.
 package struct005
 
-// BadUserService est un service utilisateur sans constructeur.
-// Démontre la violation STRUCT-005: pas de NewBadUserService().
-type BadUserService struct { // want "KTN-STRUCT-005"
-	users map[int]string
+// BadProduct représente un produit de test.
+// Utilisé pour démontrer la violation de une struct par fichier.
+type BadProduct struct { // want "KTN-STRUCT-005"
+	ID    int
+	Price float64
 }
 
-// BadUserServiceInterface définit les méthodes de BadUserService.
-type BadUserServiceInterface interface {
-	Create(name string) error
-	GetByID(id int) string
+// BadOrder représente une commande de test.
+// Démontre la violation avec une deuxième struct dans le même fichier.
+type BadOrder struct { // want "KTN-STRUCT-005"
+	OrderID   int
+	ProductID int
 }
 
-// Create crée un utilisateur.
-//
-// Params:
-//   - name: nom de l'utilisateur
-//
-// Returns:
-//   - error: erreur éventuelle
-func (b *BadUserService) Create(name string) error {
-	// Utilisation du paramètre
-	b.users[len(b.users)] = name
-	// Retour sans erreur
-	return nil
-}
-
-// GetByID récupère un utilisateur par ID.
-//
-// Params:
-//   - id: identifiant de l'utilisateur
-//
-// Returns:
-//   - string: nom de l'utilisateur
-func (b *BadUserService) GetByID(id int) string {
-	// Retour du résultat
-	return b.users[id]
+// BadCustomer représente un client de test.
+// Démontre la violation avec une troisième struct dans le même fichier.
+type BadCustomer struct { // want "KTN-STRUCT-005"
+	Name  string
+	Email string
 }

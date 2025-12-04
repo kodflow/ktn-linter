@@ -1,65 +1,27 @@
-// Analyzer 006 for the ktnfunc package.
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
 	"go/ast"
-	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer006 checks that error is always the last return value
+// Analyzer006 checks that functions don't have too many parameters
+const (
+	// MAX_PARAMS max params allowed in a function
+	MAX_PARAMS int = 5
+)
+
+// Analyzer006 checks that functions don't have more than MAX_PARAMS parameters
 var Analyzer006 = &analysis.Analyzer{
 	Name:     "ktnfunc006",
-	Doc:      "KTN-FUNC-006: L'erreur doit toujours être en dernière position dans les valeurs de retour",
+	Doc:      "KTN-FUNC-006: Les fonctions ne doivent pas dépasser 5 paramètres",
 	Run:      runFunc006,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
-
-// validateErrorInReturns vérifie que l'erreur est en dernière position.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - funcType: type de la fonction
-func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
-	// Vérification présence de résultats
-	if funcType == nil || funcType.Results == nil {
-		// Pas de résultats à vérifier
-		return
-	}
-
-	results := funcType.Results.List
-
-	// Recherche des positions d'erreur
-	var errorPositions []int
-	// Itération sur les résultats
-	for i, result := range results {
-		// Vérification si type error
-		if isErrorType(pass, result.Type) {
-			errorPositions = append(errorPositions, i)
-		}
-	}
-
-	// Vérification erreurs mal placées
-	if len(errorPositions) > 0 {
-		lastPos := len(results) - 1
-		// Itération sur les positions d'erreur
-		for _, pos := range errorPositions {
-			// Vérification position incorrecte
-			if pos != lastPos {
-				pass.Reportf(
-					funcType.Results.Pos(),
-					"KTN-FUNC-006: l'erreur doit être en dernière position dans les valeurs de retour (trouvée en position %d sur %d)",
-					pos+1,
-					len(results),
-				)
-				// Retour après premier rapport
-				return
-			}
-		}
-	}
 }
 
 // runFunc006 exécute l'analyse KTN-FUNC-006.
@@ -80,40 +42,54 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		var funcType *ast.FuncType
+		var pos ast.Node
+		var name string
+
 		// Sélection selon la valeur
-		switch node := n.(type) {
-		// Traitement FuncDecl
+		switch fn := n.(type) {
+		// Traitement
 		case *ast.FuncDecl:
-			funcType = node.Type
-		// Traitement FuncLit
+			funcType = fn.Type
+			pos = fn.Name
+			name = fn.Name.Name
+
+			// Skip test functions
+			if shared.IsTestFunction(fn) {
+				// Retour de la fonction
+				return
+			}
+		// Traitement
 		case *ast.FuncLit:
-			funcType = node.Type
+			funcType = fn.Type
+			pos = fn
+			name = "function literal"
 		}
-		validateErrorInReturns(pass, funcType)
+
+		// Count total parameters
+		paramCount := 0
+		// Itération sur les éléments
+		for _, field := range funcType.Params.List {
+			// Each field can declare multiple params: func(a, b, c int)
+			if len(field.Names) > 0 {
+				paramCount += len(field.Names)
+			} else {
+				// Unnamed parameter (e.g., in interface or func literal)
+				paramCount++
+			}
+		}
+
+		// Vérification de la condition
+		if paramCount > MAX_PARAMS {
+			pass.Reportf(
+				pos.Pos(),
+				"KTN-FUNC-006: la fonction '%s' a %d paramètres (max: %d)",
+				name,
+				paramCount,
+				MAX_PARAMS,
+			)
+		}
 	})
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// isErrorType checks if a type expression represents the error interface
-// Params:
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - bool: true si type error
-func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
-	tv := pass.TypesInfo.Types[expr]
-
-	// Check if it's the error interface
-	named, ok := tv.Type.(*types.Named)
-	// Vérification de la condition
-	if !ok {
-		// Retour de la fonction
-		return false
-	}
-
-	obj := named.Obj()
-	// Retour de la fonction
-	return obj != nil && obj.Name() == "error" && obj.Pkg() == nil
 }

@@ -3,7 +3,6 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/constant"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
@@ -11,19 +10,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const (
-	// MIN_MAKE_ARGS_VAR016 is minimum arguments for make([]T, N)
-	MIN_MAKE_ARGS_VAR016 int = 2
-	// MIN_MAKE_ARGS_WITH_CAP_VAR016 is minimum arguments for make with capacity
-	MIN_MAKE_ARGS_WITH_CAP_VAR016 int = 3
-	// MAX_ARRAY_SIZE_VAR016 is maximum size for recommending array over slice
-	MAX_ARRAY_SIZE_VAR016 int64 = 1024
-)
-
-// Analyzer016 checks for make([]T, N) with small constant N
+// Analyzer016 detects map allocations without capacity hints
 var Analyzer016 = &analysis.Analyzer{
 	Name:     "ktnvar016",
-	Doc:      "KTN-VAR-016: Vérifie l'utilisation de [N]T au lieu de make([]T, N)",
+	Doc:      "KTN-VAR-016: Préallouer maps avec capacité si connue",
 	Run:      runVar016,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -44,116 +34,33 @@ func runVar016(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call := n.(*ast.CallExpr)
+		callExpr := n.(*ast.CallExpr)
 
-		// Check if it's a make call
-		if !utils.IsIdentCall(call, "make") {
-			// Not a make call
+		// Vérification que c'est un appel à "make"
+		if !utils.IsMakeCall(callExpr) {
+			// Continue traversing AST nodes
 			return
 		}
 
-		// Check if it's make([]T, N) with small constant N
-		if shouldUseArray(pass, call) {
-			reportArraySuggestion(pass, call)
+		// Vérification que le type est une map
+		if len(callExpr.Args) == 0 || !utils.IsMapTypeWithPass(pass, callExpr.Args[0]) {
+			// Continue traversing AST nodes
+			return
 		}
+
+		// Vérification que make a exactement 1 argument (type seulement)
+		if len(callExpr.Args) != 1 {
+			// make() avec capacité fournie, conforme
+			return
+		}
+
+		// Signaler l'erreur
+		pass.Reportf(
+			callExpr.Pos(),
+			"KTN-VAR-016: préallouer la map avec une capacité (make(map[K]V, capacity))",
+		)
 	})
 
-	// Return analysis result
+	// Retour de la fonction
 	return nil, nil
-}
-
-// shouldUseArray vérifie si make devrait être remplacé par un array.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: expression d'appel à make
-//
-// Returns:
-//   - bool: true si un array est préférable
-func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
-	// Need at least 2 args: make([]T, size)
-	if len(call.Args) < MIN_MAKE_ARGS_VAR016 {
-		// Not enough arguments
-		return false
-	}
-
-	// First arg should be a slice type
-	if !utils.IsSliceType(call.Args[0]) {
-		// Not a slice type
-		return false
-	}
-
-	// Check if has different capacity (3rd arg)
-	if hasDifferentCapacity(call) {
-		// Different capacity, needs slice
-		return false
-	}
-
-	// Second arg should be small constant
-	size := getConstantSize(pass, call.Args[1])
-	// Return true if size is small constant
-	return isSmallConstant(size)
-}
-
-// hasDifferentCapacity vérifie si make a une capacité différente.
-//
-// Params:
-//   - call: expression d'appel à make
-//
-// Returns:
-//   - bool: true si capacité différente spécifiée
-func hasDifferentCapacity(call *ast.CallExpr) bool {
-	// Return true if 3rd argument exists
-	return len(call.Args) >= MIN_MAKE_ARGS_WITH_CAP_VAR016
-}
-
-// getConstantSize obtient la taille constante d'une expression.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - expr: expression de taille
-//
-// Returns:
-//   - int64: taille constante ou -1 si non constante
-func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
-	// Try to get constant value
-	tv := pass.TypesInfo.Types[expr]
-	// Check if it's a constant
-	if tv.Value == nil {
-		// Not a constant
-		return -1
-	}
-
-	// Get int64 value
-	if val, ok := constant.Int64Val(tv.Value); ok {
-		// Return the constant value
-		return val
-	}
-
-	// Not an int constant
-	return -1
-}
-
-// isSmallConstant vérifie si la taille est petite et constante.
-//
-// Params:
-//   - size: taille à vérifier
-//
-// Returns:
-//   - bool: true si petite constante (<= MAX_ARRAY_SIZE_VAR016)
-func isSmallConstant(size int64) bool {
-	// Check if it's a positive small constant
-	return size > 0 && size <= MAX_ARRAY_SIZE_VAR016
-}
-
-// reportArraySuggestion rapporte la suggestion d'utiliser un array.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: expression d'appel à make
-func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
-	pass.Reportf(
-		call.Pos(),
-		"KTN-VAR-016: préférer [N]T (array) au lieu de make([]T, N)",
-	)
 }

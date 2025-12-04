@@ -8,6 +8,9 @@ import (
 )
 
 func TestVar005(t *testing.T) {
-	// 15 variables using var with initialization instead of := (13 + 2 dans select)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer005, "var005", 15)
+	// 8 errors:
+	// - 7 make([]T, 0) calls without capacity
+	// - 1 []T{} literal followed by append (should use make)
+	// []T{} in returns/structs are NOT reported (avoid false positives)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer005, "var005", 8)
 }

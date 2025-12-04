@@ -1,86 +1,115 @@
 // Good examples for the var013 test case.
 package var013
 
-const (
-	// VALUE_TWO is constant value 2
-	VALUE_TWO int = 2
-	// VALUE_THREE is constant value 3
-	VALUE_THREE int = 3
-	// VALUE_FIVE is constant value 5
-	VALUE_FIVE int = 5
-	// VALUE_TEN is constant value 10
-	VALUE_TEN int = 10
-)
+import "bytes"
 
-// goodLoopSliceReuse réutilise un slice déclaré avant la boucle.
-func goodLoopSliceReuse() {
-	// Déclaration avant la boucle
-	data := make([]int, 0, VALUE_TEN)
-	// Loop appends values to reused slice
-	for i := 0; i < VALUE_TEN; i++ {
-		// Append current iteration value
-		data = append(data, i)
-	}
-	_ = data
-}
-
-// goodLoopMapReuse réutilise une map déclarée avant la boucle.
-func goodLoopMapReuse() {
-	// Déclaration avant la boucle avec capacité
-	cache := make(map[string]int, VALUE_TEN)
-	// Loop reuses map
-	for i := 0; i < VALUE_TEN; i++ {
-		// Store current value
-		cache["key"] = i
-	}
-	_ = cache
-}
-
-// goodRangeSliceReuse réutilise un slice dans une boucle range.
-func goodRangeSliceReuse() {
-	items := []int{1, VALUE_TWO, VALUE_THREE}
-	// Déclaration avant la boucle avec capacité
-	buffer := make([]byte, 0, VALUE_THREE)
-	// Range loop reuses buffer
-	for _, item := range items {
-		// Convert and append item
-		buffer = append(buffer, byte(item))
-	}
-	_ = buffer
-}
-
-// goodNoLoopAlloc alloue hors d'une boucle.
-func goodNoLoopAlloc() {
-	// Pas de boucle, allocation OK avec array
-	var data [VALUE_TEN]int
-	_ = data
-}
-
-// goodNestedLoopReuse réutilise dans une boucle imbriquée.
-func goodNestedLoopReuse() {
-	// Déclaration avant la boucle avec array
-	var temp [VALUE_TEN]int
-	// Outer loop iterates
-	for i := 0; i < VALUE_FIVE; i++ {
-		// Inner loop modifies temp
-		for j := 0; j < VALUE_FIVE; j++ {
-			// Store multiplication result
-			temp[j] = i * j
+// goodPreallocatedConversion préalloue la conversion hors de la boucle.
+//
+// Params:
+//   - data: données à traiter
+//   - target: cible à rechercher
+//
+// Returns:
+//   - int: nombre d'occurrences
+func goodPreallocatedConversion(data [][]byte, target string) int {
+	count := 0
+	targetBytes := []byte(target) // OK: Conversion une seule fois
+	// Parcours des éléments
+	for _, item := range data {
+		// Vérification de la condition
+		if bytes.Equal(item, targetBytes) {
+			count++
 		}
 	}
-	_ = temp
+	// Retour de la fonction
+	return count
+}
+
+// goodSingleConversion convertit une seule fois.
+//
+// Params:
+//   - data: données à convertir
+func goodSingleConversion(data []byte) {
+	str := string(data) // OK: Conversion une seule fois puis réutilisation
+	// Vérification de la condition
+	if str == "hello" {
+		println("found hello")
+	}
+	// Vérification de la condition
+	if str == "world" {
+		println("found world")
+	}
+	println(str)
+}
+
+// goodBytesEqual utilise bytes.Equal au lieu de string().
+//
+// Params:
+//   - items: éléments à comparer
+func goodBytesEqual(items [][]byte) {
+	target := []byte("test")
+	// Parcours des éléments
+	for i := range len(items) {
+		// Vérification de la condition
+		if bytes.Equal(items[i], target) { // OK: Pas de conversion string
+			println("found")
+		}
+	}
+}
+
+// goodNestedWithPrealloc préalloue dans la boucle externe.
+//
+// Params:
+//   - matrix: matrice à parcourir
+func goodNestedWithPrealloc(matrix [][][]byte) {
+	target := []byte("x")
+	// Parcours des éléments
+	for _, row := range matrix {
+		// Parcours des éléments
+		for _, cell := range row {
+			// Vérification de la condition
+			if bytes.Equal(cell, target) { // OK: Pas de conversion
+				println("found x")
+			}
+		}
+	}
+}
+
+// goodSingleUseConversion utilise string() une seule fois.
+//
+// Params:
+//   - data: données à vérifier
+func goodSingleUseConversion(data []byte) {
+	// Vérification de la condition
+	if string(data) == "unique" { // OK: Une seule utilisation
+		println("found unique")
+	}
+}
+
+// goodDifferentVariables convertit des variables différentes.
+//
+// Params:
+//   - a: première variable
+//   - b: deuxième variable
+//   - c: troisième variable
+func goodDifferentVariables(a []byte, b []byte, c []byte) {
+	println(string(a)) // OK: Chaque variable convertie une seule fois
+	println(string(b))
+	println(string(c))
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodLoopSliceReuse
-	goodLoopSliceReuse()
-	// Appel de goodLoopMapReuse
-	goodLoopMapReuse()
-	// Appel de goodRangeSliceReuse
-	goodRangeSliceReuse()
-	// Appel de goodNoLoopAlloc
-	goodNoLoopAlloc()
-	// Appel de goodNestedLoopReuse
-	goodNestedLoopReuse()
+	// Appel de goodPreallocatedConversion
+	_ = goodPreallocatedConversion(nil, "")
+	// Appel de goodSingleConversion
+	goodSingleConversion(nil)
+	// Appel de goodBytesEqual
+	goodBytesEqual(nil)
+	// Appel de goodNestedWithPrealloc
+	goodNestedWithPrealloc(nil)
+	// Appel de goodSingleUseConversion
+	goodSingleUseConversion(nil)
+	// Appel de goodDifferentVariables
+	goodDifferentVariables(nil, nil, nil)
 }

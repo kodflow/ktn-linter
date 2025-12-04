@@ -21,77 +21,100 @@ func Test_runVar013(t *testing.T) {
 	}
 }
 
-// Test_isSliceOrMapAlloc tests the private isSliceOrMapAlloc helper function.
-func Test_isSliceOrMapAlloc(t *testing.T) {
+// Test_extractLoop tests the private extractLoop helper function.
+func Test_extractLoop(t *testing.T) {
 	tests := []struct {
 		name     string
-		expr     ast.Expr
+		node     ast.Node
 		expected bool
 	}{
 		{
-			name: "slice literal",
-			expr: &ast.CompositeLit{
-				Type: &ast.ArrayType{},
-			},
+			name:     "for stmt",
+			node:     &ast.ForStmt{Body: &ast.BlockStmt{}},
 			expected: true,
 		},
 		{
-			name: "map literal",
-			expr: &ast.CompositeLit{
-				Type: &ast.MapType{},
-			},
+			name:     "range stmt",
+			node:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
 			expected: true,
 		},
 		{
-			name: "make call",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "make"},
-			},
-			expected: true,
-		},
-		{
-			name: "struct literal",
-			expr: &ast.CompositeLit{
-				Type: &ast.Ident{Name: "MyStruct"},
-			},
-			expected: false,
-		},
-		{
-			name: "other call",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "len"},
-			},
+			name:     "other node",
+			node:     &ast.IfStmt{},
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isSliceOrMapAlloc(tt.expr)
+			result := extractLoop(tt.node)
 			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isSliceOrMapAlloc() = %v, expected %v", result, tt.expected)
+			if (result != nil) != tt.expected {
+				t.Errorf("extractLoop() returned %v, expected non-nil: %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkLoopBodyForAlloc tests the private checkLoopBodyForAlloc function.
-func Test_checkLoopBodyForAlloc(t *testing.T) {
+// Test_isStringConversion tests the private isStringConversion helper function.
+func Test_isStringConversion(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		node     ast.Node
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name: "string conversion",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "string"},
+				Args: []ast.Expr{&ast.Ident{Name: "b"}},
+			},
+			expected: true,
+		},
+		{
+			name: "other function",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "len"},
+				Args: []ast.Expr{&ast.Ident{Name: "s"}},
+			},
+			expected: false,
+		},
+		{
+			name: "no args",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "string"},
+				Args: []ast.Expr{},
+			},
+			expected: false,
+		},
+		{
+			name: "multiple args",
+			node: &ast.CallExpr{
+				Fun:  &ast.Ident{Name: "string"},
+				Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
+			},
+			expected: false,
+		},
+		{
+			name:     "not call expr",
+			node:     &ast.Ident{Name: "x"},
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks loop body for allocations
+			result := isStringConversion(tt.node)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isStringConversion() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkStmtForAlloc tests the private checkStmtForAlloc function.
-func Test_checkStmtForAlloc(t *testing.T) {
+// Test_checkFuncForRepeatedConversions tests the private checkFuncForRepeatedConversions function.
+func Test_checkFuncForRepeatedConversions(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -99,13 +122,13 @@ func Test_checkStmtForAlloc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks statements for allocations
+			// Test passthrough - function checks for repeated conversions
 		})
 	}
 }
 
-// Test_checkAssignForAlloc tests the private checkAssignForAlloc function.
-func Test_checkAssignForAlloc(t *testing.T) {
+// Test_checkLoopsForStringConversion tests the private checkLoopsForStringConversion function.
+func Test_checkLoopsForStringConversion(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -113,13 +136,13 @@ func Test_checkAssignForAlloc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks assignments for allocations
+			// Test passthrough - function checks loops for string conversion
 		})
 	}
 }
 
-// Test_checkDeclForAlloc tests the private checkDeclForAlloc function.
-func Test_checkDeclForAlloc(t *testing.T) {
+// Test_hasStringConversion tests the private hasStringConversion function.
+func Test_hasStringConversion(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -127,7 +150,21 @@ func Test_checkDeclForAlloc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks declarations for allocations
+			// Test passthrough - function checks if has string conversion
+		})
+	}
+}
+
+// Test_checkMultipleConversions tests the private checkMultipleConversions function.
+func Test_checkMultipleConversions(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks for multiple conversions
 		})
 	}
 }

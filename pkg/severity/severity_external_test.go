@@ -50,19 +50,19 @@ func TestGetSeverity(t *testing.T) {
 		want     severity.Level
 	}{
 		{
-			name:     "Known rule KTN-VAR-001",
+			name:     "Known rule KTN-VAR-001 is ERROR",
 			ruleCode: "KTN-VAR-001",
-			want:     severity.SEVERITY_WARNING,
-		},
-		{
-			name:     "Known rule KTN-VAR-003",
-			ruleCode: "KTN-VAR-003",
 			want:     severity.SEVERITY_ERROR,
 		},
 		{
-			name:     "Known rule KTN-CONST-002",
+			name:     "Known rule KTN-VAR-003 is WARNING",
+			ruleCode: "KTN-VAR-003",
+			want:     severity.SEVERITY_WARNING,
+		},
+		{
+			name:     "Known rule KTN-CONST-002 is WARNING",
 			ruleCode: "KTN-CONST-002",
-			want:     severity.SEVERITY_INFO,
+			want:     severity.SEVERITY_WARNING,
 		},
 		{
 			name:     "Unknown rule defaults to WARNING",

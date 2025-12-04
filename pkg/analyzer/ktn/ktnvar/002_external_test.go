@@ -8,6 +8,7 @@ import (
 )
 
 func TestVar002(t *testing.T) {
-	// 5 scattered var declarations (2 single + 3 groups after first)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 4)
+	// good.go: 0 errors (all variables have comments)
+	// bad.go: 20 errors (missing comments)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 20)
 }

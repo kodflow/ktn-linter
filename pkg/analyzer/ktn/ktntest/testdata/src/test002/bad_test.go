@@ -1,67 +1,50 @@
-package test002_test
+package test002
 
 import "testing"
 
-// TestOrphanFunction teste une fonction sans fichier source (PAS BIEN).
-// Ce fichier bad_test.go n'a PAS de fichier bad.go correspondant.
+// TestBadPackageName utilise le mauvais package (test001 au lieu de test001_test).
 // Ceci viole KTN-TEST-002.
 //
 // Params:
 //   - t: contexte de test
-func TestOrphanFunction(t *testing.T) {
-	// Table de tests
-	tests := []struct {
-		name string
-		val  int
-		want bool
-	}{
-		{"positive", 5, true},
-		{"negative", -1, false},
-		{"zero", 0, false},
+func TestBadPackageName(t *testing.T) {
+	// Test avec package interne (PAS BIEN)
+	err := CheckValue(10)
+	// Vérification pas d'erreur
+	if err != nil {
+		t.Errorf("CheckValue devrait réussir: %v", err)
 	}
 
-	// Parcours des tests
-	for _, tt := range tests {
-		// Exécution sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			// Fonction inline pour simulation
-			result := tt.val > 0
-			// Vérification résultat
-			if result != tt.want {
-				t.Errorf("got %v, want %v", result, tt.want)
-			}
-		})
+	// Test cas erreur
+	err = CheckValue(0)
+	// Vérification erreur
+	if err == nil {
+		t.Error("CheckValue(0) devrait échouer")
 	}
 }
 
-// TestAnotherOrphan teste sans source correspondante (PAS BIEN).
-// Manque le fichier bad.go.
+// TestInternalPackage utilise le package interne (PAS BIEN).
+// Devrait utiliser test001_test.
 //
 // Params:
 //   - t: contexte de test
-func TestAnotherOrphan(t *testing.T) {
-	const EMPTY_STRING string = ""
-	// Table de tests
-	tests := []struct {
-		name  string
-		input string
-		want  int
-	}{
-		{"empty", EMPTY_STRING, 0},
-		{"single char", "a", 1},
-		{"multiple chars", "test", 4},
+func TestInternalPackage(t *testing.T) {
+	const EXPECTED string = ">hello<"
+	// Test avec package interne
+	result, err := Format("hello")
+	// Vérification pas d'erreur
+	if err != nil {
+		t.Fatalf("Format devrait réussir: %v", err)
+	}
+	// Vérification résultat
+	if result != EXPECTED {
+		t.Errorf("got %q, want %q", result, EXPECTED)
 	}
 
-	// Parcours des tests
-	for _, tt := range tests {
-		// Exécution sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			// Fonction inline
-			result := len(tt.input)
-			// Vérification
-			if result != tt.want {
-				t.Errorf("len(%q) = %d, want %d", tt.input, result, tt.want)
-			}
-		})
+	// Test cas erreur
+	_, err = Format("")
+	// Vérification erreur
+	if err == nil {
+		t.Error("Format should fail on empty")
 	}
 }

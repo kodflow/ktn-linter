@@ -1,105 +1,251 @@
 // Bad examples for the var013 test case.
 package var013
 
-// Constantes pour les tests
-const (
-	LOOP_COUNT_TEN    int = 10
-	LOOP_COUNT_FIVE   int = 5
-	SLICE_VALUE_ONE   int = 1
-	SLICE_VALUE_TWO   int = 2
-	SLICE_VALUE_THREE int = 3
-	NESTED_SLICE_SIZE int = 10
-)
-
-// badLoopSliceAlloc crée un slice à l'intérieur d'une boucle for.
-func badLoopSliceAlloc() {
-	// Allocation dans boucle for
-	for index := 0; index < LOOP_COUNT_TEN; index++ {
-		dataSlice := make([]int, 0, LOOP_COUNT_TEN)
-		_ = dataSlice
-	}
+// IDataHolder est l'interface pour DataHolder.
+// Cette interface définit le contrat pour accéder aux données.
+type IDataHolder interface {
+	Bytes() []byte
 }
 
-// badLoopMapAlloc crée une map à l'intérieur d'une boucle for.
-func badLoopMapAlloc() {
-	// Allocation dans boucle for
-	for loopIndex := 0; loopIndex < LOOP_COUNT_TEN; loopIndex++ {
-		cacheMap := make(map[string]int, LOOP_COUNT_TEN)
-		_ = cacheMap
-	}
+// DataHolder contient des données en bytes.
+// Cette structure implémente IDataHolder pour gérer les données.
+type DataHolder struct {
+	content []byte
 }
 
-// badRangeSliceAlloc crée un slice à l'intérieur d'une boucle range.
-func badRangeSliceAlloc() {
-	items := []int{SLICE_VALUE_ONE, SLICE_VALUE_TWO, SLICE_VALUE_THREE}
-	// Allocation dans boucle range
-	for _, itemValue := range items {
-		stringBuffer := make([]string, 0, LOOP_COUNT_TEN)
-		_ = itemValue
-		_ = stringBuffer
-	}
+// NewDataHolder crée un nouveau DataHolder.
+//
+// Params:
+//   - data: données initiales
+//
+// Returns:
+//   - *DataHolder: nouveau DataHolder
+func NewDataHolder(data []byte) *DataHolder {
+	// Retour d'une nouvelle instance
+	return &DataHolder{content: data}
 }
 
-// badRangeMapAlloc crée une map à l'intérieur d'une boucle range.
-func badRangeMapAlloc() {
-	items := []string{"a", "b", "c"}
-	// Allocation dans boucle range
-	for _, stringItem := range items {
-		boolMap := make(map[string]bool, LOOP_COUNT_TEN)
-		_ = stringItem
-		_ = boolMap
-	}
+// Bytes retourne le contenu en bytes.
+//
+// Returns:
+//   - []byte: contenu
+func (d *DataHolder) Bytes() []byte {
+	// Retour du contenu
+	return d.content
 }
 
-// badNestedLoopAlloc crée un slice dans une boucle imbriquée.
-func badNestedLoopAlloc() {
-	// Allocation dans boucle imbriquée
-	for outerIndex := 0; outerIndex < LOOP_COUNT_FIVE; outerIndex++ {
-		// Boucle interne avec allocation
-		for innerIndex := 0; innerIndex < LOOP_COUNT_FIVE; innerIndex++ {
-			tempSlice := make([]int, 0, NESTED_SLICE_SIZE)
-			_ = tempSlice
-			_ = innerIndex
+// badRepeatedConversionInLoop convertit plusieurs fois dans une boucle.
+//
+// Params:
+//   - data: données à parcourir
+//   - target: valeur cible recherchée
+//
+// Returns:
+//   - int: nombre d'occurrences
+func badRepeatedConversionInLoop(data [][]byte, target string) int {
+	count := 0
+	// Parcours des données
+	for _, item := range data {
+		// Vérification de correspondance - CONVERSION RÉPÉTÉE
+		if string(item) == target {
+			count++
 		}
-		_ = outerIndex
+	}
+	// Retour du compteur
+	return count
+}
+
+// badMultipleConversionsInFunction convertit plusieurs fois la même variable.
+//
+// Params:
+//   - data: données à analyser
+func badMultipleConversionsInFunction(data []byte) {
+	// Vérification hello - CONVERSION #1
+	if string(data) == "hello" {
+		println("found hello")
+	}
+	// Vérification world - CONVERSION #2
+	if string(data) == "world" {
+		println("found world")
+	}
+	// Affichage - CONVERSION #3
+	println(string(data))
+}
+
+// badConversionInForLoop convertit dans un for classique.
+//
+// Params:
+//   - items: éléments à parcourir
+func badConversionInForLoop(items [][]byte) {
+	// Parcours des éléments
+	for range items {
+		// Vérification - CONVERSION RÉPÉTÉE
+		if string(items[0]) == "test" {
+			println("found")
+		}
 	}
 }
 
-// badVarDeclInLoop crée un slice avec var dans une boucle.
-func badVarDeclInLoop() {
-	// Allocation avec var dans boucle
-	for varIndex := 0; varIndex < LOOP_COUNT_TEN; varIndex++ {
-		dataArray := make([]int, 0, SLICE_VALUE_THREE)
-		dataArray = append(dataArray, SLICE_VALUE_ONE, SLICE_VALUE_TWO, SLICE_VALUE_THREE)
-		_ = dataArray
-		_ = varIndex
+// badNestedLoopConversion convertit dans une boucle imbriquée.
+//
+// Params:
+//   - row: ligne de données
+func badNestedLoopConversion(row [][]byte) {
+	// Parcours des cellules
+	for _, cell := range row {
+		// Vérification - CONVERSION RÉPÉTÉE
+		if string(cell) == "x" {
+			println("found x")
+		}
 	}
 }
 
-// badVarMapDeclInLoop crée une map avec var dans une boucle.
-func badVarMapDeclInLoop() {
-	// Allocation avec var dans boucle
-	for mapIndex := 0; mapIndex < LOOP_COUNT_TEN; mapIndex++ {
-		stringCache := make(map[string]int, LOOP_COUNT_TEN)
-		_ = stringCache
-		_ = mapIndex
+// badMapKeyConversion utilise string() répété pour les clés de map.
+//
+// Params:
+//   - cache: map de cache
+//   - keys: clés à chercher
+func badMapKeyConversion(cache map[string]int, keys [][]byte) {
+	// Parcours des clés
+	for _, key := range keys {
+		// Accès à la map - CONVERSION RÉPÉTÉE
+		_ = cache[string(key)]
+	}
+}
+
+// badNestedIndexConversion teste la conversion avec index imbriqué.
+//
+// Params:
+//   - matrix: matrice de données
+func badNestedIndexConversion(matrix [][][]byte) {
+	// Parcours des lignes
+	for _, row := range matrix {
+		// Parcours des cellules
+		for _, cell := range row {
+			// Vérification - CONVERSION RÉPÉTÉE
+			if string(cell) == "test" {
+				println("found")
+			}
+		}
+	}
+}
+
+// badStructFieldConversion teste la conversion d'un champ de struct.
+//
+// Params:
+//   - holders: liste de conteneurs
+func badStructFieldConversion(holders []DataHolder) {
+	// Parcours des conteneurs
+	for _, h := range holders {
+		// Vérification - CONVERSION RÉPÉTÉE
+		if string(h.content) == "test" {
+			println("found")
+		}
+	}
+}
+
+// badMethodResultConversion teste la conversion du résultat d'une méthode.
+//
+// Params:
+//   - holders: liste de conteneurs
+func badMethodResultConversion(holders []*DataHolder) {
+	// Parcours des conteneurs
+	for _, h := range holders {
+		// Vérification avec appel de méthode - CONVERSION RÉPÉTÉE
+		if string(h.Bytes()) == "test" {
+			println("found")
+		}
+	}
+}
+
+// badActualNestedIndex teste l'index imbriqué dans la conversion elle-même.
+//
+// Params:
+//   - matrix: matrice de données
+func badActualNestedIndex(matrix [][][]byte) {
+	// Boucle sur la matrice
+	for range matrix {
+		// Boucle sur les lignes
+		for range matrix[0] {
+			// Conversion avec double index - CONVERSION RÉPÉTÉE
+			if string(matrix[0][0]) == "test" {
+				println("found")
+			}
+		}
+	}
+}
+
+// badSelectorConversion teste la conversion avec sélecteur de struct.
+//
+// Params:
+//   - items: liste d'éléments
+func badSelectorConversion(items []DataHolder) {
+	// Parcours des éléments
+	for _, item := range items {
+		// Vérification a - CONVERSION #1
+		if string(item.content) == "a" {
+			println("a")
+		}
+		// Vérification b - CONVERSION #2
+		if string(item.content) == "b" {
+			println("b")
+		}
+		// Vérification c - CONVERSION #3
+		if string(item.content) == "c" {
+			println("c")
+		}
+	}
+}
+
+// helperFunc retourne des données de test.
+//
+// Returns:
+//   - []byte: données de test
+func helperFunc() []byte {
+	// Retour de données
+	return []byte("test")
+}
+
+// badCallExprConversion teste avec un appel de fonction.
+func badCallExprConversion() {
+	// Vérification a - CONVERSION #1
+	if string(helperFunc()) == "a" {
+		println("a")
+	}
+	// Vérification b - CONVERSION #2
+	if string(helperFunc()) == "b" {
+		println("b")
+	}
+	// Vérification c - CONVERSION #3
+	if string(helperFunc()) == "c" {
+		println("c")
 	}
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badLoopSliceAlloc
-	badLoopSliceAlloc()
-	// Appel de badLoopMapAlloc
-	badLoopMapAlloc()
-	// Appel de badRangeSliceAlloc
-	badRangeSliceAlloc()
-	// Appel de badRangeMapAlloc
-	badRangeMapAlloc()
-	// Appel de badNestedLoopAlloc
-	badNestedLoopAlloc()
-	// Appel de badVarDeclInLoop
-	badVarDeclInLoop()
-	// Appel de badVarMapDeclInLoop
-	badVarMapDeclInLoop()
+	// Appel de badRepeatedConversionInLoop
+	_ = badRepeatedConversionInLoop(nil, "")
+	// Appel de badMultipleConversionsInFunction
+	badMultipleConversionsInFunction(nil)
+	// Appel de badConversionInForLoop
+	badConversionInForLoop(nil)
+	// Appel de badNestedLoopConversion
+	badNestedLoopConversion(nil)
+	// Appel de badMapKeyConversion
+	badMapKeyConversion(nil, nil)
+	// Appel de badNestedIndexConversion
+	badNestedIndexConversion(nil)
+	// Appel de badStructFieldConversion
+	badStructFieldConversion(nil)
+	// Appel de badMethodResultConversion
+	badMethodResultConversion(nil)
+	// Appel de badActualNestedIndex
+	badActualNestedIndex(nil)
+	// Appel de badSelectorConversion
+	badSelectorConversion(nil)
+	// Appel de helperFunc
+	helperFunc()
+	// Appel de badCallExprConversion
+	badCallExprConversion()
 }

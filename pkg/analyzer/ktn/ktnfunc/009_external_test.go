@@ -8,6 +8,6 @@ import (
 )
 
 func TestFunc009(t *testing.T) {
-	// Placeholder: will calculate error count by running test
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer009, "func009", 6)
+	// 33 errors: trivial returns moved to good.go, added robust non-trivial test cases
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer009, "func009", 33)
 }

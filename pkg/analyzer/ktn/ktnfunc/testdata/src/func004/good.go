@@ -1,199 +1,95 @@
-// Good examples for the func004 test case.
+// Package func004 contient des exemples de fonctions privées utilisées correctement.
 package func004
 
-import "unsafe"
+const (
+	// MULTIPLIER est le facteur de multiplication utilisé dans compute.
+	MULTIPLIER int = 2
+)
 
-// NoNamedReturns vérifie le cas sans returns nommés
+// PublicFunction est une fonction publique.
+//
+// Returns:
+//   - string: message
+func PublicFunction() string {
+	// Appel de la fonction privée
+	if processData("test") {
+		// Retour du helper
+		return privateHelper()
+	}
+	// Retour vide
+	return ""
+}
+
+// privateHelper est utilisée par PublicFunction.
+//
+// Returns:
+//   - string: message
+func privateHelper() string {
+	// Retour du message
+	return "helper"
+}
+
+// Calculator est une struct pour effectuer des calculs.
+// Elle stocke une valeur interne et permet de la multiplier.
+type Calculator struct {
+	value int
+}
+
+// CalculatorInterface définit les méthodes publiques de Calculator.
+type CalculatorInterface interface {
+	Calculate() int
+}
+
+// NewCalculator crée une nouvelle instance de Calculator.
+//
+// Params:
+//   - value: la valeur initiale
+//
+// Returns:
+//   - *Calculator: nouvelle instance
+func NewCalculator(value int) *Calculator {
+	// Retour de la nouvelle instance
+	return &Calculator{value: value}
+}
+
+// Calculate appelle la méthode privée.
 //
 // Returns:
 //   - int: résultat
-func NoNamedReturns() int {
-	// Retour de 1
-	return 1
+func (c *Calculator) Calculate() int {
+	// Appel de la méthode privée
+	return c.compute()
 }
 
-// ShortWithNakedReturn utilise naked return car courte
-//
-// Returns:
-//   - result: résultat
-func ShortWithNakedReturn() (result int) {
-	result = 1
-	// Retour naked autorisé car < 5 lignes
-	return
-}
-
-// ExplicitReturn utilise return explicite
-//
-// Returns:
-//   - result: résultat
-//   - err: erreur potentielle
-func ExplicitReturn() (result int, err error) {
-	result = 1
-	err = nil
-	// Retour explicite
-	return result, err
-}
-
-// ShortFourLines a 4 lignes donc naked return OK
-//
-// Returns:
-//   - x: valeur calculée
-func ShortFourLines() (x int) {
-	x = 1
-	x = x + 1
-	x = x + 1
-	// Retour naked autorisé
-	return
-}
-
-// MultipleExplicit retourne explicitement plusieurs valeurs
-//
-// Returns:
-//   - a: premier entier
-//   - b: chaîne
-//   - c: booléen
-func MultipleExplicit() (a int, b string, c bool) {
-	a = 1
-	b = "test"
-	c = true
-	// Retour explicite
-	return a, b, c
-}
-
-// NoReturnValues n'a pas de valeur de retour
-func NoReturnValues() {
-	x := 1
-	_ = x
-}
-
-// UnnamedReturn utilise return sans nom
-//
-// Returns:
-//   - int: valeur
-func UnnamedReturn() int {
-	// Retour de 1
-	return 1
-}
-
-// TestNakedReturn est exempté car fonction test
-//
-// Params:
-//   - t: paramètre de test
-//
-// Returns:
-//   - result: résultat
-func TestNakedReturn(t int) (result int) {
-	result = 1
-	result = result + 1
-	result = result + 1
-	result = result + 1
-	result = result + 1
-	result = result + 1
-	// Retour exempté car test
-	return
-}
-
-// BenchmarkNakedReturn est exempté car fonction benchmark
-//
-// Params:
-//   - b: paramètre de benchmark
-//
-// Returns:
-//   - result: résultat
-func BenchmarkNakedReturn(b int) (result int) {
-	result = 1
-	result = result + 1
-	result = result + 1
-	result = result + 1
-	result = result + 1
-	result = result + 1
-	// Retour exempté car benchmark
-	return
-}
-
-// Calculator est une interface de test.
-// Utilisée pour démontrer l'utilisation d'interfaces.
-type Calculator interface {
-	Calculate() (int, error)
-}
-
-// simpleCalculator implémente Calculator
-type simpleCalculator struct{}
-
-// Calculate implémente l'interface Calculator
-//
-// Returns:
-//   - int: résultat du calcul
-//   - error: erreur éventuelle
-func (s simpleCalculator) Calculate() (int, error) {
-	// Retour du résultat
-	return 0, nil
-}
-
-// useCalculator utilise l'interface Calculator
-//
-// Params:
-//   - calc: calculateur à utiliser
+// compute est une méthode privée utilisée.
 //
 // Returns:
 //   - int: résultat
-//   - error: erreur éventuelle
-func useCalculator(calc Calculator) (int, error) {
-	// Utilisation du calculateur
-	return calc.Calculate()
+func (c *Calculator) compute() int {
+	// Retour de la valeur multipliée par la constante
+	return c.value * MULTIPLIER
 }
 
-// SingleUnnamedReturn retourne une valeur sans nom
-//
-// Returns:
-//   - int: valeur
-func SingleUnnamedReturn() int {
-	// Retour de 1
-	return 1
-}
-
-// MultipleUnnamedReturns retourne plusieurs valeurs sans nom
-//
-// Returns:
-//   - int: entier
-//   - string: chaîne
-//   - bool: booléen
-func MultipleUnnamedReturns() (int, string, bool) {
-	// Retour de plusieurs valeurs
-	return 1, "test", true
-}
-
-// Prevent "unsafe imported but not used" error
-var _ unsafe.Pointer = unsafe.Pointer(nil)
-
-// externalLinkedFunc est une fonction externe liée
+// processData utilise validate en interne.
 //
 // Params:
-//   - v: valeur d'entrée
+//   - data: données
 //
 // Returns:
-//   - result: pointeur résultat
-//
-//go:linkname externalLinkedFunc runtime.convT64
-func externalLinkedFunc(v int) (result unsafe.Pointer)
+//   - bool: succès
+func processData(data string) bool {
+	// Appel de validate
+	return validate(data)
+}
 
-// anotherExternal est une autre fonction externe
+// validate est utilisée par processData.
 //
 // Params:
-//   - v: chaîne d'entrée
+//   - s: chaîne
 //
 // Returns:
-//   - ptr: pointeur résultat
-//
-//go:linkname anotherExternal runtime.convTstring
-func anotherExternal(v string) (ptr unsafe.Pointer)
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de useCalculator
-	_ = useCalculator(Calculator{})
-	// Appel de externalLinkedFunc
-	_ = externalLinkedFunc(0)
-	// Appel de anotherExternal
-	_ = anotherExternal("")
+//   - bool: valide
+func validate(s string) bool {
+	// Retour de la validation
+	return len(s) > 0
 }

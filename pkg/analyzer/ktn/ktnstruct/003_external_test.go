@@ -8,6 +8,6 @@ import (
 )
 
 func TestStruct003(t *testing.T) {
-	// good.go: 0 errors (champs exportés avant privés), bad.go: 5 errors (champs mélangés)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer003, "struct003", 5)
+	// good.go: 0 errors (constructeur NewX présent), bad.go: 1 error (constructeur manquant)
+	testhelper.TestGoodBad(t, ktnstruct.Analyzer003, "struct003", 1)
 }

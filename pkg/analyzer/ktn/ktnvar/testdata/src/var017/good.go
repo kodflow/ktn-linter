@@ -1,245 +1,83 @@
 // Good examples for the var017 test case.
 package var017
 
-import (
-	"fmt"
-	"io"
-	"os"
+// Good: Using arrays for small fixed sizes or slices when appropriate
+
+const (
+	// ARRAY_SIZE_SMALL is small array size
+	ARRAY_SIZE_SMALL int = 10
+	// BUFFER_SIZE is buffer size
+	BUFFER_SIZE int = 64
+	// LARGE_SIZE is large allocation size
+	LARGE_SIZE int = 2048
+	// CAPACITY_MEDIUM is medium capacity
+	CAPACITY_MEDIUM int = 100
+	// LENGTH_SMALL is small length
+	LENGTH_SMALL int = 10
+	// CAPACITY_SMALL is small capacity
+	CAPACITY_SMALL int = 20
 )
 
-// goodNoShadowingInIf utilise la réassignation correcte.
+// goodArray uses array for fixed small size
+func goodArray() {
+	// Array allocated on stack
+	var items [ARRAY_SIZE_SMALL]int
+	_ = items
+}
+
+// goodArrayBuffer uses array for buffer
+func goodArrayBuffer() {
+	// Fixed size buffer as array
+	var buffer [BUFFER_SIZE]byte
+	_ = buffer
+}
+
+// goodDynamicSize uses make with variable size
 //
 // Params:
-//   - path: chemin du fichier
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodNoShadowingInIf(path string) error {
-	file, err := os.Open(path)
-	// Vérification de la condition
-	if err != nil {
-		// Retour de la fonction
-		return err
-	}
-	defer file.Close()
-
-	data, err := io.ReadAll(file)
-	// Vérification de la condition
-	if err != nil {
-		// Retour de la fonction
-		return err
-	}
-
-	// Vérification de la condition
-	if len(data) > 0 {
-		err = goodValidateData(data) // OK: réassignation avec '='
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-
-	// Retour de la fonction
-	return err
+//   - n: dynamic size for slice allocation
+func goodDynamicSize(n int) {
+	// Size is variable, must use slice with capacity
+	items := make([]int, 0, n)
+	items = append(items, n)
+	_ = items
 }
 
-// goodFmtErrorf utilise la réassignation correcte.
-//
-// Params:
-//   - url: URL de connexion
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodFmtErrorf(url string) error {
-	conn, err := goodDial(url)
-	// Vérification de la condition
-	if err != nil {
-		err = fmt.Errorf("failed to connect: %w", err) // OK: réassignation
-		_ = conn
-		// Retour de la fonction
-		return err
-	}
-	// Retour de la fonction
-	return nil
+// goodLargeSlice uses make for large allocation
+func goodLargeSlice() {
+	// Size > 1024, slice is appropriate
+	large := make([]byte, 0, LARGE_SIZE)
+	_ = large
 }
 
-// goodInFor utilise la réassignation correcte dans une boucle.
-//
-// Params:
-//   - files: liste de fichiers
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodInFor(files []string) error {
-	var err error
-	// Parcours des éléments
-	for _, file := range files {
-		err = goodProcessFile(file) // OK: réassignation
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-	// Retour de la fonction
-	return err
+// goodGrowingSlice uses make with capacity for growing slice
+func goodGrowingSlice() {
+	// Slice will grow, needs heap allocation
+	items := make([]string, 0, CAPACITY_MEDIUM)
+	items = append(items, "test")
+	_ = items
 }
 
-// goodNewVariable déclare une nouvelle variable avec un nom différent.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodNewVariable() error {
-	result, err := goodDoSomething()
-	// Vérification de la condition
-	if err != nil {
-		// Retour de la fonction
-		return err
-	}
-
-	// Vérification de la condition
-	if result > 0 {
-		err2 := goodDoAnotherThing() // OK: nouvelle variable avec nom différent
-		// Vérification de la condition
-		if err2 != nil {
-			// Retour de la fonction
-			return err2
-		}
-	}
-
-	err = goodFinalCheck() // OK: réassignation
-	// Retour de la fonction
-	return err
-}
-
-// goodLocalScopeErr déclare err dans un scope différent (OK).
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodLocalScopeErr() error {
-	// Vérification de la condition
-	if true {
-		err := goodDoSomething2() // OK: première déclaration dans ce scope
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-
-	// Vérification de la condition
-	if false {
-		err := goodDoAnotherThing() // OK: première déclaration dans ce scope
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
-	}
-
-	// Retour de la fonction
-	return nil
-}
-
-// goodValidateData valide les données.
-//
-// Params:
-//   - _data: données à valider (non utilisées dans cet exemple)
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodValidateData(_data []byte) error {
-	// Retour de la fonction
-	return nil
-}
-
-// goodDial établit une connexion.
-//
-// Params:
-//   - _url: URL de connexion (non utilisée dans cet exemple)
-//
-// Returns:
-//   - any: connexion
-//   - error: erreur éventuelle
-func goodDial(_url string) (any, error) {
-	// Retour de la fonction
-	return nil, nil
-}
-
-// goodProcessFile traite un fichier.
-//
-// Params:
-//   - _file: fichier à traiter (non utilisé dans cet exemple)
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodProcessFile(_file string) error {
-	// Retour de la fonction
-	return nil
-}
-
-// goodDoSomething effectue une opération.
-//
-// Returns:
-//   - int: résultat
-//   - error: erreur éventuelle
-func goodDoSomething() (int, error) {
-	// Retour de la fonction
-	return 0, nil
-}
-
-// goodDoSomething2 effectue une autre opération.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodDoSomething2() error {
-	// Retour de la fonction
-	return nil
-}
-
-// goodDoAnotherThing effectue encore une autre opération.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodDoAnotherThing() error {
-	// Retour de la fonction
-	return nil
-}
-
-// goodFinalCheck effectue une vérification finale.
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodFinalCheck() error {
-	// Retour de la fonction
-	return nil
+// goodMakeWithCapacity uses make with different len/cap
+func goodMakeWithCapacity() {
+	// Different length and capacity
+	items := make([]int, 0, CAPACITY_SMALL)
+	items = append(items, LENGTH_SMALL)
+	_ = items
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodNoShadowingInIf
-	_ = goodNoShadowingInIf("")
-	// Appel de goodFmtErrorf
-	_ = goodFmtErrorf("")
-	// Appel de goodInFor
-	_ = goodInFor(nil)
-	// Appel de goodNewVariable
-	goodNewVariable()
-	// Appel de goodLocalScopeErr
-	goodLocalScopeErr()
-	// Appel de goodValidateData
-	_ = goodValidateData(nil)
-	// Appel de goodDial
-	_, _ = goodDial("")
-	// Appel de goodProcessFile
-	_ = goodProcessFile("")
-	// Appel de goodDoSomething
-	goodDoSomething()
-	// Appel de goodDoSomething2
-	goodDoSomething2()
-	// Appel de goodDoAnotherThing
-	goodDoAnotherThing()
-	// Appel de goodFinalCheck
-	goodFinalCheck()
+	// Appel de goodArray
+	goodArray()
+	// Appel de goodArrayBuffer
+	goodArrayBuffer()
+	// Appel de goodDynamicSize
+	goodDynamicSize(0)
+	// Appel de goodLargeSlice
+	goodLargeSlice()
+	// Appel de goodGrowingSlice
+	goodGrowingSlice()
+	// Appel de goodMakeWithCapacity
+	goodMakeWithCapacity()
 }

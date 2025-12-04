@@ -1,38 +1,71 @@
 package test004
 
-import "errors"
+// GoodResource représente une ressource avec des méthodes publiques.
+// Toutes les méthodes ont des tests correspondants.
+type GoodResource struct {
+	name string
+}
 
-// ProcessData traite des données.
-// Retourne error → le test a des cas d'erreur = OK.
+// NewGoodResource crée une nouvelle instance.
+//
+// Returns:
+//   - *GoodResource: nouvelle instance
+func NewGoodResource() *GoodResource {
+	// Retour de la nouvelle instance
+	return &GoodResource{}
+}
+
+// Metadata retourne les métadonnées.
+//
+// Returns:
+//   - string: nom de la ressource
+func (r *GoodResource) Metadata() string {
+	// Retour des métadonnées
+	return "good_resource"
+}
+
+// Schema retourne le schéma.
+//
+// Returns:
+//   - map[string]string: schéma de la ressource
+func (r *GoodResource) Schema() map[string]string {
+	// Retour du schéma
+	return map[string]string{"type": "test"}
+}
+
+// Configure configure la ressource.
 //
 // Params:
-//   - data: données à traiter
+//   - config: configuration à appliquer
 //
 // Returns:
-//   - string: résultat
-//   - error: erreur si échec
-func ProcessData(data string) (string, error) {
-	// Vérification données vides
-	if data == "" {
-		return "", errors.New("empty data")
-	}
-	return "processed:" + data, nil
+//   - error: erreur éventuelle
+func (r *GoodResource) Configure(config string) error {
+	r.name = config
+	// Retour succès
+	return nil
 }
 
-// GetName retourne un nom.
-// NE retourne PAS error → test simple sans cas d'erreur = OK.
+// validateConfig valide la configuration (fonction privée avec test).
+//
+// Params:
+//   - config: configuration à valider
 //
 // Returns:
-//   - string: nom
-func GetName() string {
-	return "test"
+//   - bool: true si valide
+func validateConfig(config string) bool {
+	// Validation
+	return len(config) > 0
 }
 
-// GetCount retourne un compteur.
-// NE retourne PAS error → test table-driven SANS cas d'erreur = OK.
+// sanitize nettoie les données (fonction privée avec test).
+//
+// Params:
+//   - data: données à nettoyer
 //
 // Returns:
-//   - int: compteur
-func GetCount() int {
-	return 42
+//   - string: données nettoyées
+func (r *GoodResource) sanitize(data string) string {
+	// Nettoyage
+	return data + "_sanitized"
 }

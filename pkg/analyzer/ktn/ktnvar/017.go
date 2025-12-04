@@ -3,161 +3,157 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/token"
-	"go/types"
+	"go/constant"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer017 détecte le shadowing de variables avec := au lieu de =.
-//
-// Le shadowing se produit quand on redéclare une variable avec := alors
-// qu'elle existe déjà dans un scope parent, créant une nouvelle variable
-// locale qui masque l'originale.
+const (
+	// MIN_MAKE_ARGS_VAR016 is minimum arguments for make([]T, N)
+	MIN_MAKE_ARGS_VAR016 int = 2
+	// MIN_MAKE_ARGS_WITH_CAP_VAR016 is minimum arguments for make with capacity
+	MIN_MAKE_ARGS_WITH_CAP_VAR016 int = 3
+	// MAX_ARRAY_SIZE_VAR016 is maximum size for recommending array over slice
+	MAX_ARRAY_SIZE_VAR016 int64 = 1024
+)
+
+// Analyzer017 checks for make([]T, N) with small constant N
 var Analyzer017 = &analysis.Analyzer{
 	Name:     "ktnvar017",
-	Doc:      "KTN-VAR-017: Vérifie le shadowing de variables avec := au lieu de =",
+	Doc:      "KTN-VAR-017: Vérifie l'utilisation de [N]T au lieu de make([]T, N)",
 	Run:      runVar017,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runVar017 exécute l'analyse de détection du shadowing.
+// runVar017 exécute l'analyse KTN-VAR-017.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - interface{}: toujours nil
+//   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar017(pass *analysis.Pass) (any, error) {
-	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
+		(*ast.CallExpr)(nil),
 	}
 
-	// Parcours des assignations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérification de l'assignation courte
-		checkShortVarDecl(pass, n)
+		call := n.(*ast.CallExpr)
+
+		// Check if it's a make call
+		if !utils.IsIdentCall(call, "make") {
+			// Not a make call
+			return
+		}
+
+		// Check if it's make([]T, N) with small constant N
+		if shouldUseArray(pass, call) {
+			reportArraySuggestion(pass, call)
+		}
 	})
 
-	// Traitement
+	// Return analysis result
 	return nil, nil
 }
 
-// checkShortVarDecl vérifie si une assignation courte fait du shadowing.
+// shouldUseArray vérifie si make devrait être remplacé par un array.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - n: nœud AST à analyser
-func checkShortVarDecl(pass *analysis.Pass, n ast.Node) {
-	// Cast en assignation
-	assign, ok := n.(*ast.AssignStmt)
-	// Vérification de la condition
-	if !ok || assign.Tok != token.DEFINE {
-		return // Pas une assignation courte (:=)
-	}
-
-	// Pour chaque variable assignée
-	for _, lhs := range assign.Lhs {
-		// Récupération de l'identifiant
-		ident := extractIdent(lhs)
-		// Vérification de la condition
-		if ident == nil {
-			continue
-		}
-
-		// Vérification du shadowing
-		if isShadowing(pass, ident) {
-			// Rapport d'erreur
-			pass.Reportf(
-				assign.Pos(),
-				"KTN-VAR-017: shadowing de la variable '%s' avec ':=' au lieu de '='",
-				ident.Name,
-			)
-		}
-	}
-}
-
-// extractIdent extrait l'identifiant d'une expression.
-//
-// Params:
-//   - expr: expression à analyser
+//   - call: expression d'appel à make
 //
 // Returns:
-//   - *ast.Ident: identifiant extrait ou nil
-func extractIdent(expr ast.Expr) *ast.Ident {
-	// Si c'est directement un identifiant
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Traitement
-		return ident
+//   - bool: true si un array est préférable
+func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
+	// Need at least 2 args: make([]T, size)
+	if len(call.Args) < MIN_MAKE_ARGS_VAR016 {
+		// Not enough arguments
+		return false
 	}
-	// Traitement
-	return nil
+
+	// First arg should be a slice type
+	if !utils.IsSliceType(call.Args[0]) {
+		// Not a slice type
+		return false
+	}
+
+	// Check if has different capacity (3rd arg)
+	if hasDifferentCapacity(call) {
+		// Different capacity, needs slice
+		return false
+	}
+
+	// Second arg should be small constant
+	size := getConstantSize(pass, call.Args[1])
+	// Return true if size is small constant
+	return isSmallConstant(size)
 }
 
-// isShadowing vérifie si un identifiant fait du shadowing.
+// hasDifferentCapacity vérifie si make a une capacité différente.
+//
+// Params:
+//   - call: expression d'appel à make
+//
+// Returns:
+//   - bool: true si capacité différente spécifiée
+func hasDifferentCapacity(call *ast.CallExpr) bool {
+	// Return true if 3rd argument exists
+	return len(call.Args) >= MIN_MAKE_ARGS_WITH_CAP_VAR016
+}
+
+// getConstantSize obtient la taille constante d'une expression.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - ident: identifiant à vérifier
+//   - expr: expression de taille
 //
 // Returns:
-//   - bool: true si shadowing détecté
-func isShadowing(pass *analysis.Pass, ident *ast.Ident) bool {
-	// Ignorer les blank identifiers
-	if ident.Name == "_" {
-		// Traitement
-		return false
+//   - int64: taille constante ou -1 si non constante
+func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
+	// Try to get constant value
+	tv := pass.TypesInfo.Types[expr]
+	// Check if it's a constant
+	if tv.Value == nil {
+		// Not a constant
+		return -1
 	}
 
-	// Récupération de l'objet défini (nouvelle définition avec :=)
-	obj := pass.TypesInfo.Defs[ident]
-	// Vérification de la condition
-	if obj == nil {
-		return false // Pas une nouvelle définition
+	// Get int64 value
+	if val, ok := constant.Int64Val(tv.Value); ok {
+		// Return the constant value
+		return val
 	}
 
-	// Récupération du scope de l'objet
-	scope := obj.Parent()
-	// Vérification de la condition
-	if scope == nil {
-		// Traitement
-		return false
-	}
-
-	// Vérification dans le scope parent
-	return lookupInParentScope(scope.Parent(), ident.Name)
+	// Not an int constant
+	return -1
 }
 
-// lookupInParentScope cherche une variable dans le scope parent.
+// isSmallConstant vérifie si la taille est petite et constante.
 //
 // Params:
-//   - scope: scope parent à vérifier
-//   - name: nom de la variable
+//   - size: taille à vérifier
 //
 // Returns:
-//   - bool: true si la variable existe dans le scope parent
-func lookupInParentScope(scope *types.Scope, name string) bool {
-	// Vérification de nil
-	if scope == nil {
-		// Traitement
-		return false
-	}
+//   - bool: true si petite constante (<= MAX_ARRAY_SIZE_VAR016)
+func isSmallConstant(size int64) bool {
+	// Check if it's a positive small constant
+	return size > 0 && size <= MAX_ARRAY_SIZE_VAR016
+}
 
-	// Recherche de la variable dans le scope courant
-	obj := scope.Lookup(name)
-	// Vérification de la condition
-	if obj != nil {
-		// Traitement
-		return true
-	}
-
-	// Recherche récursive dans le scope parent
-	return lookupInParentScope(scope.Parent(), name)
+// reportArraySuggestion rapporte la suggestion d'utiliser un array.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - call: expression d'appel à make
+func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
+	pass.Reportf(
+		call.Pos(),
+		"KTN-VAR-017: préférer [N]T (array) au lieu de make([]T, N)",
+	)
 }

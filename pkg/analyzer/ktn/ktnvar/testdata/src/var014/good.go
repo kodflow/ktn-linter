@@ -1,112 +1,55 @@
 // Good examples for the var014 test case.
 package var014
 
+// Good: All package-level variables are grouped in a single var block
+
 const (
-	// ANSWER is the answer
+	// MAX_RETRIES defines maximum retries
+	MAX_RETRIES int = 3
+	// DEFAULT_TIMEOUT is the default timeout
+	DEFAULT_TIMEOUT int = 30
+	// SERVER_PORT is the server port number
+	SERVER_PORT int = 8080
+	// MAX_CONNECTIONS is the maximum connections
+	MAX_CONNECTIONS int = 100
+	// ANSWER is the answer to life
 	ANSWER int = 42
-	// AGE_VALUE is age value
-	AGE_VALUE int = 25
-	// ID_VALUE is id value
-	ID_VALUE int = 1
-	// USER_AGE is user age
-	USER_AGE int = 30
-	// USER_BALANCE is user balance
-	USER_BALANCE float64 = 100.0
-	// PI_VALUE is pi value
-	PI_VALUE float64 = 3.14
-	// CONFIG_VALUE is config value
-	CONFIG_VALUE int = 10
 )
 
-// GoodSmallStruct est une petite structure (≤3 champs).
-// Utilisée pour tester l'allocation par valeur.
-type GoodSmallStruct struct {
-	ID   int
-	Name string
-	Age  int
-}
+// All variables grouped in a single block
+var (
+	// defaultRetries defines the default number of retries
+	defaultRetries int = MAX_RETRIES
 
-// GoodLargeStruct est une grande structure (>3 champs).
-// Doit être utilisée avec un pointeur pour éviter copies coûteuses.
-type GoodLargeStruct struct {
-	Field1 int
-	Field2 string
-	Field3 bool
-	Field4 float64
-}
+	// configuration holds the app configuration
+	configuration string = "default"
 
-// GoodAnotherLargeStruct est une autre grande structure.
-// Contient plusieurs champs et doit être manipulée par pointeur.
-type GoodAnotherLargeStruct struct {
-	Name    string
-	Age     int
-	Email   string
-	Active  bool
-	Balance float64
-}
+	// serverPort is the server port number
+	serverPort int = SERVER_PORT
 
-// goodSmallStructValue utilise une petite structure par valeur.
-func goodSmallStructValue() {
-	// Petite structure, OK par valeur
-	data := GoodSmallStruct{
-		ID:   ID_VALUE,
-		Name: "test",
-		Age:  AGE_VALUE,
-	}
-	_ = data
-}
+	// serverHost is the server hostname
+	serverHost string = "localhost"
 
-// goodLargeStructPointer utilise un pointeur pour une grande structure.
-func goodLargeStructPointer() {
-	// Grande structure avec pointeur
-	data := &GoodLargeStruct{
-		Field1: ANSWER,
-		Field2: "test",
-		Field3: true,
-		Field4: PI_VALUE,
-	}
-	_ = data
-}
+	// isEnabled indicates if feature is enabled
+	isEnabled bool = false
 
-// goodAnotherLargeStructPointer utilise un pointeur.
-func goodAnotherLargeStructPointer() {
-	// Grande structure avec pointeur
-	user := &GoodAnotherLargeStruct{
-		Name:    "John",
-		Age:     USER_AGE,
-		Email:   "john@example.com",
-		Active:  true,
-		Balance: USER_BALANCE,
-	}
-	_ = user
-}
+	// maxConnections is the maximum connections
+	maxConnections int = MAX_CONNECTIONS
+)
 
-// goodPointerDecl déclare un pointeur avec var.
-func goodPointerDecl() {
-	// Déclaration de pointeur
-	var config *GoodLargeStruct
-	config = &GoodLargeStruct{Field1: CONFIG_VALUE}
-	_ = config
-}
-
-// goodNewAlloc utilise new pour allouer.
-func goodNewAlloc() {
-	// Allocation avec new
-	data := new(GoodLargeStruct)
-	data.Field1 = ANSWER
-	_ = data
+// goodFunction demonstrates local variable usage (not checked by VAR-002).
+//
+// Returns:
+//   - int: calculated value
+func goodFunction() int {
+	// Local variables are not checked by VAR-002
+	localVar := ANSWER
+	// Continue traversing AST nodes.
+	return localVar
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodSmallStructValue
-	goodSmallStructValue()
-	// Appel de goodLargeStructPointer
-	goodLargeStructPointer()
-	// Appel de goodAnotherLargeStructPointer
-	goodAnotherLargeStructPointer()
-	// Appel de goodPointerDecl
-	goodPointerDecl()
-	// Appel de goodNewAlloc
-	goodNewAlloc()
+	// Appel de goodFunction
+	goodFunction()
 }

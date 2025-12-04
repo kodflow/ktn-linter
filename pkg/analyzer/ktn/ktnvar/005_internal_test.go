@@ -21,37 +21,39 @@ func Test_runVar005(t *testing.T) {
 	}
 }
 
-// Test_hasInitWithoutType tests the private hasInitWithoutType helper function.
-func Test_hasInitWithoutType(t *testing.T) {
+// Test_isAppendCall tests the private isAppendCall helper function.
+func Test_isAppendCall(t *testing.T) {
 	tests := []struct {
 		name     string
-		spec     *ast.ValueSpec
+		expr     ast.Expr
 		expected bool
 	}{
 		{
-			name: "has init without type",
-			spec: &ast.ValueSpec{
-				Names:  []*ast.Ident{{Name: "x"}},
-				Type:   nil,
-				Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
+			name: "append call",
+			expr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "append"},
 			},
 			expected: true,
 		},
 		{
-			name: "has init with type",
-			spec: &ast.ValueSpec{
-				Names:  []*ast.Ident{{Name: "x"}},
-				Type:   &ast.Ident{Name: "int"},
-				Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
+			name: "other function call",
+			expr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "len"},
 			},
 			expected: false,
 		},
 		{
-			name: "no init",
-			spec: &ast.ValueSpec{
-				Names:  []*ast.Ident{{Name: "x"}},
-				Type:   &ast.Ident{Name: "int"},
-				Values: nil,
+			name:     "not a call expr",
+			expr:     &ast.BasicLit{Value: "1"},
+			expected: false,
+		},
+		{
+			name: "method call",
+			expr: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "s"},
+					Sel: &ast.Ident{Name: "append"},
+				},
 			},
 			expected: false,
 		},
@@ -59,59 +61,159 @@ func Test_hasInitWithoutType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := hasInitWithoutType(tt.spec)
+			result := isAppendCall(tt.expr)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("hasInitWithoutType() = %v, expected %v", result, tt.expected)
+				t.Errorf("isAppendCall() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkFunctionBody tests the private checkFunctionBody function.
-func Test_checkFunctionBody(t *testing.T) {
+// Test_isSliceArrayOrMap tests the private isSliceArrayOrMap helper function.
+func Test_isSliceArrayOrMap(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typeExpr ast.Expr
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name:     "nil type",
+			typeExpr: nil,
+			expected: false,
+		},
+		{
+			name:     "slice type",
+			typeExpr: &ast.ArrayType{Len: nil},
+			expected: true,
+		},
+		{
+			name:     "array type",
+			typeExpr: &ast.ArrayType{Len: &ast.BasicLit{Value: "10"}},
+			expected: true,
+		},
+		{
+			name:     "map type",
+			typeExpr: &ast.MapType{},
+			expected: true,
+		},
+		{
+			name:     "struct type",
+			typeExpr: &ast.StructType{},
+			expected: false,
+		},
+		{
+			name:     "ident type",
+			typeExpr: &ast.Ident{Name: "int"},
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function walks AST nodes
+			result := isSliceArrayOrMap(tt.typeExpr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isSliceArrayOrMap() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkStatement tests the private checkStatement function.
-func Test_checkStatement(t *testing.T) {
+// Test_isInReturnStatement tests the private isInReturnStatement helper function.
+func Test_isInReturnStatement(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		stack    []ast.Node
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name:     "empty stack",
+			stack:    []ast.Node{},
+			expected: false,
+		},
+		{
+			name: "has return in stack",
+			stack: []ast.Node{
+				&ast.FuncDecl{},
+				&ast.BlockStmt{},
+				&ast.ReturnStmt{},
+			},
+			expected: true,
+		},
+		{
+			name: "no return in stack",
+			stack: []ast.Node{
+				&ast.FuncDecl{},
+				&ast.BlockStmt{},
+				&ast.AssignStmt{},
+			},
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks statements
+			result := isInReturnStatement(tt.stack)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isInReturnStatement() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkNestedBlocks tests the private checkNestedBlocks function.
-func Test_checkNestedBlocks(t *testing.T) {
+// Test_isInStructLiteral tests the private isInStructLiteral helper function.
+func Test_isInStructLiteral(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		stack    []ast.Node
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name:     "empty stack",
+			stack:    []ast.Node{},
+			expected: false,
+		},
+		{
+			name: "has struct literal in stack",
+			stack: []ast.Node{
+				&ast.FuncDecl{},
+				&ast.CompositeLit{Type: &ast.Ident{Name: "MyStruct"}},
+			},
+			expected: true,
+		},
+		{
+			name: "has key-value expr in stack",
+			stack: []ast.Node{
+				&ast.FuncDecl{},
+				&ast.KeyValueExpr{},
+			},
+			expected: true,
+		},
+		{
+			name: "has slice literal in stack",
+			stack: []ast.Node{
+				&ast.FuncDecl{},
+				&ast.CompositeLit{Type: &ast.ArrayType{}},
+			},
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks nested blocks
+			result := isInStructLiteral(tt.stack)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isInStructLiteral() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkIfStmt tests the private checkIfStmt function.
-func Test_checkIfStmt(t *testing.T) {
+// Test_collectAppendVariables tests the private collectAppendVariables function.
+func Test_collectAppendVariables(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -119,13 +221,13 @@ func Test_checkIfStmt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if statements
+			// Test passthrough - function collects append variables
 		})
 	}
 }
 
-// Test_checkBlockIfNotNil tests the private checkBlockIfNotNil function.
-func Test_checkBlockIfNotNil(t *testing.T) {
+// Test_checkMakeCalls tests the private checkMakeCalls function.
+func Test_checkMakeCalls(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -133,13 +235,13 @@ func Test_checkBlockIfNotNil(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks blocks
+			// Test passthrough - function checks make calls
 		})
 	}
 }
 
-// Test_checkCaseClause tests the private checkCaseClause function.
-func Test_checkCaseClause(t *testing.T) {
+// Test_checkMakeCall tests the private checkMakeCall function.
+func Test_checkMakeCall(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -147,13 +249,13 @@ func Test_checkCaseClause(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks case clauses
+			// Test passthrough - function checks single make call
 		})
 	}
 }
 
-// Test_checkCommClause tests the private checkCommClause function.
-func Test_checkCommClause(t *testing.T) {
+// Test_checkEmptySliceLiterals tests the private checkEmptySliceLiterals function.
+func Test_checkEmptySliceLiterals(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -161,13 +263,13 @@ func Test_checkCommClause(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks comm clauses
+			// Test passthrough - function checks empty slice literals
 		})
 	}
 }
 
-// Test_checkVarSpecs tests the private checkVarSpecs function.
-func Test_checkVarSpecs(t *testing.T) {
+// Test_checkCompositeLit tests the private checkCompositeLit function.
+func Test_checkCompositeLit(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -175,21 +277,7 @@ func Test_checkVarSpecs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks var specs
-		})
-	}
-}
-
-// Test_reportVarErrors tests the private reportVarErrors function.
-func Test_reportVarErrors(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function reports errors
+			// Test passthrough - function checks composite literals
 		})
 	}
 }

@@ -1,4 +1,4 @@
-// Internal tests for analyzer 002 in ktncomment package.
+// Internal tests for analyzer 001 in ktncomment package.
 package ktncomment
 
 import (
@@ -12,8 +12,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Test_runComment002 tests the private runComment002 function
-func Test_runComment002(t *testing.T) {
+// Test_runComment001 tests the private runComment001 function
+func Test_runComment001(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -84,10 +84,10 @@ var x = 1`,
 			}
 
 			// Run analyzer
-			_, err = runComment002(pass)
+			_, err = runComment001(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runComment002 failed: %v", err)
+				t.Fatalf("runComment001 failed: %v", err)
 			}
 
 			// Check error count matches expectation

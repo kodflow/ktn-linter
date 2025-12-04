@@ -1,4 +1,4 @@
-package test001
+package test002
 
 import "errors"
 

@@ -8,6 +8,6 @@ import (
 )
 
 func TestFunc005(t *testing.T) {
-	// Placeholder: will calculate error count by running test
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer005, "func005", 6)
+	// func005/bad.go doit avoir 2 erreurs (TooLong: 36 lignes, VeryLong: 37 lignes)
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer005, "func005", 2)
 }

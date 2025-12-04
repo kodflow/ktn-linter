@@ -1,116 +1,83 @@
 // Good examples for the var011 test case.
 package var011
 
-import (
-	"bytes"
-	"strings"
-)
+import "sync"
 
 const (
-	// GROW_SIZE_LARGE is large grow size
-	GROW_SIZE_LARGE int = 400
-	// LOOP_COUNT_LARGE is large loop count
-	LOOP_COUNT_LARGE int = 100
-	// LOOP_COUNT_SMALL is small loop count
-	LOOP_COUNT_SMALL int = 10
-	// GROW_SIZE_SMALL is small grow size
-	GROW_SIZE_SMALL int = 50
+	// VALUE_THREE is constant value 3
+	VALUE_THREE int = 3
+	// VALUE_SIXTY_FOUR is constant value 64
+	VALUE_SIXTY_FOUR int = 64
+	// VALUE_HUNDRED is constant value 100
+	VALUE_HUNDRED int = 100
+	// VALUE_1024 is constant value 1024
+	VALUE_1024 int = 1024
 )
 
-// goodStringsBuilderTypeDecl uses type declaration (not composite literal).
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilderTypeDecl() string {
-	// Good: var declaration without composite literal is allowed
-	var sb strings.Builder
-	sb.Grow(GROW_SIZE_LARGE)
+// Good: Using sync.Pool or creating buffers outside loops
 
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
-		sb.WriteString("item")
-	}
-
-	// Return the result
-	return sb.String()
+// bufferPool is a sync.Pool for byte buffers
+var bufferPool = &sync.Pool{
+	New: func() any {
+		// Buffer size optimized for common use case
+		buffer := make([]byte, 0, VALUE_1024)
+		// Return preallocated buffer
+		return buffer
+	},
 }
 
-// goodBytesBufferTypeDecl uses type declaration (not composite literal).
-//
-// Returns:
-//   - []byte: concatenated result
-func goodBytesBufferTypeDecl() []byte {
-	// Good: var declaration without composite literal is allowed
-	var buf bytes.Buffer
-	buf.Grow(GROW_SIZE_LARGE)
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
-		buf.WriteString("item")
+// goodWithPool uses sync.Pool for buffer reuse
+func goodWithPool() {
+	// Loop processes items
+	for i := range VALUE_HUNDRED {
+		// Get buffer from pool
+		buffer := bufferPool.Get().([]byte)
+		_ = buffer
+		// Put buffer back to pool
+		bufferPool.Put(buffer)
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
-
-	// Return the result
-	return buf.Bytes()
 }
 
-// goodBuilderPointer uses a pointer to strings.Builder (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodBuilderPointer() string {
-	// Good: pointer type is allowed (different use case)
-	sb := &strings.Builder{}
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_SMALL; i++ {
-		sb.WriteString("x")
+// goodOutsideLoop creates buffer outside the loop
+func goodOutsideLoop() {
+	// Buffer allocated once before loop with array
+	var buffer [VALUE_1024]byte
+	// Loop reuses buffer
+	for i := range VALUE_HUNDRED {
+		_ = buffer
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
-
-	// Return the result
-	return sb.String()
 }
 
-// goodNoLoopTypeDecl uses type declaration without loop (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodNoLoopTypeDecl() string {
-	// Good: var declaration without composite literal
-	var sb strings.Builder
-	sb.WriteString("single")
-
-	// Return the result
-	return sb.String()
+// goodNoLoop creates buffer outside loop context
+func goodNoLoop() {
+	// Not in a loop, no pool needed, use array
+	var buffer [VALUE_1024]byte
+	_ = buffer
 }
 
-// goodShortFormNew uses new() to create Builder (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodShortFormNew() string {
-	// Good: using new() instead of composite literal
-	sb := new(strings.Builder)
-	sb.Grow(GROW_SIZE_SMALL)
-
-	// Iteration over data to append
-	for i := 0; i < GROW_SIZE_SMALL; i++ {
-		sb.WriteString("x")
+// goodSmallLoop creates buffer where pooling overhead not justified
+func goodSmallLoop() {
+	// Small fixed iteration count where pool overhead may not help with array
+	var buffer [VALUE_SIXTY_FOUR]byte
+	// Very small fixed loop
+	for i := range VALUE_THREE {
+		_ = buffer
+		_ = i
 	}
-
-	// Return the result
-	return sb.String()
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodStringsBuilderTypeDecl
-	goodStringsBuilderTypeDecl()
-	// Appel de goodBytesBufferTypeDecl
-	goodBytesBufferTypeDecl()
-	// Appel de goodBuilderPointer
-	goodBuilderPointer()
-	// Appel de goodNoLoopTypeDecl
-	goodNoLoopTypeDecl()
-	// Appel de goodShortFormNew
-	goodShortFormNew()
+	// Appel de goodWithPool
+	goodWithPool()
+	// Appel de goodOutsideLoop
+	goodOutsideLoop()
+	// Appel de goodNoLoop
+	goodNoLoop()
+	// Appel de goodSmallLoop
+	goodSmallLoop()
 }

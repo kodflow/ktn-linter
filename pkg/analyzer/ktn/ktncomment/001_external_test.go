@@ -1,4 +1,4 @@
-// External tests for ktncomment Analyzer002.
+// External tests for ktncomment Analyzer001.
 package ktncomment_test
 
 import (
@@ -8,8 +8,8 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestComment002 tests the Analyzer002 for inline comments exceeding 80 characters.
-func TestComment002(t *testing.T) {
+// TestComment001 tests the Analyzer001 for inline comments exceeding 80 characters.
+func TestComment001(t *testing.T) {
 	// good.go: 0 errors, bad.go: 4 errors for long inline comments
-	testhelper.TestGoodBad(t, ktncomment.Analyzer002, "comment002", 4)
+	testhelper.TestGoodBad(t, ktncomment.Analyzer001, "comment001", 4)
 }

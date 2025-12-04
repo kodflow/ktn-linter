@@ -1,4 +1,4 @@
-// Analyzer 002 for the ktncomment package.
+// Analyzer 001 for the ktncomment package.
 package ktncomment
 
 import (
@@ -17,22 +17,22 @@ const (
 	MAX_COMMENT_LENGTH int = 80
 )
 
-// Analyzer002 detects inline comments exceeding 80 characters.
-var Analyzer002 = &analysis.Analyzer{
-	Name:     "ktncomment002",
-	Doc:      "KTN-COMMENT-002: commentaire inline trop long (>80 chars)",
-	Run:      runComment002,
+// Analyzer001 detects inline comments exceeding 80 characters.
+var Analyzer001 = &analysis.Analyzer{
+	Name:     "ktncomment001",
+	Doc:      "KTN-COMMENT-001: commentaire inline trop long (>80 chars)",
+	Run:      runComment001,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runComment002 analyzes inline comments for excessive length.
+// runComment001 analyzes inline comments for excessive length.
 // Params:
 //   - pass: Analysis pass
 //
 // Returns:
 //   - any: always nil
 //   - error: analysis error if any
-func runComment002(pass *analysis.Pass) (any, error) {
+func runComment001(pass *analysis.Pass) (any, error) {
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -62,7 +62,7 @@ func runComment002(pass *analysis.Pass) (any, error) {
 				if len(text) > MAX_COMMENT_LENGTH {
 					pass.Reportf(
 						comment.Pos(),
-						"KTN-COMMENT-002: commentaire inline trop long (>%d chars)",
+						"KTN-COMMENT-001: commentaire inline trop long (>%d chars)",
 						MAX_COMMENT_LENGTH,
 					)
 				}

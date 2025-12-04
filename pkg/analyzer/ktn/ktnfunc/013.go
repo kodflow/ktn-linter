@@ -1,91 +1,80 @@
-// Analyzer 013 for the ktnfunc package.
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
 	"go/ast"
-	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Analyzer013 checks that functions don't exceed cyclomatic complexity of 10
 const (
-	// INITIAL_PARAMS_CAP initial capacity for params map
-	INITIAL_PARAMS_CAP int = 8
-	// INITIAL_USED_VARS_CAP initial capacity for used vars map
-	INITIAL_USED_VARS_CAP int = 16
+	// MAX_CYCLOMATIC_COMPLEXITY max cyclomatic complexity
+	MAX_CYCLOMATIC_COMPLEXITY int = 10
 )
 
-// Analyzer013 vérifie que les paramètres non utilisés sont explicitement ignorés.
+// Analyzer013 checks that functions don't exceed maximum cyclomatic complexity
 var Analyzer013 = &analysis.Analyzer{
 	Name:     "ktnfunc013",
-	Doc:      "KTN-FUNC-013: paramètres non utilisés doivent être préfixés par _ ou assignés à _",
+	Doc:      "KTN-FUNC-013: La complexité cyclomatique ne doit pas dépasser 10",
 	Run:      runFunc013,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc013 exécute l'analyse KTN-FUNC-013.
+// runFunc013 description à compléter.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - any: résultat
 //   - error: erreur éventuelle
 func runFunc013(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Filtrer uniquement les déclarations de fonction
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// runFunc013 exécute l'analyse KTN-FUNC-013.
+		//
+		// Params:
+		//   - pass: contexte d'analyse
+		//
+		// Returns:
+		//   - any: résultat de l'analyse
+		//   - error: erreur éventuelle
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérification de la présence d'un corps de fonction
+		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
-			// Fonction sans corps (interface method signature)
+			// Retour de la fonction
 			return
 		}
 
-		// Collecter tous les paramètres
-		params := collectFunctionParams(funcDecl)
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
+			return
+		}
 
-		// Collecter les variables utilisées dans le corps
-		usedVars := collectUsedVariables(funcDecl.Body)
+		funcName := funcDecl.Name.Name
 
-		// Collecter les variables explicitement ignorées avec _ = var
-		ignoredVars := collectIgnoredVariables(funcDecl.Body)
+		// Calculate cyclomatic complexity
+		complexity := calculateComplexity(funcDecl.Body)
 
-		// Vérifier chaque paramètre
-		for paramName, paramPos := range params {
-			// Ignorer les paramètres déjà préfixés par _
-			if len(paramName) > 0 && paramName[0] == '_' {
-				// Paramètre déjà marqué comme ignoré
-				continue
-			}
-
-			// Vérifier si le paramètre est utilisé
-			if usedVars[paramName] {
-				// Paramètre utilisé
-				continue
-			}
-
-			// Vérifier si le paramètre est explicitement ignoré
-			if ignoredVars[paramName] {
-				// Paramètre explicitement ignoré
-				continue
-			}
-
-			// Paramètre non utilisé et non ignoré - reporter l'erreur
+		// Vérification de la condition
+		if complexity > MAX_CYCLOMATIC_COMPLEXITY {
 			pass.Reportf(
-				paramPos,
-				"KTN-FUNC-013: le paramètre '%s' n'est pas utilisé. Préfixez-le par _ (ex: _%s) ou ajoutez '_ = %s' dans le corps de la fonction",
-				paramName,
-				paramName,
-				paramName,
+				funcDecl.Name.Pos(),
+				"KTN-FUNC-013: la fonction '%s' a une complexité cyclomatique de %d (max: %d)",
+				funcName,
+				complexity,
+				MAX_CYCLOMATIC_COMPLEXITY,
 			)
 		}
 	})
@@ -94,159 +83,50 @@ func runFunc013(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// collectFunctionParams collecte tous les paramètres d'une fonction.
-//
+// calculateComplexity calculates the cyclomatic complexity of a function
 // Params:
-//   - funcDecl: déclaration de fonction
+//   - pass: contexte d'analyse
 //
 // Returns:
-//   - map[string]token.Pos: map des noms de paramètres vers leurs positions
-func collectFunctionParams(funcDecl *ast.FuncDecl) map[string]token.Pos {
-	params := make(map[string]token.Pos, INITIAL_PARAMS_CAP)
+//   - int: complexité calculée
+func calculateComplexity(body *ast.BlockStmt) int {
+	// Start with complexity of 1 (the function itself)
+	complexity := 1
 
-	// Vérification de la présence de paramètres
-	if funcDecl.Type.Params == nil {
-		// Pas de paramètres
-		return params
-	}
-
-	// Parcourir tous les paramètres
-	for _, field := range funcDecl.Type.Params.List {
-		// Parcourir tous les noms dans ce champ (peut y avoir plusieurs: x, y int)
-		for _, name := range field.Names {
-			// Vérification du nom
-			if name != nil && name.Name != "_" {
-				// Ajouter le paramètre
-				params[name.Name] = name.Pos()
+	ast.Inspect(body, func(n ast.Node) bool {
+		// Sélection selon la valeur
+		switch node := n.(type) {
+		// Traitement
+		case *ast.IfStmt:
+			// +1 for if
+			complexity++
+		// Traitement
+		case *ast.ForStmt, *ast.RangeStmt:
+			// +1 for each loop
+			complexity++
+		// Traitement
+		case *ast.CaseClause:
+			// +1 for each case (except default)
+			if node.List != nil {
+				complexity++
+			}
+		// Traitement
+		case *ast.CommClause:
+			// +1 for each comm case in select
+			if node.Comm != nil {
+				complexity++
+			}
+		// Traitement
+		case *ast.BinaryExpr:
+			// +1 for && and ||
+			if node.Op.String() == "&&" || node.Op.String() == "||" {
+				complexity++
 			}
 		}
-	}
-
-	// Retour de la map des paramètres
-	return params
-}
-
-// collectUsedVariables collecte toutes les variables utilisées dans le corps.
-//
-// Params:
-//   - body: corps de fonction
-//
-// Returns:
-//   - map[string]bool: map des variables utilisées
-func collectUsedVariables(body *ast.BlockStmt) map[string]bool {
-	used := make(map[string]bool, INITIAL_USED_VARS_CAP)
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		ident, isIdent := n.(*ast.Ident)
-		// Vérifier si c'est un identifiant
-		if isIdent {
-			parent, found := findParentAssignToBlank(body, ident)
-			// Vérifier si dans une assignation à _
-			if found && parent {
-				// C'est dans une assignation à _ - ne pas compter comme utilisé
-				return true
-			}
-			// Ajouter comme variable utilisée
-			used[ident.Name] = true
-		}
-		// Continuer la traversée
+		// Retour de la fonction
 		return true
 	})
 
-	// Retour de la map des variables utilisées
-	return used
-}
-
-// collectIgnoredVariables collecte les variables explicitement ignorées avec _ = var.
-//
-// Params:
-//   - body: corps de fonction
-//
-// Returns:
-//   - map[string]bool: map des variables ignorées
-func collectIgnoredVariables(body *ast.BlockStmt) map[string]bool {
-	ignored := make(map[string]bool, INITIAL_PARAMS_CAP)
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		assign, isAssign := n.(*ast.AssignStmt)
-		// Vérifier si c'est une assignation
-		if !isAssign {
-			// Continuer la traversée
-			return true
-		}
-		// Vérifier si le côté gauche est _
-		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
-			// Continuer la traversée
-			return true
-		}
-		lhsIdent, isLhsIdent := assign.Lhs[0].(*ast.Ident)
-		// Vérification du côté gauche
-		if !isLhsIdent || lhsIdent.Name != "_" {
-			// Continuer la traversée
-			return true
-		}
-		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
-		// Vérification du côté droit
-		if isRhsIdent {
-			// Ajouter comme variable ignorée
-			ignored[rhsIdent.Name] = true
-		}
-		// Continuer la traversée
-		return true
-	})
-
-	// Retour de la map des variables ignorées
-	return ignored
-}
-
-// findParentAssignToBlank vérifie si un identifiant est dans une assignation à _.
-//
-// Params:
-//   - body: corps de fonction
-//   - target: identifiant cible
-//
-// Returns:
-//   - bool: true si dans une assignation à _
-//   - bool: true si trouvé
-func findParentAssignToBlank(body *ast.BlockStmt, target *ast.Ident) (bool, bool) {
-	found := false
-	inAssignToBlank := false
-
-	ast.Inspect(body, func(n ast.Node) bool {
-		assign, isAssign := n.(*ast.AssignStmt)
-		// Vérifier si c'est une assignation
-		if !isAssign {
-			// Continuer la traversée
-			return true
-		}
-		// Vérifier la structure de l'assignation
-		if len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
-			// Continuer la traversée
-			return true
-		}
-		lhsIdent, isLhsIdent := assign.Lhs[0].(*ast.Ident)
-		// Vérification du côté gauche
-		if !isLhsIdent || lhsIdent.Name != "_" {
-			// Continuer la traversée
-			return true
-		}
-		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
-		// Vérification du côté droit
-		if !isRhsIdent {
-			// Continuer la traversée
-			return true
-		}
-		// Vérification si c'est notre target
-		if rhsIdent.Pos() == target.Pos() {
-			found = true
-			inAssignToBlank = true
-			// Arrêter la recherche
-			return false
-		}
-		// Continuer la traversée
-		return true
-	})
-
-	// Retour du résultat
-	return inAssignToBlank, found
+	// Retour de la fonction
+	return complexity
 }

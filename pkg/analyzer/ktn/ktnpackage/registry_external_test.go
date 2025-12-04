@@ -11,19 +11,27 @@ import (
 // Params:
 //   - t: contexte de test
 func TestAnalyzers(t *testing.T) {
-	// Récupérer les analyseurs
-	analyzers := ktnpackage.Analyzers()
-
-	// Vérifier qu'on a au moins 1 analyseur
-	if len(analyzers) < 1 {
-		t.Errorf("expected at least 1 analyzer, got %d", len(analyzers))
+	tests := []struct {
+		name string
+	}{
+		{name: "analyzers should be valid"},
 	}
 
-	// Vérifier que tous les analyseurs sont non-nil
-	for i, analyzer := range analyzers {
-		// Vérification non-nil
-		if analyzer == nil {
-			t.Errorf("analyzer at index %d is nil", i)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			analyzers := ktnpackage.Analyzers()
+
+			// Vérifier qu'on a au moins 1 analyseur et tous non-nil
+			if len(analyzers) < 1 {
+				t.Errorf("expected at least 1 analyzer, got %d", len(analyzers))
+				return
+			}
+
+			for i, analyzer := range analyzers {
+				if analyzer == nil {
+					t.Errorf("analyzer at index %d is nil", i)
+				}
+			}
+		})
 	}
 }

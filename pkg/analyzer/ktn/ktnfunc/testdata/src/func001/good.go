@@ -1,230 +1,167 @@
 // Good examples for the func001 test case.
 package func001
 
-// Constantes pour éviter les magic numbers
-const (
-	TWO          int = 1 + 1
-	THREE        int = TWO + 1
-	FOUR         int = THREE + 1
-	FIVE         int = FOUR + 1
-	SIX          int = FIVE + 1
-	SEVEN        int = SIX + 1
-	EIGHT        int = SEVEN + 1
-	NINE         int = EIGHT + 1
-	TEN          int = NINE + 1
-	HUNDRED      int = TEN * TEN
-	ELEVEN       int = TEN + 1
-	TWELVE       int = ELEVEN + 1
-	THIRTEEN     int = TWELVE + 1
-	FOURTEEN     int = THIRTEEN + 1
-	FIFTEEN      int = FOURTEEN + 1
-	SIXTEEN      int = FIFTEEN + 1
-	SEVENTEEN    int = SIXTEEN + 1
-	EIGHTEEN     int = SEVENTEEN + 1
-	NINETEEN     int = EIGHTEEN + 1
-	TWENTY       int = NINETEEN + 1
-	TWENTY_ONE   int = TWENTY + 1
-	TWENTY_TWO   int = TWENTY_ONE + 1
-	TWENTY_THREE int = TWENTY_TWO + 1
-	TWENTY_FOUR  int = TWENTY_THREE + 1
-	TWENTY_FIVE  int = TWENTY_FOUR + 1
-	TWENTY_SIX   int = TWENTY_FIVE + 1
-	TWENTY_SEVEN int = TWENTY_SIX + 1
-	TWENTY_EIGHT int = TWENTY_SEVEN + 1
-	TWENTY_NINE  int = TWENTY_EIGHT + 1
-	THIRTY       int = TWENTY_NINE + 1
-	THIRTY_ONE   int = THIRTY + 1
-	THIRTY_TWO   int = THIRTY_ONE + 1
-	THIRTY_THREE int = THIRTY_TWO + 1
-	THIRTY_FOUR  int = THIRTY_THREE + 1
-)
+// Good examples: error is always last
 
-// smallFunction est une petite fonction avec peu de code
+// GoodSingleError returns only an error (always compliant).
 //
 // Returns:
-//   - string: résultat du calcul
-func smallFunction() string {
-	// Déclaration des variables
-	x := 1
-	y := 1 + 1
-	z := x + y
-	// Retour de la fonction
-	_ = z
-	// Retour de la fonction
-	return "result"
+//   - error: nil on success
+func GoodSingleError() error {
+	// Success case
+	return nil
 }
 
-// exactlyThirtyFive a exactement 35 lignes de code pur (limite)
-func exactlyThirtyFive() {
-	a := 1                                                                                                                                            // 1
-	b := TWO                                                                                                                                          // 2
-	c := THREE                                                                                                                                        // 3
-	d := FOUR                                                                                                                                         // 4
-	e := FIVE                                                                                                                                         // 5
-	f := SIX                                                                                                                                          // 6
-	g := SEVEN                                                                                                                                        // 7
-	h := EIGHT                                                                                                                                        // 8
-	i := NINE                                                                                                                                         // 9
-	j := TEN                                                                                                                                          // 10
-	k := ELEVEN                                                                                                                                       // 11
-	l := TWELVE                                                                                                                                       // 12
-	m := THIRTEEN                                                                                                                                     // 13
-	n := FOURTEEN                                                                                                                                     // 14
-	o := FIFTEEN                                                                                                                                      // 15
-	p := SIXTEEN                                                                                                                                      // 16
-	q := SEVENTEEN                                                                                                                                    // 17
-	r := EIGHTEEN                                                                                                                                     // 18
-	s := NINETEEN                                                                                                                                     // 19
-	t := TWENTY                                                                                                                                       // 20
-	u := TWENTY_ONE                                                                                                                                   // 21
-	v := TWENTY_TWO                                                                                                                                   // 22
-	w := TWENTY_THREE                                                                                                                                 // 23
-	x := TWENTY_FOUR                                                                                                                                  // 24
-	y := TWENTY_FIVE                                                                                                                                  // 25
-	z := TWENTY_SIX                                                                                                                                   // 26
-	aa := TWENTY_SEVEN                                                                                                                                // 27
-	ab := TWENTY_EIGHT                                                                                                                                // 28
-	ac := TWENTY_NINE                                                                                                                                 // 29
-	ad := THIRTY                                                                                                                                      // 30
-	ae := THIRTY_ONE                                                                                                                                  // 31
-	af := THIRTY_TWO                                                                                                                                  // 32
-	ag := THIRTY_THREE                                                                                                                                // 33
-	ah := THIRTY_FOUR                                                                                                                                 // 34
-	_ = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah // 35
-}
-
-// manyCommentsButFewStatements démontre que les commentaires ne comptent pas
-func manyCommentsButFewStatements() {
-	// Ce commentaire ne compte pas
-	// Ni celui-ci
-	// Ni celui-là
-	// Les commentaires sont ignorés
-	// Encore un commentaire
-	// Toujours des commentaires
-	// Plus de commentaires
-	// Commentaires partout
-	x := 1 // Statement 1
-	// Commentaire entre statements
-	y := 1 + 1 // Statement 2
-	// Encore un commentaire
-	z := x + y // Statement 3
-	// Commentaire final
-	_ = z // Statement 4
-}
-
-// withNestedBlocks démontre que les blocs imbriqués sont comptés correctement
+// GoodStringError returns a string and an error.
 //
 // Returns:
-//   - int: résultat
-func withNestedBlocks() int {
-	// Déclaration de la variable
-	x := 1
-	// Condition if
-	if x > 0 {
-		// Dans le if
-		y := 1 + 1
-		// Retour de la fonction
-		return y
-	}
-	// Boucle for
-	for i := range TEN {
-		// Dans le for
-		z := i * TWO
-		// Utilisation de z
-		_ = z
-	}
-	// Retour de la fonction
-	return 0
+//   - string: empty string
+//   - error: nil on success
+func GoodStringError() (string, error) {
+	// Success case with empty string
+	return "", nil
 }
 
-// exemptTestFunction démontre qu'une fonction Test* est exemptée de FUNC-001
-func exemptTestFunction() {
-	// Les fonctions de test peuvent être aussi longues que nécessaire
-	for i := range HUNDRED {
-		x := i * TWO
-		y := i * THREE
-		z := x + y
-		_ = z
-	}
-}
-
-// exemptBenchmarkFunction démontre qu'une fonction Benchmark* est exemptée de FUNC-001
-func exemptBenchmarkFunction() {
-	// Les fonctions de benchmark peuvent être aussi longues que nécessaire
-	for i := range HUNDRED {
-		x := i * TWO
-		y := i * THREE
-		z := x + y
-		_ = z
-	}
-}
-
-// exemptExampleFunction démontre qu'une fonction Example* est exemptée de FUNC-001
-func exemptExampleFunction() {
-	// Les fonctions d'exemple peuvent être aussi longues que nécessaire
-	for i := range HUNDRED {
-		x := i * TWO
-		y := i * THREE
-		z := x + y
-		_ = z
-	}
-}
-
-// exemptFuzzFunction démontre qu'une fonction Fuzz* est exemptée de FUNC-001
-func exemptFuzzFunction() {
-	// Les fonctions de fuzzing peuvent être aussi longues que nécessaire
-	for i := range HUNDRED {
-		x := i * TWO
-		y := i * THREE
-		z := x + y
-		_ = z
-	}
-}
-
-// main est la fonction principale exemptée
-func main() {
-	// La fonction main peut être aussi longue que nécessaire
-	for i := range HUNDRED {
-		x := i * TWO
-		y := i * THREE
-		z := x + y
-		_ = z
-	}
-}
-
-// functionWithBlockComments teste les commentaires de bloc
+// GoodMultipleReturnsError returns multiple values with error last.
 //
 // Returns:
-//   - int: résultat
-func functionWithBlockComments() int {
-	/* Block comment court */
-	x := 1
-
-	/* Autre block comment */
-	y := TWO
-
-	// Ligne de commentaire normale
-	z := x + y
-
-	// Retour de la fonction
-	return z
+//   - int: zero value
+//   - string: empty string
+//   - error: nil on success
+func GoodMultipleReturnsError() (int, string, error) {
+	// Success case with zero values
+	return 0, "", nil
 }
 
-// init utilise toutes les fonctions privées pour démontrer qu'elles sont correctement définies
-func init() {
-	// Utilisation de smallFunction
-	_ = smallFunction()
-	// Utilisation de exactlyThirtyFive
-	exactlyThirtyFive()
-	// Utilisation de manyCommentsButFewStatements
-	manyCommentsButFewStatements()
-	// Utilisation de withNestedBlocks
-	_ = withNestedBlocks()
-	// Utilisation de functionWithBlockComments
-	_ = functionWithBlockComments()
-	// Utilisation des fonctions exemptées
-	exemptTestFunction()
-	exemptBenchmarkFunction()
-	exemptExampleFunction()
-	exemptFuzzFunction()
+// GoodBoolError returns a boolean and an error.
+//
+// Returns:
+//   - bool: true on success
+//   - error: nil on success
+func GoodBoolError() (bool, error) {
+	// Success case with true
+	return true, nil
+}
+
+// GoodNoError returns a string without error.
+//
+// Returns:
+//   - string: empty string
+func GoodNoError() string {
+	// Return empty string
+	return ""
+}
+
+// GoodNoReturn performs an operation without returning anything.
+func GoodNoReturn() {
+	// Nothing to do
+}
+
+// GoodMultipleValues returns multiple values without error.
+//
+// Returns:
+//   - int: zero value
+//   - string: empty string
+//   - bool: false
+func GoodMultipleValues() (int, string, bool) {
+	// Return zero values
+	return 0, "", false
+}
+
+// GoodType est un type de test pour les méthodes.
+// Il démontre la bonne utilisation des retours d'erreur.
+type GoodType struct{}
+
+// GoodTypeInterface définit les méthodes publiques de GoodType.
+type GoodTypeInterface interface {
+	GoodMethod() (string, error)
+}
+
+// NewGoodType crée une nouvelle instance de GoodType.
+//
+// Returns:
+//   - *GoodType: nouvelle instance
+func NewGoodType() *GoodType {
+	// Retour de la nouvelle instance
+	return &GoodType{}
+}
+
+// GoodMethod returns a string and an error with error last.
+//
+// Returns:
+//   - string: empty string
+//   - error: nil on success
+func (g *GoodType) GoodMethod() (string, error) {
+	// Success case with empty string
+	return "", nil
+}
+
+// goodFunc is a function literal that returns an int and an error.
+var goodFunc func() (int, error) = func() (int, error) {
+	// Success case with zero
+	return 0, nil
+}
+
+// GoodClosure returns a closure that returns an error.
+//
+// Returns:
+//   - func() error: a function that returns nil error
+func GoodClosure() func() error {
+	// Return closure that always succeeds
+	return func() error {
+		// Success case
+		return nil
+	}
+}
+
+// CustomError represents a custom error type.
+// Implémente l'interface error pour fournir des erreurs personnalisées.
+type CustomError struct {
+	msg string
+}
+
+// CustomErrorInterface définit les méthodes de CustomError.
+type CustomErrorInterface interface {
+	Error() string
+}
+
+// NewCustomError crée une nouvelle instance de CustomError.
+//
+// Params:
+//   - msg: le message d'erreur
+//
+// Returns:
+//   - CustomError: nouvelle instance d'erreur
+func NewCustomError(msg string) CustomError {
+	// Retour de la nouvelle instance
+	return CustomError{msg: msg}
+}
+
+// Error returns the error message.
+//
+// Returns:
+//   - string: the error message
+func (e CustomError) Error() string {
+	// Return stored message
+	return e.msg
+}
+
+// GoodCustomError returns a string and a custom error.
+//
+// Returns:
+//   - string: empty string
+//   - error: custom error with test message
+func GoodCustomError() (string, error) {
+	// Return custom error
+	return "", CustomError{msg: "test"}
+}
+
+// GoodInterface returns an interface and a string (not error).
+//
+// Returns:
+//   - any: nil value
+//   - string: empty string
+func GoodInterface() (any, string) {
+	// Return nil interface and empty string
+	return nil, ""
 }

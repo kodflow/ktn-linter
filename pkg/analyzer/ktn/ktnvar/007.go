@@ -4,23 +4,15 @@ package ktnvar
 import (
 	"go/ast"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const (
-	// MIN_MAKE_ARGS is the minimum number of arguments for make call
-	MIN_MAKE_ARGS int = 2
-	// INITIAL_APPEND_VARS_CAP initial capacity for append variables map
-	INITIAL_APPEND_VARS_CAP int = 16
-)
-
-// Analyzer007 checks that slices are preallocated with capacity when known
+// Analyzer007 checks for strings.Builder/bytes.Buffer without Grow preallocate
 var Analyzer007 = &analysis.Analyzer{
 	Name:     "ktnvar007",
-	Doc:      "KTN-VAR-007: Vérifie que les slices sont préalloués avec une capacité si elle est connue",
+	Doc:      "KTN-VAR-007: Préallouer bytes.Buffer/strings.Builder avec Grow",
 	Run:      runVar007,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -36,347 +28,222 @@ var Analyzer007 = &analysis.Analyzer{
 func runVar007(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Collecter les variables utilisées avec append
-	appendVars := collectAppendVariables(insp)
+	nodeFilter := []ast.Node{
+		(*ast.ValueSpec)(nil),
+		(*ast.AssignStmt)(nil),
+	}
 
-	// Vérifier les make() sans capacité
-	checkMakeCalls(pass, insp)
-
-	// Vérifier les []T{} qui devraient être préalloués
-	checkEmptySliceLiterals(pass, insp, appendVars)
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		checkBuilderWithoutGrow(pass, n)
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectAppendVariables collecte les variables utilisées avec append.
+// checkBuilderWithoutGrow checks if Builder/Buffer lacks Grow call.
 //
 // Params:
-//   - insp: inspecteur AST
-//
-// Returns:
-//   - map[string]bool: map des noms de variables utilisées avec append
-func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
-	appendVars := make(map[string]bool, INITIAL_APPEND_VARS_CAP)
+//   - pass: analysis pass context
+//   - n: AST node to check
+func checkBuilderWithoutGrow(pass *analysis.Pass, n ast.Node) {
+	// Composite literal found
+	var compositeLit *ast.CompositeLit
+	// Position for reporting
+	var pos ast.Node
 
-	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
+	// Check type of node
+	switch node := n.(type) {
+	// Case: variable specification
+	case *ast.ValueSpec:
+		compositeLit, pos = checkValueSpec(node)
+	// Case: assignment statement
+	case *ast.AssignStmt:
+		compositeLit, pos = checkAssignStmt(node)
 	}
 
-	// Parcours des assignations pour trouver les appends
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
+	// Report if composite literal found
+	if compositeLit != nil && pos != nil {
+		reportMissingGrow(pass, pos)
+	}
+}
 
-		// Vérification de chaque expression à droite
-		for _, rhs := range assign.Rhs {
-			// Vérification si c'est un appel à append
-			if isAppendCall(rhs) {
-				// Récupération des variables à gauche
-				for _, lhs := range assign.Lhs {
-					// Extraction du nom de la variable
-					if ident, isIdent := lhs.(*ast.Ident); isIdent {
-						appendVars[ident.Name] = true
-					}
+// checkValueSpec checks var declaration for Builder/Buffer.
+//
+// Params:
+//   - node: variable specification node
+//
+// Returns:
+//   - *ast.CompositeLit: composite literal if found
+//   - ast.Node: position node for reporting
+func checkValueSpec(node *ast.ValueSpec) (*ast.CompositeLit, ast.Node) {
+	// Only check var sb = strings.Builder{}
+	if len(node.Values) == 0 {
+		// Return nil if no values
+		return nil, nil
+	}
+
+	// Check var sb = strings.Builder{}
+	for _, val := range node.Values {
+		// Check if value is composite literal
+		if lit, ok := val.(*ast.CompositeLit); ok {
+			// Check if it's Builder/Buffer type
+			if isBuilderCompositeLit(lit) {
+				// Return found composite literal
+				return lit, node
+			}
+		}
+	}
+
+	// Return nil if not found
+	return nil, nil
+}
+
+// checkAssignStmt checks assignment for Builder/Buffer.
+//
+// Params:
+//   - node: assignment statement node
+//
+// Returns:
+//   - *ast.CompositeLit: composite literal if found
+//   - ast.Node: position node for reporting
+func checkAssignStmt(node *ast.AssignStmt) (*ast.CompositeLit, ast.Node) {
+	// Check short declaration (sb := strings.Builder{})
+	for _, rhs := range node.Rhs {
+		// Check if right-hand side is composite literal
+		if lit, ok := rhs.(*ast.CompositeLit); ok {
+			// Check if it's Builder/Buffer type
+			if isBuilderCompositeLit(lit) {
+				// Return found composite literal
+				return lit, node
+			}
+		}
+	}
+
+	// Return nil if not found
+	return nil, nil
+}
+
+// isBuilderCompositeLit checks if composite is Builder/Buffer.
+//
+// Params:
+//   - lit: composite literal to check
+//
+// Returns:
+//   - bool: true if Builder/Buffer composite literal
+func isBuilderCompositeLit(lit *ast.CompositeLit) bool {
+	// Check if type is selector expression
+	if sel, ok := lit.Type.(*ast.SelectorExpr); ok {
+		var pkg *ast.Ident
+		// Check package and type names
+		if pkg, ok = sel.X.(*ast.Ident); ok {
+			pkgName := pkg.Name
+			typeName := sel.Sel.Name
+			// Check for strings.Builder or bytes.Buffer
+			return (pkgName == "strings" && typeName == "Builder") ||
+				(pkgName == "bytes" && typeName == "Buffer")
+		}
+	}
+	// Return false if not Builder/Buffer
+	return false
+}
+
+// reportMissingGrow reports missing Grow() call.
+//
+// Params:
+//   - pass: analysis pass context
+//   - node: AST node position for reporting
+func reportMissingGrow(pass *analysis.Pass, node ast.Node) {
+	// Get type information
+	var typeStr string
+	// Check type of node
+	switch n := node.(type) {
+	// Case: variable specification
+	case *ast.ValueSpec:
+		typeStr = extractTypeString(n.Type, n.Values)
+	// Case: assignment statement
+	case *ast.AssignStmt:
+		typeStr = extractAssignTypeString(n)
+	}
+
+	// Check if type string is valid
+	if typeStr != "" {
+		pass.Reportf(
+			node.Pos(),
+			"KTN-VAR-007: préallouer %s avec Grow() avant boucle pour optimiser les allocations",
+			typeStr,
+		)
+	}
+}
+
+// extractTypeString extracts type name from ValueSpec.
+//
+// Params:
+//   - typeExpr: type expression
+//   - values: initialization values
+//
+// Returns:
+//   - string: type name as string
+func extractTypeString(typeExpr ast.Expr, values []ast.Expr) string {
+	// Check if type expression exists
+	if typeExpr != nil {
+		// Check if selector expression
+		if sel, ok := typeExpr.(*ast.SelectorExpr); ok {
+			var pkg *ast.Ident
+			// Check package name
+			if pkg, ok = sel.X.(*ast.Ident); ok {
+				// Return package.Type format
+				return pkg.Name + "." + sel.Sel.Name
+			}
+		}
+	}
+
+	// Check values for composite literal
+	if len(values) > 0 {
+		// Check first value
+		if lit, ok := values[0].(*ast.CompositeLit); ok {
+			var sel *ast.SelectorExpr
+			// Check if type is selector expression
+			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
+				var pkg *ast.Ident
+				// Check package name
+				if pkg, ok = sel.X.(*ast.Ident); ok {
+					// Return package.Type format
+					return pkg.Name + "." + sel.Sel.Name
 				}
 			}
 		}
-	})
+	}
 
-	// Retour de la map
-	return appendVars
+	// Return empty if type cannot be extracted
+	return ""
 }
 
-// isAppendCall vérifie si une expression est un appel à append.
+// extractAssignTypeString extracts type from assignment.
 //
 // Params:
-//   - expr: expression à vérifier
+//   - assign: assignment statement
 //
 // Returns:
-//   - bool: true si c'est un appel à append
-func isAppendCall(expr ast.Expr) bool {
-	call, ok := expr.(*ast.CallExpr)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un appel de fonction
-		return false
-	}
-
-	// Vérification du nom de la fonction
-	ident, ok := call.Fun.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return false
-	}
-
-	// Retour du résultat
-	return ident.Name == "append"
-}
-
-// checkMakeCalls vérifie les appels à make sans capacité.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
-	nodeFilter := []ast.Node{
-		(*ast.CallExpr)(nil),
-	}
-
-	// Parcours des appels de fonction
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call, ok := n.(*ast.CallExpr)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
-
-		// Vérification de l'appel make
-		checkMakeCall(pass, call)
-	})
-}
-
-// checkMakeCall vérifie un appel à make pour les slices sans capacité.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: appel de fonction à vérifier
-func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
-	// Vérification que c'est un appel à make
-	if !utils.IsMakeCall(call) {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Vérification du nombre d'arguments (doit être 2: type et length)
-	if len(call.Args) != MIN_MAKE_ARGS {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(pass, call.Args[0]) {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Signalement de l'erreur
-	pass.Reportf(
-		call.Pos(),
-		"KTN-VAR-007: spécifier une capacité avec make([]T, 0, capacity) au lieu de make([]T, 0)",
-	)
-}
-
-// litCheckContext contains context for slice literal checking.
-type litCheckContext struct {
-	pass       *analysis.Pass
-	appendVars map[string]bool
-}
-
-// checkEmptySliceLiterals vérifie les []T{} qui devraient être préalloués.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//   - appendVars: variables utilisées avec append
-func checkEmptySliceLiterals(
-	pass *analysis.Pass,
-	insp *inspector.Inspector,
-	appendVars map[string]bool,
-) {
-	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
-	}
-
-	// Créer le contexte de vérification
-	ctx := &litCheckContext{
-		pass:       pass,
-		appendVars: appendVars,
-	}
-
-	// Parcours des assignations
-	insp.WithStack(nodeFilter, func(n ast.Node, push bool, stack []ast.Node) bool {
-		// Ignorer le pop
-		if !push {
-			// Continuer le parcours
-			return true
-		}
-
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continuer le parcours
-			return true
-		}
-
-		// Vérification de chaque paire lhs/rhs
-		for i, rhs := range assign.Rhs {
-			// Vérification que c'est un composite literal
-			lit, isLit := rhs.(*ast.CompositeLit)
-			// Vérification de la condition
-			if !isLit {
-				// Continuer avec l'élément suivant
-				continue
-			}
-
-			// Vérification de la slice vide
-			checkCompositeLit(ctx, assign, i, lit, stack)
-		}
-
-		// Continuer le parcours
-		return true
-	})
-}
-
-// checkCompositeLit vérifie un composite literal pour les slices vides.
-//
-// Params:
-//   - ctx: contexte de vérification
-//   - assign: assignation contenant le literal
-//   - index: index dans la liste des rhs
-//   - lit: composite literal à vérifier
-//   - stack: pile des nœuds parents
-func checkCompositeLit(
-	ctx *litCheckContext,
-	assign *ast.AssignStmt,
-	index int,
-	lit *ast.CompositeLit,
-	stack []ast.Node,
-) {
-	// Vérification que c'est un slice vide
-	if len(lit.Elts) > 0 {
-		// Le slice n'est pas vide
-		return
-	}
-
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(ctx.pass, lit.Type) {
-		// Ce n'est pas un slice
-		return
-	}
-
-	// Vérification si on est dans un return statement
-	if isInReturnStatement(stack) {
-		// Pas de préallocation nécessaire pour un return
-		return
-	}
-
-	// Vérification si on est dans un struct literal
-	if isInStructLiteral(stack) {
-		// Pas de préallocation nécessaire pour init de struct
-		return
-	}
-
-	// Récupération du nom de la variable assignée
-	if index >= len(assign.Lhs) {
-		// Index invalide
-		return
-	}
-
-	ident, ok := assign.Lhs[index].(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return
-	}
-
-	// Vérification si la variable est utilisée avec append
-	if !ctx.appendVars[ident.Name] {
-		// La variable n'est jamais utilisée avec append
-		return
-	}
-
-	// Signalement de l'erreur
-	ctx.pass.Reportf(
-		lit.Pos(),
-		"KTN-VAR-007: préallouer le slice '%s' avec make([]T, 0, capacity) au lieu de []T{}",
-		ident.Name,
-	)
-}
-
-// isInReturnStatement vérifie si le nœud est dans un return statement.
-//
-// Params:
-//   - stack: pile des nœuds parents
-//
-// Returns:
-//   - bool: true si dans un return
-func isInReturnStatement(stack []ast.Node) bool {
-	// Parcours de la pile des parents
-	for _, node := range stack {
-		// Vérification si c'est un return statement
-		if _, ok := node.(*ast.ReturnStmt); ok {
-			// Trouvé un return parent
-			return true
-		}
-	}
-
-	// Pas de return parent trouvé
-	return false
-}
-
-// isInStructLiteral vérifie si le nœud est dans un struct literal.
-//
-// Params:
-//   - stack: pile des nœuds parents
-//
-// Returns:
-//   - bool: true si dans un struct literal
-func isInStructLiteral(stack []ast.Node) bool {
-	// Parcours de la pile des parents (en excluant le nœud courant)
-	for i := len(stack) - 1; i >= 0; i-- {
-		node := stack[i]
-
-		// Vérification si c'est un composite literal (struct)
-		if lit, ok := node.(*ast.CompositeLit); ok {
-			// Vérification que ce n'est pas un slice/array/map
-			if !isSliceArrayOrMap(lit.Type) {
-				// C'est un struct literal
-				return true
+//   - string: type name as string
+func extractAssignTypeString(assign *ast.AssignStmt) string {
+	// Iteration over right-hand side expressions
+	for _, rhs := range assign.Rhs {
+		// Check if composite literal
+		if lit, ok := rhs.(*ast.CompositeLit); ok {
+			var sel *ast.SelectorExpr
+			// Check if type is selector expression
+			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
+				var pkg *ast.Ident
+				// Check package name
+				if pkg, ok = sel.X.(*ast.Ident); ok {
+					// Return package.Type format
+					return pkg.Name + "." + sel.Sel.Name
+				}
 			}
 		}
-
-		// Vérification si c'est un key-value expression
-		if _, ok := node.(*ast.KeyValueExpr); ok {
-			// Dans une initialisation de champ
-			return true
-		}
 	}
 
-	// Pas de struct parent trouvé
-	return false
+	// Return empty if type cannot be extracted
+	return ""
 }
-
-// isSliceArrayOrMap vérifie si le type est un slice, array ou map.
-//
-// Params:
-//   - typeExpr: expression de type
-//
-// Returns:
-//   - bool: true si slice, array ou map
-func isSliceArrayOrMap(typeExpr ast.Expr) bool {
-	// Vérification du type nil
-	if typeExpr == nil {
-		// Type implicite (peut être struct)
-		return false
-	}
-
-	// Vérification des différents types
-	switch typeExpr.(type) {
-	// Traitement des types slice/array/map
-	case *ast.ArrayType, *ast.MapType:
-		// C'est un slice, array ou map
-		return true
-	// Traitement des autres types
-	default:
-		// Ce n'est pas un slice, array ou map
-		return false
-	}
-}
-

@@ -8,5 +8,5 @@ import (
 )
 
 func TestFunc003(t *testing.T) {
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer003, "func003", 9)
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer003, "func003", 6)
 }

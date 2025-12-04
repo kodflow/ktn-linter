@@ -1,63 +1,74 @@
 // Good examples for the var003 test case.
 package var003
 
-// Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)
+// Good: Variables with correct type visibility
 
 const (
-	// GOOD_DEFAULT_TIMEOUT is a constant (SCREAMING_SNAKE_CASE is OK for constants)
-	GOOD_DEFAULT_TIMEOUT int = 30
-	// GOOD_MAX_RETRIES is a constant
-	GOOD_MAX_RETRIES int = 3
-	// GOOD_SERVER_PORT is the server port
-	GOOD_SERVER_PORT int = 8080
-	// GOOD_MAX_CONNECTIONS is maximum connections
-	GOOD_MAX_CONNECTIONS int = 100
-	// GOOD_MIN_TIMEOUT is minimum timeout
-	GOOD_MIN_TIMEOUT int = 5
-	// GOOD_ANSWER is the answer to life
-	GOOD_ANSWER int = 42
+	// DEFAULT_TIMEOUT is the default timeout
+	DEFAULT_TIMEOUT int = 30
+	// DEFAULT_PORT is the default port
+	DEFAULT_PORT int = 8080
+	// MAX_CONNECTIONS is the maximum connections
+	MAX_CONNECTIONS int = 100
+	// ANSWER is the answer to everything
+	ANSWER int = 42
+	// RETRIES_MULTIPLIER is the multiplier for retries
+	RETRIES_MULTIPLIER int = 3
+	// BUFFER_SIZE is the buffer size
+	BUFFER_SIZE int = 1024
+	// BYTE_H is the byte value for H
+	BYTE_H byte = 72
+	// BYTE_E is the byte value for e
+	BYTE_E byte = 101
+	// BYTE_L is the byte value for l
+	BYTE_L byte = 108
+	// BYTE_O is the byte value for o
+	BYTE_O byte = 111
+	// FLOAT_MULTIPLIER is the float multiplier
+	FLOAT_MULTIPLIER int = 3
 )
 
-// All package-level variables grouped in a single block
+// Cas 1: Type non visible (constante, variable) → type explicite requis
+// Cas 2: Type visible dans composite literal → pas de type explicite
+// Cas 3: Type visible via conversion de type → pas de type explicite
 var (
-	// defaultRetries uses camelCase (good for private variables)
-	defaultRetries int = GOOD_DEFAULT_TIMEOUT
-
-	// configuration uses camelCase
+	// defaultRetries defines the default number of retries
+	defaultRetries int = DEFAULT_TIMEOUT
+	// configuration holds the app configuration
 	configuration string = "default"
-
-	// isEnabled uses camelCase
+	// isEnabled indicates if feature is enabled
 	isEnabled bool = false
-
-	// serverPort uses camelCase
-	serverPort int = GOOD_SERVER_PORT
-
-	// maxConnections uses camelCase
-	maxConnections int = GOOD_MAX_CONNECTIONS
-
-	// minTimeout uses camelCase
-	minTimeout int = GOOD_MIN_TIMEOUT
-
-	// apiEndpoint uses camelCase
-	apiEndpoint string = "http://localhost"
-
-	// DefaultConfig uses PascalCase (good for exported variables)
-	DefaultConfig string = "production"
-
-	// ServerAddress uses PascalCase
-	ServerAddress string = "0.0.0.0"
+	// serverPort is the server port number
+	serverPort int = DEFAULT_PORT
+	// serverHost is the server hostname
+	serverHost string = "localhost"
+	// maxConnections is the maximum connections
+	maxConnections int = MAX_CONNECTIONS
+	// endpoints is a list of endpoints
+	endpoints = []string{"http://localhost:8080", "http://localhost:9090"}
+	// configMap is a map of configuration values
+	configMap = map[string]int{"timeout": DEFAULT_TIMEOUT, "retries": RETRIES_MULTIPLIER}
+	// buffer is created with make
+	buffer = make([]byte, 0, BUFFER_SIZE)
+	// cache is a map created with make
+	cache = make(map[string]string)
+	// convertedInt is a type conversion
+	convertedInt = int(ANSWER)
+	// convertedStr is a type conversion
+	convertedStr = string([]byte{BYTE_H, BYTE_E, BYTE_L, BYTE_L, BYTE_O})
+	// convertedFloat is a type conversion
+	convertedFloat = float64(FLOAT_MULTIPLIER)
 )
 
-// goodFunction demonstrates local variables (not checked by VAR-003).
+// goodFunction demonstrates correct local variable usage (not checked by VAR-001).
 //
 // Returns:
 //   - int: calculated value
 func goodFunction() int {
-	// Local variables are not checked by VAR-003
-	localVar := GOOD_ANSWER
-	ANOTHER_LOCAL := GOOD_MAX_CONNECTIONS
+	// Local variables are not checked by VAR-001
+	localVar := ANSWER
 	// Continue traversing AST nodes.
-	return localVar + ANOTHER_LOCAL
+	return localVar
 }
 
 // init utilise les fonctions privées

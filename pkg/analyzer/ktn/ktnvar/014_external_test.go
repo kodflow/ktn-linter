@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar014(t *testing.T) {
-	// 5 grandes structures sans pointeur
-	testhelper.TestGoodBad(t, ktnvar.Analyzer014, "var014", 5)
+	// 5 scattered var declarations (2 single + 3 groups after first)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer014, "var014", 4)
 }

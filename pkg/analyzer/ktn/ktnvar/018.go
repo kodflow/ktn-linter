@@ -1,34 +1,32 @@
-// Analyzer 018 for the ktnvar package.
+// Package ktnvar implements KTN linter rules.
 package ktnvar
 
 import (
 	"go/ast"
+	"go/types"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// INITIAL_CONVERSIONS_CAP est la capacité initiale pour la map de conversions
-	INITIAL_CONVERSIONS_CAP int = 10
-	// MAX_ALLOWED_CONVERSIONS est le nombre maximum de conversions tolérées
-	MAX_ALLOWED_CONVERSIONS int = 2
+	// INITIAL_VALUE_RECEIVERS_CAP initial cap for value receivers
+	INITIAL_VALUE_RECEIVERS_CAP int = 10
 )
 
-// Analyzer018 détecte les conversions string() répétées.
+// Analyzer018 détecte les copies de mutex.
 //
-// Les conversions string([]byte) répétées créent des allocations inutiles.
-// Il vaut mieux convertir une seule fois et réutiliser la variable.
+// Copier un mutex crée des bugs de concurrence car la copie ne partage pas
+// le même état de verrouillage.
 var Analyzer018 = &analysis.Analyzer{
 	Name:     "ktnvar018",
-	Doc:      "KTN-VAR-018: Vérifie les conversions string() répétées",
+	Doc:      "KTN-VAR-018: Vérifie les copies de mutex (sync.Mutex, sync.RWMutex, atomic.Value)",
 	Run:      runVar018,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runVar018 exécute l'analyse de détection des conversions répétées.
+// runVar018 exécute l'analyse de détection des copies de mutex.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -40,6 +38,37 @@ func runVar018(pass *analysis.Pass) (any, error) {
 	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// Collecte des types avec receivers par valeur
+	typesWithValueRecv := collectTypesWithValueReceivers(pass, insp)
+
+	// Analyse des structs avec mutex (seulement celles avec value receivers)
+	checkStructsWithMutex(pass, insp, typesWithValueRecv)
+
+	// Analyse des receivers par valeur
+	checkValueReceivers(pass, insp)
+
+	// Analyse des paramètres par valeur
+	checkValueParams(pass, insp)
+
+	// Analyse des assignations
+	checkAssignments(pass, insp)
+
+	// Traitement
+	return nil, nil
+}
+
+// collectTypesWithValueReceivers collecte les types ayant des receivers par valeur.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - insp: inspecteur AST
+//
+// Returns:
+//   - map[string]bool: map des types avec receivers par valeur
+func collectTypesWithValueReceivers(_pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
+	// Map pour stocker les types
+	typesWithValueRecv := make(map[string]bool, INITIAL_VALUE_RECEIVERS_CAP)
+
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
@@ -47,203 +76,445 @@ func runVar018(pass *analysis.Pass) (any, error) {
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérification des conversions dans la fonction
-		checkFuncForRepeatedConversions(pass, n)
-	})
-
-	// Traitement
-	return nil, nil
-}
-
-// checkFuncForRepeatedConversions vérifie une fonction entière.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - n: nœud AST à analyser
-func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node) {
-	// Cast en fonction
-	funcDecl, ok := n.(*ast.FuncDecl)
-	// Vérification de la condition
-	if !ok || funcDecl.Body == nil {
-		// Traitement
-		return
-	}
-
-	// Analyse des boucles
-	checkLoopsForStringConversion(pass, funcDecl.Body)
-
-	// Analyse des conversions multiples
-	checkMultipleConversions(pass, funcDecl.Body)
-}
-
-// checkLoopsForStringConversion détecte string() dans les boucles.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkLoopsForStringConversion(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Parcours de tous les statements
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Vérification des boucles
-		loop := extractLoop(n)
+		// Cast en fonction
+		funcDecl, ok := n.(*ast.FuncDecl)
 		// Vérification de la condition
-		if loop == nil {
+		if !ok || funcDecl.Recv == nil {
 			// Traitement
-			return true
+			return
 		}
 
-		// Vérification des conversions dans la boucle
-		if hasStringConversion(loop) {
-			// Rapport d'erreur
-			pass.Reportf(
-				loop.Pos(),
-				"KTN-VAR-018: conversion string() répétée dans la boucle, préallouer hors de la boucle",
-			)
-		}
-
-		// Traitement
-		return true
-	})
-}
-
-// extractLoop extrait le corps d'une boucle.
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - ast.Node: corps de la boucle ou nil
-func extractLoop(n ast.Node) ast.Node {
-	// Switch sur le type de nœud
-	switch loop := n.(type) {
-	// Traitement
-	case *ast.ForStmt:
-		// Traitement
-		return loop.Body
-	// Traitement
-	case *ast.RangeStmt:
-		// Traitement
-		return loop.Body
-	// Traitement
-	default:
-		// Traitement
-		return nil
-	}
-}
-
-// hasStringConversion vérifie si un nœud contient string().
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si conversion trouvée
-func hasStringConversion(n ast.Node) bool {
-	// Recherche de conversions
-	found := false
-
-	ast.Inspect(n, func(node ast.Node) bool {
-		// Vérification des appels de fonction
-		if isStringConversion(node) {
-			found = true
+		// Récupération du receiver
+		if len(funcDecl.Recv.List) == 0 {
 			// Traitement
-			return false
+			return
 		}
-		// Traitement
-		return true
+
+		recv := funcDecl.Recv.List[0]
+
+		// Vérification si c'est un receiver par valeur (pas un pointeur)
+		if !isPointerType(recv.Type) {
+			// Extraction du nom du type
+			typeName := getTypeName(recv.Type)
+			// Vérification de la condition
+			if typeName != "" {
+				typesWithValueRecv[typeName] = true
+			}
+		}
 	})
 
-	// Traitement
-	return found
+	// Retour de la map
+	return typesWithValueRecv
 }
 
-// isStringConversion vérifie si un nœud est une conversion string().
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si c'est une conversion string()
-func isStringConversion(n ast.Node) bool {
-	// Cast en appel
-	call, ok := n.(*ast.CallExpr)
-	// Vérification de la condition
-	if !ok {
-		// Traitement
-		return false
-	}
-
-	// Vérification du type de fonction
-	ident, ok := call.Fun.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Traitement
-		return false
-	}
-
-	// Vérification que c'est "string"
-	if ident.Name != "string" {
-		// Traitement
-		return false
-	}
-
-	// Vérification qu'il y a exactement 1 argument
-	if len(call.Args) != 1 {
-		// Traitement
-		return false
-	}
-
-	// Vérification que l'argument est un []byte
-	return true
-}
-
-// checkMultipleConversions détecte les conversions multiples.
+// checkStructsWithMutex vérifie les structs contenant des mutex.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Map pour compter les conversions par variable
-	conversions := make(map[string]int, INITIAL_CONVERSIONS_CAP)
-	var firstPos map[string]ast.Node = make(map[string]ast.Node, INITIAL_CONVERSIONS_CAP)
+//   - insp: inspecteur AST
+//   - typesWithValueRecv: types ayant des receivers par valeur
+func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, typesWithValueRecv map[string]bool) {
+	// Types de nœuds à analyser
+	nodeFilter := []ast.Node{
+		(*ast.TypeSpec)(nil),
+	}
 
-	// Parcours pour compter
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Skip les boucles (déjà traité)
-		if extractLoop(n) != nil {
+	// Parcours des types
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en type spec
+		typeSpec, ok := n.(*ast.TypeSpec)
+		// Vérification de la condition
+		if !ok {
 			// Traitement
-			return false
+			return
 		}
 
-		// Vérification des conversions
-		if call, ok := n.(*ast.CallExpr); ok && isStringConversion(call) {
-			// Extraction de la variable convertie
-			varName := utils.ExtractVarName(call.Args[0])
-			// Vérification de la condition
-			if varName != "" {
-				conversions[varName]++
+		// Vérification que c'est une struct
+		structType, ok := typeSpec.Type.(*ast.StructType)
+		// Vérification de la condition
+		if !ok {
+			// Traitement
+			return
+		}
+
+		// Vérification si ce type a des receivers par valeur
+		if !typesWithValueRecv[typeSpec.Name.Name] {
+			// Si tous les receivers sont des pointeurs, pas de problème
+			return
+		}
+
+		// Vérification des champs
+		for _, field := range structType.Fields.List {
+			// Vérification si le champ est un mutex
+			if mutexType := getMutexType(pass, field.Type); mutexType != "" {
+				// Rapport d'erreur seulement si le type a des receivers par valeur
+				pass.Reportf(
+					field.Pos(),
+					"KTN-VAR-018: struct contient %s, utiliser *%s pour éviter les copies",
+					mutexType,
+					typeSpec.Name.Name,
+				)
+			}
+		}
+	})
+}
+
+// checkValueReceivers vérifie les receivers par valeur.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - inspect: inspecteur AST
+func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Types de nœuds à analyser
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
+
+	// Parcours des fonctions
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en fonction
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Vérification de la condition
+		if !ok || funcDecl.Recv == nil {
+			// Traitement
+			return
+		}
+
+		// Récupération du receiver
+		if len(funcDecl.Recv.List) == 0 {
+			// Traitement
+			return
+		}
+
+		recv := funcDecl.Recv.List[0]
+
+		// Vérification si c'est un receiver par valeur
+		if !isPointerType(recv.Type) {
+			// Vérification si le type contient un mutex
+			if hasMutex(pass, recv.Type) {
+				typeName := getTypeName(recv.Type)
+				mutexType := getMutexTypeFromType(pass, recv.Type)
+
+				pass.Reportf(
+					recv.Pos(),
+					"KTN-VAR-018: receiver par valeur copie %s, utiliser *%s",
+					mutexType,
+					typeName,
+				)
+			}
+		}
+	})
+}
+
+// checkValueParams vérifie les paramètres par valeur.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - inspect: inspecteur AST
+func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Types de nœuds à analyser
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
+
+	// Parcours des fonctions
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en fonction
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Vérification de la condition
+		if !ok || funcDecl.Type.Params == nil {
+			// Traitement
+			return
+		}
+
+		// Vérification des paramètres
+		for _, param := range funcDecl.Type.Params.List {
+			// Vérification si c'est un type mutex par valeur
+			if mutexType := getMutexType(pass, param.Type); mutexType != "" {
 				// Vérification de la condition
-				if _, exists := firstPos[varName]; !exists {
-					firstPos[varName] = call
+				if !isPointerType(param.Type) {
+					pass.Reportf(
+						param.Pos(),
+						"KTN-VAR-018: passage de %s par valeur, utiliser *%s",
+						mutexType,
+						mutexType,
+					)
 				}
 			}
 		}
-
-		// Traitement
-		return true
 	})
+}
 
-	// Rapport des conversions multiples
-	for varName, count := range conversions {
+// checkAssignments vérifie les assignations de mutex.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - inspect: inspecteur AST
+func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Types de nœuds à analyser
+	nodeFilter := []ast.Node{
+		(*ast.AssignStmt)(nil),
+	}
+
+	// Parcours des assignations
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en assignation
+		assign, ok := n.(*ast.AssignStmt)
 		// Vérification de la condition
-		if count > MAX_ALLOWED_CONVERSIONS {
-			pos := firstPos[varName]
-			pass.Reportf(
-				pos.Pos(),
-				"KTN-VAR-018: conversion string() de '%s' répétée %d fois, stocker dans une variable",
-				varName,
-				count,
-			)
+		if !ok {
+			// Traitement
+			return
+		}
+
+		// Vérification de chaque assignation
+		for i, rhs := range assign.Rhs {
+			// Vérification si on assigne un mutex
+			if i < len(assign.Lhs) {
+				// Vérification de la condition
+				if isMutexCopy(pass, assign.Lhs[i], rhs) {
+					pass.Reportf(
+						assign.Pos(),
+						"KTN-VAR-018: copie de sync.Mutex détectée, utiliser un pointeur",
+					)
+				}
+			}
+		}
+	})
+}
+
+// getMutexType retourne le type de mutex ou "".
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - string: type de mutex ou ""
+func getMutexType(pass *analysis.Pass, expr ast.Expr) string {
+	// Récupération du type
+	tv, ok := pass.TypesInfo.Types[expr]
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return ""
+	}
+
+	// Vérification du type
+	return getMutexTypeName(tv.Type)
+}
+
+// getMutexTypeName retourne le nom du type mutex.
+//
+// Params:
+//   - t: type à vérifier
+//
+// Returns:
+//   - string: nom du type mutex ou ""
+func getMutexTypeName(t types.Type) string {
+	// Récupération du type nommé
+	named, ok := t.(*types.Named)
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return ""
+	}
+
+	// Vérification du package et du nom
+	obj := named.Obj()
+	// Vérification de la condition
+	if obj.Pkg() == nil {
+		// Traitement
+		return ""
+	}
+
+	pkg := obj.Pkg().Path()
+	name := obj.Name()
+
+	// Vérification des types de mutex
+	if pkg == "sync" && (name == "Mutex" || name == "RWMutex") {
+		// Traitement
+		return "sync." + name
+	}
+
+	// Vérification de la condition
+	if pkg == "sync/atomic" && name == "Value" {
+		// Traitement
+		return "atomic.Value"
+	}
+
+	// Traitement
+	return ""
+}
+
+// isPointerType vérifie si un type est un pointeur.
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si pointeur
+func isPointerType(expr ast.Expr) bool {
+	// Vérification directe
+	_, ok := expr.(*ast.StarExpr)
+	// Traitement
+	return ok
+}
+
+// hasMutex vérifie si un type contient un mutex.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si mutex trouvé
+func hasMutex(pass *analysis.Pass, expr ast.Expr) bool {
+	// Récupération du type
+	tv, ok := pass.TypesInfo.Types[expr]
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return false
+	}
+
+	// Vérification si c'est une struct
+	return hasMutexInType(tv.Type)
+}
+
+// hasMutexInType vérifie si un type contient un mutex.
+//
+// Params:
+//   - t: type à vérifier
+//
+// Returns:
+//   - bool: true si mutex trouvé
+func hasMutexInType(t types.Type) bool {
+	var ok bool
+	var ptr *types.Pointer
+	// Déréférencement des pointeurs
+	if ptr, ok = t.(*types.Pointer); ok {
+		t = ptr.Elem()
+	}
+
+	var st *types.Struct
+	// Vérification si c'est une struct
+	st, ok = t.Underlying().(*types.Struct)
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return false
+	}
+
+	// Parcours des champs avec itérateur standard
+	for field := range st.Fields() {
+		// Vérification de la condition
+		if getMutexTypeName(field.Type()) != "" {
+			// Traitement
+			return true
 		}
 	}
+
+	// Traitement
+	return false
+}
+
+// getMutexTypeFromType retourne le type de mutex d'un type.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - string: type de mutex ou ""
+func getMutexTypeFromType(pass *analysis.Pass, expr ast.Expr) string {
+	// Récupération du type
+	tv, ok := pass.TypesInfo.Types[expr]
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return ""
+	}
+
+	var ptr *types.Pointer
+	// Déréférencement des pointeurs
+	t := tv.Type
+	// Vérification de la condition
+	if ptr, ok = t.(*types.Pointer); ok {
+		t = ptr.Elem()
+	}
+
+	var st *types.Struct
+	// Vérification si c'est une struct
+	st, ok = t.Underlying().(*types.Struct)
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return ""
+	}
+
+	// Parcours des champs avec itérateur standard
+	for field := range st.Fields() {
+		// Vérification de la condition
+		if mutexType := getMutexTypeName(field.Type()); mutexType != "" {
+			// Traitement
+			return mutexType
+		}
+	}
+
+	// Traitement
+	return ""
+}
+
+// getTypeName retourne le nom d'un type.
+//
+// Params:
+//   - expr: expression à analyser
+//
+// Returns:
+//   - string: nom du type
+func getTypeName(expr ast.Expr) string {
+	// Vérification si c'est un identifiant
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Traitement
+		return ident.Name
+	}
+
+	// Vérification si c'est une star expression
+	if star, ok := expr.(*ast.StarExpr); ok {
+		// Traitement
+		return getTypeName(star.X)
+	}
+
+	// Traitement
+	return ""
+}
+
+// isMutexCopy vérifie si une assignation copie un mutex.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - lhs: partie gauche de l'assignation
+//   - rhs: partie droite de l'assignation
+//
+// Returns:
+//   - bool: true si copie de mutex
+func isMutexCopy(pass *analysis.Pass, _lhs, rhs ast.Expr) bool {
+	// Récupération du type RHS
+	tv, ok := pass.TypesInfo.Types[rhs]
+	// Vérification de la condition
+	if !ok {
+		// Traitement
+		return false
+	}
+
+	// Vérification si c'est un mutex
+	if getMutexTypeName(tv.Type) != "" {
+		// Vérification que ce n'est pas un pointeur
+		_, isPointer := tv.Type.(*types.Pointer)
+		// Traitement
+		return !isPointer
+	}
+
+	// Traitement
+	return false
 }

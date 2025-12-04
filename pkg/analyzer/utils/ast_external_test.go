@@ -87,20 +87,30 @@ func TestGetTypeString(t *testing.T) {
 
 // TestGetTypeStringWithNoType tests the functionality of the corresponding implementation.
 func TestGetTypeStringWithNoType(t *testing.T) {
-	// Test avec une ValueSpec sans type explicite
-	fset := token.NewFileSet()
-	code := "package test\nvar x = 5"
-	file, err := parser.ParseFile(fset, "", code, 0)
-	if err != nil {
-		t.Fatalf("Failed to parse: %v", err)
+	tests := []struct {
+		name     string
+		code     string
+		expected string
+	}{
+		{name: "no type spec", code: "package test\nvar x = 5", expected: "<type>"},
 	}
 
-	genDecl := file.Decls[0].(*ast.GenDecl)
-	spec := genDecl.Specs[0].(*ast.ValueSpec)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
 
-	got := utils.GetTypeString(spec)
-	if got != "<type>" {
-		t.Errorf("utils.GetTypeString(no type) = %q, want \"<type>\"", got)
+			genDecl := file.Decls[0].(*ast.GenDecl)
+			spec := genDecl.Specs[0].(*ast.ValueSpec)
+
+			got := utils.GetTypeString(spec)
+			if got != tt.expected {
+				t.Errorf("utils.GetTypeString(no type) = %q, want %q", got, tt.expected)
+			}
+		})
 	}
 }
 

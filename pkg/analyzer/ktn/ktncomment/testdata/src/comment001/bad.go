@@ -1,5 +1,5 @@
-// Bad examples for the comment002 test case.
-package comment002
+// Bad examples for the comment001 test case.
+package comment001
 
 const (
 	// BAD_DEFAULT_VALUE est la valeur par défaut pour bad examples
@@ -16,7 +16,7 @@ const (
 // Returns:
 //   - none
 func badFunctionWithLongComment() {
-	// This is a very long inline comment that exceeds the maximum allowed length of 80 characters and should trigger the rule // want "KTN-COMMENT-002"
+	// This is a very long inline comment that exceeds the maximum allowed length of 80 characters and should trigger the rule // want "KTN-COMMENT-001"
 	x := BAD_DEFAULT_VALUE
 	_ = x
 }
@@ -29,10 +29,10 @@ func badFunctionWithLongComment() {
 // Returns:
 //   - none
 func badMultipleLongComments() {
-	// This comment is way too long and contains unnecessary verbose explanations about what the code does below // want "KTN-COMMENT-002"
+	// This comment is way too long and contains unnecessary verbose explanations about what the code does below // want "KTN-COMMENT-001"
 	y := "test"
 
-	// Another extremely long comment that provides excessive detail about a simple variable assignment operation here // want "KTN-COMMENT-002"
+	// Another extremely long comment that provides excessive detail about a simple variable assignment operation here // want "KTN-COMMENT-001"
 	z := BAD_MAX_THRESHOLD
 	_, _ = y, z
 }
@@ -47,7 +47,7 @@ func badMultipleLongComments() {
 func badNestedLongComment(_flag bool) {
 	// Vérifie le flag
 	if _flag {
-		// This is an excessively long comment inside a conditional block that should be shortened significantly // want "KTN-COMMENT-002"
+		// This is an excessively long comment inside a conditional block that should be shortened significantly // want "KTN-COMMENT-001"
 		// Retourne si le flag est true
 		return
 	}

@@ -1,73 +1,43 @@
-// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
-// Ce fichier démontre les getters idiomatiques Go (sans préfixe Get).
+// Good examples for the struct003 test case.
 package struct006
 
-// GoodUser représente un utilisateur avec encapsulation correcte.
-// Les getters suivent la convention Go idiomatique sans préfixe "Get".
-type GoodUser struct {
-	id    int
-	name  string
-	email string
+// UserModel champs exportés avant privés - CONFORME.
+// Représente un utilisateur avec champs publics et privés.
+type UserModel struct {
+	Name  string `json:"name"`  // exporté
+	Age   int    `json:"age"`   // exporté
+	id    int    `json:"-"`     // privé
+	email string `json:"-"`     // privé
 }
 
-// GoodUserInterface définit le contrat public de GoodUser.
-type GoodUserInterface interface {
-	ID() int
-	Name() string
-	Email() string
-	SetName(name string)
+// AllPublicModel tous exportés - CONFORME.
+// Structure avec uniquement des champs publics.
+type AllPublicModel struct {
+	Name    string `json:"name"`
+	Age     int    `json:"age"`
+	Address string `json:"address"`
 }
 
-// NewGoodUser crée une nouvelle instance de GoodUser.
-//
-// Params:
-//   - id: identifiant unique de l'utilisateur
-//   - name: nom de l'utilisateur
-//   - email: adresse email de l'utilisateur
-//
-// Returns:
-//   - *GoodUser: nouvelle instance initialisée
-func NewGoodUser(id int, name, email string) *GoodUser {
-	// Retourne une nouvelle instance avec les valeurs fournies
-	return &GoodUser{
-		id:    id,
-		name:  name,
-		email: email,
-	}
+// AllPrivateModel tous privés - CONFORME.
+// Structure avec uniquement des champs privés.
+type AllPrivateModel struct {
+	name    string `json:"-"`
+	age     int    `json:"-"`
+	address string `json:"-"`
 }
 
-// ID retourne l'identifiant de l'utilisateur.
-//
-// Returns:
-//   - int: identifiant unique
-func (u *GoodUser) ID() int {
-	// Retourne le champ id
-	return u.id
+// EmptyData struct vide - CONFORME.
+// Structure vide utilisée comme marqueur.
+type EmptyData struct{}
+
+// OnlyPublicModel un seul champ exporté - CONFORME.
+// Structure avec un seul champ public.
+type OnlyPublicModel struct {
+	Name string `json:"name"`
 }
 
-// Name retourne le nom de l'utilisateur.
-//
-// Returns:
-//   - string: nom de l'utilisateur
-func (u *GoodUser) Name() string {
-	// Retourne le champ name
-	return u.name
-}
-
-// Email retourne l'adresse email de l'utilisateur.
-//
-// Returns:
-//   - string: adresse email
-func (u *GoodUser) Email() string {
-	// Retourne le champ email
-	return u.email
-}
-
-// SetName définit le nom de l'utilisateur.
-//
-// Params:
-//   - name: nouveau nom à définir
-func (u *GoodUser) SetName(name string) {
-	// Modifie le champ name
-	u.name = name
+// OnlyPrivateModel un seul champ privé - CONFORME.
+// Structure avec un seul champ privé.
+type OnlyPrivateModel struct {
+	name string `json:"-"`
 }

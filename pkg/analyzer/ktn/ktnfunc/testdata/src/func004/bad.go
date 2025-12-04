@@ -1,92 +1,37 @@
-// Bad examples for the func004 test case.
+// Package func004 demonstrates violations of KTN-FUNC-004 rule.
+// Contains examples of unused private functions that should trigger warnings.
 package func004
 
-const (
-	// INCREMENT_ONE représente l'incrément de 1
-	INCREMENT_ONE int = 1
-	// INCREMENT_TWO représente l'incrément de 2
-	INCREMENT_TWO int = 2
-	// INCREMENT_THREE représente l'incrément de 3
-	INCREMENT_THREE int = 3
-	// INCREMENT_FOUR représente l'incrément de 4
-	INCREMENT_FOUR int = 4
-	// INCREMENT_FIVE représente l'incrément de 5
-	INCREMENT_FIVE int = 5
-	// INCREMENT_SIX représente l'incrément de 6
-	INCREMENT_SIX int = 6
-	// INCREMENT_TEN représente l'incrément de 10
-	INCREMENT_TEN int = 10
-	// INCREMENT_TWENTY représente l'incrément de 20
-	INCREMENT_TWENTY int = 20
-	// INCREMENT_THIRTY représente l'incrément de 30
-	INCREMENT_THIRTY int = 30
-	// INCREMENT_FORTY représente l'incrément de 40
-	INCREMENT_FORTY int = 40
-	// INCREMENT_FIFTY représente l'incrément de 50
-	INCREMENT_FIFTY int = 50
-)
-
-// badLongWithNakedReturn utilise naked return dans fonction de 5 lignes
+// validateTagName is dead code created to bypass KTN-TEST-008.
+// This is a private helper function to justify internal testing.
+//
+// Params:
+//   - name: tag name to validate
 //
 // Returns:
-//   - result: résultat calculé
-func badLongWithNakedReturn() (result int) {
-	result = INCREMENT_ONE
-	result += INCREMENT_TWO
-	result += INCREMENT_THREE
-	result += INCREMENT_FOUR
-	result += INCREMENT_FIVE
-	// Retour naked interdit car >= 5 lignes
-	return
+//   - bool: true if valid, false otherwise
+func validateTagName(name string) bool {
+	// Cette fonction n'est JAMAIS appelée dans le code de production!
+	return len(name) > 0
 }
 
-// badVeryLongNakedReturn utilise naked return dans fonction longue
+// unusedHelper is dead code created to bypass linting.
 //
 // Returns:
-//   - a: premier entier
-//   - b: chaîne de caractères
-func badVeryLongNakedReturn() (a int, b string) {
-	a = INCREMENT_ONE
-	a += INCREMENT_TWO
-	a += INCREMENT_THREE
-	a += INCREMENT_FOUR
-	a += INCREMENT_FIVE
-	a += INCREMENT_SIX
-	b = "test"
-	// Retour naked interdit car >= 5 lignes
-	return
+//   - string: message
+func unusedHelper() string {
+	// Jamais appelée!
+	return "unused"
 }
 
-// badMultipleNakedReturns utilise plusieurs naked returns dans fonction longue
+// formatData is dead code.
+//
+// Params:
+//   - data: données
 //
 // Returns:
-//   - result: résultat calculé
-func badMultipleNakedReturns() (result int) {
-	// Vérification de la condition
-	if true {
-		result = INCREMENT_ONE
-		result += INCREMENT_TWO
-		result += INCREMENT_THREE
-		result += INCREMENT_FOUR
-		result += INCREMENT_FIVE
-		// Retour naked interdit car >= 5 lignes
-		return
-	}
-	result = INCREMENT_TEN
-	result += INCREMENT_TWENTY
-	result += INCREMENT_THIRTY
-	result += INCREMENT_FORTY
-	result += INCREMENT_FIFTY
-	// Retour naked interdit car >= 5 lignes
-	return
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de badLongWithNakedReturn
-	badLongWithNakedReturn()
-	// Appel de badVeryLongNakedReturn
-	badVeryLongNakedReturn()
-	// Appel de badMultipleNakedReturns
-	badMultipleNakedReturns()
+//   - string: formaté
+func formatData(data string) string {
+	// Jamais appelée!
+	return "[" + data + "]"
 }

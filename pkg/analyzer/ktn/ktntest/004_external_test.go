@@ -8,8 +8,6 @@ import (
 )
 
 func TestTest004(t *testing.T) {
-	// 2 erreurs: tests de fonctions retournant error sans couverture d'erreur
-	// - TestParseConfig: ParseConfig retourne error mais test sans cas d'erreur
-	// - TestValidateInput: ValidateInput retourne error mais test sans cas d'erreur
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer004, "test004", "good_test.go", "bad_test.go", 2)
+	// 2 erreurs: fonctions Multiply et Divide sans test
+	testhelper.TestGoodBadPackage(t, ktntest.Analyzer004, "test004", 2)
 }

@@ -1,87 +1,221 @@
 // Bad examples for the var004 test case.
 package var004
 
+// Constants to avoid magic numbers
 const (
-	// SMTP_PORT_VALUE defines SMTP port value
-	SMTP_PORT_VALUE int = 25
-	// SSH_PORT_VALUE defines SSH port value
-	SSH_PORT_VALUE int = 22
-	// TELNET_PORT_VALUE defines telnet port value
-	TELNET_PORT_VALUE int = 23
-	// POOL_MAX_SIZE_VALUE defines pool max size
-	POOL_MAX_SIZE_VALUE int = 500
-	// POOL_MIN_SIZE_VALUE defines pool min size
-	POOL_MIN_SIZE_VALUE int = 5
-	// CONNECTION_TIMEOUT_VALUE defines connection timeout
-	CONNECTION_TIMEOUT_VALUE int = 60
-	// SERVER_VERSION_VALUE defines server version
-	SERVER_VERSION_VALUE string = "v2.0"
-	// BASE_PATH_VALUE defines base path
-	BASE_PATH_VALUE string = "/base"
-	// AUTH_TOKEN_VALUE defines auth token
-	AUTH_TOKEN_VALUE string = "token123"
-	// AUTO_RELOAD_VALUE defines auto reload setting
-	AUTO_RELOAD_VALUE bool = false
-	// STRICT_MODE_VALUE defines strict mode setting
-	STRICT_MODE_VALUE bool = true
-	// LOG_ENABLED_VALUE defines log enabled setting
-	LOG_ENABLED_VALUE bool = true
-	// ATTEMPTS_LIMIT_VALUE defines attempts limit
-	ATTEMPTS_LIMIT_VALUE int = 3
-	// WAIT_TIME_MS_VALUE defines wait time in ms
-	WAIT_TIME_MS_VALUE int = 500
-	// SCALE_FACTOR_VALUE defines scale factor
-	SCALE_FACTOR_VALUE float64 = 2.0
-	// CACHE_HOST_VALUE defines cache host
-	CACHE_HOST_VALUE string = "127.0.0.1"
-	// CACHE_PORT_VALUE defines cache port
-	CACHE_PORT_VALUE int = 6379
-	// SCHEMA_NAME_VALUE defines schema name
-	SCHEMA_NAME_VALUE string = "public"
-	// ADMIN_USER_VALUE defines admin user
-	ADMIN_USER_VALUE string = "root"
-	// MISSING_COMMENT_VALUE defines missing comment value
-	MISSING_COMMENT_VALUE int = 999
+	// TEST_AGE is the test age value
+	TEST_AGE int = 25
+	// TEST_X is the test x coordinate
+	TEST_X int = 10
+	// TEST_Y is the test y coordinate
+	TEST_Y int = 20
+	// TEST_ANSWER is the answer value
+	TEST_ANSWER int = 42
+	// TEST_ONE is the value one
+	TEST_ONE int = 1
+	// TEST_TWO is the value two
+	TEST_TWO int = 2
+	// TEST_THREE is the value three
+	TEST_THREE int = 3
+	// THRESHOLD_VALUE is the threshold for comparison
+	THRESHOLD_VALUE int = 5
+	// MULTIPLIER is the multiplication factor
+	MULTIPLIER int = 2
+	// ZERO_INDEX is the starting index
+	ZERO_INDEX int = 0
 )
 
+// Package-level variables with explicit types (OK, not checked by VAR-005)
 var (
-	badSmtpPort int = SMTP_PORT_VALUE
-
-	badSshPort int = SSH_PORT_VALUE
-
-	badTelnetPort int = TELNET_PORT_VALUE
-
-	badPoolMaxSize int = POOL_MAX_SIZE_VALUE
-
-	badPoolMinSize int = POOL_MIN_SIZE_VALUE
-
-	badConnectionTimeout int = CONNECTION_TIMEOUT_VALUE
-
-	badServerVersion string = SERVER_VERSION_VALUE
-
-	badBasePath string = BASE_PATH_VALUE
-
-	badAuthToken string = AUTH_TOKEN_VALUE
-
-	badAutoReload bool = AUTO_RELOAD_VALUE
-
-	badStrictMode bool = STRICT_MODE_VALUE
-
-	badLogEnabled bool = LOG_ENABLED_VALUE
-
-	badAttemptsLimit int = ATTEMPTS_LIMIT_VALUE
-
-	badWaitTimeMs int = WAIT_TIME_MS_VALUE
-
-	badScaleFactor float64 = SCALE_FACTOR_VALUE
-
-	badCacheHost string = CACHE_HOST_VALUE
-
-	badCachePort int = CACHE_PORT_VALUE
-
-	badSchemaName string = SCHEMA_NAME_VALUE
-
-	badAdminUser string = ADMIN_USER_VALUE
-
-	badMissingComment int = MISSING_COMMENT_VALUE
+	// PackageLevel is a package-level variable
+	PackageLevel string = "ok"
+	// AnotherGlobal is another package-level variable
+	AnotherGlobal int = TEST_ANSWER
 )
+
+// badSimpleVar shows incorrect use of var with initialization.
+// Should use := instead of var for local variables.
+func badSimpleVar() {
+	// Variable declarations with initialization (should use :=)
+	var name = "Bob"
+	// age variable with initialization
+	var age = TEST_AGE
+
+	// Using variables to avoid unused warnings
+	_ = name
+	_ = age
+}
+
+// badMultipleVars shows incorrect use of var with multiple variables.
+// Should use := instead of var for local variables.
+func badMultipleVars() {
+	// x variable with initialization
+	var x = TEST_X
+	// y variable with initialization
+	var y = TEST_Y
+
+	// Using variables to avoid unused warnings
+	_ = x
+	_ = y
+}
+
+// badBoolVar shows incorrect use of var with bool.
+// Should use := instead of var for local variables.
+func badBoolVar() {
+	// Boolean variable declaration (should use :=)
+	var isEnabled = true
+
+	// Using variable to avoid unused warning
+	_ = isEnabled
+}
+
+// badStringVar shows incorrect use of var with string.
+// Should use := instead of var for local variables.
+func badStringVar() {
+	// String variable declaration (should use :=)
+	var message = "Hello"
+
+	// Using variable to avoid unused warning
+	_ = message
+}
+
+// badSliceVar shows incorrect use of var with slice.
+// Should use := instead of var for local variables.
+func badSliceVar() {
+	// Slice variable declaration (should use :=)
+	var numbers = []int{TEST_ONE, TEST_TWO, TEST_THREE}
+
+	// Using variable to avoid unused warning
+	_ = numbers
+}
+
+// badMapVar shows incorrect use of var with map.
+// Should use := instead of var for local variables.
+func badMapVar() {
+	// Map variable declaration (should use :=)
+	var config = map[string]int{"key": TEST_ONE}
+
+	// Using variable to avoid unused warning
+	_ = config
+}
+
+// badVarInIf shows incorrect use of var in if block.
+// Local variables should use := even inside control structures.
+func badVarInIf() {
+	// Initialize test variable
+	x := TEST_X
+
+	// Check if x exceeds threshold
+	if x > THRESHOLD_VALUE {
+		// Variable in if block (should use :=)
+		var result = "big"
+
+		// Using variable to avoid unused warning
+		_ = result
+	}
+}
+
+// badVarInFor shows incorrect use of var in for loop.
+// Local variables should use := even inside loops.
+func badVarInFor() {
+	// Loop through range
+	for i := ZERO_INDEX; i < TEST_THREE; i++ {
+		// Variable in for loop (should use :=)
+		var item = i * MULTIPLIER
+
+		// Using variable to avoid unused warning
+		_ = item
+	}
+}
+
+// badVarInRange shows incorrect use of var in range loop.
+// Local variables should use := even inside range loops.
+func badVarInRange() {
+	// Initialize slice for iteration
+	nums := []int{TEST_ONE, TEST_TWO, TEST_THREE}
+
+	// Iterate over slice
+	for _, n := range nums {
+		// Variable in range loop (should use :=)
+		var doubled = n * MULTIPLIER
+
+		// Using variable to avoid unused warning
+		_ = doubled
+	}
+}
+
+// badVarInSwitch shows incorrect use of var in switch.
+// Local variables should use := even in switch cases.
+func badVarInSwitch() {
+	// Initialize test value
+	x := THRESHOLD_VALUE
+
+	// Switch on value
+	switch x {
+	// Case when x equals threshold
+	case THRESHOLD_VALUE:
+		// Variable in case block (should use :=)
+		var msg = "five"
+
+		// Using variable to avoid unused warning
+		_ = msg
+	// Default case for other values
+	default:
+		// Variable in default block (should use :=)
+		var other = "other"
+
+		// Using variable to avoid unused warning
+		_ = other
+	}
+}
+
+// badVarInSelect shows incorrect use of var in select.
+// Local variables should use := even in select cases.
+func badVarInSelect() {
+	// Create channels for testing
+	ch := make(chan int)
+
+	// Select on channel operations
+	select {
+	// Case when receiving from channel
+	case val := <-ch:
+		// Variable in select case (should use :=)
+		var result = val * MULTIPLIER
+
+		// Using variable to avoid unused warning
+		_ = result
+	// Default case when no channel operation is ready
+	default:
+		// Variable in default block (should use :=)
+		var msg = "no data"
+
+		// Using variable to avoid unused warning
+		_ = msg
+	}
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badSimpleVar
+	badSimpleVar()
+	// Appel de badMultipleVars
+	badMultipleVars()
+	// Appel de badBoolVar
+	badBoolVar()
+	// Appel de badStringVar
+	badStringVar()
+	// Appel de badSliceVar
+	badSliceVar()
+	// Appel de badMapVar
+	badMapVar()
+	// Appel de badVarInIf
+	badVarInIf()
+	// Appel de badVarInFor
+	badVarInFor()
+	// Appel de badVarInRange
+	badVarInRange()
+	// Appel de badVarInSwitch
+	badVarInSwitch()
+	// Appel de badVarInSelect
+	badVarInSelect()
+}

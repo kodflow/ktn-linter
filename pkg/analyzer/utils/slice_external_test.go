@@ -257,135 +257,140 @@ func TestIsByteSlice(t *testing.T) {
 
 // Test functions with Pass parameter using a mock Pass
 func TestIsSliceTypeWithPass(t *testing.T) {
-	// Create a minimal Pass with TypesInfo
-	pass := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
+	tests := []struct {
+		name         string
+		withTypeInfo bool
+	}{
+		{name: "with TypesInfo", withTypeInfo: true},
+		{name: "fallback to AST", withTypeInfo: false},
 	}
 
-	// Test with TypesInfo
-	sliceExpr := &ast.ArrayType{Len: nil, Elt: &ast.Ident{Name: "int"}}
-	pass.TypesInfo.Types[sliceExpr] = types.TypeAndValue{
-		Type: types.NewSlice(types.Typ[types.Int]),
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
 
-	got := utils.IsSliceTypeWithPass(pass, sliceExpr)
-	if !got {
-		t.Errorf("utils.IsSliceTypeWithPass() with TypesInfo = false, want true")
-	}
+			sliceExpr := &ast.ArrayType{Len: nil, Elt: &ast.Ident{Name: "int"}}
+			if tt.withTypeInfo {
+				pass.TypesInfo.Types[sliceExpr] = types.TypeAndValue{
+					Type: types.NewSlice(types.Typ[types.Int]),
+				}
+			}
 
-	// Test fallback to AST checking
-	pass2 := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-	}
-
-	got2 := utils.IsSliceTypeWithPass(pass2, sliceExpr)
-	if !got2 {
-		t.Errorf("utils.IsSliceTypeWithPass() fallback to AST = false, want true")
+			if !utils.IsSliceTypeWithPass(pass, sliceExpr) {
+				t.Errorf("utils.IsSliceTypeWithPass() = false, want true")
+			}
+		})
 	}
 }
 
 func TestIsMapTypeWithPass(t *testing.T) {
-	// Create a minimal Pass with TypesInfo
-	pass := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
+	tests := []struct {
+		name         string
+		withTypeInfo bool
+	}{
+		{name: "with TypesInfo", withTypeInfo: true},
+		{name: "fallback to AST", withTypeInfo: false},
 	}
 
-	// Test with TypesInfo
-	mapExpr := &ast.MapType{
-		Key:   &ast.Ident{Name: "string"},
-		Value: &ast.Ident{Name: "int"},
-	}
-	pass.TypesInfo.Types[mapExpr] = types.TypeAndValue{
-		Type: types.NewMap(types.Typ[types.String], types.Typ[types.Int]),
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
 
-	got := utils.IsMapTypeWithPass(pass, mapExpr)
-	if !got {
-		t.Errorf("utils.IsMapTypeWithPass() with TypesInfo = false, want true")
-	}
+			mapExpr := &ast.MapType{
+				Key:   &ast.Ident{Name: "string"},
+				Value: &ast.Ident{Name: "int"},
+			}
+			if tt.withTypeInfo {
+				pass.TypesInfo.Types[mapExpr] = types.TypeAndValue{
+					Type: types.NewMap(types.Typ[types.String], types.Typ[types.Int]),
+				}
+			}
 
-	// Test fallback to AST checking
-	pass2 := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-	}
-
-	got2 := utils.IsMapTypeWithPass(pass2, mapExpr)
-	if !got2 {
-		t.Errorf("utils.IsMapTypeWithPass() fallback to AST = false, want true")
+			if !utils.IsMapTypeWithPass(pass, mapExpr) {
+				t.Errorf("utils.IsMapTypeWithPass() = false, want true")
+			}
+		})
 	}
 }
 
 func TestIsByteSliceWithPass(t *testing.T) {
-	// Create a minimal Pass with TypesInfo
-	pass := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
+	tests := []struct {
+		name         string
+		withTypeInfo bool
+	}{
+		{name: "with TypesInfo", withTypeInfo: true},
+		{name: "fallback to AST", withTypeInfo: false},
 	}
 
-	// Test with TypesInfo
-	byteSliceExpr := &ast.ArrayType{Len: nil, Elt: &ast.Ident{Name: "byte"}}
-	pass.TypesInfo.Types[byteSliceExpr] = types.TypeAndValue{
-		Type: types.NewSlice(types.Typ[types.Byte]),
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
 
-	got := utils.IsByteSliceWithPass(pass, byteSliceExpr)
-	if !got {
-		t.Errorf("utils.IsByteSliceWithPass() with TypesInfo = false, want true")
-	}
+			byteSliceExpr := &ast.ArrayType{Len: nil, Elt: &ast.Ident{Name: "byte"}}
+			if tt.withTypeInfo {
+				pass.TypesInfo.Types[byteSliceExpr] = types.TypeAndValue{
+					Type: types.NewSlice(types.Typ[types.Byte]),
+				}
+			}
 
-	// Test fallback to AST checking
-	pass2 := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-	}
-
-	got2 := utils.IsByteSliceWithPass(pass2, byteSliceExpr)
-	if !got2 {
-		t.Errorf("utils.IsByteSliceWithPass() fallback to AST = false, want true")
+			if !utils.IsByteSliceWithPass(pass, byteSliceExpr) {
+				t.Errorf("utils.IsByteSliceWithPass() = false, want true")
+			}
+		})
 	}
 }
 
 func TestIsSliceOrMapTypeWithPass(t *testing.T) {
-	// Create a minimal Pass with TypesInfo
-	pass := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
+	tests := []struct {
+		name    string
+		isSlice bool
+	}{
+		{name: "with slice", isSlice: true},
+		{name: "with map", isSlice: false},
 	}
 
-	// Test with slice
-	sliceExpr := &ast.ArrayType{Len: nil, Elt: &ast.Ident{Name: "int"}}
-	pass.TypesInfo.Types[sliceExpr] = types.TypeAndValue{
-		Type: types.NewSlice(types.Typ[types.Int]),
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
 
-	got := utils.IsSliceOrMapTypeWithPass(pass, sliceExpr)
-	if !got {
-		t.Errorf("utils.IsSliceOrMapTypeWithPass() with slice = false, want true")
-	}
+			var expr ast.Expr
+			if tt.isSlice {
+				sliceExpr := &ast.ArrayType{Len: nil, Elt: &ast.Ident{Name: "int"}}
+				pass.TypesInfo.Types[sliceExpr] = types.TypeAndValue{
+					Type: types.NewSlice(types.Typ[types.Int]),
+				}
+				expr = sliceExpr
+			} else {
+				mapExpr := &ast.MapType{
+					Key:   &ast.Ident{Name: "string"},
+					Value: &ast.Ident{Name: "int"},
+				}
+				pass.TypesInfo.Types[mapExpr] = types.TypeAndValue{
+					Type: types.NewMap(types.Typ[types.String], types.Typ[types.Int]),
+				}
+				expr = mapExpr
+			}
 
-	// Test with map
-	mapExpr := &ast.MapType{
-		Key:   &ast.Ident{Name: "string"},
-		Value: &ast.Ident{Name: "int"},
-	}
-	pass.TypesInfo.Types[mapExpr] = types.TypeAndValue{
-		Type: types.NewMap(types.Typ[types.String], types.Typ[types.Int]),
-	}
-
-	got2 := utils.IsSliceOrMapTypeWithPass(pass, mapExpr)
-	if !got2 {
-		t.Errorf("utils.IsSliceOrMapTypeWithPass() with map = false, want true")
+			if !utils.IsSliceOrMapTypeWithPass(pass, expr) {
+				t.Errorf("utils.IsSliceOrMapTypeWithPass() = false, want true")
+			}
+		})
 	}
 }
 

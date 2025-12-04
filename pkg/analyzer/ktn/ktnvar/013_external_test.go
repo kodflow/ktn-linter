@@ -7,7 +7,11 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestVar013 vérifie la détection des conversions string() répétées.
+//
+// Params:
+//   - t: contexte de test
 func TestVar013(t *testing.T) {
-	// 7 allocations dans des boucles (5 assignements + 2 déclarations var)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer013, "var013", 7)
+	// 12 conversions répétées détectées (5 original + 7 nouveaux edge cases)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer013, "var013", 12)
 }

@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar009(t *testing.T) {
-	// 7 maps without capacity hints
+	// 7 allocations dans des boucles (5 assignements + 2 déclarations var)
 	testhelper.TestGoodBad(t, ktnvar.Analyzer009, "var009", 7)
 }

@@ -1,85 +1,118 @@
 // Bad examples for the func006 test case.
 package func006
 
-// Bad examples: error is not last
-
-// BadErrorFirst demonstrates error in first position instead of last.
+// processSixParams dépasse la limite avec 6 paramètres
 //
-// Returns:
-//   - error: potential error (bad position)
-//   - string: result message
-func BadErrorFirst() (error, string) {
-	// Return nil error and empty string
-	return nil, ""
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+func processSixParams(a, b, c, d, e, f int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e + f
 }
 
-// BadErrorMiddle demonstrates error in middle position instead of last.
+// calculateSevenParams dépasse largement avec 7 paramètres
 //
-// Returns:
-//   - string: result message
-//   - error: potential error (bad position)
-//   - bool: success flag
-func BadErrorMiddle() (string, error, bool) {
-	// Return empty string, nil error, and false
-	return "", nil, false
+// Params:
+//   - a: entier
+//   - b: chaîne
+//   - c: booléen
+//   - d: flottant
+//   - e: slice d'entiers
+//   - f: map
+//   - g: canal
+func calculateSevenParams(a int, b string, c bool, d float64, e []int, f map[string]int, g chan int) {
+	// Utilisation des paramètres
+	_, _, _, _, _, _, _ = a, b, c, d, e, f, g
 }
 
-// BadErrorFirstOfThree demonstrates error in first position with three return values.
+// buildTenParams fonction avec beaucoup trop de paramètres
 //
-// Returns:
-//   - error: potential error (bad position)
-//   - int: numeric result
-//   - string: result message
-func BadErrorFirstOfThree() (error, int, string) {
-	// Return nil error, zero, and empty string
-	return nil, 0, ""
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+//   - g: paramètre de test
+//   - h: paramètre de test
+//   - i: paramètre de test
+//   - j: paramètre de test
+func buildTenParams(a, b, c, d, e, f, g, h, i, j int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e + f + g + h + i + j
 }
 
-// BadType is a test type for method examples.
-// Used to demonstrate error position in method return values.
-type BadType struct{}
-
-// BadTypeInterface defines the public methods of BadType.
-type BadTypeInterface interface {
-	BadMethod() (error, string)
+// createEightParams cas avec 8 paramètres groupés
+//
+// Params:
+//   - a: entier
+//   - b, c: chaînes
+//   - d, e, f: booléens
+//   - g, h: flottants
+func createEightParams(a int, b, c string, d, e, f bool, g, h float64) {
+	// Utilisation des paramètres
+	_, _, _, _, _, _, _, _ = a, b, c, d, e, f, g, h
 }
 
-// NewBadType creates a new instance of BadType.
+// formatSixParams exactement 6 paramètres (juste au-dessus de la limite)
 //
-// Returns:
-//   - *BadType: new instance
-func NewBadType() *BadType {
-	// Return new instance
-	return &BadType{}
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+func formatSixParams(a, b, c, d, e, f int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e + f
 }
 
-// BadMethod demonstrates error in first position for a method.
+// convertWithVariadicBad fonction variadique avec 6 paramètres au total
 //
-// Returns:
-//   - error: potential error (bad position)
-//   - string: result message
-func (b *BadType) BadMethod() (error, string) {
-	// Return nil error and empty string
-	return nil, ""
+// Params:
+//   - a: paramètre régulier
+//   - b: paramètre régulier
+//   - c: paramètre régulier
+//   - d: paramètre régulier
+//   - e: paramètre régulier
+//   - f: paramètre variadique
+func convertWithVariadicBad(a, b, c, d, e int, f ...string) {
+	// Utilisation des paramètres
+	_, _, _, _, _, _ = a, b, c, d, e, f
 }
 
-// badFunc is a function literal with error not last
-//
-// Returns:
-//   - error: potential error (bad position)
-//   - int: numeric result
-var badFunc func() (error, int) = func() (error, int) {
-	// Return nil error and zero
-	return nil, 0
-}
+var (
+	// badLiteralSix fonction littérale avec 6 paramètres
+	badLiteralSix func(int, int, int, int, int, int) = func(a, b, c, d, e, f int) {
+		// Utilisation des paramètres
+		_ = a + b + c + d + e + f
+	}
 
-// BadMultipleErrors demonstrates multiple errors with one misplaced.
-//
-// Returns:
-//   - error: first potential error (bad position)
-//   - string: result message
-//   - error: second potential error
-func BadMultipleErrors() (error, string, error) {
-	// Return nil errors and empty string
-	return nil, "", nil
+	// badLiteralUnnamed fonction littérale avec 6 paramètres non nommés
+	badLiteralUnnamed func(int, string, bool, float64, []int, map[string]int) = func(int, string, bool, float64, []int, map[string]int) {
+		// Fonction vide
+	}
+
+	// badLiteralSixUnnamed 6 paramètres non nommés identiques
+	badLiteralSixUnnamed func(int, int, int, int, int, int) = func(int, int, int, int, int, int) {
+		// Fonction vide
+	}
+)
+
+// init utilise les fonctions privées
+func init() {
+	// Appel des fonctions
+	processSixParams(0, 0, 0, 0, 0, 0)
+	calculateSevenParams(0, "", false, 0, nil, nil, nil)
+	buildTenParams(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	createEightParams(0, "", "", false, false, false, 0, 0)
+	formatSixParams(0, 0, 0, 0, 0, 0)
+	convertWithVariadicBad(0, 0, 0, 0, 0)
 }

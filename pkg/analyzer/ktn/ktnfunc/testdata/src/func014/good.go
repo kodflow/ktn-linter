@@ -1,95 +1,139 @@
-// Package func014 contient des exemples de fonctions privées utilisées correctement.
+// Good examples for the func014 test case.
 package func014
 
 const (
-	// MULTIPLIER est le facteur de multiplication utilisé dans compute.
-	MULTIPLIER int = 2
+	// TWO_INT représente la valeur 2
+	TWO_INT int = 2
+	// THIRTY_INT représente la valeur 30
+	THIRTY_INT int = 30
+	// NINETY_FIVE_DOT représente la valeur 95.5
+	NINETY_FIVE_DOT float64 = 95.5
 )
 
-// PublicFunction est une fonction publique.
+// OneReturn retourne une seule valeur entière.
 //
 // Returns:
-//   - string: message
-func PublicFunction() string {
-	// Appel de la fonction privée
-	if processData("test") {
-		// Retour du helper
-		return privateHelper()
-	}
-	// Retour vide
-	return ""
+//   - int: valeur 1
+func OneReturn() int {
+	// Retourne la valeur 1
+	return 1
 }
 
-// privateHelper est utilisée par PublicFunction.
+// TwoReturns retourne deux valeurs.
 //
 // Returns:
-//   - string: message
-func privateHelper() string {
-	// Retour du message
-	return "helper"
+//   - int: valeur 1
+//   - error: nil
+func TwoReturns() (int, error) {
+	// Retourne un entier et nil pour l'erreur
+	return 1, nil
 }
 
-// Calculator est une struct pour effectuer des calculs.
-// Elle stocke une valeur interne et permet de la multiplier.
-type Calculator struct {
-	value int
-}
-
-// CalculatorInterface définit les méthodes publiques de Calculator.
-type CalculatorInterface interface {
-	Calculate() int
-}
-
-// NewCalculator crée une nouvelle instance de Calculator.
-//
-// Params:
-//   - value: la valeur initiale
+// ThreeReturns retourne trois valeurs.
 //
 // Returns:
-//   - *Calculator: nouvelle instance
-func NewCalculator(value int) *Calculator {
-	// Retour de la nouvelle instance
-	return &Calculator{value: value}
+//   - int: valeur 1
+//   - string: chaîne "test"
+//   - error: nil
+func ThreeReturns() (int, string, error) {
+	// Retourne un entier, une chaîne et nil pour l'erreur
+	return 1, "test", nil
 }
 
-// Calculate appelle la méthode privée.
+// FourNamedReturns retourne quatre valeurs nommées.
 //
 // Returns:
-//   - int: résultat
-func (c *Calculator) Calculate() int {
-	// Appel de la méthode privée
-	return c.compute()
+//   - count: valeur 1
+//   - name: chaîne "test"
+//   - valid: true
+//   - err: nil
+func FourNamedReturns() (count int, name string, valid bool, err error) {
+	// Retourne les quatre valeurs nommées
+	return 1, "test", true, nil
 }
 
-// compute est une méthode privée utilisée.
+// FiveNamedReturns retourne cinq valeurs nommées.
 //
 // Returns:
-//   - int: résultat
-func (c *Calculator) compute() int {
-	// Retour de la valeur multipliée par la constante
-	return c.value * MULTIPLIER
+//   - a: valeur 1
+//   - b: valeur 2
+//   - c: chaîne "test"
+//   - d: true
+//   - e: nil
+func FiveNamedReturns() (a int, b int, c string, d bool, e error) {
+	// Retourne les cinq valeurs nommées
+	return 1, TWO_INT, "test", true, nil
 }
 
-// processData utilise validate en interne.
-//
-// Params:
-//   - data: données
+// ManyNamedReturns retourne plusieurs valeurs nommées.
 //
 // Returns:
-//   - bool: succès
-func processData(data string) bool {
-	// Appel de validate
-	return validate(data)
+//   - id: valeur 1
+//   - name: chaîne "test"
+//   - age: valeur 30
+//   - active: true
+//   - score: valeur 95.5
+func ManyNamedReturns() (id int, name string, age int, active bool, score float64) {
+	// Retourne les valeurs pour id, name, age, active et score
+	return 1, "test", THIRTY_INT, true, NINETY_FIVE_DOT
 }
 
-// validate est utilisée par processData.
-//
-// Params:
-//   - s: chaîne
+// NoReturn ne retourne aucune valeur.
+func NoReturn() {
+	x := 1
+	_ = x
+}
+
+// TestManyUnnamedReturns est une fonction de test avec plusieurs retours non nommés.
 //
 // Returns:
-//   - bool: valide
-func validate(s string) bool {
-	// Retour de la validation
-	return len(s) > 0
+//   - int: valeur 1
+//   - string: chaîne "test"
+//   - bool: true
+//   - error: nil
+func TestManyUnnamedReturns() (int, string, bool, error) {
+	// Retourne les valeurs de test
+	return 1, "test", true, nil
+}
+
+// BenchmarkManyUnnamedReturns est une fonction de benchmark avec plusieurs retours non nommés.
+//
+// Returns:
+//   - int: valeur 1
+//   - string: chaîne "test"
+//   - bool: true
+//   - error: nil
+func BenchmarkManyUnnamedReturns() (int, string, bool, error) {
+	// Retourne les valeurs de benchmark
+	return 1, "test", true, nil
+}
+
+// NoReturnValue ne retourne aucune valeur.
+func NoReturnValue() {
+	x := 1
+	_ = x
+}
+
+// GetFourValuesCompact retourne quatre valeurs nommées (format compact).
+//
+// Returns:
+//   - x, y: coordonnées
+//   - name: nom
+//   - err: erreur éventuelle
+func GetFourValuesCompact() (x, y int, name string, err error) {
+	// Retour des coordonnées et du nom
+	return 1, TWO_INT, "point", nil
+}
+
+// testSomething est une fonction de test.
+func testSomething() {
+	// Les fonctions de test ne sont pas vérifiées
+	x := 1
+	_ = x
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de testSomething
+	testSomething()
 }

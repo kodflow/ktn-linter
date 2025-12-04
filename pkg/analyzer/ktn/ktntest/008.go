@@ -62,8 +62,8 @@ func runTest008(pass *analysis.Pass) (any, error) {
 		result := analyzeFileFunctions(file)
 
 		// Si le fichier n'a pas de FONCTIONS (publiques ou privées), pas de test requis
-		// Note: les constantes/types seuls ne nécessitent pas de tests dédiés car ils
-		// n'ont pas de comportement à tester (valeurs compile-time ou définitions de structure)
+		// Note: les constantes/types seuls ne nécessitent pas de tests dédiés car
+		// ils n'ont pas de comportement à tester (valeurs compile-time ou struct)
 		if len(result.publicFuncs) == 0 && len(result.privateFuncs) == 0 {
 			continue
 		}

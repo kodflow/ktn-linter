@@ -8,7 +8,6 @@ import (
 )
 
 func TestVar004(t *testing.T) {
-	// good.go: 0 errors (all variables have comments)
-	// bad.go: 20 errors (missing comments)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer004, "var004", 20)
+	// 15 variables using var with initialization instead of := (13 + 2 dans select)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer004, "var004", 15)
 }

@@ -11,116 +11,105 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-// Test_runLint teste la fonction runLint avec un package valide.
+// Test_runLint teste la fonction runLint avec différents packages.
 func Test_runLint(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
-
-	// Capturer stdout
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	defer func() {
-		os.Stdout = oldStdout
-	}()
-
-	exitCode, didExit := catchExitInCmd(t, func() {
-		runLint(lintCmd, []string{"../../../pkg/formatter"})
-	})
-
-	w.Close()
-	r.Close()
-
-	if !didExit {
-		t.Error("Expected runLint to exit")
+	tests := []struct {
+		name     string
+		packages []string
+	}{
+		{
+			name:     "valid formatter package",
+			packages: []string{"../../../pkg/formatter"},
+		},
+		{
+			name:     "testdata with potential issues",
+			packages: []string{"../../../pkg/analyzer/ktn/const/testdata/src/const001"},
+		},
+		{
+			name:     "formatter success case",
+			packages: []string{"../../../pkg/formatter"},
+		},
 	}
 
-	// Le code peut être 0 (succès) ou 1 (quelques warnings)
-	if exitCode != 0 && exitCode != 1 {
-		t.Errorf("Expected exit code 0 or 1, got %d", exitCode)
-	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
 
-// Test_runLintWithIssues teste runLint qui trouve des violations.
-func Test_runLintWithIssues(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
+			// Capturer stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+			defer func() {
+				os.Stdout = oldStdout
+			}()
 
-	// Utiliser le package const qui a potentiellement des règles violées
-	exitCode, didExit := catchExitInCmd(t, func() {
-		runLint(lintCmd, []string{"../../../pkg/analyzer/ktn/const/testdata/src/const001"})
-	})
+			exitCode, didExit := catchExitInCmd(t, func() {
+				runLint(lintCmd, tt.packages)
+			})
 
-	if !didExit {
-		t.Error("Expected runLint to exit")
-	}
+			w.Close()
+			r.Close()
 
-	// Devrait exit avec 1 (issues trouvées) ou 0 (aucune issue)
-	if exitCode != 0 && exitCode != 1 {
-		t.Errorf("Expected exit code 0 or 1, got %d", exitCode)
+			// Vérification exit et code
+			if !didExit || (exitCode != 0 && exitCode != 1) {
+				t.Errorf("Test failed: didExit=%v, exitCode=%d", didExit, exitCode)
+			}
+		})
 	}
 }
 
-// Test_runLintSuccess teste runLint sans aucun diagnostic.
-func Test_runLintSuccess(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
-
-	exitCode, didExit := catchExitInCmd(t, func() {
-		runLint(lintCmd, []string{"../../../pkg/formatter"})
-	})
-
-	if !didExit {
-		t.Error("Expected runLint to exit")
-	}
-
-	// formatter devrait être clean
-	if exitCode != 0 && exitCode != 1 {
-		t.Errorf("Expected exit code 0 or 1, got %d", exitCode)
-	}
-}
-
-// Test_loadPackages teste loadPackages avec un pattern valide.
+// Test_loadPackages teste loadPackages avec différents patterns.
 func Test_loadPackages(t *testing.T) {
-	pkgs := loadPackages([]string{"../../../pkg/formatter"})
-
-	if len(pkgs) == 0 {
-		t.Error("Expected at least one package")
+	tests := []struct {
+		name         string
+		patterns     []string
+		expectExit   bool
+		expectedCode int
+	}{
+		{
+			name:       "valid formatter package",
+			patterns:   []string{"../../../pkg/formatter"},
+			expectExit: false,
+		},
+		{
+			name:         "invalid nonexistent path",
+			patterns:     []string{"/nonexistent/path/that/does/not/exist"},
+			expectExit:   true,
+			expectedCode: 1,
+		},
 	}
 
-	for _, pkg := range pkgs {
-		if len(pkg.Errors) > 0 {
-			t.Errorf("Package %s has errors: %v", pkg.PkgPath, pkg.Errors)
-		}
-	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
 
-// Test_loadPackagesInvalid teste loadPackages avec un pattern invalide.
-func Test_loadPackagesInvalid(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+			defer func() {
+				os.Stderr = oldStderr
+			}()
 
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-	defer func() {
-		os.Stderr = oldStderr
-	}()
+			exitCode, didExit := catchExitInCmd(t, func() {
+				pkgs := loadPackages(tt.patterns)
+				// Vérification packages valides
+				if !tt.expectExit && len(pkgs) == 0 {
+					t.Error("Expected at least one package")
+				}
+			})
 
-	exitCode, didExit := catchExitInCmd(t, func() {
-		loadPackages([]string{"/nonexistent/path/that/does/not/exist"})
-	})
+			w.Close()
+			r.Close()
 
-	w.Close()
-	r.Close()
-
-	if !didExit {
-		t.Error("Expected loadPackages to exit on invalid path")
-	}
-
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
+			// Vérification comportement exit
+			if tt.expectExit && (!didExit || exitCode != tt.expectedCode) {
+				t.Errorf("Expected exit=%v code=%d, got exit=%v code=%d",
+					tt.expectExit, tt.expectedCode, didExit, exitCode)
+			}
+		})
 	}
 }
 
@@ -306,43 +295,58 @@ func Test_runAnalyzers(t *testing.T) {
 	}
 }
 
-// TestRunAnalyzersWithCategory teste runAnalyzers avec une catégorie
+// TestRunAnalyzersWithCategory teste runAnalyzers avec différentes catégories.
 func Test_runAnalyzersWithCategory(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
-
-	// Tester avec une catégorie valide
-	Category = "func"
-	defer func() { Category = "" }()
-
-	pkgs := loadPackages([]string{"../../../pkg/formatter"})
-	diagnostics := runAnalyzers(pkgs)
-	_ = diagnostics
-
-	// Tester avec une catégorie invalide
-	Category = "invalid"
-
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-	defer func() {
-		os.Stderr = oldStderr
-	}()
-
-	exitCode, didExit := catchExitInCmd(t, func() {
-		runAnalyzers(pkgs)
-	})
-
-	w.Close()
-	r.Close()
-
-	if !didExit {
-		t.Error("Expected runAnalyzers to exit with invalid category")
+	tests := []struct {
+		name         string
+		category     string
+		expectExit   bool
+		expectedCode int
+	}{
+		{
+			name:       "valid func category",
+			category:   "func",
+			expectExit: false,
+		},
+		{
+			name:         "invalid category should exit",
+			category:     "invalid",
+			expectExit:   true,
+			expectedCode: 1,
+		},
 	}
 
-	if exitCode != 1 {
-		t.Errorf("Expected exit code 1, got %d", exitCode)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
+
+			Category = tt.category
+			defer func() { Category = "" }()
+
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+			defer func() {
+				os.Stderr = oldStderr
+			}()
+
+			pkgs := loadPackages([]string{"../../../pkg/formatter"})
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				runAnalyzers(pkgs)
+			})
+
+			w.Close()
+			r.Close()
+
+			// Vérification comportement
+			if tt.expectExit && (!didExit || exitCode != tt.expectedCode) {
+				t.Errorf("Expected exit=%v code=%d, got exit=%v code=%d",
+					tt.expectExit, tt.expectedCode, didExit, exitCode)
+			}
+		})
 	}
 }
 
@@ -430,66 +434,80 @@ func Test_runAnalyzersVerboseMultiplePackages(t *testing.T) {
 	}
 }
 
-// TestRunAnalyzersWithError teste runAnalyzers avec un analyzer qui retourne une erreur
+// TestRunAnalyzersWithError teste runAnalyzers avec différents packages.
 func Test_runAnalyzersWithError(t *testing.T) {
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-
-	// On utilise un vrai package - si un analyzer échoue, l'erreur sera affichée mais le programme continue
-	pkgs := loadPackages([]string{"../../../pkg/formatter"})
-	diagnostics := runAnalyzers(pkgs)
-
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-	os.Stderr = oldStderr
-
-	// Vérification: diagnostics doit être non nil
-	if diagnostics == nil {
-		t.Error("runAnalyzers returned nil diagnostics")
+	tests := []struct {
+		name     string
+		packages []string
+	}{
+		{
+			name:     "formatter package should work",
+			packages: []string{"../../../pkg/formatter"},
+		},
 	}
-	// Vérification: la fonction ne doit pas paniquer
-	t.Log("runAnalyzers completed without panic")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
+			pkgs := loadPackages(tt.packages)
+			diagnostics := runAnalyzers(pkgs)
+
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
+
+			// Vérification: diagnostics doit être non nil
+			if diagnostics == nil {
+				t.Error("runAnalyzers returned nil diagnostics")
+			}
+		})
+	}
 }
 
-// TestFilterDiagnostics teste le filtrage des diagnostics
+// TestFilterDiagnostics teste le filtrage des diagnostics.
 func Test_filterDiagnostics(t *testing.T) {
-	fset := token.NewFileSet()
-
-	diagnostics := []diagWithFset{
+	tests := []struct {
+		name            string
+		files           []string
+		expectedCount   int
+		expectedMessage string
+	}{
 		{
-			diag: analysis.Diagnostic{
-				Pos:     fset.AddFile("test.go", -1, 100).Pos(0),
-				Message: "test message",
-			},
-			fset: fset,
-		},
-		{
-			diag: analysis.Diagnostic{
-				Pos:     fset.AddFile("/.cache/go-build/test.go", -1, 100).Pos(0),
-				Message: "cache message",
-			},
-			fset: fset,
-		},
-		{
-			diag: analysis.Diagnostic{
-				Pos:     fset.AddFile("/tmp/test.go", -1, 100).Pos(0),
-				Message: "tmp message",
-			},
-			fset: fset,
+			name:            "filters cache and tmp files",
+			files:           []string{"test.go", "/.cache/go-build/test.go", "/tmp/test.go"},
+			expectedCount:   1,
+			expectedMessage: "msg-0",
 		},
 	}
 
-	filtered := filterDiagnostics(diagnostics)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			diagnostics := make([]diagWithFset, len(tt.files))
 
-	if len(filtered) != 1 {
-		t.Errorf("Expected 1 diagnostic after filtering, got %d", len(filtered))
-	}
+			for i, file := range tt.files {
+				diagnostics[i] = diagWithFset{
+					diag: analysis.Diagnostic{
+						Pos:     fset.AddFile(file, -1, 100).Pos(0),
+						Message: "msg-" + string(rune('0'+i)),
+					},
+					fset: fset,
+				}
+			}
 
-	if filtered[0].diag.Message != "test message" {
-		t.Errorf("Expected 'test message', got '%s'", filtered[0].diag.Message)
+			filtered := filterDiagnostics(diagnostics)
+
+			// Vérification unique
+			if len(filtered) != tt.expectedCount || filtered[0].diag.Message != tt.expectedMessage {
+				t.Errorf("Expected %d diagnostics with message %q, got %d",
+					tt.expectedCount, tt.expectedMessage, len(filtered))
+			}
+		})
 	}
 }
 

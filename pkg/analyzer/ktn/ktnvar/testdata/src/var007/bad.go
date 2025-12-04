@@ -1,131 +1,93 @@
 // Bad examples for the var007 test case.
 package var007
 
-// Bad: Slices created without capacity when it could be known
+import (
+	"bytes"
+	"strings"
+)
 
 // Constantes pour les tests
 const (
-	MAX_SIZE         int = 50
-	SMALL_LOOP_COUNT int = 20
+	BAD_LOOP_COUNT_LARGE int = 100
+	BAD_LOOP_COUNT_SMALL int = 50
 )
 
-// badMakeStringSlice creates a string slice without capacity
+// badStringsBuilderNoGrow creates a strings.Builder without Grow.
 //
 // Returns:
-//   - []string: slice without preallocated capacity
-func badMakeStringSlice() []string {
-	// Bad: make without capacity argument
-	items := make([]string, 0)
-	// Retour de la fonction
-	return items
-}
+//   - string: concatenated result
+func badStringsBuilderNoGrow() string {
+	// Bad: composite literal without Grow() call
+	sb := strings.Builder{}
 
-// badMakeWithoutCapacity creates a slice using make without capacity
-//
-// Returns:
-//   - []string: slice without preallocated capacity
-func badMakeWithoutCapacity() []string {
-	// Bad: make without capacity argument
-	result := make([]string, 0)
-	// Retour de la fonction
-	return result
-}
-
-// badMakeInLoop creates a slice without capacity in loop
-//
-// Returns:
-//   - []int: slice without preallocated capacity
-func badMakeInLoop() []int {
-	// Bad: Known size but no capacity
-	numbers := make([]int, 0)
-	// Itération sur les éléments
-	for i := range MAX_SIZE {
-		numbers = append(numbers, i)
+	// Iteration over data to append
+	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
+		sb.WriteString("item")
 	}
-	// Retour de la fonction
-	return numbers
+
+	// Return the result
+	return sb.String()
 }
 
-// badMakeFloatSlice creates a float slice without capacity
+// badBytesBufferNoGrow creates a bytes.Buffer without Grow.
 //
 // Returns:
-//   - []float64: slice without preallocated capacity
-func badMakeFloatSlice() []float64 {
-	// Bad: make for float64 without capacity
-	values := make([]float64, 0)
-	// Retour de la fonction
-	return values
+//   - []byte: concatenated result
+func badBytesBufferNoGrow() []byte {
+	// Bad: composite literal without Grow() call
+	buf := bytes.Buffer{}
+
+	// Iteration over data to append
+	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
+		buf.WriteString("item")
+	}
+
+	// Return the result
+	return buf.Bytes()
 }
 
-// badMakeInterfaceSlice creates an interface slice without capacity
+// badShortFormBuilder uses short form without Grow.
 //
 // Returns:
-//   - []any: interface slice without capacity
-func badMakeInterfaceSlice() []any {
-	// Bad: make for any without capacity
-	items := make([]any, 0)
-	// Retour de la fonction
-	return items
+//   - string: concatenated result
+func badShortFormBuilder() string {
+	// Bad: short declaration without Grow
+	sb := strings.Builder{}
+
+	// Iteration over data to append
+	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
+		sb.WriteString("x")
+	}
+
+	// Return the result
+	return sb.String()
 }
 
-// Item represents a test item with a single value field.
-// This struct is used for testing slice allocation patterns.
-type Item struct {
-	value int
-}
-
-// badMakeStructSlice creates a slice of structs without capacity
+// badShortFormBuffer uses short form bytes.Buffer without Grow.
 //
 // Returns:
-//   - []Item: slice of structs without capacity
-func badMakeStructSlice() []Item {
-	// Bad: make for struct slice without capacity
-	items := make([]Item, 0)
-	// Retour de la fonction
-	return items
-}
+//   - []byte: concatenated result
+func badShortFormBuffer() []byte {
+	// Bad: short declaration without Grow
+	buf := bytes.Buffer{}
 
-// badMakeByteSlice creates a byte slice without capacity
-//
-// Returns:
-//   - []byte: byte slice without capacity
-func badMakeByteSlice() []byte {
-	// Bad: Byte slice without capacity
-	buffer := make([]byte, 0)
-	// Retour de la fonction
-	return buffer
-}
+	// Iteration over data to append
+	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
+		buf.Write([]byte("x"))
+	}
 
-// badEmptyLiteralWithAppend creates empty literal then appends
-//
-// Returns:
-//   - []int: slice that should use make with capacity
-func badEmptyLiteralWithAppend() []int {
-	// Bad: make([]T, 0) without capacity when size could be known
-	numbers := make([]int, 0)
-	// Ajout d'éléments
-	numbers = append(numbers, SMALL_LOOP_COUNT)
-	numbers = append(numbers, MAX_SIZE)
-	// Retour de la fonction
-	return numbers
+	// Return the result
+	return buf.Bytes()
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badMakeStringSlice
-	badMakeStringSlice()
-	// Appel de badMakeWithoutCapacity
-	badMakeWithoutCapacity()
-	// Appel de badMakeInLoop
-	badMakeInLoop()
-	// Appel de badMakeFloatSlice
-	badMakeFloatSlice()
-	// Appel de badMakeInterfaceSlice
-	badMakeInterfaceSlice()
-	// Appel de badMakeStructSlice
-	badMakeStructSlice()
-	// Appel de badMakeByteSlice
-	badMakeByteSlice()
-	// Appel de badEmptyLiteralWithAppend
-	badEmptyLiteralWithAppend()
+	// Appel de badStringsBuilderNoGrow
+	badStringsBuilderNoGrow()
+	// Appel de badBytesBufferNoGrow
+	badBytesBufferNoGrow()
+	// Appel de badShortFormBuilder
+	badShortFormBuilder()
+	// Appel de badShortFormBuffer
+	badShortFormBuffer()
 }

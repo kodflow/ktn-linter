@@ -1,189 +1,199 @@
 // Good examples for the func012 test case.
 package func012
 
-const (
-	// MULTIPLIER_DOUBLE constante pour doubler une valeur
-	MULTIPLIER_DOUBLE int = 2
-	// MULTIPLIER_TRIPLE constante pour tripler une valeur
-	MULTIPLIER_TRIPLE int = 3
-	// MAX_LOOP_ITERATIONS nombre maximum d'itérations de boucle
-	MAX_LOOP_ITERATIONS int = 10
-	// MODULO_EVEN modulo pour vérifier les nombres pairs
-	MODULO_EVEN int = 2
-)
+import "unsafe"
 
-// checkPositive vérifie si un nombre est positif
-//
-// Params:
-//   - x: nombre à vérifier
+// NoNamedReturns vérifie le cas sans returns nommés
 //
 // Returns:
-//   - string: "positive" ou "negative"
-func checkPositive(x int) string {
-	// Vérification si positif
-	if x > 0 {
-		// Retour cas positif
-		return "positive"
-	}
-	// Retour cas négatif ou zéro
-	return "negative"
+//   - int: résultat
+func NoNamedReturns() int {
+	// Retour de 1
+	return 1
 }
 
-// processValue traite une valeur en la doublant si positive
-//
-// Params:
-//   - val: valeur à traiter
+// ShortWithNakedReturn utilise naked return car courte
 //
 // Returns:
-//   - int: 0 si négatif, sinon valeur doublée
-func processValue(val int) int {
-	// Vérification si négatif
-	if val < 0 {
-		// Retour zéro pour valeur négative
-		return 0
-	}
-	// Retour valeur doublée
-	return val * MULTIPLIER_DOUBLE
+//   - result: résultat
+func ShortWithNakedReturn() (result int) {
+	result = 1
+	// Retour naked autorisé car < 5 lignes
+	return
 }
 
-// findMax trouve le maximum entre deux nombres
-//
-// Params:
-//   - a: premier nombre
-//   - b: deuxième nombre
+// ExplicitReturn utilise return explicite
 //
 // Returns:
-//   - int: le maximum des deux nombres
-func findMax(a, b int) int {
-	// Comparaison a > b
-	if a > b {
-		// Retour a si supérieur
-		return a
-	}
-	// Retour b sinon
-	return b
+//   - result: résultat
+//   - err: erreur potentielle
+func ExplicitReturn() (result int, err error) {
+	result = 1
+	err = nil
+	// Retour explicite
+	return result, err
 }
 
-// loopExample illustre l'utilisation de continue sans else
-func loopExample() {
-	// Boucle sur les 10 premières valeurs
-	for i := 0; i < MAX_LOOP_ITERATIONS; i++ {
-		// Vérification si pair
-		if i%MODULO_EVEN == 0 {
-			// Continue si pair
-			continue
-		}
-		// Utilisation de la valeur impaire
-		_ = i
-	}
-}
-
-// switchExample illustre l'utilisation de break sans else
-//
-// Params:
-//   - x: valeur initiale
-func switchExample(x int) {
-	// Boucle infinie avec condition de sortie
-	for {
-		// Vérification condition de sortie
-		if x > MAX_LOOP_ITERATIONS {
-			// Sortie de boucle
-			break
-		}
-		// Incrémentation
-		x++
-	}
-}
-
-// validateInput valide une entrée
-//
-// Params:
-//   - input: chaîne à valider
+// ShortFourLines a 4 lignes donc naked return OK
 //
 // Returns:
-//   - error: erreur de validation ou nil
-func validateInput(input string) error {
-	// Vérification si vide
-	if input == "" {
-		// Retour nil si vide
-		return nil
-	}
-	// Retour nil pour entrée valide
-	return nil
+//   - x: valeur calculée
+func ShortFourLines() (x int) {
+	x = 1
+	x = x + 1
+	x = x + 1
+	// Retour naked autorisé
+	return
 }
 
-// complexLogic applique une logique avec else acceptable
-//
-// Params:
-//   - x: nombre à traiter
+// MultipleExplicit retourne explicitement plusieurs valeurs
 //
 // Returns:
-//   - int: résultat après transformation
-func complexLogic(x int) int {
-	// Vérification si positif
-	if x > 0 {
-		// Doublement si positif
-		x = x * MULTIPLIER_DOUBLE
-	} else {
-		// Triplement si négatif ou nul
-		x = x * MULTIPLIER_TRIPLE
-	}
-	// Retour résultat transformé
-	return x
+//   - a: premier entier
+//   - b: chaîne
+//   - c: booléen
+func MultipleExplicit() (a int, b string, c bool) {
+	a = 1
+	b = "test"
+	c = true
+	// Retour explicite
+	return a, b, c
 }
 
-// nestedConditions gère des conditions imbriquées avec early returns
-//
-// Params:
-//   - a: premier nombre
-//   - b: deuxième nombre
+// NoReturnValues n'a pas de valeur de retour
+func NoReturnValues() {
+	x := 1
+	_ = x
+}
+
+// UnnamedReturn utilise return sans nom
 //
 // Returns:
-//   - int: résultat selon les conditions
-func nestedConditions(a, b int) int {
-	// Vérification si a positif
-	if a > 0 {
-		// Vérification si b positif
-		if b > 0 {
-			// Retour somme si les deux positifs
-			return a + b
-		}
-		// Retour a si seul a positif
-		return a
-	}
-	// Retour b si a non positif
-	return b
+//   - int: valeur
+func UnnamedReturn() int {
+	// Retour de 1
+	return 1
 }
 
-// emptyIfBody teste les blocs if vides (edge case)
+// TestNakedReturn est exempté car fonction test
 //
 // Params:
-//   - x: valeur à tester
-func emptyIfBody(x int) {
-	// Bloc if vide (ne déclenche pas KTN-FUNC-012)
-	if x > 0 {
-	}
-	// Retour de la fonction
+//   - t: paramètre de test
+//
+// Returns:
+//   - result: résultat
+func TestNakedReturn(t int) (result int) {
+	result = 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car test
+	return
 }
+
+// BenchmarkNakedReturn est exempté car fonction benchmark
+//
+// Params:
+//   - b: paramètre de benchmark
+//
+// Returns:
+//   - result: résultat
+func BenchmarkNakedReturn(b int) (result int) {
+	result = 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car benchmark
+	return
+}
+
+// Calculator est une interface de test.
+// Utilisée pour démontrer l'utilisation d'interfaces.
+type Calculator interface {
+	Calculate() (int, error)
+}
+
+// simpleCalculator implémente Calculator
+type simpleCalculator struct{}
+
+// Calculate implémente l'interface Calculator
+//
+// Returns:
+//   - int: résultat du calcul
+//   - error: erreur éventuelle
+func (s simpleCalculator) Calculate() (int, error) {
+	// Retour du résultat
+	return 0, nil
+}
+
+// useCalculator utilise l'interface Calculator
+//
+// Params:
+//   - calc: calculateur à utiliser
+//
+// Returns:
+//   - int: résultat
+//   - error: erreur éventuelle
+func useCalculator(calc Calculator) (int, error) {
+	// Utilisation du calculateur
+	return calc.Calculate()
+}
+
+// SingleUnnamedReturn retourne une valeur sans nom
+//
+// Returns:
+//   - int: valeur
+func SingleUnnamedReturn() int {
+	// Retour de 1
+	return 1
+}
+
+// MultipleUnnamedReturns retourne plusieurs valeurs sans nom
+//
+// Returns:
+//   - int: entier
+//   - string: chaîne
+//   - bool: booléen
+func MultipleUnnamedReturns() (int, string, bool) {
+	// Retour de plusieurs valeurs
+	return 1, "test", true
+}
+
+// Prevent "unsafe imported but not used" error
+var _ unsafe.Pointer = unsafe.Pointer(nil)
+
+// externalLinkedFunc est une fonction externe liée
+//
+// Params:
+//   - v: valeur d'entrée
+//
+// Returns:
+//   - result: pointeur résultat
+//
+//go:linkname externalLinkedFunc runtime.convT64
+func externalLinkedFunc(v int) (result unsafe.Pointer)
+
+// anotherExternal est une autre fonction externe
+//
+// Params:
+//   - v: chaîne d'entrée
+//
+// Returns:
+//   - ptr: pointeur résultat
+//
+//go:linkname anotherExternal runtime.convTstring
+func anotherExternal(v string) (ptr unsafe.Pointer)
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de checkPositive
-	_ = checkPositive(0)
-	// Appel de processValue
-	_ = processValue(0)
-	// Appel de findMax
-	_ = findMax(1, 0)
-	// Appel de loopExample
-	loopExample()
-	// Appel de switchExample
-	switchExample(0)
-	// Appel de validateInput
-	_ = validateInput("")
-	// Appel de complexLogic
-	_ = complexLogic(0)
-	// Appel de nestedConditions
-	_ = nestedConditions(1, 0)
-	// Appel de emptyIfBody
-	emptyIfBody(0)
+	// Appel de useCalculator
+	_ = useCalculator(Calculator{})
+	// Appel de externalLinkedFunc
+	_ = externalLinkedFunc(0)
+	// Appel de anotherExternal
+	_ = anotherExternal("")
 }

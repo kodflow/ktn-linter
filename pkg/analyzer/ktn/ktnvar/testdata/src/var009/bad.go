@@ -1,68 +1,105 @@
 // Bad examples for the var009 test case.
 package var009
 
+// Constantes pour les tests
 const (
-	// USER_ID_TWO est un ID d'utilisateur
-	USER_ID_TWO int = 2
-	// TEST_ID_ONE est un ID de test
-	TEST_ID_ONE int = 1
-	// TEST_INDEX_ZERO est un index de test
-	TEST_INDEX_ZERO int = 0
+	LOOP_COUNT_TEN    int = 10
+	LOOP_COUNT_FIVE   int = 5
+	SLICE_VALUE_ONE   int = 1
+	SLICE_VALUE_TWO   int = 2
+	SLICE_VALUE_THREE int = 3
+	NESTED_SLICE_SIZE int = 10
 )
 
-// badInitUsers creates a map without capacity.
-//
-// Returns:
-//   - map[string]int: map des utilisateurs
-func badInitUsers() map[string]int {
-	// Map without capacity hint - VIOLATES VAR-009
-	users := make(map[string]int)
-	users["alice"] = TEST_ID_ONE
-	users["bob"] = USER_ID_TWO
-	// Retour du résultat
-	return users
+// badLoopSliceAlloc crée un slice à l'intérieur d'une boucle for.
+func badLoopSliceAlloc() {
+	// Allocation dans boucle for
+	for index := 0; index < LOOP_COUNT_TEN; index++ {
+		dataSlice := make([]int, 0, LOOP_COUNT_TEN)
+		_ = dataSlice
+	}
 }
 
-// badInitConfig creates a map without capacity in var declaration.
-func badInitConfig() {
-	// Map without capacity hint - VIOLATES VAR-009
-	config := make(map[string]string)
-	config["host"] = "localhost"
-	// Utilisation de la config
-	_ = config
+// badLoopMapAlloc crée une map à l'intérieur d'une boucle for.
+func badLoopMapAlloc() {
+	// Allocation dans boucle for
+	for loopIndex := 0; loopIndex < LOOP_COUNT_TEN; loopIndex++ {
+		cacheMap := make(map[string]int, LOOP_COUNT_TEN)
+		_ = cacheMap
+	}
 }
 
-// badProcessData creates multiple maps without capacity.
-func badProcessData() {
-	// Multiple maps without capacity hints - VIOLATES VAR-009 (3 times)
-	data := make(map[int]string)
-	cache := make(map[string]bool)
-	index := make(map[int][]string)
-
-	// Utilisation des maps
-	data[TEST_ID_ONE] = "test"
-	cache["key"] = true
-	index[TEST_INDEX_ZERO] = []string{"a", "b"}
+// badRangeSliceAlloc crée un slice à l'intérieur d'une boucle range.
+func badRangeSliceAlloc() {
+	items := []int{SLICE_VALUE_ONE, SLICE_VALUE_TWO, SLICE_VALUE_THREE}
+	// Allocation dans boucle range
+	for _, itemValue := range items {
+		stringBuffer := make([]string, 0, LOOP_COUNT_TEN)
+		_ = itemValue
+		_ = stringBuffer
+	}
 }
 
-// badNestedMap creates a map of maps without capacity.
-func badNestedMap() {
-	// Map without capacity hint - VIOLATES VAR-009
-	nested := make(map[string]map[int]string)
-	// Inner map also without capacity - VIOLATES VAR-009
-	nested["key"] = make(map[int]string)
-	// Utilisation de la map
-	_ = nested
+// badRangeMapAlloc crée une map à l'intérieur d'une boucle range.
+func badRangeMapAlloc() {
+	items := []string{"a", "b", "c"}
+	// Allocation dans boucle range
+	for _, stringItem := range items {
+		boolMap := make(map[string]bool, LOOP_COUNT_TEN)
+		_ = stringItem
+		_ = boolMap
+	}
+}
+
+// badNestedLoopAlloc crée un slice dans une boucle imbriquée.
+func badNestedLoopAlloc() {
+	// Allocation dans boucle imbriquée
+	for outerIndex := 0; outerIndex < LOOP_COUNT_FIVE; outerIndex++ {
+		// Boucle interne avec allocation
+		for innerIndex := 0; innerIndex < LOOP_COUNT_FIVE; innerIndex++ {
+			tempSlice := make([]int, 0, NESTED_SLICE_SIZE)
+			_ = tempSlice
+			_ = innerIndex
+		}
+		_ = outerIndex
+	}
+}
+
+// badVarDeclInLoop crée un slice avec var dans une boucle.
+func badVarDeclInLoop() {
+	// Allocation avec var dans boucle
+	for varIndex := 0; varIndex < LOOP_COUNT_TEN; varIndex++ {
+		dataArray := make([]int, 0, SLICE_VALUE_THREE)
+		dataArray = append(dataArray, SLICE_VALUE_ONE, SLICE_VALUE_TWO, SLICE_VALUE_THREE)
+		_ = dataArray
+		_ = varIndex
+	}
+}
+
+// badVarMapDeclInLoop crée une map avec var dans une boucle.
+func badVarMapDeclInLoop() {
+	// Allocation avec var dans boucle
+	for mapIndex := 0; mapIndex < LOOP_COUNT_TEN; mapIndex++ {
+		stringCache := make(map[string]int, LOOP_COUNT_TEN)
+		_ = stringCache
+		_ = mapIndex
+	}
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badInitUsers
-	badInitUsers()
-	// Appel de badInitConfig
-	badInitConfig()
-	// Appel de badProcessData
-	badProcessData()
-	// Appel de badNestedMap
-	badNestedMap()
+	// Appel de badLoopSliceAlloc
+	badLoopSliceAlloc()
+	// Appel de badLoopMapAlloc
+	badLoopMapAlloc()
+	// Appel de badRangeSliceAlloc
+	badRangeSliceAlloc()
+	// Appel de badRangeMapAlloc
+	badRangeMapAlloc()
+	// Appel de badNestedLoopAlloc
+	badNestedLoopAlloc()
+	// Appel de badVarDeclInLoop
+	badVarDeclInLoop()
+	// Appel de badVarMapDeclInLoop
+	badVarMapDeclInLoop()
 }

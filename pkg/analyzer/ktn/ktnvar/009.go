@@ -10,10 +10,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer009 detects map allocations without capacity hints
+// Analyzer009 checks for slice/map allocations inside loops
 var Analyzer009 = &analysis.Analyzer{
 	Name:     "ktnvar009",
-	Doc:      "KTN-VAR-009: Préallouer maps avec capacité si connue",
+	Doc:      "KTN-VAR-009: Évite les allocations de slices/maps dans les boucles chaudes",
 	Run:      runVar009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -30,37 +30,156 @@ func runVar009(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.CallExpr)(nil),
+		(*ast.ForStmt)(nil),
+		(*ast.RangeStmt)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		callExpr := n.(*ast.CallExpr)
-
-		// Vérification que c'est un appel à "make"
-		if !utils.IsMakeCall(callExpr) {
-			// Continue traversing AST nodes
+		// Récupération du corps de la boucle
+		var body *ast.BlockStmt
+		// Vérification du type de boucle
+		switch loop := n.(type) {
+		// Cas d'une boucle for classique
+		case *ast.ForStmt:
+			// Boucle for classique
+			body = loop.Body
+		// Cas d'une boucle range
+		case *ast.RangeStmt:
+			// Boucle range
+			body = loop.Body
+		// Cas par défaut
+		default:
+			// Type de boucle non supporté
 			return
 		}
 
-		// Vérification que le type est une map
-		if len(callExpr.Args) == 0 || !utils.IsMapTypeWithPass(pass, callExpr.Args[0]) {
-			// Continue traversing AST nodes
-			return
-		}
-
-		// Vérification que make a exactement 1 argument (type seulement)
-		if len(callExpr.Args) != 1 {
-			// make() avec capacité fournie, conforme
-			return
-		}
-
-		// Signaler l'erreur
-		pass.Reportf(
-			callExpr.Pos(),
-			"KTN-VAR-009: préallouer la map avec une capacité (make(map[K]V, capacity))",
-		)
+		// Parcours des instructions du corps
+		checkLoopBodyForAlloc(pass, body)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// checkLoopBodyForAlloc vérifie les allocations dans le corps d'une boucle.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - body: corps de la boucle à vérifier
+func checkLoopBodyForAlloc(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Vérification du corps de la boucle
+	if body == nil {
+		// Corps de boucle vide
+		return
+	}
+
+	// Parcours des instructions
+	for _, stmt := range body.List {
+		checkStmtForAlloc(pass, stmt)
+	}
+}
+
+// checkStmtForAlloc vérifie une instruction pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: instruction à vérifier
+func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
+	// Vérification du type d'instruction
+	switch s := stmt.(type) {
+	// Cas d'une affectation
+	case *ast.AssignStmt:
+		// Vérification des affectations
+		checkAssignForAlloc(pass, s)
+	// Cas d'une déclaration
+	case *ast.DeclStmt:
+		// Vérification des déclarations
+		checkDeclForAlloc(pass, s)
+		// Note: les boucles imbriquées sont déjà gérées par Preorder
+	}
+}
+
+// checkAssignForAlloc vérifie une affectation pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - assign: affectation à vérifier
+func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
+	// Parcours des valeurs affectées
+	for _, rhs := range assign.Rhs {
+		// Vérification si allocation de slice ou map
+		if isSliceOrMapAlloc(rhs) {
+			// Allocation de slice/map détectée
+			pass.Reportf(
+				rhs.Pos(),
+				"KTN-VAR-009: évitez d'allouer des slices/maps dans une boucle",
+			)
+		}
+	}
+}
+
+// checkDeclForAlloc vérifie une déclaration pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - decl: déclaration à vérifier
+func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
+	genDecl, ok := decl.Decl.(*ast.GenDecl)
+	// Vérification du type de déclaration
+	if !ok {
+		// Pas une déclaration générale
+		return
+	}
+
+	var valueSpec *ast.ValueSpec
+	// Parcours des spécifications
+	for _, spec := range genDecl.Specs {
+		valueSpec, ok = spec.(*ast.ValueSpec)
+		// Vérification de la spécification de valeur
+		if !ok {
+			// Pas une spécification de valeur
+			continue
+		}
+
+		// Parcours des valeurs
+		for _, value := range valueSpec.Values {
+			// Vérification si allocation de slice ou map
+			if isSliceOrMapAlloc(value) {
+				// Allocation de slice/map détectée
+				pass.Reportf(
+					value.Pos(),
+					"KTN-VAR-009: évitez d'allouer des slices/maps dans une boucle",
+				)
+			}
+		}
+	}
+}
+
+// isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si allocation détectée
+func isSliceOrMapAlloc(expr ast.Expr) bool {
+	// Vérification du type d'expression
+	switch e := expr.(type) {
+	// Cas d'un littéral composite
+	case *ast.CompositeLit:
+		// Vérification du type composite
+		if utils.IsSliceOrMapType(e.Type) {
+			// Allocation de slice/map sous forme de littéral
+			return true
+		}
+	// Cas d'un appel de fonction
+	case *ast.CallExpr:
+		// Vérification des appels make()
+		if utils.IsMakeCall(e) {
+			// Appel à make() détecté
+			return true
+		}
+	}
+	// Pas d'allocation détectée
+	return false
 }

@@ -1,167 +1,216 @@
-// Good examples for the func006 test case.
+// Package func006 contient des exemples de fonctions avec différents nombres de paramètres.
 package func006
 
-// Good examples: error is always last
-
-// GoodSingleError returns only an error (always compliant).
-//
-// Returns:
-//   - error: nil on success
-func GoodSingleError() error {
-	// Success case
-	return nil
+// processNoParams fonction sans paramètre
+func processNoParams() {
+	// Fonction vide
 }
 
-// GoodStringError returns a string and an error.
-//
-// Returns:
-//   - string: empty string
-//   - error: nil on success
-func GoodStringError() (string, error) {
-	// Success case with empty string
-	return "", nil
-}
-
-// GoodMultipleReturnsError returns multiple values with error last.
-//
-// Returns:
-//   - int: zero value
-//   - string: empty string
-//   - error: nil on success
-func GoodMultipleReturnsError() (int, string, error) {
-	// Success case with zero values
-	return 0, "", nil
-}
-
-// GoodBoolError returns a boolean and an error.
-//
-// Returns:
-//   - bool: true on success
-//   - error: nil on success
-func GoodBoolError() (bool, error) {
-	// Success case with true
-	return true, nil
-}
-
-// GoodNoError returns a string without error.
-//
-// Returns:
-//   - string: empty string
-func GoodNoError() string {
-	// Return empty string
-	return ""
-}
-
-// GoodNoReturn performs an operation without returning anything.
-func GoodNoReturn() {
-	// Nothing to do
-}
-
-// GoodMultipleValues returns multiple values without error.
-//
-// Returns:
-//   - int: zero value
-//   - string: empty string
-//   - bool: false
-func GoodMultipleValues() (int, string, bool) {
-	// Return zero values
-	return 0, "", false
-}
-
-// GoodType est un type de test pour les méthodes.
-// Il démontre la bonne utilisation des retours d'erreur.
-type GoodType struct{}
-
-// GoodTypeInterface définit les méthodes publiques de GoodType.
-type GoodTypeInterface interface {
-	GoodMethod() (string, error)
-}
-
-// NewGoodType crée une nouvelle instance de GoodType.
-//
-// Returns:
-//   - *GoodType: nouvelle instance
-func NewGoodType() *GoodType {
-	// Retour de la nouvelle instance
-	return &GoodType{}
-}
-
-// GoodMethod returns a string and an error with error last.
-//
-// Returns:
-//   - string: empty string
-//   - error: nil on success
-func (g *GoodType) GoodMethod() (string, error) {
-	// Success case with empty string
-	return "", nil
-}
-
-// goodFunc is a function literal that returns an int and an error.
-var goodFunc func() (int, error) = func() (int, error) {
-	// Success case with zero
-	return 0, nil
-}
-
-// GoodClosure returns a closure that returns an error.
-//
-// Returns:
-//   - func() error: a function that returns nil error
-func GoodClosure() func() error {
-	// Return closure that always succeeds
-	return func() error {
-		// Success case
-		return nil
-	}
-}
-
-// CustomError represents a custom error type.
-// Implémente l'interface error pour fournir des erreurs personnalisées.
-type CustomError struct {
-	msg string
-}
-
-// CustomErrorInterface définit les méthodes de CustomError.
-type CustomErrorInterface interface {
-	Error() string
-}
-
-// NewCustomError crée une nouvelle instance de CustomError.
+// calculateOneParam fonction avec 1 paramètre
 //
 // Params:
-//   - msg: le message d'erreur
-//
-// Returns:
-//   - CustomError: nouvelle instance d'erreur
-func NewCustomError(msg string) CustomError {
-	// Retour de la nouvelle instance
-	return CustomError{msg: msg}
+//   - a: paramètre de test
+func calculateOneParam(a int) {
+	// Utilisation du paramètre
+	_ = a
 }
 
-// Error returns the error message.
+// buildFiveParams exactement 5 paramètres (à la limite)
 //
-// Returns:
-//   - string: the error message
-func (e CustomError) Error() string {
-	// Return stored message
-	return e.msg
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+func buildFiveParams(a, b, c, d, e int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e
 }
 
-// GoodCustomError returns a string and a custom error.
+// createFiveParamsMixed 5 paramètres de types différents
 //
-// Returns:
-//   - string: empty string
-//   - error: custom error with test message
-func GoodCustomError() (string, error) {
-	// Return custom error
-	return "", CustomError{msg: "test"}
+// Params:
+//   - a: entier
+//   - b: chaîne
+//   - c: booléen
+//   - d: flottant
+//   - e: slice
+func createFiveParamsMixed(a int, b string, c bool, d float64, e []int) {
+	// Utilisation des paramètres
+	_, _, _, _, _ = a, b, c, d, e
 }
 
-// GoodInterface returns an interface and a string (not error).
+// MyType structure de test pour les méthodes.
+// Utilisée pour démontrer les règles sur les paramètres de méthodes.
+type MyType struct{}
+
+// processMethodFourParams méthode avec 4 paramètres (le receiver ne compte pas)
 //
-// Returns:
-//   - any: nil value
-//   - string: empty string
-func GoodInterface() (any, string) {
-	// Return nil interface and empty string
-	return nil, ""
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+func (m MyType) processMethodFourParams(a, b, c, d int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d
 }
+
+const (
+	// ZERO_FLOAT constante pour les tests de type float64.
+	ZERO_FLOAT float64 = 0.0
+)
+
+// init appelle les fonctions privées pour éviter FUNC-014.
+func init() {
+	// Appel des fonctions privées pour éviter FUNC-014
+	processNoParams()
+	calculateOneParam(0)
+	buildFiveParams(0, 0, 0, 0, 0)
+	createFiveParamsMixed(0, "", false, ZERO_FLOAT, nil)
+	var m MyType
+	m.processMethodFourParams(0, 0, 0, 0)
+	formatThreeParams(0, 0, 0)
+	convertTwoParamsMixed(0, "")
+	validateFourParamsGrouped(0, 0, "", "")
+	convertWithVariadic(0, 0, 0, 0)
+}
+
+// TestWithManyParams les fonctions de test sont exemptées
+//
+// Params:
+//   - t: paramètre de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+func TestWithManyParams(t, a, b, c, d, e, f int) {
+	// Utilisation des paramètres
+	_ = t + a + b + c + d + e + f
+}
+
+// BenchmarkWithManyParams les fonctions de benchmark sont exemptées
+//
+// Params:
+//   - b: paramètre de test
+//   - a: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+//   - g: paramètre de test
+func BenchmarkWithManyParams(b, a, c, d, e, f, g int) {
+	// Utilisation des paramètres
+	_ = b + a + c + d + e + f + g
+}
+
+// ExampleWithManyParams les fonctions d'exemple sont exemptées
+//
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+//   - g: paramètre de test
+func ExampleWithManyParams(a, b, c, d, e, f, g int) {
+	// Utilisation des paramètres
+	_ = a + b + c + d + e + f + g
+}
+
+// FuzzWithManyParams les fonctions de fuzzing sont exemptées
+//
+// Params:
+//   - f: paramètre de test
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - g: paramètre de test
+func FuzzWithManyParams(f, a, b, c, d, e, g int) {
+	// Utilisation des paramètres
+	_ = f + a + b + c + d + e + g
+}
+
+// formatThreeParams fonction avec 3 paramètres
+//
+// Params:
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+func formatThreeParams(a, b, c int) {
+	// Utilisation des paramètres
+	_ = a + b + c
+}
+
+// convertTwoParamsMixed fonction avec 2 paramètres de types différents
+//
+// Params:
+//   - a: entier
+//   - b: chaîne
+func convertTwoParamsMixed(a int, b string) {
+	// Utilisation des paramètres
+	_, _ = a, b
+}
+
+// validateFourParamsGrouped fonction avec 4 paramètres groupés par type
+//
+// Params:
+//   - a: entier
+//   - b: entier
+//   - c: chaîne
+//   - d: chaîne
+func validateFourParamsGrouped(a, b int, c, d string) {
+	// Utilisation des paramètres
+	_, _, _, _ = a, b, c, d
+}
+
+// convertWithVariadic fonction variadique avec 5 paramètres (variadique compte pour 1)
+//
+// Params:
+//   - a: paramètre régulier
+//   - b: paramètre régulier
+//   - c: paramètre régulier
+//   - d: paramètre régulier
+//   - e: paramètre variadique
+func convertWithVariadic(a, b, c, d int, e ...string) {
+	// Utilisation des paramètres
+	_, _, _, _, _ = a, b, c, d, e
+}
+
+var (
+	// goodLiteralUnnamed fonction avec 5 paramètres non nommés
+	goodLiteralUnnamed func(int, string, bool, float64, []int) = func(int, string, bool, float64, []int) {
+		// Fonction vide
+	}
+
+	// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
+	goodLiteralFourUnnamed func(int, int, int, int) = func(int, int, int, int) {
+		// Fonction vide
+	}
+
+	// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
+	goodLiteralOneUnnamed func(int) = func(int) {
+		// Fonction vide
+	}
+
+	// goodLiteralNoParams fonction littérale sans paramètre
+	goodLiteralNoParams func() = func() {
+		// Fonction vide
+	}
+
+	// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
+	goodLiteralThreeUnnamed func(int, string, bool) = func(int, string, bool) {
+		// Fonction vide
+	}
+
+	// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
+	goodLiteralTwoUnnamed func(int, string) = func(int, string) {
+		// Fonction vide
+	}
+)

@@ -4,26 +4,33 @@ import "testing"
 
 // TestGetKnownInitialisms tests the functionality of the corresponding implementation.
 func TestGetKnownInitialisms(t *testing.T) {
-	initialisms := getKnownInitialisms()
-
-	// Verify some expected initialismsexist
-	expected := []string{"HTTP", "HTTPS", "URL", "API", "JSON", "XML"}
-	for _, exp := range expected {
-		found := false
-		for _, init := range initialisms {
-			if init == exp {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("Expected initialism %q not found in list", exp)
-		}
+	tests := []struct {
+		name     string
+		expected []string
+	}{
+		{name: "contains expected initialisms", expected: []string{"HTTP", "HTTPS", "URL", "API", "JSON", "XML"}},
 	}
 
-	// Verify list is not empty
-	if len(initialisms) == 0 {
-		t.Error("getKnownInitialisms() returned empty list")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initialisms := getKnownInitialisms()
+			if len(initialisms) == 0 {
+				t.Error("getKnownInitialisms() returned empty list")
+				return
+			}
+			for _, exp := range tt.expected {
+				found := false
+				for _, init := range initialisms {
+					if init == exp {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected initialism %q not found in list", exp)
+				}
+			}
+		})
 	}
 }
 
