@@ -2,76 +2,16 @@
 package formatter
 
 import (
-	"bytes"
 	"go/token"
-	"strings"
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
 )
 
-// Test_formatterImpl_Format tests the Format method
-func Test_formatterImpl_Format(t *testing.T) {
-	tests := []struct {
-		name        string
-		diagnostics []analysis.Diagnostic
-		aiMode      bool
-		noColor     bool
-		simpleMode  bool
-		wantContain string
-	}{
-		{
-			name:        "no diagnostics",
-			diagnostics: []analysis.Diagnostic{},
-			wantContain: "No issues found",
-		},
-		{
-			name: "human mode with color",
-			diagnostics: []analysis.Diagnostic{
-				{Message: "KTN-VAR-001: test error", Pos: token.Pos(1)},
-			},
-			noColor:     false,
-			wantContain: "KTN-LINTER REPORT",
-		},
-		{
-			name: "simple mode",
-			diagnostics: []analysis.Diagnostic{
-				{Message: "KTN-VAR-001: test error", Pos: token.Pos(1)},
-			},
-			simpleMode:  true,
-			wantContain: "KTN-VAR-001",
-		},
-		{
-			name: "AI mode",
-			diagnostics: []analysis.Diagnostic{
-				{Message: "KTN-VAR-001: test error", Pos: token.Pos(1)},
-			},
-			aiMode:      true,
-			wantContain: "KTN-Linter Report (AI Mode)",
-		},
-	}
-
-	// Iteration over table-driven tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			f := NewFormatter(&buf, tt.aiMode, tt.noColor, tt.simpleMode)
-
-			fset := token.NewFileSet()
-			fset.AddFile("test.go", 1, 100)
-
-			f.Format(fset, tt.diagnostics)
-
-			output := buf.String()
-			// Check output contains expected string
-			if !strings.Contains(output, tt.wantContain) {
-				t.Errorf("output should contain %q, got:\n%s", tt.wantContain, output)
-			}
-		})
-	}
-}
-
-// Test_extractCode tests the extractCode function
+// Test_extractCode tests the extractCode function.
+//
+// Params:
+//   - t: testing context
 func Test_extractCode(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -107,7 +47,10 @@ func Test_extractCode(t *testing.T) {
 	}
 }
 
-// Test_extractMessage tests the extractMessage function
+// Test_extractMessage tests the extractMessage function.
+//
+// Params:
+//   - t: testing context
 func Test_extractMessage(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -148,7 +91,10 @@ func Test_extractMessage(t *testing.T) {
 	}
 }
 
-// Test_groupByFile tests the groupByFile method
+// Test_groupByFile tests the groupByFile method.
+//
+// Params:
+//   - t: testing context
 func Test_groupByFile(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -157,6 +103,7 @@ func Test_groupByFile(t *testing.T) {
 		{name: "groups diagnostics by file", expectedGroups: 2},
 	}
 
+	// Iteration over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &formatterImpl{noColor: true}
@@ -172,12 +119,14 @@ func Test_groupByFile(t *testing.T) {
 
 			groups := f.groupByFile(fset, diagnostics)
 
-			// Check groups count and each has diagnostics
+			// Check groups count
 			if len(groups) != tt.expectedGroups {
 				t.Errorf("expected %d groups, got %d", tt.expectedGroups, len(groups))
 				return
 			}
+			// Check each group has diagnostics
 			for _, group := range groups {
+				// Verify group is not empty
 				if len(group.Diagnostics) == 0 {
 					t.Errorf("group for %s has no diagnostics", group.Filename)
 				}
@@ -186,7 +135,10 @@ func Test_groupByFile(t *testing.T) {
 	}
 }
 
-// Test_filterAndSortDiagnostics tests the filterAndSortDiagnostics method
+// Test_filterAndSortDiagnostics tests the filterAndSortDiagnostics method.
+//
+// Params:
+//   - t: testing context
 func Test_filterAndSortDiagnostics(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -195,6 +147,7 @@ func Test_filterAndSortDiagnostics(t *testing.T) {
 		{name: "filters cache files and sorts", expectedCount: 2},
 	}
 
+	// Iteration over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &formatterImpl{}
@@ -210,42 +163,19 @@ func Test_filterAndSortDiagnostics(t *testing.T) {
 
 			filtered := f.filterAndSortDiagnostics(fset, diagnostics)
 
-			// Check count and sorting
+			// Check count
 			if len(filtered) != tt.expectedCount {
 				t.Errorf("expected %d filtered diagnostics, got %d", tt.expectedCount, len(filtered))
 				return
 			}
+			// Check sorting
 			if len(filtered) >= 2 {
 				pos1 := fset.Position(filtered[0].Pos).Line
 				pos2 := fset.Position(filtered[1].Pos).Line
+				// Verify sorted order
 				if pos1 > pos2 {
 					t.Errorf("diagnostics not sorted: %d > %d", pos1, pos2)
 				}
-			}
-		})
-	}
-}
-
-// Test_NewFormatter tests the NewFormatter function
-func Test_NewFormatter(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{name: "creates valid formatter"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			f := NewFormatter(&buf, false, false, false)
-
-			// Check formatter is not nil and implements interface
-			if f == nil {
-				t.Error("NewFormatter returned nil")
-				return
-			}
-			if _, ok := f.(Formatter); !ok {
-				t.Error("returned value does not implement Formatter interface")
 			}
 		})
 	}

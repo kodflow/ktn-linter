@@ -149,9 +149,11 @@ func isPassthroughTest(funcDecl *ast.FuncDecl) bool {
 func checkForValidationSignal(n ast.Node) bool {
 	// Vérifier selon le type de nœud
 	switch node := n.(type) {
+	// Case: appel de fonction (t.Error, assert.Equal, etc.)
 	case *ast.CallExpr:
 		// Vérifier les appels de fonction
 		return checkCallForValidation(node)
+	// Case: expression binaire (==, !=, <, >, etc.)
 	case *ast.BinaryExpr:
 		// Vérifier les comparaisons
 		return isComparisonOperator(node.Op)
@@ -198,7 +200,9 @@ func checkCallForValidation(callExpr *ast.CallExpr) bool {
 func isComparisonOperator(op token.Token) bool {
 	// Vérifier les opérateurs de comparaison
 	switch op {
+	// Case: opérateurs de comparaison (==, !=, <, >, <=, >=)
 	case token.EQL, token.NEQ, token.LSS, token.GTR, token.LEQ, token.GEQ:
+		// C'est une comparaison
 		return true
 	}
 	// Pas une comparaison
