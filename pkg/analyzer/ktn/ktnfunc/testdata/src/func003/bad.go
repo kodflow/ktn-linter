@@ -117,6 +117,21 @@ func badValidateInput(input string) error {
 	}
 }
 
+// badPanicExample illustre else inutile après panic.
+//
+// Params:
+//   - x: valeur à vérifier
+func badPanicExample(x int) {
+	// Check if x is negative
+	if x < 0 {
+		// Panic for negative values
+		panic("negative value")
+	} else { // want "KTN-FUNC-003: else inutile après panic, utiliser early return"
+		// Process positive values
+		_ = x
+	}
+}
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de badCheckPositive
@@ -131,4 +146,6 @@ func init() {
 	badSwitchExample(0)
 	// Appel de badValidateInput
 	_ = badValidateInput("")
+	// Appel de badPanicExample
+	badPanicExample(1)
 }

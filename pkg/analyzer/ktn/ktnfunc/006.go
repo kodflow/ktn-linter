@@ -12,7 +12,7 @@ import (
 
 // Analyzer006 checks that functions don't have too many parameters
 const (
-	// MAX_PARAMS max params allowed in a function
+	// MAX_PARAMS max params allowed in a function (context.Context excluded)
 	MAX_PARAMS int = 5
 )
 
@@ -65,18 +65,8 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 			name = "function literal"
 		}
 
-		// Count total parameters
-		paramCount := 0
-		// Itération sur les éléments
-		for _, field := range funcType.Params.List {
-			// Each field can declare multiple params: func(a, b, c int)
-			if len(field.Names) > 0 {
-				paramCount += len(field.Names)
-			} else {
-				// Unnamed parameter (e.g., in interface or func literal)
-				paramCount++
-			}
-		}
+		// Count total parameters (excluding context.Context)
+		paramCount := countEffectiveParams(pass, funcType.Params)
 
 		// Vérification de la condition
 		if paramCount > MAX_PARAMS {
@@ -92,4 +82,41 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// countEffectiveParams counts parameters excluding context.Context.
+// context.Context is excluded because KTN-FUNC-002 already mandates it as first param.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - params: field list of function parameters
+//
+// Returns:
+//   - int: effective parameter count
+func countEffectiveParams(pass *analysis.Pass, params *ast.FieldList) int {
+	// Check for nil params
+	if params == nil {
+		// Retour 0 si pas de paramètres
+		return 0
+	}
+
+	count := 0
+	// Iterate over parameter fields
+	for _, field := range params.List {
+		// Skip context.Context parameters (including aliases)
+		if isContextTypeWithPass(pass, field.Type) {
+			continue
+		}
+
+		// Each field can declare multiple params: func(a, b, c int)
+		if len(field.Names) > 0 {
+			count += len(field.Names)
+		} else {
+			// Unnamed parameter (e.g., in interface or func literal)
+			count++
+		}
+	}
+
+	// Retour du compte effectif
+	return count
 }

@@ -1,6 +1,8 @@
 // Bad examples for the func006 test case.
 package func006
 
+import "context"
+
 // processSixParams dépasse la limite avec 6 paramètres
 //
 // Params:
@@ -106,6 +108,21 @@ var (
 	}
 )
 
+// processWithContextBad 7 params, context exclu = 6 effectifs (ERREUR)
+//
+// Params:
+//   - ctx: contexte (exclu du compte)
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+//   - f: paramètre de test
+func processWithContextBad(ctx context.Context, a, b, c, d, e, f int) { // want "KTN-FUNC-006: la fonction 'processWithContextBad' a 6 paramètres \\(max: 5\\)"
+	// Utilisation des paramètres
+	_, _, _, _, _, _, _ = ctx, a, b, c, d, e, f
+}
+
 // init utilise les fonctions privées
 func init() {
 	// Appel des fonctions
@@ -115,4 +132,5 @@ func init() {
 	createEightParams(0, "", "", false, false, false, 0, 0)
 	formatSixParams(0, 0, 0, 0, 0, 0)
 	convertWithVariadicBad(0, 0, 0, 0, 0)
+	processWithContextBad(nil, 0, 0, 0, 0, 0, 0)
 }

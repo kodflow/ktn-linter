@@ -15,6 +15,22 @@ const (
 	ARRAY_SIZE          int     = 10
 )
 
+// Constantes avec iota (bitflags) - ne doivent pas déclencher KTN-FUNC-009
+const (
+	FLAG_NONE  = 0
+	FLAG_READ  = 1 << iota
+	FLAG_WRITE // = 1 << 1
+	FLAG_EXEC  // = 1 << 2
+)
+
+// Constantes avec iota simple
+const (
+	LEVEL_DEBUG = iota
+	LEVEL_INFO
+	LEVEL_WARN
+	LEVEL_ERROR
+)
+
 // processSixItems utilise une constante nommée
 func processSixItems() {
 	items := [DEFAULT_ITEM_COUNT]int{}

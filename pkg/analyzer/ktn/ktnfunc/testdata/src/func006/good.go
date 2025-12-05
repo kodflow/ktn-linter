@@ -1,6 +1,8 @@
 // Package func006 contient des exemples de fonctions avec différents nombres de paramètres.
 package func006
 
+import "context"
+
 // processNoParams fonction sans paramètre
 func processNoParams() {
 	// Fonction vide
@@ -214,3 +216,32 @@ var (
 		// Fonction vide
 	}
 )
+
+// processWithContext 6 params mais context.Context exclu = 5 effectifs (OK)
+//
+// Params:
+//   - ctx: contexte (exclu du compte)
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+func processWithContext(ctx context.Context, a, b, c, d, e int) {
+	// Utilisation des paramètres
+	_, _, _, _, _, _ = ctx, a, b, c, d, e
+}
+
+// handleWithContextFive 6 params mais context.Context exclu = 5 effectifs (OK)
+// Cette fonction n'est pas une erreur car context est exclu
+//
+// Params:
+//   - ctx: contexte (exclu du compte)
+//   - a: paramètre de test
+//   - b: paramètre de test
+//   - c: paramètre de test
+//   - d: paramètre de test
+//   - e: paramètre de test
+func handleWithContextFive(ctx context.Context, a, b, c, d, e int) {
+	// Utilisation des paramètres
+	_, _, _, _, _, _ = ctx, a, b, c, d, e
+}

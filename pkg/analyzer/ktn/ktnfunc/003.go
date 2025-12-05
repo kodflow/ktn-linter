@@ -9,10 +9,10 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer003 checks for unnecessary else blocks after return/continue/break
+// Analyzer003 checks for unnecessary else blocks after return/continue/break/panic
 var Analyzer003 = &analysis.Analyzer{
 	Name:     "ktnfunc003",
-	Doc:      "KTN-FUNC-003: Éviter else après return/continue/break (early return préféré)",
+	Doc:      "KTN-FUNC-003: Éviter else après return/continue/break/panic (early return préféré)",
 	Run:      runFunc003,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -74,7 +74,7 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - bool: true si sortie anticipée
-//   - string: type de sortie (return, continue, break)
+//   - string: type de sortie (return, continue, break, panic)
 func checkEarlyExit(stmt ast.Stmt) (bool, string) {
 	// Switch sur le type d'instruction
 	switch s := stmt.(type) {
@@ -94,8 +94,42 @@ func checkEarlyExit(stmt ast.Stmt) (bool, string) {
 			// Retour true car c'est une sortie anticipée de type break
 			return true, "break"
 		}
+	// Cas expression statement (peut contenir panic)
+	case *ast.ExprStmt:
+		// Vérifier si c'est un appel à panic
+		if isPanicCall(s.X) {
+			return true, "panic"
+		}
 	}
 
 	// Pas de sortie anticipée
 	return false, ""
+}
+
+// isPanicCall vérifie si une expression est un appel à panic().
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si c'est un appel à panic
+func isPanicCall(expr ast.Expr) bool {
+	// Vérifier si c'est un appel de fonction
+	call, ok := expr.(*ast.CallExpr)
+	// Si pas un appel de fonction
+	if !ok {
+		// Retour false
+		return false
+	}
+
+	// Vérifier si c'est un identifiant
+	ident, ok := call.Fun.(*ast.Ident)
+	// Si pas un identifiant
+	if !ok {
+		// Retour false
+		return false
+	}
+
+	// Retour true si c'est panic
+	return ident.Name == "panic"
 }

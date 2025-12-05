@@ -66,3 +66,26 @@ func MixedApproach(ctx context.Context, _unused1 string, used string, unused2 in
 	// Retourne used
 	return used
 }
+
+// Handler interface pour les gestionnaires de requêtes.
+type Handler interface {
+	Handle(ctx context.Context, data string) error
+}
+
+// NoOpHandler implémente Handler mais n'utilise pas tous les params.
+// C'est un cas valide car les paramètres sont requis par l'interface.
+type NoOpHandler struct{}
+
+// Handle implémente Handler.Handle.
+// Les paramètres ctx et data sont requis par l'interface mais non utilisés ici.
+//
+// Params:
+//   - _ctx: context (requis par interface)
+//   - _data: données (requis par interface)
+//
+// Returns:
+//   - error: nil
+func (h *NoOpHandler) Handle(_ctx context.Context, _data string) error {
+	// Ne fait rien
+	return nil
+}

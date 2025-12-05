@@ -166,6 +166,20 @@ func emptyIfBody(x int) {
 	// Retour de la fonction
 }
 
+// goodPanicExample illustre panic sans else (bon usage)
+//
+// Params:
+//   - x: valeur à vérifier
+func goodPanicExample(x int) {
+	// Vérification si négatif
+	if x < 0 {
+		// Panic pour valeur négative
+		panic("negative value")
+	}
+	// Traitement de la valeur positive
+	_ = x
+}
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de checkPositive
@@ -186,4 +200,6 @@ func init() {
 	_ = nestedConditions(1, 0)
 	// Appel de emptyIfBody
 	emptyIfBody(0)
+	// Appel de goodPanicExample
+	goodPanicExample(1)
 }

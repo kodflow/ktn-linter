@@ -14,13 +14,13 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **91.9%** |
+| 🟡 | **TOTAL (Global)** | **91.4%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🔴 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 74.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 95.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.4% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.6% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 91.7% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 96.8% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 93.8% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 92.7% |
@@ -73,10 +73,16 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `002.go:runConst002` | 92.3% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.6%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 91.7%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
+| 🔴 `001.go:isErrorType` | 76.9% |
+| 🔴 `001.go:isBuiltinError` | 80.0% |
+| 🔴 `002.go:isContextTypeWithPass` | 75.0% |
+| 🔴 `002.go:isContextTypeByType` | 73.3% |
+| ⚫ `002.go:isContextType` | 0.0% |
+| 🔴 `003.go:isPanicCall` | 71.4% |
 | 🟡 `004.go:collectPrivateFunctions` | 90.9% |
 | 🟡 `004.go:extractPrivateFuncInfo` | 91.7% |
 | 🟡 `004.go:collectCalledFunctions` | 90.0% |
@@ -84,7 +90,11 @@ Rapport de couverture généré automatiquement.
 | 🔴 `004.go:reportUnusedFunc` | 50.0% |
 | 🔴 `005.go:runFunc005` | 86.7% |
 | 🔴 `005.go:countPureCodeLines` | 88.2% |
-| 🟡 `007.go:runFunc007` | 95.0% |
+| 🟡 `006.go:countEffectiveParams` | 90.0% |
+| 🟡 `007.go:runFunc007` | 92.3% |
+| 🟡 `007.go:collectLazyLoadFields` | 92.9% |
+| 🔴 `007.go:isNilComparison` | 80.0% |
+| 🔴 `007.go:extractFieldName` | 40.0% |
 | 🟡 `008.go:runFunc008` | 94.4% |
 | 🔴 `008.go:collectFunctionParams` | 87.5% |
 | 🔴 `008.go:collectIgnoredVariables` | 86.7% |
@@ -232,4 +242,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-05 10:14:22*
+*Généré le: 2025-12-05 21:33:46*

@@ -273,6 +273,31 @@ func (m *MyStruct) GetDecrementedValue() int {
 	return count
 }
 
+// LazyLoader structure pour démontrer le lazy loading.
+type LazyLoader struct {
+	data    *string
+	service *serviceClient
+}
+
+// serviceClient représente un client de service.
+type serviceClient struct {
+	name string
+}
+
+// GetOrCreateService implémente le lazy loading du service.
+// C'est un pattern valide pour les getters.
+//
+// Returns:
+//   - *serviceClient: le client de service
+func (l *LazyLoader) GetOrCreateService() *serviceClient {
+	// Lazy loading: crée le service s'il n'existe pas
+	if l.service == nil {
+		l.service = &serviceClient{name: "default"}
+	}
+	// Retourne le service
+	return l.service
+}
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de useDataReader

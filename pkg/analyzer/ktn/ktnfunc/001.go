@@ -97,23 +97,95 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 }
 
 // isErrorType checks if a type expression represents the error interface
+// or a type alias for error.
+//
 // Params:
 //   - pass: contexte d'analyse
+//   - expr: expression de type à vérifier
 //
 // Returns:
-//   - bool: true si type error
+//   - bool: true si type error ou alias
 func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 	tv := pass.TypesInfo.Types[expr]
-
-	// Check if it's the error interface
-	named, ok := tv.Type.(*types.Named)
-	// Vérification de la condition
-	if !ok {
-		// Retour de la fonction
+	// Vérification si type valide
+	if tv.Type == nil {
 		return false
 	}
 
-	obj := named.Obj()
-	// Retour de la fonction
-	return obj != nil && obj.Name() == "error" && obj.Pkg() == nil
+	// Vérifier si c'est directement l'interface error
+	if isBuiltinError(tv.Type) {
+		return true
+	}
+
+	// Vérifier si c'est un type nommé qui est l'interface error
+	named, ok := tv.Type.(*types.Named)
+	if ok {
+		obj := named.Obj()
+		// Vérification builtin error
+		if obj != nil && obj.Name() == "error" && obj.Pkg() == nil {
+			return true
+		}
+		// Vérifier le type sous-jacent (pour les alias)
+		if isBuiltinError(named.Underlying()) {
+			return true
+		}
+	}
+
+	// Vérifier si le type implémente l'interface error
+	return implementsError(tv.Type)
+}
+
+// isBuiltinError vérifie si le type est l'interface error builtin.
+//
+// Params:
+//   - t: type à vérifier
+//
+// Returns:
+//   - bool: true si c'est l'interface error
+func isBuiltinError(t types.Type) bool {
+	// Vérifier si c'est une interface avec la signature Error() string
+	iface, ok := t.Underlying().(*types.Interface)
+	if !ok {
+		return false
+	}
+	// Vérifier si l'interface a exactement une méthode Error() string
+	if iface.NumMethods() != 1 {
+		return false
+	}
+	method := iface.Method(0)
+	// Vérifier le nom et la signature
+	if method.Name() != "Error" {
+		return false
+	}
+	sig, ok := method.Type().(*types.Signature)
+	if !ok {
+		return false
+	}
+	// Vérifier paramètres (aucun) et retour (string)
+	if sig.Params().Len() != 0 || sig.Results().Len() != 1 {
+		return false
+	}
+	// Vérifier que le retour est string
+	basic, ok := sig.Results().At(0).Type().(*types.Basic)
+	return ok && basic.Kind() == types.String
+}
+
+// implementsError vérifie si un type implémente l'interface error.
+//
+// Params:
+//   - t: type à vérifier
+//
+// Returns:
+//   - bool: true si implémente error
+func implementsError(t types.Type) bool {
+	// Créer l'interface error pour comparaison
+	errorMethod := types.NewFunc(0, nil, "Error",
+		types.NewSignatureType(nil, nil, nil, nil,
+			types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.String])),
+			false))
+	errorIface := types.NewInterfaceType([]*types.Func{errorMethod}, nil)
+	errorIface.Complete()
+
+	// Vérifier si le type implémente error
+	return types.Implements(t, errorIface)
 }

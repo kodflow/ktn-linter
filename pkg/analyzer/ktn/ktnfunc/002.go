@@ -3,6 +3,7 @@ package ktnfunc
 
 import (
 	"go/ast"
+	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -55,7 +56,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 		// Itération sur les éléments
 		for i, field := range funcDecl.Type.Params.List {
 			// Vérification de la condition
-			if isContextType(field.Type) {
+			if isContextTypeWithPass(pass, field.Type) {
 				contextParamIndex = i
 				break
 			}
@@ -75,12 +76,70 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// isContextType checks if a type is context.Context
+// isContextTypeWithPass checks if a type is context.Context using type info.
+// Handles both direct context.Context and type aliases.
+//
 // Params:
 //   - pass: contexte d'analyse
+//   - expr: expression de type à vérifier
 //
 // Returns:
-//   - bool: true si type context
+//   - bool: true si type context.Context ou alias
+func isContextTypeWithPass(pass *analysis.Pass, expr ast.Expr) bool {
+	// Try using type info first
+	tv := pass.TypesInfo.Types[expr]
+	if tv.Type != nil {
+		return isContextTypeByType(tv.Type)
+	}
+	// Fallback to AST-based check
+	return isContextType(expr)
+}
+
+// isContextTypeByType checks if a types.Type is context.Context.
+//
+// Params:
+//   - t: type à vérifier
+//
+// Returns:
+//   - bool: true si context.Context
+func isContextTypeByType(t types.Type) bool {
+	// Get the named type
+	named, ok := t.(*types.Named)
+	if !ok {
+		return false
+	}
+	obj := named.Obj()
+	if obj == nil {
+		return false
+	}
+	// Check if it's from context package
+	if obj.Pkg() != nil && obj.Pkg().Path() == "context" && obj.Name() == "Context" {
+		return true
+	}
+	// Check underlying type for aliases
+	if obj.Pkg() != nil {
+		underlying := t.Underlying()
+		// Vérifier si le type sous-jacent est nommé
+		if underNamed, ok := underlying.(*types.Named); ok {
+			underObj := underNamed.Obj()
+			// Vérifier context.Context sous-jacent
+			if underObj != nil && underObj.Pkg() != nil {
+				// Retour si match avec context.Context
+				return underObj.Pkg().Path() == "context" && underObj.Name() == "Context"
+			}
+		}
+	}
+	// Retour false par défaut
+	return false
+}
+
+// isContextType checks if a type is context.Context (AST-based fallback).
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si type context.Context
 func isContextType(expr ast.Expr) bool {
 	sel, ok := expr.(*ast.SelectorExpr)
 	// Vérification de la condition
