@@ -29,6 +29,8 @@ const (
 )
 
 // FuncMeta contains metadata about a function for test classification.
+// It captures information needed to determine expected test names and
+// visibility rules for analyzer rules like KTN-TEST-004, 009, 010.
 type FuncMeta struct {
 	// Name is the function name.
 	Name string
@@ -41,6 +43,8 @@ type FuncMeta struct {
 }
 
 // TestTarget represents the target of a test function.
+// It contains parsed information from a test function name to determine
+// which function or method the test is intended to cover.
 type TestTarget struct {
 	// FuncName is the name of the function being tested.
 	FuncName string
@@ -85,26 +89,36 @@ func ClassifyFunc(funcDecl *ast.FuncDecl) FuncMeta {
 
 	// Check if it's a method
 	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+		// Method with receiver
 		meta.Kind = FuncMethod
 		meta.ReceiverName = ExtractReceiverTypeName(funcDecl.Recv.List[0].Type)
 		// Visibility is determined by METHOD name only
-		if IsExportedIdent(meta.Name) {
-			meta.Visibility = VisPublic
-		} else {
-			meta.Visibility = VisPrivate
-		}
+		meta.Visibility = getVisibility(meta.Name)
 	} else {
 		// Top-level function
 		meta.Kind = FuncTopLevel
 		// Visibility is determined by function name
-		if IsExportedIdent(meta.Name) {
-			meta.Visibility = VisPublic
-		} else {
-			meta.Visibility = VisPrivate
-		}
+		meta.Visibility = getVisibility(meta.Name)
 	}
-
+	// Return metadata
 	return meta
+}
+
+// getVisibility returns the visibility based on identifier name.
+//
+// Params:
+//   - name: identifier name
+//
+// Returns:
+//   - Visibility: public or private
+func getVisibility(name string) Visibility {
+	// Check if exported
+	if IsExportedIdent(name) {
+		// Public identifier
+		return VisPublic
+	}
+	// Private identifier
+	return VisPrivate
 }
 
 // ExtractReceiverTypeName extracts the type name from a receiver expression.
@@ -115,22 +129,27 @@ func ClassifyFunc(funcDecl *ast.FuncDecl) FuncMeta {
 // Returns:
 //   - string: type name without pointer/slice decorators
 func ExtractReceiverTypeName(expr ast.Expr) string {
-	// Handle pointer types
+	// Handle different expression types using type switch
 	switch t := expr.(type) {
+	// Case: pointer receiver (*Type)
 	case *ast.StarExpr:
-		// Pointer receiver (*Type)
+		// Recurse to unwrap pointer
 		return ExtractReceiverTypeName(t.X)
+	// Case: simple identifier (Type)
 	case *ast.Ident:
-		// Simple identifier
+		// Base case - return name
 		return t.Name
+	// Case: generic type with single param (Type[T])
 	case *ast.IndexExpr:
-		// Generic type (Type[T])
+		// Recurse to get base type
 		return ExtractReceiverTypeName(t.X)
+	// Case: generic type with multiple params (Type[T, U])
 	case *ast.IndexListExpr:
-		// Generic type with multiple params (Type[T, U])
+		// Recurse to get base type
 		return ExtractReceiverTypeName(t.X)
+	// Case: unknown expression type
 	default:
-		// Unknown type
+		// Return empty for unhandled cases
 		return ""
 	}
 }
@@ -173,6 +192,7 @@ func BuildSuggestedTestName(meta FuncMeta) string {
 func BuildTestLookupKey(meta FuncMeta) string {
 	// Handle methods
 	if meta.Kind == FuncMethod {
+		// Method key format
 		return meta.ReceiverName + "_" + meta.Name
 	}
 	// Top-level function
@@ -194,66 +214,64 @@ func BuildTestLookupKey(meta FuncMeta) string {
 //   - bool: true if parsing succeeded
 func ParseTestName(testName string) (TestTarget, bool) {
 	// Must start with Test
-	if !strings.HasPrefix(testName, "Test") {
-		return TestTarget{}, false
-	}
-
-	// Remove Test prefix
-	body := strings.TrimPrefix(testName, "Test")
-	// Empty body
-	if body == "" {
+	body, hasPrefix := strings.CutPrefix(testName, "Test")
+	// No Test prefix
+	if !hasPrefix || body == "" {
 		return TestTarget{}, false
 	}
 
 	// Check for private function pattern (Test_foo)
-	if strings.HasPrefix(body, "_") {
-		privateName := strings.TrimPrefix(body, "_")
-		// Empty after underscore
-		if privateName == "" {
-			return TestTarget{}, false
-		}
-		// Check if it's a method (Type_method pattern after underscore)
-		if idx := strings.Index(privateName, "_"); idx > 0 {
-			// Could be Test_Type_method
-			typeName := privateName[:idx]
-			methodName := privateName[idx+1:]
-			// Check if method
-			if methodName != "" {
-				return TestTarget{
-					FuncName:     methodName,
-					ReceiverName: typeName,
-					IsPrivate:    !IsExportedIdent(methodName),
-					IsMethod:     true,
-				}, true
-			}
-		}
-		// Simple private function Test_foo
-		return TestTarget{
-			FuncName:  privateName,
-			IsPrivate: true,
-			IsMethod:  false,
-		}, true
+	if privateName, isPrivate := strings.CutPrefix(body, "_"); isPrivate {
+		// Parse private function test
+		return parsePrivateTestName(privateName)
 	}
 
 	// Check for method pattern (TestType_Method)
-	if idx := strings.Index(body, "_"); idx > 0 {
-		typeName := body[:idx]
-		methodName := body[idx+1:]
+	if typeName, methodName, hasMethod := strings.Cut(body, "_"); hasMethod && methodName != "" {
 		// Valid method pattern
-		if methodName != "" {
-			return TestTarget{
-				FuncName:     methodName,
-				ReceiverName: typeName,
-				IsPrivate:    !IsExportedIdent(methodName),
-				IsMethod:     true,
-			}, true
-		}
+		return TestTarget{
+			FuncName:     methodName,
+			ReceiverName: typeName,
+			IsPrivate:    !IsExportedIdent(methodName),
+			IsMethod:     true,
+		}, true
 	}
 
 	// Public function TestFoo
 	return TestTarget{
 		FuncName:  body,
 		IsPrivate: false,
+		IsMethod:  false,
+	}, true
+}
+
+// parsePrivateTestName parses the body of a private test name (after Test_).
+//
+// Params:
+//   - privateName: test name body after "Test_"
+//
+// Returns:
+//   - TestTarget: parsed target info
+//   - bool: true if parsing succeeded
+func parsePrivateTestName(privateName string) (TestTarget, bool) {
+	// Empty after underscore
+	if privateName == "" {
+		return TestTarget{}, false
+	}
+	// Check if it's a method (Type_method pattern after underscore)
+	if typeName, methodName, hasMethod := strings.Cut(privateName, "_"); hasMethod && methodName != "" {
+		// Test_Type_method pattern
+		return TestTarget{
+			FuncName:     methodName,
+			ReceiverName: typeName,
+			IsPrivate:    !IsExportedIdent(methodName),
+			IsMethod:     true,
+		}, true
+	}
+	// Simple private function Test_foo
+	return TestTarget{
+		FuncName:  privateName,
+		IsPrivate: true,
 		IsMethod:  false,
 	}, true
 }
@@ -268,6 +286,7 @@ func ParseTestName(testName string) (TestTarget, bool) {
 func BuildTestTargetKey(target TestTarget) string {
 	// Handle methods
 	if target.IsMethod && target.ReceiverName != "" {
+		// Method key format
 		return target.ReceiverName + "_" + target.FuncName
 	}
 	// Top-level function

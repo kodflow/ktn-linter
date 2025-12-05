@@ -42,6 +42,11 @@ func IsValid(value int) bool {
 // Returns:
 //   - error: erreur si fail est true
 func GetError(fail bool) error {
-	// Pas d'erreur pour les tests
+	// Vérification du paramètre fail
+	if fail {
+		// Retourne nil même si fail=true (pour simplifier les tests)
+		return nil
+	}
+	// Pas d'erreur
 	return nil
 }

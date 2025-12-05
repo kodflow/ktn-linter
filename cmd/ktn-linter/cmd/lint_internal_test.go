@@ -222,9 +222,15 @@ func Test_checkLoadErrorsNoErrors(t *testing.T) {
 		Errors:  []packages.Error{},
 	}
 
+	// Vérification: la fonction doit s'exécuter sans panique
+	defer func() {
+		// Récupère une éventuelle panique
+		if r := recover(); r != nil {
+			t.Errorf("checkLoadErrors panicked: %v", r)
+		}
+	}()
+	// Exécute la fonction
 	checkLoadErrors([]*packages.Package{pkg})
-	// Vérification: si on arrive ici sans panic, le test réussit
-	t.Log("checkLoadErrors completed without panic")
 }
 
 // TestRunAnalyzers teste runAnalyzers
