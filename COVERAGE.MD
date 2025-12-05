@@ -14,11 +14,11 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **90.8%** |
+| 🟡 | **TOTAL (Global)** | **90.9%** |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🔴 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 74.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 93.6% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 95.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.4% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.6% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 88.7% |
@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 86.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 98.3% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 98.2% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 92.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
@@ -54,7 +54,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `lint.go:applyEditsToFile` | 18.2% |
 | 🟡 `lint.go:filterOverlappingEdits` | 91.7% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` - 93.6%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` - 95.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -62,9 +62,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `002.go:runComment002` | 87.5% |
 | 🟡 `004.go:runComment004` | 95.0% |
 | 🔴 `005.go:runComment005` | 84.2% |
-| 🔴 `005.go:hasValidDocumentation` | 78.6% |
 | 🔴 `006.go:runComment006` | 86.7% |
-| 🔴 `006.go:validateDescriptionLine` | 80.0% |
 | 🔴 `006.go:validateDocFormat` | 86.4% |
 | 🟡 `007.go:runComment007` | 94.1% |
 | 🔴 `007.go:hasCommentBeforeOrInside` | 71.4% |
@@ -131,12 +129,12 @@ Rapport de couverture généré automatiquement.
 | 🔴 `003.go:runTest003` | 83.3% |
 | 🟡 `004.go:collectFunctions` | 92.3% |
 | 🔴 `004.go:checkFunctionsHaveTests` | 84.6% |
-| 🔴 `004.go:buildFuncLookupKey` | 66.7% |
 | 🔴 `004.go:buildTestNames` | 83.3% |
 | 🔴 `004.go:hasMatchingTest` | 85.7% |
 | 🟡 `004.go:reportMissingTest` | 91.7% |
-| 🔴 `004.go:collectTestedFunctions` | 80.0% |
-| 🔴 `004.go:collectExternalTestFunctions` | 88.0% |
+| 🔴 `004.go:findPackageDir` | 83.3% |
+| 🔴 `004.go:collectExternalTestFunctions` | 83.3% |
+| 🔴 `004.go:collectExternalTestedFunctions` | 86.7% |
 | 🟡 `005.go:runTest005` | 91.7% |
 | 🔴 `006.go:runTest006` | 87.5% |
 | 🔴 `007.go:runTest007` | 88.9% |
@@ -151,12 +149,12 @@ Rapport de couverture généré automatiquement.
 | 🟡 `009.go:collectPublicFunctions` | 90.9% |
 | 🔴 `009.go:addPublicFunction` | 75.0% |
 | 🟡 `009.go:checkInternalTestsForPublicFunctions` | 90.0% |
-| 🔴 `009.go:checkAndReportPublicFunctionTest` | 81.8% |
+| 🔴 `009.go:checkAndReportPublicFunctionTest` | 72.7% |
 | 🟡 `010.go:collectPrivateFunctions` | 90.9% |
 | 🔴 `010.go:addPrivateFunction` | 75.0% |
 | 🟡 `010.go:checkExternalTestsForPrivateFunctions` | 90.0% |
 | 🔴 `010.go:checkAndReportPrivateFunctionTest` | 76.9% |
-| 🔴 `012.go:runTest012` | 83.3% |
+| 🔴 `012.go:runTest012` | 77.8% |
 | 🔴 `012.go:isAssertLibraryCall` | 87.5% |
 | 🔴 `013.go:runTest013` | 72.2% |
 | 🔴 `013.go:collectFuncSignatures` | 64.3% |
@@ -219,7 +217,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `017.go:getMutexTypeFromType` | 73.3% |
 | 🔴 `017.go:isMutexCopy` | 85.7% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/shared` - 98.3%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/shared` - 98.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -237,4 +235,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-05 00:14:50*
+*Généré le: 2025-12-05 04:44:49*

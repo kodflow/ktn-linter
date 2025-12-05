@@ -147,7 +147,7 @@ func classifyFunction(funcDecl *ast.FuncDecl, result *fileAnalysisResult) {
 	displayName := buildFunctionDisplayName(funcDecl)
 
 	// Use visibility from shared helper
-	if meta.Visibility == shared.VisPublic {
+	if meta.Visibility == shared.VIS_PUBLIC {
 		result.hasPublic = true
 		result.publicFuncs = append(result.publicFuncs, displayName)
 	} else {

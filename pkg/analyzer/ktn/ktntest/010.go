@@ -106,7 +106,7 @@ func addPrivateFunction(funcDecl *ast.FuncDecl, privateFunctions map[string]bool
 	}
 
 	// Only add private functions
-	if meta.Visibility != shared.VisPrivate {
+	if meta.Visibility != shared.VIS_PRIVATE {
 		return
 	}
 

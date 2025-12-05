@@ -53,79 +53,54 @@ func TestIsExportedIdent(t *testing.T) {
 // Params:
 //   - t: testing context
 func TestClassifyFunc(t *testing.T) {
-	// Parse sample code
-	src := `
-package test
-
-func PublicFunc() {}
-func privateFunc() {}
-func (s *Service) PublicMethod() {}
-func (s *Service) privateMethod() {}
-func (s *service) PublicOnPrivate() {}
-func (s *service) privateOnPrivate() {}
-`
-	// Create file set
-	fset := token.NewFileSet()
-	// Parse source
-	file, err := parser.ParseFile(fset, "test.go", src, 0)
-	// Check parse error
-	if err != nil {
-		// Fail test
-		t.Fatalf("Failed to parse: %v", err)
-	}
-	// Extract function declarations
-	var funcs []*ast.FuncDecl
-	// Iterate declarations
-	for _, decl := range file.Decls {
-		// Check if function
-		if fn, ok := decl.(*ast.FuncDecl); ok {
-			// Add to list
-			funcs = append(funcs, fn)
-		}
-	}
 	// Define expected results
-	expected := []struct {
+	tests := []struct {
 		name         string
-		kind         shared.FuncKind
-		visibility   shared.Visibility
-		receiverName string
+		code         string
+		wantKind     shared.FuncKind
+		wantVis      shared.Visibility
+		wantReceiver string
 	}{
-		{"PublicFunc", shared.FuncTopLevel, shared.VisPublic, ""},
-		{"privateFunc", shared.FuncTopLevel, shared.VisPrivate, ""},
-		{"PublicMethod", shared.FuncMethod, shared.VisPublic, "Service"},
-		{"privateMethod", shared.FuncMethod, shared.VisPrivate, "Service"},
-		{"PublicOnPrivate", shared.FuncMethod, shared.VisPublic, "service"},
-		{"privateOnPrivate", shared.FuncMethod, shared.VisPrivate, "service"},
+		{"PublicFunc", "func PublicFunc() {}", shared.FUNC_TOP_LEVEL, shared.VIS_PUBLIC, ""},
+		{"privateFunc", "func privateFunc() {}", shared.FUNC_TOP_LEVEL, shared.VIS_PRIVATE, ""},
+		{"PublicMethod", "func (s *Service) PublicMethod() {}", shared.FUNC_METHOD, shared.VIS_PUBLIC, "Service"},
+		{"privateMethod", "func (s *Service) privateMethod() {}", shared.FUNC_METHOD, shared.VIS_PRIVATE, "Service"},
+		{"PublicOnPrivate", "func (s *service) PublicOnPrivate() {}", shared.FUNC_METHOD, shared.VIS_PUBLIC, "service"},
+		{"privateOnPrivate", "func (s *service) privateOnPrivate() {}", shared.FUNC_METHOD, shared.VIS_PRIVATE, "service"},
 	}
-	// Check count
-	if len(funcs) != len(expected) {
-		// Report mismatch
-		t.Fatalf("Expected %d functions, got %d", len(expected), len(funcs))
-	}
-	// Validate each function
-	for i, fn := range funcs {
-		// Classify function
-		meta := shared.ClassifyFunc(fn)
-		// Check name
-		if meta.Name != expected[i].name {
-			// Report error
-			t.Errorf("funcs[%d]: Name = %q, want %q", i, meta.Name, expected[i].name)
-		}
-		// Check kind
-		if meta.Kind != expected[i].kind {
-			// Report error
-			t.Errorf("funcs[%d] %s: Kind = %v, want %v", i, meta.Name, meta.Kind, expected[i].kind)
-		}
-		// Check visibility
-		if meta.Visibility != expected[i].visibility {
-			// Report error
-			t.Errorf("funcs[%d] %s: Visibility = %v, want %v", i, meta.Name, meta.Visibility, expected[i].visibility)
-		}
-		// Check receiver
-		if meta.ReceiverName != expected[i].receiverName {
-			// Report error
-			t.Errorf("funcs[%d] %s: ReceiverName = %q, want %q", i, meta.Name, meta.ReceiverName, expected[i].receiverName)
-		}
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create file set
+			fset := token.NewFileSet()
+			// Parse source
+			src := "package test\n" + tt.code
+			file, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				// Fail test
+				t.Fatalf("Failed to parse: %v", err)
+			}
+			// Get function decl
+			fn := file.Decls[0].(*ast.FuncDecl)
+			// Classify function
+			meta := shared.ClassifyFunc(fn)
+			// Check kind
+			if meta.Kind != tt.wantKind {
+				// Report error
+				t.Errorf("Kind = %v, want %v", meta.Kind, tt.wantKind)
+			}
+			// Check visibility
+			if meta.Visibility != tt.wantVis {
+				// Report error
+				t.Errorf("Visibility = %v, want %v", meta.Visibility, tt.wantVis)
+			}
+			// Check receiver
+			if meta.ReceiverName != tt.wantReceiver {
+				// Report error
+				t.Errorf("ReceiverName = %q, want %q", meta.ReceiverName, tt.wantReceiver)
+			}
+		})
 	}
 }
 
@@ -137,19 +112,19 @@ func TestBuildSuggestedTestName(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name     string
-		meta     shared.FuncMeta
+		meta     *shared.FuncMeta
 		expected string
 	}{
 		// Public top-level
-		{"public_func", shared.FuncMeta{Name: "Foo", Kind: shared.FuncTopLevel, Visibility: shared.VisPublic}, "TestFoo"},
+		{"public_func", &shared.FuncMeta{Name: "Foo", Kind: shared.FUNC_TOP_LEVEL, Visibility: shared.VIS_PUBLIC}, "TestFoo"},
 		// Private top-level
-		{"private_func", shared.FuncMeta{Name: "foo", Kind: shared.FuncTopLevel, Visibility: shared.VisPrivate}, "Test_foo"},
+		{"private_func", &shared.FuncMeta{Name: "foo", Kind: shared.FUNC_TOP_LEVEL, Visibility: shared.VIS_PRIVATE}, "Test_foo"},
 		// Public method
-		{"public_method", shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FuncMethod, Visibility: shared.VisPublic}, "TestService_Bar"},
+		{"public_method", &shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FUNC_METHOD, Visibility: shared.VIS_PUBLIC}, "TestService_Bar"},
 		// Private method
-		{"private_method", shared.FuncMeta{Name: "bar", ReceiverName: "Service", Kind: shared.FuncMethod, Visibility: shared.VisPrivate}, "TestService_bar"},
+		{"private_method", &shared.FuncMeta{Name: "bar", ReceiverName: "Service", Kind: shared.FUNC_METHOD, Visibility: shared.VIS_PRIVATE}, "TestService_bar"},
 		// Public method on private type
-		{"public_on_private", shared.FuncMeta{Name: "Baz", ReceiverName: "service", Kind: shared.FuncMethod, Visibility: shared.VisPublic}, "Testservice_Baz"},
+		{"public_on_private", &shared.FuncMeta{Name: "Baz", ReceiverName: "service", Kind: shared.FUNC_METHOD, Visibility: shared.VIS_PUBLIC}, "Testservice_Baz"},
 	}
 	// Run test cases
 	for _, tt := range tests {
@@ -244,13 +219,13 @@ func TestBuildTestLookupKey(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name     string
-		meta     shared.FuncMeta
+		meta     *shared.FuncMeta
 		expected string
 	}{
 		// Top-level function
-		{"top_level", shared.FuncMeta{Name: "Foo", Kind: shared.FuncTopLevel}, "Foo"},
+		{"top_level", &shared.FuncMeta{Name: "Foo", Kind: shared.FUNC_TOP_LEVEL}, "Foo"},
 		// Method
-		{"method", shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FuncMethod}, "Service_Bar"},
+		{"method", &shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FUNC_METHOD}, "Service_Bar"},
 	}
 	// Run test cases
 	for _, tt := range tests {
@@ -451,45 +426,39 @@ func TestIsExemptTestName(t *testing.T) {
 // Params:
 //   - t: testing context
 func TestExtractReceiverTypeName(t *testing.T) {
-	// Parse sample code with various receiver types
-	src := `
-package test
-
-func (s Service) Value() {}
-func (s *Service) Pointer() {}
-func (s Service[T]) Generic() {}
-func (s *Service[T, U]) GenericPointer() {}
-`
-	// Create file set
-	fset := token.NewFileSet()
-	// Parse source
-	file, err := parser.ParseFile(fset, "test.go", src, 0)
-	// Check parse error
-	if err != nil {
-		// Fail test
-		t.Fatalf("Failed to parse: %v", err)
+	// Define test cases
+	tests := []struct {
+		name     string
+		code     string
+		expected string
+	}{
+		{"value receiver", "func (s Service) Method() {}", "Service"},
+		{"pointer receiver", "func (s *Service) Method() {}", "Service"},
+		{"generic receiver", "func (s Service[T]) Method() {}", "Service"},
+		{"generic pointer receiver", "func (s *Service[T, U]) Method() {}", "Service"},
 	}
-	// Expected receiver names
-	expected := []string{"Service", "Service", "Service", "Service"}
-	// Counter
-	i := 0
-	// Iterate declarations
-	for _, decl := range file.Decls {
-		// Check if function
-		fn, ok := decl.(*ast.FuncDecl)
-		// Skip non-functions
-		if !ok || fn.Recv == nil {
-			// Continue
-			continue
-		}
-		// Extract receiver name
-		got := shared.ExtractReceiverTypeName(fn.Recv.List[0].Type)
-		// Validate
-		if got != expected[i] {
-			// Report error
-			t.Errorf("funcs[%d] %s: ReceiverTypeName = %q, want %q", i, fn.Name.Name, got, expected[i])
-		}
-		// Increment
-		i++
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create file set
+			fset := token.NewFileSet()
+			// Parse source
+			src := "package test\n" + tt.code
+			file, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				// Fail test
+				t.Fatalf("Failed to parse: %v", err)
+			}
+			// Get function decl
+			fn := file.Decls[0].(*ast.FuncDecl)
+			// Extract receiver name
+			got := shared.ExtractReceiverTypeName(fn.Recv.List[0].Type)
+			// Validate
+			if got != tt.expected {
+				// Report error
+				t.Errorf("ReceiverTypeName = %q, want %q", got, tt.expected)
+			}
+		})
 	}
 }

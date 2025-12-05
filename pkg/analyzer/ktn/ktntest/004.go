@@ -67,14 +67,17 @@ func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[st
 			// Vérification de la condition
 			if shared.IsTestFile(filename) {
 				// Fichier de test - collecter les fonctions testées
-				collectTestedFunctions(funcDecl, testedFuncs)
+				// On utilise collectExternalTestedFunctions ici aussi car
+				// les fichiers _internal_test.go sont dans pass.Files mais
+				// shared.IsUnitTestFunction peut échouer sans TypesInfo complet
+				collectExternalTestedFunctions(funcDecl, testedFuncs)
 			} else {
 				// Fichier source - collecter TOUTES les fonctions (publiques et privées)
 				meta := shared.ClassifyFunc(funcDecl)
 				*funcs = append(*funcs, funcInfo{
 					name:         meta.Name,
 					receiverName: meta.ReceiverName,
-					isExported:   meta.Visibility == shared.VisPublic,
+					isExported:   meta.Visibility == shared.VIS_PUBLIC,
 					pos:          funcDecl.Pos(),
 					filename:     filename,
 				})
@@ -228,17 +231,17 @@ func buildFuncLookupKey(fn funcInfo) string {
 //   - []string: noms de test possibles
 func buildTestNames(testNames []string, fn funcInfo) []string {
 	// Use shared helper to build lookup key
-	meta := shared.FuncMeta{
+	meta := &shared.FuncMeta{
 		Name:         fn.name,
 		ReceiverName: fn.receiverName,
 	}
 	// Set kind based on receiver
 	if fn.receiverName != "" {
 		// Method
-		meta.Kind = shared.FuncMethod
+		meta.Kind = shared.FUNC_METHOD
 	} else {
 		// Top-level function
-		meta.Kind = shared.FuncTopLevel
+		meta.Kind = shared.FUNC_TOP_LEVEL
 	}
 	// Add lookup key
 	testNames = append(testNames, shared.BuildTestLookupKey(meta))
@@ -282,25 +285,25 @@ func hasMatchingTest(testNames []string, testedFuncs map[string]bool) bool {
 //   - fn: information sur la fonction
 func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
 	// Build meta for suggested test name
-	meta := shared.FuncMeta{
+	meta := &shared.FuncMeta{
 		Name:         fn.name,
 		ReceiverName: fn.receiverName,
 	}
 	// Set kind and visibility
 	if fn.receiverName != "" {
 		// Method
-		meta.Kind = shared.FuncMethod
+		meta.Kind = shared.FUNC_METHOD
 	} else {
 		// Top-level function
-		meta.Kind = shared.FuncTopLevel
+		meta.Kind = shared.FUNC_TOP_LEVEL
 	}
 	// Set visibility
 	if fn.isExported {
 		// Public
-		meta.Visibility = shared.VisPublic
+		meta.Visibility = shared.VIS_PUBLIC
 	} else {
 		// Private
-		meta.Visibility = shared.VisPrivate
+		meta.Visibility = shared.VIS_PRIVATE
 	}
 
 	// Use shared helper for suggested name
@@ -341,39 +344,71 @@ func getTestFileInfo(isExported bool, fileBase string) (string, string, string) 
 	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
 }
 
-// collectTestedFunctions collecte les fonctions testées.
+// findPackageDir trouve le répertoire du package à partir des fichiers du pass.
 //
 // Params:
-//   - funcDecl: déclaration de fonction de test
-//   - testedFuncs: map des fonctions testées
-func collectTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool) {
-	// Vérifier si c'est une fonction de test unitaire (Test*)
-	if !shared.IsUnitTestFunction(funcDecl) {
-		// Pas une fonction de test unitaire
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: chemin du répertoire ou chaîne vide si non trouvé
+func findPackageDir(pass *analysis.Pass) string {
+	// Parcourir les fichiers pour trouver un chemin valide
+	for _, file := range pass.Files {
+		filename := pass.Fset.Position(file.Pos()).Filename
+		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		if isCacheOrTempFile(filename) {
+			// Cache file, skip
+			continue
+		}
+		// Utiliser le premier fichier source valide
+		return filepath.Dir(filename)
+	}
+	// Pas de fichier source valide
+	return ""
+}
+
+// isCacheOrTempFile vérifie si un fichier est dans le cache Go ou temporaire.
+//
+// Params:
+//   - filename: chemin du fichier
+//
+// Returns:
+//   - bool: true si c'est un fichier cache/temp
+func isCacheOrTempFile(filename string) bool {
+	// Vérifier les patterns de cache et temp
+	return strings.Contains(filename, "/.cache/go-build/") ||
+		strings.Contains(filename, "/tmp/") ||
+		strings.Contains(filename, "\\cache\\go-build\\")
+}
+
+// parseTestFile parse un fichier de test et extrait les fonctions testées.
+//
+// Params:
+//   - fullPath: chemin complet du fichier
+//   - testedFuncs: map des fonctions testées à remplir
+func parseTestFile(fullPath string, testedFuncs map[string]bool) {
+	// Parser le fichier pour extraire les tests
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, fullPath, nil, 0)
+	// Si erreur de parsing, retourner
+	if err != nil {
+		// Parsing failed
 		return
 	}
 
-	// Skip exempt test names
-	if shared.IsExemptTestName(funcDecl.Name.Name) {
-		// Exempt test name
-		return
-	}
-
-	// Use shared helper to parse test name
-	target, ok := shared.ParseTestName(funcDecl.Name.Name)
-	// Check if parse succeeded
-	if !ok {
-		// Could not parse
-		return
-	}
-
-	// Build lookup key from target
-	key := shared.BuildTestTargetKey(target)
-	// Add to tested functions
-	if key != "" {
-		// Add key
-		testedFuncs[key] = true
-	}
+	// Extraire les fonctions de test du fichier parsé
+	ast.Inspect(node, func(n ast.Node) bool {
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Si ce n'est pas une fonction, continuer
+		if !ok {
+			// Continue traversal
+			return true
+		}
+		// Collecter les fonctions testées
+		collectExternalTestedFunctions(funcDecl, testedFuncs)
+		// Continue traversal
+		return true
+	})
 }
 
 // collectExternalTestFunctions scanne les packages _test externes.
@@ -391,8 +426,12 @@ func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bo
 	}
 
 	// Obtenir le répertoire du package
-	firstFile := pass.Fset.Position(pass.Files[0].Pos()).Filename
-	packageDir := filepath.Dir(firstFile)
+	packageDir := findPackageDir(pass)
+	// Si pas de répertoire valide trouvé, retourner
+	if packageDir == "" {
+		// Pas de fichier source valide
+		return
+	}
 
 	// Scanner tous les fichiers du répertoire
 	entries, err := os.ReadDir(packageDir)
@@ -402,48 +441,67 @@ func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bo
 		return
 	}
 
-	// Parcourir tous les fichiers
+	// Parcourir tous les fichiers de test
 	for _, entry := range entries {
-		// Ignorer les répertoires
-		if entry.IsDir() {
+		// Ignorer les répertoires et non-test files
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), "_test.go") {
 			// Continuer avec le prochain
 			continue
 		}
+		// Parser le fichier de test
+		parseTestFile(filepath.Join(packageDir, entry.Name()), testedFuncs)
+	}
+}
 
-		filename := entry.Name()
-		// Ne garder que les fichiers de test (*_test.go)
-		if !strings.HasSuffix(filename, "_test.go") {
-			// Continuer avec le prochain
-			continue
-		}
+// collectExternalTestedFunctions collecte les fonctions testées à partir
+// d'un fichier _test.go parsé en dehors du Pass (sans TypesInfo).
+// On ne peut pas utiliser shared.IsUnitTestFunction ici, on se base donc
+// uniquement sur une heuristique syntaxique.
+//
+// Params:
+//   - funcDecl: déclaration de fonction de test
+//   - testedFuncs: map des fonctions testées
+func collectExternalTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool) {
+	// Nom de test Go standard: doit commencer par "Test"
+	if !strings.HasPrefix(funcDecl.Name.Name, "Test") {
+		// Pas une fonction de test
+		return
+	}
 
-		// Construire le chemin complet
-		fullPath := filepath.Join(packageDir, filename)
+	// Vérification minimale de la signature (func TestXxx(t *testing.T))
+	if funcDecl.Type == nil || funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
+		// Pas de paramètres
+		return
+	}
 
-		// Parser le fichier pour extraire les tests
-		fset := token.NewFileSet()
-		var node *ast.File
-		node, err = parser.ParseFile(fset, fullPath, nil, 0)
-		// Si erreur de parsing, continuer avec le prochain fichier
-		if err != nil {
-			// Continuer avec le prochain
-			continue
-		}
+	// Vérifier que le premier paramètre est "t"
+	firstParam := funcDecl.Type.Params.List[0]
+	// Check if param has a name
+	if len(firstParam.Names) == 0 || firstParam.Names[0].Name != "t" {
+		// Premier paramètre n'est pas "t", probablement pas un test standard
+		return
+	}
 
-		// Extraire les fonctions de test du fichier parsé
-		ast.Inspect(node, func(n ast.Node) bool {
-			funcDecl, ok := n.(*ast.FuncDecl)
-			// Si ce n'est pas une fonction, continuer
-			if !ok {
-				// Continue traversal
-				return true
-			}
+	// Skip exempt test names (helper, main, etc.)
+	if shared.IsExemptTestName(funcDecl.Name.Name) {
+		// Exempt test name
+		return
+	}
 
-			// Collecter les fonctions testées
-			collectTestedFunctions(funcDecl, testedFuncs)
-			// Continue traversal
-			return true
-		})
+	// On réutilise la même logique de parsing de nom et de clé cible
+	target, ok := shared.ParseTestName(funcDecl.Name.Name)
+	// Check if parse succeeded
+	if !ok {
+		// Could not parse
+		return
+	}
+
+	// Build lookup key from target
+	key := shared.BuildTestTargetKey(target)
+	// Add to tested functions
+	if key != "" {
+		// Add key
+		testedFuncs[key] = true
 	}
 }
 

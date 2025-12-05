@@ -106,7 +106,7 @@ func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) 
 	}
 
 	// Only add public functions
-	if meta.Visibility != shared.VisPublic {
+	if meta.Visibility != shared.VIS_PUBLIC {
 		return
 	}
 

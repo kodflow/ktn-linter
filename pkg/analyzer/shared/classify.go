@@ -11,21 +11,19 @@ import (
 // FuncKind represents the kind of function (top-level or method).
 type FuncKind int
 
-const (
-	// FuncTopLevel is a package-level function.
-	FuncTopLevel FuncKind = iota
-	// FuncMethod is a method with a receiver.
-	FuncMethod
-)
-
 // Visibility represents the visibility of a function.
 type Visibility int
 
 const (
-	// VisPrivate is a private (unexported) function.
-	VisPrivate Visibility = iota
-	// VisPublic is a public (exported) function.
-	VisPublic
+	// FUNC_TOP_LEVEL is a package-level function.
+	FUNC_TOP_LEVEL FuncKind = iota
+	// FUNC_METHOD is a method with a receiver.
+	FUNC_METHOD
+
+	// VIS_PRIVATE is a private (unexported) function.
+	VIS_PRIVATE Visibility = iota
+	// VIS_PUBLIC is a public (exported) function.
+	VIS_PUBLIC
 )
 
 // FuncMeta contains metadata about a function for test classification.
@@ -40,20 +38,6 @@ type FuncMeta struct {
 	Kind FuncKind
 	// Visibility indicates if the function is public or private.
 	Visibility Visibility
-}
-
-// TestTarget represents the target of a test function.
-// It contains parsed information from a test function name to determine
-// which function or method the test is intended to cover.
-type TestTarget struct {
-	// FuncName is the name of the function being tested.
-	FuncName string
-	// ReceiverName is the receiver type name (for method tests).
-	ReceiverName string
-	// IsPrivate indicates if this targets a private function.
-	IsPrivate bool
-	// IsMethod indicates if this targets a method.
-	IsMethod bool
 }
 
 // IsExportedIdent checks if an identifier is exported (starts with uppercase).
@@ -80,23 +64,23 @@ func IsExportedIdent(name string) bool {
 //   - funcDecl: function declaration to classify
 //
 // Returns:
-//   - FuncMeta: metadata about the function
-func ClassifyFunc(funcDecl *ast.FuncDecl) FuncMeta {
+//   - *FuncMeta: metadata about the function
+func ClassifyFunc(funcDecl *ast.FuncDecl) *FuncMeta {
 	// Initialize metadata
-	meta := FuncMeta{
+	meta := &FuncMeta{
 		Name: funcDecl.Name.Name,
 	}
 
 	// Check if it's a method
 	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
 		// Method with receiver
-		meta.Kind = FuncMethod
+		meta.Kind = FUNC_METHOD
 		meta.ReceiverName = ExtractReceiverTypeName(funcDecl.Recv.List[0].Type)
 		// Visibility is determined by METHOD name only
 		meta.Visibility = getVisibility(meta.Name)
 	} else {
 		// Top-level function
-		meta.Kind = FuncTopLevel
+		meta.Kind = FUNC_TOP_LEVEL
 		// Visibility is determined by function name
 		meta.Visibility = getVisibility(meta.Name)
 	}
@@ -115,10 +99,10 @@ func getVisibility(name string) Visibility {
 	// Check if exported
 	if IsExportedIdent(name) {
 		// Public identifier
-		return VisPublic
+		return VIS_PUBLIC
 	}
 	// Private identifier
-	return VisPrivate
+	return VIS_PRIVATE
 }
 
 // ExtractReceiverTypeName extracts the type name from a receiver expression.
@@ -165,14 +149,14 @@ func ExtractReceiverTypeName(expr ast.Expr) string {
 //
 // Returns:
 //   - string: suggested test name
-func BuildSuggestedTestName(meta FuncMeta) string {
+func BuildSuggestedTestName(meta *FuncMeta) string {
 	// Handle methods
-	if meta.Kind == FuncMethod {
+	if meta.Kind == FUNC_METHOD {
 		// Always TestType_Method for methods
 		return "Test" + meta.ReceiverName + "_" + meta.Name
 	}
 	// Handle top-level functions
-	if meta.Visibility == VisPrivate {
+	if meta.Visibility == VIS_PRIVATE {
 		// Private: Test_foo
 		return "Test_" + meta.Name
 	}
@@ -189,9 +173,9 @@ func BuildSuggestedTestName(meta FuncMeta) string {
 //
 // Returns:
 //   - string: lookup key
-func BuildTestLookupKey(meta FuncMeta) string {
+func BuildTestLookupKey(meta *FuncMeta) string {
 	// Handle methods
-	if meta.Kind == FuncMethod {
+	if meta.Kind == FUNC_METHOD {
 		// Method key format
 		return meta.ReceiverName + "_" + meta.Name
 	}
@@ -382,20 +366,28 @@ func IsExemptTestName(testName string) bool {
 	if IsMockName(testName) {
 		return true
 	}
-	// Check setup/teardown patterns
+	// Check exact exempt test names (case-insensitive)
+	// TestSetup, Test_setup, TestTeardown, Test_teardown, TestHelper, etc.
 	lower := strings.ToLower(testName)
-	exemptPatterns := []string{
+	// Match word boundaries - not substring to avoid false positives
+	exemptSuffixes := []string{
 		"setup",
 		"teardown",
 		"init",
 		"helper",
+		"helpers",
 		"util",
+		"utils",
 		"fixture",
+		"fixtures",
 	}
-	// Check patterns
-	for _, pattern := range exemptPatterns {
-		// Check if contains pattern
-		if strings.Contains(lower, pattern) {
+	// Extract the body after "Test" or "Test_"
+	body := strings.TrimPrefix(lower, "test")
+	body = strings.TrimPrefix(body, "_")
+	// Check if body starts with an exempt suffix followed by end or underscore
+	for _, suffix := range exemptSuffixes {
+		// Check if body equals suffix or starts with suffix_
+		if body == suffix || strings.HasPrefix(body, suffix+"_") {
 			return true
 		}
 	}

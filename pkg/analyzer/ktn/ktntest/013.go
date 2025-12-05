@@ -252,7 +252,7 @@ func extractFuncInfo(funcDecl *ast.FuncDecl) *testedFuncInfo {
 	info := &testedFuncInfo{
 		name:         meta.Name,
 		returnsError: functionReturnsError(funcDecl),
-		hasReceiver:  meta.Kind == shared.FuncMethod,
+		hasReceiver:  meta.Kind == shared.FUNC_METHOD,
 		receiverName: meta.ReceiverName,
 	}
 

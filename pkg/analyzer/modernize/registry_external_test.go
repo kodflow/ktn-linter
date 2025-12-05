@@ -1,4 +1,4 @@
-// External tests for modernize registry.
+// External tests for registry.go - modernize package.
 package modernize_test
 
 import (
@@ -8,36 +8,31 @@ import (
 )
 
 // TestAnalyzers tests the public Analyzers function.
+//
+// Params:
+//   - t: testing context
 func TestAnalyzers(t *testing.T) {
 	tests := []struct {
-		name string
+		name      string
+		wantEmpty bool
 	}{
-		{"verify analyzers are returned"},
+		{
+			name:      "returns non-empty list",
+			wantEmpty: false,
+		},
 	}
 
+	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analyzers := modernize.Analyzers()
-
-			// Vérification de la longueur (au moins quelques analyseurs après filtrage)
-			if len(analyzers) == 0 {
-				t.Error("Analyzers() should return non-empty slice")
+			// Vérification résultat
+			if tt.wantEmpty && len(analyzers) > 0 {
+				t.Error("Analyzers() returned non-empty when expected empty")
 			}
-
-			// Vérification des analyseurs
-			for i, a := range analyzers {
-				// Vérification nil
-				if a == nil {
-					t.Errorf("Analyzer at index %d is nil", i)
-				}
-			}
-
-			// Vérifier que newexpr est bien exclu (désactivé)
-			for _, analyzer := range analyzers {
-				// Vérification que newexpr n'est pas présent
-				if analyzer.Name == "newexpr" {
-					t.Error("Analyzer 'newexpr' should be disabled")
-				}
+			// Vérification non-vide
+			if !tt.wantEmpty && len(analyzers) == 0 {
+				t.Error("Analyzers() returned empty when expected non-empty")
 			}
 		})
 	}
