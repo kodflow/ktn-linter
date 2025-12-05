@@ -18,7 +18,7 @@ func Test_typeFunctions(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - logic tested via external tests
+			// Test passthrough - public functions tested via external tests
 		})
 	}
 }

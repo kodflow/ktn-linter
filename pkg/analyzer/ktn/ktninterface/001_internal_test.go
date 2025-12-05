@@ -480,6 +480,62 @@ func Test_checkType(t *testing.T) {
 			expr: nil,
 			want: 0,
 		},
+		{
+			name: "Ident type",
+			expr: &ast.Ident{Name: "MyInterface"},
+			want: 1,
+		},
+		{
+			name: "StarExpr pointer type",
+			expr: &ast.StarExpr{
+				X: &ast.Ident{Name: "Reader"},
+			},
+			want: 1,
+		},
+		{
+			name: "ArrayType slice type",
+			expr: &ast.ArrayType{
+				Elt: &ast.Ident{Name: "Writer"},
+			},
+			want: 1,
+		},
+		{
+			name: "MapType with key and value",
+			expr: &ast.MapType{
+				Key:   &ast.Ident{Name: "string"},
+				Value: &ast.Ident{Name: "Handler"},
+			},
+			want: 2,
+		},
+		{
+			name: "ChanType channel",
+			expr: &ast.ChanType{
+				Value: &ast.Ident{Name: "Message"},
+			},
+			want: 1,
+		},
+		{
+			name: "SelectorExpr qualified type",
+			expr: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "io"},
+				Sel: &ast.Ident{Name: "Reader"},
+			},
+			want: 1,
+		},
+		{
+			name: "nested pointer to slice",
+			expr: &ast.StarExpr{
+				X: &ast.ArrayType{
+					Elt: &ast.Ident{Name: "Service"},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "unknown expression type",
+			expr: &ast.BasicLit{Value: "42"},
+			want: 0,
+		},
 	}
 
 	// Iteration over table-driven tests

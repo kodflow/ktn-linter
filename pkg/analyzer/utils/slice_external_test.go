@@ -2,6 +2,7 @@ package utils_test
 
 import (
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/types"
 	"testing"
@@ -435,6 +436,39 @@ func TestIsSmallConstantSize(t *testing.T) {
 			got := utils.IsSmallConstantSize(pass, expr)
 			if got != tt.want {
 				t.Errorf("utils.IsSmallConstantSize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestIsSmallConstantSizeWithConstants tests with actual constant values
+func TestIsSmallConstantSizeWithConstants(t *testing.T) {
+	tests := []struct {
+		name  string
+		value int64
+		want  bool
+	}{
+		{"zero", 0, false},
+		{"small positive 100", 100, true},
+		{"boundary 1024", 1024, true},
+		{"over boundary 1025", 1025, false},
+		{"negative", -5, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr := &ast.BasicLit{Value: "x"}
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						expr: {Value: constant.MakeInt64(tt.value)},
+					},
+				},
+			}
+			got := utils.IsSmallConstantSize(pass, expr)
+			// Check result
+			if got != tt.want {
+				t.Errorf("IsSmallConstantSize(%d) = %v, want %v", tt.value, got, tt.want)
 			}
 		})
 	}

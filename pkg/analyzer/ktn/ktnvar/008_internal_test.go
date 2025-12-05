@@ -3,6 +3,8 @@ package ktnvar
 import (
 	"go/ast"
 	"testing"
+
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_runVar008 tests the private runVar008 function.
@@ -122,12 +124,59 @@ func Test_checkAssignForAlloc(t *testing.T) {
 func Test_checkDeclForAlloc(t *testing.T) {
 	tests := []struct {
 		name string
+		decl *ast.DeclStmt
 	}{
-		{"error case validation"},
+		{
+			name: "non-GenDecl",
+			decl: &ast.DeclStmt{
+				Decl: &ast.BadDecl{},
+			},
+		},
+		{
+			name: "GenDecl with non-ValueSpec",
+			decl: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ImportSpec{},
+					},
+				},
+			},
+		},
+		{
+			name: "GenDecl with ValueSpec no values",
+			decl: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "GenDecl with ValueSpec non-alloc value",
+			decl: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{&ast.Ident{Name: "y"}},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks declarations for allocations
+			// Create real pass with no-op reporter
+			pass := &analysis.Pass{
+				Report: func(d analysis.Diagnostic) {},
+			}
+			checkDeclForAlloc(pass, tt.decl)
+			// Test passes if no panic
 		})
 	}
 }

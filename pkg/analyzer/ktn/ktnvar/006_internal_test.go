@@ -95,13 +95,79 @@ func Test_checkBuilderWithoutGrow(t *testing.T) {
 // Test_checkValueSpec tests the private checkValueSpec function.
 func Test_checkValueSpec(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		node        *ast.ValueSpec
+		expectLit   bool
+		expectNode  bool
 	}{
-		{"error case validation"},
+		{
+			name:        "empty values",
+			node:        &ast.ValueSpec{Values: []ast.Expr{}},
+			expectLit:   false,
+			expectNode:  false,
+		},
+		{
+			name: "strings.Builder value",
+			node: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "strings"},
+							Sel: &ast.Ident{Name: "Builder"},
+						},
+					},
+				},
+			},
+			expectLit:  true,
+			expectNode: true,
+		},
+		{
+			name: "bytes.Buffer value",
+			node: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "bytes"},
+							Sel: &ast.Ident{Name: "Buffer"},
+						},
+					},
+				},
+			},
+			expectLit:  true,
+			expectNode: true,
+		},
+		{
+			name: "non-Builder composite literal",
+			node: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.Ident{Name: "MyStruct"},
+					},
+				},
+			},
+			expectLit:  false,
+			expectNode: false,
+		},
+		{
+			name: "non-composite literal value",
+			node: &ast.ValueSpec{
+				Values: []ast.Expr{&ast.Ident{Name: "x"}},
+			},
+			expectLit:  false,
+			expectNode: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks value specs
+			lit, pos := checkValueSpec(tt.node)
+			// Check composite literal result
+			if (lit != nil) != tt.expectLit {
+				t.Errorf("checkValueSpec() lit = %v, expectLit %v", lit != nil, tt.expectLit)
+			}
+			// Check position node result
+			if (pos != nil) != tt.expectNode {
+				t.Errorf("checkValueSpec() pos = %v, expectNode %v", pos != nil, tt.expectNode)
+			}
 		})
 	}
 }
@@ -109,13 +175,64 @@ func Test_checkValueSpec(t *testing.T) {
 // Test_checkAssignStmt tests the private checkAssignStmt function.
 func Test_checkAssignStmt(t *testing.T) {
 	tests := []struct {
-		name string
+		name       string
+		node       *ast.AssignStmt
+		expectLit  bool
+		expectNode bool
 	}{
-		{"error case validation"},
+		{
+			name:       "empty rhs",
+			node:       &ast.AssignStmt{Rhs: []ast.Expr{}},
+			expectLit:  false,
+			expectNode: false,
+		},
+		{
+			name: "strings.Builder assignment",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "strings"},
+							Sel: &ast.Ident{Name: "Builder"},
+						},
+					},
+				},
+			},
+			expectLit:  true,
+			expectNode: true,
+		},
+		{
+			name: "non-Builder assignment",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.Ident{Name: "MyStruct"},
+					},
+				},
+			},
+			expectLit:  false,
+			expectNode: false,
+		},
+		{
+			name: "non-composite literal rhs",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			},
+			expectLit:  false,
+			expectNode: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks assign statements
+			lit, pos := checkAssignStmt(tt.node)
+			// Check composite literal result
+			if (lit != nil) != tt.expectLit {
+				t.Errorf("checkAssignStmt() lit = %v, expectLit %v", lit != nil, tt.expectLit)
+			}
+			// Check position node result
+			if (pos != nil) != tt.expectNode {
+				t.Errorf("checkAssignStmt() pos = %v, expectNode %v", pos != nil, tt.expectNode)
+			}
 		})
 	}
 }
@@ -137,13 +254,69 @@ func Test_reportMissingGrow(t *testing.T) {
 // Test_extractTypeString tests the private extractTypeString function.
 func Test_extractTypeString(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typeExpr ast.Expr
+		values   []ast.Expr
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "nil type expr and empty values",
+			typeExpr: nil,
+			values:   []ast.Expr{},
+			expected: "",
+		},
+		{
+			name: "selector type expr",
+			typeExpr: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "strings"},
+				Sel: &ast.Ident{Name: "Builder"},
+			},
+			values:   nil,
+			expected: "strings.Builder",
+		},
+		{
+			name:     "type from composite literal value",
+			typeExpr: nil,
+			values: []ast.Expr{
+				&ast.CompositeLit{
+					Type: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "bytes"},
+						Sel: &ast.Ident{Name: "Buffer"},
+					},
+				},
+			},
+			expected: "bytes.Buffer",
+		},
+		{
+			name:     "non-selector type expr",
+			typeExpr: &ast.Ident{Name: "int"},
+			values:   nil,
+			expected: "",
+		},
+		{
+			name:     "value is not composite literal",
+			typeExpr: nil,
+			values:   []ast.Expr{&ast.Ident{Name: "x"}},
+			expected: "",
+		},
+		{
+			name:     "composite literal without selector type",
+			typeExpr: nil,
+			values: []ast.Expr{
+				&ast.CompositeLit{
+					Type: &ast.Ident{Name: "MyStruct"},
+				},
+			},
+			expected: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function extracts type strings
+			result := extractTypeString(tt.typeExpr, tt.values)
+			// Check result matches expected
+			if result != tt.expected {
+				t.Errorf("extractTypeString() = %q, expected %q", result, tt.expected)
+			}
 		})
 	}
 }
