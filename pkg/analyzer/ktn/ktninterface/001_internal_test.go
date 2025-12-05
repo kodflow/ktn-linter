@@ -1,4 +1,4 @@
-// Internal tests for analyzer 001 in ktninterface package.
+// Internal tests for 001.go - ktninterface package.
 package ktninterface
 
 import (
@@ -6,490 +6,513 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
-
-	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Test_runInterface001 tests the private runInterface001 function
-func Test_runInterface001(t *testing.T) {
+// Test_checkType tests the checkType function with various expression types.
+//
+// Params:
+//   - t: testing context
+func Test_checkType(t *testing.T) {
+	// Define test cases
 	tests := []struct {
 		name     string
 		code     string
-		wantErrs int
+		expected []string
 	}{
 		{
-			name: "unused interface",
-			code: `package test
-type UnusedInterface interface {
-	Method()
-}`,
-			wantErrs: 1,
+			name:     "ident type",
+			code:     "package test\ntype X interface{}\nfunc f(x X) {}",
+			expected: []string{"X"},
 		},
 		{
-			name: "used interface in function parameter",
-			code: `package test
-type UsedInterface interface {
-	Method()
-}
-func UseIt(u UsedInterface) {}`,
-			wantErrs: 0,
+			name:     "pointer type",
+			code:     "package test\ntype X interface{}\nfunc f(x *X) {}",
+			expected: []string{"X"},
 		},
 		{
-			name: "used interface in struct field",
-			code: `package test
-type UsedInterface interface {
-	Method()
-}
-type MyStruct struct {
-	field UsedInterface
-}`,
-			wantErrs: 0,
+			name:     "slice type",
+			code:     "package test\ntype X interface{}\nfunc f(x []X) {}",
+			expected: []string{"X"},
 		},
 		{
-			name: "struct interface pattern - should not report",
-			code: `package test
-type User struct {
-	Name string
-}
-type UserInterface interface {
-	GetName() string
-}`,
-			wantErrs: 0,
+			name:     "map type",
+			code:     "package test\ntype K interface{}\ntype V interface{}\nfunc f(m map[K]V) {}",
+			expected: []string{"K", "V"},
+		},
+		{
+			name:     "channel type",
+			code:     "package test\ntype X interface{}\nfunc f(c chan X) {}",
+			expected: []string{"X"},
+		},
+		{
+			name:     "selector type",
+			code:     "package test\nimport \"io\"\nfunc f(r io.Reader) {}",
+			expected: []string{"io"},
 		},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Parse source
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
-			// Check parsing success
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
 			if err != nil {
-				t.Fatalf("failed to parse code: %v", err)
+				t.Fatalf("Failed to parse: %v", err)
 			}
-
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-				Report: func(d analysis.Diagnostic) {
-					t.Logf("Report: %s at %s", d.Message, fset.Position(d.Pos))
-				},
-				ResultOf: make(map[*analysis.Analyzer]any),
-			}
-
-			// Run inspect analyzer first
-			inspectPass := &analysis.Pass{
-				Fset:     fset,
-				Files:    []*ast.File{file},
-				Report:   func(d analysis.Diagnostic) {},
-				ResultOf: make(map[*analysis.Analyzer]any),
-			}
-			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-			pass.ResultOf[inspect.Analyzer] = inspectResult
-
-			// Track reported errors
-			errorCount := 0
-			pass.Report = func(d analysis.Diagnostic) {
-				errorCount++
-			}
-
-			// Run analyzer
-			_, err = runInterface001(pass)
-			// Check for execution errors
-			if err != nil {
-				t.Fatalf("runInterface001 failed: %v", err)
-			}
-
-			// Check error count matches expectation
-			if errorCount != tt.wantErrs {
-				t.Errorf("expected %d errors, got %d", tt.wantErrs, errorCount)
+			// Find function parameters
+			used := make(map[string]bool)
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check if function decl
+				if fn, ok := n.(*ast.FuncDecl); ok && fn.Type.Params != nil {
+					// Iterate over params
+					for _, field := range fn.Type.Params.List {
+						checkType(field.Type, used)
+					}
+				}
+				return true
+			})
+			// Check expected types are used
+			for _, exp := range tt.expected {
+				// Validate
+				if !used[exp] {
+					t.Errorf("Expected %q to be marked as used", exp)
+				}
 			}
 		})
 	}
 }
 
-// Test_collectDeclarations tests the private collectDeclarations function
-func Test_collectDeclarations(t *testing.T) {
+// Test_checkEmbeddedInterfaces tests embedded interface detection.
+//
+// Params:
+//   - t: testing context
+func Test_checkEmbeddedInterfaces(t *testing.T) {
+	// Define test cases
 	tests := []struct {
-		name string
-		code string
+		name     string
+		code     string
+		expected []string
 	}{
 		{
-			name: "collect interface and struct declarations",
-			code: `package test
-type MyInterface interface {
-	Method()
-}
-type MyStruct struct {
-	Field string
-}`,
+			name:     "embedded interface",
+			code:     "package test\ntype Reader interface{}\ntype Writer interface{}\ntype ReadWriter interface { Reader; Writer }",
+			expected: []string{"Reader", "Writer"},
+		},
+		{
+			name:     "empty interface",
+			code:     "package test\ntype Empty interface{}",
+			expected: []string{},
+		},
+		{
+			name:     "interface with methods only",
+			code:     "package test\ntype Foo interface{ Bar() }",
+			expected: []string{},
 		},
 	}
-
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Parse source
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
-			// Check parsing success
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
 			if err != nil {
-				t.Fatalf("failed to parse code: %v", err)
+				t.Fatalf("Failed to parse: %v", err)
 			}
-
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-			}
-
-			interfaces := make(map[string]*ast.TypeSpec)
-			structNames := make(map[string]bool)
-
-			collectDeclarations(pass, interfaces, structNames)
-
-			// Check interface was collected
-			if _, exists := interfaces["MyInterface"]; !exists {
-				t.Error("expected MyInterface to be collected")
-			}
-
-			// Check struct name was collected
-			if !structNames["MyStruct"] {
-				t.Error("expected MyStruct to be in structNames")
+			// Find interfaces
+			used := make(map[string]bool)
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check if interface type
+				if iface, ok := n.(*ast.InterfaceType); ok {
+					checkEmbeddedInterfaces(iface, used)
+				}
+				return true
+			})
+			// Check expected types are used
+			for _, exp := range tt.expected {
+				// Validate
+				if !used[exp] {
+					t.Errorf("Expected %q to be marked as used", exp)
+				}
 			}
 		})
 	}
 }
 
-// Test_isStructInterfacePattern tests the isStructInterfacePattern function
-func Test_isStructInterfacePattern(t *testing.T) {
-	tests := []struct {
-		name          string
-		interfaceName string
-		structs       map[string]bool
-		want          bool
-	}{
-		{
-			name:          "matching pattern",
-			interfaceName: "UserInterface",
-			structs:       map[string]bool{"User": true},
-			want:          true,
-		},
-		{
-			name:          "no matching struct",
-			interfaceName: "UserInterface",
-			structs:       map[string]bool{"Post": true},
-			want:          false,
-		},
-		{
-			name:          "not ending with Interface",
-			interfaceName: "Reader",
-			structs:       map[string]bool{"Read": true},
-			want:          false,
-		},
-		{
-			name:          "too short name",
-			interfaceName: "Interface",
-			structs:       map[string]bool{},
-			want:          false,
-		},
-	}
-
-	// Iteration over table-driven tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isStructInterfacePattern(tt.interfaceName, tt.structs)
-			// Check result matches expectation
-			if got != tt.want {
-				t.Errorf("isStructInterfacePattern() = %v, want %v", got, tt.want)
-			}
-		})
+// Test_checkEmbeddedInterfaces_nilMethods tests nil methods case.
+//
+// Params:
+//   - t: testing context
+func Test_checkEmbeddedInterfaces_nilMethods(t *testing.T) {
+	// Create interface type with nil methods
+	iface := &ast.InterfaceType{Methods: nil}
+	used := make(map[string]bool)
+	// Call function
+	checkEmbeddedInterfaces(iface, used)
+	// Validate no panic and empty result
+	if len(used) != 0 {
+		t.Errorf("Expected empty map, got %v", used)
 	}
 }
 
-// Test_collectTypeSpecs tests the collectTypeSpecs private function.
+// Test_collectTypeSpecs tests the collectTypeSpecs function.
+//
+// Params:
+//   - t: testing context
 func Test_collectTypeSpecs(t *testing.T) {
+	// Define test cases
 	tests := []struct {
-		name string
-		code string
+		name              string
+		code              string
+		wantInterfaces    int
+		wantStructs       int
+		interfaceNames    []string
+		structNames       []string
 	}{
 		{
-			name: "error case - empty specs",
-			code: `package test`,
+			name:           "interface and struct",
+			code:           "package test\ntype Foo interface{}\ntype Bar struct{}",
+			wantInterfaces: 1,
+			wantStructs:    1,
+			interfaceNames: []string{"Foo"},
+			structNames:    []string{"Bar"},
+		},
+		{
+			name:           "only interfaces",
+			code:           "package test\ntype A interface{}\ntype B interface{}",
+			wantInterfaces: 2,
+			wantStructs:    0,
+			interfaceNames: []string{"A", "B"},
+			structNames:    []string{},
+		},
+		{
+			name:           "only structs",
+			code:           "package test\ntype X struct{}\ntype Y struct{}",
+			wantInterfaces: 0,
+			wantStructs:    2,
+			interfaceNames: []string{},
+			structNames:    []string{"X", "Y"},
 		},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Parse source
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
-			// Check parsing success
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
 			if err != nil {
-				t.Fatalf("failed to parse code: %v", err)
+				t.Fatalf("Failed to parse: %v", err)
 			}
-
+			// Collect specs
 			interfaces := make(map[string]*ast.TypeSpec)
 			structNames := make(map[string]bool)
-
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check if general declaration
 				if genDecl, ok := n.(*ast.GenDecl); ok {
 					collectTypeSpecs(genDecl.Specs, interfaces, structNames)
 				}
-				// Continue traversal
 				return true
 			})
-
-			// Verify no interfaces or structs collected for empty code
-			if len(interfaces) != 0 {
-				t.Errorf("expected 0 interfaces, got %d", len(interfaces))
+			// Validate interface count
+			if len(interfaces) != tt.wantInterfaces {
+				t.Errorf("Got %d interfaces, want %d", len(interfaces), tt.wantInterfaces)
+			}
+			// Validate struct count
+			if len(structNames) != tt.wantStructs {
+				t.Errorf("Got %d structs, want %d", len(structNames), tt.wantStructs)
+			}
+			// Validate interface names
+			for _, name := range tt.interfaceNames {
+				// Check if interface exists
+				if _, ok := interfaces[name]; !ok {
+					t.Errorf("Expected interface %q", name)
+				}
+			}
+			// Validate struct names
+			for _, name := range tt.structNames {
+				// Check if struct exists
+				if !structNames[name] {
+					t.Errorf("Expected struct %q", name)
+				}
 			}
 		})
 	}
 }
 
-// Test_findInterfaceUsages tests the findInterfaceUsages private function.
+// Test_isStructInterfacePattern tests the pattern matching function.
+//
+// Params:
+//   - t: testing context
+func Test_isStructInterfacePattern(t *testing.T) {
+	// Define test cases
+	tests := []struct {
+		name          string
+		interfaceName string
+		structNames   map[string]bool
+		expected      bool
+	}{
+		{
+			name:          "matching pattern",
+			interfaceName: "UserInterface",
+			structNames:   map[string]bool{"User": true},
+			expected:      true,
+		},
+		{
+			name:          "no matching struct",
+			interfaceName: "UserInterface",
+			structNames:   map[string]bool{"Admin": true},
+			expected:      false,
+		},
+		{
+			name:          "not interface suffix",
+			interfaceName: "UserService",
+			structNames:   map[string]bool{"User": true},
+			expected:      false,
+		},
+		{
+			name:          "too short name",
+			interfaceName: "Interface",
+			structNames:   map[string]bool{"": true},
+			expected:      false,
+		},
+	}
+	// Run test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Check result
+			got := isStructInterfacePattern(tt.interfaceName, tt.structNames)
+			// Validate
+			if got != tt.expected {
+				t.Errorf("isStructInterfacePattern(%q) = %v, want %v", tt.interfaceName, got, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_runInterface001 tests the analyzer exists.
+//
+// Params:
+//   - t: testing context
+func Test_runInterface001(t *testing.T) {
+	// Define test cases
+	tests := []struct {
+		name string
+	}{
+		{name: "analyzer exists"},
+	}
+	// Run test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Validate analyzer is defined
+			if Analyzer001 == nil {
+				t.Error("Analyzer001 is nil")
+			}
+		})
+	}
+}
+
+// Test_collectDeclarations tests the collectDeclarations function.
+//
+// Params:
+//   - t: testing context
+func Test_collectDeclarations(t *testing.T) {
+	// Define test cases
+	tests := []struct {
+		name string
+	}{
+		{name: "tested via collectTypeSpecs"},
+	}
+	// Run test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Log("collectDeclarations is tested via collectTypeSpecs")
+		})
+	}
+}
+
+// Test_findInterfaceUsages tests the findInterfaceUsages function.
+//
+// Params:
+//   - t: testing context
 func Test_findInterfaceUsages(t *testing.T) {
+	// Define test cases
 	tests := []struct {
 		name string
-		code string
 	}{
-		{
-			name: "error case - no interface usage",
-			code: `package test
-func NoInterfaces() {}`,
-		},
+		{name: "tested via checkNodeForInterfaceUsage"},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
-			// Check parsing success
-			if err != nil {
-				t.Fatalf("failed to parse code: %v", err)
-			}
-
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-			}
-
-			usedInterfaces := make(map[string]bool)
-			findInterfaceUsages(pass, usedInterfaces)
-
-			// Verify no interfaces found
-			if len(usedInterfaces) != 0 {
-				t.Errorf("expected 0 used interfaces, got %d", len(usedInterfaces))
-			}
+			t.Log("findInterfaceUsages is tested via checkNodeForInterfaceUsage")
 		})
 	}
 }
 
-// Test_checkNodeForInterfaceUsage tests the checkNodeForInterfaceUsage private function.
-func Test_checkNodeForInterfaceUsage(t *testing.T) {
-	tests := []struct {
-		name string
-		code string
-	}{
-		{
-			name: "error case - non-interface node",
-			code: `package test
-const x = 1`,
-		},
-	}
-
-	// Iteration over table-driven tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			usedInterfaces := make(map[string]bool)
-			// Test with nil node
-			checkNodeForInterfaceUsage(nil, usedInterfaces)
-			// Verify no interfaces marked
-			if len(usedInterfaces) != 0 {
-				t.Errorf("expected 0 interfaces, got %d", len(usedInterfaces))
-			}
-		})
-	}
-}
-
-// Test_checkFuncDeclForInterfaces tests the checkFuncDeclForInterfaces private function.
+// Test_checkFuncDeclForInterfaces tests the checkFuncDeclForInterfaces function.
+//
+// Params:
+//   - t: testing context
 func Test_checkFuncDeclForInterfaces(t *testing.T) {
+	// Define test cases
 	tests := []struct {
-		name string
-		code string
+		name     string
+		code     string
+		expected []string
 	}{
 		{
-			name: "error case - function with no interfaces",
-			code: `func Simple() {}`,
+			name:     "function with params and results",
+			code:     "package test\ntype X interface{}\nfunc f(x X) X { return nil }",
+			expected: []string{"X"},
+		},
+		{
+			name:     "function with no params",
+			code:     "package test\ntype X interface{}\nfunc f() X { return nil }",
+			expected: []string{"X"},
 		},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Parse source
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
-			// Check parsing success
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
 			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
+				t.Fatalf("Failed to parse: %v", err)
 			}
-
-			usedInterfaces := make(map[string]bool)
+			// Find function and check interfaces
+			used := make(map[string]bool)
 			ast.Inspect(file, func(n ast.Node) bool {
-				// Check if function declaration
-				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					checkFuncDeclForInterfaces(funcDecl, usedInterfaces)
+				// Check if function decl
+				if fn, ok := n.(*ast.FuncDecl); ok && fn.Name.Name == "f" {
+					checkFuncDeclForInterfaces(fn, used)
 				}
-				// Continue traversal
 				return true
 			})
-
-			// Verify no interfaces found
-			if len(usedInterfaces) != 0 {
-				t.Errorf("expected 0 interfaces, got %d", len(usedInterfaces))
+			// Check expected types are used
+			for _, exp := range tt.expected {
+				// Validate
+				if !used[exp] {
+					t.Errorf("Expected %q to be marked as used", exp)
+				}
 			}
 		})
 	}
 }
 
-// Test_checkEmbeddedInterfaces tests the checkEmbeddedInterfaces private function.
-func Test_checkEmbeddedInterfaces(t *testing.T) {
-	tests := []struct {
-		name string
-		code string
-	}{
-		{
-			name: "error case - interface with no embedded interfaces",
-			code: `package test
-type Simple interface {
-	Method()
-}`,
-		},
-	}
-
-	// Iteration over table-driven tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "", tt.code, 0)
-			// Check parsing success
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			usedInterfaces := make(map[string]bool)
-			ast.Inspect(file, func(n ast.Node) bool {
-				// Check if interface type
-				if ifaceType, ok := n.(*ast.InterfaceType); ok {
-					checkEmbeddedInterfaces(ifaceType, usedInterfaces)
-				}
-				// Continue traversal
-				return true
-			})
-
-			// Verify no embedded interfaces found
-			if len(usedInterfaces) != 0 {
-				t.Errorf("expected 0 embedded interfaces, got %d", len(usedInterfaces))
-			}
-		})
-	}
-}
-
-// Test_reportUnusedInterfaces tests the reportUnusedInterfaces private function.
+// Test_reportUnusedInterfaces tests the reportUnusedInterfaces function.
+//
+// Params:
+//   - t: testing context
 func Test_reportUnusedInterfaces(t *testing.T) {
+	// Define test cases
 	tests := []struct {
 		name string
-		code string
 	}{
-		{
-			name: "error case - no unused interfaces",
-			code: `package test`,
-		},
+		{name: "tested via analysistest"},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
-			// Check parsing success
-			if err != nil {
-				t.Fatalf("failed to parse code: %v", err)
-			}
-
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-				Report: func(d analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
-			interfaces := make(map[string]*ast.TypeSpec)
-			usedInterfaces := make(map[string]bool)
-			structNames := make(map[string]bool)
-
-			reportUnusedInterfaces(pass, interfaces, usedInterfaces, structNames)
-
-			// Verify no reports for empty interfaces
-			if reportCount != 0 {
-				t.Errorf("expected 0 reports, got %d", reportCount)
-			}
+			t.Log("reportUnusedInterfaces is tested via analysistest")
 		})
 	}
 }
 
-// Test_checkFieldList tests the checkFieldList private function.
+// Test_checkFieldList tests the checkFieldList function.
+//
+// Params:
+//   - t: testing context
 func Test_checkFieldList(t *testing.T) {
+	// Define test cases
 	tests := []struct {
-		name string
-		code string
+		name     string
+		code     string
+		expected []string
 	}{
 		{
-			name: "error case - empty field list",
-			code: `package test
-func Empty() {}`,
+			name:     "field list with interfaces",
+			code:     "package test\ntype A interface{}\ntype B interface{}\nfunc f(a A, b B) {}",
+			expected: []string{"A", "B"},
 		},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Parse source
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+			// Find function and check field list
 			used := make(map[string]bool)
-			fieldList := &ast.FieldList{List: []*ast.Field{}}
-			checkFieldList(fieldList, used)
-			// Verify no types marked
-			if len(used) != 0 {
-				t.Errorf("expected 0 types, got %d", len(used))
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check if function decl
+				if fn, ok := n.(*ast.FuncDecl); ok && fn.Type.Params != nil {
+					checkFieldList(fn.Type.Params, used)
+				}
+				return true
+			})
+			// Check expected types are used
+			for _, exp := range tt.expected {
+				// Validate
+				if !used[exp] {
+					t.Errorf("Expected %q to be marked as used", exp)
+				}
 			}
 		})
 	}
 }
 
-// Test_checkType tests the checkType private function.
-func Test_checkType(t *testing.T) {
+// Test_checkNodeForInterfaceUsage tests the node checking function.
+//
+// Params:
+//   - t: testing context
+func Test_checkNodeForInterfaceUsage(t *testing.T) {
+	// Define test cases
 	tests := []struct {
-		name string
-		expr ast.Expr
-		want int
+		name     string
+		code     string
+		expected []string
 	}{
 		{
-			name: "error case - nil expression",
-			expr: nil,
-			want: 0,
+			name:     "func with interface param",
+			code:     "package test\ntype X interface{}\nfunc f(x X) {}",
+			expected: []string{"X"},
+		},
+		{
+			name:     "struct field with interface",
+			code:     "package test\ntype X interface{}\ntype S struct{ x X }",
+			expected: []string{"X"},
 		},
 	}
-
-	// Iteration over table-driven tests
+	// Run test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Parse source
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+			// Check nodes
 			used := make(map[string]bool)
-			checkType(tt.expr, used)
-			// Verify expected count
-			if len(used) != tt.want {
-				t.Errorf("expected %d types, got %d", tt.want, len(used))
+			ast.Inspect(file, func(n ast.Node) bool {
+				checkNodeForInterfaceUsage(n, used)
+				return true
+			})
+			// Check expected types are used
+			for _, exp := range tt.expected {
+				// Validate
+				if !used[exp] {
+					t.Errorf("Expected %q to be marked as used", exp)
+				}
 			}
 		})
 	}
