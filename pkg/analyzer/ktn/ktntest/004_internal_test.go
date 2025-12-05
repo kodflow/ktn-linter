@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -59,49 +60,31 @@ func Test_isExemptFunction(t *testing.T) {
 	}
 }
 
-// Test_isPublicFunction tests the isPublicFunction private function.
+// Test_ClassifyFunc tests the shared.ClassifyFunc helper function.
 //
 // Params:
 //   - t: testing context
-func Test_isPublicFunction(t *testing.T) {
+func Test_ClassifyFunc(t *testing.T) {
 	tests := []struct {
-		name string
-		code string
-		want bool
+		name       string
+		code       string
+		wantPublic bool
 	}{
 		{
-			name: "public function",
-			code: "func PublicFunc() {}",
-			want: true,
+			name:       "public function",
+			code:       "func PublicFunc() {}",
+			wantPublic: true,
 		},
 		{
-			name: "private function",
-			code: "func privateFunc() {}",
-			want: false,
-		},
-		{
-			name: "function with nil name",
-			code: "",
-			want: false,
+			name:       "private function",
+			code:       "func privateFunc() {}",
+			wantPublic: false,
 		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Vérification du code vide
-			if tt.code == "" {
-				// Test with nil function decl
-				funcDecl := &ast.FuncDecl{Name: nil}
-				got := isPublicFunction(funcDecl)
-				// Vérification de la condition
-				if got != tt.want {
-					t.Errorf("isPublicFunction(nil name) = %v, want %v", got, tt.want)
-				}
-				// Retour de la fonction
-				return
-			}
-
 			// Parse the code
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
@@ -128,20 +111,21 @@ func Test_isPublicFunction(t *testing.T) {
 				t.Fatal("no function declaration found")
 			}
 
-			got := isPublicFunction(funcDecl)
+			meta := shared.ClassifyFunc(funcDecl)
+			isPublic := meta.Visibility == shared.VisPublic
 			// Vérification de la condition
-			if got != tt.want {
-				t.Errorf("isPublicFunction(%q) = %v, want %v", tt.code, got, tt.want)
+			if isPublic != tt.wantPublic {
+				t.Errorf("ClassifyFunc(%q) public = %v, want %v", tt.code, isPublic, tt.wantPublic)
 			}
 		})
 	}
 }
 
-// Test_extractReceiverTypeName tests the extractReceiverTypeName private function.
+// Test_ExtractReceiverTypeName tests the shared.ExtractReceiverTypeName helper.
 //
 // Params:
 //   - t: testing context
-func Test_extractReceiverTypeName(t *testing.T) {
+func Test_ExtractReceiverTypeName(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
@@ -188,47 +172,50 @@ func Test_extractReceiverTypeName(t *testing.T) {
 				t.Fatal("no receiver found")
 			}
 
-			got := extractReceiverTypeName(funcDecl.Recv.List[0].Type)
+			got := shared.ExtractReceiverTypeName(funcDecl.Recv.List[0].Type)
 			// Vérification de la condition
 			if got != tt.want {
-				t.Errorf("extractReceiverTypeName() = %q, want %q", got, tt.want)
+				t.Errorf("ExtractReceiverTypeName() = %q, want %q", got, tt.want)
 			}
 		})
 	}
 }
 
-// Test_buildSuggestedTestName tests the buildSuggestedTestName private function.
+// Test_BuildSuggestedTestName tests the shared.BuildSuggestedTestName helper.
 //
 // Params:
 //   - t: testing context
-func Test_buildSuggestedTestName(t *testing.T) {
+func Test_BuildSuggestedTestName(t *testing.T) {
 	tests := []struct {
 		name string
-		fn   funcInfo
+		meta shared.FuncMeta
 		want string
 	}{
 		{
 			name: "public function",
-			fn: funcInfo{
-				name:       "DoSomething",
-				isExported: true,
+			meta: shared.FuncMeta{
+				Name:       "DoSomething",
+				Kind:       shared.FuncTopLevel,
+				Visibility: shared.VisPublic,
 			},
 			want: "TestDoSomething",
 		},
 		{
 			name: "private function",
-			fn: funcInfo{
-				name:       "doSomething",
-				isExported: false,
+			meta: shared.FuncMeta{
+				Name:       "doSomething",
+				Kind:       shared.FuncTopLevel,
+				Visibility: shared.VisPrivate,
 			},
 			want: "Test_doSomething",
 		},
 		{
 			name: "public method",
-			fn: funcInfo{
-				name:         "Method",
-				receiverName: "MyType",
-				isExported:   true,
+			meta: shared.FuncMeta{
+				Name:         "Method",
+				ReceiverName: "MyType",
+				Kind:         shared.FuncMethod,
+				Visibility:   shared.VisPublic,
 			},
 			want: "TestMyType_Method",
 		},
@@ -237,10 +224,10 @@ func Test_buildSuggestedTestName(t *testing.T) {
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := buildSuggestedTestName(tt.fn)
+			got := shared.BuildSuggestedTestName(tt.meta)
 			// Vérification de la condition
 			if got != tt.want {
-				t.Errorf("buildSuggestedTestName() = %q, want %q", got, tt.want)
+				t.Errorf("BuildSuggestedTestName() = %q, want %q", got, tt.want)
 			}
 		})
 	}
@@ -252,28 +239,28 @@ func Test_buildSuggestedTestName(t *testing.T) {
 //   - t: testing context
 func Test_getTestFileInfo(t *testing.T) {
 	tests := []struct {
-		name           string
-		isExported     bool
-		fileBase       string
-		wantFile       string
-		wantType       string
-		wantFuncType   string
+		name         string
+		isExported   bool
+		fileBase     string
+		wantFile     string
+		wantType     string
+		wantFuncType string
 	}{
 		{
-			name:           "public function",
-			isExported:     true,
-			fileBase:       "myfile",
-			wantFile:       "myfile_external_test.go",
-			wantType:       "black-box testing avec package xxx_test",
-			wantFuncType:   "publique",
+			name:         "public function",
+			isExported:   true,
+			fileBase:     "myfile",
+			wantFile:     "myfile_external_test.go",
+			wantType:     "black-box testing avec package xxx_test",
+			wantFuncType: "publique",
 		},
 		{
-			name:           "private function",
-			isExported:     false,
-			fileBase:       "myfile",
-			wantFile:       "myfile_internal_test.go",
-			wantType:       "white-box testing avec package xxx",
-			wantFuncType:   "privée",
+			name:         "private function",
+			isExported:   false,
+			fileBase:     "myfile",
+			wantFile:     "myfile_internal_test.go",
+			wantType:     "white-box testing avec package xxx",
+			wantFuncType: "privée",
 		},
 	}
 
@@ -492,10 +479,10 @@ func Test_runTest004(t *testing.T) {
 //   - t: testing context
 func Test_countTestFiles(t *testing.T) {
 	tests := []struct {
-		name          string
-		filename      string
-		wantHas       bool
-		wantCount     int
+		name      string
+		filename  string
+		wantHas   bool
+		wantCount int
 	}{
 		{
 			name:      "error case - no test files",

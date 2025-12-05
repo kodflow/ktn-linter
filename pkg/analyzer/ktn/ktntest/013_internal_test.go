@@ -6,6 +6,8 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 )
 
 // Test_hasErrorCaseCoverage tests the hasErrorCaseCoverage private function.
@@ -486,11 +488,11 @@ func Test_isErrorType(t *testing.T) {
 	}
 }
 
-// Test_extractReceiverName tests the extractReceiverName function.
+// Test_ExtractReceiverTypeName013 tests the shared.ExtractReceiverTypeName function (for 013).
 //
 // Params:
 //   - t: testing context
-func Test_extractReceiverName(t *testing.T) {
+func Test_ExtractReceiverTypeName013(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -514,10 +516,10 @@ func Test_extractReceiverName(t *testing.T) {
 				if fd, ok := decl.(*ast.FuncDecl); ok {
 					// Vérifier si c'est une méthode
 					if fd.Recv != nil && len(fd.Recv.List) > 0 {
-						result := extractReceiverName(fd.Recv.List[0].Type)
+						result := shared.ExtractReceiverTypeName(fd.Recv.List[0].Type)
 						// Vérification résultat
 						if result != tt.expected {
-							t.Errorf("extractReceiverName() = %q, want %q", result, tt.expected)
+							t.Errorf("ExtractReceiverTypeName() = %q, want %q", result, tt.expected)
 						}
 					}
 				}
@@ -538,29 +540,34 @@ func Test_analyzeTestFunction(t *testing.T) {
 	})
 }
 
-// Test_extractTestedFuncName tests the extractTestedFuncName function.
+// Test_ParseTestName013 tests the shared.ParseTestName function (for 013).
 //
 // Params:
 //   - t: testing context
-func Test_extractTestedFuncName(t *testing.T) {
+func Test_ParseTestName013(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected string
+		name         string
+		input        string
+		expectedFunc string
+		expectedOk   bool
 	}{
-		{"TestFoo", "TestFoo", "Foo"},
-		{"Test_foo", "Test_foo", "foo"},
-		{"TestFooBar", "TestFooBar", "FooBar"},
-		{"Test", "Test", ""},
-		{"NotATest", "NotATest", "NotATest"},
+		{"TestFoo", "TestFoo", "Foo", true},
+		{"Test_foo", "Test_foo", "foo", true},
+		{"TestFooBar", "TestFooBar", "FooBar", true},
+		{"Test", "Test", "", false},
+		{"NotATest", "NotATest", "", false},
 	}
 	// Parcourir les tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractTestedFuncName(tt.input)
-			// Vérification résultat
-			if result != tt.expected {
-				t.Errorf("extractTestedFuncName(%q) = %q, want %q", tt.input, result, tt.expected)
+			target, ok := shared.ParseTestName(tt.input)
+			// Vérification ok
+			if ok != tt.expectedOk {
+				t.Errorf("ParseTestName(%q) ok = %v, want %v", tt.input, ok, tt.expectedOk)
+			}
+			// Vérification résultat si ok
+			if ok && target.FuncName != tt.expectedFunc {
+				t.Errorf("ParseTestName(%q).FuncName = %q, want %q", tt.input, target.FuncName, tt.expectedFunc)
 			}
 		})
 	}

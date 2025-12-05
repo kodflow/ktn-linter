@@ -13,6 +13,6 @@ import (
 // Params:
 //   - t: testing context
 func TestTest012(t *testing.T) {
-	// 3 erreurs: 3 tests passthrough dans bad_test.go
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer012, "test012", "good_test.go", "bad_test.go", 3)
+	// 8 erreurs: 8 tests passthrough dans bad_test.go
+	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer012, "test012", "good_test.go", "bad_test.go", 8)
 }

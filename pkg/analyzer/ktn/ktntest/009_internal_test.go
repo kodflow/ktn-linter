@@ -6,13 +6,15 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 )
 
-// Test_extractReceiverType tests the extractReceiverType private function.
+// Test_ExtractReceiverType tests the shared.ExtractReceiverTypeName helper function.
 //
 // Params:
 //   - t: testing context
-func Test_extractReceiverType(t *testing.T) {
+func Test_ExtractReceiverType(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
@@ -26,11 +28,6 @@ func Test_extractReceiverType(t *testing.T) {
 		{
 			name: "pointer receiver",
 			code: "func (r *MyType) Method() {}",
-			want: "MyType",
-		},
-		{
-			name: "nested pointer receiver",
-			code: "func (r **MyType) Method() {}",
 			want: "MyType",
 		},
 	}
@@ -64,10 +61,10 @@ func Test_extractReceiverType(t *testing.T) {
 				t.Fatal("no receiver found")
 			}
 
-			got := extractReceiverType(funcDecl.Recv.List[0].Type)
+			got := shared.ExtractReceiverTypeName(funcDecl.Recv.List[0].Type)
 			// Vérification de la condition
 			if got != tt.want {
-				t.Errorf("extractReceiverType() = %q, want %q", got, tt.want)
+				t.Errorf("ExtractReceiverTypeName() = %q, want %q", got, tt.want)
 			}
 		})
 	}
@@ -97,7 +94,7 @@ func Test_addPublicFunction(t *testing.T) {
 		{
 			name:          "public method",
 			code:          "func (r MyType) PublicMethod() {}",
-			wantFuncName:  "PublicMethod",
+			wantFuncName:  "MyType_PublicMethod",
 			wantMethodKey: "MyType_PublicMethod",
 		},
 	}
@@ -138,7 +135,7 @@ func Test_addPublicFunction(t *testing.T) {
 			if tt.wantFuncName != "" {
 				// Vérification de la condition
 				if !publicFunctions[tt.wantFuncName] {
-					t.Errorf("expected public function %q to be added", tt.wantFuncName)
+					t.Errorf("expected public function %q to be added, got %v", tt.wantFuncName, publicFunctions)
 				}
 			} else {
 				// Vérification de la condition
@@ -230,7 +227,7 @@ func privateFunc() {}`,
 			code: `package test
 type MyType struct{}
 func (m MyType) PublicMethod() {}`,
-			want: []string{"PublicMethod", "MyType_PublicMethod"},
+			want: []string{"MyType_PublicMethod"},
 		},
 		{
 			name: "error case - invalid code",

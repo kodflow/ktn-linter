@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"path/filepath"
 	"strings"
-	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -69,6 +68,11 @@ func collectPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[
 			return
 		}
 
+		// Ignorer les fichiers mock
+		if shared.IsMockFile(filename) {
+			return
+		}
+
 		// Ajouter la fonction si elle est publique
 		addPublicFunction(funcDecl, publicFunctions)
 	})
@@ -88,22 +92,29 @@ func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) 
 		return
 	}
 
-	firstRune := rune(funcDecl.Name.Name[0])
-	// Vérification fonction publique
-	if !unicode.IsUpper(firstRune) {
+	// Skip mock functions
+	if shared.IsMockName(funcDecl.Name.Name) {
 		return
 	}
 
-	// Ajouter le nom de la fonction
-	publicFunctions[funcDecl.Name.Name] = true
+	// Use shared helper to classify function
+	meta := shared.ClassifyFunc(funcDecl)
 
-	// Pour les méthodes, ajouter aussi le pattern Type_Method
-	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
-		receiverType := extractReceiverType(funcDecl.Recv.List[0].Type)
-		// Vérification receiver valide
-		if receiverType != "" {
-			publicFunctions[receiverType+"_"+funcDecl.Name.Name] = true
-		}
+	// Skip mock receiver types
+	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		return
+	}
+
+	// Only add public functions
+	if meta.Visibility != shared.VisPublic {
+		return
+	}
+
+	// Add lookup key
+	key := shared.BuildTestLookupKey(meta)
+	// Vérification clé valide
+	if key != "" {
+		publicFunctions[key] = true
 	}
 }
 
@@ -127,6 +138,11 @@ func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.I
 			return
 		}
 
+		// Skip exempt test files
+		if shared.IsExemptTestFile(filename) {
+			return
+		}
+
 		// Vérifier si c'est un test de fonction publique
 		checkAndReportPublicFunctionTest(pass, funcDecl, baseName, publicFunctions)
 	})
@@ -140,44 +156,34 @@ func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.I
 //   - baseName: nom de base du fichier
 //   - publicFunctions: map des fonctions publiques
 func checkAndReportPublicFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, publicFunctions map[string]bool) {
-	// Extraire le nom de la fonction testée
-	testedFuncName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
-	// Vérification nom valide
-	if testedFuncName == "" {
+	testName := funcDecl.Name.Name
+
+	// Skip exempt test names
+	if shared.IsExemptTestName(testName) {
+		return
+	}
+
+	// Use shared helper to parse test name
+	target, ok := shared.ParseTestName(testName)
+	// Vérification parsing réussi
+	if !ok {
+		return
+	}
+
+	// Build lookup key
+	key := shared.BuildTestTargetKey(target)
+	// Vérification clé vide
+	if key == "" {
 		return
 	}
 
 	// Vérifier si c'est un test de fonction publique
-	if publicFunctions[testedFuncName] {
+	if publicFunctions[key] {
 		pass.Reportf(
 			funcDecl.Pos(),
 			"KTN-TEST-009: le test '%s' dans '%s' teste une fonction publique '%s'. Les tests de fonctions publiques doivent être dans '%s' (black-box testing avec package xxx_test)",
-			funcDecl.Name.Name, baseName, testedFuncName,
+			testName, baseName, key,
 			strings.Replace(baseName, "_internal_test.go", "_external_test.go", 1),
 		)
 	}
-}
-
-// extractReceiverType extrait le nom du type du receiver.
-//
-// Params:
-//   - expr: expression du receiver
-//
-// Returns:
-//   - string: nom du type
-func extractReceiverType(expr ast.Expr) string {
-	// Gérer les pointeurs
-	if starExpr, ok := expr.(*ast.StarExpr); ok {
-		// Retour récursif
-		return extractReceiverType(starExpr.X)
-	}
-
-	// Gérer les identifiants
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Retour du nom
-		return ident.Name
-	}
-
-	// Type non géré
-	return ""
 }

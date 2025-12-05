@@ -1,6 +1,6 @@
 package test010
 
-// helper est une fonction privée
-func helper() bool {
+// doWork est une fonction privée
+func doWork() bool {
 	return true
 }

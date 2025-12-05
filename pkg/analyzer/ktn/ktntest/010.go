@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"path/filepath"
 	"strings"
-	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -69,18 +68,54 @@ func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map
 			return
 		}
 
-		// Ajouter la fonction si elle est privée
-		if funcDecl.Name != nil && len(funcDecl.Name.Name) > 0 {
-			firstRune := rune(funcDecl.Name.Name[0])
-			// Vérification fonction privée
-			if unicode.IsLower(firstRune) {
-				privateFunctions[funcDecl.Name.Name] = true
-			}
+		// Ignorer les fichiers mock
+		if shared.IsMockFile(filename) {
+			return
 		}
+
+		// Ajouter la fonction si elle est privée
+		addPrivateFunction(funcDecl, privateFunctions)
 	})
 
 	// Retour de la map
 	return privateFunctions
+}
+
+// addPrivateFunction ajoute une fonction privée à la map.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//   - privateFunctions: map des fonctions privées
+func addPrivateFunction(funcDecl *ast.FuncDecl, privateFunctions map[string]bool) {
+	// Vérifier le nom de la fonction
+	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
+		return
+	}
+
+	// Skip mock functions
+	if shared.IsMockName(funcDecl.Name.Name) {
+		return
+	}
+
+	// Use shared helper to classify function
+	meta := shared.ClassifyFunc(funcDecl)
+
+	// Skip mock receiver types
+	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		return
+	}
+
+	// Only add private functions
+	if meta.Visibility != shared.VisPrivate {
+		return
+	}
+
+	// Add lookup key
+	key := shared.BuildTestLookupKey(meta)
+	// Vérification clé valide
+	if key != "" {
+		privateFunctions[key] = true
+	}
 }
 
 // checkExternalTestsForPrivateFunctions vérifie les tests de fonctions privées.
@@ -103,6 +138,11 @@ func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.
 			return
 		}
 
+		// Skip exempt test files
+		if shared.IsExemptTestFile(filename) {
+			return
+		}
+
 		// Vérifier si c'est un test de fonction privée
 		checkAndReportPrivateFunctionTest(pass, funcDecl, baseName, privateFunctions)
 	})
@@ -116,62 +156,39 @@ func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.
 //   - baseName: nom de base du fichier
 //   - privateFunctions: map des fonctions privées
 func checkAndReportPrivateFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, privateFunctions map[string]bool) {
-	// Extraire le nom de la fonction testée
-	testedFuncName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
-	// Vérification nom valide
-	if testedFuncName == "" {
+	testName := funcDecl.Name.Name
+
+	// Skip exempt test names
+	if shared.IsExemptTestName(testName) {
 		return
 	}
 
-	// Pour les tests de méthodes privées, extraire le nom de la fonction
-	testedFuncName = extractPrivateFunctionName(testedFuncName)
+	// Use shared helper to parse test name
+	target, ok := shared.ParseTestName(testName)
+	// Vérification parsing réussi
+	if !ok {
+		return
+	}
+
+	// Only check tests targeting private functions
+	if !target.IsPrivate {
+		return
+	}
+
+	// Build lookup key
+	key := shared.BuildTestTargetKey(target)
+	// Vérification clé vide
+	if key == "" {
+		return
+	}
 
 	// Vérifier si c'est un test de fonction privée
-	if isPrivateFunctionTested(testedFuncName, privateFunctions) {
+	if privateFunctions[key] {
 		pass.Reportf(
 			funcDecl.Pos(),
 			"KTN-TEST-010: le test '%s' dans '%s' teste une fonction privée '%s'. Les tests de fonctions privées doivent être dans '%s' (white-box testing avec package xxx)",
-			funcDecl.Name.Name, baseName, testedFuncName,
+			testName, baseName, target.FuncName,
 			strings.Replace(baseName, "_external_test.go", "_internal_test.go", 1),
 		)
 	}
-}
-
-// extractPrivateFunctionName extrait le nom de fonction privée du nom de test.
-//
-// Params:
-//   - testedFuncName: nom extrait du test
-//
-// Returns:
-//   - string: nom de la fonction privée
-func extractPrivateFunctionName(testedFuncName string) string {
-	// Pattern: TestType_privateMethod -> privateMethod
-	parts := strings.Split(testedFuncName, "_")
-	// Vérification pattern méthode
-	if len(parts) > 1 {
-		// Prendre le dernier élément
-		return parts[len(parts)-1]
-	}
-	// Retour du nom original
-	return testedFuncName
-}
-
-// isPrivateFunctionTested vérifie si une fonction privée est testée.
-//
-// Params:
-//   - testedFuncName: nom de la fonction testée
-//   - privateFunctions: map des fonctions privées
-//
-// Returns:
-//   - bool: true si c'est une fonction privée testée
-func isPrivateFunctionTested(testedFuncName string, privateFunctions map[string]bool) bool {
-	// Vérifier le nom
-	if len(testedFuncName) == 0 {
-		// Nom vide, pas de fonction testée
-		return false
-	}
-	// Vérifier si commence par minuscule et existe
-	firstRune := rune(testedFuncName[0])
-	// Retour de la vérification
-	return unicode.IsLower(firstRune) && privateFunctions[testedFuncName]
 }

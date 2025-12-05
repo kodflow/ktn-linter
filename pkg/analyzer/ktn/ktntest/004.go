@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -46,9 +45,14 @@ var Analyzer004 = &analysis.Analyzer{
 //   - testedFuncs: map des fonctions testées
 func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[string]bool) {
 	// Parcourir tous les fichiers du pass
-	// Pour chaque fichier, collecter les fonctions publiques et les tests
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Skip mock files
+		if shared.IsMockFile(filename) {
+			// Mock file, skip
+			continue
+		}
 
 		// Parcourir l'AST du fichier pour trouver les fonctions
 		ast.Inspect(file, func(n ast.Node) bool {
@@ -66,16 +70,11 @@ func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[st
 				collectTestedFunctions(funcDecl, testedFuncs)
 			} else {
 				// Fichier source - collecter TOUTES les fonctions (publiques et privées)
-				receiverName := ""
-				// Vérification si c'est une méthode avec un receiver
-				if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
-					// Extraire le nom du type du receiver
-					receiverName = extractReceiverTypeName(funcDecl.Recv.List[0].Type)
-				}
+				meta := shared.ClassifyFunc(funcDecl)
 				*funcs = append(*funcs, funcInfo{
-					name:         funcDecl.Name.Name,
-					receiverName: receiverName,
-					isExported:   isPublicFunction(funcDecl),
+					name:         meta.Name,
+					receiverName: meta.ReceiverName,
+					isExported:   meta.Visibility == shared.VisPublic,
 					pos:          funcDecl.Pos(),
 					filename:     filename,
 				})
@@ -167,19 +166,56 @@ func collectAllFunctionsAndTests(pass *analysis.Pass) ([]funcInfo, map[string]bo
 //   - allFuncs: liste des fonctions
 //   - testedFuncs: map des fonctions testées
 func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFuncs map[string]bool) {
+	// Build lookup map for functions
+	funcLookup := make(map[string]bool)
+	// Populate lookup map
+	for _, fn := range allFuncs {
+		key := buildFuncLookupKey(fn)
+		funcLookup[key] = true
+	}
+
 	// Pré-allouer le slice pour les noms de test
 	testNames := make([]string, 0, MAX_TEST_NAMES)
 
 	// Vérifier chaque fonction
 	for _, fn := range allFuncs {
+		// Skip mocks
+		if shared.IsMockName(fn.name) {
+			// Mock function, skip
+			continue
+		}
+		// Skip if receiver is a mock
+		if fn.receiverName != "" && shared.IsMockName(fn.receiverName) {
+			// Mock method, skip
+			continue
+		}
+
 		// Réinitialiser et construire les noms de test possibles
 		testNames = buildTestNames(testNames[:0], fn)
 
 		// Vérifier si au moins un des noms possibles a un test
 		if !hasMatchingTest(testNames, testedFuncs) && !isExemptFunction(fn.name) {
+			// Report missing test
 			reportMissingTest(pass, fn)
 		}
 	}
+}
+
+// buildFuncLookupKey builds the lookup key for a function.
+//
+// Params:
+//   - fn: function info
+//
+// Returns:
+//   - string: lookup key
+func buildFuncLookupKey(fn funcInfo) string {
+	// Handle methods
+	if fn.receiverName != "" {
+		// Method: ReceiverName_MethodName
+		return fn.receiverName + "_" + fn.name
+	}
+	// Top-level function
+	return fn.name
 }
 
 // buildTestNames construit les noms de test possibles pour une fonction.
@@ -191,12 +227,21 @@ func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFun
 // Returns:
 //   - []string: noms de test possibles
 func buildTestNames(testNames []string, fn funcInfo) []string {
-	// Ajouter le nom simple
-	testNames = append(testNames, fn.name)
-	// Si c'est une méthode, ajouter aussi le pattern Receiver_Method
-	if fn.receiverName != "" {
-		testNames = append(testNames, fn.receiverName+"_"+fn.name)
+	// Use shared helper to build lookup key
+	meta := shared.FuncMeta{
+		Name:         fn.name,
+		ReceiverName: fn.receiverName,
 	}
+	// Set kind based on receiver
+	if fn.receiverName != "" {
+		// Method
+		meta.Kind = shared.FuncMethod
+	} else {
+		// Top-level function
+		meta.Kind = shared.FuncTopLevel
+	}
+	// Add lookup key
+	testNames = append(testNames, shared.BuildTestLookupKey(meta))
 	// Retour des noms
 	return testNames
 }
@@ -236,8 +281,30 @@ func hasMatchingTest(testNames []string, testedFuncs map[string]bool) bool {
 //   - pass: contexte d'analyse
 //   - fn: information sur la fonction
 func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
-	// Construire le nom du test suggéré
-	suggestedTestName := buildSuggestedTestName(fn)
+	// Build meta for suggested test name
+	meta := shared.FuncMeta{
+		Name:         fn.name,
+		ReceiverName: fn.receiverName,
+	}
+	// Set kind and visibility
+	if fn.receiverName != "" {
+		// Method
+		meta.Kind = shared.FuncMethod
+	} else {
+		// Top-level function
+		meta.Kind = shared.FuncTopLevel
+	}
+	// Set visibility
+	if fn.isExported {
+		// Public
+		meta.Visibility = shared.VisPublic
+	} else {
+		// Private
+		meta.Visibility = shared.VisPrivate
+	}
+
+	// Use shared helper for suggested name
+	suggestedTestName := shared.BuildSuggestedTestName(meta)
 
 	// Extraire le nom de base du fichier
 	baseName := filepath.Base(fn.filename)
@@ -252,28 +319,6 @@ func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
 		"KTN-TEST-004: fonction %s '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (%s)",
 		funcType, fn.name, suggestedTestName, suggestedTestFile, testType,
 	)
-}
-
-// buildSuggestedTestName construit le nom de test suggéré.
-//
-// Params:
-//   - fn: information sur la fonction
-//
-// Returns:
-//   - string: nom de test suggéré
-func buildSuggestedTestName(fn funcInfo) string {
-	// Si c'est une méthode, suggérer le pattern Type_Method
-	if fn.receiverName != "" {
-		// Retour du pattern méthode
-		return "Test" + fn.receiverName + "_" + fn.name
-	}
-	// Private function: add underscore per Go conventions
-	if !fn.isExported {
-		// Retour du pattern privé
-		return "Test_" + fn.name
-	}
-	// Public function: simple pattern
-	return "Test" + fn.name
 }
 
 // getTestFileInfo retourne les informations sur le fichier de test.
@@ -296,31 +341,6 @@ func getTestFileInfo(isExported bool, fileBase string) (string, string, string) 
 	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
 }
 
-// isPublicFunction vérifie si une fonction est publique.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//
-// Returns:
-//   - bool: true si la fonction est publique
-func isPublicFunction(funcDecl *ast.FuncDecl) bool {
-	// Vérification du nom
-	if funcDecl.Name == nil {
-		// Pas de nom
-		return false
-	}
-
-	name := funcDecl.Name.Name
-	// Vérifier si le premier caractère est en majuscule
-	if len(name) == 0 {
-		// Nom vide
-		return false
-	}
-
-	// Retour du résultat
-	return unicode.IsUpper(rune(name[0]))
-}
-
 // collectTestedFunctions collecte les fonctions testées.
 //
 // Params:
@@ -333,40 +353,27 @@ func collectTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool)
 		return
 	}
 
-	// Extraire le nom de la fonction testée
-	testedName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
-	// Handle Test_functionName format for private funcs
-	testedName = strings.TrimPrefix(testedName, "_")
-
-	// Vérification de la condition
-	if testedName != "" {
-		// Ajouter à la map
-		testedFuncs[testedName] = true
-	}
-}
-
-// extractReceiverTypeName extrait le nom du type du receiver.
-//
-// Params:
-//   - expr: expression du type du receiver
-//
-// Returns:
-//   - string: nom du type (sans * pour les pointeurs)
-func extractReceiverTypeName(expr ast.Expr) string {
-	// Gérer les pointeurs (*Type)
-	if starExpr, ok := expr.(*ast.StarExpr); ok {
-		// Expression pointeur
-		return extractReceiverTypeName(starExpr.X)
+	// Skip exempt test names
+	if shared.IsExemptTestName(funcDecl.Name.Name) {
+		// Exempt test name
+		return
 	}
 
-	// Gérer les identifiants simples (Type)
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Retour du nom du type
-		return ident.Name
+	// Use shared helper to parse test name
+	target, ok := shared.ParseTestName(funcDecl.Name.Name)
+	// Check if parse succeeded
+	if !ok {
+		// Could not parse
+		return
 	}
 
-	// Type non géré
-	return ""
+	// Build lookup key from target
+	key := shared.BuildTestTargetKey(target)
+	// Add to tested functions
+	if key != "" {
+		// Add key
+		testedFuncs[key] = true
+	}
 }
 
 // collectExternalTestFunctions scanne les packages _test externes.

@@ -20,12 +20,11 @@ const INITIAL_MAP_CAPACITY int = 32
 
 // testedFuncInfo contient les informations sur une fonction testée.
 type testedFuncInfo struct {
-	name          string
-	returnsError  bool
-	hasReceiver   bool
-	receiverName  string
+	name         string
+	returnsError bool
+	hasReceiver  bool
+	receiverName string
 }
-
 
 // Analyzer013 checks that tests cover error cases
 var Analyzer013 = &analysis.Analyzer{
@@ -63,8 +62,23 @@ func runTest013(pass *analysis.Pass) (any, error) {
 			return
 		}
 
+		// Skip exempt test files
+		if shared.IsExemptTestFile(filename) {
+			return
+		}
+
+		// Skip mock files
+		if shared.IsMockFile(filename) {
+			return
+		}
+
 		// Vérifier si c'est une fonction de test unitaire
 		if !shared.IsUnitTestFunction(funcDecl) {
+			return
+		}
+
+		// Skip exempt test names
+		if shared.IsExemptTestName(funcDecl.Name.Name) {
 			return
 		}
 
@@ -102,6 +116,16 @@ func collectFuncSignatures(pass *analysis.Pass, insp *inspector.Inspector) map[s
 			return
 		}
 
+		// Ignorer les fichiers mock
+		if shared.IsMockFile(filename) {
+			return
+		}
+
+		// Skip mock functions
+		if funcDecl.Name != nil && shared.IsMockName(funcDecl.Name.Name) {
+			return
+		}
+
 		// Ajouter la signature
 		addFuncSignature(signatures, funcDecl)
 	})
@@ -120,6 +144,12 @@ func collectFuncSignatures(pass *analysis.Pass, insp *inspector.Inspector) map[s
 //   - funcDecl: déclaration de fonction
 func addFuncSignature(signatures map[string]testedFuncInfo, funcDecl *ast.FuncDecl) {
 	info := extractFuncInfo(funcDecl)
+
+	// Skip mock receiver types
+	if info.hasReceiver && shared.IsMockName(info.receiverName) {
+		return
+	}
+
 	// Stocker avec le nom simple
 	signatures[info.name] = *info
 	// Stocker aussi avec Receiver_Method si méthode
@@ -176,6 +206,10 @@ func scanSourceFile(dir string, filename string, signatures map[string]testedFun
 	if strings.HasSuffix(filename, "_test.go") {
 		return
 	}
+	// Skip mock files
+	if shared.IsMockFile(filename) {
+		return
+	}
 
 	// Parser le fichier
 	fullPath := filepath.Join(dir, filename)
@@ -193,6 +227,10 @@ func scanSourceFile(dir string, filename string, signatures map[string]testedFun
 		if !ok {
 			return true
 		}
+		// Skip mock functions
+		if funcDecl.Name != nil && shared.IsMockName(funcDecl.Name.Name) {
+			return true
+		}
 		// Ajouter la signature
 		addFuncSignature(signatures, funcDecl)
 		return true
@@ -207,16 +245,15 @@ func scanSourceFile(dir string, filename string, signatures map[string]testedFun
 // Returns:
 //   - *testedFuncInfo: informations extraites
 func extractFuncInfo(funcDecl *ast.FuncDecl) *testedFuncInfo {
+	// Use shared helper to classify
+	meta := shared.ClassifyFunc(funcDecl)
+
 	// Créer les infos de base
 	info := &testedFuncInfo{
-		name:         funcDecl.Name.Name,
+		name:         meta.Name,
 		returnsError: functionReturnsError(funcDecl),
-	}
-
-	// Vérifier si c'est une méthode
-	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
-		info.hasReceiver = true
-		info.receiverName = extractReceiverName(funcDecl.Recv.List[0].Type)
+		hasReceiver:  meta.Kind == shared.FuncMethod,
+		receiverName: meta.ReceiverName,
 	}
 
 	// Retour des infos
@@ -270,28 +307,6 @@ func isErrorType(expr ast.Expr) bool {
 	return false
 }
 
-// extractReceiverName extrait le nom du receiver.
-//
-// Params:
-//   - expr: expression du type
-//
-// Returns:
-//   - string: nom du receiver
-func extractReceiverName(expr ast.Expr) string {
-	// Gérer les pointeurs
-	if star, ok := expr.(*ast.StarExpr); ok {
-		// Appel récursif sur le type pointé
-		return extractReceiverName(star.X)
-	}
-	// Identifiant simple
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Retour du nom de l'identifiant
-		return ident.Name
-	}
-	// Type non supporté
-	return ""
-}
-
 // analyzeTestFunction analyse une fonction de test.
 //
 // Params:
@@ -303,15 +318,22 @@ func analyzeTestFunction(
 	testFunc *ast.FuncDecl,
 	signatures map[string]testedFuncInfo,
 ) {
-	// Extraire le nom de la fonction testée
-	testedName := extractTestedFuncName(testFunc.Name.Name)
-	// Nom vide = pas de fonction testée identifiable
-	if testedName == "" {
+	// Use shared helper to parse test name
+	target, ok := shared.ParseTestName(testFunc.Name.Name)
+	// Parsing failed
+	if !ok {
+		return
+	}
+
+	// Build lookup key
+	key := shared.BuildTestTargetKey(target)
+	// Key empty
+	if key == "" {
 		return
 	}
 
 	// Chercher la fonction dans les signatures
-	info, found := signatures[testedName]
+	info, found := signatures[key]
 	// Fonction non trouvée dans les signatures
 	if !found {
 		return
@@ -331,22 +353,6 @@ func analyzeTestFunction(
 			testFunc.Name.Name,
 		)
 	}
-}
-
-// extractTestedFuncName extrait le nom de la fonction testée.
-//
-// Params:
-//   - testName: nom du test (ex: TestParseConfig)
-//
-// Returns:
-//   - string: nom de la fonction testée
-func extractTestedFuncName(testName string) string {
-	// Retirer le préfixe "Test"
-	name := strings.TrimPrefix(testName, "Test")
-	// Retirer le _ pour les fonctions privées
-	name = strings.TrimPrefix(name, "_")
-	// Retour du nom extrait
-	return name
 }
 
 // hasErrorCaseCoverage vérifie la couverture des cas d'erreur.

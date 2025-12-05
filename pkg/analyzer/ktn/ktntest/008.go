@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
@@ -50,6 +49,11 @@ func runTest008(pass *analysis.Pass) (any, error) {
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
+			continue
+		}
+
+		// Ignorer les fichiers mock
+		if shared.IsMockFile(filename) {
 			continue
 		}
 
@@ -126,15 +130,28 @@ func classifyFunction(funcDecl *ast.FuncDecl, result *fileAnalysisResult) {
 		return
 	}
 
-	// Construire le nom complet (avec receiver si méthode)
+	// Skip mock functions
+	if shared.IsMockName(funcName) {
+		return
+	}
+
+	// Use shared helper to classify
+	meta := shared.ClassifyFunc(funcDecl)
+
+	// Skip mock receiver types
+	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		return
+	}
+
+	// Construire le nom d'affichage
 	displayName := buildFunctionDisplayName(funcDecl)
 
-	// Classifier la fonction
-	if len(funcName) > 0 && unicode.IsUpper(rune(funcName[0])) {
+	// Use visibility from shared helper
+	if meta.Visibility == shared.VisPublic {
 		result.hasPublic = true
 		result.publicFuncs = append(result.publicFuncs, displayName)
 	} else {
-		// Fonction privée (commence par minuscule)
+		// Fonction privée
 		result.hasPrivate = true
 		result.privateFuncs = append(result.privateFuncs, displayName)
 	}
@@ -214,12 +231,16 @@ func checkVariables(genDecl *ast.GenDecl, result *fileAnalysisResult) {
 			if varName == "_" {
 				continue
 			}
+			// Skip mock names
+			if shared.IsMockName(varName) {
+				continue
+			}
 			// Classifier la variable comme publique ou privée
-			if len(varName) > 0 && unicode.IsUpper(rune(varName[0])) {
-				// Variable publique (commence par majuscule)
+			if shared.IsExportedIdent(varName) {
+				// Variable publique
 				result.hasPublic = true
 			} else {
-				// Variable privée (commence par minuscule)
+				// Variable privée
 				result.hasPrivate = true
 			}
 		}

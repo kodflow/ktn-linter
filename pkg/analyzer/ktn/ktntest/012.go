@@ -3,6 +3,7 @@ package ktntest
 
 import (
 	"go/ast"
+	"go/token"
 	"slices"
 	"strings"
 
@@ -13,14 +14,17 @@ import (
 )
 
 var (
-	// assertionMethods contient les méthodes d'assertion de testing.T.
+	// assertionMethods contient uniquement les méthodes d'assertion de testing.T.
+	// Log, Logf, Run, Skip*, Parallel, Helper, Cleanup ne sont PAS des assertions.
 	assertionMethods = []string{
 		"Error", "Errorf",
 		"Fatal", "Fatalf",
 		"Fail", "FailNow",
-		"Log", "Logf",
-		"Run", "Skip", "Skipf", "SkipNow",
-		"Parallel", "Helper", "Cleanup",
+	}
+
+	// subTestMethods contient les méthodes qui lancent des sous-tests.
+	subTestMethods = []string{
+		"Run",
 	}
 
 	// Analyzer012 detects passthrough tests that don't test anything.
@@ -57,8 +61,23 @@ func runTest012(pass *analysis.Pass) (any, error) {
 			return
 		}
 
+		// Skip exempt test files
+		if shared.IsExemptTestFile(filename) {
+			return
+		}
+
+		// Skip mock files
+		if shared.IsMockFile(filename) {
+			return
+		}
+
 		// Vérifier si c'est une fonction de test
 		if !shared.IsUnitTestFunction(funcDecl) {
+			return
+		}
+
+		// Skip exempt test names
+		if shared.IsExemptTestName(funcDecl.Name.Name) {
 			return
 		}
 
@@ -78,6 +97,11 @@ func runTest012(pass *analysis.Pass) (any, error) {
 }
 
 // isPassthroughTest vérifie si un test est passthrough.
+// Un test est passthrough s'il ne contient aucun signal de validation:
+//   - Pas d'assertion (t.Error, t.Fatal, assert.Equal, etc.)
+//   - Pas de comparaison logique (==, !=, <, >, etc.)
+//   - Pas de sous-test (t.Run)
+//   - Pas d'appel à un helper de test
 //
 // Params:
 //   - funcDecl: déclaration de fonction de test
@@ -90,62 +114,105 @@ func isPassthroughTest(funcDecl *ast.FuncDecl) bool {
 		return true
 	}
 
-	// Vérifier si le test contient des assertions
-	hasAssertion := false
+	// Vérifier si le test contient des signaux de validation
+	hasValidation := false
 
 	// Parcourir le corps de la fonction
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Vérifier les appels de fonction
-		if checkForAssertion(n) {
-			hasAssertion = true
-			// Pas besoin de continuer
+		// Déjà trouvé, pas besoin de continuer
+		if hasValidation || n == nil {
 			return false
 		}
+
+		// Vérifier les différents signaux
+		if checkForValidationSignal(n) {
+			hasValidation = true
+			return false
+		}
+
 		// Continuer la traversée
 		return true
 	})
 
-	// Passthrough si pas d'assertion
-	return !hasAssertion
+	// Passthrough si pas de signal de validation
+	return !hasValidation
 }
 
-// checkForAssertion vérifie si un nœud contient une assertion.
+// checkForValidationSignal vérifie si un nœud contient un signal de validation.
+// Cela inclut: assertions, comparaisons, sous-tests, helpers.
 //
 // Params:
 //   - n: nœud AST
 //
 // Returns:
-//   - bool: true si assertion trouvée
-func checkForAssertion(n ast.Node) bool {
-	// Vérifier les appels de fonction
-	callExpr, ok := n.(*ast.CallExpr)
-	// Pas un appel de fonction
-	if !ok {
-		return false
+//   - bool: true si signal trouvé
+func checkForValidationSignal(n ast.Node) bool {
+	// Vérifier selon le type de nœud
+	switch node := n.(type) {
+	case *ast.CallExpr:
+		// Vérifier les appels de fonction
+		return checkCallForValidation(node)
+	case *ast.BinaryExpr:
+		// Vérifier les comparaisons
+		return isComparisonOperator(node.Op)
 	}
 
-	// Vérifier les différents types d'assertions
-	if isTestingMethodCall(callExpr) {
-		return true
-	}
-
-	// Vérifier les bibliothèques d'assertion
-	if isAssertLibraryCall(callExpr) {
-		return true
-	}
-
-	// Vérifier si c'est un appel de helper avec t
-	return isTestHelperCall(callExpr)
+	// Pas de signal trouvé
+	return false
 }
 
-// isTestingMethodCall vérifie si c'est un appel t.Error, t.Fatal, etc.
+// checkCallForValidation vérifie si un appel est une validation.
 //
 // Params:
 //   - callExpr: expression d'appel
 //
 // Returns:
-//   - bool: true si c'est une méthode de testing
-func isTestingMethodCall(callExpr *ast.CallExpr) bool {
+//   - bool: true si c'est une validation
+func checkCallForValidation(callExpr *ast.CallExpr) bool {
+	// Méthodes sur testing.T : t.Error, t.Fatal, t.Fail, ...
+	if isTestingAssertionCall(callExpr) {
+		return true
+	}
+
+	// Sous-tests : t.Run
+	if isSubTestCall(callExpr) {
+		return true
+	}
+
+	// Bibliothèques d'assertion (assert, require, ...)
+	if isAssertLibraryCall(callExpr) {
+		return true
+	}
+
+	// Helper de test prenant t en premier argument
+	return isTestHelperCall(callExpr)
+}
+
+// isComparisonOperator vérifie si un opérateur est une comparaison.
+//
+// Params:
+//   - op: opérateur token
+//
+// Returns:
+//   - bool: true si c'est une comparaison
+func isComparisonOperator(op token.Token) bool {
+	// Vérifier les opérateurs de comparaison
+	switch op {
+	case token.EQL, token.NEQ, token.LSS, token.GTR, token.LEQ, token.GEQ:
+		return true
+	}
+	// Pas une comparaison
+	return false
+}
+
+// isTestingAssertionCall vérifie si c'est un appel t.Error, t.Fatal, etc.
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est une assertion testing.T
+func isTestingAssertionCall(callExpr *ast.CallExpr) bool {
 	// Vérifier si c'est un sélecteur (x.Method)
 	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
 	// Pas un sélecteur
@@ -155,6 +222,32 @@ func isTestingMethodCall(callExpr *ast.CallExpr) bool {
 
 	// Vérifier si c'est une méthode d'assertion
 	return slices.Contains(assertionMethods, sel.Sel.Name)
+}
+
+// isSubTestCall vérifie si c'est un appel t.Run (sous-test).
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est un sous-test
+func isSubTestCall(callExpr *ast.CallExpr) bool {
+	// Vérifier si c'est un sélecteur (t.Run)
+	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
+	// Pas un sélecteur
+	if !ok {
+		return false
+	}
+
+	// Vérifier si le receiver est t
+	recv, recvOk := sel.X.(*ast.Ident)
+	// Pas un identifiant
+	if !recvOk || recv.Name != "t" {
+		return false
+	}
+
+	// Vérifier si c'est Run
+	return slices.Contains(subTestMethods, sel.Sel.Name)
 }
 
 // isAssertLibraryCall vérifie si c'est un appel à une bibliothèque d'assertion.
