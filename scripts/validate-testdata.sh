@@ -57,11 +57,18 @@ CATEGORY_MAP["var"]="VAR"
 
 # Fonction pour extraire le code de règle attendu d'un chemin testdata
 get_expected_code() {
-    local testname=$1  # ex: func001, const002, var019
+    local testname=$1  # ex: func001, const002, var019, func004_special
 
-    # Extraire le préfixe de catégorie et le numéro
-    local category_prefix=$(echo "$testname" | sed 's/[0-9_]*$//')
+    # Extraire le préfixe de catégorie (tout avant le premier chiffre)
+    local category_prefix=$(echo "$testname" | sed 's/[0-9].*//')
+    # Extraire le premier numéro trouvé
     local rulenum=$(echo "$testname" | grep -oE '[0-9]+' | head -1)
+
+    # Si pas de numéro trouvé, retourner vide
+    if [ -z "$rulenum" ]; then
+        echo ""
+        return
+    fi
 
     # Formater le numéro sur 3 chiffres (10# force base 10 pour éviter erreur octal sur 008/009)
     rulenum=$(printf "%03d" "$((10#$rulenum))")
