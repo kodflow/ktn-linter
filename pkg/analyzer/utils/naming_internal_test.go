@@ -1,9 +1,13 @@
+// Internal tests for naming.go - private function tests.
 package utils
 
 import "testing"
 
-// TestGetKnownInitialisms tests the functionality of the corresponding implementation.
-func TestGetKnownInitialisms(t *testing.T) {
+// Test_getKnownInitialisms tests the getKnownInitialisms function.
+//
+// Params:
+//   - t: testing context
+func Test_getKnownInitialisms(t *testing.T) {
 	tests := []struct {
 		name     string
 		expected []string
@@ -34,8 +38,11 @@ func TestGetKnownInitialisms(t *testing.T) {
 	}
 }
 
-// TestTryMatchInitialismPrefix tests the functionality of the corresponding implementation.
-func TestTryMatchInitialismPrefix(t *testing.T) {
+// Test_tryMatchInitialismPrefix tests the tryMatchInitialismPrefix function.
+//
+// Params:
+//   - t: testing context
+func Test_tryMatchInitialismPrefix(t *testing.T) {
 	initialisms := getKnownInitialisms()
 
 	tests := []struct {
