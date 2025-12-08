@@ -25,7 +25,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 93.8% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 92.7% |
 | 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 88.3% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 90.4% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 90.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 98.2% |
@@ -175,13 +175,12 @@ Rapport de couverture généré automatiquement.
 | 🔴 `013.go:analyzeTestFunction` | 76.9% |
 | 🔴 `013.go:checkErrorInKeyValue` | 75.0% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 90.4%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 90.5%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `001.go:runVar001` | 93.3% |
-| 🔴 `002.go:isTypeVisible` | 87.5% |
-| 🔴 `002.go:isTypedCall` | 40.0% |
+| 🔴 `002.go:checkVarSpec` | 84.6% |
 | 🔴 `003.go:runVar003` | 87.5% |
 | 🟡 `003.go:checkStatement` | 90.0% |
 | 🔴 `003.go:checkNestedBlocks` | 80.0% |
@@ -207,7 +206,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `010.go:checkLoopBodyVar015` | 83.3% |
 | 🔴 `010.go:checkMakeCallForByteSlice` | 80.0% |
 | 🔴 `011.go:checkShortVarDecl` | 88.9% |
-| 🔴 `011.go:isShadowing` | 77.8% |
+| 🔴 `011.go:isShadowing` | 81.8% |
 | 🔴 `012.go:checkFuncForRepeatedConversions` | 80.0% |
 | 🟡 `014.go:runVar014` | 92.9% |
 | 🟡 `015.go:runVar015` | 91.7% |
@@ -242,4 +241,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-05 21:33:46*
+*Généré le: 2025-12-08 20:49:57*

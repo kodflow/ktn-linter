@@ -1,7 +1,7 @@
-// Good examples for the var003 test case.
+// Good examples for the var002 test case.
 package var002
 
-// Good: Variables with correct type visibility
+// Good: Variables with explicit type AND value (format: var name type = value)
 
 const (
 	// DEFAULT_TIMEOUT is the default timeout
@@ -12,8 +12,6 @@ const (
 	MAX_CONNECTIONS int = 100
 	// ANSWER is the answer to everything
 	ANSWER int = 42
-	// RETRIES_MULTIPLIER is the multiplier for retries
-	RETRIES_MULTIPLIER int = 3
 	// BUFFER_SIZE is the buffer size
 	BUFFER_SIZE int = 1024
 	// BYTE_H is the byte value for H
@@ -24,48 +22,44 @@ const (
 	BYTE_L byte = 108
 	// BYTE_O is the byte value for o
 	BYTE_O byte = 111
-	// FLOAT_MULTIPLIER is the float multiplier
-	FLOAT_MULTIPLIER int = 3
 )
 
-// Cas 1: Type non visible (constante, variable) → type explicite requis
-// Cas 2: Type visible dans composite literal → pas de type explicite
-// Cas 3: Type visible via conversion de type → pas de type explicite
+// Style obligatoire: var name type = value
 var (
-	// defaultRetries defines the default number of retries
+	// defaultRetries has explicit type and value
 	defaultRetries int = DEFAULT_TIMEOUT
-	// configuration holds the app configuration
+	// configuration has explicit type and value
 	configuration string = "default"
-	// isEnabled indicates if feature is enabled
+	// isEnabled has explicit type and value
 	isEnabled bool = false
-	// serverPort is the server port number
+	// serverPort has explicit type and value
 	serverPort int = DEFAULT_PORT
-	// serverHost is the server hostname
+	// serverHost has explicit type and value
 	serverHost string = "localhost"
-	// maxConnections is the maximum connections
+	// maxConnections has explicit type and value
 	maxConnections int = MAX_CONNECTIONS
-	// endpoints is a list of endpoints
-	endpoints = []string{"http://localhost:8080", "http://localhost:9090"}
-	// configMap is a map of configuration values
-	configMap = map[string]int{"timeout": DEFAULT_TIMEOUT, "retries": RETRIES_MULTIPLIER}
-	// buffer is created with make
-	buffer = make([]byte, 0, BUFFER_SIZE)
-	// cache is a map created with make
-	cache = make(map[string]string)
-	// convertedInt is a type conversion
-	convertedInt = int(ANSWER)
-	// convertedStr is a type conversion
-	convertedStr = string([]byte{BYTE_H, BYTE_E, BYTE_L, BYTE_L, BYTE_O})
-	// convertedFloat is a type conversion
-	convertedFloat = float64(FLOAT_MULTIPLIER)
+	// endpoints has explicit type and value
+	endpoints []string = []string{"http://localhost:8080", "http://localhost:9090"}
+	// configMap has explicit type and value
+	configMap map[string]int = map[string]int{"timeout": DEFAULT_TIMEOUT, "retries": 3}
+	// buffer has explicit type and value
+	buffer []byte = make([]byte, 0, BUFFER_SIZE)
+	// cache has explicit type and value
+	cache map[string]string = make(map[string]string)
+	// convertedInt has explicit type and value
+	convertedInt int = int(ANSWER)
+	// convertedStr has explicit type and value
+	convertedStr string = string([]byte{BYTE_H, BYTE_E, BYTE_L, BYTE_L, BYTE_O})
+	// convertedFloat has explicit type and value
+	convertedFloat float64 = float64(ANSWER)
 )
 
-// goodFunction demonstrates correct local variable usage (not checked by VAR-001).
+// goodFunction demonstrates correct local variable usage (not checked by VAR-002).
 //
 // Returns:
 //   - int: calculated value
 func goodFunction() int {
-	// Local variables are not checked by VAR-001
+	// Local variables are not checked by VAR-002
 	localVar := ANSWER
 	// Continue traversing AST nodes.
 	return localVar

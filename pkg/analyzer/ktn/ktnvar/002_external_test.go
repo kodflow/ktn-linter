@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar002(t *testing.T) {
-	// 6 variables without explicit types + 4 variables with redundant types = 10
+	// 8 variables without explicit type + 2 variables without value = 10
 	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 10)
 }

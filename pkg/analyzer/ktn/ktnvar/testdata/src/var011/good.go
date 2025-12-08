@@ -1,20 +1,21 @@
-// Good examples for the var012 test case.
+// Good examples for the var011 test case.
 package var011
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 )
 
-// goodNoShadowingInIf utilise la réassignation correcte.
+// goodNoShadowing utilise la réassignation correcte (pas de shadowing).
 //
 // Params:
 //   - path: chemin du fichier
 //
 // Returns:
 //   - error: erreur éventuelle
-func goodNoShadowingInIf(path string) error {
+func goodNoShadowing(path string) error {
 	file, err := os.Open(path)
 	// Vérification de la condition
 	if err != nil {
@@ -44,18 +45,19 @@ func goodNoShadowingInIf(path string) error {
 	return err
 }
 
-// goodFmtErrorf utilise la réassignation correcte.
+// goodShadowingErr démontre le shadowing de err qui est exemptée.
+// Le shadowing de 'err' est autorisé car c'est un pattern idiomatique Go.
 //
 // Params:
 //   - url: URL de connexion
 //
 // Returns:
 //   - error: erreur éventuelle
-func goodFmtErrorf(url string) error {
+func goodShadowingErr(url string) error {
 	conn, err := goodDial(url)
 	// Vérification de la condition
 	if err != nil {
-		err = fmt.Errorf("failed to connect: %w", err) // OK: réassignation
+		err := fmt.Errorf("failed to connect: %w", err) // OK: 'err' est exemptée
 		_ = conn
 		// Retour de la fonction
 		return err
@@ -64,26 +66,34 @@ func goodFmtErrorf(url string) error {
 	return nil
 }
 
-// goodInFor utilise la réassignation correcte dans une boucle.
+// goodShadowingOk démontre le shadowing de ok qui est exemptée.
+// Le shadowing de 'ok' est autorisé pour le pattern map access/type assertion.
+func goodShadowingOk() {
+	m := map[string]int{"key": 42}
+	v, ok := m["key"]
+	// Vérification de la condition
+	if ok {
+		_, ok := m["other"] // OK: 'ok' est exemptée
+		_ = ok
+	}
+	_ = v
+}
+
+// goodShadowingCtx démontre le shadowing de ctx qui est exemptée.
+// Le shadowing de 'ctx' est autorisé pour la redéfinition de context.
 //
 // Params:
-//   - files: liste de fichiers
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodInFor(files []string) error {
-	var err error
-	// Parcours des éléments
-	for _, file := range files {
-		err = goodProcessFile(file) // OK: réassignation
-		// Vérification de la condition
-		if err != nil {
-			// Retour de la fonction
-			return err
-		}
+//   - ctx: contexte parent
+func goodShadowingCtx(ctx context.Context) {
+	// Création d'un sous-contexte
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Bloc imbriqué
+	{
+		ctx := context.WithValue(ctx, "key", "value") // OK: 'ctx' est exemptée
+		_ = ctx
 	}
-	// Retour de la fonction
-	return err
 }
 
 // goodNewVariable déclare une nouvelle variable avec un nom différent.
@@ -113,7 +123,7 @@ func goodNewVariable() error {
 	return err
 }
 
-// goodLocalScopeErr déclare err dans un scope différent (OK).
+// goodLocalScopeErr déclare err dans un scope différent (OK - pas de parent).
 //
 // Returns:
 //   - error: erreur éventuelle
@@ -130,7 +140,7 @@ func goodLocalScopeErr() error {
 
 	// Vérification de la condition
 	if false {
-		err := goodDoAnotherThing() // OK: première déclaration dans ce scope
+		err := goodDoAnotherThing() // OK: première déclaration dans ce scope (différent du précédent)
 		// Vérification de la condition
 		if err != nil {
 			// Retour de la fonction
@@ -165,18 +175,6 @@ func goodValidateData(_data []byte) error {
 func goodDial(_url string) (any, error) {
 	// Retour de la fonction
 	return nil, nil
-}
-
-// goodProcessFile traite un fichier.
-//
-// Params:
-//   - _file: fichier à traiter (non utilisé dans cet exemple)
-//
-// Returns:
-//   - error: erreur éventuelle
-func goodProcessFile(_file string) error {
-	// Retour de la fonction
-	return nil
 }
 
 // goodDoSomething effectue une opération.
@@ -218,12 +216,14 @@ func goodFinalCheck() error {
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de goodNoShadowingInIf
-	_ = goodNoShadowingInIf("")
-	// Appel de goodFmtErrorf
-	_ = goodFmtErrorf("")
-	// Appel de goodInFor
-	_ = goodInFor(nil)
+	// Appel de goodNoShadowing
+	_ = goodNoShadowing("")
+	// Appel de goodShadowingErr
+	_ = goodShadowingErr("")
+	// Appel de goodShadowingOk
+	goodShadowingOk()
+	// Appel de goodShadowingCtx
+	goodShadowingCtx(context.Background())
 	// Appel de goodNewVariable
 	goodNewVariable()
 	// Appel de goodLocalScopeErr
@@ -232,8 +232,6 @@ func init() {
 	_ = goodValidateData(nil)
 	// Appel de goodDial
 	_, _ = goodDial("")
-	// Appel de goodProcessFile
-	_ = goodProcessFile("")
 	// Appel de goodDoSomething
 	goodDoSomething()
 	// Appel de goodDoSomething2

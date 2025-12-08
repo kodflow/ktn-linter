@@ -16,11 +16,24 @@ import (
 // Le shadowing se produit quand on redéclare une variable avec := alors
 // qu'elle existe déjà dans un scope parent, créant une nouvelle variable
 // locale qui masque l'originale.
+//
+// Exceptions (patterns idiomatiques Go):
+// - "err" : réutilisation courante dans le chaînage d'erreurs
+// - "ok" : pattern idiomatique (_, ok := m[k] ou v, ok := x.(T))
+// - "ctx" : context souvent redéfini dans les sous-scopes
 var Analyzer011 = &analysis.Analyzer{
 	Name:     "ktnvar011",
 	Doc:      "KTN-VAR-011: Vérifie le shadowing de variables avec := au lieu de =",
 	Run:      runVar011,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
+
+// allowedShadowing contains variable names that are allowed to shadow.
+// These are idiomatic Go patterns where shadowing is expected.
+var allowedShadowing = map[string]bool{
+	"err": true, // Error chaining pattern
+	"ok":  true, // Map/type assertion pattern
+	"ctx": true, // Context redefinition in sub-scopes
 }
 
 // runVar011 exécute l'analyse de détection du shadowing.
@@ -108,11 +121,17 @@ func extractIdent(expr ast.Expr) *ast.Ident {
 //   - ident: identifiant à vérifier
 //
 // Returns:
-//   - bool: true si shadowing détecté
+//   - bool: true si shadowing détecté (et non exempté)
 func isShadowing(pass *analysis.Pass, ident *ast.Ident) bool {
 	// Ignorer les blank identifiers
 	if ident.Name == "_" {
 		// Traitement
+		return false
+	}
+
+	// Vérifier si c'est une variable exemptée (patterns idiomatiques)
+	if allowedShadowing[ident.Name] {
+		// Shadowing autorisé pour cette variable
 		return false
 	}
 

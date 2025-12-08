@@ -1,11 +1,5 @@
-// Bad examples for the var012 test case.
+// Bad examples for the var011 test case.
 package var011
-
-import (
-	"fmt"
-	"io"
-	"os"
-)
 
 const (
 	// LOOP_MAX_ITERATIONS est le nombre maximum d'itérations
@@ -14,158 +8,63 @@ const (
 	MULTIPLIER_VALUE int = 2
 )
 
-// badShadowingInIf démontre le shadowing d'erreur dans un if.
+// badShadowingCount démontre le shadowing d'une variable non exemptée.
 //
-// Params:
-//   - path: chemin du fichier à ouvrir
-//
-// Returns:
-//   - error: erreur éventuelle
-func badShadowingInIf(path string) error {
-	file, err := os.Open(path)
-	// Vérification d'erreur
-	if err != nil {
-		// Retour avec erreur
-		return err
-	}
-	defer file.Close()
-
-	data, err := io.ReadAll(file)
-	// Vérification d'erreur
-	if err != nil {
-		// Retour avec erreur
-		return err
-	}
-
-	// Vérification de la longueur des données
-	if len(data) > 0 {
-		err := validateData(data)
-		// Vérification d'erreur
-		if err != nil {
-			// Retour avec erreur
-			return err
-		}
-	}
-
-	// Retour avec dernière erreur
-	return err
-}
-
-// badShadowingFmtErrorf démontre le shadowing dans fmt.Errorf.
-//
-// Params:
-//   - url: URL de connexion
-//
-// Returns:
-//   - error: erreur éventuelle
-func badShadowingFmtErrorf(url string) error {
-	conn, err := dial(url)
-	// Vérification d'erreur
-	if err != nil {
-		err := fmt.Errorf("failed to connect: %w", err) // SHADOWING: err redéclaré
-		_ = conn
-		// Retour avec erreur wrappée
-		return err
-	}
-	// Retour sans erreur
-	return nil
-}
-
-// badShadowingInFor démontre le shadowing dans une boucle.
-//
-// Params:
-//   - files: liste des fichiers à traiter
-//
-// Returns:
-//   - error: erreur éventuelle
-func badShadowingInFor(files []string) error {
-	var err error
-	// Traitement de chaque fichier
-	for _, file := range files {
-		err := processFile(file)
-		// Vérification d'erreur
-		if err != nil {
-			// Retour avec erreur
-			return err
-		}
-	}
-	// Retour avec dernière erreur
-	return err
-}
-
-// badMultipleShadowing démontre plusieurs shadowings.
-//
-// Returns:
-//   - error: erreur éventuelle
-func badMultipleShadowing() error {
-	result, err := doSomething()
-	// Vérification d'erreur
-	if err != nil {
-		// Retour avec erreur
-		return err
-	}
-
-	// Vérification du résultat
-	if result > 0 {
-		err := doAnotherThing()
-		// Vérification d'erreur
-		if err != nil {
-			// Retour avec erreur
-			return err
-		}
-	}
-
-	err = finalCheck()
-	// Retour avec dernière erreur
-	return err
-}
-
-// badShadowingOtherVar démontre le shadowing d'autres variables.
-func badShadowingOtherVar() {
+// Note: Les variables err, ok, ctx sont exemptées car ce sont des patterns idiomatiques Go.
+func badShadowingCount() {
 	count := 0
 	// Boucle sur les itérations
 	for range LOOP_MAX_ITERATIONS {
-		count := count * MULTIPLIER_VALUE
+		count := count * MULTIPLIER_VALUE // want "KTN-VAR-011: shadowing de la variable 'count'"
 		_ = count
 	}
 	_ = count
 }
 
-// validateData valide les données.
-//
-// Params:
-//   - _data: données à valider (non utilisé)
-//
-// Returns:
-//   - error: erreur éventuelle
-func validateData(_data []byte) error {
-	// Retour sans erreur
-	return nil
+// badShadowingValue démontre le shadowing d'une variable value.
+func badShadowingValue() {
+	value := "outer"
+	// Bloc imbriqué
+	{
+		value := "inner" // want "KTN-VAR-011: shadowing de la variable 'value'"
+		_ = value
+	}
+	_ = value
 }
 
-// dial établit une connexion.
-//
-// Params:
-//   - _url: URL de connexion (non utilisé)
-//
-// Returns:
-//   - any: connexion établie
-//   - error: erreur éventuelle
-func dial(_url string) (any, error) {
-	// Retour sans erreur
-	return nil, nil
+// badShadowingResult démontre le shadowing d'une variable result.
+func badShadowingResult() {
+	result, _ := doSomething()
+	// Bloc if
+	if result > 0 {
+		result := result * MULTIPLIER_VALUE // want "KTN-VAR-011: shadowing de la variable 'result'"
+		_ = result
+	}
+	_ = result
 }
 
-// processFile traite un fichier.
+// badShadowingData démontre le shadowing d'une variable data.
+func badShadowingData() {
+	data := []int{1, 2, 3}
+	// Boucle range
+	for i := range data {
+		data := append(data, i) // want "KTN-VAR-011: shadowing de la variable 'data'"
+		_ = data
+	}
+	_ = data
+}
+
+// badShadowingName démontre le shadowing dans une fonction.
 //
 // Params:
-//   - _file: chemin du fichier (non utilisé)
-//
-// Returns:
-//   - error: erreur éventuelle
-func processFile(_file string) error {
-	// Retour sans erreur
-	return nil
+//   - name: nom passé en paramètre
+func badShadowingName(name string) {
+	// Bloc imbriqué
+	{
+		name := "shadowed" // want "KTN-VAR-011: shadowing de la variable 'name'"
+		_ = name
+	}
+	_ = name
 }
 
 // doSomething effectue une opération.
@@ -178,46 +77,18 @@ func doSomething() (int, error) {
 	return 0, nil
 }
 
-// doAnotherThing effectue une autre opération.
-//
-// Returns:
-//   - error: erreur éventuelle
-func doAnotherThing() error {
-	// Retour sans erreur
-	return nil
-}
-
-// finalCheck effectue une vérification finale.
-//
-// Returns:
-//   - error: erreur éventuelle
-func finalCheck() error {
-	// Retour sans erreur
-	return nil
-}
-
 // init utilise les fonctions privées
 func init() {
-	// Appel de badShadowingInIf
-	_ = badShadowingInIf("")
-	// Appel de badShadowingFmtErrorf
-	_ = badShadowingFmtErrorf("")
-	// Appel de badShadowingInFor
-	_ = badShadowingInFor(nil)
-	// Appel de badMultipleShadowing
-	badMultipleShadowing()
-	// Appel de badShadowingOtherVar
-	badShadowingOtherVar()
-	// Appel de validateData
-	_ = validateData(nil)
-	// Appel de dial
-	_, _ = dial("")
-	// Appel de processFile
-	_ = processFile("")
+	// Appel de badShadowingCount
+	badShadowingCount()
+	// Appel de badShadowingValue
+	badShadowingValue()
+	// Appel de badShadowingResult
+	badShadowingResult()
+	// Appel de badShadowingData
+	badShadowingData()
+	// Appel de badShadowingName
+	badShadowingName("test")
 	// Appel de doSomething
 	doSomething()
-	// Appel de doAnotherThing
-	doAnotherThing()
-	// Appel de finalCheck
-	finalCheck()
 }
