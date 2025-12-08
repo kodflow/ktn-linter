@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer013 checks that variables are grouped together in a single var block
-var Analyzer013 = &analysis.Analyzer{
+var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktnvar013",
 	Doc:  "KTN-VAR-013: Vérifie que les variables de package sont groupées dans un seul bloc var ()",
 	Run:  runVar013,

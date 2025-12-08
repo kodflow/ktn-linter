@@ -17,7 +17,7 @@ const (
 )
 
 // Analyzer012 checks that functions with >3 return values use named returns
-var Analyzer012 = &analysis.Analyzer{
+var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc012",
 	Doc:      "KTN-FUNC-012: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
 	Run:      runFunc012,

@@ -77,6 +77,8 @@ func init() {
 	convertTwoParamsMixed(0, "")
 	validateFourParamsGrouped(0, 0, "", "")
 	convertWithVariadic(0, 0, 0, 0)
+	processWithContext(nil, 0, 0, 0, 0, 0)
+	handleWithContextFive(nil, 0, 0, 0, 0, 0)
 }
 
 // TestWithManyParams les fonctions de test sont exemptées

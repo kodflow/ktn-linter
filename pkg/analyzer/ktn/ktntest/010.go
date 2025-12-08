@@ -18,7 +18,7 @@ const (
 )
 
 // Analyzer010 checks private function tests are in internal test files
-var Analyzer010 = &analysis.Analyzer{
+var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest010",
 	Doc:      "KTN-TEST-010: Les tests de fonctions privées (non-exportées) doivent être dans _internal_test.go uniquement (white-box testing)",
 	Run:      runTest010,

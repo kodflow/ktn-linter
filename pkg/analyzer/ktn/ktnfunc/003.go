@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer003 checks for unnecessary else blocks after return/continue/break/panic
-var Analyzer003 = &analysis.Analyzer{
+var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc003",
 	Doc:      "KTN-FUNC-003: Éviter else après return/continue/break/panic (early return préféré)",
 	Run:      runFunc003,
@@ -98,6 +98,7 @@ func checkEarlyExit(stmt ast.Stmt) (bool, string) {
 	case *ast.ExprStmt:
 		// Vérifier si c'est un appel à panic
 		if isPanicCall(s.X) {
+			// Retour true car c'est une sortie anticipée de type panic
 			return true, "panic"
 		}
 	}

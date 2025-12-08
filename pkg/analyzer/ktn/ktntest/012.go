@@ -16,19 +16,19 @@ import (
 var (
 	// assertionMethods contient uniquement les méthodes d'assertion de testing.T.
 	// Log, Logf, Run, Skip*, Parallel, Helper, Cleanup ne sont PAS des assertions.
-	assertionMethods = []string{
+	assertionMethods []string = []string{
 		"Error", "Errorf",
 		"Fatal", "Fatalf",
 		"Fail", "FailNow",
 	}
 
 	// subTestMethods contient les méthodes qui lancent des sous-tests.
-	subTestMethods = []string{
+	subTestMethods []string = []string{
 		"Run",
 	}
 
 	// Analyzer012 detects passthrough tests that don't test anything.
-	Analyzer012 = &analysis.Analyzer{
+	Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 		Name:     "ktntest012",
 		Doc:      "KTN-TEST-012: Les tests doivent contenir des assertions et vraiment tester quelque chose",
 		Run:      runTest012,

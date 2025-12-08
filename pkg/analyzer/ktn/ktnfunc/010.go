@@ -17,7 +17,7 @@ const (
 )
 
 // Analyzer010 checks that naked returns are only used in very short functions
-var Analyzer010 = &analysis.Analyzer{
+var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc010",
 	Doc:      "KTN-FUNC-010: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
 	Run:      runFunc010,

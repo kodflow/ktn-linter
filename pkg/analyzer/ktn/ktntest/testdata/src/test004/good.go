@@ -6,6 +6,7 @@ type GoodResourceInterface interface {
 	Metadata() string
 	Schema() map[string]string
 	Configure(config string) error
+	Name() string
 }
 
 // GoodResource représente une ressource avec des méthodes publiques.
@@ -80,4 +81,13 @@ func validateConfig(config string) bool {
 func (r *GoodResource) sanitize(data string) string {
 	// Nettoyage
 	return data + "_sanitized"
+}
+
+// Name retourne le nom de la ressource.
+//
+// Returns:
+//   - string: nom de la ressource
+func (r *GoodResource) Name() string {
+	// Retour du nom
+	return r.name
 }

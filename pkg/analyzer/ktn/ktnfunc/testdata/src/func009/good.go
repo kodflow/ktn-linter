@@ -17,15 +17,15 @@ const (
 
 // Constantes avec iota (bitflags) - ne doivent pas déclencher KTN-FUNC-009
 const (
-	FLAG_NONE  = 0
-	FLAG_READ  = 1 << iota
-	FLAG_WRITE // = 1 << 1
-	FLAG_EXEC  // = 1 << 2
+	FLAG_NONE  int = 0
+	FLAG_READ  int = 1 << iota
+	FLAG_WRITE     // = 1 << 1
+	FLAG_EXEC      // = 1 << 2
 )
 
 // Constantes avec iota simple
 const (
-	LEVEL_DEBUG = iota
+	LEVEL_DEBUG int = iota
 	LEVEL_INFO
 	LEVEL_WARN
 	LEVEL_ERROR

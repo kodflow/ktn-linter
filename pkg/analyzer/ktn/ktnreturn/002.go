@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer002 detects nil returns for slice and map types.
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnreturn002",
 	Doc:      "KTN-RETURN-002: préférer slice/map vide à nil",
 	Run:      runReturn002,

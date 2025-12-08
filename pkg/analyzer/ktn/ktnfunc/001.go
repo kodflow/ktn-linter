@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer001 checks that error is always the last return value
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc001",
 	Doc:      "KTN-FUNC-001: L'erreur doit toujours être en dernière position dans les valeurs de retour",
 	Run:      runFunc001,
@@ -119,6 +119,7 @@ func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 
 	// Vérifier si c'est un type nommé qui est l'interface error
 	named, ok := tv.Type.(*types.Named)
+	// Si c'est un type nommé, vérifier ses propriétés
 	if ok {
 		obj := named.Obj()
 		// Vérification builtin error
@@ -145,6 +146,7 @@ func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 func isBuiltinError(t types.Type) bool {
 	// Vérifier si c'est une interface avec la signature Error() string
 	iface, ok := t.Underlying().(*types.Interface)
+	// Si ce n'est pas une interface, ce n'est pas error
 	if !ok {
 		return false
 	}
@@ -158,6 +160,7 @@ func isBuiltinError(t types.Type) bool {
 		return false
 	}
 	sig, ok := method.Type().(*types.Signature)
+	// Si ce n'est pas une signature, invalide
 	if !ok {
 		return false
 	}
@@ -167,6 +170,7 @@ func isBuiltinError(t types.Type) bool {
 	}
 	// Vérifier que le retour est string
 	basic, ok := sig.Results().At(0).Type().(*types.Basic)
+	// Retour true si le type est Basic et de kind String
 	return ok && basic.Kind() == types.String
 }
 

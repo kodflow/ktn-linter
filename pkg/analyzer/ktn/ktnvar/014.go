@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer014 checks that package-level variables are declared after constants
-var Analyzer014 = &analysis.Analyzer{
+var Analyzer014 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar014",
 	Doc:      "KTN-VAR-014: Vérifie que les variables de package sont déclarées après les constantes",
 	Run:      runVar014,

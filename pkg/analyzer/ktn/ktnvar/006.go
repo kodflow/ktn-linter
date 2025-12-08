@@ -10,7 +10,7 @@ import (
 )
 
 // Analyzer006 checks for strings.Builder/bytes.Buffer without Grow preallocate
-var Analyzer006 = &analysis.Analyzer{
+var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar006",
 	Doc:      "KTN-VAR-006: Préallouer bytes.Buffer/strings.Builder avec Grow",
 	Run:      runVar006,

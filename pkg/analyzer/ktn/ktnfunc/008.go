@@ -18,7 +18,7 @@ const (
 )
 
 // Analyzer008 vérifie que les paramètres non utilisés sont explicitement ignorés.
-var Analyzer008 = &analysis.Analyzer{
+var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc008",
 	Doc:      "KTN-FUNC-008: paramètres non utilisés doivent être préfixés par _ ou assignés à _",
 	Run:      runFunc008,

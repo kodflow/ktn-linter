@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer010 checks for repeated buffer allocations in loops
-var Analyzer010 = &analysis.Analyzer{
+var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar010",
 	Doc:      "KTN-VAR-010: Vérifie que les buffers répétés utilisent sync.Pool",
 	Run:      runVar010,

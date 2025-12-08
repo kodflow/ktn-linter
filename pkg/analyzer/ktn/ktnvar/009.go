@@ -15,7 +15,7 @@ import (
 const MAX_STRUCT_FIELDS int = 3
 
 // Analyzer009 checks for large struct usage without pointers
-var Analyzer009 = &analysis.Analyzer{
+var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar009",
 	Doc:      "KTN-VAR-009: Utilise des pointeurs pour les structs >64 bytes",
 	Run:      runVar009,

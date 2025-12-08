@@ -15,7 +15,7 @@ import (
 )
 
 // Analyzer003 checks that test files have corresponding source files
-var Analyzer003 = &analysis.Analyzer{
+var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest003",
 	Doc:      "KTN-TEST-003: Chaque fichier _test.go doit avoir un fichier .go correspondant",
 	Run:      runTest003,

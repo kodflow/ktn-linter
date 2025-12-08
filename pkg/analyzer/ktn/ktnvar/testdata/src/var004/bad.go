@@ -74,6 +74,29 @@ type Item struct {
 	value int
 }
 
+// ItemInterface définit les méthodes de Item.
+type ItemInterface interface {
+	Value() int
+}
+
+// NewItem crée une nouvelle instance de Item.
+//
+// Returns:
+//   - *Item: nouvelle instance
+func NewItem() *Item {
+	// Retourne une nouvelle instance
+	return &Item{}
+}
+
+// Value retourne la valeur.
+//
+// Returns:
+//   - int: valeur du champ
+func (i *Item) Value() int {
+	// Retourne le champ value
+	return i.value
+}
+
 // badMakeStructSlice creates a slice of structs without capacity
 //
 // Returns:

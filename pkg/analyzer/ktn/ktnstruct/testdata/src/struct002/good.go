@@ -9,7 +9,7 @@ const (
 // UserServiceConfig gère les utilisateurs du système.
 // Encapsule la logique métier liée aux utilisateurs.
 type UserServiceConfig struct {
-	users map[int]string `json:"users"`
+	users map[int]string
 }
 
 // NewUserService crée un nouveau service utilisateur.
@@ -64,14 +64,14 @@ type UserDTO struct {
 
 // internalCacheData cache privé avec méthodes - PAS DE CONSTRUCTEUR REQUIS.
 type internalCacheData struct {
-	data map[string]any `json:"data"`
+	data map[string]any
 }
 
 // RepositoryConfig gère la persistance des données.
 // Service avec dépendances.
 type RepositoryConfig struct {
-	db     Database `json:"db"`
-	logger Logger   `json:"logger"`
+	db     Database
+	logger Logger
 }
 
 // NewRepository crée un nouveau repository.
@@ -105,11 +105,11 @@ func (r *RepositoryConfig) Save(_entity any) error {
 // EmailServiceSettings gère l'envoi d'emails.
 // Service avec configuration complexe.
 type EmailServiceSettings struct {
-	host     string `json:"host"`
-	port     int    `json:"port"`
-	username string `json:"username"`
-	password string `json:"password"`
-	tls      bool   `json:"tls"`
+	host     string
+	port     int
+	username string
+	password string
+	tls      bool
 }
 
 // EmailServiceConfig configuration pour EmailService.
@@ -202,7 +202,7 @@ func (e *EmailServiceSettings) Send(_to, _subject, _body string) error {
 // ValidatorConfig valide des données.
 // Service retournant valeur directe (pas pointeur).
 type ValidatorConfig struct {
-	rules map[string]func(string) bool `json:"-"`
+	rules map[string]func(string) bool
 }
 
 // NewValidator crée un validateur - RETOURNE VALEUR

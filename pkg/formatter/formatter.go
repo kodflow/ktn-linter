@@ -69,22 +69,25 @@ func extractCode(message string) string {
 	return "UNKNOWN"
 }
 
-// extractMessage extrait le message principal en supprimant le code et les exemples
+// extractMessage extrait le message principal en supprimant le code et les exemples.
+//
 // Params:
-//   - pass: contexte d'analyse
+//   - message: message brut du diagnostic
 //
 // Returns:
-//   - string: couleur ANSI
+//   - string: message nettoyé sans le code KTN
 func extractMessage(message string) string {
 	var idx int
 	// Supprimer le code [KTN-XXX-XXX] ou KTN-XXX-XXX:
-	// Format 1: [KTN-XXX-XXX] ...
-	if idx = strings.Index(message, "]"); idx != -1 && idx < len(message)-1 {
-		message = strings.TrimSpace(message[idx+1:])
-		// Traitement
-		// Vérification de la condition
+	// Traitement Format 1: [KTN-XXX-XXX] ...
+	if strings.HasPrefix(message, "[KTN-") {
+		// Chercher le ] correspondant au code KTN
+		if idx = strings.Index(message, "]"); idx != -1 && idx < len(message)-1 {
+			message = strings.TrimSpace(message[idx+1:])
+		}
+		// Sinon traitement Format 2: KTN-XXX-XXX: ...
 	} else if strings.HasPrefix(message, "KTN-") {
-		// Format 2: KTN-XXX-XXX: ...
+		// Chercher le : séparateur
 		if idx = strings.Index(message, ":"); idx != -1 && idx < len(message)-1 {
 			message = strings.TrimSpace(message[idx+1:])
 		}
@@ -95,6 +98,6 @@ func extractMessage(message string) string {
 		message = message[:idx]
 	}
 
-	// Early return from function.
+	// Retour du message nettoyé
 	return message
 }

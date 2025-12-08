@@ -123,6 +123,7 @@ type CustomError struct {
 // CustomErrorInterface définit les méthodes de CustomError.
 type CustomErrorInterface interface {
 	Error() string
+	Msg() string
 }
 
 // NewCustomError crée une nouvelle instance de CustomError.
@@ -143,6 +144,15 @@ func NewCustomError(msg string) CustomError {
 //   - string: the error message
 func (e CustomError) Error() string {
 	// Return stored message
+	return e.msg
+}
+
+// Msg retourne le message d'erreur.
+//
+// Returns:
+//   - string: le message d'erreur
+func (e CustomError) Msg() string {
+	// Retour du champ msg
 	return e.msg
 }
 

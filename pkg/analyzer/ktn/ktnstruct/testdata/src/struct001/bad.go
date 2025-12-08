@@ -44,3 +44,12 @@ func (b *BadUserService) GetByID(id int) (string, error) {
 	// Retour du résultat
 	return b.users[id], nil
 }
+
+// Users retourne la map des utilisateurs.
+//
+// Returns:
+//   - map[int]string: map des utilisateurs
+func (b *BadUserService) Users() map[int]string {
+	// Retourne le champ users
+	return b.users
+}

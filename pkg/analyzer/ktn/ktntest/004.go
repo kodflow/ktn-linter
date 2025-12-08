@@ -31,7 +31,7 @@ type funcInfo struct {
 }
 
 // Analyzer004 checks that all functions (public and private) have corresponding tests
-var Analyzer004 = &analysis.Analyzer{
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktntest004",
 	Doc:  "KTN-TEST-004: Toutes les fonctions (publiques et privées) doivent avoir des tests",
 	Run:  runTest004,
@@ -170,7 +170,7 @@ func collectAllFunctionsAndTests(pass *analysis.Pass) ([]funcInfo, map[string]bo
 //   - testedFuncs: map des fonctions testées
 func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFuncs map[string]bool) {
 	// Build lookup map for functions
-	funcLookup := make(map[string]bool)
+	funcLookup := make(map[string]bool, len(allFuncs))
 	// Populate lookup map
 	for _, fn := range allFuncs {
 		key := buildFuncLookupKey(fn)

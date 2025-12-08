@@ -18,7 +18,7 @@ const (
 )
 
 // Analyzer004 checks that slices are preallocated with capacity when known
-var Analyzer004 = &analysis.Analyzer{
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar004",
 	Doc:      "KTN-VAR-004: Vérifie que les slices sont préalloués avec une capacité si elle est connue",
 	Run:      runVar004,

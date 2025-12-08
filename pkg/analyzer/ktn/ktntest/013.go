@@ -27,7 +27,7 @@ type testedFuncInfo struct {
 }
 
 // Analyzer013 checks that tests cover error cases
-var Analyzer013 = &analysis.Analyzer{
+var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest013",
 	Doc:      "KTN-TEST-013: Les tests doivent couvrir les cas d'erreur et exceptions",
 	Run:      runTest013,

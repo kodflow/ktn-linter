@@ -11,6 +11,7 @@ type BadUserService struct { // want "KTN-STRUCT-002"
 type BadUserServiceInterface interface {
 	Create(name string) error
 	GetByID(id int) string
+	Users() map[int]string
 }
 
 // Create crée un utilisateur.
@@ -37,4 +38,13 @@ func (b *BadUserService) Create(name string) error {
 func (b *BadUserService) GetByID(id int) string {
 	// Retour du résultat
 	return b.users[id]
+}
+
+// Users retourne la map des utilisateurs.
+//
+// Returns:
+//   - map[int]string: map des utilisateurs
+func (b *BadUserService) Users() map[int]string {
+	// Retourne le champ users
+	return b.users
 }

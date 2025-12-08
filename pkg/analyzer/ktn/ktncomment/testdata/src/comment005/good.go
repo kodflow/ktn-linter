@@ -17,7 +17,7 @@ type Config struct {
 
 // privateStruct n'a pas besoin de documentation car elle est privée
 type privateStruct struct {
-	data int `json:"-"`
+	data int
 }
 
 // DataModel représente un modèle de données.

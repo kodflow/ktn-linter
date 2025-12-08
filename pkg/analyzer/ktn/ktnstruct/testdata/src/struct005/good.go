@@ -4,10 +4,10 @@ package struct005
 // UserModel champs exportés avant privés - CONFORME.
 // Représente un utilisateur avec champs publics et privés.
 type UserModel struct {
-	Name  string `json:"name"`  // exporté
-	Age   int    `json:"age"`   // exporté
-	id    int    `json:"-"`     // privé
-	email string `json:"-"`     // privé
+	Name  string `json:"name"` // exporté
+	Age   int    `json:"age"`  // exporté
+	id    int    // privé sans tag
+	email string // privé sans tag
 }
 
 // AllPublicModel tous exportés - CONFORME.
@@ -19,11 +19,11 @@ type AllPublicModel struct {
 }
 
 // AllPrivateModel tous privés - CONFORME.
-// Structure avec uniquement des champs privés.
-type AllPrivateModel struct {
-	name    string `json:"-"`
-	age     int    `json:"-"`
-	address string `json:"-"`
+// Structure privée avec uniquement des champs privés.
+type allPrivateModel struct {
+	name    string
+	age     int
+	address string
 }
 
 // EmptyData struct vide - CONFORME.
@@ -36,8 +36,8 @@ type OnlyPublicModel struct {
 	Name string `json:"name"`
 }
 
-// OnlyPrivateModel un seul champ privé - CONFORME.
-// Structure avec un seul champ privé.
-type OnlyPrivateModel struct {
-	name string `json:"-"`
+// onlyPrivateModel un seul champ privé - CONFORME.
+// Structure privée avec un seul champ privé.
+type onlyPrivateModel struct {
+	name string
 }

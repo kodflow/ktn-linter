@@ -72,9 +72,30 @@ type Handler interface {
 	Handle(ctx context.Context, data string) error
 }
 
+// ProcessHandler traite un handler.
+//
+// Params:
+//   - h: handler à traiter
+//
+// Returns:
+//   - error: erreur éventuelle
+func ProcessHandler(h Handler) error {
+	// Retourne nil si succès
+	return h.Handle(context.Background(), "")
+}
+
 // NoOpHandler implémente Handler mais n'utilise pas tous les params.
 // C'est un cas valide car les paramètres sont requis par l'interface.
 type NoOpHandler struct{}
+
+// NewNoOpHandler crée une nouvelle instance de NoOpHandler.
+//
+// Returns:
+//   - *NoOpHandler: instance qui implémente l'interface Handler
+func NewNoOpHandler() *NoOpHandler {
+	// Retourne une nouvelle instance
+	return &NoOpHandler{}
+}
 
 // Handle implémente Handler.Handle.
 // Les paramètres ctx et data sont requis par l'interface mais non utilisés ici.

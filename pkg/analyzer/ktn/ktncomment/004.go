@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer004 checks that every package-level variable has an associated comment
-var Analyzer004 = &analysis.Analyzer{
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktncomment004",
 	Doc:      "KTN-COMMENT-004: Vérifie que chaque variable de package a un commentaire associé",
 	Run:      runComment004,

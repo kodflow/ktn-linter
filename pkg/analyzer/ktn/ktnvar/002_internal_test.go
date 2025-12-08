@@ -113,37 +113,63 @@ func Test_checkVarSpec(t *testing.T) {
 // Params:
 //   - t: testing context
 func Test_checkVarSpec_multipleVars(t *testing.T) {
-	code := `package test
+	tests := []struct {
+		name          string
+		code          string
+		expectedCount int
+	}{
+		{
+			name: "three_valid_vars",
+			code: `package test
 var (
 	a int = 1
 	b string = "hello"
 	c bool = true
-)`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Vérification erreur
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
+)`,
+			expectedCount: 3,
+		},
+		{
+			name: "mixed_valid_invalid",
+			code: `package test
+var (
+	a int = 1
+	b = "hello"
+	c bool = true
+)`,
+			expectedCount: 2,
+		},
 	}
 
-	// Compter les ValueSpecs valides
-	validCount := 0
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérification du type
-		if vs, ok := n.(*ast.ValueSpec); ok {
-			hasType := vs.Type != nil
-			hasValues := len(vs.Values) > 0
-			// Vérification format valide
-			if hasType && hasValues {
-				validCount++
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
 			}
-		}
-		return true
-	})
 
-	// Vérification nombre de vars valides
-	if validCount != 3 {
-		t.Errorf("valid var count = %d, want 3", validCount)
+			// Compter les ValueSpecs valides
+			validCount := 0
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type
+				if vs, ok := n.(*ast.ValueSpec); ok {
+					hasType := vs.Type != nil
+					hasValues := len(vs.Values) > 0
+					// Vérification format valide
+					if hasType && hasValues {
+						validCount++
+					}
+				}
+				return true
+			})
+
+			// Vérification nombre de vars valides
+			if validCount != tt.expectedCount {
+				t.Errorf("valid var count = %d, want %d", validCount, tt.expectedCount)
+			}
+		})
 	}
 }

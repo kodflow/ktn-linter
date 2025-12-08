@@ -16,7 +16,7 @@ const (
 )
 
 // Analyzer001 detects unused interface declarations.
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktninterface001",
 	Doc:      "KTN-INTERFACE-001: interface non utilisée",
 	Run:      runInterface001,

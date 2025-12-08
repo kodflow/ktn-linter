@@ -21,7 +21,7 @@ const (
 //
 // Les conversions string([]byte) répétées créent des allocations inutiles.
 // Il vaut mieux convertir une seule fois et réutiliser la variable.
-var Analyzer012 = &analysis.Analyzer{
+var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar012",
 	Doc:      "KTN-VAR-012: Vérifie les conversions string() répétées",
 	Run:      runVar012,

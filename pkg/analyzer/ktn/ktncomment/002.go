@@ -15,7 +15,7 @@ const (
 )
 
 // Analyzer002 checks that each Go file has a package description comment.
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktncomment002",
 	Doc:  "KTN-COMMENT-002: chaque fichier .go doit avoir un commentaire descriptif avant la déclaration package",
 	Run:  runComment002,

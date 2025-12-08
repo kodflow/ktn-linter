@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer003 checks that every constant has an associated comment
-var Analyzer003 = &analysis.Analyzer{
+var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktncomment003",
 	Doc:      "KTN-COMMENT-003: Vérifie que chaque constante a un commentaire associé",
 	Run:      runComment003,

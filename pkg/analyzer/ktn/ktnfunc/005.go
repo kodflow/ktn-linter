@@ -17,7 +17,7 @@ const (
 )
 
 // Analyzer005 checks that functions don't exceed 35 lines of pure code
-var Analyzer005 = &analysis.Analyzer{
+var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc005",
 	Doc:      "KTN-FUNC-005: Les fonctions ne doivent pas dépasser 35 lignes de code pur (hors commentaires et lignes vides)",
 	Run:      runFunc005,

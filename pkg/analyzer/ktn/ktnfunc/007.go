@@ -11,8 +11,13 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const (
+	// LAZY_FIELDS_CAP est la capacité initiale pour la map des champs lazy load
+	LAZY_FIELDS_CAP int = 4
+)
+
 // Analyzer007 checks that getter functions don't have side effects
-var Analyzer007 = &analysis.Analyzer{
+var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc007",
 	Doc:      "KTN-FUNC-007: Les getters (Get*/Is*/Has*) ne doivent pas avoir de side effects (assignations, appels de fonctions modifiant l'état)",
 	Run:      runFunc007,
@@ -171,7 +176,7 @@ func hasSideEffect(expr ast.Expr) bool {
 // Returns:
 //   - map[string]bool: map of field names that could be lazy loaded
 func collectLazyLoadFields(body *ast.BlockStmt) map[string]bool {
-	lazyFields := make(map[string]bool)
+	lazyFields := make(map[string]bool, LAZY_FIELDS_CAP)
 	// Inspect the body for nil checks
 	ast.Inspect(body, func(node ast.Node) bool {
 		ifStmt, ok := node.(*ast.IfStmt)

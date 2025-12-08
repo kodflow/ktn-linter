@@ -41,7 +41,7 @@ func (l Level) String() string {
 
 // rulesSeverity mappe chaque règle à son niveau de sévérité
 // Les règles sont ordonnées par criticité : ERROR > WARNING > INFO
-var rulesSeverity = map[string]Level{
+var rulesSeverity map[string]Level = map[string]Level{
 	// COMMENT - Commentaires et documentation (7 règles)
 	"KTN-COMMENT-001": SEVERITY_INFO,    // Commentaire inline trop long >80 chars
 	"KTN-COMMENT-002": SEVERITY_WARNING, // Description de fichier manquante (ex-PACKAGE-001)

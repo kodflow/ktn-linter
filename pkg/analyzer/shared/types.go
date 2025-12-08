@@ -15,7 +15,7 @@ type DeclGroup struct {
 }
 
 // dtoSuffixes contient les suffixes typiques des DTOs.
-var dtoSuffixes = []string{
+var dtoSuffixes []string = []string{
 	"Config",
 	"Settings",
 	"Options",

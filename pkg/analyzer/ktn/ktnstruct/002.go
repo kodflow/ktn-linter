@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer002 vérifie que les structs exportées avec méthodes ont un constructeur
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct002",
 	Doc:      "KTN-STRUCT-002: Struct exportée avec méthodes doit avoir un constructeur NewX()",
 	Run:      runStruct002,

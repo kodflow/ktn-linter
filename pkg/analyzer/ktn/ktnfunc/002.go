@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer002 checks that context.Context is always the first parameter
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc002",
 	Doc:      "KTN-FUNC-002: context.Context doit toujours être le premier paramètre (après le receiver pour les méthodes)",
 	Run:      runFunc002,
@@ -88,7 +88,9 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 func isContextTypeWithPass(pass *analysis.Pass, expr ast.Expr) bool {
 	// Try using type info first
 	tv := pass.TypesInfo.Types[expr]
+	// Si le type est disponible, vérifier via types.Type
 	if tv.Type != nil {
+		// Retour du résultat de la vérification par type
 		return isContextTypeByType(tv.Type)
 	}
 	// Fallback to AST-based check
@@ -105,29 +107,60 @@ func isContextTypeWithPass(pass *analysis.Pass, expr ast.Expr) bool {
 func isContextTypeByType(t types.Type) bool {
 	// Get the named type
 	named, ok := t.(*types.Named)
+	// Si ce n'est pas un type nommé, ce n'est pas context.Context
 	if !ok {
 		return false
 	}
 	obj := named.Obj()
+	// Si pas d'objet associé, invalide
 	if obj == nil {
 		return false
 	}
 	// Check if it's from context package
-	if obj.Pkg() != nil && obj.Pkg().Path() == "context" && obj.Name() == "Context" {
+	if isContextObj(obj) {
 		return true
 	}
 	// Check underlying type for aliases
-	if obj.Pkg() != nil {
-		underlying := t.Underlying()
-		// Vérifier si le type sous-jacent est nommé
-		if underNamed, ok := underlying.(*types.Named); ok {
-			underObj := underNamed.Obj()
-			// Vérifier context.Context sous-jacent
-			if underObj != nil && underObj.Pkg() != nil {
-				// Retour si match avec context.Context
-				return underObj.Pkg().Path() == "context" && underObj.Name() == "Context"
-			}
-		}
+	return isContextUnderlying(t, obj)
+}
+
+// isContextObj vérifie si l'objet est context.Context.
+//
+// Params:
+//   - obj: objet de type à vérifier
+//
+// Returns:
+//   - bool: true si context.Context
+func isContextObj(obj *types.TypeName) bool {
+	// Vérifier le package et le nom
+	return obj.Pkg() != nil && obj.Pkg().Path() == "context" && obj.Name() == "Context"
+}
+
+// isContextUnderlying vérifie le type sous-jacent pour les alias.
+//
+// Params:
+//   - t: type à vérifier
+//   - obj: objet associé au type
+//
+// Returns:
+//   - bool: true si type sous-jacent est context.Context
+func isContextUnderlying(t types.Type, obj *types.TypeName) bool {
+	// Si le package n'est pas défini, pas d'alias possible
+	if obj.Pkg() == nil {
+		return false
+	}
+	underlying := t.Underlying()
+	// Vérifier si le type sous-jacent est nommé
+	underNamed, ok := underlying.(*types.Named)
+	// Si pas un type nommé, retour false
+	if !ok {
+		return false
+	}
+	underObj := underNamed.Obj()
+	// Vérifier context.Context sous-jacent
+	if underObj != nil && underObj.Pkg() != nil {
+		// Retour si match avec context.Context
+		return underObj.Pkg().Path() == "context" && underObj.Name() == "Context"
 	}
 	// Retour false par défaut
 	return false

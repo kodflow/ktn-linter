@@ -17,7 +17,7 @@ const (
 )
 
 // Analyzer005 vérifie que les structs exportées ont une documentation
-var Analyzer005 = &analysis.Analyzer{
+var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktncomment005",
 	Doc:      "KTN-COMMENT-005: Toute struct exportée doit avoir une documentation complète",
 	Run:      runComment005,

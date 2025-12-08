@@ -38,6 +38,7 @@ type Calculator struct {
 // CalculatorInterface définit les méthodes publiques de Calculator.
 type CalculatorInterface interface {
 	Calculate() int
+	Value() int
 }
 
 // NewCalculator crée une nouvelle instance de Calculator.
@@ -68,6 +69,15 @@ func (c *Calculator) Calculate() int {
 func (c *Calculator) compute() int {
 	// Retour de la valeur multipliée par la constante
 	return c.value * MULTIPLIER
+}
+
+// Value retourne la valeur du calculateur.
+//
+// Returns:
+//   - int: valeur actuelle
+func (c *Calculator) Value() int {
+	// Retour du champ value
+	return c.value
 }
 
 // processData utilise validate en interne.

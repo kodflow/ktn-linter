@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer002 checks that package-level variables have explicit type AND value
-var Analyzer002 = &analysis.Analyzer{
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar002",
 	Doc:      "KTN-VAR-002: Les variables de package doivent avoir le format 'var name type = value'",
 	Run:      runVar002,

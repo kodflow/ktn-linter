@@ -8,29 +8,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Global flags and commands
+// Global flags and commands.
 var (
-	// aiMode enables AI-friendly output format.
-	AIMode bool
-	// noColor disables colored output.
-	NoColor bool
-	// simple enables simple one-line format for IDE integration.
-	Simple bool
-	// verbose enables verbose output.
-	Verbose bool
-	// category filters rules by specific category.
-	Category string
-	// fix enables automatic fix application for modernize analyzers.
-	Fix bool
-	// version stocke la version du linter
+	// AIMode enables AI-friendly output format.
+	AIMode bool = false
+	// NoColor disables colored output.
+	NoColor bool = false
+	// Simple enables simple one-line format for IDE integration.
+	Simple bool = false
+	// Verbose enables verbose output.
+	Verbose bool = false
+	// Category filters rules by specific category.
+	Category string = ""
+	// Fix enables automatic fix application for modernize analyzers.
+	Fix bool = false
+	// version stocke la version du linter.
 	version string = "dev"
 
 	// OsExit est une variable pour permettre le mocking dans les tests.
 	// Par défaut, elle pointe vers os.Exit, mais peut être remplacée par un mock.
 	OsExit func(int) = os.Exit
 
-	// rootCmd represents the base command when called without any subcommands
-	rootCmd = &cobra.Command{
+	// rootCmd represents the base command when called without any subcommands.
+	rootCmd *cobra.Command = &cobra.Command{
 		Use:   "ktn-linter",
 		Short: "KTN-Linter - Linter for Go code following KTN conventions",
 		Long: `KTN-Linter is a specialized linter that enforces naming conventions and code quality standards for Go projects.

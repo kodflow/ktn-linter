@@ -13,7 +13,7 @@ import (
 )
 
 // Analyzer001 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct001",
 	Doc:      "KTN-STRUCT-001: Chaque struct doit avoir une interface reprenant 100% de ses méthodes publiques",
 	Run:      runStruct001,

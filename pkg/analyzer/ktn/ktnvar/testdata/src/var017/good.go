@@ -21,6 +21,8 @@ type GoodCounter struct {
 // GoodCounterInterface définit les méthodes de GoodCounter.
 type GoodCounterInterface interface {
 	Increment()
+	Mu() *sync.Mutex
+	Value() int
 }
 
 // NewGoodCounter crée un nouveau compteur.
@@ -41,6 +43,24 @@ func (c *GoodCounter) Increment() {
 	c.mu.Unlock()
 }
 
+// Mu retourne le mutex.
+//
+// Returns:
+//   - *sync.Mutex: mutex du compteur
+func (c *GoodCounter) Mu() *sync.Mutex {
+	// Retour du mutex
+	return c.mu
+}
+
+// Value retourne la valeur.
+//
+// Returns:
+//   - int: valeur du compteur
+func (c *GoodCounter) Value() int {
+	// Retour de la valeur
+	return c.value
+}
+
 // GoodSafeCounter utilise un mutex embarqué mais des receivers par pointeur.
 // Compteur thread-safe avec RWMutex pour lecture/écriture optimisée.
 type GoodSafeCounter struct {
@@ -52,6 +72,8 @@ type GoodSafeCounter struct {
 type GoodSafeCounterInterface interface {
 	Read() int
 	Write(v int)
+	Mu() *sync.RWMutex
+	Value() int
 }
 
 // Read utilise un receiver par pointeur (correct).
@@ -73,6 +95,24 @@ func (c *GoodSafeCounter) Write(v int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.value = v
+}
+
+// Mu retourne le mutex RW.
+//
+// Returns:
+//   - *sync.RWMutex: mutex du compteur
+func (c *GoodSafeCounter) Mu() *sync.RWMutex {
+	// Retour du mutex
+	return &c.mu
+}
+
+// Value retourne la valeur directement (sans lock).
+//
+// Returns:
+//   - int: valeur du compteur
+func (c *GoodSafeCounter) Value() int {
+	// Retour de la valeur
+	return c.value
 }
 
 // GoodConfig utilise atomic.Value avec receivers par pointeur.

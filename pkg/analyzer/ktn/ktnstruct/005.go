@@ -12,7 +12,7 @@ import (
 )
 
 // Analyzer005 vérifie que les champs exportés sont avant les champs privés
-var Analyzer005 = &analysis.Analyzer{
+var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct005",
 	Doc:      "KTN-STRUCT-005: Les champs exportés doivent être placés avant les champs privés dans une struct",
 	Run:      runStruct005,

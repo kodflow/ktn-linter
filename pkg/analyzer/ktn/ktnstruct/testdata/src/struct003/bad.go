@@ -12,6 +12,9 @@ type BadUser struct {
 
 // BadUserInterface définit le contrat public de BadUser.
 type BadUserInterface interface {
+	Id() int
+	Name() string
+	Email() string
 	GetID() int
 	GetName() string
 	GetEmail() string
@@ -34,6 +37,33 @@ func NewBadUser(id int, name, email string) *BadUser {
 		name:  name,
 		email: email,
 	}
+}
+
+// Id retourne l'identifiant de l'utilisateur.
+//
+// Returns:
+//   - int: identifiant unique
+func (u *BadUser) Id() int {
+	// Retourne le champ id
+	return u.id
+}
+
+// Name retourne le nom de l'utilisateur.
+//
+// Returns:
+//   - string: nom de l'utilisateur
+func (u *BadUser) Name() string {
+	// Retourne le champ name
+	return u.name
+}
+
+// Email retourne l'adresse email de l'utilisateur.
+//
+// Returns:
+//   - string: adresse email
+func (u *BadUser) Email() string {
+	// Retourne le champ email
+	return u.email
 }
 
 // GetID retourne l'identifiant de l'utilisateur.

@@ -9,7 +9,7 @@ import (
 )
 
 // Analyzer004 vérifie qu'il n'y a qu'une seule struct par fichier Go
-var Analyzer004 = &analysis.Analyzer{
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktnstruct004",
 	Doc:  "KTN-STRUCT-004: Un fichier Go ne doit contenir qu'une seule struct (évite les fichiers de 10000 lignes)",
 	Run:  runStruct004,

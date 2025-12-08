@@ -20,7 +20,7 @@ const (
 )
 
 // Analyzer003 checks getters don't have "Get" prefix (Go idiom)
-var Analyzer003 = &analysis.Analyzer{
+var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct003",
 	Doc:      "KTN-STRUCT-003: Les getters ne doivent pas avoir le préfixe 'Get' (convention Go idiomatique)",
 	Run:      runStruct003,

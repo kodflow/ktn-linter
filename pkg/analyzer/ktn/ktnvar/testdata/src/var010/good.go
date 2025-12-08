@@ -17,7 +17,7 @@ const (
 // Good: Using sync.Pool or creating buffers outside loops
 
 // bufferPool is a sync.Pool for byte buffers
-var bufferPool = &sync.Pool{
+var bufferPool *sync.Pool = &sync.Pool{
 	New: func() any {
 		// Buffer size optimized for common use case
 		buffer := make([]byte, 0, VALUE_1024)

@@ -117,14 +117,14 @@ func goodSliceOfSlices() [][]int {
 // GoodItem is a test struct.
 // Utilisé pour démontrer les slices de structs.
 type GoodItem struct {
-	value int
+	Value int
 }
 
 // GoodContainer is a test struct with slice fields.
 // Contient des slices pour démontrer l'initialisation.
 type GoodContainer struct {
-	items  []int
-	values []string
+	Items  []int
+	Values []string
 }
 
 // goodSliceOfStructs creates empty slice of structs
@@ -144,8 +144,8 @@ func goodSliceOfStructs() []GoodItem {
 func goodEmptySliceInStructInit() GoodContainer {
 	// Good: []T{} in struct initialization is acceptable
 	c := GoodContainer{
-		items:  []int{},
-		values: []string{},
+		Items:  []int{},
+		Values: []string{},
 	}
 	// Retour de la fonction
 	return c

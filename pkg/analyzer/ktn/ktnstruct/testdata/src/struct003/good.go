@@ -12,7 +12,7 @@ type GoodUser struct {
 
 // GoodUserInterface définit le contrat public de GoodUser.
 type GoodUserInterface interface {
-	ID() int
+	Id() int
 	Name() string
 	Email() string
 	SetName(name string)
@@ -36,11 +36,11 @@ func NewGoodUser(id int, name, email string) *GoodUser {
 	}
 }
 
-// ID retourne l'identifiant de l'utilisateur.
+// Id retourne l'identifiant de l'utilisateur.
 //
 // Returns:
 //   - int: identifiant unique
-func (u *GoodUser) ID() int {
+func (u *GoodUser) Id() int {
 	// Retourne le champ id
 	return u.id
 }

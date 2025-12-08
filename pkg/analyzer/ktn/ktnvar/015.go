@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer015 detects map allocations without capacity hints
-var Analyzer015 = &analysis.Analyzer{
+var Analyzer015 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar015",
 	Doc:      "KTN-VAR-015: Préallouer maps avec capacité si connue",
 	Run:      runVar015,

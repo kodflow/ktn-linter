@@ -12,23 +12,25 @@ import (
 )
 
 var (
-	// Analyzer006 checks that all functions have proper documentation
-	Analyzer006 = &analysis.Analyzer{
+	// Analyzer006 checks that all functions have proper documentation.
+	Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 		Name:     "ktncomment006",
 		Doc:      "KTN-COMMENT-006: Toutes les fonctions doivent avoir une documentation au format strict (description, Params, Returns)",
 		Run:      runComment006,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 	}
 
-	// Pattern for Params section header
-	paramsHeaderPattern = regexp.MustCompile(`^//\s*Params:\s*$`)
-	// Pattern for individual Params items
-	paramItemPattern = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
+	// paramsHeaderPattern matches Params section header.
+	paramsHeaderPattern *regexp.Regexp = regexp.MustCompile(`^//\s*Params:\s*$`)
 
-	// Pattern for Returns section header
-	returnsHeaderPattern = regexp.MustCompile(`^//\s*Returns:\s*$`)
-	// Pattern for individual Returns items
-	returnItemPattern = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
+	// paramItemPattern matches individual Params items.
+	paramItemPattern *regexp.Regexp = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
+
+	// returnsHeaderPattern matches Returns section header.
+	returnsHeaderPattern *regexp.Regexp = regexp.MustCompile(`^//\s*Returns:\s*$`)
+
+	// returnItemPattern matches individual Returns items.
+	returnItemPattern *regexp.Regexp = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
 )
 
 // runComment006 description à compléter.

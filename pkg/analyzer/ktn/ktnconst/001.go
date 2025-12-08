@@ -11,7 +11,7 @@ import (
 )
 
 // Analyzer001 checks that constants have explicit types
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnconst001",
 	Doc:      "KTN-CONST-001: Vérifie que les constantes ont un type explicite",
 	Run:      runConst001,
