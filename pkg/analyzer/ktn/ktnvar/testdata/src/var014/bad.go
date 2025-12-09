@@ -11,8 +11,8 @@ var (
 
 // Const block AFTER vars (violates VAR-006 and CONST-002 - inévitable)
 const (
-	// BAD_MAX_ATTEMPTS is placed after var
-	BAD_MAX_ATTEMPTS int = 5
-	// BAD_DEFAULT_PORT is also after var
-	BAD_DEFAULT_PORT int = 8080
+	// BadMaxAttempts is placed after var
+	BadMaxAttempts int = 5
+	// BadDefaultPort is also after var
+	BadDefaultPort int = 8080
 )

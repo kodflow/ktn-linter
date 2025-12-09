@@ -7,7 +7,7 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-func TestVar001(t *testing.T) {
-	// 9 variables with SCREAMING_SNAKE_CASE naming (6 original + 3 acronym cases)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer001, "var001", 9)
+func TestVar018(t *testing.T) {
+	// 8 variables using snake_case (with underscores)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer018, "var018", 8)
 }

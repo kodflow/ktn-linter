@@ -2,36 +2,46 @@
 package var001
 
 // Bad: Package-level variables using SCREAMING_SNAKE_CASE (violates KTN-VAR-001)
-// But respects other rules: explicit types (VAR-001), proper comments (VAR-004), grouped (VAR-002)
 
 const (
-	// API_KEY is a constant
-	API_KEY string = "secret"
-	// TIMEOUT_VALUE is timeout value
-	TIMEOUT_VALUE int = 30
-	// PORT_VALUE is port value
-	PORT_VALUE int = 8080
-	// MAX_CONN_VALUE is max connections value
-	MAX_CONN_VALUE int = 100
+	// ApiKey is a constant in CamelCase
+	ApiKey string = "secret"
+	// TimeoutValue is timeout value
+	TimeoutValue int = 30
+	// PortValue is port value
+	PortValue int = 8080
+	// MaxConnValue is max connections value
+	MaxConnValue int = 100
 )
 
 // Variables with SCREAMING_SNAKE_CASE (violates KTN-VAR-001)
 var (
 	// BAD_TIMEOUT uses SCREAMING_SNAKE_CASE (reserved for constants)
-	BAD_TIMEOUT int = TIMEOUT_VALUE
+	BAD_TIMEOUT int = TimeoutValue // want "KTN-VAR-001"
 
 	// WRONG_CONFIG uses SCREAMING_SNAKE_CASE (should be camelCase)
-	WRONG_CONFIG string = "config"
+	WRONG_CONFIG string = "config" // want "KTN-VAR-001"
 
 	// SERVER_PORT uses SCREAMING_SNAKE_CASE
-	SERVER_PORT int = PORT_VALUE
+	SERVER_PORT int = PortValue // want "KTN-VAR-001"
 
 	// SERVER_HOST uses SCREAMING_SNAKE_CASE
-	SERVER_HOST string = "localhost"
+	SERVER_HOST string = "localhost" // want "KTN-VAR-001"
 
 	// MAX_CONNECTIONS uses SCREAMING_SNAKE_CASE
-	MAX_CONNECTIONS int = MAX_CONN_VALUE
+	MAX_CONNECTIONS int = MaxConnValue // want "KTN-VAR-001"
 
 	// IS_ENABLED uses SCREAMING_SNAKE_CASE
-	IS_ENABLED bool = false
+	IS_ENABLED bool = false // want "KTN-VAR-001"
+
+	// ===== Acronyms with SCREAMING_SNAKE_CASE (should be flagged) =====
+
+	// HTTP_CLIENT uses SCREAMING_SNAKE_CASE with acronym
+	HTTP_CLIENT string = "bad" // want "KTN-VAR-001"
+
+	// XML_PARSER uses SCREAMING_SNAKE_CASE with acronym
+	XML_PARSER string = "bad" // want "KTN-VAR-001"
+
+	// API_KEY uses SCREAMING_SNAKE_CASE with acronym
+	API_KEY string = "bad" // want "KTN-VAR-001"
 )

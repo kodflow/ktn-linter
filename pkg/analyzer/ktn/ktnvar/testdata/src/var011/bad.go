@@ -2,10 +2,10 @@
 package var011
 
 const (
-	// LOOP_MAX_ITERATIONS est le nombre maximum d'itérations
-	LOOP_MAX_ITERATIONS int = 10
-	// MULTIPLIER_VALUE est le multiplicateur utilisé
-	MULTIPLIER_VALUE int = 2
+	// LoopMaxIterations est le nombre maximum d'itérations
+	LoopMaxIterations int = 10
+	// MultiplierValue est le multiplicateur utilisé
+	MultiplierValue int = 2
 )
 
 // badShadowingCount démontre le shadowing d'une variable non exemptée.
@@ -14,8 +14,8 @@ const (
 func badShadowingCount() {
 	count := 0
 	// Boucle sur les itérations
-	for range LOOP_MAX_ITERATIONS {
-		count := count * MULTIPLIER_VALUE // want "KTN-VAR-011: shadowing de la variable 'count'"
+	for range LoopMaxIterations {
+		count := count * MultiplierValue // want "KTN-VAR-011: shadowing de la variable 'count'"
 		_ = count
 	}
 	_ = count
@@ -37,7 +37,7 @@ func badShadowingResult() {
 	result, _ := doSomething()
 	// Bloc if
 	if result > 0 {
-		result := result * MULTIPLIER_VALUE // want "KTN-VAR-011: shadowing de la variable 'result'"
+		result := result * MultiplierValue // want "KTN-VAR-011: shadowing de la variable 'result'"
 		_ = result
 	}
 	_ = result

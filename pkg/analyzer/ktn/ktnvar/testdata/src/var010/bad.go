@@ -4,55 +4,55 @@ package var010
 // Bad: Creating []byte buffers repeatedly in loops without sync.Pool
 
 const (
-	// LOOP_ITERATIONS est le nombre d'itérations de boucle
-	LOOP_ITERATIONS int = 100
-	// BUFFER_SIZE est la taille du buffer
-	BUFFER_SIZE int = 1024
-	// SMALL_BUFFER_SIZE est la taille du petit buffer
-	SMALL_BUFFER_SIZE int = 512
-	// TINY_BUFFER_SIZE est la taille du très petit buffer
-	TINY_BUFFER_SIZE int = 128
-	// MEDIUM_BUFFER_SIZE est la taille moyenne du buffer
-	MEDIUM_BUFFER_SIZE int = 256
-	// CONST_BUFFER_SIZE est la taille constante du buffer
-	CONST_BUFFER_SIZE int = 2048
-	// OUTER_ITERATIONS est le nombre d'itérations externes
-	OUTER_ITERATIONS int = 10
-	// INNER_ITERATIONS est le nombre d'itérations internes
-	INNER_ITERATIONS int = 10
-	// NESTED_BUFFER_SIZE est la taille du buffer imbriqué
-	NESTED_BUFFER_SIZE int = 64
-	// LARGE_BUFFER_SIZE est la taille du grand buffer
-	LARGE_BUFFER_SIZE int = 512
-	// LARGE_BUFFER_CAPACITY est la capacité du grand buffer
-	LARGE_BUFFER_CAPACITY int = 1024
-	// ITEMS_COUNT est le nombre d'éléments
-	ITEMS_COUNT int = 3
-	// COUNTER_LIMIT est la limite du compteur
-	COUNTER_LIMIT int = 100
-	// RANGE_ITERATIONS est le nombre d'itérations de range
-	RANGE_ITERATIONS int = 50
+	// LoopIterations est le nombre d'itérations de boucle
+	LoopIterations int = 100
+	// BufferSize est la taille du buffer
+	BufferSize int = 1024
+	// SmallBufferSize est la taille du petit buffer
+	SmallBufferSize int = 512
+	// TinyBufferSize est la taille du très petit buffer
+	TinyBufferSize int = 128
+	// MediumBufferSize est la taille moyenne du buffer
+	MediumBufferSize int = 256
+	// ConstBufferSize est la taille constante du buffer
+	ConstBufferSize int = 2048
+	// OuterIterations est le nombre d'itérations externes
+	OuterIterations int = 10
+	// InnerIterations est le nombre d'itérations internes
+	InnerIterations int = 10
+	// NestedBufferSize est la taille du buffer imbriqué
+	NestedBufferSize int = 64
+	// LargeBufferSize est la taille du grand buffer
+	LargeBufferSize int = 512
+	// LargeBufferCapacity est la capacité du grand buffer
+	LargeBufferCapacity int = 1024
+	// ItemsCount est le nombre d'éléments
+	ItemsCount int = 3
+	// CounterLimit est la limite du compteur
+	CounterLimit int = 100
+	// RangeIterations est le nombre d'itérations de range
+	RangeIterations int = 50
 )
 
 // badProcessInLoop creates buffer in loop without sync.Pool
 func badProcessInLoop() {
-	items := make([]int, 0, LOOP_ITERATIONS)
+	items := make([]int, 0, LoopIterations)
 	// Loop processes items
-	for range LOOP_ITERATIONS {
+	for range LoopIterations {
 		// Buffer created repeatedly in loop
-		buffer := make([]byte, 0, BUFFER_SIZE)
+		buffer := make([]byte, 0, BufferSize)
 		items = append(items, len(buffer))
 	}
 }
 
 // badRangeLoop creates buffer in range loop without sync.Pool
 func badRangeLoop() {
-	items := [ITEMS_COUNT]string{"a", "b", "c"}
-	results := make([]int, 0, ITEMS_COUNT)
+	items := [ItemsCount]string{"a", "b", "c"}
+	results := make([]int, 0, ItemsCount)
 	// Loop processes items
 	for _, item := range items {
 		// Buffer created in each iteration
-		buf := make([]byte, 0, SMALL_BUFFER_SIZE)
+		buf := make([]byte, 0, SmallBufferSize)
 		_ = item
 		results = append(results, len(buf))
 	}
@@ -63,7 +63,7 @@ func badInfiniteLoop() {
 	// Infinite loop processing
 	for {
 		// Buffer allocated every iteration
-		b := make([]byte, 0, TINY_BUFFER_SIZE)
+		b := make([]byte, 0, TinyBufferSize)
 		_ = b
 		break
 	}
@@ -72,11 +72,11 @@ func badInfiniteLoop() {
 // badWhileStyle creates buffer in while-style loop
 func badWhileStyle() {
 	counter := 0
-	results := make([]int, 0, COUNTER_LIMIT)
+	results := make([]int, 0, CounterLimit)
 	// While-style loop
-	for counter < COUNTER_LIMIT {
+	for counter < CounterLimit {
 		// Buffer created each iteration
-		data := make([]byte, 0, MEDIUM_BUFFER_SIZE)
+		data := make([]byte, 0, MediumBufferSize)
 		results = append(results, len(data))
 		counter++
 	}
@@ -84,11 +84,11 @@ func badWhileStyle() {
 
 // badConstSizeBuffer creates buffer with const size in loop
 func badConstSizeBuffer() {
-	results := make([]int, 0, RANGE_ITERATIONS)
+	results := make([]int, 0, RangeIterations)
 	// Loop processes items
-	for range RANGE_ITERATIONS {
+	for range RangeIterations {
 		// Buffer with const size
-		buf := make([]byte, 0, CONST_BUFFER_SIZE)
+		buf := make([]byte, 0, ConstBufferSize)
 		results = append(results, len(buf))
 	}
 }
@@ -96,11 +96,11 @@ func badConstSizeBuffer() {
 // badNestedLoop creates buffer in nested loop
 func badNestedLoop() {
 	// Outer loop
-	for range OUTER_ITERATIONS {
+	for range OuterIterations {
 		// Inner loop
-		for range INNER_ITERATIONS {
+		for range InnerIterations {
 			// Buffer allocated in nested loop
-			temp := make([]byte, 0, NESTED_BUFFER_SIZE)
+			temp := make([]byte, 0, NestedBufferSize)
 			_ = temp
 		}
 	}
@@ -108,11 +108,11 @@ func badNestedLoop() {
 
 // badMakeWithCapacity creates buffer with capacity in loop
 func badMakeWithCapacity() {
-	results := make([]int, 0, LOOP_ITERATIONS)
+	results := make([]int, 0, LoopIterations)
 	// Loop processes items
-	for range LOOP_ITERATIONS {
+	for range LoopIterations {
 		// Buffer with capacity allocated in loop
-		buffer := make([]byte, 0, LARGE_BUFFER_CAPACITY)
+		buffer := make([]byte, 0, LargeBufferCapacity)
 		results = append(results, len(buffer))
 	}
 }

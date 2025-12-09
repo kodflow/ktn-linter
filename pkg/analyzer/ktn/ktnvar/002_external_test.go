@@ -8,6 +8,6 @@ import (
 )
 
 func TestVar002(t *testing.T) {
-	// 8 variables without explicit type + 2 variables without value = 10
-	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 10)
+	// 8 variables without explicit type (zero-values are now valid)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 8)
 }

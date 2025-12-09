@@ -1,45 +1,45 @@
-// Bad examples for the var004 test case.
+// Bad examples for the var003 test case.
 package var003
 
 // Constants to avoid magic numbers
 const (
-	// TEST_AGE is the test age value
-	TEST_AGE int = 25
-	// TEST_X is the test x coordinate
-	TEST_X int = 10
-	// TEST_Y is the test y coordinate
-	TEST_Y int = 20
-	// TEST_ANSWER is the answer value
-	TEST_ANSWER int = 42
-	// TEST_ONE is the value one
-	TEST_ONE int = 1
-	// TEST_TWO is the value two
-	TEST_TWO int = 2
-	// TEST_THREE is the value three
-	TEST_THREE int = 3
-	// THRESHOLD_VALUE is the threshold for comparison
-	THRESHOLD_VALUE int = 5
-	// MULTIPLIER is the multiplication factor
-	MULTIPLIER int = 2
-	// ZERO_INDEX is the starting index
-	ZERO_INDEX int = 0
+	// TestAge is the test age value
+	TestAge int = 25
+	// TestX is the test x coordinate
+	TestX int = 10
+	// TestY is the test y coordinate
+	TestY int = 20
+	// TestAnswer is the answer value
+	TestAnswer int = 42
+	// TestOne is the value one
+	TestOne int = 1
+	// TestTwo is the value two
+	TestTwo int = 2
+	// TestThree is the value three
+	TestThree int = 3
+	// ThresholdValue is the threshold for comparison
+	ThresholdValue int = 5
+	// MultiplierValue is the multiplication factor
+	MultiplierValue int = 2
+	// ZeroIndex is the starting index
+	ZeroIndex int = 0
 )
 
-// Package-level variables with explicit types (OK, not checked by VAR-005)
+// Package-level variables with explicit types (OK, not checked by VAR-003)
 var (
 	// PackageLevel is a package-level variable
 	PackageLevel string = "ok"
 	// AnotherGlobal is another package-level variable
-	AnotherGlobal int = TEST_ANSWER
+	AnotherGlobal int = TestAnswer
 )
 
 // badSimpleVar shows incorrect use of var with initialization.
 // Should use := instead of var for local variables.
 func badSimpleVar() {
 	// Variable declarations with initialization (should use :=)
-	var name = "Bob"
+	var name = "Bob" // want "KTN-VAR-003"
 	// age variable with initialization
-	var age = TEST_AGE
+	var age = TestAge // want "KTN-VAR-003"
 
 	// Using variables to avoid unused warnings
 	_ = name
@@ -50,9 +50,9 @@ func badSimpleVar() {
 // Should use := instead of var for local variables.
 func badMultipleVars() {
 	// x variable with initialization
-	var x = TEST_X
+	var x = TestX // want "KTN-VAR-003"
 	// y variable with initialization
-	var y = TEST_Y
+	var y = TestY // want "KTN-VAR-003"
 
 	// Using variables to avoid unused warnings
 	_ = x
@@ -63,7 +63,7 @@ func badMultipleVars() {
 // Should use := instead of var for local variables.
 func badBoolVar() {
 	// Boolean variable declaration (should use :=)
-	var isEnabled = true
+	var isEnabled = true // want "KTN-VAR-003"
 
 	// Using variable to avoid unused warning
 	_ = isEnabled
@@ -73,7 +73,7 @@ func badBoolVar() {
 // Should use := instead of var for local variables.
 func badStringVar() {
 	// String variable declaration (should use :=)
-	var message = "Hello"
+	var message = "Hello" // want "KTN-VAR-003"
 
 	// Using variable to avoid unused warning
 	_ = message
@@ -83,7 +83,7 @@ func badStringVar() {
 // Should use := instead of var for local variables.
 func badSliceVar() {
 	// Slice variable declaration (should use :=)
-	var numbers = []int{TEST_ONE, TEST_TWO, TEST_THREE}
+	var numbers = []int{TestOne, TestTwo, TestThree} // want "KTN-VAR-003"
 
 	// Using variable to avoid unused warning
 	_ = numbers
@@ -93,7 +93,7 @@ func badSliceVar() {
 // Should use := instead of var for local variables.
 func badMapVar() {
 	// Map variable declaration (should use :=)
-	var config = map[string]int{"key": TEST_ONE}
+	var config = map[string]int{"key": TestOne} // want "KTN-VAR-003"
 
 	// Using variable to avoid unused warning
 	_ = config
@@ -103,12 +103,12 @@ func badMapVar() {
 // Local variables should use := even inside control structures.
 func badVarInIf() {
 	// Initialize test variable
-	x := TEST_X
+	x := TestX
 
 	// Check if x exceeds threshold
-	if x > THRESHOLD_VALUE {
+	if x > ThresholdValue {
 		// Variable in if block (should use :=)
-		var result = "big"
+		var result = "big" // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = result
@@ -119,9 +119,9 @@ func badVarInIf() {
 // Local variables should use := even inside loops.
 func badVarInFor() {
 	// Loop through range
-	for i := ZERO_INDEX; i < TEST_THREE; i++ {
+	for i := ZeroIndex; i < TestThree; i++ {
 		// Variable in for loop (should use :=)
-		var item = i * MULTIPLIER
+		var item = i * MultiplierValue // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = item
@@ -132,12 +132,12 @@ func badVarInFor() {
 // Local variables should use := even inside range loops.
 func badVarInRange() {
 	// Initialize slice for iteration
-	nums := []int{TEST_ONE, TEST_TWO, TEST_THREE}
+	nums := []int{TestOne, TestTwo, TestThree}
 
 	// Iterate over slice
 	for _, n := range nums {
 		// Variable in range loop (should use :=)
-		var doubled = n * MULTIPLIER
+		var doubled = n * MultiplierValue // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = doubled
@@ -148,21 +148,21 @@ func badVarInRange() {
 // Local variables should use := even in switch cases.
 func badVarInSwitch() {
 	// Initialize test value
-	x := THRESHOLD_VALUE
+	x := ThresholdValue
 
 	// Switch on value
 	switch x {
 	// Case when x equals threshold
-	case THRESHOLD_VALUE:
+	case ThresholdValue:
 		// Variable in case block (should use :=)
-		var msg = "five"
+		var msg = "five" // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = msg
 	// Default case for other values
 	default:
 		// Variable in default block (should use :=)
-		var other = "other"
+		var other = "other" // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = other
@@ -180,14 +180,14 @@ func badVarInSelect() {
 	// Case when receiving from channel
 	case val := <-ch:
 		// Variable in select case (should use :=)
-		var result = val * MULTIPLIER
+		var result = val * MultiplierValue // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = result
 	// Default case when no channel operation is ready
 	default:
 		// Variable in default block (should use :=)
-		var msg = "no data"
+		var msg = "no data" // want "KTN-VAR-003"
 
 		// Using variable to avoid unused warning
 		_ = msg

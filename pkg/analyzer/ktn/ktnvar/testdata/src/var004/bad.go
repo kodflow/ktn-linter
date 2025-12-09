@@ -5,8 +5,8 @@ package var004
 
 // Constantes pour les tests
 const (
-	MAX_SIZE         int = 50
-	SMALL_LOOP_COUNT int = 20
+	MaxSize        int = 50
+	SmallLoopCount int = 20
 )
 
 // badMakeStringSlice creates a string slice without capacity
@@ -39,7 +39,7 @@ func badMakeInLoop() []int {
 	// Bad: Known size but no capacity
 	numbers := make([]int, 0)
 	// Itération sur les éléments
-	for i := range MAX_SIZE {
+	for i := range MaxSize {
 		numbers = append(numbers, i)
 	}
 	// Retour de la fonction
@@ -127,8 +127,8 @@ func badEmptyLiteralWithAppend() []int {
 	// Bad: make([]T, 0) without capacity when size could be known
 	numbers := make([]int, 0)
 	// Ajout d'éléments
-	numbers = append(numbers, SMALL_LOOP_COUNT)
-	numbers = append(numbers, MAX_SIZE)
+	numbers = append(numbers, SmallLoopCount)
+	numbers = append(numbers, MaxSize)
 	// Retour de la fonction
 	return numbers
 }

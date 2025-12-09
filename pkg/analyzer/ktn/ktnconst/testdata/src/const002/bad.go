@@ -22,8 +22,9 @@ const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble 
 	ConstAfterVar string = "after_var"
 )
 
-// Type declaration
-type myType struct {
+// MyType is a type for testing const order.
+// This struct demonstrates type declarations in file order.
+type MyType struct {
 	// Field is a field
 	Field string
 }
@@ -34,9 +35,11 @@ const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble 
 	ConstAfterType string = "after_type"
 )
 
-// Function declaration
-func dummyFunc() {
-	// Empty function
+// init uses the declarations to avoid unused errors
+func init() {
+	// Use all declarations
+	_ = globalVar
+	_ = MyType{}
 }
 
 // Fifth const block after func (ERROR - all violations)

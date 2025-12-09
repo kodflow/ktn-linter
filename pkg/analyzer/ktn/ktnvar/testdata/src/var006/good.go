@@ -7,110 +7,63 @@ import (
 )
 
 const (
-	// GROW_SIZE_LARGE is large grow size
-	GROW_SIZE_LARGE int = 400
-	// LOOP_COUNT_LARGE is large loop count
-	LOOP_COUNT_LARGE int = 100
-	// LOOP_COUNT_SMALL is small loop count
-	LOOP_COUNT_SMALL int = 10
-	// GROW_SIZE_SMALL is small grow size
-	GROW_SIZE_SMALL int = 50
+	// GrowSizeLarge is large grow size
+	GrowSizeLarge int = 400
+	// LoopCountLarge is large loop count
+	LoopCountLarge int = 100
+	// LoopCountSmall is small loop count
+	LoopCountSmall int = 10
+	// GrowSizeSmall is small grow size
+	GrowSizeSmall int = 50
 )
 
-// goodStringsBuilderTypeDecl uses type declaration (not composite literal).
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilderTypeDecl() string {
+// init demonstrates proper Builder usage
+func init() {
 	// Good: var declaration without composite literal is allowed
 	var sb strings.Builder
-	sb.Grow(GROW_SIZE_LARGE)
-
+	sb.Grow(GrowSizeLarge)
 	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
+	for i := range LoopCountLarge {
 		sb.WriteString("item")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
+	_ = sb.String()
 
-	// Return the result
-	return sb.String()
-}
-
-// goodBytesBufferTypeDecl uses type declaration (not composite literal).
-//
-// Returns:
-//   - []byte: concatenated result
-func goodBytesBufferTypeDecl() []byte {
 	// Good: var declaration without composite literal is allowed
 	var buf bytes.Buffer
-	buf.Grow(GROW_SIZE_LARGE)
-
+	buf.Grow(GrowSizeLarge)
 	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
+	for i := range LoopCountLarge {
 		buf.WriteString("item")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
+	_ = buf.Bytes()
 
-	// Return the result
-	return buf.Bytes()
-}
-
-// goodBuilderPointer uses a pointer to strings.Builder (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodBuilderPointer() string {
 	// Good: pointer type is allowed (different use case)
-	sb := &strings.Builder{}
-
+	sb2 := &strings.Builder{}
 	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_SMALL; i++ {
-		sb.WriteString("x")
+	for i := range LoopCountSmall {
+		sb2.WriteString("x")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
+	_ = sb2.String()
 
-	// Return the result
-	return sb.String()
-}
-
-// goodNoLoopTypeDecl uses type declaration without loop (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodNoLoopTypeDecl() string {
 	// Good: var declaration without composite literal
-	var sb strings.Builder
-	sb.WriteString("single")
+	var sb3 strings.Builder
+	sb3.WriteString("single")
+	_ = sb3.String()
 
-	// Return the result
-	return sb.String()
-}
-
-// goodShortFormNew uses new() to create Builder (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodShortFormNew() string {
 	// Good: using new() instead of composite literal
-	sb := new(strings.Builder)
-	sb.Grow(GROW_SIZE_SMALL)
-
+	sb4 := new(strings.Builder)
+	sb4.Grow(GrowSizeSmall)
 	// Iteration over data to append
-	for i := 0; i < GROW_SIZE_SMALL; i++ {
-		sb.WriteString("x")
+	for i := range GrowSizeSmall {
+		sb4.WriteString("x")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
-
-	// Return the result
-	return sb.String()
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de goodStringsBuilderTypeDecl
-	goodStringsBuilderTypeDecl()
-	// Appel de goodBytesBufferTypeDecl
-	goodBytesBufferTypeDecl()
-	// Appel de goodBuilderPointer
-	goodBuilderPointer()
-	// Appel de goodNoLoopTypeDecl
-	goodNoLoopTypeDecl()
-	// Appel de goodShortFormNew
-	goodShortFormNew()
+	_ = sb4.String()
 }

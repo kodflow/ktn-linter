@@ -1,83 +1,58 @@
-// Good examples for the var011 test case.
+// Good examples for the var010 test case.
 package var010
 
 import "sync"
 
 const (
-	// VALUE_THREE is constant value 3
-	VALUE_THREE int = 3
-	// VALUE_SIXTY_FOUR is constant value 64
-	VALUE_SIXTY_FOUR int = 64
-	// VALUE_HUNDRED is constant value 100
-	VALUE_HUNDRED int = 100
-	// VALUE_1024 is constant value 1024
-	VALUE_1024 int = 1024
+	// ValueThree is constant value 3
+	ValueThree int = 3
+	// ValueSixtyFour is constant value 64
+	ValueSixtyFour int = 64
+	// ValueHundred is constant value 100
+	ValueHundred int = 100
+	// Value1024 is constant value 1024
+	Value1024 int = 1024
 )
-
-// Good: Using sync.Pool or creating buffers outside loops
 
 // bufferPool is a sync.Pool for byte buffers
 var bufferPool *sync.Pool = &sync.Pool{
 	New: func() any {
 		// Buffer size optimized for common use case
-		buffer := make([]byte, 0, VALUE_1024)
+		buffer := make([]byte, 0, Value1024)
 		// Return preallocated buffer
 		return buffer
 	},
 }
 
-// goodWithPool uses sync.Pool for buffer reuse
-func goodWithPool() {
-	// Loop processes items
-	for i := range VALUE_HUNDRED {
-		// Get buffer from pool
-		buffer := bufferPool.Get().([]byte)
-		_ = buffer
-		// Put buffer back to pool
-		bufferPool.Put(buffer)
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-}
-
-// goodOutsideLoop creates buffer outside the loop
-func goodOutsideLoop() {
-	// Buffer allocated once before loop with array
-	var buffer [VALUE_1024]byte
-	// Loop reuses buffer
-	for i := range VALUE_HUNDRED {
-		_ = buffer
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-}
-
-// goodNoLoop creates buffer outside loop context
-func goodNoLoop() {
-	// Not in a loop, no pool needed, use array
-	var buffer [VALUE_1024]byte
-	_ = buffer
-}
-
-// goodSmallLoop creates buffer where pooling overhead not justified
-func goodSmallLoop() {
-	// Small fixed iteration count where pool overhead may not help with array
-	var buffer [VALUE_SIXTY_FOUR]byte
-	// Very small fixed loop
-	for i := range VALUE_THREE {
-		_ = buffer
-		_ = i
-	}
-}
-
-// init utilise les fonctions privées
+// init demonstrates correct usage patterns
 func init() {
-	// Appel de goodWithPool
-	goodWithPool()
-	// Appel de goodOutsideLoop
-	goodOutsideLoop()
-	// Appel de goodNoLoop
-	goodNoLoop()
-	// Appel de goodSmallLoop
-	goodSmallLoop()
+	// Using sync.Pool for buffer reuse
+	for i := range ValueHundred {
+		// Get buffer from pool
+		buf := bufferPool.Get().([]byte)
+		_ = buf
+		// Put buffer back to pool
+		bufferPool.Put(buf)
+		_ = i
+	}
+
+	// Buffer allocated once before loop with array
+	var buffer [Value1024]byte
+	// Loop reuses buffer
+	for i := range ValueHundred {
+		_ = buffer
+		_ = i
+	}
+
+	// Not in a loop, no pool needed, use array
+	var bufferNoLoop [Value1024]byte
+	_ = bufferNoLoop
+
+	// Small fixed iteration count where pool overhead may not help with array
+	var smallBuffer [ValueSixtyFour]byte
+	// Loop with small iterations
+	for i := range ValueThree {
+		_ = smallBuffer
+		_ = i
+	}
 }

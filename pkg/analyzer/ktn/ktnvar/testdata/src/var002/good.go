@@ -4,69 +4,95 @@ package var002
 // Good: Variables with explicit type AND value (format: var name type = value)
 
 const (
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// DEFAULT_PORT is the default port
-	DEFAULT_PORT int = 8080
-	// MAX_CONNECTIONS is the maximum connections
-	MAX_CONNECTIONS int = 100
-	// ANSWER is the answer to everything
-	ANSWER int = 42
-	// BUFFER_SIZE is the buffer size
-	BUFFER_SIZE int = 1024
-	// BYTE_H is the byte value for H
-	BYTE_H byte = 72
-	// BYTE_E is the byte value for e
-	BYTE_E byte = 101
-	// BYTE_L is the byte value for l
-	BYTE_L byte = 108
-	// BYTE_O is the byte value for o
-	BYTE_O byte = 111
+	// DefaultTimeout is the default timeout
+	DefaultTimeout int = 30
+	// DefaultPort is the default port
+	DefaultPort int = 8080
+	// MaxConnections is the maximum connections
+	MaxConnections int = 100
+	// TheAnswer is the answer to everything
+	TheAnswer int = 42
+	// BufferSize is the buffer size
+	BufferSize int = 1024
+	// ByteH is the byte value for H
+	ByteH byte = 72
+	// ByteE is the byte value for e
+	ByteE byte = 101
+	// ByteL is the byte value for l
+	ByteL byte = 108
+	// ByteO is the byte value for o
+	ByteO byte = 111
+	// DefaultRetries is the default retry count
+	DefaultRetries int = 3
+	// DefaultCacheSize is the default cache size
+	DefaultCacheSize int = 10
 )
 
-// Style obligatoire: var name type = value
+// Style requis: var name type (= value optionnel)
 var (
+	// ===== Avec type explicite ET valeur =====
+
 	// defaultRetries has explicit type and value
-	defaultRetries int = DEFAULT_TIMEOUT
+	defaultRetries int = DefaultTimeout
 	// configuration has explicit type and value
 	configuration string = "default"
 	// isEnabled has explicit type and value
 	isEnabled bool = false
 	// serverPort has explicit type and value
-	serverPort int = DEFAULT_PORT
+	serverPort int = DefaultPort
 	// serverHost has explicit type and value
 	serverHost string = "localhost"
 	// maxConnections has explicit type and value
-	maxConnections int = MAX_CONNECTIONS
+	maxConnections int = MaxConnections
 	// endpoints has explicit type and value
 	endpoints []string = []string{"http://localhost:8080", "http://localhost:9090"}
 	// configMap has explicit type and value
-	configMap map[string]int = map[string]int{"timeout": DEFAULT_TIMEOUT, "retries": 3}
+	configMap map[string]int = map[string]int{"timeout": DefaultTimeout, "retries": DefaultRetries}
 	// buffer has explicit type and value
-	buffer []byte = make([]byte, 0, BUFFER_SIZE)
+	buffer []byte = make([]byte, 0, BufferSize)
 	// cache has explicit type and value
-	cache map[string]string = make(map[string]string)
+	cache map[string]string = make(map[string]string, DefaultCacheSize)
 	// convertedInt has explicit type and value
-	convertedInt int = int(ANSWER)
+	convertedInt int = int(TheAnswer)
 	// convertedStr has explicit type and value
-	convertedStr string = string([]byte{BYTE_H, BYTE_E, BYTE_L, BYTE_L, BYTE_O})
+	convertedStr string = string([]byte{ByteH, ByteE, ByteL, ByteL, ByteO})
 	// convertedFloat has explicit type and value
-	convertedFloat float64 = float64(ANSWER)
+	convertedFloat float64 = float64(TheAnswer)
+
+	// ===== Zéro-values (type explicite, pas de valeur) =====
+
+	// zeroInt uses zero-value (idiomatic Go)
+	zeroInt int
+	// zeroString uses zero-value
+	zeroString string
+	// zeroBool uses zero-value
+	zeroBool bool
+	// zeroSlice uses zero-value (nil slice)
+	zeroSlice []string
+	// zeroMap uses zero-value (nil map)
+	zeroMap map[string]int
 )
 
-// goodFunction demonstrates correct local variable usage (not checked by VAR-002).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-002
-	localVar := ANSWER
-	// Continue traversing AST nodes.
-	return localVar
-}
-
-// init utilise les fonctions privées
+// init utilise les variables pour éviter les erreurs de compilation
 func init() {
-	// Appel de goodFunction
-	goodFunction()
+	// Utilisation des variables privées
+	_ = defaultRetries
+	_ = configuration
+	_ = isEnabled
+	_ = serverPort
+	_ = serverHost
+	_ = maxConnections
+	_ = endpoints
+	_ = configMap
+	_ = buffer
+	_ = cache
+	_ = convertedInt
+	_ = convertedStr
+	_ = convertedFloat
+	// Utilisation des zéro-values
+	_ = zeroInt
+	_ = zeroString
+	_ = zeroBool
+	_ = zeroSlice
+	_ = zeroMap
 }

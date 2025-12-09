@@ -2,12 +2,12 @@
 package var015
 
 const (
-	// USER_ID_TWO est un ID d'utilisateur
-	USER_ID_TWO int = 2
-	// TEST_ID_ONE est un ID de test
-	TEST_ID_ONE int = 1
-	// TEST_INDEX_ZERO est un index de test
-	TEST_INDEX_ZERO int = 0
+	// UserIdTwo est un ID d'utilisateur
+	UserIdTwo int = 2
+	// TestIdOne est un ID de test
+	TestIdOne int = 1
+	// TestIndexZero est un index de test
+	TestIndexZero int = 0
 )
 
 // badInitUsers creates a map without capacity.
@@ -17,8 +17,8 @@ const (
 func badInitUsers() map[string]int {
 	// Map without capacity hint - VIOLATES VAR-009
 	users := make(map[string]int)
-	users["alice"] = TEST_ID_ONE
-	users["bob"] = USER_ID_TWO
+	users["alice"] = TestIdOne
+	users["bob"] = UserIdTwo
 	// Retour du résultat
 	return users
 }
@@ -40,9 +40,9 @@ func badProcessData() {
 	index := make(map[int][]string)
 
 	// Utilisation des maps
-	data[TEST_ID_ONE] = "test"
+	data[TestIdOne] = "test"
 	cache["key"] = true
-	index[TEST_INDEX_ZERO] = []string{"a", "b"}
+	index[TestIndexZero] = []string{"a", "b"}
 }
 
 // badNestedMap creates a map of maps without capacity.

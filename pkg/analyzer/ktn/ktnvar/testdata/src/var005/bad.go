@@ -4,20 +4,20 @@ package var005
 // Bad: Using make with length > 0 when append is used
 
 const (
-	// SIZE_LIMIT defines the size limit
-	SIZE_LIMIT int = 50
-	// LOOP_ITERATIONS defines loop count
-	LOOP_ITERATIONS int = 10
-	// FIVE_ITEMS defines five items
-	FIVE_ITEMS int = 5
-	// SMALL_COUNT defines small count
-	SMALL_COUNT int = 3
-	// TWO_VALUE defines two value
-	TWO_VALUE int = 2
-	// BAD_BUFFER_SIZE defines bad buffer size
-	BAD_BUFFER_SIZE int = 100
-	// CAPACITY defines capacity
-	CAPACITY int = 200
+	// SizeLimit defines the size limit
+	SizeLimit int = 50
+	// LoopIterations defines loop count
+	LoopIterations int = 10
+	// FiveItems defines five items
+	FiveItems int = 5
+	// SmallCount defines small count
+	SmallCount int = 3
+	// TwoValue defines two value
+	TwoValue int = 2
+	// BadBufferSize defines bad buffer size
+	BadBufferSize int = 100
+	// Capacity defines capacity
+	Capacity int = 200
 )
 
 // badMakeWithLengthAndCapacity creates a slice with length then append.
@@ -27,9 +27,9 @@ const (
 //   - []string: slice with wasted zero values
 func badMakeWithLengthAndCapacity() []string {
 	// Bad: Length > 0 even with capacity creates zero values before append
-	result := make([]string, LOOP_ITERATIONS, CAPACITY)
+	result := make([]string, LoopIterations, Capacity)
 	// Itération sur les éléments
-	for range FIVE_ITEMS {
+	for range FiveItems {
 		result = append(result, "value")
 	}
 	// Retour de la fonction
@@ -43,10 +43,10 @@ func badMakeWithLengthAndCapacity() []string {
 //   - []int: slice with wasted zero values
 func badMakeWithSmallLengthAndCapacity() []int {
 	// Bad: Even small length > 0 wastes zero values
-	numbers := make([]int, FIVE_ITEMS, CAPACITY)
+	numbers := make([]int, FiveItems, Capacity)
 	// Itération sur les éléments
-	for i := range SMALL_COUNT {
-		numbers = append(numbers, i*TWO_VALUE)
+	for i := range SmallCount {
+		numbers = append(numbers, i*TwoValue)
 	}
 	// Retour de la fonction
 	return numbers
@@ -59,9 +59,9 @@ func badMakeWithSmallLengthAndCapacity() []int {
 //   - []string: slice with wasted zero values
 func badMakeWithConstLengthAndCapacity() []string {
 	// Bad: Length from constant > 0 with capacity
-	items := make([]string, LOOP_ITERATIONS, CAPACITY)
+	items := make([]string, LoopIterations, Capacity)
 	// Itération sur les éléments
-	for range FIVE_ITEMS {
+	for range FiveItems {
 		items = append(items, "value")
 	}
 	// Retour de la fonction
@@ -75,7 +75,7 @@ func badMakeWithConstLengthAndCapacity() []string {
 //   - []byte: byte slice with wasted zero values
 func badMakeByteSliceWithLengthAndCapacity() []byte {
 	// Bad: Byte slice with length > 0 and capacity
-	buffer := make([]byte, BAD_BUFFER_SIZE, CAPACITY)
+	buffer := make([]byte, BadBufferSize, Capacity)
 	// Ajout de données
 	buffer = append(buffer, "test"...)
 	// Retour de la fonction
@@ -89,9 +89,9 @@ func badMakeByteSliceWithLengthAndCapacity() []byte {
 //   - []any: slice with wasted zero values
 func badMakeInterfaceSliceWithCapacity() []any {
 	// Bad: any slice with length > 0 and capacity
-	items := make([]any, FIVE_ITEMS, CAPACITY)
+	items := make([]any, FiveItems, Capacity)
 	// Itération sur les éléments
-	for i := range SMALL_COUNT {
+	for i := range SmallCount {
 		items = append(items, i)
 	}
 	// Retour de la fonction
@@ -108,9 +108,9 @@ func badMakeInterfaceSliceWithCapacity() []any {
 //   - []int: slice with wasted zero values
 func badMakeWithVariableAndCapacity(n int) []int {
 	// Bad: Using variable length with capacity
-	data := make([]int, n, CAPACITY)
+	data := make([]int, n, Capacity)
 	// Ajout de données
-	data = append(data, LOOP_ITERATIONS, TWO_VALUE, SMALL_COUNT)
+	data = append(data, LoopIterations, TwoValue, SmallCount)
 	// Retour de la fonction
 	return data
 }
@@ -125,7 +125,7 @@ func badMakeWithVariableAndCapacity(n int) []int {
 //   - []string: slice with wasted zero values
 func badMakeWithExpressionAndCapacity(items []string) []string {
 	// Bad: Using len() expression with capacity
-	result := make([]string, len(items), CAPACITY)
+	result := make([]string, len(items), Capacity)
 	// Ajout de données
 	result = append(result, "extra")
 	// Retour de la fonction
@@ -139,9 +139,9 @@ func badMakeWithExpressionAndCapacity(items []string) []string {
 //   - []int: slice with wasted zero values
 func badMakeWithOperationAndCapacity() []int {
 	// Bad: Using arithmetic expression with capacity
-	nums := make([]int, SMALL_COUNT+TWO_VALUE, CAPACITY)
+	nums := make([]int, SmallCount+TwoValue, Capacity)
 	// Ajout de données
-	nums = append(nums, SIZE_LIMIT)
+	nums = append(nums, SizeLimit)
 	// Retour de la fonction
 	return nums
 }

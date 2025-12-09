@@ -3,19 +3,19 @@ package var008
 
 // Constantes pour les tests
 const (
-	LOOP_COUNT_TEN    int = 10
-	LOOP_COUNT_FIVE   int = 5
-	SLICE_VALUE_ONE   int = 1
-	SLICE_VALUE_TWO   int = 2
-	SLICE_VALUE_THREE int = 3
-	NESTED_SLICE_SIZE int = 10
+	LoopCountTen    int = 10
+	LoopCountFive   int = 5
+	SliceValueOne   int = 1
+	SliceValueTwo   int = 2
+	SliceValueThree int = 3
+	NestedSliceSize int = 10
 )
 
 // badLoopSliceAlloc crée un slice à l'intérieur d'une boucle for.
 func badLoopSliceAlloc() {
 	// Allocation dans boucle for
-	for index := 0; index < LOOP_COUNT_TEN; index++ {
-		dataSlice := make([]int, 0, LOOP_COUNT_TEN)
+	for index := 0; index < LoopCountTen; index++ {
+		dataSlice := make([]int, 0, LoopCountTen)
 		_ = dataSlice
 	}
 }
@@ -23,18 +23,18 @@ func badLoopSliceAlloc() {
 // badLoopMapAlloc crée une map à l'intérieur d'une boucle for.
 func badLoopMapAlloc() {
 	// Allocation dans boucle for
-	for loopIndex := 0; loopIndex < LOOP_COUNT_TEN; loopIndex++ {
-		cacheMap := make(map[string]int, LOOP_COUNT_TEN)
+	for loopIndex := 0; loopIndex < LoopCountTen; loopIndex++ {
+		cacheMap := make(map[string]int, LoopCountTen)
 		_ = cacheMap
 	}
 }
 
 // badRangeSliceAlloc crée un slice à l'intérieur d'une boucle range.
 func badRangeSliceAlloc() {
-	items := []int{SLICE_VALUE_ONE, SLICE_VALUE_TWO, SLICE_VALUE_THREE}
+	items := []int{SliceValueOne, SliceValueTwo, SliceValueThree}
 	// Allocation dans boucle range
 	for _, itemValue := range items {
-		stringBuffer := make([]string, 0, LOOP_COUNT_TEN)
+		stringBuffer := make([]string, 0, LoopCountTen)
 		_ = itemValue
 		_ = stringBuffer
 	}
@@ -45,7 +45,7 @@ func badRangeMapAlloc() {
 	items := []string{"a", "b", "c"}
 	// Allocation dans boucle range
 	for _, stringItem := range items {
-		boolMap := make(map[string]bool, LOOP_COUNT_TEN)
+		boolMap := make(map[string]bool, LoopCountTen)
 		_ = stringItem
 		_ = boolMap
 	}
@@ -54,10 +54,10 @@ func badRangeMapAlloc() {
 // badNestedLoopAlloc crée un slice dans une boucle imbriquée.
 func badNestedLoopAlloc() {
 	// Allocation dans boucle imbriquée
-	for outerIndex := 0; outerIndex < LOOP_COUNT_FIVE; outerIndex++ {
+	for outerIndex := 0; outerIndex < LoopCountFive; outerIndex++ {
 		// Boucle interne avec allocation
-		for innerIndex := 0; innerIndex < LOOP_COUNT_FIVE; innerIndex++ {
-			tempSlice := make([]int, 0, NESTED_SLICE_SIZE)
+		for innerIndex := 0; innerIndex < LoopCountFive; innerIndex++ {
+			tempSlice := make([]int, 0, NestedSliceSize)
 			_ = tempSlice
 			_ = innerIndex
 		}
@@ -68,9 +68,9 @@ func badNestedLoopAlloc() {
 // badVarDeclInLoop crée un slice avec var dans une boucle.
 func badVarDeclInLoop() {
 	// Allocation avec var dans boucle
-	for varIndex := 0; varIndex < LOOP_COUNT_TEN; varIndex++ {
-		dataArray := make([]int, 0, SLICE_VALUE_THREE)
-		dataArray = append(dataArray, SLICE_VALUE_ONE, SLICE_VALUE_TWO, SLICE_VALUE_THREE)
+	for varIndex := 0; varIndex < LoopCountTen; varIndex++ {
+		dataArray := make([]int, 0, SliceValueThree)
+		dataArray = append(dataArray, SliceValueOne, SliceValueTwo, SliceValueThree)
 		_ = dataArray
 		_ = varIndex
 	}
@@ -79,8 +79,8 @@ func badVarDeclInLoop() {
 // badVarMapDeclInLoop crée une map avec var dans une boucle.
 func badVarMapDeclInLoop() {
 	// Allocation avec var dans boucle
-	for mapIndex := 0; mapIndex < LOOP_COUNT_TEN; mapIndex++ {
-		stringCache := make(map[string]int, LOOP_COUNT_TEN)
+	for mapIndex := 0; mapIndex < LoopCountTen; mapIndex++ {
+		stringCache := make(map[string]int, LoopCountTen)
 		_ = stringCache
 		_ = mapIndex
 	}

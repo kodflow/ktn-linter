@@ -4,24 +4,24 @@ package var001
 // Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)
 
 const (
-	// GOOD_DEFAULT_TIMEOUT is a constant (SCREAMING_SNAKE_CASE is OK for constants)
-	GOOD_DEFAULT_TIMEOUT int = 30
-	// GOOD_MAX_RETRIES is a constant
-	GOOD_MAX_RETRIES int = 3
-	// GOOD_SERVER_PORT is the server port
-	GOOD_SERVER_PORT int = 8080
-	// GOOD_MAX_CONNECTIONS is maximum connections
-	GOOD_MAX_CONNECTIONS int = 100
-	// GOOD_MIN_TIMEOUT is minimum timeout
-	GOOD_MIN_TIMEOUT int = 5
-	// GOOD_ANSWER is the answer to life
-	GOOD_ANSWER int = 42
+	// DefaultTimeout is a constant in CamelCase
+	DefaultTimeout int = 30
+	// MaxRetries is a constant
+	MaxRetries int = 3
+	// ServerPort is the server port
+	ServerPort int = 8080
+	// MaxConnections is maximum connections
+	MaxConnections int = 100
+	// MinTimeout is minimum timeout
+	MinTimeout int = 5
+	// TheAnswer is the answer to life
+	TheAnswer int = 42
 )
 
 // All package-level variables grouped in a single block
 var (
 	// defaultRetries uses camelCase (good for private variables)
-	defaultRetries int = GOOD_DEFAULT_TIMEOUT
+	defaultRetries int = DefaultTimeout
 
 	// configuration uses camelCase
 	configuration string = "default"
@@ -30,13 +30,13 @@ var (
 	isEnabled bool = false
 
 	// serverPort uses camelCase
-	serverPort int = GOOD_SERVER_PORT
+	serverPort int = ServerPort
 
 	// maxConnections uses camelCase
-	maxConnections int = GOOD_MAX_CONNECTIONS
+	maxConnections int = MaxConnections
 
 	// minTimeout uses camelCase
-	minTimeout int = GOOD_MIN_TIMEOUT
+	minTimeout int = MinTimeout
 
 	// apiEndpoint uses camelCase
 	apiEndpoint string = "http://localhost"
@@ -46,22 +46,40 @@ var (
 
 	// ServerAddress uses PascalCase
 	ServerAddress string = "0.0.0.0"
+
+	// ===== Acronyms handling (valid Go naming) =====
+
+	// HTTPClient uses PascalCase with acronym (exported, valid Go convention)
+	HTTPClient string = "http-client"
+
+	// httpClient uses camelCase (private, valid Go convention)
+	httpClient string = "http-client-private"
+
+	// XMLParser uses PascalCase with acronym (exported)
+	XMLParser string = "xml-parser"
+
+	// xmlParser uses camelCase (private)
+	xmlParser string = "xml-parser-private"
+
+	// APIEndpoint uses PascalCase with acronym
+	APIEndpoint string = "/api/v1"
+
+	// apiKey uses camelCase (private)
+	apiKey string = "secret-key"
 )
 
-// goodFunction demonstrates local variables (not checked by VAR-003).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-003
-	localVar := GOOD_ANSWER
-	ANOTHER_LOCAL := GOOD_MAX_CONNECTIONS
-	// Continue traversing AST nodes.
-	return localVar + ANOTHER_LOCAL
-}
-
-// init utilise les fonctions privées
+// init utilise les variables pour éviter les erreurs de compilation
 func init() {
-	// Appel de goodFunction
-	goodFunction()
+	// Utilisation des variables privées
+	_ = defaultRetries
+	_ = configuration
+	_ = isEnabled
+	_ = serverPort
+	_ = maxConnections
+	_ = minTimeout
+	_ = apiEndpoint
+	// Utilisation des variables avec acronymes
+	_ = httpClient
+	_ = xmlParser
+	_ = apiKey
 }

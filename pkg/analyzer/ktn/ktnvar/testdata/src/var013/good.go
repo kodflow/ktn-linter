@@ -1,31 +1,27 @@
-// Good examples for the var014 test case.
+// Good examples for the var013 test case.
 package var013
 
-// Good: All package-level variables are grouped in a single var block
-
 const (
-	// MAX_RETRIES defines maximum retries
-	MAX_RETRIES int = 3
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// SERVER_PORT is the server port number
-	SERVER_PORT int = 8080
-	// MAX_CONNECTIONS is the maximum connections
-	MAX_CONNECTIONS int = 100
-	// ANSWER is the answer to life
-	ANSWER int = 42
+	// MaxRetries defines maximum retries
+	MaxRetries int = 3
+	// DefaultTimeout is the default timeout
+	DefaultTimeout int = 30
+	// ServerPort is the server port number
+	ServerPort int = 8080
+	// MaxConnections is the maximum connections
+	MaxConnections int = 100
 )
 
 // All variables grouped in a single block
 var (
 	// defaultRetries defines the default number of retries
-	defaultRetries int = MAX_RETRIES
+	defaultRetries int = MaxRetries
 
 	// configuration holds the app configuration
 	configuration string = "default"
 
 	// serverPort is the server port number
-	serverPort int = SERVER_PORT
+	serverPort int = ServerPort
 
 	// serverHost is the server hostname
 	serverHost string = "localhost"
@@ -34,22 +30,18 @@ var (
 	isEnabled bool = false
 
 	// maxConnections is the maximum connections
-	maxConnections int = MAX_CONNECTIONS
+	maxConnections int = MaxConnections
 )
 
-// goodFunction demonstrates local variable usage (not checked by VAR-002).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-002
-	localVar := ANSWER
-	// Continue traversing AST nodes.
-	return localVar
-}
-
-// init utilise les fonctions privées
+// init demonstrates correct usage patterns
 func init() {
-	// Appel de goodFunction
-	goodFunction()
+	// Local variables are not checked by VAR-013
+	localVar := MaxRetries
+	_ = localVar
+	_ = defaultRetries
+	_ = configuration
+	_ = serverPort
+	_ = serverHost
+	_ = isEnabled
+	_ = maxConnections
 }

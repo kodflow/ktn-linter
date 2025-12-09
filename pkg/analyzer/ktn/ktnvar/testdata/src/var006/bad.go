@@ -8,8 +8,8 @@ import (
 
 // Constantes pour les tests
 const (
-	BAD_LOOP_COUNT_LARGE int = 100
-	BAD_LOOP_COUNT_SMALL int = 50
+	BadLoopCountLarge int = 100
+	BadLoopCountSmall int = 50
 )
 
 // badStringsBuilderNoGrow creates a strings.Builder without Grow.
@@ -21,7 +21,7 @@ func badStringsBuilderNoGrow() string {
 	sb := strings.Builder{}
 
 	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
+	for i := 0; i < BadLoopCountLarge; i++ {
 		sb.WriteString("item")
 	}
 
@@ -38,7 +38,7 @@ func badBytesBufferNoGrow() []byte {
 	buf := bytes.Buffer{}
 
 	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
+	for i := 0; i < BadLoopCountLarge; i++ {
 		buf.WriteString("item")
 	}
 
@@ -55,7 +55,7 @@ func badShortFormBuilder() string {
 	sb := strings.Builder{}
 
 	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
+	for i := 0; i < BadLoopCountSmall; i++ {
 		sb.WriteString("x")
 	}
 
@@ -72,7 +72,7 @@ func badShortFormBuffer() []byte {
 	buf := bytes.Buffer{}
 
 	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
+	for i := 0; i < BadLoopCountSmall; i++ {
 		buf.Write([]byte("x"))
 	}
 

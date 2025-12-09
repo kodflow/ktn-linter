@@ -2,85 +2,59 @@
 package var008
 
 const (
-	// VALUE_TWO is constant value 2
-	VALUE_TWO int = 2
-	// VALUE_THREE is constant value 3
-	VALUE_THREE int = 3
-	// VALUE_FIVE is constant value 5
-	VALUE_FIVE int = 5
-	// VALUE_TEN is constant value 10
-	VALUE_TEN int = 10
+	// ValueTwo is constant value 2
+	ValueTwo int = 2
+	// ValueThree is constant value 3
+	ValueThree int = 3
+	// ValueFive is constant value 5
+	ValueFive int = 5
+	// ValueTen is constant value 10
+	ValueTen int = 10
 )
 
-// goodLoopSliceReuse réutilise un slice déclaré avant la boucle.
-func goodLoopSliceReuse() {
+// init demonstrates good loop allocation patterns
+func init() {
 	// Déclaration avant la boucle
-	data := make([]int, 0, VALUE_TEN)
+	data := make([]int, 0, ValueTen)
 	// Loop appends values to reused slice
-	for i := 0; i < VALUE_TEN; i++ {
+	for i := range ValueTen {
 		// Append current iteration value
 		data = append(data, i)
 	}
 	_ = data
-}
 
-// goodLoopMapReuse réutilise une map déclarée avant la boucle.
-func goodLoopMapReuse() {
 	// Déclaration avant la boucle avec capacité
-	cache := make(map[string]int, VALUE_TEN)
+	cache := make(map[string]int, ValueTen)
 	// Loop reuses map
-	for i := 0; i < VALUE_TEN; i++ {
+	for i := range ValueTen {
 		// Store current value
 		cache["key"] = i
 	}
 	_ = cache
-}
 
-// goodRangeSliceReuse réutilise un slice dans une boucle range.
-func goodRangeSliceReuse() {
-	items := []int{1, VALUE_TWO, VALUE_THREE}
+	items := []int{1, ValueTwo, ValueThree}
 	// Déclaration avant la boucle avec capacité
-	buffer := make([]byte, 0, VALUE_THREE)
+	buffer := make([]byte, 0, ValueThree)
 	// Range loop reuses buffer
 	for _, item := range items {
 		// Convert and append item
 		buffer = append(buffer, byte(item))
 	}
 	_ = buffer
-}
 
-// goodNoLoopAlloc alloue hors d'une boucle.
-func goodNoLoopAlloc() {
 	// Pas de boucle, allocation OK avec array
-	var data [VALUE_TEN]int
-	_ = data
-}
+	var single [ValueTen]int
+	_ = single
 
-// goodNestedLoopReuse réutilise dans une boucle imbriquée.
-func goodNestedLoopReuse() {
 	// Déclaration avant la boucle avec array
-	var temp [VALUE_TEN]int
+	var temp [ValueTen]int
 	// Outer loop iterates
-	for i := 0; i < VALUE_FIVE; i++ {
+	for i := range ValueFive {
 		// Inner loop modifies temp
-		for j := 0; j < VALUE_FIVE; j++ {
+		for j := range ValueFive {
 			// Store multiplication result
 			temp[j] = i * j
 		}
 	}
 	_ = temp
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de goodLoopSliceReuse
-	goodLoopSliceReuse()
-	// Appel de goodLoopMapReuse
-	goodLoopMapReuse()
-	// Appel de goodRangeSliceReuse
-	goodRangeSliceReuse()
-	// Appel de goodNoLoopAlloc
-	goodNoLoopAlloc()
-	// Appel de goodNestedLoopReuse
-	goodNestedLoopReuse()
 }

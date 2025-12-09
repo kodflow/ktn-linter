@@ -4,105 +4,46 @@ package var007
 import "strings"
 
 const (
-	// AVG_ITEM_LENGTH is the average item length estimate
-	AVG_ITEM_LENGTH int = 10
+	// AvgItemLength is the average item length estimate
+	AvgItemLength int = 10
+	// LoopCount is the number of iterations
+	LoopCount int = 10
 )
 
-// goodStringsBuilder uses strings.Builder for concatenation.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilder(items []string) string {
-	// sb is the strings builder
-	var sb strings.Builder
+// init demonstrates proper string concatenation
+func init() {
+	items := []string{"a", "b", "c"}
 
 	// Good: using strings.Builder
+	var sb strings.Builder
+	// Iteration over items to build string
 	for _, item := range items {
 		sb.WriteString(item)
 	}
-
-	// Return the result
-	return sb.String()
-}
-
-// goodStringsBuilderWithGrow uses strings.Builder with Grow.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilderWithGrow(items []string) string {
-	// sb is the strings builder
-	var sb strings.Builder
-	sb.Grow(len(items) * AVG_ITEM_LENGTH)
+	_ = sb.String()
 
 	// Good: using strings.Builder with preallocated size
+	var sb2 strings.Builder
+	sb2.Grow(len(items) * AvgItemLength)
+	// Iteration over items to build string with capacity
 	for _, item := range items {
-		sb.WriteString(item)
+		sb2.WriteString(item)
 	}
+	_ = sb2.String()
 
-	// Return the result
-	return sb.String()
-}
-
-// goodStringsJoin uses strings.Join for simple concatenation.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsJoin(items []string) string {
 	// Good: using strings.Join for simple cases
-	return strings.Join(items, "")
-}
+	joined := strings.Join(items, "")
+	_ = joined
 
-// goodSingleConcat performs single concatenation outside loop.
-//
-// Params:
-//   - a: first string
-//   - b: second string
-//
-// Returns:
-//   - string: concatenated result
-func goodSingleConcat(a string, b string) string {
 	// Good: single concatenation, not in a loop
-	return a + b
-}
-
-// goodNoStringConcat uses int concatenation in loop (allowed).
-//
-// Params:
-//   - n: number of iterations
-//
-// Returns:
-//   - int: sum result
-func goodNoStringConcat(n int) int {
-	result := 0
+	result := "a" + "b"
+	_ = result
 
 	// Good: not string concatenation
-	for i := 0; i < n; i++ {
-		result += i
+	sum := 0
+	// Iteration to compute sum
+	for i := range LoopCount {
+		sum += i
 	}
-
-	// Return the result
-	return result
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de goodStringsBuilder
-	_ = goodStringsBuilder(nil)
-	// Appel de goodStringsBuilderWithGrow
-	_ = goodStringsBuilderWithGrow(nil)
-	// Appel de goodStringsJoin
-	_ = goodStringsJoin(nil)
-	// Appel de goodSingleConcat
-	_ = goodSingleConcat("", "")
-	// Appel de goodNoStringConcat
-	_ = goodNoStringConcat(0)
+	_ = sum
 }

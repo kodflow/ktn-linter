@@ -2,11 +2,11 @@
 package var014
 
 const (
-	// MAX_RETRIES définit le nombre maximum de tentatives
-	MAX_RETRIES int = 3
+	// MaxRetries définit le nombre maximum de tentatives
+	MaxRetries int = 3
 
-	// TIMEOUT définit le délai d'attente en secondes
-	TIMEOUT int = 30
+	// Timeout définit le délai d'attente en secondes
+	Timeout int = 30
 )
 
 var (

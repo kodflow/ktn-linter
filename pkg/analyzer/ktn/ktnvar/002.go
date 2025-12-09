@@ -66,16 +66,16 @@ func runVar002(pass *analysis.Pass) (any, error) {
 }
 
 // checkVarSpec vérifie une spécification de variable.
-// Style obligatoire: var name type = value
+// Style requis: var name type (= value optionnel, zéro-value accepté)
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - valueSpec: spécification de variable
 func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 	hasExplicitType := valueSpec.Type != nil
-	hasValues := len(valueSpec.Values) > 0
 
-	// Cas 1: Pas de type explicite = erreur
+	// Seule exigence: type explicite obligatoire
+	// L'initialisation est optionnelle (zéro-value idiomatique en Go)
 	if !hasExplicitType {
 		// Parcourir les noms
 		for _, name := range valueSpec.Names {
@@ -86,29 +86,11 @@ func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 
 			pass.Reportf(
 				name.Pos(),
-				"KTN-VAR-002: la variable '%s' doit avoir un type explicite (format: var name type = value)",
-				name.Name,
-			)
-		}
-		return
-	}
-
-	// Cas 2: Pas de valeur = erreur
-	if !hasValues {
-		// Parcourir les noms
-		for _, name := range valueSpec.Names {
-			// Ignorer les blank identifiers
-			if name.Name == "_" {
-				continue
-			}
-
-			pass.Reportf(
-				name.Pos(),
-				"KTN-VAR-002: la variable '%s' doit être initialisée (format: var name type = value)",
+				"KTN-VAR-002: la variable '%s' doit avoir un type explicite (format: var name type ou var name type = value)",
 				name.Name,
 			)
 		}
 	}
-	// Cas 3: Type explicite ET valeur = OK (style obligatoire respecté)
+	// Type explicite présent = OK (avec ou sans valeur)
 }
 
