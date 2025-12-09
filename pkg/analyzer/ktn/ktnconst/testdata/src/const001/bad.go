@@ -1,46 +1,46 @@
 // Bad examples for the const001 test case.
 package const001
 
-// Bad type for status
-type BadStatus int
-
 // Bad: All constants WITHOUT explicit types (violates KTN-CONST-001)
-// But respects other rules: proper naming, comments, single-block grouping
+// Names use CamelCase to avoid CONST-003 errors
 const (
-	// BAD_MAX_CONNECTIONS defines max connections
-	BAD_MAX_CONNECTIONS = 100 // want "KTN-CONST-001"
-	// BAD_PORT_NUMBER defines server port
-	BAD_PORT_NUMBER = 8080 // want "KTN-CONST-001"
-	// BAD_TIMEOUT_MS defines timeout in ms
-	BAD_TIMEOUT_MS = 5000 // want "KTN-CONST-001"
+	// BadMaxConnections defines max connections
+	BadMaxConnections = 100 // want "KTN-CONST-001"
+	// BadPortNumber defines server port
+	BadPortNumber = 8080 // want "KTN-CONST-001"
+	// BadTimeoutMs defines timeout in ms
+	BadTimeoutMs = 5000 // want "KTN-CONST-001"
 
-	// BAD_HTTP_OK represents HTTP 200 status
-	BAD_HTTP_OK = 200 // want "KTN-CONST-001"
-	// BAD_HTTP_NOT_FOUND represents 404
-	BAD_HTTP_NOT_FOUND = 404 // want "KTN-CONST-001"
+	// BadHttpOk represents HTTP 200 status
+	BadHttpOk = 200 // want "KTN-CONST-001"
+	// BadHttpNotFound represents 404
+	BadHttpNotFound = 404 // want "KTN-CONST-001"
 
-	// BAD_API_VERSION defines API version
-	BAD_API_VERSION = "v1.0" // want "KTN-CONST-001"
-	// BAD_DEFAULT_LANG defines default lang
-	BAD_DEFAULT_LANG = "en" // want "KTN-CONST-001"
+	// BadApiVersion defines API version
+	BadApiVersion = "v1.0" // want "KTN-CONST-001"
+	// BadDefaultLang defines default lang
+	BadDefaultLang = "en" // want "KTN-CONST-001"
 
-	// BAD_IS_PRODUCTION indicates prod mode
-	BAD_IS_PRODUCTION = true // want "KTN-CONST-001"
-	// BAD_ENABLE_CACHE indicates cache on
-	BAD_ENABLE_CACHE = false // want "KTN-CONST-001"
+	// BadIsProduction indicates prod mode
+	BadIsProduction = true // want "KTN-CONST-001"
+	// BadEnableCache indicates cache on
+	BadEnableCache = false // want "KTN-CONST-001"
 
-	// BAD_RATIO defines calculation ratio
-	BAD_RATIO = 1.5 // want "KTN-CONST-001"
+	// BadRatio defines calculation ratio
+	BadRatio = 1.5 // want "KTN-CONST-001"
 
-	// BAD_STATE_A without explicit type
-	BAD_STATE_A = iota // want "KTN-CONST-001"
-	// BAD_STATE_B inherits (no error)
-	BAD_STATE_B
-	// BAD_STATE_C inherits (no error)
-	BAD_STATE_C
+	// BadStateA without explicit type
+	BadStateA = iota // want "KTN-CONST-001"
+	// BadStateB inherits (no error)
+	BadStateB
+	// BadStateC inherits (no error)
+	BadStateC
 
-	// BAD_MULTI_A without explicit type
+	// BadMultiA without explicit type
 	// want "KTN-CONST-001"
 	// want "KTN-CONST-001"
-	BAD_MULTI_A, BAD_MULTI_B = 10, 20
+	BadMultiA, BadMultiB = 10, 20
 )
+
+// BadStatus is a type declared after const (for testing purposes only)
+type BadStatus int

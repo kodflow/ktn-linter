@@ -1,63 +1,46 @@
 // Bad examples for the const002 test case.
 package const002
 
-// Bad: Multiple scattered const blocks (violates KTN-CONST-002)
-
-// First group of constants (OK - first block)
+// First const block (OK - at the top)
 const (
-	// BAD_FIRST_GROUP_A is in the first group
-	BAD_FIRST_GROUP_A string = "first"
-	// BAD_FIRST_GROUP_B is in the first group
-	BAD_FIRST_GROUP_B string = "group"
+	// FirstConst is the first constant
+	FirstConst string = "first"
 )
 
-// Second scattered const group (ERROR #1)
-const ( // want "KTN-CONST-002"
-	// BAD_SECOND_GROUP is in a second group
-	BAD_SECOND_GROUP string = "scattered"
+// Second scattered const block (ERROR - scattered)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
+	// ScatteredConst is scattered
+	ScatteredConst string = "scattered"
 )
 
-// Third scattered const group (ERROR #2)
-const ( // want "KTN-CONST-002"
-	// BAD_SCATTERED_A is scattered
-	BAD_SCATTERED_A string = "bad"
+// Variable declaration
+var globalVar string = "var"
+
+// Third const block after var (ERROR - after var + scattered)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc" "KTN-CONST-002: les constantes doivent être placées avant les déclarations var"
+	// ConstAfterVar is after var
+	ConstAfterVar string = "after_var"
 )
 
-// Fourth scattered const group (ERROR #3)
-const ( // want "KTN-CONST-002"
-	// BAD_SCATTERED_ONE in another block
-	BAD_SCATTERED_ONE string = "one"
+// Type declaration
+type myType struct {
+	// Field is a field
+	Field string
+}
+
+// Fourth const block after type (ERROR - after type + after var + scattered)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc" "KTN-CONST-002: les constantes doivent être placées avant les déclarations var" "KTN-CONST-002: les constantes doivent être placées avant les déclarations type"
+	// ConstAfterType is after type
+	ConstAfterType string = "after_type"
 )
 
-// Fifth scattered const group (ERROR #4)
-const ( // want "KTN-CONST-002"
-	// BAD_SCATTERED_TWO in yet another block
-	BAD_SCATTERED_TWO string = "two"
-)
+// Function declaration
+func dummyFunc() {
+	// Empty function
+}
 
-// Sixth scattered const group (ERROR #5)
-const ( // want "KTN-CONST-002"
-	// BAD_THIRD_SCATTERED also scattered
-	BAD_THIRD_SCATTERED int = 1
+// Fifth const block after func (ERROR - all violations)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc" "KTN-CONST-002: les constantes doivent être placées avant les déclarations var" "KTN-CONST-002: les constantes doivent être placées avant les déclarations type" "KTN-CONST-002: les constantes doivent être placées avant les déclarations func"
+	// ConstAfterFunc is after func
+	ConstAfterFunc string = "after_func"
 )
-
-// Seventh scattered const group (ERROR #6)
-const ( // want "KTN-CONST-002"
-	// BAD_FOURTH_SCATTERED also scattered
-	BAD_FOURTH_SCATTERED int = 2
-)
-
-// Eighth scattered const group (ERROR #7)
-const ( // want "KTN-CONST-002"
-	// BAD_CONST_FINAL is yet another scattered const
-	BAD_CONST_FINAL string = "final"
-)
-
-// Ninth scattered const group (ERROR #8)
-const ( // want "KTN-CONST-002"
-	// BAD_CONST_EXTRA yet another scattered const block
-	BAD_CONST_EXTRA string = "extra"
-)
-
-// Variable declaration (after all constants)
-var badGlobalVar string = "some var"

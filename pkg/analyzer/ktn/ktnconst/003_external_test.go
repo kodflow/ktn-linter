@@ -8,6 +8,7 @@ import (
 )
 
 func TestConst003(t *testing.T) {
-	// good.go: 0 errors (includes edge cases), bad.go: 33 errors (invalid naming conventions)
-	testhelper.TestGoodBad(t, ktnconst.Analyzer003, "const003", 33)
+	// good.go: 0 errors (CamelCase is valid)
+	// bad.go: 15 errors (constants with underscores violate CamelCase convention)
+	testhelper.TestGoodBad(t, ktnconst.Analyzer003, "const003", 15)
 }

@@ -5,131 +5,205 @@ import (
 	"go/ast"
 	"go/token"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 )
 
-// Analyzer002 checks that constants are grouped together and placed above var declarations
+// Analyzer002 checks that constants are grouped together and placed at the top.
+// Order must be: const → var → type → func
 var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name: "ktnconst002",
-	Doc:  "KTN-CONST-002: Vérifie que les constantes sont groupées ensemble et placées au-dessus des déclarations var",
+	Doc:  "KTN-CONST-002: Vérifie que les constantes sont groupées et placées en haut (ordre: const → var → type → func)",
 	Run:  runConst002,
 }
 
-// runConst002 description à compléter.
+// fileDeclarations holds all declaration positions for a file.
+type fileDeclarations struct {
+	constDecls []token.Pos
+	varDecls   []token.Pos
+	typeDecls  []token.Pos
+	funcDecls  []token.Pos
+}
+
+// runConst002 executes KTN-CONST-002 analysis.
 //
 // Params:
-//   - pass: contexte d'analyse
+//   - pass: analysis context
 //
 // Returns:
-//   - any: résultat
-//   - error: erreur éventuelle
+//   - any: analysis result
+//   - error: potential error
 func runConst002(pass *analysis.Pass) (any, error) {
 	// Analyze each file independently
 	for _, file := range pass.Files {
-		var constGroups []shared.DeclGroup
-		var varGroups []shared.DeclGroup
-		tracker := &declTracker{
-			constGroups: constGroups,
-			varGroups:   varGroups,
-		}
-
-		// Collect const and var declarations
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			// Vérification de la condition
-			if !ok {
-				continue
-			}
-
-			// Sélection selon la valeur
-			switch genDecl.Tok {
-			// Traitement
-			case token.CONST:
-				tracker.constGroups = append(tracker.constGroups, shared.DeclGroup{
-					Decl: genDecl,
-					Pos:  genDecl.Pos(),
-				})
-			// Traitement
-			case token.VAR:
-				tracker.varGroups = append(tracker.varGroups, shared.DeclGroup{
-					Decl: genDecl,
-					Pos:  genDecl.Pos(),
-				})
-			}
-		}
-
-		// Check violations
-		checkConstGrouping(pass, tracker)
+		decls := collectDeclarations(file)
+		checkConstOrder(pass, decls)
 	}
 
-	// Retour de la fonction
+	// Return result
 	return nil, nil
 }
 
-type declTracker struct {
-	constGroups []shared.DeclGroup
-	varGroups   []shared.DeclGroup
-}
-
-// checkConstGrouping description à compléter.
+// collectDeclarations gathers all declaration positions from a file.
 //
 // Params:
-//   - pass: contexte d'analyse
-func checkConstGrouping(pass *analysis.Pass, tracker *declTracker) {
-	// If no var declarations, only check if consts are scattered
-	if len(tracker.varGroups) == 0 {
-		checkScatteredConsts(pass, tracker.constGroups)
-		// Retour de la fonction
-		return
-	}
+//   - file: AST file to analyze
+//
+// Returns:
+//   - *fileDeclarations: collected declaration positions
+func collectDeclarations(file *ast.File) *fileDeclarations {
+	decls := &fileDeclarations{}
 
-	// Find the position of the first var declaration
-	firstVarPos := tracker.varGroups[0].Pos
+	// Iterate over all declarations
+	for _, decl := range file.Decls {
+		// Handle GenDecl (const, var, type)
+		if genDecl, ok := decl.(*ast.GenDecl); ok {
+			// Switch on token type
+			switch genDecl.Tok {
+			// Const declaration
+			case token.CONST:
+				decls.constDecls = append(decls.constDecls, genDecl.Pos())
+			// Var declaration
+			case token.VAR:
+				decls.varDecls = append(decls.varDecls, genDecl.Pos())
+			// Type declaration
+			case token.TYPE:
+				decls.typeDecls = append(decls.typeDecls, genDecl.Pos())
+			}
+		}
 
-	// Separate consts into those before and after first var
-	var constGroupsBeforeVar []shared.DeclGroup
-	var constGroupsAfterVar []shared.DeclGroup
-
-	// Itération sur les éléments
-	for _, constGroup := range tracker.constGroups {
-		// Vérification de la condition
-		if constGroup.Pos < firstVarPos {
-			constGroupsBeforeVar = append(constGroupsBeforeVar, constGroup)
-			// Cas alternatif
-		} else {
-			constGroupsAfterVar = append(constGroupsAfterVar, constGroup)
+		// Handle FuncDecl
+		if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+			decls.funcDecls = append(decls.funcDecls, funcDecl.Pos())
 		}
 	}
 
-	// Report consts that appear after var
-	for _, constGroup := range constGroupsAfterVar {
-		pass.Reportf(
-			constGroup.Pos,
-			"KTN-CONST-002: les constantes doivent être groupées et placées au-dessus des déclarations var",
-		)
-	}
-
-	// Check if consts before vars are scattered
-	checkScatteredConsts(pass, constGroupsBeforeVar)
+	// Return collected declarations
+	return decls
 }
 
-// checkScatteredConsts description à compléter.
+// checkConstOrder verifies const declarations are properly ordered and grouped.
 //
 // Params:
-//   - pass: contexte d'analyse
-func checkScatteredConsts(pass *analysis.Pass, constGroups []shared.DeclGroup) {
-	// If 0 or 1 const group, they're not scattered
-	if len(constGroups) <= 1 {
-		// Retour de la fonction
+//   - pass: analysis context
+//   - decls: collected declarations
+func checkConstOrder(pass *analysis.Pass, decls *fileDeclarations) {
+	// No const declarations, nothing to check
+	if len(decls.constDecls) == 0 {
+		// Return early
+		return
+	}
+
+	// Check scattered const blocks (all except first)
+	checkScatteredConstBlocks(pass, decls.constDecls)
+
+	// Check const vs var order
+	checkConstBeforeVar(pass, decls)
+
+	// Check const vs type order
+	checkConstBeforeType(pass, decls)
+
+	// Check const vs func order
+	checkConstBeforeFunc(pass, decls)
+}
+
+// checkScatteredConstBlocks reports if const declarations are scattered.
+//
+// Params:
+//   - pass: analysis context
+//   - constDecls: positions of const declarations
+func checkScatteredConstBlocks(pass *analysis.Pass, constDecls []token.Pos) {
+	// If 0 or 1 const block, they're not scattered
+	if len(constDecls) <= 1 {
+		// Return early
 		return
 	}
 
 	// Report all const groups except the first as scattered
-	for i := 1; i < len(constGroups); i++ {
+	for i := 1; i < len(constDecls); i++ {
 		pass.Reportf(
-			constGroups[i].Pos,
+			constDecls[i],
 			"KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc",
 		)
+	}
+}
+
+// checkConstBeforeVar ensures const declarations come before var declarations.
+//
+// Params:
+//   - pass: analysis context
+//   - decls: collected declarations
+func checkConstBeforeVar(pass *analysis.Pass, decls *fileDeclarations) {
+	// No var declarations, nothing to check
+	if len(decls.varDecls) == 0 {
+		// Return early
+		return
+	}
+
+	// Get first var position
+	firstVarPos := decls.varDecls[0]
+
+	// Check each const declaration
+	for _, constPos := range decls.constDecls {
+		// Const after var is a violation
+		if constPos > firstVarPos {
+			pass.Reportf(
+				constPos,
+				"KTN-CONST-002: les constantes doivent être placées avant les déclarations var",
+			)
+		}
+	}
+}
+
+// checkConstBeforeType ensures const declarations come before type declarations.
+//
+// Params:
+//   - pass: analysis context
+//   - decls: collected declarations
+func checkConstBeforeType(pass *analysis.Pass, decls *fileDeclarations) {
+	// No type declarations, nothing to check
+	if len(decls.typeDecls) == 0 {
+		// Return early
+		return
+	}
+
+	// Get first type position
+	firstTypePos := decls.typeDecls[0]
+
+	// Check each const declaration
+	for _, constPos := range decls.constDecls {
+		// Const after type is a violation
+		if constPos > firstTypePos {
+			pass.Reportf(
+				constPos,
+				"KTN-CONST-002: les constantes doivent être placées avant les déclarations type",
+			)
+		}
+	}
+}
+
+// checkConstBeforeFunc ensures const declarations come before func declarations.
+//
+// Params:
+//   - pass: analysis context
+//   - decls: collected declarations
+func checkConstBeforeFunc(pass *analysis.Pass, decls *fileDeclarations) {
+	// No func declarations, nothing to check
+	if len(decls.funcDecls) == 0 {
+		// Return early
+		return
+	}
+
+	// Get first func position
+	firstFuncPos := decls.funcDecls[0]
+
+	// Check each const declaration
+	for _, constPos := range decls.constDecls {
+		// Const after func is a violation
+		if constPos > firstFuncPos {
+			pass.Reportf(
+				constPos,
+				"KTN-CONST-002: les constantes doivent être placées avant les déclarations func",
+			)
+		}
 	}
 }
