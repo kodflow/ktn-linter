@@ -2,18 +2,18 @@
 package interface001
 
 // badUnusedInterface is never used anywhere.
-type badUnusedInterface interface { // want "KTN-INTERFACE-001"
+type badUnusedInterface interface { // want "KTN-INTERFACE-001: interface 'badUnusedInterface' non utilisée"
 	Method()
 }
 
 // badAnotherUnused is also never referenced.
-type badAnotherUnused interface { // want "KTN-INTERFACE-001"
+type badAnotherUnused interface { // want "KTN-INTERFACE-001: interface 'badAnotherUnused' non utilisée"
 	DoSomething() error
 	DoAnother(int) string
 }
 
 // badComplexInterface has multiple methods but is unused.
-type badComplexInterface interface { // want "KTN-INTERFACE-001"
+type badComplexInterface interface { // want "KTN-INTERFACE-001: interface 'badComplexInterface' non utilisée"
 	Read([]byte) (int, error)
 	Write([]byte) (int, error)
 	Close() error

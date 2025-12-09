@@ -2,12 +2,12 @@
 package func003
 
 const (
-	// MULTIPLIER represents the multiplication factor
-	MULTIPLIER int = 2
-	// LOOP_MAX represents the maximum loop iterations
-	LOOP_MAX int = 10
-	// THRESHOLD represents the threshold value
-	THRESHOLD int = 10
+	// Multiplier represents the multiplication factor
+	Multiplier int = 2
+	// LoopMax represents the maximum loop iterations
+	LoopMax int = 10
+	// Threshold represents the threshold value
+	Threshold int = 10
 )
 
 // badCheckPositive vérifie si un nombre est positif avec else inutile.
@@ -42,7 +42,7 @@ func badProcessValue(val int) int {
 		return 0
 	} else {
 		// Return multiplied value
-		return val * MULTIPLIER
+		return val * Multiplier
 	}
 }
 
@@ -68,10 +68,10 @@ func badFindMax(a, b int) int {
 // badLoopExample demonstrates a loop with unnecessary else after continue.
 // This function violates KTN-FUNC-003 by using else after continue.
 func badLoopExample() {
-	// Iterate from 0 to LOOP_MAX
-	for i := 0; i < LOOP_MAX; i++ {
+	// Iterate from 0 to LoopMax
+	for i := range LoopMax {
 		// Check if i is even
-		if i%MULTIPLIER == 0 {
+		if i%Multiplier == 0 {
 			// Skip even numbers
 			continue
 		} else {
@@ -89,7 +89,7 @@ func badSwitchExample(x int) {
 	// Loop until x exceeds threshold
 	for {
 		// Check if threshold exceeded
-		if x > THRESHOLD {
+		if x > Threshold {
 			// Exit loop when threshold exceeded
 			break
 		} else {
@@ -132,6 +132,29 @@ func badPanicExample(x int) {
 	}
 }
 
+// badElseIfExample illustre else if inutile après return.
+//
+// Params:
+//   - x: valeur à classifier
+//
+// Returns:
+//   - string: catégorie de la valeur
+func badElseIfExample(x int) string {
+	// Check if negative
+	if x < 0 {
+		// Return negative category
+		return "negative"
+		// else if checks if zero
+	} else if x == 0 {
+		// Return zero category
+		return "zero"
+		// else handles positive
+	} else {
+		// Return positive category
+		return "positive"
+	}
+}
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de badCheckPositive
@@ -148,4 +171,6 @@ func init() {
 	_ = badValidateInput("")
 	// Appel de badPanicExample
 	badPanicExample(1)
+	// Appel de badElseIfExample
+	_ = badElseIfExample(0)
 }

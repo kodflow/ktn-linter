@@ -133,3 +133,57 @@ func Test_runTest012_edgeCases(t *testing.T) {
 		})
 	}
 }
+
+// Test_hasValidTestSuffix tests the hasValidTestSuffix function.
+//
+// Params:
+//   - t: testing context
+func Test_hasValidTestSuffix(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		want     bool
+	}{
+		{
+			name:     "internal test file",
+			filename: "foo_internal_test.go",
+			want:     true,
+		},
+		{
+			name:     "external test file",
+			filename: "foo_external_test.go",
+			want:     true,
+		},
+		{
+			name:     "bench test file",
+			filename: "foo_bench_test.go",
+			want:     true,
+		},
+		{
+			name:     "integration test file",
+			filename: "foo_integration_test.go",
+			want:     true,
+		},
+		{
+			name:     "plain test file invalid",
+			filename: "foo_test.go",
+			want:     false,
+		},
+		{
+			name:     "non-test file",
+			filename: "foo.go",
+			want:     false,
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasValidTestSuffix(tt.filename)
+			// Check result
+			if got != tt.want {
+				t.Errorf("hasValidTestSuffix(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}

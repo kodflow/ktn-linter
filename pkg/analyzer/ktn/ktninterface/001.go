@@ -188,14 +188,44 @@ func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.Type
 			continue
 		}
 
-		// Skip if interface follows XXXInterface pattern for struct XXX (KTN-STRUCT-002)
+		// Skip if interface follows XXXInterface pattern for struct XXX
+		// Ces interfaces sont légitimes pour le mocking de la struct
 		if isStructInterfacePattern(name, structNames) {
 			continue
 		}
 
-		// Report unused interface
-		pass.Reportf(typeSpec.Pos(), "KTN-INTERFACE-001: interface non utilisée")
+		// Skip if a struct with same name exists (interface for struct)
+		// L'interface est légitime car elle permet de mocker la struct
+		if hasCorrespondingStruct(name, structNames) {
+			continue
+		}
+
+		// Report unused interface with helpful message for developers/AI
+		pass.Reportf(
+			typeSpec.Pos(),
+			"KTN-INTERFACE-001: interface '%s' non utilisée. "+
+				"Options: (1) créer une struct '%s' qui l'implémente pour permettre le mocking, "+
+				"(2) utiliser cette interface en paramètre/retour de fonction, "+
+				"(3) supprimer si vraiment inutile. "+
+				"Les interfaces permettent de créer des mocks et d'améliorer la couverture de tests",
+			name,
+			name,
+		)
 	}
+}
+
+// hasCorrespondingStruct vérifie si une struct correspondante existe.
+// Par exemple, pour une interface "UserService", vérifie si "UserService" struct existe.
+//
+// Params:
+//   - interfaceName: nom de l'interface
+//   - structs: map des noms de structs
+//
+// Returns:
+//   - bool: true si une struct correspondante existe
+func hasCorrespondingStruct(interfaceName string, structs map[string]bool) bool {
+	// Vérifier si une struct avec le même nom existe
+	return structs[interfaceName]
 }
 
 // isStructInterfacePattern checks if interface follows XXXInterface pattern.

@@ -84,7 +84,7 @@ func baz(_ int, a string) {}`,
 				t.Fatal("No function found")
 			}
 
-			result := collectFunctionParams(funcDecl)
+			result := collectFunctionParams008(funcDecl)
 			// Vérification du nombre de paramètres
 			if len(result) != tt.expected {
 				t.Errorf("collectFunctionParams() = %d params, want %d", len(result), tt.expected)
@@ -165,7 +165,7 @@ func foo(x int) { _ = x }`,
 				t.Fatal("No function body found")
 			}
 
-			result := collectIgnoredVariables(body)
+			result := collectIgnoredVariables008(body)
 			// Vérification du nombre de variables ignorées
 			if len(result) != tt.expected {
 				t.Errorf("collectIgnoredVariables() = %d vars, want %d", len(result), tt.expected)

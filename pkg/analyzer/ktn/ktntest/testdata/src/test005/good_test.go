@@ -6,12 +6,34 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test005"
 )
 
-// TestCalculatorSingleAssertion teste un seul cas avec une seule assertion (BIEN)
+// TestCalculatorSingleAssertion teste un seul cas avec table-driven (BIEN).
+// Même avec 1 cas, table-driven est obligatoire.
 func TestCalculatorSingleAssertion(t *testing.T) {
-	result, _ := test005.Calculator("+", 2, 3)
-	// Vérification résultat uniquement
-	if result != 5 {
-		t.Errorf("got %d, want 5", result)
+	tests := []struct {
+		name string
+		op   string
+		a    int
+		b    int
+		want int
+	}{
+		{
+			name: "addition simple",
+			op:   "+",
+			a:    2,
+			b:    3,
+			want: 5,
+		},
+	}
+
+	// Parcours des cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, _ := test005.Calculator(tt.op, tt.a, tt.b)
+			// Vérification résultat
+			if result != tt.want {
+				t.Errorf("got %d, want %d", result, tt.want)
+			}
+		})
 	}
 }
 

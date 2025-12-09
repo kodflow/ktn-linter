@@ -3,6 +3,47 @@ package func006
 
 import "context"
 
+const (
+	// zeroFloat constante pour les tests de type float64.
+	zeroFloat float64 = 0.0
+)
+
+// MyType structure de test pour les méthodes.
+// Utilisée pour démontrer les règles sur les paramètres de méthodes.
+type MyType struct{}
+
+var (
+	// goodLiteralUnnamed fonction avec 5 paramètres non nommés
+	goodLiteralUnnamed func(int, string, bool, float64, []int) = func(int, string, bool, float64, []int) {
+		// Fonction vide
+	}
+
+	// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
+	goodLiteralFourUnnamed func(int, int, int, int) = func(int, int, int, int) {
+		// Fonction vide
+	}
+
+	// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
+	goodLiteralOneUnnamed func(int) = func(int) {
+		// Fonction vide
+	}
+
+	// goodLiteralNoParams fonction littérale sans paramètre
+	goodLiteralNoParams func() = func() {
+		// Fonction vide
+	}
+
+	// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
+	goodLiteralThreeUnnamed func(int, string, bool) = func(int, string, bool) {
+		// Fonction vide
+	}
+
+	// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
+	goodLiteralTwoUnnamed func(int, string) = func(int, string) {
+		// Fonction vide
+	}
+)
+
 // processNoParams fonction sans paramètre
 func processNoParams() {
 	// Fonction vide
@@ -11,10 +52,9 @@ func processNoParams() {
 // calculateOneParam fonction avec 1 paramètre
 //
 // Params:
-//   - a: paramètre de test
-func calculateOneParam(a int) {
-	// Utilisation du paramètre
-	_ = a
+//   - _a: paramètre de test (non utilisé)
+func calculateOneParam(_a int) {
+	// Fonction vide
 }
 
 // buildFiveParams exactement 5 paramètres (à la limite)
@@ -43,10 +83,6 @@ func createFiveParamsMixed(a int, b string, c bool, d float64, e []int) {
 	_, _, _, _, _ = a, b, c, d, e
 }
 
-// MyType structure de test pour les méthodes.
-// Utilisée pour démontrer les règles sur les paramètres de méthodes.
-type MyType struct{}
-
 // processMethodFourParams méthode avec 4 paramètres (le receiver ne compte pas)
 //
 // Params:
@@ -59,18 +95,13 @@ func (m MyType) processMethodFourParams(a, b, c, d int) {
 	_ = a + b + c + d
 }
 
-const (
-	// ZERO_FLOAT constante pour les tests de type float64.
-	ZERO_FLOAT float64 = 0.0
-)
-
 // init appelle les fonctions privées pour éviter FUNC-014.
 func init() {
 	// Appel des fonctions privées pour éviter FUNC-014
 	processNoParams()
 	calculateOneParam(0)
 	buildFiveParams(0, 0, 0, 0, 0)
-	createFiveParamsMixed(0, "", false, ZERO_FLOAT, nil)
+	createFiveParamsMixed(0, "", false, zeroFloat, nil)
 	var m MyType
 	m.processMethodFourParams(0, 0, 0, 0)
 	formatThreeParams(0, 0, 0)
@@ -186,38 +217,6 @@ func convertWithVariadic(a, b, c, d int, e ...string) {
 	// Utilisation des paramètres
 	_, _, _, _, _ = a, b, c, d, e
 }
-
-var (
-	// goodLiteralUnnamed fonction avec 5 paramètres non nommés
-	goodLiteralUnnamed func(int, string, bool, float64, []int) = func(int, string, bool, float64, []int) {
-		// Fonction vide
-	}
-
-	// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
-	goodLiteralFourUnnamed func(int, int, int, int) = func(int, int, int, int) {
-		// Fonction vide
-	}
-
-	// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
-	goodLiteralOneUnnamed func(int) = func(int) {
-		// Fonction vide
-	}
-
-	// goodLiteralNoParams fonction littérale sans paramètre
-	goodLiteralNoParams func() = func() {
-		// Fonction vide
-	}
-
-	// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
-	goodLiteralThreeUnnamed func(int, string, bool) = func(int, string, bool) {
-		// Fonction vide
-	}
-
-	// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
-	goodLiteralTwoUnnamed func(int, string) = func(int, string) {
-		// Fonction vide
-	}
-)
 
 // processWithContext 6 params mais context.Context exclu = 5 effectifs (OK)
 //

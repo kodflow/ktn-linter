@@ -2,101 +2,8 @@
 package ktncomment
 
 import (
-	"go/ast"
 	"testing"
 )
-
-// Test_isTrivialReturn tests the isTrivialReturn function.
-//
-// Params:
-//   - t: testing context
-func Test_isTrivialReturn(t *testing.T) {
-	tests := []struct {
-		name string
-		stmt *ast.ReturnStmt
-		want bool
-	}{
-		{
-			name: "bare return",
-			stmt: &ast.ReturnStmt{Results: nil},
-			want: true,
-		},
-		{
-			name: "empty results",
-			stmt: &ast.ReturnStmt{Results: []ast.Expr{}},
-			want: true,
-		},
-		{
-			name: "return nil",
-			stmt: &ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.Ident{Name: "nil"},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "return true",
-			stmt: &ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.Ident{Name: "true"},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "return false",
-			stmt: &ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.Ident{Name: "false"},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "return empty slice",
-			stmt: &ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.CompositeLit{Elts: []ast.Expr{}},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "return variable",
-			stmt: &ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.Ident{Name: "result"},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "return non-empty composite lit",
-			stmt: &ast.ReturnStmt{
-				Results: []ast.Expr{
-					&ast.CompositeLit{
-						Elts: []ast.Expr{
-							&ast.BasicLit{Value: "1"},
-						},
-					},
-				},
-			},
-			want: false,
-		},
-	}
-
-	// Iterate over test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isTrivialReturn(tt.stmt)
-			// Check result
-			if got != tt.want {
-				t.Errorf("isTrivialReturn() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 // Test_runComment007 tests the runComment007 function configuration.
 //
@@ -115,6 +22,7 @@ func Test_runComment007(t *testing.T) {
 			// Verify that Analyzer007 is properly configured
 			if Analyzer007 == nil {
 				t.Error("Analyzer007 should not be nil")
+				// Retour anticipé
 				return
 			}
 			// Check analyzer name

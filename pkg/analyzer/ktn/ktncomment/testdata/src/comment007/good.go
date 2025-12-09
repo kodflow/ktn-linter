@@ -356,7 +356,7 @@ func GoodInlineCommentSameLine(x int) int {
 	return 0
 }
 
-// GoodTrivialBoolReturn demonstrates trivial bool returns don't need comments.
+// GoodTrivialBoolReturn demonstrates all returns need comments (strict rule).
 //
 // Params:
 //   - x: the integer to check
@@ -366,12 +366,14 @@ func GoodInlineCommentSameLine(x int) int {
 func GoodTrivialBoolReturn(x int) bool {
 	// Check if x is positive
 	if x > 0 {
+		// Return true for positive values
 		return true
 	}
+	// Return false for non-positive values
 	return false
 }
 
-// GoodTrivialNilReturn demonstrates trivial nil returns don't need comments.
+// GoodTrivialNilReturn demonstrates all returns need comments (strict rule).
 //
 // Params:
 //   - x: the integer to check
@@ -381,24 +383,28 @@ func GoodTrivialBoolReturn(x int) bool {
 func GoodTrivialNilReturn(x int) error {
 	// Check if x is positive
 	if x > 0 {
+		// Return nil for positive values
 		return nil
 	}
+	// Return nil for non-positive values
 	return nil
 }
 
-// GoodBareReturn demonstrates bare returns don't need comments.
+// GoodBareReturn demonstrates all returns need comments (strict rule).
 //
 // Params:
 //   - x: the integer to check
 func GoodBareReturn(x int) {
 	// Check if x is positive
 	if x > 0 {
+		// Return early for positive values
 		return
 	}
+	// Return for non-positive values
 	return
 }
 
-// GoodEmptySliceReturn demonstrates empty slice returns don't need comments.
+// GoodEmptySliceReturn demonstrates all returns need comments (strict rule).
 //
 // Params:
 //   - x: the integer to check
@@ -408,8 +414,10 @@ func GoodBareReturn(x int) {
 func GoodEmptySliceReturn(x int) []int {
 	// Check if x is positive
 	if x > 0 {
+		// Return empty slice for positive values
 		return []int{}
 	}
+	// Return empty slice for non-positive values
 	return []int{}
 }
 

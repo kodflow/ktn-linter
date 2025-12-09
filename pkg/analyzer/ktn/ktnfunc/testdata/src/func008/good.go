@@ -1,4 +1,4 @@
-// Good examples for the func010 test case.
+// Good examples for the func008 test case.
 package func008
 
 import "context"
@@ -33,36 +33,17 @@ func UnusedWithUnderscore(_ctx context.Context, name string, _value int) string 
 	return name
 }
 
-// UnusedWithBlankAssign assigne à _ les params non utilisés.
+// MixedApproach utilise le préfixe _ pour tous les non-utilisés.
 //
 // Params:
-//   - ctx: context
-//   - req: requête
-//   - resp: réponse
-//
-// Returns:
-//   - string: résultat
-func UnusedWithBlankAssign(ctx context.Context, req string, resp string) string {
-	// Ignore explicitement ctx et resp
-	_ = ctx
-	_ = resp
-	// Retourne uniquement req
-	return req
-}
-
-// MixedApproach mélange les deux approches.
-//
-// Params:
-//   - ctx: context
+//   - _ctx: context (non utilisé)
 //   - _unused1: non utilisé
 //   - used: utilisé
-//   - unused2: non utilisé
+//   - _unused2: non utilisé
 //
 // Returns:
 //   - string: résultat
-func MixedApproach(ctx context.Context, _unused1 string, used string, unused2 int) string {
-	_ = ctx
-	_ = unused2
+func MixedApproach(_ctx context.Context, _unused1 string, used string, _unused2 int) string {
 	// Retourne used
 	return used
 }

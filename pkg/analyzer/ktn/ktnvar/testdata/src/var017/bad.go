@@ -230,6 +230,45 @@ func badAtomicValueAssignment() {
 	_ = v2
 }
 
+// badWaitGroupParam passe un WaitGroup par valeur.
+//
+// Params:
+//   - wg: WaitGroup passé par valeur (copie).
+func badWaitGroupParam(wg sync.WaitGroup) {
+	wg.Add(1)
+	wg.Done()
+}
+
+// badOnceParam passe un Once par valeur.
+//
+// Params:
+//   - once: Once passé par valeur (copie).
+func badOnceParam(once sync.Once) {
+	once.Do(func() {})
+}
+
+// badCondParam passe un Cond par valeur.
+//
+// Params:
+//   - cond: Cond passé par valeur (copie).
+func badCondParam(cond sync.Cond) {
+	cond.Signal()
+}
+
+// badWaitGroupAssignment assigne un WaitGroup (copie).
+func badWaitGroupAssignment() {
+	var wg1 sync.WaitGroup
+	wg2 := wg1
+	_ = wg2
+}
+
+// badOnceAssignment assigne un Once (copie).
+func badOnceAssignment() {
+	var once1 sync.Once
+	once2 := once1
+	_ = once2
+}
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de newCounter
@@ -272,4 +311,14 @@ func init() {
 	badRWMutexAssignment()
 	// Appel de badAtomicValueAssignment
 	badAtomicValueAssignment()
+	// Appel de badWaitGroupParam
+	badWaitGroupParam(sync.WaitGroup{})
+	// Appel de badOnceParam
+	badOnceParam(sync.Once{})
+	// Appel de badCondParam
+	badCondParam(sync.Cond{})
+	// Appel de badWaitGroupAssignment
+	badWaitGroupAssignment()
+	// Appel de badOnceAssignment
+	badOnceAssignment()
 }

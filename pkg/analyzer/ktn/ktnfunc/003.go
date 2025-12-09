@@ -53,11 +53,14 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 		// Déterminer le type de sortie anticipée
 		hasEarlyExit, exitType := checkEarlyExit(lastStmt)
 
-		// Si sortie anticipée détectée, reporter l'erreur
+		// Si sortie anticipée détectée
 		if hasEarlyExit {
+			// Vérifier si c'est un else if
+			elseType := getElseType(ifStmt.Else)
 			pass.Reportf(
 				ifStmt.Else.Pos(),
-				"KTN-FUNC-003: else inutile après %s, utiliser early return",
+				"KTN-FUNC-003: %s inutile après %s, utiliser early return",
+				elseType,
 				exitType,
 			)
 		}
@@ -105,6 +108,23 @@ func checkEarlyExit(stmt ast.Stmt) (bool, string) {
 
 	// Pas de sortie anticipée
 	return false, ""
+}
+
+// getElseType détermine le type de clause else (else ou else if).
+//
+// Params:
+//   - elseStmt: instruction else à analyser
+//
+// Returns:
+//   - string: "else if" ou "else"
+func getElseType(elseStmt ast.Stmt) string {
+	// Vérifier si c'est un else if
+	if _, ok := elseStmt.(*ast.IfStmt); ok {
+		// Retour else if
+		return "else if"
+	}
+	// Retour else simple
+	return "else"
 }
 
 // isPanicCall vérifie si une expression est un appel à panic().

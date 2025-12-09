@@ -19,6 +19,7 @@ var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 }
 
 // runTest007 exécute l'analyse KTN-TEST-007.
+// AUCUN t.Skip() n'est autorisé - les tests doivent être corrigés ou supprimés.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -40,23 +41,20 @@ func runTest007(pass *analysis.Pass) (any, error) {
 		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
 		// Pas un appel de méthode, continuer
 		if !ok {
-			// Continue traversal
 			return
 		}
 
 		// Vérifier si la méthode s'appelle "Skip", "Skipf" ou "SkipNow"
 		methodName := selExpr.Sel.Name
 		// Vérification de la condition
-		if methodName != "Skip" && methodName != "Skipf" && methodName != "SkipNow" {
-			// Pas un appel à Skip, continuer
+		if !isSkipMethod(methodName) {
 			return
 		}
 
-		// Vérifier si le receiver est 't' ou un nom de variable de test
+		// Vérifier si le receiver est un identifiant simple
 		ident, ok := selExpr.X.(*ast.Ident)
 		// Pas un identifiant simple, continuer
 		if !ok {
-			// Continue traversal
 			return
 		}
 
@@ -64,14 +62,15 @@ func runTest007(pass *analysis.Pass) (any, error) {
 		filename := pass.Fset.Position(n.Pos()).Filename
 		// Vérification de la condition
 		if !shared.IsTestFile(filename) {
-			// Pas un fichier de test, continuer
 			return
 		}
 
-		// Reporter l'erreur
+		// Reporter l'erreur - AUCUNE exception
 		pass.Reportf(
 			callExpr.Pos(),
-			"KTN-TEST-007: utilisation de %s.%s() interdite. Les tests doivent être corrigés ou supprimés, pas skippés",
+			"KTN-TEST-007: utilisation de %s.%s() interdite. "+
+				"Les tests doivent être corrigés ou supprimés, jamais skippés. "+
+				"Un test skippé est une dette technique cachée",
 			ident.Name,
 			methodName,
 		)
@@ -79,4 +78,16 @@ func runTest007(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// isSkipMethod vérifie si le nom de méthode est une méthode Skip.
+//
+// Params:
+//   - methodName: nom de la méthode à vérifier
+//
+// Returns:
+//   - bool: true si c'est Skip, Skipf ou SkipNow
+func isSkipMethod(methodName string) bool {
+	// Vérifier les noms de méthodes Skip
+	return methodName == "Skip" || methodName == "Skipf" || methodName == "SkipNow"
 }

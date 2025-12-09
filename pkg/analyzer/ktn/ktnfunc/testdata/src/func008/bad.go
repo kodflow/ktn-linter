@@ -1,4 +1,4 @@
-// Bad examples for the func010 test case.
+// Bad examples for the func008 test case.
 package func008
 
 import "context"
@@ -9,8 +9,8 @@ import "context"
 //   - ctx: context
 //   - req: request
 //   - resp: response
-func Delete(ctx context.Context, req string, resp string) {
-	// Only ignores ctx, but req and resp are also unused!
+func Delete(ctx context.Context, req string, resp string) { // want "ctx" "req" "resp"
+	// Uses _ = ctx pattern which is now flagged as bad practice
 	_ = ctx
 	// No-op: intentionally empty
 }
@@ -24,7 +24,7 @@ func Delete(ctx context.Context, req string, resp string) {
 //
 // Returns:
 //   - string: résultat
-func ProcessData(ctx context.Context, data string, options map[string]string) string {
+func ProcessData(ctx context.Context, data string, options map[string]string) string { // want "ctx" "options"
 	// Utilise seulement data, ctx et options non utilisés
 	return data
 }
@@ -38,8 +38,35 @@ func ProcessData(ctx context.Context, data string, options map[string]string) st
 //
 // Returns:
 //   - string: résultat
-func PartialIgnore(a string, b string, c string) string {
+func PartialIgnore(a string, b string, c string) string { // want "a" "b" "c"
+	// Uses _ = b pattern which is now flagged
 	_ = b
 	// a et c non utilisés et non ignorés!
 	return "result"
+}
+
+// badHandler représente un gestionnaire qui n'utilise pas ses paramètres.
+// Ce type est un exemple de mauvaise pratique pour KTN-FUNC-008.
+type badHandler struct{}
+
+// handle implémente une méthode qui n'utilise pas le préfixe _.
+// Ceci est un mauvais exemple car les params non utilisés
+// doivent utiliser le préfixe _ pour être explicites.
+//
+// Params:
+//   - ctx: context (non utilisé)
+//   - data: données (non utilisé)
+//
+// Returns:
+//   - error: nil
+func (h *badHandler) handle(ctx context.Context, data string) error { // want "ctx" "data"
+	// Ne fait rien mais n'utilise pas le préfixe _ pour les params non utilisés
+	return nil
+}
+
+// init appelle les méthodes pour éviter dead code.
+func init() {
+	// Crée une instance et appelle handle
+	h := &badHandler{}
+	_ = h.handle(nil, "")
 }

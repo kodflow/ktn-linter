@@ -6,7 +6,7 @@ import "golang.org/x/tools/go/analysis"
 // Analyzers retourne tous les analyseurs de la catégorie TEST.
 //
 // Returns:
-//   - []*analysis.Analyzer: liste des analyseurs TEST (13 règles)
+//   - []*analysis.Analyzer: liste des analyseurs TEST (12 règles)
 func Analyzers() []*analysis.Analyzer {
 	// Retourne tous les analyseurs de test ordonnés par criticité
 	return []*analysis.Analyzer{
@@ -15,7 +15,7 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer003,
 		Analyzer004,
 		Analyzer005,
-		Analyzer006,
+		// Analyzer006 désactivée: doublon de 003 (pattern 1:1)
 		Analyzer007,
 		Analyzer008,
 		Analyzer009,

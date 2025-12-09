@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -50,6 +51,20 @@ func runComment006(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Skip test files entirely (all _test.go files)
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Vérification si fichier de test
+		if shared.IsTestFile(filename) {
+			// Pas de documentation requise pour les fichiers de test
+			return
+		}
+
+		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
+		if shared.IsTestFunction(funcDecl) {
+			// Pas de documentation requise pour les fonctions de test
+			return
+		}
 
 		// Get function documentation
 		doc := funcDecl.Doc

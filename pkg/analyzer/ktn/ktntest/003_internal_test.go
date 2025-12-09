@@ -156,6 +156,55 @@ func Test_isExemptTestFile(t *testing.T) {
 	}
 }
 
+// Test_getSourceFileForTest tests the getSourceFileForTest private function.
+//
+// Params:
+//   - t: testing context
+func Test_getSourceFileForTest(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		want     string
+	}{
+		{
+			name:     "internal test file",
+			filename: "/path/to/myfile_internal_test.go",
+			want:     "/path/to/myfile.go",
+		},
+		{
+			name:     "external test file",
+			filename: "/path/to/myfile_external_test.go",
+			want:     "/path/to/myfile.go",
+		},
+		{
+			name:     "bench test file",
+			filename: "/path/to/myfile_bench_test.go",
+			want:     "/path/to/myfile.go",
+		},
+		{
+			name:     "integration test file",
+			filename: "/path/to/myfile_integration_test.go",
+			want:     "/path/to/myfile.go",
+		},
+		{
+			name:     "standard test file",
+			filename: "/path/to/myfile_test.go",
+			want:     "/path/to/myfile.go",
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getSourceFileForTest(tt.filename)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("getSourceFileForTest(%q) = %q, want %q", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
 // Test_fileExists_edgeCases tests edge cases for fileExists.
 //
 // Params:

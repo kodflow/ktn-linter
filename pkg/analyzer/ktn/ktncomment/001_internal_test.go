@@ -248,3 +248,109 @@ func main() { x := 1 // inline
 		})
 	}
 }
+
+// Test_containsURL tests the containsURL function
+func Test_containsURL(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want bool
+	}{
+		{
+			name: "text without URL",
+			text: "This is a simple comment",
+			want: false,
+		},
+		{
+			name: "text with https URL",
+			text: "See https://example.com/documentation for more info",
+			want: true,
+		},
+		{
+			name: "text with http URL",
+			text: "Check http://localhost:8080/api",
+			want: true,
+		},
+		{
+			name: "text with file URL",
+			text: "file:///etc/config is the config path",
+			want: true,
+		},
+		{
+			name: "text with long URL",
+			text: "See https://github.com/org/repo/blob/main/path/to/file.go#L100-L200 for implementation",
+			want: true,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := containsURL(tt.text)
+			// Check result matches expectation
+			if got != tt.want {
+				t.Errorf("containsURL(%q) = %v, want %v", tt.text, got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_checkMultiLineComment tests the checkMultiLineComment function.
+//
+// Params:
+//   - t: testing context
+func Test_checkMultiLineComment(t *testing.T) {
+	tests := []struct {
+		name     string
+		text     string
+		wantErrs int
+	}{
+		{
+			name:     "multi-line with short lines",
+			text:     "/* short line 1\nshort line 2 */",
+			wantErrs: 0,
+		},
+		{
+			name:     "multi-line with long line",
+			text:     "/* short line\n" + strings.Repeat("a", 85) + "\nshort line */",
+			wantErrs: 1,
+		},
+		{
+			name:     "multi-line with URL on long line",
+			text:     "/* short line\nSee https://example.com/very/long/path/to/something */",
+			wantErrs: 0,
+		},
+		{
+			name:     "multi-line with empty lines",
+			text:     "/* first\n\n\nlast */",
+			wantErrs: 0,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			comment := &ast.Comment{
+				Slash: token.NoPos,
+				Text:  tt.text,
+			}
+
+			errorCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(d analysis.Diagnostic) {
+					errorCount++
+				},
+			}
+
+			// Run the function
+			checkMultiLineComment(pass, comment, tt.text)
+
+			// Check error count matches expectation
+			if errorCount != tt.wantErrs {
+				t.Errorf("checkMultiLineComment() errors = %d, want %d", errorCount, tt.wantErrs)
+			}
+		})
+	}
+}

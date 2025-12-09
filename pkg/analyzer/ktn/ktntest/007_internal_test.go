@@ -42,8 +42,10 @@ func Test_runTest007_integration(t *testing.T) {
 		{name: "analyzer structure", expectedName: "ktntest007"},
 	}
 
+	// Iterate over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Check analyzer is valid
 			if Analyzer007 == nil || Analyzer007.Name != tt.expectedName {
 				t.Errorf("Analyzer007 invalid: nil=%v, Name=%q, want %q",
 					Analyzer007 == nil, Analyzer007.Name, tt.expectedName)
@@ -52,48 +54,56 @@ func Test_runTest007_integration(t *testing.T) {
 	}
 }
 
-// Test_runTest007_skipMethods tests detection of various Skip methods.
+// Test_isSkipMethod tests the isSkipMethod function.
 //
 // Params:
 //   - t: testing context
-func Test_runTest007_skipMethods(t *testing.T) {
+func Test_isSkipMethod(t *testing.T) {
 	tests := []struct {
 		name       string
-		method     string
-		shouldFail bool
+		methodName string
+		want       bool
 	}{
 		{
-			name:       "Skip method should be detected",
-			method:     "Skip",
-			shouldFail: true,
+			name:       "Skip method detected",
+			methodName: "Skip",
+			want:       true,
 		},
 		{
-			name:       "Skipf method should be detected",
-			method:     "Skipf",
-			shouldFail: true,
+			name:       "Skipf method detected",
+			methodName: "Skipf",
+			want:       true,
 		},
 		{
-			name:       "SkipNow method should be detected",
-			method:     "SkipNow",
-			shouldFail: true,
+			name:       "SkipNow method detected",
+			methodName: "SkipNow",
+			want:       true,
 		},
 		{
-			name:       "Error method should not be detected",
-			method:     "Error",
-			shouldFail: false,
+			name:       "Error method not detected",
+			methodName: "Error",
+			want:       false,
 		},
 		{
-			name:       "Fatal method should not be detected",
-			method:     "Fatal",
-			shouldFail: false,
+			name:       "Fatal method not detected",
+			methodName: "Fatal",
+			want:       false,
+		},
+		{
+			name:       "Run method not detected",
+			methodName: "Run",
+			want:       false,
 		},
 	}
 
-	// Parcourir les cas de test
+	// Iterate over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test conceptual logic
-			t.Logf("Testing method: %s", tt.method)
+			got := isSkipMethod(tt.methodName)
+			// Check result
+			if got != tt.want {
+				t.Errorf("isSkipMethod(%q) = %v, want %v", tt.methodName, got, tt.want)
+			}
 		})
 	}
 }

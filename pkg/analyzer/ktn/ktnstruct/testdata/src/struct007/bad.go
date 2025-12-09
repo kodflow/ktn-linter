@@ -1,90 +1,31 @@
 // Bad examples for the struct007 test case.
 package struct007
 
-// BadService est une struct non-DTO sans getter pour son champ privé.
-// Démontre la violation STRUCT-007: pas de getter Name() pour le champ name.
-type BadService struct {
-	name string // want "KTN-STRUCT-007: la struct 'BadService' devrait avoir un getter 'Name\\(\\)' pour le champ privé 'name'"
+// BadGetterMismatch est une struct avec un getter mal nommé.
+// Démontre la violation STRUCT-007: getter Value() retourne le champ data.
+type BadGetterMismatch struct {
+	data string
 }
 
-// BadServiceInterface définit les méthodes de BadService.
-type BadServiceInterface interface {
-	Run() error
+// BadGetterMismatchInterface définit les méthodes de BadGetterMismatch.
+type BadGetterMismatchInterface interface {
+	Value() string
 }
 
-// NewBadService crée une nouvelle instance de BadService.
+// NewBadGetterMismatch crée une nouvelle instance.
 //
 // Returns:
-//   - *BadService: nouvelle instance
-func NewBadService() *BadService {
+//   - *BadGetterMismatch: nouvelle instance
+func NewBadGetterMismatch() *BadGetterMismatch {
 	// Retourne une nouvelle instance
-	return &BadService{}
+	return &BadGetterMismatch{}
 }
 
-// Run exécute le service.
+// Value retourne data mais devrait être nommé Data().
 //
 // Returns:
-//   - error: erreur éventuelle
-func (s *BadService) Run() error {
-	// Retourne nil si succès
-	return nil
-}
-
-// BadRepository est une struct non-DTO avec plusieurs champs privés sans getters.
-// Démontre la violation STRUCT-007 avec plusieurs champs privés.
-type BadRepository struct {
-	connection string // want "KTN-STRUCT-007: la struct 'BadRepository' devrait avoir un getter 'Connection\\(\\)' pour le champ privé 'connection'"
-	timeout    int    // want "KTN-STRUCT-007: la struct 'BadRepository' devrait avoir un getter 'Timeout\\(\\)' pour le champ privé 'timeout'"
-}
-
-// BadRepositoryInterface définit les méthodes de BadRepository.
-type BadRepositoryInterface interface {
-	Connect() error
-}
-
-// NewBadRepository crée une nouvelle instance de BadRepository.
-//
-// Returns:
-//   - *BadRepository: nouvelle instance
-func NewBadRepository() *BadRepository {
-	// Retourne une nouvelle instance
-	return &BadRepository{}
-}
-
-// Connect établit la connexion.
-//
-// Returns:
-//   - error: erreur éventuelle
-func (r *BadRepository) Connect() error {
-	// Retourne nil si succès
-	return nil
-}
-
-// BadHandler est une struct avec un champ privé mais pas le bon getter.
-// Démontre la violation STRUCT-007 avec un getter mal nommé.
-type BadHandler struct {
-	logger string // want "KTN-STRUCT-007: la struct 'BadHandler' devrait avoir un getter 'Logger\\(\\)' pour le champ privé 'logger'"
-}
-
-// BadHandlerInterface définit les méthodes de BadHandler.
-type BadHandlerInterface interface {
-	WrongGetter() int
-}
-
-// NewBadHandler crée une nouvelle instance de BadHandler.
-//
-// Returns:
-//   - *BadHandler: nouvelle instance
-func NewBadHandler() *BadHandler {
-	// Retourne une nouvelle instance
-	return &BadHandler{}
-}
-
-// WrongGetter retourne autre chose - pas le bon getter.
-//
-// Returns:
-//   - int: toujours 0
-func (h *BadHandler) WrongGetter() int {
-	// Retour de la valeur
-	return 0
+//   - string: valeur
+func (b *BadGetterMismatch) Value() string { // want "KTN-STRUCT-007: getter 'Value\\(\\)' retourne le champ 'data', devrait être nommé 'Data\\(\\)'"
+	// Retour des données
+	return b.data
 }

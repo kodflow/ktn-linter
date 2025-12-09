@@ -36,16 +36,16 @@ func Test_runStruct007(t *testing.T) {
 	}
 }
 
-// Test_collectNonDTOStructs teste la fonction collectNonDTOStructs.
+// Test_collectStructPrivateFields teste la fonction collectStructPrivateFields.
 //
 // Params:
 //   - t: instance de testing
-func Test_collectNonDTOStructs(t *testing.T) {
+func Test_collectStructPrivateFields(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "non_dto_structs_collection",
+			name: "struct_private_fields_collection",
 		},
 	}
 
@@ -53,57 +53,22 @@ func Test_collectNonDTOStructs(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - nécessite inspector.Inspector réel
+			// Test passthrough - nécessite analysis.Pass et inspector.Inspector réels
 			_ = tt.name
 		})
 	}
 }
 
-// Test_collectPrivateFields teste la fonction collectPrivateFields.
+// Test_collectMethodsDetailed teste la fonction collectMethodsDetailed.
 //
 // Params:
 //   - t: instance de testing
-func Test_collectPrivateFields(t *testing.T) {
-	tests := []struct {
-		name        string
-		structType  *ast.StructType
-		expectedLen int
-	}{
-		{
-			name:        "nil_fields",
-			structType:  &ast.StructType{Fields: nil},
-			expectedLen: 0,
-		},
-		{
-			name:        "empty_fields",
-			structType:  &ast.StructType{Fields: &ast.FieldList{List: nil}},
-			expectedLen: 0,
-		},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			result := collectPrivateFields(tt.structType)
-			// Vérification du résultat
-			if len(result) != tt.expectedLen {
-				t.Errorf("collectPrivateFields() len = %d, want %d", len(result), tt.expectedLen)
-			}
-		})
-	}
-}
-
-// Test_collectMethods teste la fonction collectMethods.
-//
-// Params:
-//   - t: instance de testing
-func Test_collectMethods(t *testing.T) {
+func Test_collectMethodsDetailed(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "methods_collection",
+			name: "methods_detailed_collection",
 		},
 	}
 
@@ -161,11 +126,11 @@ func Test_extractReceiverType(t *testing.T) {
 	}
 }
 
-// Test_buildGetterName teste la fonction buildGetterName.
+// Test_capitalizeFirst teste la fonction capitalizeFirst.
 //
 // Params:
 //   - t: instance de testing
-func Test_buildGetterName(t *testing.T) {
+func Test_capitalizeFirst(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -201,80 +166,230 @@ func Test_buildGetterName(t *testing.T) {
 	// Exécution des tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := buildGetterName(tt.input)
+			result := capitalizeFirst(tt.input)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("buildGetterName(%q) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("capitalizeFirst(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_hasMethod teste la fonction hasMethod.
+// Test_hasGetter teste la fonction hasGetter.
 //
 // Params:
 //   - t: instance de testing
-func Test_hasMethod(t *testing.T) {
+func Test_hasGetter(t *testing.T) {
 	tests := []struct {
-		name     string
-		methods  []string
-		search   string
-		expected bool
+		name      string
+		methods   []methodInfo
+		fieldName string
+		expected  bool
 	}{
 		{
-			name:     "exact_match",
-			methods:  []string{"Name", "Age", "String"},
-			search:   "Name",
-			expected: true,
+			name:      "exact_match",
+			methods:   []methodInfo{{name: "Name"}, {name: "Age"}},
+			fieldName: "name",
+			expected:  true,
 		},
 		{
-			name:     "get_prefix_match",
-			methods:  []string{"GetName", "Age", "String"},
-			search:   "Name",
-			expected: true,
+			name:      "no_match",
+			methods:   []methodInfo{{name: "Age"}},
+			fieldName: "name",
+			expected:  false,
 		},
 		{
-			name:     "no_match",
-			methods:  []string{"Age", "String"},
-			search:   "Name",
-			expected: false,
+			name:      "empty_methods",
+			methods:   []methodInfo{},
+			fieldName: "name",
+			expected:  false,
 		},
 		{
-			name:     "empty_methods",
-			methods:  []string{},
-			search:   "Name",
-			expected: false,
-		},
-		{
-			name:     "nil_methods",
-			methods:  nil,
-			search:   "Name",
-			expected: false,
+			name:      "nil_methods",
+			methods:   nil,
+			fieldName: "name",
+			expected:  false,
 		},
 	}
 
 	// Exécution des tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := hasMethod(tt.methods, tt.search)
+			result := hasGetter(tt.methods, tt.fieldName)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("hasMethod(%v, %q) = %v, want %v", tt.methods, tt.search, result, tt.expected)
+				t.Errorf("hasGetter(%v, %q) = %v, want %v", tt.methods, tt.fieldName, result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkMissingGetters teste la fonction checkMissingGetters.
+// Test_extractReturnedField teste la fonction extractReturnedField.
 //
 // Params:
 //   - t: instance de testing
-func Test_checkMissingGetters(t *testing.T) {
+func Test_extractReturnedField(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected string
+	}{
+		{
+			name:     "selector_expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "s"}, Sel: &ast.Ident{Name: "name"}},
+			expected: "name",
+		},
+		{
+			name:     "non_selector",
+			expr:     &ast.Ident{Name: "x"},
+			expected: "",
+		},
+		{
+			name:     "selector_with_non_ident_x",
+			expr:     &ast.SelectorExpr{X: &ast.CallExpr{}, Sel: &ast.Ident{Name: "name"}},
+			expected: "",
+		},
+	}
+
+	// Exécution des tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractReturnedField(tt.expr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("extractReturnedField() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_findModifiedField teste la fonction findModifiedField.
+//
+// Params:
+//   - t: instance de testing
+func Test_findModifiedField(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     *ast.BlockStmt
+		expected string
+	}{
+		{
+			name:     "nil_body",
+			body:     nil,
+			expected: "",
+		},
+		{
+			name:     "empty_body",
+			body:     &ast.BlockStmt{List: nil},
+			expected: "",
+		},
+		{
+			name: "assignment_to_field",
+			body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					&ast.AssignStmt{
+						Lhs: []ast.Expr{
+							&ast.SelectorExpr{
+								X:   &ast.Ident{Name: "s"},
+								Sel: &ast.Ident{Name: "name"},
+							},
+						},
+						Rhs: []ast.Expr{&ast.Ident{Name: "value"}},
+					},
+				},
+			},
+			expected: "name",
+		},
+	}
+
+	// Exécution des tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := findModifiedField(tt.body)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("findModifiedField() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isSetterMethod teste la fonction isSetterMethod.
+//
+// Params:
+//   - t: instance de testing
+func Test_isSetterMethod(t *testing.T) {
+	tests := []struct {
+		name          string
+		method        methodInfo
+		expectedIsSetter bool
+		expectedField    string
+	}{
+		{
+			name: "setter_with_param",
+			method: methodInfo{
+				name: "SetName",
+				funcDecl: &ast.FuncDecl{
+					Type: &ast.FuncType{
+						Params: &ast.FieldList{
+							List: []*ast.Field{{Names: []*ast.Ident{{Name: "n"}}}},
+						},
+					},
+				},
+			},
+			expectedIsSetter: true,
+			expectedField:    "name",
+		},
+		{
+			name: "not_setter_no_set_prefix",
+			method: methodInfo{
+				name:     "Name",
+				funcDecl: &ast.FuncDecl{Type: &ast.FuncType{}},
+			},
+			expectedIsSetter: false,
+			expectedField:    "",
+		},
+		{
+			name: "setter_no_params",
+			method: methodInfo{
+				name: "SetName",
+				funcDecl: &ast.FuncDecl{
+					Type: &ast.FuncType{
+						Params: &ast.FieldList{List: nil},
+					},
+				},
+			},
+			expectedIsSetter: false,
+			expectedField:    "",
+		},
+	}
+
+	// Exécution des tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isSetter, field := isSetterMethod(tt.method)
+			// Vérification du résultat
+			if isSetter != tt.expectedIsSetter {
+				t.Errorf("isSetterMethod() isSetter = %v, want %v", isSetter, tt.expectedIsSetter)
+			}
+			// Vérification du champ
+			if field != tt.expectedField {
+				t.Errorf("isSetterMethod() field = %q, want %q", field, tt.expectedField)
+			}
+		})
+	}
+}
+
+// Test_checkNamingConventions teste la fonction checkNamingConventions.
+//
+// Params:
+//   - t: instance de testing
+func Test_checkNamingConventions(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		{
-			name: "missing_getters_check",
+			name: "naming_conventions_check",
 		},
 	}
 

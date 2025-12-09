@@ -330,19 +330,25 @@ func getMutexTypeName(t types.Type) string {
 	pkg := obj.Pkg().Path()
 	name := obj.Name()
 
-	// Vérification des types de mutex
-	if pkg == "sync" && (name == "Mutex" || name == "RWMutex") {
-		// Traitement
-		return "sync." + name
+	// Vérification des types sync qui ne doivent pas être copiés
+	if pkg == "sync" {
+		// Liste des types sync non-copiables
+		switch name {
+		// sync.Mutex ne doit pas être copié
+		case "Mutex", "RWMutex", "Cond", "Once", "WaitGroup", "Pool", "Map":
+			// Retour du type qualifié
+			return "sync." + name
+		}
 	}
 
-	// Vérification de la condition
-	if pkg == "sync/atomic" && name == "Value" {
-		// Traitement
-		return "atomic.Value"
+	// Vérification des types atomic qui ne doivent pas être copiés
+	if pkg == "sync/atomic" {
+		// Tous les types atomic.* ne doivent pas être copiés
+		// Inclut: Value, Bool, Int32, Int64, Uint32, Uint64, Uintptr, Pointer
+		return "atomic." + name
 	}
 
-	// Traitement
+	// Type non-mutex
 	return ""
 }
 

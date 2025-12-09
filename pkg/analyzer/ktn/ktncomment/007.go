@@ -37,6 +37,14 @@ func runComment007(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
+		// Skip test files entirely (all _test.go files)
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Vérification si fichier de test
+		if shared.IsTestFile(filename) {
+			// Pas de vérification pour les fichiers de test
+			return
+		}
+
 		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
 			// Retour de la fonction
@@ -79,10 +87,12 @@ func runComment007(pass *analysis.Pass) (any, error) {
 }
 
 // checkIfStmt checks if an if statement has a comment
+//
 // Params:
 //   - pass: contexte d'analyse
+//   - stmt: if statement to check
 func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
-	// Vérification de la condition
+	// Vérification que le if a un commentaire (règle stricte, pas d'exception)
 	if !hasCommentBefore(pass, stmt.Pos()) {
 		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le bloc 'if' doit avoir un commentaire explicatif")
 	}
@@ -145,64 +155,24 @@ func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
 }
 
 // checkLoopStmt checks if a loop statement has a comment
+//
 // Params:
 //   - pass: contexte d'analyse
+//   - stmt: loop statement to check
 func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
-	// Vérification de la condition
+	// Vérification que la boucle a un commentaire
 	if !hasCommentBefore(pass, stmt.Pos()) {
 		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le bloc de boucle doit avoir un commentaire explicatif")
 	}
 }
 
-// isTrivialReturn checks if return is trivial (nil, empty slice/map, bool).
-//
-// Params:
-//   - stmt: Return statement to check
-//
-// Returns:
-//   - bool: true if return is trivial (bare, nil, or simple literal)
-func isTrivialReturn(stmt *ast.ReturnStmt) bool {
-	// No return values (bare return)
-	if len(stmt.Results) == 0 {
-		return true
-	}
-
-	// Check each return value
-	for _, result := range stmt.Results {
-		// Check for nil
-		if ident, ok := result.(*ast.Ident); ok {
-			// Verification de la condition
-			if ident.Name == "nil" || ident.Name == "true" || ident.Name == "false" {
-				continue
-			}
-		}
-
-		// Check for empty composite literal ([]T{}, map[K]V{})
-		if comp, ok := result.(*ast.CompositeLit); ok {
-			// Verification de la condition
-			if len(comp.Elts) == 0 {
-				continue
-			}
-		}
-
-		// If we get here, return value is not trivial
-		return false
-	}
-
-	// All return values are trivial
-	return true
-}
-
 // checkReturnStmt checks if a return statement has a comment
+//
 // Params:
 //   - pass: contexte d'analyse
+//   - stmt: return statement to check
 func checkReturnStmt(pass *analysis.Pass, stmt *ast.ReturnStmt) {
-	// Ignorer les returns triviaux (nil, []T{}, true, false, etc.)
-	if isTrivialReturn(stmt) {
-		return
-	}
-
-	// Vérification de la condition
+	// Vérification que le return a un commentaire (règle stricte, pas d'exception)
 	if !hasCommentBefore(pass, stmt.Pos()) && !hasInlineComment(pass, stmt.Pos()) {
 		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le 'return' doit avoir un commentaire explicatif")
 	}

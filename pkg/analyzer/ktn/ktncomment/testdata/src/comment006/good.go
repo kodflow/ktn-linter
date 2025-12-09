@@ -13,16 +13,13 @@ func GoodNoParams() string {
 // GoodWithParams traite des données avec des paramètres.
 //
 // Params:
-//   - data: les données à traiter
-//   - count: le nombre d'itérations
+//   - _data: les données à traiter
+//   - _count: le nombre d'itérations
 //
 // Returns:
 //   - bool: true si le traitement a réussi
 //   - error: une erreur si le traitement a échoué
-func GoodWithParams(data string, count int) (bool, error) {
-	// Utilisation des paramètres
-	_ = data
-	_ = count
+func GoodWithParams(_data string, _count int) (bool, error) {
 	// Retourne succès du traitement sans erreur
 	return true, nil
 }
@@ -30,10 +27,9 @@ func GoodWithParams(data string, count int) (bool, error) {
 // GoodNoReturn effectue une action sans retourner de valeur.
 //
 // Params:
-//   - msg: le message à afficher
-func GoodNoReturn(msg string) {
-	// Utilisation du paramètre
-	_ = msg
+//   - _msg: le message à afficher (non utilisé)
+func GoodNoReturn(_msg string) {
+	// Fonction sans retour
 }
 
 // GoodNoParamsNoReturn effectue une opération sans paramètres ni retour.
@@ -114,7 +110,7 @@ func GoodNamedReturns(input int) (result int, err error) {
 // Returns:
 //   - int: valeur de retour
 func GoodUnderscoreParams(_unused string) int {
-	// Retourne une valeur fixe
+	// Retourne zéro
 	return 0
 }
 

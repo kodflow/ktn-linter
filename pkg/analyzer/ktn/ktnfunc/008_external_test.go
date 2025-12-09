@@ -13,9 +13,10 @@ import (
 //   - t: contexte de test
 func TestFunc008(t *testing.T) {
 	// Expected errors in bad.go:
-	// - Delete: req et resp non utilisés (2 erreurs)
-	// - ProcessData: ctx et options non utilisés (2 erreurs)
-	// - PartialIgnore: a et c non utilisés (2 erreurs)
-	// Total: 6 erreurs
-	testhelper.TestGoodBad(t, ktnfunc.Analyzer008, "func008", 6)
+	// - Delete: ctx (_ = ctx), req, resp (3 erreurs)
+	// - ProcessData: ctx, options (2 erreurs)
+	// - PartialIgnore: a, b (_ = b), c (3 erreurs)
+	// - BadHandler.Handle: ctx, data (2 erreurs - méthode implémentant interface)
+	// Total: 10 erreurs
+	testhelper.TestGoodBad(t, ktnfunc.Analyzer008, "func008", 10)
 }

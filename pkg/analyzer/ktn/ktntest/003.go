@@ -43,22 +43,7 @@ func runTest003(pass *analysis.Pass) (any, error) {
 		}
 
 		// Extraire le nom du fichier source correspondant
-		var sourceFile string
-		var base string
-		var ok bool
-		// Vérification du suffixe (convention internal/external)
-		if base, ok = strings.CutSuffix(filename, "_internal_test.go"); ok {
-			// Fichier _internal_test.go → chercher .go
-			sourceFile = base + ".go"
-			// Cas alternatif: external test
-		} else if base, ok = strings.CutSuffix(filename, "_external_test.go"); ok {
-			// Fichier _external_test.go → chercher .go
-			sourceFile = base + ".go"
-			// Cas par défaut: standard test
-		} else {
-			// Fichier _test.go standard → chercher .go
-			sourceFile = strings.TrimSuffix(filename, "_test.go") + ".go"
-		}
+		sourceFile := getSourceFileForTest(filename)
 
 		// Vérifier si le fichier source existe
 		if !fileExists(sourceFile) && !isExemptTestFile(filename) {
@@ -82,6 +67,41 @@ func runTest003(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// getSourceFileForTest retourne le chemin du fichier source correspondant à un fichier de test.
+//
+// Params:
+//   - filename: chemin du fichier de test
+//
+// Returns:
+//   - string: chemin du fichier source correspondant
+func getSourceFileForTest(filename string) string {
+	var base string
+	var ok bool
+
+	// Vérification du suffixe (convention internal/external/bench/integration)
+	if base, ok = strings.CutSuffix(filename, "_internal_test.go"); ok {
+		// Fichier _internal_test.go → chercher .go
+		return base + ".go"
+	}
+	// Cas alternatif: external test
+	if base, ok = strings.CutSuffix(filename, "_external_test.go"); ok {
+		// Fichier _external_test.go → chercher .go
+		return base + ".go"
+	}
+	// Cas alternatif: bench test
+	if base, ok = strings.CutSuffix(filename, "_bench_test.go"); ok {
+		// Fichier _bench_test.go → chercher .go
+		return base + ".go"
+	}
+	// Cas alternatif: integration test
+	if base, ok = strings.CutSuffix(filename, "_integration_test.go"); ok {
+		// Fichier _integration_test.go → chercher .go
+		return base + ".go"
+	}
+	// Cas par défaut: standard test
+	return strings.TrimSuffix(filename, "_test.go") + ".go"
 }
 
 // fileExists vérifie si un fichier existe.

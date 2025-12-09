@@ -14,9 +14,8 @@ func badWrongFormat() { // want "KTN-COMMENT-006: la description doit commencer 
 }
 
 // badMissingParams has params but no Params section.
-func badMissingParams(x int) { // want "KTN-COMMENT-006: section 'Params:' manquante"
-	// Utilisation du paramètre
-	_ = x
+func badMissingParams(_x int) { // want "KTN-COMMENT-006: section 'Params:' manquante"
+	// Paramètre non utilisé
 }
 
 // badMissingReturns has returns but no Returns section.
@@ -31,9 +30,7 @@ func badMissingReturns() string { // want "KTN-COMMENT-006: section 'Returns:' m
 //
 // Returns:
 //   - string: résultat
-func badEmptyParamsSection(x int) string { // want "KTN-COMMENT-006: au moins un paramètre doit être documenté dans 'Params:'"
-	// Utilisation du paramètre
-	_ = x
+func badEmptyParamsSection(_x int) string { // want "KTN-COMMENT-006: au moins un paramètre doit être documenté dans 'Params:'"
 	// Retourne une chaîne vide
 	return ""
 }
@@ -41,12 +38,10 @@ func badEmptyParamsSection(x int) string { // want "KTN-COMMENT-006: au moins un
 // badEmptyReturnsSection a une section Returns: vide (sans items).
 //
 // Params:
-//   - x: paramètre
+//   - _x: paramètre non utilisé
 //
 // Returns:
-func badEmptyReturnsSection(x int) string { // want "KTN-COMMENT-006: au moins une valeur de retour doit être documentée dans 'Returns:'"
-	// Utilisation du paramètre
-	_ = x
+func badEmptyReturnsSection(_x int) string { // want "KTN-COMMENT-006: au moins une valeur de retour doit être documentée dans 'Returns:'"
 	// Retourne une chaîne vide
 	return ""
 }
@@ -84,6 +79,6 @@ func init() {
 	_ = badMissingReturns()
 	_ = badEmptyParamsSection(1)
 	_ = badEmptyReturnsSection(1)
-	_ = badMissingParamInDoc(1, 2)
+	_ = badMissingParamInDoc(1, 1)
 	_, _ = badMissingReturnInDoc(1)
 }

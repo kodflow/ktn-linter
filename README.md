@@ -167,14 +167,21 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-FUNC-011](docs/rules/KTN-FUNC-011.md) | INFO | Complexité cyclomatique max 10 |
 | [KTN-FUNC-012](docs/rules/KTN-FUNC-012.md) | INFO | Named returns pour >3 valeurs de retour |
 
-### Structures (5 règles) - WARNING/INFO
+### Structures (7 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| [KTN-STRUCT-001](docs/rules/KTN-STRUCT-001.md) | WARNING | Interface obligatoire (100% méthodes publiques) |
-| [KTN-STRUCT-002](docs/rules/KTN-STRUCT-002.md) | WARNING | Constructeur NewX() requis |
+| [KTN-STRUCT-001](docs/rules/KTN-STRUCT-001.md) | WARNING | Interface obligatoire pour mockabilité (sauf DTOs) |
+| [KTN-STRUCT-002](docs/rules/KTN-STRUCT-002.md) | WARNING | Constructeur NewX() requis (suffixes autorisés: NewXxxWithOption) |
 | [KTN-STRUCT-003](docs/rules/KTN-STRUCT-003.md) | WARNING | Pas de préfixe Get pour getters |
-| [KTN-STRUCT-004](docs/rules/KTN-STRUCT-004.md) | INFO | Un fichier Go par struct |
+| [KTN-STRUCT-004](docs/rules/KTN-STRUCT-004.md) | INFO | Un fichier Go par struct (DTOs peuvent être groupés) |
 | [KTN-STRUCT-005](docs/rules/KTN-STRUCT-005.md) | INFO | Ordre des champs (exportés avant privés) |
+| [KTN-STRUCT-006](docs/rules/KTN-STRUCT-006.md) | INFO | Pas de tags sur champs privés de DTOs |
+| [KTN-STRUCT-007](docs/rules/KTN-STRUCT-007.md) | INFO | Nommage getters/setters: `Field()` et `SetField()` |
+
+**Convention Getters/Setters (STRUCT-007)**:
+- Getters/setters sont **OPTIONNELS**
+- Si présents: `x.Value()` pour get, `x.SetValue(v)` pour set
+- Si getter existe mais nom ≠ champ (ex: `Value()` retourne `foo`), suggérer renommage vers `Foo()`
 
 ### Tests (13 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |

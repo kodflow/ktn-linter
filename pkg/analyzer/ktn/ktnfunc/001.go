@@ -42,6 +42,15 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 		}
 	}
 
+	// Signaler si plus d'une erreur en retour
+	if len(errorPositions) > 1 {
+		pass.Reportf(
+			funcType.Results.Pos(),
+			"KTN-FUNC-001: la fonction a %d types error en retour, ce qui est inhabituel",
+			len(errorPositions),
+		)
+	}
+
 	// Vérification erreurs mal placées
 	if len(errorPositions) > 0 {
 		lastPos := len(results) - 1

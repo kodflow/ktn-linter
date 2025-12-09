@@ -13,6 +13,7 @@ import (
 // Params:
 //   - t: testing context
 func TestComment007(t *testing.T) {
-	// good.go: 0 errors, bad.go: 33 errors for missing block comments
-	testhelper.TestGoodBad(t, ktncomment.Analyzer007, "comment007", 33)
+	// good.go: 0 errors, bad.go: 37 errors for missing block comments
+	// (règle stricte: tous les blocs, returns, et if doivent avoir un commentaire)
+	testhelper.TestGoodBad(t, ktncomment.Analyzer007, "comment007", 37)
 }

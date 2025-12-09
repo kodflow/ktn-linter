@@ -88,6 +88,9 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 		return
 	}
 
+	// Collect slice/map return types for better messages
+	returnTypes := collectSliceMapReturnTypes(pass, funcDecl)
+
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		retStmt, ok := n.(*ast.ReturnStmt)
 		// Continue traversal if not return statement
@@ -96,18 +99,90 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 		}
 
 		// Check each return value
-		for _, result := range retStmt.Results {
+		for i, result := range retStmt.Results {
 			// Verification de la condition
-			if isNilIdent(result) {
-				pass.Reportf(
-					retStmt.Pos(),
-					"KTN-RETURN-002: préférer slice/map vide à nil",
-				)
+			if isNilIdent(result) && i < len(returnTypes) {
+				typeInfo := returnTypes[i]
+				// Report avec message adapté au type
+				if typeInfo != "" {
+					pass.Reportf(
+						retStmt.Pos(),
+						"KTN-RETURN-002: préférer %s à nil",
+						typeInfo,
+					)
+				}
 			}
 		}
 
 		return true
 	})
+}
+
+// collectSliceMapReturnTypes collecte les types slice/map pour chaque position de retour.
+//
+// Params:
+//   - pass: Analysis pass
+//   - funcDecl: Function declaration
+//
+// Returns:
+//   - []string: suggestion de syntaxe pour chaque position de retour
+func collectSliceMapReturnTypes(pass *analysis.Pass, funcDecl *ast.FuncDecl) []string {
+	// Vérification des résultats
+	if funcDecl.Type.Results == nil {
+		return nil
+	}
+
+	// Collecte des types avec expansion des noms multiples
+	var result []string
+	// Itération sur les résultats
+	for _, field := range funcDecl.Type.Results.List {
+		typeInfo := pass.TypesInfo.TypeOf(field.Type)
+		// Vérification du type
+		if typeInfo == nil {
+			result = append(result, "")
+			continue
+		}
+
+		// Génération de la suggestion
+		suggestion := getSuggestionForType(typeInfo)
+
+		// Si plusieurs noms dans le champ, répéter la suggestion
+		count := len(field.Names)
+		// Au moins une fois si pas de noms
+		if count == 0 {
+			count = 1
+		}
+		// Ajout des suggestions
+		for range count {
+			result = append(result, suggestion)
+		}
+	}
+
+	return result
+}
+
+// getSuggestionForType retourne la suggestion de syntaxe pour un type.
+//
+// Params:
+//   - t: type à analyser
+//
+// Returns:
+//   - string: suggestion de syntaxe ou chaîne vide
+func getSuggestionForType(t types.Type) string {
+	// Vérification du type sous-jacent
+	switch underlying := t.Underlying().(type) {
+	// Cas slice
+	case *types.Slice:
+		elemType := underlying.Elem().String()
+		return "[]" + elemType + "{}"
+	// Cas map
+	case *types.Map:
+		keyType := underlying.Key().String()
+		elemType := underlying.Elem().String()
+		return "map[" + keyType + "]" + elemType + "{}"
+	}
+	// Type non slice/map
+	return ""
 }
 
 // isNilIdent checks if expression is nil identifier.

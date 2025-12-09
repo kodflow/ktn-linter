@@ -51,15 +51,35 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Check each parameter
+		// Check each parameter and count contexts
 		contextParamIndex := -1
+		contextCount := 0
 		// Itération sur les éléments
 		for i, field := range funcDecl.Type.Params.List {
 			// Vérification de la condition
 			if isContextTypeWithPass(pass, field.Type) {
-				contextParamIndex = i
-				break
+				// Compte le nombre de noms dans ce champ (pour gérer a, b context.Context)
+				nameCount := len(field.Names)
+				// Si pas de noms explicites, compter 1
+				if nameCount == 0 {
+					nameCount = 1
+				}
+				contextCount += nameCount
+				// Enregistrer la première position trouvée
+				if contextParamIndex == -1 {
+					contextParamIndex = i
+				}
 			}
+		}
+
+		// Signaler si plus d'un context.Context
+		if contextCount > 1 {
+			pass.Reportf(
+				funcDecl.Type.Params.Pos(),
+				"KTN-FUNC-002: la fonction '%s' a %d paramètres context.Context, ce qui est inhabituel",
+				funcName,
+				contextCount,
+			)
 		}
 
 		// If there's a context parameter and it's not first, report error
