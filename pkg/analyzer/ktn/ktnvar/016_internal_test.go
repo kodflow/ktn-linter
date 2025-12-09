@@ -95,12 +95,12 @@ func Test_isSmallConstant(t *testing.T) {
 		},
 		{
 			name:     "max allowed",
-			size:     MAX_ARRAY_SIZE_VAR016,
+			size:     maxArraySizeVar016,
 			expected: true,
 		},
 		{
 			name:     "too large",
-			size:     MAX_ARRAY_SIZE_VAR016 + 1,
+			size:     maxArraySizeVar016 + 1,
 			expected: false,
 		},
 	}

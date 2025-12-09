@@ -8,23 +8,23 @@ import (
 	"unicode"
 )
 
+// FuncKind and Visibility values.
+const (
+	// FuncTopLevel is a package-level function.
+	FuncTopLevel int = 0
+	// FuncMethod is a method with a receiver.
+	FuncMethod int = 1
+	// VisPrivate is a private (unexported) function.
+	VisPrivate int = 0
+	// VisPublic is a public (exported) function.
+	VisPublic int = 1
+)
+
 // FuncKind represents the kind of function (top-level or method).
-type FuncKind int
+type FuncKind = int
 
 // Visibility represents the visibility of a function.
-type Visibility int
-
-const (
-	// FUNC_TOP_LEVEL is a package-level function.
-	FUNC_TOP_LEVEL FuncKind = iota
-	// FUNC_METHOD is a method with a receiver.
-	FUNC_METHOD
-
-	// VIS_PRIVATE is a private (unexported) function.
-	VIS_PRIVATE Visibility = iota
-	// VIS_PUBLIC is a public (exported) function.
-	VIS_PUBLIC
-)
+type Visibility = int
 
 // FuncMeta contains metadata about a function for test classification.
 // It captures information needed to determine expected test names and
@@ -50,9 +50,11 @@ type FuncMeta struct {
 func IsExportedIdent(name string) bool {
 	// Check if name is empty
 	if name == "" {
+		// Retour si nom vide
 		return false
 	}
 	// Check first character
+	// Retour résultat de la vérification
 	return unicode.IsUpper(rune(name[0]))
 }
 
@@ -74,13 +76,13 @@ func ClassifyFunc(funcDecl *ast.FuncDecl) *FuncMeta {
 	// Check if it's a method
 	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
 		// Method with receiver
-		meta.Kind = FUNC_METHOD
+		meta.Kind = FuncMethod
 		meta.ReceiverName = ExtractReceiverTypeName(funcDecl.Recv.List[0].Type)
 		// Visibility is determined by METHOD name only
 		meta.Visibility = getVisibility(meta.Name)
 	} else {
 		// Top-level function
-		meta.Kind = FUNC_TOP_LEVEL
+		meta.Kind = FuncTopLevel
 		// Visibility is determined by function name
 		meta.Visibility = getVisibility(meta.Name)
 	}
@@ -99,10 +101,10 @@ func getVisibility(name string) Visibility {
 	// Check if exported
 	if IsExportedIdent(name) {
 		// Public identifier
-		return VIS_PUBLIC
+		return VisPublic
 	}
 	// Private identifier
-	return VIS_PRIVATE
+	return VisPrivate
 }
 
 // ExtractReceiverTypeName extracts the type name from a receiver expression.
@@ -151,12 +153,12 @@ func ExtractReceiverTypeName(expr ast.Expr) string {
 //   - string: suggested test name
 func BuildSuggestedTestName(meta *FuncMeta) string {
 	// Handle methods
-	if meta.Kind == FUNC_METHOD {
+	if meta.Kind == FuncMethod {
 		// Always TestType_Method for methods
 		return "Test" + meta.ReceiverName + "_" + meta.Name
 	}
 	// Handle top-level functions
-	if meta.Visibility == VIS_PRIVATE {
+	if meta.Visibility == VisPrivate {
 		// Private: Test_foo
 		return "Test_" + meta.Name
 	}
@@ -175,7 +177,7 @@ func BuildSuggestedTestName(meta *FuncMeta) string {
 //   - string: lookup key
 func BuildTestLookupKey(meta *FuncMeta) string {
 	// Handle methods
-	if meta.Kind == FUNC_METHOD {
+	if meta.Kind == FuncMethod {
 		// Method key format
 		return meta.ReceiverName + "_" + meta.Name
 	}
@@ -201,6 +203,7 @@ func ParseTestName(testName string) (TestTarget, bool) {
 	body, hasPrefix := strings.CutPrefix(testName, "Test")
 	// No Test prefix
 	if !hasPrefix || body == "" {
+		// Retour échec si pas de préfixe Test
 		return TestTarget{}, false
 	}
 
@@ -240,6 +243,7 @@ func ParseTestName(testName string) (TestTarget, bool) {
 func parsePrivateTestName(privateName string) (TestTarget, bool) {
 	// Empty after underscore
 	if privateName == "" {
+		// Retour échec si nom vide après underscore
 		return TestTarget{}, false
 	}
 	// Check if it's a method (Type_method pattern after underscore)
@@ -343,6 +347,7 @@ func IsExemptTestFile(filename string) bool {
 	for _, pattern := range exemptPatterns {
 		// Check if contains pattern
 		if strings.Contains(baseLower, pattern) {
+			// Retour si pattern exempt trouvé
 			return true
 		}
 	}
@@ -360,10 +365,12 @@ func IsExemptTestFile(filename string) bool {
 func IsExemptTestName(testName string) bool {
 	// TestMain is always exempt
 	if testName == "TestMain" {
+		// Retour TestMain toujours exempt
 		return true
 	}
 	// Check mock-related names
 	if IsMockName(testName) {
+		// Retour si nom de mock
 		return true
 	}
 	// Check exact exempt test names (case-insensitive)
@@ -388,6 +395,7 @@ func IsExemptTestName(testName string) bool {
 	for _, suffix := range exemptSuffixes {
 		// Check if body equals suffix or starts with suffix_
 		if body == suffix || strings.HasPrefix(body, suffix+"_") {
+			// Retour si suffixe exempt trouvé
 			return true
 		}
 	}

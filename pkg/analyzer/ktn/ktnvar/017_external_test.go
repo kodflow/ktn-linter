@@ -3,6 +3,8 @@ package ktnvar_test
 import (
 	"testing"
 
+	"golang.org/x/tools/go/analysis"
+
 	ktnvar "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
@@ -32,5 +34,29 @@ import (
 // Params:
 //   - t: contexte de test
 func TestVar017(t *testing.T) {
-	testhelper.TestGoodBad(t, ktnvar.Analyzer017, "var017", 30)
+	tests := []struct {
+		name           string
+		analyzer       *analysis.Analyzer
+		testdataDir    string
+		expectedErrors int
+	}{
+		{
+			name:           "Mutex and sync type copies",
+			analyzer:       ktnvar.Analyzer017,
+			testdataDir:    "var017",
+			expectedErrors: 30,
+		},
+		{
+			name:           "Valid pointer usage for sync types",
+			analyzer:       ktnvar.Analyzer017,
+			testdataDir:    "var017",
+			expectedErrors: 30,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
+		})
+	}
 }

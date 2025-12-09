@@ -61,12 +61,12 @@ func TestClassifyFunc(t *testing.T) {
 		wantVis      shared.Visibility
 		wantReceiver string
 	}{
-		{"PublicFunc", "func PublicFunc() {}", shared.FUNC_TOP_LEVEL, shared.VIS_PUBLIC, ""},
-		{"privateFunc", "func privateFunc() {}", shared.FUNC_TOP_LEVEL, shared.VIS_PRIVATE, ""},
-		{"PublicMethod", "func (s *Service) PublicMethod() {}", shared.FUNC_METHOD, shared.VIS_PUBLIC, "Service"},
-		{"privateMethod", "func (s *Service) privateMethod() {}", shared.FUNC_METHOD, shared.VIS_PRIVATE, "Service"},
-		{"PublicOnPrivate", "func (s *service) PublicOnPrivate() {}", shared.FUNC_METHOD, shared.VIS_PUBLIC, "service"},
-		{"privateOnPrivate", "func (s *service) privateOnPrivate() {}", shared.FUNC_METHOD, shared.VIS_PRIVATE, "service"},
+		{"PublicFunc", "func PublicFunc() {}", shared.FuncTopLevel, shared.VisPublic, ""},
+		{"privateFunc", "func privateFunc() {}", shared.FuncTopLevel, shared.VisPrivate, ""},
+		{"PublicMethod", "func (s *Service) PublicMethod() {}", shared.FuncMethod, shared.VisPublic, "Service"},
+		{"privateMethod", "func (s *Service) privateMethod() {}", shared.FuncMethod, shared.VisPrivate, "Service"},
+		{"PublicOnPrivate", "func (s *service) PublicOnPrivate() {}", shared.FuncMethod, shared.VisPublic, "service"},
+		{"privateOnPrivate", "func (s *service) privateOnPrivate() {}", shared.FuncMethod, shared.VisPrivate, "service"},
 	}
 	// Parcourir les cas de test
 	for _, tt := range tests {
@@ -116,15 +116,15 @@ func TestBuildSuggestedTestName(t *testing.T) {
 		expected string
 	}{
 		// Public top-level
-		{"public_func", &shared.FuncMeta{Name: "Foo", Kind: shared.FUNC_TOP_LEVEL, Visibility: shared.VIS_PUBLIC}, "TestFoo"},
+		{"public_func", &shared.FuncMeta{Name: "Foo", Kind: shared.FuncTopLevel, Visibility: shared.VisPublic}, "TestFoo"},
 		// Private top-level
-		{"private_func", &shared.FuncMeta{Name: "foo", Kind: shared.FUNC_TOP_LEVEL, Visibility: shared.VIS_PRIVATE}, "Test_foo"},
+		{"private_func", &shared.FuncMeta{Name: "foo", Kind: shared.FuncTopLevel, Visibility: shared.VisPrivate}, "Test_foo"},
 		// Public method
-		{"public_method", &shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FUNC_METHOD, Visibility: shared.VIS_PUBLIC}, "TestService_Bar"},
+		{"public_method", &shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FuncMethod, Visibility: shared.VisPublic}, "TestService_Bar"},
 		// Private method
-		{"private_method", &shared.FuncMeta{Name: "bar", ReceiverName: "Service", Kind: shared.FUNC_METHOD, Visibility: shared.VIS_PRIVATE}, "TestService_bar"},
+		{"private_method", &shared.FuncMeta{Name: "bar", ReceiverName: "Service", Kind: shared.FuncMethod, Visibility: shared.VisPrivate}, "TestService_bar"},
 		// Public method on private type
-		{"public_on_private", &shared.FuncMeta{Name: "Baz", ReceiverName: "service", Kind: shared.FUNC_METHOD, Visibility: shared.VIS_PUBLIC}, "Testservice_Baz"},
+		{"public_on_private", &shared.FuncMeta{Name: "Baz", ReceiverName: "service", Kind: shared.FuncMethod, Visibility: shared.VisPublic}, "Testservice_Baz"},
 	}
 	// Run test cases
 	for _, tt := range tests {
@@ -223,9 +223,9 @@ func TestBuildTestLookupKey(t *testing.T) {
 		expected string
 	}{
 		// Top-level function
-		{"top_level", &shared.FuncMeta{Name: "Foo", Kind: shared.FUNC_TOP_LEVEL}, "Foo"},
+		{"top_level", &shared.FuncMeta{Name: "Foo", Kind: shared.FuncTopLevel}, "Foo"},
 		// Method
-		{"method", &shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FUNC_METHOD}, "Service_Bar"},
+		{"method", &shared.FuncMeta{Name: "Bar", ReceiverName: "Service", Kind: shared.FuncMethod}, "Service_Bar"},
 	}
 	// Run test cases
 	for _, tt := range tests {

@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	// INITIAL_PRIVATE_FUNCS_CAP initial capacity for private funcs map
-	INITIAL_PRIVATE_FUNCS_CAP int = 32
-	// INITIAL_CALLED_FUNCS_CAP initial capacity for called funcs map
-	INITIAL_CALLED_FUNCS_CAP int = 64
+	// initialPrivateFuncsCap initial capacity for private funcs map
+	initialPrivateFuncsCap int = 32
+	// initialCalledFuncsCap initial capacity for called funcs map
+	initialCalledFuncsCap int = 64
 )
 
 // Analyzer004 checks that all private functions are used in production.
@@ -54,6 +54,7 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 	// Reporter les fonctions privées non utilisées
 	reportUnusedPrivateFuncs(pass, privateFuncs, calledInProduction)
 
+	// Retour succès de l'analyse
 	return nil, nil
 }
 
@@ -66,7 +67,7 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string][]*privateFuncInfo: map des fonctions privées par nom
 func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string][]*privateFuncInfo {
-	privateFuncs := make(map[string][]*privateFuncInfo, INITIAL_PRIVATE_FUNCS_CAP)
+	privateFuncs := make(map[string][]*privateFuncInfo, initialPrivateFuncsCap)
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
@@ -75,6 +76,7 @@ func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
+			// Retour pour ignorer le fichier de test
 			return
 		}
 
@@ -82,6 +84,7 @@ func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map
 		info := extractPrivateFuncInfo(funcDecl)
 		// Ajouter à la map si valide
 		if info != nil {
+			// Ajout de la fonction privée à la collection
 			privateFuncs[info.name] = append(privateFuncs[info.name], info)
 		}
 	})
@@ -100,6 +103,7 @@ func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map
 func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
 	// Vérifier le nom
 	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
+		// Retour si nom invalide
 		return nil
 	}
 
@@ -107,6 +111,7 @@ func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
 
 	// Ignorer les fonctions spéciales Go
 	if funcName == "main" || funcName == "init" {
+		// Retour si fonction spéciale
 		return nil
 	}
 
@@ -114,6 +119,7 @@ func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
 	firstChar := rune(funcName[0])
 	// Ignorer les fonctions publiques
 	if firstChar < 'a' || firstChar > 'z' {
+		// Retour si fonction publique
 		return nil
 	}
 
@@ -121,6 +127,7 @@ func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
 
 	// Si c'est une méthode, extraire le type du receiver
 	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+		// Extraction du type du receiver
 		info.receiverType = extractReceiverType(funcDecl.Recv.List[0].Type)
 	}
 
@@ -137,7 +144,7 @@ func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
 // Returns:
 //   - map[string]bool: map des fonctions appelées
 func collectCalledFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
-	calledInProduction := make(map[string]bool, INITIAL_CALLED_FUNCS_CAP)
+	calledInProduction := make(map[string]bool, initialCalledFuncsCap)
 	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
@@ -146,11 +153,13 @@ func collectCalledFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
+			// Retour pour ignorer le fichier de test
 			return
 		}
 
 		// Marquer la fonction comme appelée
 		if funcName := extractCalledFuncName(callExpr); funcName != "" {
+			// Marquage de la fonction comme appelée
 			calledInProduction[funcName] = true
 		}
 	})
@@ -179,12 +188,15 @@ func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, priva
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
+			// Retour pour ignorer le fichier de test
 			return
 		}
 
 		// Traitement spécial pour les CallExpr (méthodes passées en arguments)
 		if callExpr, ok := n.(*ast.CallExpr); ok {
+			// Collection des callbacks dans les CallExpr
 			collectCallExprCallbacks(callExpr, privateFuncs, calledInProduction)
+			// Retour après traitement CallExpr
 			return
 		}
 
@@ -204,12 +216,15 @@ func collectCallExprCallbacks(callExpr *ast.CallExpr, privateFuncs map[string][]
 	for _, arg := range callExpr.Args {
 		// Cas 1: fonction directe (ex: handler)
 		if ident, ok := arg.(*ast.Ident); ok {
+			// Marquage de la fonction identifiant
 			markIfPrivateFunc(ident.Name, privateFuncs, calledInProduction)
+			// Passage au prochain argument
 			continue
 		}
 
 		// Cas 2: méthode (ex: a.handleLiveness, obj.Method)
 		if selExpr, ok := arg.(*ast.SelectorExpr); ok {
+			// Marquage de la méthode sélectionnée
 			markIfPrivateFunc(selExpr.Sel.Name, privateFuncs, calledInProduction)
 		}
 	}
@@ -225,6 +240,7 @@ func collectIdentCallbacks(n ast.Node, privateFuncs map[string][]*privateFuncInf
 	ast.Inspect(n, func(node ast.Node) bool {
 		// Vérifier si c'est un identifiant
 		if ident, ok := node.(*ast.Ident); ok {
+			// Marquage si fonction privée
 			markIfPrivateFunc(ident.Name, privateFuncs, calledInProduction)
 		}
 		// Continuer la traversée
@@ -241,6 +257,7 @@ func collectIdentCallbacks(n ast.Node, privateFuncs map[string][]*privateFuncInf
 func markIfPrivateFunc(funcName string, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
 	// Vérifier si c'est une fonction privée connue
 	if _, exists := privateFuncs[funcName]; exists {
+		// Marquage de la fonction comme appelée
 		calledInProduction[funcName] = true
 	}
 }
@@ -256,11 +273,13 @@ func reportUnusedPrivateFuncs(pass *analysis.Pass, privateFuncs map[string][]*pr
 	for key, infos := range privateFuncs {
 		// Vérifier si la fonction est appelée
 		if calledInProduction[key] {
+			// Passage à la fonction suivante si appelée
 			continue
 		}
 
 		// Reporter toutes les fonctions avec ce nom
 		for _, info := range infos {
+			// Rapport de fonction non utilisée
 			reportUnusedFunc(pass, info)
 		}
 	}
@@ -302,7 +321,7 @@ func extractReceiverType(expr ast.Expr) string {
 
 	// Gérer les identifiants simples (Type)
 	if ident, ok := expr.(*ast.Ident); ok {
-		// Retour du nom
+		// Retour du nom de l'identifiant
 		return ident.Name
 	}
 

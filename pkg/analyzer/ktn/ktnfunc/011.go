@@ -12,8 +12,8 @@ import (
 
 // Analyzer011 checks that functions don't exceed cyclomatic complexity of 10
 const (
-	// MAX_CYCLOMATIC_COMPLEXITY max cyclomatic complexity
-	MAX_CYCLOMATIC_COMPLEXITY int = 10
+	// maxCyclomaticComplexity max cyclomatic complexity
+	maxCyclomaticComplexity int = 10
 )
 
 // Analyzer011 checks that functions don't exceed maximum cyclomatic complexity
@@ -68,13 +68,14 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 		complexity := calculateComplexity(funcDecl.Body)
 
 		// Vérification de la condition
-		if complexity > MAX_CYCLOMATIC_COMPLEXITY {
+		if complexity > maxCyclomaticComplexity {
+			// Rapport d'erreur pour complexité excessive
 			pass.Reportf(
 				funcDecl.Name.Pos(),
 				"KTN-FUNC-011: la fonction '%s' a une complexité cyclomatique de %d (max: %d)",
 				funcName,
 				complexity,
-				MAX_CYCLOMATIC_COMPLEXITY,
+				maxCyclomaticComplexity,
 			)
 		}
 	})
@@ -99,27 +100,32 @@ func calculateComplexity(body *ast.BlockStmt) int {
 		// Traitement
 		case *ast.IfStmt:
 			// +1 for if
+			// Incrément pour if
 			complexity++
 		// Traitement
 		case *ast.ForStmt, *ast.RangeStmt:
 			// +1 for each loop
+			// Incrément pour boucle
 			complexity++
 		// Traitement
 		case *ast.CaseClause:
 			// +1 for each case (except default)
 			if node.List != nil {
+				// Incrément pour case non-default
 				complexity++
 			}
 		// Traitement
 		case *ast.CommClause:
 			// +1 for each comm case in select
 			if node.Comm != nil {
+				// Incrément pour comm case
 				complexity++
 			}
 		// Traitement
 		case *ast.BinaryExpr:
 			// +1 for && and ||
 			if node.Op.String() == "&&" || node.Op.String() == "||" {
+				// Incrément pour opérateur logique
 				complexity++
 			}
 		}

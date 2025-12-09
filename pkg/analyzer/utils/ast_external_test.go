@@ -42,13 +42,36 @@ func TestGetExprAsString(t *testing.T) {
 
 // TestGetExprAsStringWithUnknownType tests the functionality of the corresponding implementation.
 func TestGetExprAsStringWithUnknownType(t *testing.T) {
-	// Test avec un type non supporté (FuncType)
-	expr := &ast.FuncType{
-		Params: &ast.FieldList{},
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected string
+	}{
+		{
+			name: "FuncType not supported",
+			expr: &ast.FuncType{
+				Params: &ast.FieldList{},
+			},
+			expected: "unknown",
+		},
+		{
+			name: "Another FuncType",
+			expr: &ast.FuncType{
+				Params: &ast.FieldList{
+					List: []*ast.Field{},
+				},
+			},
+			expected: "unknown",
+		},
 	}
-	got := utils.GetExprAsString(expr)
-	if got != "unknown" {
-		t.Errorf("utils.GetExprAsString(unsupported) = %q, want \"unknown\"", got)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.GetExprAsString(tt.expr)
+			if got != tt.expected {
+				t.Errorf("utils.GetExprAsString(unsupported) = %q, want %q", got, tt.expected)
+			}
+		})
 	}
 }
 

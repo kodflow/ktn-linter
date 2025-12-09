@@ -51,38 +51,46 @@ func runTest012(pass *analysis.Pass) (any, error) {
 		(*ast.FuncDecl)(nil),
 	}
 
-	// Analyser les fonctions de test
+	// Parcourir les fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Conversion en FuncDecl
 		funcDecl := n.(*ast.FuncDecl)
+		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Vérification fichier de test
+		// Vérification si test
 		if !shared.IsTestFile(filename) {
+			// Retour si pas test
 			return
 		}
 
-		// Skip exempt test files
+		// Vérification fichier exempté
 		if shared.IsExemptTestFile(filename) {
+			// Retour si exempté
 			return
 		}
 
-		// Skip mock files
+		// Vérification fichier mock
 		if shared.IsMockFile(filename) {
+			// Retour si mock
 			return
 		}
 
-		// Vérifier si c'est une fonction de test
+		// Vérification si test unitaire
 		if !shared.IsUnitTestFunction(funcDecl) {
+			// Retour si pas unitaire
 			return
 		}
 
-		// Skip exempt test names
+		// Vérification nom exempté
 		if shared.IsExemptTestName(funcDecl.Name.Name) {
+			// Retour si exempté
 			return
 		}
 
-		// Vérifier si le test contient des assertions
+		// Vérification si passthrough
 		if isPassthroughTest(funcDecl) {
+			// Signaler test passthrough
 			pass.Reportf(
 				funcDecl.Pos(),
 				"KTN-TEST-012: le test '%s' est un test passthrough - "+
@@ -109,28 +117,32 @@ func runTest012(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - bool: true si le test est passthrough
 func isPassthroughTest(funcDecl *ast.FuncDecl) bool {
-	// Corps vide = passthrough
+	// Vérification corps vide
 	if funcDecl.Body == nil || len(funcDecl.Body.List) == 0 {
+		// Retour passthrough si vide
 		return true
 	}
 
-	// Vérifier si le test contient des signaux de validation
+	// Initialiser validation
 	hasValidation := false
 
-	// Parcourir le corps de la fonction
+	// Parcourir le corps
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Déjà trouvé, pas besoin de continuer
+		// Vérification si déjà trouvé
 		if hasValidation || n == nil {
+			// Arrêter la recherche
 			return false
 		}
 
-		// Vérifier les différents signaux
+		// Vérification signal validation
 		if checkForValidationSignal(n) {
+			// Marquer comme trouvé
 			hasValidation = true
+			// Arrêter la recherche
 			return false
 		}
 
-		// Continuer la traversée
+		// Continuer la recherche
 		return true
 	})
 
@@ -147,15 +159,17 @@ func isPassthroughTest(funcDecl *ast.FuncDecl) bool {
 // Returns:
 //   - bool: true si signal trouvé
 func checkForValidationSignal(n ast.Node) bool {
-	// Vérifier selon le type de nœud
+	// Sélection selon le type
 	switch node := n.(type) {
-	// Case: appel de fonction (t.Error, assert.Equal, etc.)
+	// Vérification appel de fonction
 	case *ast.CallExpr:
-		// Vérifier les appels de fonction
+		// Cas appel de fonction
+		// Vérifier appel validation
 		return checkCallForValidation(node)
-	// Case: expression binaire (==, !=, <, >, etc.)
+	// Vérification expression binaire
 	case *ast.BinaryExpr:
-		// Vérifier les comparaisons
+		// Cas expression binaire
+		// Vérifier opérateur comparaison
 		return isComparisonOperator(node.Op)
 	}
 
@@ -171,22 +185,25 @@ func checkForValidationSignal(n ast.Node) bool {
 // Returns:
 //   - bool: true si c'est une validation
 func checkCallForValidation(callExpr *ast.CallExpr) bool {
-	// Méthodes sur testing.T : t.Error, t.Fatal, t.Fail, ...
+	// Vérification assertion testing.T
 	if isTestingAssertionCall(callExpr) {
+		// Retour si assertion trouvée
 		return true
 	}
 
-	// Sous-tests : t.Run
+	// Vérification sous-test
 	if isSubTestCall(callExpr) {
+		// Retour si sous-test trouvé
 		return true
 	}
 
-	// Bibliothèques d'assertion (assert, require, ...)
+	// Vérification bibliothèque assertion
 	if isAssertLibraryCall(callExpr) {
+		// Retour si assertion trouvée
 		return true
 	}
 
-	// Helper de test prenant t en premier argument
+	// Retour vérification helper
 	return isTestHelperCall(callExpr)
 }
 
@@ -198,11 +215,12 @@ func checkCallForValidation(callExpr *ast.CallExpr) bool {
 // Returns:
 //   - bool: true si c'est une comparaison
 func isComparisonOperator(op token.Token) bool {
-	// Vérifier les opérateurs de comparaison
+	// Sélection selon opérateur
 	switch op {
-	// Case: opérateurs de comparaison (==, !=, <, >, <=, >=)
+	// Vérification opérateurs de comparaison
 	case token.EQL, token.NEQ, token.LSS, token.GTR, token.LEQ, token.GEQ:
-		// C'est une comparaison
+		// Cas opérateur comparaison
+		// Retour trouvé
 		return true
 	}
 	// Pas une comparaison
@@ -217,14 +235,15 @@ func isComparisonOperator(op token.Token) bool {
 // Returns:
 //   - bool: true si c'est une assertion testing.T
 func isTestingAssertionCall(callExpr *ast.CallExpr) bool {
-	// Vérifier si c'est un sélecteur (x.Method)
+	// Conversion en SelectorExpr
 	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
-	// Pas un sélecteur
+	// Vérification si sélecteur
 	if !ok {
+		// Retour si pas sélecteur
 		return false
 	}
 
-	// Vérifier si c'est une méthode d'assertion
+	// Retour vérification méthode
 	return slices.Contains(assertionMethods, sel.Sel.Name)
 }
 
@@ -236,21 +255,23 @@ func isTestingAssertionCall(callExpr *ast.CallExpr) bool {
 // Returns:
 //   - bool: true si c'est un sous-test
 func isSubTestCall(callExpr *ast.CallExpr) bool {
-	// Vérifier si c'est un sélecteur (t.Run)
+	// Conversion en SelectorExpr
 	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
-	// Pas un sélecteur
+	// Vérification si sélecteur
 	if !ok {
+		// Retour si pas sélecteur
 		return false
 	}
 
-	// Vérifier si le receiver est t
+	// Vérifier le receiver
 	recv, recvOk := sel.X.(*ast.Ident)
-	// Pas un identifiant
+	// Vérification receiver t
 	if !recvOk || recv.Name != "t" {
+		// Retour si pas t
 		return false
 	}
 
-	// Vérifier si c'est Run
+	// Retour vérification Run
 	return slices.Contains(subTestMethods, sel.Sel.Name)
 }
 
@@ -262,23 +283,25 @@ func isSubTestCall(callExpr *ast.CallExpr) bool {
 // Returns:
 //   - bool: true si c'est une assertion de bibliothèque
 func isAssertLibraryCall(callExpr *ast.CallExpr) bool {
-	// Vérifier si c'est un sélecteur (assert.Equal, require.NoError, etc.)
+	// Conversion en SelectorExpr
 	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
-	// Pas un sélecteur
+	// Vérification si sélecteur
 	if !ok {
+		// Retour si pas sélecteur
 		return false
 	}
 
 	// Vérifier le receiver
 	recv, recvOk := sel.X.(*ast.Ident)
-	// Pas un identifiant simple
+	// Vérification identifiant
 	if !recvOk {
+		// Retour si pas identifiant
 		return false
 	}
 
-	// Vérifier si c'est une bibliothèque d'assertion connue
+	// Vérifier bibliothèque assertion
 	receiverName := strings.ToLower(recv.Name)
-	// Retour du résultat
+	// Retour vérification nom
 	return receiverName == "assert" || receiverName == "require"
 }
 
@@ -291,18 +314,20 @@ func isAssertLibraryCall(callExpr *ast.CallExpr) bool {
 // Returns:
 //   - bool: true si c'est un appel de helper de test
 func isTestHelperCall(callExpr *ast.CallExpr) bool {
-	// Vérifier si l'appel a des arguments
+	// Vérification arguments présents
 	if len(callExpr.Args) == 0 {
+		// Retour si pas d'arguments
 		return false
 	}
 
-	// Vérifier si le premier argument est t (le testing.T)
+	// Vérifier premier argument
 	firstArg, ok := callExpr.Args[0].(*ast.Ident)
-	// Pas un identifiant
+	// Vérification identifiant
 	if !ok {
+		// Retour si pas identifiant
 		return false
 	}
 
-	// Si le premier argument s'appelle t, c'est probablement un helper
+	// Retour vérification nom t
 	return firstArg.Name == "t"
 }

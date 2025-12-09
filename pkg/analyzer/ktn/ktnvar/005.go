@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// MIN_MAKE_ARGS_VAR008 is the minimum number of arguments for make call
-	MIN_MAKE_ARGS_VAR008 int = 2
+	// minMakeArgsVar008 is the minimum number of arguments for make call
+	minMakeArgsVar008 int = 2
 )
 
 // Analyzer005 checks that make with length > 0 is avoided when append is used
@@ -36,7 +36,7 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Vérification du nombre d'arguments (2 ou 3: type, length, [capacity])
-	if len(call.Args) < MIN_MAKE_ARGS_VAR008 {
+	if len(call.Args) < minMakeArgsVar008 {
 		// Continue traversing AST nodes.
 		return
 	}
@@ -54,7 +54,7 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Skip si VAR-016 s'applique (constante <= 1024 sans capacité)
-	if len(call.Args) == MIN_MAKE_ARGS_VAR008 && utils.IsSmallConstantSize(pass, call.Args[1]) {
+	if len(call.Args) == minMakeArgsVar008 && utils.IsSmallConstantSize(pass, call.Args[1]) {
 		// VAR-016 gère ce cas
 		return
 	}

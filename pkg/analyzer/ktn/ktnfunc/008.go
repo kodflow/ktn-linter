@@ -18,6 +18,14 @@ const (
 	initialUsedVarsCap int = 16
 )
 
+// paramCheckContext contains context for parameter checking.
+type paramCheckContext struct {
+	pass        *analysis.Pass
+	usedVars    map[string]bool
+	ignoredVars map[string]bool
+	ifaceName   string
+}
+
 // Analyzer008 vérifie que les paramètres non utilisés sont explicitement ignorés.
 var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc008",
@@ -60,7 +68,7 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 func analyzeFunc008(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	// Vérification de la présence d'un corps de fonction
 	if funcDecl.Body == nil {
-		// Fonction sans corps (interface method signature)
+		// Retour si fonction sans corps (interface method signature)
 		return
 	}
 
@@ -76,30 +84,27 @@ func analyzeFunc008(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	// Déterminer si c'est une implémentation d'interface
 	ifaceName := findImplementedInterface(pass, funcDecl)
 
+	// Créer le contexte de vérification
+	ctx := &paramCheckContext{
+		pass:        pass,
+		usedVars:    usedVars,
+		ignoredVars: ignoredVars,
+		ifaceName:   ifaceName,
+	}
+
 	// Vérifier chaque paramètre
 	for paramName, paramPos := range params {
 		// Vérifier le paramètre
-		checkParam008(pass, paramName, paramPos, usedVars, ignoredVars, ifaceName)
+		ctx.checkParam008(paramName, paramPos)
 	}
 }
 
 // checkParam008 vérifie un paramètre individuel.
 //
 // Params:
-//   - pass: contexte d'analyse
 //   - paramName: nom du paramètre
 //   - paramPos: position du paramètre
-//   - usedVars: variables utilisées
-//   - ignoredVars: variables ignorées avec _ = var
-//   - ifaceName: nom de l'interface implémentée (vide si aucune)
-func checkParam008(
-	pass *analysis.Pass,
-	paramName string,
-	paramPos token.Pos,
-	usedVars map[string]bool,
-	ignoredVars map[string]bool,
-	ifaceName string,
-) {
+func (ctx *paramCheckContext) checkParam008(paramName string, paramPos token.Pos) {
 	// Ignorer les paramètres déjà préfixés par _
 	if len(paramName) > 0 && paramName[0] == '_' {
 		// Paramètre déjà marqué comme ignoré
@@ -107,21 +112,21 @@ func checkParam008(
 	}
 
 	// Vérifier si le paramètre est utilisé
-	if usedVars[paramName] {
-		// Paramètre utilisé
+	if ctx.usedVars[paramName] {
+		// Retour si paramètre utilisé
 		return
 	}
 
 	// Générer le message approprié selon le contexte
-	if ignoredVars[paramName] {
+	if ctx.ignoredVars[paramName] {
 		// Pattern _ = param détecté
-		reportUnusedWithBypass(pass, paramPos, paramName, ifaceName)
-		// Déjà signalé
+		reportUnusedWithBypass(ctx.pass, paramPos, paramName, ctx.ifaceName)
+		// Retour après signalement
 		return
 	}
 
 	// Paramètre non utilisé et non ignoré
-	reportUnusedParam(pass, paramPos, paramName, ifaceName)
+	reportUnusedParam(ctx.pass, paramPos, paramName, ctx.ifaceName)
 }
 
 // reportUnusedWithBypass signale un paramètre avec contournement _ = param.
@@ -201,7 +206,7 @@ func reportUnusedParam(pass *analysis.Pass, pos token.Pos, name string, ifaceNam
 func findImplementedInterface(pass *analysis.Pass, funcDecl *ast.FuncDecl) string {
 	// Vérifier si c'est une méthode (a un receiver)
 	if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
-		// Fonction sans receiver - pas une méthode
+		// Retour chaîne vide si fonction sans receiver
 		return ""
 	}
 
@@ -209,7 +214,7 @@ func findImplementedInterface(pass *analysis.Pass, funcDecl *ast.FuncDecl) strin
 	recvType := getReceiverType(pass, funcDecl.Recv.List[0].Type)
 	// Vérifier si le type est valide
 	if recvType == nil {
-		// Type non résolu
+		// Retour chaîne vide si type non résolu
 		return ""
 	}
 
@@ -231,7 +236,7 @@ func findImplementedInterface(pass *analysis.Pass, funcDecl *ast.FuncDecl) strin
 func getReceiverType(pass *analysis.Pass, expr ast.Expr) types.Type {
 	// Gérer le cas du pointeur (*Type)
 	if starExpr, isStar := expr.(*ast.StarExpr); isStar {
-		// Récupérer le type pointé
+		// Extraction du type pointé
 		expr = starExpr.X
 	}
 
@@ -239,7 +244,7 @@ func getReceiverType(pass *analysis.Pass, expr ast.Expr) types.Type {
 	typeInfo := pass.TypesInfo.TypeOf(expr)
 	// Vérifier si le type est valide
 	if typeInfo == nil {
-		// Type non résolu
+		// Retour nil si type non résolu
 		return nil
 	}
 
@@ -264,7 +269,7 @@ func findInterfaceForMethod(pass *analysis.Pass, recvType types.Type, methodName
 	ifaceName := searchInterfaceInScope(pkgScope, recvType, methodName)
 	// Vérifier si trouvé
 	if ifaceName != "" {
-		// Interface trouvée
+		// Retour du nom de l'interface trouvée
 		return ifaceName
 	}
 
@@ -274,7 +279,7 @@ func findInterfaceForMethod(pass *analysis.Pass, recvType types.Type, methodName
 		ifaceName = searchInterfaceInScope(imp.Scope(), recvType, methodName)
 		// Vérifier si trouvé
 		if ifaceName != "" {
-			// Interface trouvée
+			// Retour du nom de l'interface trouvée
 			return ifaceName
 		}
 	}
@@ -315,13 +320,13 @@ func searchInterfaceInScope(scope *types.Scope, recvType types.Type, methodName 
 
 		// Vérifier si l'interface a cette méthode
 		if !interfaceHasMethod(iface, methodName) {
-			// Continuer la recherche
+			// Passage à l'interface suivante
 			continue
 		}
 
 		// Vérifier si le type implémente l'interface
 		if types.Implements(recvType, iface) || implementsWithPointer(recvType, iface) {
-			// Interface trouvée
+			// Retour du nom de l'interface trouvée
 			return name
 		}
 	}
@@ -339,11 +344,11 @@ func searchInterfaceInScope(scope *types.Scope, recvType types.Type, methodName 
 // Returns:
 //   - bool: true si l'interface a la méthode
 func interfaceHasMethod(iface *types.Interface, methodName string) bool {
-	// Parcourir les méthodes de l'interface
-	for i := range iface.NumMethods() {
+	// Parcourir les méthodes de l'interface avec l'itérateur
+	for method := range iface.Methods() {
 		// Vérifier le nom
-		if iface.Method(i).Name() == methodName {
-			// Méthode trouvée
+		if method.Name() == methodName {
+			// Retour true si méthode trouvée
 			return true
 		}
 	}
@@ -388,7 +393,7 @@ func collectFunctionParams008(funcDecl *ast.FuncDecl) map[string]token.Pos {
 		for _, name := range field.Names {
 			// Vérification du nom
 			if name != nil && name.Name != "_" {
-				// Ajouter le paramètre
+				// Ajout du paramètre à la collection
 				params[name.Name] = name.Pos()
 			}
 		}
@@ -415,10 +420,10 @@ func collectUsedVariables008(body *ast.BlockStmt) map[string]bool {
 			inBlank, found := findParentAssignToBlank008(body, ident)
 			// Vérifier si dans une assignation à _
 			if found && inBlank {
-				// Ne pas compter comme utilisé
+				// Retour pour ne pas compter comme utilisé
 				return true
 			}
-			// Ajouter comme variable utilisée
+			// Ajout comme variable utilisée
 			used[ident.Name] = true
 		}
 		// Continuer la traversée
@@ -460,7 +465,7 @@ func collectIgnoredVariables008(body *ast.BlockStmt) map[string]bool {
 		rhsIdent, isRhsIdent := assign.Rhs[0].(*ast.Ident)
 		// Vérification du côté droit
 		if isRhsIdent {
-			// Ajouter comme variable ignorée
+			// Ajout comme variable ignorée
 			ignored[rhsIdent.Name] = true
 		}
 		// Continuer la traversée
@@ -510,9 +515,10 @@ func findParentAssignToBlank008(body *ast.BlockStmt, target *ast.Ident) (bool, b
 		}
 		// Vérification si c'est notre target
 		if rhsIdent.Pos() == target.Pos() {
+			// Marquage comme trouvé et assigné à blank
 			found = true
 			inAssignToBlank = true
-			// Arrêter la recherche
+			// Retour false pour arrêter la recherche
 			return false
 		}
 		// Continuer la traversée

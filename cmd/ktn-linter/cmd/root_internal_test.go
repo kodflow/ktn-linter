@@ -240,18 +240,31 @@ func TestRootCmdStructure(t *testing.T) {
 // Test_execute tests internal execute behavior with mocked dependencies.
 // Note: Public API tests are in root_external_test.go
 func Test_execute(t *testing.T) {
-	// This test verifies internal execution behavior
-	// using mocked dependencies (OsExit, etc.)
-	// The actual Execute function is tested in root_external_test.go
-	errorCases := "tests panic and error recovery"
-	_ = errorCases
+	tests := []struct {
+		name       string
+		errorCases string
+	}{
+		{
+			name:       "tests panic and error recovery",
+			errorCases: "tests panic and error recovery",
+		},
+	}
 
-	defer func() {
-		// Vérification panic
-		if r := recover(); r != nil {
-			t.Logf("execute caused panic: %v (may be expected)", r)
-		}
-	}()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// This test verifies internal execution behavior
+			// using mocked dependencies (OsExit, etc.)
+			// The actual Execute function is tested in root_external_test.go
+			_ = tt.errorCases
+
+			defer func() {
+				// Vérification panic
+				if r := recover(); r != nil {
+					t.Logf("execute caused panic: %v (may be expected)", r)
+				}
+			}()
+		})
+	}
 }
 
 // Test_setVersion teste la configuration interne de la version.

@@ -38,12 +38,14 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 	for i, result := range results {
 		// Vérification si type error
 		if isErrorType(pass, result.Type) {
+			// Ajout de la position d'erreur
 			errorPositions = append(errorPositions, i)
 		}
 	}
 
 	// Signaler si plus d'une erreur en retour
 	if len(errorPositions) > 1 {
+		// Rapport d'erreur pour erreurs multiples
 		pass.Reportf(
 			funcType.Results.Pos(),
 			"KTN-FUNC-001: la fonction a %d types error en retour, ce qui est inhabituel",
@@ -58,6 +60,7 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 		for _, pos := range errorPositions {
 			// Vérification position incorrecte
 			if pos != lastPos {
+				// Rapport d'erreur pour position incorrecte
 				pass.Reportf(
 					funcType.Results.Pos(),
 					"KTN-FUNC-001: l'erreur doit être en dernière position dans les valeurs de retour (trouvée en position %d sur %d)",
@@ -93,11 +96,14 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 		switch node := n.(type) {
 		// Traitement FuncDecl
 		case *ast.FuncDecl:
+			// Extraction du type de fonction
 			funcType = node.Type
 		// Traitement FuncLit
 		case *ast.FuncLit:
+			// Extraction du type de fonction littérale
 			funcType = node.Type
 		}
+		// Validation de la position des erreurs
 		validateErrorInReturns(pass, funcType)
 	})
 
@@ -118,11 +124,13 @@ func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 	tv := pass.TypesInfo.Types[expr]
 	// Vérification si type valide
 	if tv.Type == nil {
+		// Retour false si type invalide
 		return false
 	}
 
 	// Vérifier si c'est directement l'interface error
 	if isBuiltinError(tv.Type) {
+		// Retour true si interface error builtin
 		return true
 	}
 
@@ -130,13 +138,16 @@ func isErrorType(pass *analysis.Pass, expr ast.Expr) bool {
 	named, ok := tv.Type.(*types.Named)
 	// Si c'est un type nommé, vérifier ses propriétés
 	if ok {
+		// Extraction de l'objet du type nommé
 		obj := named.Obj()
 		// Vérification builtin error
 		if obj != nil && obj.Name() == "error" && obj.Pkg() == nil {
+			// Retour true si builtin error
 			return true
 		}
 		// Vérifier le type sous-jacent (pour les alias)
 		if isBuiltinError(named.Underlying()) {
+			// Retour true si type sous-jacent est error
 			return true
 		}
 	}
@@ -157,24 +168,30 @@ func isBuiltinError(t types.Type) bool {
 	iface, ok := t.Underlying().(*types.Interface)
 	// Si ce n'est pas une interface, ce n'est pas error
 	if !ok {
+		// Retour false si pas une interface
 		return false
 	}
 	// Vérifier si l'interface a exactement une méthode Error() string
 	if iface.NumMethods() != 1 {
+		// Retour false si pas exactement une méthode
 		return false
 	}
+	// Extraction de la première méthode
 	method := iface.Method(0)
 	// Vérifier le nom et la signature
 	if method.Name() != "Error" {
+		// Retour false si nom différent de Error
 		return false
 	}
 	sig, ok := method.Type().(*types.Signature)
 	// Si ce n'est pas une signature, invalide
 	if !ok {
+		// Retour false si pas une signature
 		return false
 	}
 	// Vérifier paramètres (aucun) et retour (string)
 	if sig.Params().Len() != 0 || sig.Results().Len() != 1 {
+		// Retour false si signature incorrecte
 		return false
 	}
 	// Vérifier que le retour est string

@@ -41,12 +41,14 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 		structType, ok := typeSpec.Type.(*ast.StructType)
 		// Si pas une struct, ignorer
 		if !ok {
+			// Retour anticipé
 			return
 		}
 
 		// Vérifier si c'est un DTO
 		if !shared.IsSerializableStruct(structType, typeSpec.Name.Name) {
 			// Pas un DTO, ignorer
+			// Retour anticipé
 			return
 		}
 
@@ -67,6 +69,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType, structName string) {
 	// Vérifier si la struct a des champs
 	if structType.Fields == nil {
+		// Retour anticipé
 		return
 	}
 
@@ -102,8 +105,10 @@ func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType,
 func isPrivateField(name string) bool {
 	// Un champ est privé si son nom commence par une minuscule
 	if len(name) == 0 {
+		// Retour false pour nom vide
 		return false
 	}
 	// Vérifier le premier caractère
+	// Retour du résultat de la vérification
 	return unicode.IsLower(rune(name[0]))
 }

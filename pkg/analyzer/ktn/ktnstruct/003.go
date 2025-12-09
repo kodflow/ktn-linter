@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	// INITIAL_STRUCT_TYPES_CAP initial capacity for struct types map
-	INITIAL_STRUCT_TYPES_CAP int = 32
-	// GET_PREFIX_LEN length of "Get" prefix
-	GET_PREFIX_LEN int = 3
+	// initialStructTypesCap initial capacity for struct types map
+	initialStructTypesCap int = 32
+	// getPrefixLen length of "Get" prefix
+	getPrefixLen int = 3
 )
 
 // Analyzer003 checks getters don't have "Get" prefix (Go idiom)
@@ -86,7 +86,7 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier qu'il y a au moins un caractère après "Get"
-		if len(methodName) <= GET_PREFIX_LEN {
+		if len(methodName) <= getPrefixLen {
 			// Juste "Get", pas un getter
 			return
 		}
@@ -98,7 +98,7 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 		}
 
 		// Construire le nom suggéré sans le préfixe "Get"
-		suggestedName := methodName[GET_PREFIX_LEN:]
+		suggestedName := methodName[getPrefixLen:]
 
 		// Reporter la violation
 		pass.Reportf(
@@ -121,7 +121,7 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string][]string: map du nom du type vers la liste des champs
 func collectStructTypes(pass *analysis.Pass) map[string][]string {
-	result := make(map[string][]string, INITIAL_STRUCT_TYPES_CAP)
+	result := make(map[string][]string, initialStructTypesCap)
 
 	// Parcourir chaque fichier
 	for _, file := range pass.Files {
@@ -199,7 +199,7 @@ func isSimpleGetter(funcDecl *ast.FuncDecl, structTypes map[string][]string) boo
 
 	// Vérifier si le champ correspondant existe dans la struct
 	methodName := funcDecl.Name.Name
-	expectedFieldName := strings.ToLower(methodName[GET_PREFIX_LEN:])
+	expectedFieldName := strings.ToLower(methodName[getPrefixLen:])
 
 	// Obtenir les champs du type receiver
 	fields, ok := structTypes[receiverType]

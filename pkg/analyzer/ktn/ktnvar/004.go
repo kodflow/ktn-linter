@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	// MIN_MAKE_ARGS is the minimum number of arguments for make call
-	MIN_MAKE_ARGS int = 2
-	// INITIAL_APPEND_VARS_CAP initial capacity for append variables map
-	INITIAL_APPEND_VARS_CAP int = 16
+	// minMakeArgs is the minimum number of arguments for make call
+	minMakeArgs int = 2
+	// initialAppendVarsCap initial capacity for append variables map
+	initialAppendVarsCap int = 16
 )
 
 // Analyzer004 checks that slices are preallocated with capacity when known
@@ -57,7 +57,7 @@ func runVar004(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string]bool: map des noms de variables utilisées avec append
 func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
-	appendVars := make(map[string]bool, INITIAL_APPEND_VARS_CAP)
+	appendVars := make(map[string]bool, initialAppendVarsCap)
 
 	nodeFilter := []ast.Node{
 		(*ast.AssignStmt)(nil),
@@ -155,7 +155,7 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Vérification du nombre d'arguments (doit être 2: type et length)
-	if len(call.Args) != MIN_MAKE_ARGS {
+	if len(call.Args) != minMakeArgs {
 		// Continue traversing AST nodes
 		return
 	}

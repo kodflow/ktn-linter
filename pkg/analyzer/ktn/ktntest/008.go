@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	// MAX_FUNCS_TO_DISPLAY nombre max de fonctions affichées.
-	MAX_FUNCS_TO_DISPLAY int = 3
-	// INITIAL_FUNCS_CAP capacité initiale des listes.
-	INITIAL_FUNCS_CAP int = 8
+	// maxFuncsToDisplay nombre max de fonctions affichées.
+	maxFuncsToDisplay int = 3
+	// initialFuncsCap capacité initiale des listes.
+	initialFuncsCap int = 8
 )
 
 // Analyzer008 checks that each source file has appropriate test files based on its content
@@ -43,36 +43,38 @@ type fileAnalysisResult struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest008(pass *analysis.Pass) (any, error) {
-	// Parcourir tous les fichiers sources (non-test)
+	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
 
-		// Ignorer les fichiers de test
+		// Vérification si test
 		if shared.IsTestFile(filename) {
+			// Ignorer fichier de test
 			continue
 		}
 
-		// Ignorer les fichiers mock
+		// Vérification si mock
 		if shared.IsMockFile(filename) {
+			// Ignorer fichier mock
 			continue
 		}
 
-		// Ignorer le package main (ne peut pas avoir de tests externes)
+		// Vérification si package main
 		if file.Name.Name == "main" {
+			// Ignorer package main
 			continue
 		}
 
-		// Analyser le contenu du fichier
+		// Analyser le fichier
 		result := analyzeFileFunctions(file)
 
-		// Si le fichier n'a pas de FONCTIONS (publiques ou privées), pas de test requis
-		// Note: les constantes/types seuls ne nécessitent pas de tests dédiés car
-		// ils n'ont pas de comportement à tester (valeurs compile-time ou struct)
+		// Vérification si fonctions présentes
 		if len(result.publicFuncs) == 0 && len(result.privateFuncs) == 0 {
+			// Pas de fonctions, continuer
 			continue
 		}
 
-		// Vérifier les fichiers de test existants
+		// Vérifier les tests existants
 		status := checkTestFilesExist(filename)
 
 		// Reporter les problèmes
@@ -93,24 +95,27 @@ func runTest008(pass *analysis.Pass) (any, error) {
 func analyzeFileFunctions(file *ast.File) *fileAnalysisResult {
 	// Initialisation du résultat avec capacité définie
 	result := &fileAnalysisResult{
-		publicFuncs:  make([]string, 0, INITIAL_FUNCS_CAP),
-		privateFuncs: make([]string, 0, INITIAL_FUNCS_CAP),
+		publicFuncs:  make([]string, 0, initialFuncsCap),
+		privateFuncs: make([]string, 0, initialFuncsCap),
 	}
 
-	// Parcourir l'AST du fichier
+	// Parcourir l'AST
 	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier les déclarations de fonctions
+		// Vérification si fonction
 		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Name != nil {
+			// Classifier la fonction
 			classifyFunction(funcDecl, result)
+			// Continuer la traversée
 			return true
 		}
 
-		// Vérifier les déclarations de variables (publiques et privées)
+		// Vérification si déclaration générique
 		if genDecl, ok := n.(*ast.GenDecl); ok {
+			// Vérifier les variables
 			checkVariables(genDecl, result)
 		}
 
-		// Continuer l'itération
+		// Continuer la traversée
 		return true
 	})
 
@@ -125,33 +130,38 @@ func analyzeFileFunctions(file *ast.File) *fileAnalysisResult {
 //   - result: résultat à mettre à jour
 func classifyFunction(funcDecl *ast.FuncDecl, result *fileAnalysisResult) {
 	funcName := funcDecl.Name.Name
-	// Ignorer les fonctions exemptées (init, main)
+	// Vérification si exemptée
 	if isExemptFunction(funcName) {
+		// Retour si exemptée
 		return
 	}
 
-	// Skip mock functions
+	// Vérification si mock
 	if shared.IsMockName(funcName) {
+		// Retour si mock
 		return
 	}
 
-	// Use shared helper to classify
+	// Classifier la fonction
 	meta := shared.ClassifyFunc(funcDecl)
 
-	// Skip mock receiver types
+	// Vérification receiver mock
 	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		// Retour si mock
 		return
 	}
 
 	// Construire le nom d'affichage
 	displayName := buildFunctionDisplayName(funcDecl)
 
-	// Use visibility from shared helper
-	if meta.Visibility == shared.VIS_PUBLIC {
+	// Vérification visibilité
+	if meta.Visibility == shared.VisPublic {
+		// Ajouter fonction publique
 		result.hasPublic = true
 		result.publicFuncs = append(result.publicFuncs, displayName)
 	} else {
-		// Fonction privée
+		// Cas alternatif: privée
+		// Ajouter fonction privée
 		result.hasPrivate = true
 		result.privateFuncs = append(result.privateFuncs, displayName)
 	}
@@ -167,17 +177,18 @@ func classifyFunction(funcDecl *ast.FuncDecl, result *fileAnalysisResult) {
 func buildFunctionDisplayName(funcDecl *ast.FuncDecl) string {
 	funcName := funcDecl.Name.Name
 
-	// Vérifier si c'est une méthode avec receiver
+	// Vérification si méthode
 	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+		// Extraire le type du receiver
 		receiverType := extractReceiverTypeString(funcDecl.Recv.List[0].Type)
-		// Vérifier si le receiver a un type valide
+		// Vérification type valide
 		if receiverType != "" {
-			// Retour du nom avec receiver (ex: "(*Type).Method")
+			// Retour nom avec receiver
 			return receiverType + "." + funcName
 		}
 	}
 
-	// Retour du nom simple (fonction sans receiver)
+	// Retour nom simple
 	return funcName
 }
 
@@ -189,24 +200,24 @@ func buildFunctionDisplayName(funcDecl *ast.FuncDecl) string {
 // Returns:
 //   - string: type formaté (ex: "*App" ou "App")
 func extractReceiverTypeString(expr ast.Expr) string {
-	// Vérifier si c'est un pointeur (*Type)
+	// Vérification si pointeur
 	if starExpr, isPointer := expr.(*ast.StarExpr); isPointer {
-		// Vérifier si l'expression pointée est un identifiant
+		// Vérification si identifiant
 		if innerIdent, isIdent := starExpr.X.(*ast.Ident); isIdent {
-			// Retour du nom avec notation pointeur
+			// Retour nom avec pointeur
 			return "(*" + innerIdent.Name + ")"
 		}
-		// Type pointeur non supporté (ex: *pkg.Type)
+		// Retour vide si non supporté
 		return ""
 	}
 
-	// Vérifier si c'est un identifiant simple (Type)
+	// Vérification si identifiant
 	if ident, isIdent := expr.(*ast.Ident); isIdent {
-		// Retour du nom simple
+		// Retour nom simple
 		return ident.Name
 	}
 
-	// Type non géré (retour vide)
+	// Retour vide par défaut
 	return ""
 }
 
@@ -216,31 +227,36 @@ func extractReceiverTypeString(expr ast.Expr) string {
 //   - genDecl: déclaration générique
 //   - result: résultat de l'analyse à mettre à jour
 func checkVariables(genDecl *ast.GenDecl, result *fileAnalysisResult) {
-	// Parcourir les spécifications de la déclaration
+	// Itération sur les spécifications
 	for _, spec := range genDecl.Specs {
-		// Vérifier si c'est une spécification de valeur (var ou const)
+		// Conversion en ValueSpec
 		valueSpec, ok := spec.(*ast.ValueSpec)
-		// Si ce n'est pas une valeur, continuer
+		// Vérification si ValueSpec
 		if !ok {
+			// Continuer l'itération
 			continue
 		}
-		// Vérifier chaque nom dans la spécification
+		// Itération sur les noms
 		for _, name := range valueSpec.Names {
+			// Extraire le nom
 			varName := name.Name
-			// Ignorer les variables blank (_)
+			// Vérification si blank
 			if varName == "_" {
+				// Ignorer blank
 				continue
 			}
-			// Skip mock names
+			// Vérification si mock
 			if shared.IsMockName(varName) {
+				// Ignorer mock
 				continue
 			}
-			// Classifier la variable comme publique ou privée
+			// Vérification si publique
 			if shared.IsExportedIdent(varName) {
-				// Variable publique
+				// Marquer comme publique
 				result.hasPublic = true
 			} else {
-				// Variable privée
+				// Cas alternatif: privée
+				// Marquer comme privée
 				result.hasPrivate = true
 			}
 		}
@@ -255,8 +271,11 @@ func checkVariables(genDecl *ast.GenDecl, result *fileAnalysisResult) {
 // Returns:
 //   - testFilesStatus: état des fichiers de test
 func checkTestFilesExist(filename string) testFilesStatus {
+	// Extraire le répertoire
 	dir := filepath.Dir(filename)
+	// Extraire le nom de base
 	baseName := filepath.Base(filename)
+	// Retirer extension .go
 	fileBase := strings.TrimSuffix(baseName, ".go")
 
 	// Retour de l'état des fichiers de test
@@ -276,16 +295,22 @@ func checkTestFilesExist(filename string) testFilesStatus {
 //   - result: pointeur vers le résultat de l'analyse des fonctions
 //   - status: état des fichiers de test
 func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
-	// Vérification selon le type de fichier
+	// Sélection selon le type
 	switch {
-	// Cas fichier mixte avec fonctions publiques ET privées
+	// Vérification cas mixte
 	case result.hasPublic && result.hasPrivate:
+		// Cas mixte
+		// Reporter problèmes mixtes
 		reportMixedFunctionsIssues(pass, file, result, status)
-	// Cas fichier avec fonctions publiques uniquement
+	// Vérification cas public
 	case result.hasPublic:
+		// Cas public uniquement
+		// Reporter problèmes publics
 		reportPublicOnlyIssues(pass, file, result, status)
-	// Cas fichier avec fonctions privées uniquement
+	// Vérification cas privé
 	case result.hasPrivate:
+		// Cas privé uniquement
+		// Reporter problèmes privés
 		reportPrivateOnlyIssues(pass, file, result, status)
 	}
 }
@@ -298,22 +323,22 @@ func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result *fileAnaly
 // Returns:
 //   - string: liste formatée (ex: "Func1, Func2, Func3, ...")
 func formatFuncList(funcs []string) string {
-	// Vérifier si la liste est vide
+	// Vérification si vide
 	if len(funcs) == 0 {
-		// Retour d'une chaîne vide pour liste vide
+		// Retour chaîne vide
 		return ""
 	}
 
-	// Vérifier si le nombre de fonctions est dans la limite
-	if len(funcs) <= MAX_FUNCS_TO_DISPLAY {
-		// Retour de la liste complète séparée par des virgules
+	// Vérification si dans limite
+	if len(funcs) <= maxFuncsToDisplay {
+		// Retour liste complète
 		return strings.Join(funcs, ", ")
 	}
 
-	// Calcul du nombre de fonctions restantes
-	displayed := funcs[:MAX_FUNCS_TO_DISPLAY]
-	remaining := len(funcs) - MAX_FUNCS_TO_DISPLAY
-	// Retour de la liste tronquée avec indicateur du reste
+	// Calculer restantes
+	displayed := funcs[:maxFuncsToDisplay]
+	remaining := len(funcs) - maxFuncsToDisplay
+	// Retour liste tronquée
 	return strings.Join(displayed, ", ") + ", ... (+" + formatCount(remaining) + ")"
 }
 
@@ -337,25 +362,30 @@ func formatCount(count int) string {
 //   - result: pointeur vers le résultat de l'analyse
 //   - status: état des fichiers de test
 func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
+	// Formater les listes de fonctions
 	pubList := formatFuncList(result.publicFuncs)
 	privList := formatFuncList(result.privateFuncs)
 
-	// Fichier avec fonctions publiques ET privées → besoin des deux fichiers
+	// Vérification absence totale fichiers
 	if !status.hasInternal && !status.hasExternal {
+		// Signaler manque des deux
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient %d fonction(s) publique(s) [%s] et %d fonction(s) privée(s) [%s]. Créez '%s_external_test.go' (black-box, package xxx_test) ET '%s_internal_test.go' (white-box, package xxx)",
 			status.baseName, len(result.publicFuncs), pubList, len(result.privateFuncs), privList, status.fileBase, status.fileBase)
+		// Retour après signalement
 		return
 	}
 
-	// Vérifier les fichiers manquants individuellement
+	// Vérification fichier internal manquant
 	if !status.hasInternal {
+		// Signaler manque internal
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient %d fonction(s) privée(s) [%s] → créez '%s_internal_test.go' (white-box, package xxx) pour les tester",
 			status.baseName, len(result.privateFuncs), privList, status.fileBase)
 	}
-	// Vérification du fichier externe manquant
+	// Vérification fichier external manquant
 	if !status.hasExternal {
+		// Signaler manque external
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient %d fonction(s) publique(s) [%s] → créez '%s_external_test.go' (black-box, package xxx_test) pour les tester",
 			status.baseName, len(result.publicFuncs), pubList, status.fileBase)
@@ -370,18 +400,22 @@ func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, result *fil
 //   - result: pointeur vers le résultat de l'analyse
 //   - status: état des fichiers de test
 func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
+	// Formater la liste de fonctions
 	pubList := formatFuncList(result.publicFuncs)
 
-	// Vérification du fichier externe manquant
+	// Vérification absence external
 	if !status.hasExternal {
+		// Signaler manque external
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient UNIQUEMENT %d fonction(s) publique(s) [%s] → créez '%s_external_test.go' (black-box, package xxx_test)",
 			status.baseName, len(result.publicFuncs), pubList, status.fileBase)
+		// Retour après signalement
 		return
 	}
 
-	// Vérification du fichier interne superflu
+	// Vérification internal superflu
 	if status.hasInternal {
+		// Signaler fichier superflu
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient UNIQUEMENT des fonctions publiques [%s]. Supprimez '%s_internal_test.go' (inutile) et utilisez '%s_external_test.go'",
 			status.baseName, pubList, status.fileBase, status.fileBase)
@@ -396,18 +430,22 @@ func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAna
 //   - result: pointeur vers le résultat de l'analyse
 //   - status: état des fichiers de test
 func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
+	// Formater la liste de fonctions
 	privList := formatFuncList(result.privateFuncs)
 
-	// Vérification du fichier interne manquant
+	// Vérification absence internal
 	if !status.hasInternal {
+		// Signaler manque internal
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient UNIQUEMENT %d fonction(s) privée(s) [%s] → créez '%s_internal_test.go' (white-box, package xxx)",
 			status.baseName, len(result.privateFuncs), privList, status.fileBase)
+		// Retour après signalement
 		return
 	}
 
-	// Vérification du fichier externe superflu
+	// Vérification external superflu
 	if status.hasExternal {
+		// Signaler fichier superflu
 		pass.Reportf(file.Name.Pos(),
 			"KTN-TEST-008: '%s' contient UNIQUEMENT des fonctions privées [%s]. Supprimez '%s_external_test.go' (inutile) et utilisez '%s_internal_test.go'",
 			status.baseName, privList, status.fileBase, status.fileBase)
@@ -424,6 +462,7 @@ func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAn
 // Returns:
 //   - bool: true si le fichier existe, false sinon
 func fileExistsOnDisk(path string) bool {
+	// Obtenir les informations du fichier
 	info, err := os.Stat(path)
 	// Vérification de la condition
 	if err != nil {

@@ -143,8 +143,8 @@ func NewCustomError(msg string) CustomError {
 // Returns:
 //   - string: the error message
 func (e CustomError) Error() string {
-	// Return stored message
-	return e.msg
+	// Delegate to Msg getter
+	return e.Msg()
 }
 
 // Msg retourne le message d'erreur.

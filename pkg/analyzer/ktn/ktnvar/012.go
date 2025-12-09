@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	// INITIAL_CONVERSIONS_CAP est la capacité initiale pour la map de conversions
-	INITIAL_CONVERSIONS_CAP int = 10
-	// MAX_ALLOWED_CONVERSIONS est le nombre maximum de conversions tolérées
-	MAX_ALLOWED_CONVERSIONS int = 2
+	// initialConversionsCap est la capacité initiale pour la map de conversions
+	initialConversionsCap int = 10
+	// maxAllowedConversions est le nombre maximum de conversions tolérées
+	maxAllowedConversions int = 2
 )
 
 // Analyzer012 détecte les conversions string() répétées.
@@ -204,8 +204,8 @@ func isStringConversion(n ast.Node) bool {
 //   - body: corps de la fonction
 func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
 	// Map pour compter les conversions par variable
-	conversions := make(map[string]int, INITIAL_CONVERSIONS_CAP)
-	var firstPos map[string]ast.Node = make(map[string]ast.Node, INITIAL_CONVERSIONS_CAP)
+	conversions := make(map[string]int, initialConversionsCap)
+	var firstPos map[string]ast.Node = make(map[string]ast.Node, initialConversionsCap)
 
 	// Parcours pour compter
 	ast.Inspect(body, func(n ast.Node) bool {
@@ -236,7 +236,7 @@ func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
 	// Rapport des conversions multiples
 	for varName, count := range conversions {
 		// Vérification de la condition
-		if count > MAX_ALLOWED_CONVERSIONS {
+		if count > maxAllowedConversions {
 			pos := firstPos[varName]
 			pass.Reportf(
 				pos.Pos(),

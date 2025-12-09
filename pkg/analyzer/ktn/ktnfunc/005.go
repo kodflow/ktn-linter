@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	// MAX_PURE_CODE_LINES max lines of pure code in a function
-	MAX_PURE_CODE_LINES int = 35
+	// maxPureCodeLines max lines of pure code in a function
+	maxPureCodeLines int = 35
 )
 
 // Analyzer005 checks that functions don't exceed 35 lines of pure code
@@ -66,13 +66,13 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 		pureLines := countPureCodeLines(pass, funcDecl.Body)
 
 		// Vérification de la condition
-		if pureLines > MAX_PURE_CODE_LINES {
+		if pureLines > maxPureCodeLines {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
 				"KTN-FUNC-005: la fonction '%s' contient %d lignes de code pur (max: %d)",
 				funcName,
 				pureLines,
-				MAX_PURE_CODE_LINES,
+				maxPureCodeLines,
 			)
 		}
 	})
@@ -92,10 +92,12 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 func isLineToSkip(trimmed string, inBlockComment *bool) bool {
 	// Gestion des commentaires de bloc
 	if strings.Contains(trimmed, "/*") {
+		// Marquage du début de commentaire bloc
 		*inBlockComment = true
 	}
 	// Vérification fin de commentaire bloc
 	if strings.Contains(trimmed, "*/") {
+		// Marquage de la fin de commentaire bloc
 		*inBlockComment = false
 		// Ligne de fin de bloc à ignorer
 		return true
@@ -165,6 +167,7 @@ func countPureCodeLines(pass *analysis.Pass, body *ast.BlockStmt) int {
 
 		// Vérification si ligne doit être ignorée
 		if !isLineToSkip(trimmed, &inBlockComment) {
+			// Incrément du compteur de lignes de code pur
 			pureCodeLines++
 		}
 	}

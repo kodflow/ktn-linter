@@ -12,10 +12,10 @@ import (
 
 // Constantes pour les nombres utilisés dans les fonctions
 const (
-	MAKE_ARGS_WITH_LENGTH   int = 2 // make([]T, length)
-	MAKE_ARGS_WITH_CAPACITY int = 3 // make([]T, length, capacity)
-	SECOND_ARG_INDEX        int = 1 // index du deuxième argument
-	THIRD_ARG_INDEX         int = 2 // index du troisième argument
+	makeArgsWithLength   int = 2 // make([]T, length)
+	makeArgsWithCapacity int = 3 // make([]T, length, capacity)
+	secondArgIndex       int = 1 // index du deuxième argument
+	thirdArgIndex        int = 2 // index du troisième argument
 )
 
 // IsZeroLiteral vérifie si une expression est le literal zéro (0).
@@ -220,15 +220,15 @@ func IsMakeSliceZero(expr ast.Expr) bool {
 	}
 
 	// Vérifier les arguments
-	if len(callExpr.Args) == MAKE_ARGS_WITH_LENGTH {
+	if len(callExpr.Args) == makeArgsWithLength {
 		// make([]T, length) - vérifier que length est 0
-		return IsZeroLiteral(callExpr.Args[SECOND_ARG_INDEX])
+		return IsZeroLiteral(callExpr.Args[secondArgIndex])
 	}
 
 	// Vérification de la condition
-	if len(callExpr.Args) == MAKE_ARGS_WITH_CAPACITY {
+	if len(callExpr.Args) == makeArgsWithCapacity {
 		// make([]T, length, capacity) - vérifier que length et capacity sont 0
-		return IsZeroLiteral(callExpr.Args[SECOND_ARG_INDEX]) && IsZeroLiteral(callExpr.Args[THIRD_ARG_INDEX])
+		return IsZeroLiteral(callExpr.Args[secondArgIndex]) && IsZeroLiteral(callExpr.Args[thirdArgIndex])
 	}
 
 	// Condition not met, return false.

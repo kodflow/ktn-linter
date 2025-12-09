@@ -12,12 +12,12 @@ import (
 )
 
 const (
-	// MIN_MAKE_ARGS_VAR016 is minimum arguments for make([]T, N)
-	MIN_MAKE_ARGS_VAR016 int = 2
-	// MIN_MAKE_ARGS_WITH_CAP_VAR016 is minimum arguments for make with capacity
-	MIN_MAKE_ARGS_WITH_CAP_VAR016 int = 3
-	// MAX_ARRAY_SIZE_VAR016 is maximum size for recommending array over slice
-	MAX_ARRAY_SIZE_VAR016 int64 = 1024
+	// minMakeArgsVar016 is minimum arguments for make([]T, N)
+	minMakeArgsVar016 int = 2
+	// minMakeArgsWithCapVar016 is minimum arguments for make with capacity
+	minMakeArgsWithCapVar016 int = 3
+	// maxArraySizeVar016 is maximum size for recommending array over slice
+	maxArraySizeVar016 int64 = 1024
 )
 
 // Analyzer016 checks for make([]T, N) with small constant N
@@ -72,7 +72,7 @@ func runVar016(pass *analysis.Pass) (any, error) {
 //   - bool: true si un array est préférable
 func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
 	// Need at least 2 args: make([]T, size)
-	if len(call.Args) < MIN_MAKE_ARGS_VAR016 {
+	if len(call.Args) < minMakeArgsVar016 {
 		// Not enough arguments
 		return false
 	}
@@ -104,7 +104,7 @@ func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
 //   - bool: true si capacité différente spécifiée
 func hasDifferentCapacity(call *ast.CallExpr) bool {
 	// Return true if 3rd argument exists
-	return len(call.Args) >= MIN_MAKE_ARGS_WITH_CAP_VAR016
+	return len(call.Args) >= minMakeArgsWithCapVar016
 }
 
 // getConstantSize obtient la taille constante d'une expression.
@@ -143,7 +143,7 @@ func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
 //   - bool: true si petite constante (<= MAX_ARRAY_SIZE_VAR016)
 func isSmallConstant(size int64) bool {
 	// Check if it's a positive small constant
-	return size > 0 && size <= MAX_ARRAY_SIZE_VAR016
+	return size > 0 && size <= maxArraySizeVar016
 }
 
 // reportArraySuggestion rapporte la suggestion d'utiliser un array.

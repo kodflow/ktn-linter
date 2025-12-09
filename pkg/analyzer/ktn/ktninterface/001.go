@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	// INITIAL_INTERFACES_CAP initial capacity for interfaces map
-	INITIAL_INTERFACES_CAP int = 16
-	// INTERFACE_SUFFIX_LEN length of "Interface" suffix
-	INTERFACE_SUFFIX_LEN int = 9
+	// initialInterfacesCap initial capacity for interfaces map
+	initialInterfacesCap int = 16
+	// interfaceSuffixLen length of "Interface" suffix
+	interfaceSuffixLen int = 9
 )
 
 // Analyzer001 detects unused interface declarations.
@@ -32,9 +32,9 @@ var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 //   - error: analysis error if any
 func runInterface001(pass *analysis.Pass) (any, error) {
 	// Collect all interface declarations
-	interfaces := make(map[string]*ast.TypeSpec, INITIAL_INTERFACES_CAP)
-	usedInterfaces := make(map[string]bool, INITIAL_INTERFACES_CAP)
-	structNames := make(map[string]bool, INITIAL_INTERFACES_CAP)
+	interfaces := make(map[string]*ast.TypeSpec, initialInterfacesCap)
+	usedInterfaces := make(map[string]bool, initialInterfacesCap)
+	structNames := make(map[string]bool, initialInterfacesCap)
 
 	// First pass: collect all interface and struct declarations
 	collectDeclarations(pass, interfaces, structNames)
@@ -62,6 +62,7 @@ func collectDeclarations(pass *analysis.Pass, interfaces map[string]*ast.TypeSpe
 			genDecl, isGenDecl := node.(*ast.GenDecl)
 			// Continue if not general declaration
 			if !isGenDecl {
+				// Continuer l'itération
 				return true
 			}
 
@@ -162,6 +163,7 @@ func checkFuncDeclForInterfaces(funcDecl *ast.FuncDecl, usedInterfaces map[strin
 func checkEmbeddedInterfaces(interfaceType *ast.InterfaceType, usedInterfaces map[string]bool) {
 	// Vérifier si les méthodes existent
 	if interfaceType.Methods == nil {
+		// Retour de la fonction
 		return
 	}
 	// Itération sur les méthodes
@@ -238,12 +240,13 @@ func hasCorrespondingStruct(interfaceName string, structs map[string]bool) bool 
 //   - bool: true if interface follows the pattern
 func isStructInterfacePattern(interfaceName string, structs map[string]bool) bool {
 	// Check if interface name ends with "Interface"
-	if len(interfaceName) <= INTERFACE_SUFFIX_LEN || interfaceName[len(interfaceName)-INTERFACE_SUFFIX_LEN:] != "Interface" {
+	if len(interfaceName) <= interfaceSuffixLen || interfaceName[len(interfaceName)-interfaceSuffixLen:] != "Interface" {
+		// Retour de la fonction
 		return false
 	}
 
 	// Extract potential struct name (remove "Interface" suffix)
-	structName := interfaceName[:len(interfaceName)-INTERFACE_SUFFIX_LEN]
+	structName := interfaceName[:len(interfaceName)-interfaceSuffixLen]
 
 	// Check if corresponding struct exists
 	return structs[structName]

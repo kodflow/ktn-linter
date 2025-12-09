@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// INITIAL_VALUE_RECEIVERS_CAP initial cap for value receivers
-	INITIAL_VALUE_RECEIVERS_CAP int = 10
+	// initialValueReceiversCap initial cap for value receivers
+	initialValueReceiversCap int = 10
 )
 
 // Analyzer017 détecte les copies de mutex.
@@ -67,7 +67,7 @@ func runVar017(pass *analysis.Pass) (any, error) {
 //   - map[string]bool: map des types avec receivers par valeur
 func collectTypesWithValueReceivers(_pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
 	// Map pour stocker les types
-	typesWithValueRecv := make(map[string]bool, INITIAL_VALUE_RECEIVERS_CAP)
+	typesWithValueRecv := make(map[string]bool, initialValueReceiversCap)
 
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{

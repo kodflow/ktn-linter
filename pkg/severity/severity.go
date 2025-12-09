@@ -1,17 +1,17 @@
 // Severity levels for linter diagnostics.
 package severity
 
+const (
+	// SeverityInfo recommandations et style
+	SeverityInfo Level = iota
+	// SeverityWarning problèmes de maintenabilité
+	SeverityWarning
+	// SeverityError bugs potentiels et problèmes graves
+	SeverityError
+)
+
 // Level représente le niveau de sévérité d'une règle
 type Level int
-
-const (
-	// SEVERITY_INFO recommandations et style
-	SEVERITY_INFO Level = iota
-	// SEVERITY_WARNING problèmes de maintenabilité
-	SEVERITY_WARNING
-	// SEVERITY_ERROR bugs potentiels et problèmes graves
-	SEVERITY_ERROR
-)
 
 // String retourne la représentation textuelle du niveau.
 //
@@ -20,17 +20,17 @@ const (
 func (l Level) String() string {
 	// Vérification du niveau
 	switch l {
-	// Niveau SEVERITY_INFO
-	case SEVERITY_INFO:
-		// Retour SEVERITY_INFO
+	// Niveau SeverityInfo
+	case SeverityInfo:
+		// Retour SeverityInfo
 		return "INFO"
-	// Niveau SEVERITY_WARNING
-	case SEVERITY_WARNING:
-		// Retour SEVERITY_WARNING
+	// Niveau SeverityWarning
+	case SeverityWarning:
+		// Retour SeverityWarning
 		return "WARNING"
-	// Niveau SEVERITY_ERROR
-	case SEVERITY_ERROR:
-		// Retour SEVERITY_ERROR
+	// Niveau SeverityError
+	case SeverityError:
+		// Retour SeverityError
 		return "ERROR"
 	// Niveau par défaut
 	default:
@@ -43,73 +43,73 @@ func (l Level) String() string {
 // Les règles sont ordonnées par criticité : ERROR > WARNING > INFO
 var rulesSeverity map[string]Level = map[string]Level{
 	// COMMENT - Commentaires et documentation (7 règles)
-	"KTN-COMMENT-001": SEVERITY_INFO,    // Commentaire inline trop long >80 chars
-	"KTN-COMMENT-002": SEVERITY_WARNING, // Description de fichier manquante (ex-PACKAGE-001)
-	"KTN-COMMENT-003": SEVERITY_WARNING, // Commentaire requis pour constantes (ex-CONST-002)
-	"KTN-COMMENT-004": SEVERITY_WARNING, // Commentaire requis pour var package (ex-VAR-002)
-	"KTN-COMMENT-005": SEVERITY_WARNING, // Documentation struct exportée (ex-STRUCT-002)
-	"KTN-COMMENT-006": SEVERITY_WARNING, // Documentation fonction complète (ex-FUNC-007)
-	"KTN-COMMENT-007": SEVERITY_WARNING, // Commentaires sur blocs de contrôle (ex-FUNC-009)
+	"KTN-COMMENT-001": SeverityInfo,    // Commentaire inline trop long >80 chars
+	"KTN-COMMENT-002": SeverityWarning, // Description de fichier manquante (ex-PACKAGE-001)
+	"KTN-COMMENT-003": SeverityWarning, // Commentaire requis pour constantes (ex-CONST-002)
+	"KTN-COMMENT-004": SeverityWarning, // Commentaire requis pour var package (ex-VAR-002)
+	"KTN-COMMENT-005": SeverityWarning, // Documentation struct exportée (ex-STRUCT-002)
+	"KTN-COMMENT-006": SeverityWarning, // Documentation fonction complète (ex-FUNC-007)
+	"KTN-COMMENT-007": SeverityWarning, // Commentaires sur blocs de contrôle (ex-FUNC-009)
 
 	// CONST - Constantes (3 règles, ex-002 déplacé vers COMMENT-003)
-	"KTN-CONST-001": SEVERITY_WARNING, // Type explicite requis
-	"KTN-CONST-002": SEVERITY_INFO,    // Groupement des constantes (ex-003)
-	"KTN-CONST-003": SEVERITY_INFO,    // Convention SCREAMING_SNAKE_CASE (ex-004)
+	"KTN-CONST-001": SeverityWarning, // Type explicite requis
+	"KTN-CONST-002": SeverityInfo,    // Groupement des constantes (ex-003)
+	"KTN-CONST-003": SeverityInfo,    // Convention SCREAMING_SNAKE_CASE (ex-004)
 
 	// VAR - Variables (17 règles, ex-002 déplacé vers COMMENT-004)
-	"KTN-VAR-001": SEVERITY_ERROR,   // Variables package en camelCase
-	"KTN-VAR-002": SEVERITY_WARNING, // Type explicite pour var package (ex-003)
-	"KTN-VAR-003": SEVERITY_WARNING, // Utiliser := pour variables locales (ex-004)
-	"KTN-VAR-004": SEVERITY_WARNING, // Préallocation slices (ex-005)
-	"KTN-VAR-005": SEVERITY_WARNING, // Éviter make([]T, length) avec append (ex-006)
-	"KTN-VAR-006": SEVERITY_WARNING, // Préallocation bytes.Buffer/strings.Builder (ex-007)
-	"KTN-VAR-007": SEVERITY_WARNING, // Utiliser strings.Builder pour >2 concat (ex-008)
-	"KTN-VAR-008": SEVERITY_WARNING, // Éviter allocs dans boucles chaudes (ex-009)
-	"KTN-VAR-009": SEVERITY_WARNING, // Pointeurs pour structs >64 bytes (ex-010)
-	"KTN-VAR-010": SEVERITY_WARNING, // sync.Pool pour buffers répétés (ex-011)
-	"KTN-VAR-011": SEVERITY_WARNING, // Shadowing de variables (ex-012)
-	"KTN-VAR-012": SEVERITY_WARNING, // Conversions string() répétées (ex-013)
-	"KTN-VAR-013": SEVERITY_INFO,    // Groupement des variables (ex-014)
-	"KTN-VAR-014": SEVERITY_INFO,    // Variables après constantes (ex-015)
-	"KTN-VAR-015": SEVERITY_INFO,    // Préallocation maps (ex-016)
-	"KTN-VAR-016": SEVERITY_INFO,    // Utiliser [N]T au lieu de make([]T, N) (ex-017)
-	"KTN-VAR-017": SEVERITY_INFO,    // Copies de mutex (ex-018)
+	"KTN-VAR-001": SeverityError,   // Variables package en camelCase
+	"KTN-VAR-002": SeverityWarning, // Type explicite pour var package (ex-003)
+	"KTN-VAR-003": SeverityWarning, // Utiliser := pour variables locales (ex-004)
+	"KTN-VAR-004": SeverityWarning, // Préallocation slices (ex-005)
+	"KTN-VAR-005": SeverityWarning, // Éviter make([]T, length) avec append (ex-006)
+	"KTN-VAR-006": SeverityWarning, // Préallocation bytes.Buffer/strings.Builder (ex-007)
+	"KTN-VAR-007": SeverityWarning, // Utiliser strings.Builder pour >2 concat (ex-008)
+	"KTN-VAR-008": SeverityWarning, // Éviter allocs dans boucles chaudes (ex-009)
+	"KTN-VAR-009": SeverityWarning, // Pointeurs pour structs >64 bytes (ex-010)
+	"KTN-VAR-010": SeverityWarning, // sync.Pool pour buffers répétés (ex-011)
+	"KTN-VAR-011": SeverityWarning, // Shadowing de variables (ex-012)
+	"KTN-VAR-012": SeverityWarning, // Conversions string() répétées (ex-013)
+	"KTN-VAR-013": SeverityInfo,    // Groupement des variables (ex-014)
+	"KTN-VAR-014": SeverityInfo,    // Variables après constantes (ex-015)
+	"KTN-VAR-015": SeverityInfo,    // Préallocation maps (ex-016)
+	"KTN-VAR-016": SeverityInfo,    // Utiliser [N]T au lieu de make([]T, N) (ex-017)
+	"KTN-VAR-017": SeverityInfo,    // Copies de mutex (ex-018)
 
 	// FUNC - Fonctions (12 règles, ex-007 et ex-009 déplacés vers COMMENT)
-	"KTN-FUNC-001": SEVERITY_ERROR,   // Erreur en dernière position retour
-	"KTN-FUNC-002": SEVERITY_ERROR,   // context.Context en premier paramètre
-	"KTN-FUNC-003": SEVERITY_ERROR,   // Éviter else après return
-	"KTN-FUNC-004": SEVERITY_ERROR,   // Fonctions privées non utilisées
-	"KTN-FUNC-005": SEVERITY_WARNING, // Max 35 lignes par fonction
-	"KTN-FUNC-006": SEVERITY_WARNING, // Max 5 paramètres
-	"KTN-FUNC-007": SEVERITY_WARNING, // Getters sans side effects (ex-008)
-	"KTN-FUNC-008": SEVERITY_WARNING, // Paramètres non utilisés préfixés _ (ex-010)
-	"KTN-FUNC-009": SEVERITY_INFO,    // Pas de magic numbers (ex-011)
-	"KTN-FUNC-010": SEVERITY_INFO,    // Naked returns interdits (ex-012)
-	"KTN-FUNC-011": SEVERITY_INFO,    // Complexité cyclomatique ≤10 (ex-013)
-	"KTN-FUNC-012": SEVERITY_INFO,    // Named returns si >3 valeurs retour (ex-014)
+	"KTN-FUNC-001": SeverityError,   // Erreur en dernière position retour
+	"KTN-FUNC-002": SeverityError,   // context.Context en premier paramètre
+	"KTN-FUNC-003": SeverityError,   // Éviter else après return
+	"KTN-FUNC-004": SeverityError,   // Fonctions privées non utilisées
+	"KTN-FUNC-005": SeverityWarning, // Max 35 lignes par fonction
+	"KTN-FUNC-006": SeverityWarning, // Max 5 paramètres
+	"KTN-FUNC-007": SeverityWarning, // Getters sans side effects (ex-008)
+	"KTN-FUNC-008": SeverityWarning, // Paramètres non utilisés préfixés _ (ex-010)
+	"KTN-FUNC-009": SeverityInfo,    // Pas de magic numbers (ex-011)
+	"KTN-FUNC-010": SeverityInfo,    // Naked returns interdits (ex-012)
+	"KTN-FUNC-011": SeverityInfo,    // Complexité cyclomatique ≤10 (ex-013)
+	"KTN-FUNC-012": SeverityInfo,    // Named returns si >3 valeurs retour (ex-014)
 
 	// STRUCT - Structures (5 règles, ex-002 déplacé vers COMMENT-005)
-	"KTN-STRUCT-001": SEVERITY_WARNING, // Interface pour chaque struct
-	"KTN-STRUCT-002": SEVERITY_WARNING, // Constructeur NewX() requis (ex-003)
-	"KTN-STRUCT-003": SEVERITY_WARNING, // Pas de préfixe Get pour getters (ex-004)
-	"KTN-STRUCT-004": SEVERITY_INFO,    // Une struct par fichier (ex-005)
-	"KTN-STRUCT-005": SEVERITY_INFO,    // Champs exportés avant privés (ex-006)
+	"KTN-STRUCT-001": SeverityWarning, // Interface pour chaque struct
+	"KTN-STRUCT-002": SeverityWarning, // Constructeur NewX() requis (ex-003)
+	"KTN-STRUCT-003": SeverityWarning, // Pas de préfixe Get pour getters (ex-004)
+	"KTN-STRUCT-004": SeverityInfo,    // Une struct par fichier (ex-005)
+	"KTN-STRUCT-005": SeverityInfo,    // Champs exportés avant privés (ex-006)
 
 	// TEST - Tests (13 règles)
-	"KTN-TEST-001": SEVERITY_ERROR,   // Fichier doit finir par _internal/_external_test.go
-	"KTN-TEST-002": SEVERITY_WARNING, // Package xxx_test pour tests (désactivé)
-	"KTN-TEST-003": SEVERITY_WARNING, // Fichier .go correspondant requis
-	"KTN-TEST-004": SEVERITY_WARNING, // Toutes fonctions doivent avoir tests
-	"KTN-TEST-005": SEVERITY_WARNING, // Table-driven tests requis
-	"KTN-TEST-006": SEVERITY_WARNING, // Pattern 1:1 fichiers test/source
-	"KTN-TEST-007": SEVERITY_WARNING, // Interdiction t.Skip()
-	"KTN-TEST-008": SEVERITY_WARNING, // Fichiers test appropriés requis
-	"KTN-TEST-009": SEVERITY_WARNING, // Tests publics dans _external_test.go
-	"KTN-TEST-010": SEVERITY_WARNING, // Tests privés dans _internal_test.go
-	"KTN-TEST-011": SEVERITY_WARNING, // Package correct selon type fichier
-	"KTN-TEST-012": SEVERITY_WARNING, // Tests doivent contenir assertions
-	"KTN-TEST-013": SEVERITY_INFO,    // Couverture cas d'erreur
+	"KTN-TEST-001": SeverityError,   // Fichier doit finir par _internal/_external_test.go
+	"KTN-TEST-002": SeverityWarning, // Package xxx_test pour tests (désactivé)
+	"KTN-TEST-003": SeverityWarning, // Fichier .go correspondant requis
+	"KTN-TEST-004": SeverityWarning, // Toutes fonctions doivent avoir tests
+	"KTN-TEST-005": SeverityWarning, // Table-driven tests requis
+	"KTN-TEST-006": SeverityWarning, // Pattern 1:1 fichiers test/source
+	"KTN-TEST-007": SeverityWarning, // Interdiction t.Skip()
+	"KTN-TEST-008": SeverityWarning, // Fichiers test appropriés requis
+	"KTN-TEST-009": SeverityWarning, // Tests publics dans _external_test.go
+	"KTN-TEST-010": SeverityWarning, // Tests privés dans _internal_test.go
+	"KTN-TEST-011": SeverityWarning, // Package correct selon type fichier
+	"KTN-TEST-012": SeverityWarning, // Tests doivent contenir assertions
+	"KTN-TEST-013": SeverityInfo,    // Couverture cas d'erreur
 }
 
 // GetSeverity retourne le niveau de sévérité d'une règle.
@@ -125,8 +125,8 @@ func GetSeverity(ruleCode string) Level {
 		// Retour du niveau
 		return level
 	}
-	// Par défaut SEVERITY_WARNING
-	return SEVERITY_WARNING
+	// Par défaut SeverityWarning
+	return SeverityWarning
 }
 
 // ColorCode retourne le code couleur ANSI pour un niveau.
@@ -136,16 +136,16 @@ func GetSeverity(ruleCode string) Level {
 func (l Level) ColorCode() string {
 	// Vérification du niveau
 	switch l {
-	// Niveau SEVERITY_INFO
-	case SEVERITY_INFO:
+	// Niveau SeverityInfo
+	case SeverityInfo:
 		// Bleu
 		return "\033[34m"
-	// Niveau SEVERITY_WARNING
-	case SEVERITY_WARNING:
+	// Niveau SeverityWarning
+	case SeverityWarning:
 		// Orange (jaune vif)
 		return "\033[33m"
-	// Niveau SEVERITY_ERROR
-	case SEVERITY_ERROR:
+	// Niveau SeverityError
+	case SeverityError:
 		// Rouge
 		return "\033[31m"
 	// Niveau par défaut
@@ -162,16 +162,16 @@ func (l Level) ColorCode() string {
 func (l Level) Symbol() string {
 	// Vérification du niveau
 	switch l {
-	// Niveau SEVERITY_INFO
-	case SEVERITY_INFO:
+	// Niveau SeverityInfo
+	case SeverityInfo:
 		// Symbole info
 		return "ℹ"
-	// Niveau SEVERITY_WARNING
-	case SEVERITY_WARNING:
+	// Niveau SeverityWarning
+	case SeverityWarning:
 		// Symbole warning
 		return "⚠"
-	// Niveau SEVERITY_ERROR
-	case SEVERITY_ERROR:
+	// Niveau SeverityError
+	case SeverityError:
 		// Symbole error
 		return "✖"
 	// Niveau par défaut

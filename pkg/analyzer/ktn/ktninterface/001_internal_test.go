@@ -550,3 +550,37 @@ func Test_checkType(t *testing.T) {
 		})
 	}
 }
+
+// Test_hasCorrespondingStruct tests the hasCorrespondingStruct private function.
+func Test_hasCorrespondingStruct(t *testing.T) {
+	tests := []struct {
+		name          string
+		interfaceName string
+		structs       map[string]bool
+		want          bool
+	}{
+		{
+			name:          "struct exists with same name",
+			interfaceName: "UserService",
+			structs:       map[string]bool{"UserService": true},
+			want:          true,
+		},
+		{
+			name:          "struct does not exist",
+			interfaceName: "UserService",
+			structs:       map[string]bool{"OrderService": true},
+			want:          false,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasCorrespondingStruct(tt.interfaceName, tt.structs)
+			// Verify result matches expectation
+			if got != tt.want {
+				t.Errorf("hasCorrespondingStruct() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

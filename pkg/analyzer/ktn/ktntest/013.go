@@ -15,8 +15,8 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// INITIAL_MAP_CAPACITY est la capacité initiale des maps de signatures.
-const INITIAL_MAP_CAPACITY int = 32
+// initialMapCapacity est la capacité initiale des maps de signatures.
+const initialMapCapacity int = 32
 
 // testedFuncInfo contient les informations sur une fonction testée.
 type testedFuncInfo struct {
@@ -48,41 +48,49 @@ func runTest013(pass *analysis.Pass) (any, error) {
 	// Collecter toutes les fonctions du package avec leur signature
 	funcSignatures := collectFuncSignatures(pass, insp)
 
+	// Définir le filtre de nœuds
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
 
-	// Analyser les fonctions de test
+	// Parcourir les fonctions de test
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Conversion en FuncDecl
 		funcDecl := n.(*ast.FuncDecl)
+		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Vérification fichier de test
+		// Vérification si fichier de test
 		if !shared.IsTestFile(filename) {
+			// Retour si pas fichier de test
 			return
 		}
 
-		// Skip exempt test files
+		// Vérification fichier exempté
 		if shared.IsExemptTestFile(filename) {
+			// Retour si exempté
 			return
 		}
 
-		// Skip mock files
+		// Vérification fichier mock
 		if shared.IsMockFile(filename) {
+			// Retour si mock
 			return
 		}
 
-		// Vérifier si c'est une fonction de test unitaire
+		// Vérification test unitaire
 		if !shared.IsUnitTestFunction(funcDecl) {
+			// Retour si pas unitaire
 			return
 		}
 
-		// Skip exempt test names
+		// Vérification nom exempté
 		if shared.IsExemptTestName(funcDecl.Name.Name) {
+			// Retour si exempté
 			return
 		}
 
-		// Analyser le test par rapport à la fonction testée
+		// Analyser le test
 		analyzeTestFunction(pass, funcDecl, funcSignatures)
 	})
 
@@ -100,29 +108,35 @@ func runTest013(pass *analysis.Pass) (any, error) {
 //   - map[string]testedFuncInfo: map nom -> info fonction
 func collectFuncSignatures(pass *analysis.Pass, insp *inspector.Inspector) map[string]testedFuncInfo {
 	// Initialiser avec capacité estimée
-	signatures := make(map[string]testedFuncInfo, INITIAL_MAP_CAPACITY)
+	signatures := make(map[string]testedFuncInfo, initialMapCapacity)
 
+	// Définir le filtre de nœuds
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 	}
 
-	// Parcourir toutes les fonctions du pass
+	// Parcourir les fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Conversion en FuncDecl
 		funcDecl := n.(*ast.FuncDecl)
+		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Ignorer les fichiers de test
+		// Vérification fichier de test
 		if shared.IsTestFile(filename) {
+			// Retour si test
 			return
 		}
 
-		// Ignorer les fichiers mock
+		// Vérification fichier mock
 		if shared.IsMockFile(filename) {
+			// Retour si mock
 			return
 		}
 
-		// Skip mock functions
+		// Vérification fonction mock
 		if funcDecl.Name != nil && shared.IsMockName(funcDecl.Name.Name) {
+			// Retour si mock
 			return
 		}
 
@@ -143,17 +157,20 @@ func collectFuncSignatures(pass *analysis.Pass, insp *inspector.Inspector) map[s
 //   - signatures: map des signatures
 //   - funcDecl: déclaration de fonction
 func addFuncSignature(signatures map[string]testedFuncInfo, funcDecl *ast.FuncDecl) {
+	// Extraire les informations de la fonction
 	info := extractFuncInfo(funcDecl)
 
-	// Skip mock receiver types
+	// Vérification receiver mock
 	if info.hasReceiver && shared.IsMockName(info.receiverName) {
+		// Retour si mock
 		return
 	}
 
-	// Stocker avec le nom simple
+	// Stocker nom simple
 	signatures[info.name] = *info
-	// Stocker aussi avec Receiver_Method si méthode
+	// Vérification si méthode
 	if info.hasReceiver {
+		// Stocker avec receiver
 		signatures[info.receiverName+"_"+info.name] = *info
 	}
 }
@@ -164,29 +181,32 @@ func addFuncSignature(signatures map[string]testedFuncInfo, funcDecl *ast.FuncDe
 //   - pass: contexte d'analyse
 //   - signatures: map des signatures à remplir
 func collectExternalSourceSignatures(pass *analysis.Pass, signatures map[string]testedFuncInfo) {
-	// Pas de fichiers dans le pass
+	// Vérification fichiers présents
 	if len(pass.Files) == 0 {
+		// Retour si pas de fichiers
 		return
 	}
 
-	// Obtenir le répertoire du package
+	// Obtenir le répertoire
 	firstFile := pass.Fset.Position(pass.Files[0].Pos()).Filename
 	packageDir := filepath.Dir(firstFile)
 
-	// Lire les fichiers du répertoire
+	// Lire le répertoire
 	entries, err := os.ReadDir(packageDir)
-	// Erreur de lecture
+	// Vérification erreur
 	if err != nil {
+		// Retour si erreur
 		return
 	}
 
-	// Parcourir les fichiers
+	// Itération sur les fichiers
 	for _, entry := range entries {
-		// Ignorer les répertoires
+		// Vérification si répertoire
 		if entry.IsDir() {
+			// Continuer si répertoire
 			continue
 		}
-		// Scanner les fichiers Go non-test
+		// Scanner le fichier
 		scanSourceFile(packageDir, entry.Name(), signatures)
 	}
 }
@@ -198,16 +218,19 @@ func collectExternalSourceSignatures(pass *analysis.Pass, signatures map[string]
 //   - filename: nom du fichier
 //   - signatures: map des signatures
 func scanSourceFile(dir string, filename string, signatures map[string]testedFuncInfo) {
-	// Ignorer les fichiers non-Go
+	// Vérification extension Go
 	if !strings.HasSuffix(filename, ".go") {
+		// Retour si pas Go
 		return
 	}
-	// Ignorer les fichiers de test
+	// Vérification fichier test
 	if strings.HasSuffix(filename, "_test.go") {
+		// Retour si test
 		return
 	}
-	// Skip mock files
+	// Vérification fichier mock
 	if shared.IsMockFile(filename) {
+		// Retour si mock
 		return
 	}
 
@@ -215,24 +238,29 @@ func scanSourceFile(dir string, filename string, signatures map[string]testedFun
 	fullPath := filepath.Join(dir, filename)
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, fullPath, nil, 0)
-	// Erreur de parsing
+	// Vérification erreur parsing
 	if err != nil {
+		// Retour si erreur
 		return
 	}
 
-	// Extraire les signatures
+	// Parcourir l'AST
 	ast.Inspect(file, func(n ast.Node) bool {
+		// Conversion en FuncDecl
 		funcDecl, ok := n.(*ast.FuncDecl)
-		// Pas une fonction
+		// Vérification fonction
 		if !ok {
+			// Continuer si pas fonction
 			return true
 		}
-		// Skip mock functions
+		// Vérification mock
 		if funcDecl.Name != nil && shared.IsMockName(funcDecl.Name.Name) {
+			// Continuer si mock
 			return true
 		}
 		// Ajouter la signature
 		addFuncSignature(signatures, funcDecl)
+		// Continuer la traversée
 		return true
 	})
 }
@@ -252,7 +280,7 @@ func extractFuncInfo(funcDecl *ast.FuncDecl) *testedFuncInfo {
 	info := &testedFuncInfo{
 		name:         meta.Name,
 		returnsError: functionReturnsError(funcDecl),
-		hasReceiver:  meta.Kind == shared.FUNC_METHOD,
+		hasReceiver:  meta.Kind == shared.FuncMethod,
 		receiverName: meta.ReceiverName,
 	}
 
@@ -268,25 +296,27 @@ func extractFuncInfo(funcDecl *ast.FuncDecl) *testedFuncInfo {
 // Returns:
 //   - bool: true si retourne error
 func functionReturnsError(funcDecl *ast.FuncDecl) bool {
-	// Pas de type de fonction
+	// Vérification type fonction
 	if funcDecl.Type == nil {
+		// Retour si pas de type
 		return false
 	}
-	// Pas de résultats
+	// Vérification résultats
 	if funcDecl.Type.Results == nil {
+		// Retour si pas de résultats
 		return false
 	}
 
-	// Parcourir les types de retour
+	// Itération sur les résultats
 	for _, field := range funcDecl.Type.Results.List {
-		// Vérifier si c'est "error"
+		// Vérification type error
 		if isErrorType(field.Type) {
-			// Type error trouvé
+			// Retour trouvé
 			return true
 		}
 	}
 
-	// Aucun type error trouvé
+	// Retour non trouvé
 	return false
 }
 
@@ -298,12 +328,12 @@ func functionReturnsError(funcDecl *ast.FuncDecl) bool {
 // Returns:
 //   - bool: true si c'est error
 func isErrorType(expr ast.Expr) bool {
-	// Identifiant simple "error"
+	// Vérification identifiant
 	if ident, ok := expr.(*ast.Ident); ok {
-		// Comparer avec "error"
+		// Retour vérification error
 		return ident.Name == "error"
 	}
-	// Pas un type error
+	// Retour faux par défaut
 	return false
 }
 
@@ -318,34 +348,39 @@ func analyzeTestFunction(
 	testFunc *ast.FuncDecl,
 	signatures map[string]testedFuncInfo,
 ) {
-	// Use shared helper to parse test name
+	// Parser le nom du test
 	target, ok := shared.ParseTestName(testFunc.Name.Name)
-	// Parsing failed
+	// Vérification parsing réussi
 	if !ok {
+		// Retour si échec
 		return
 	}
 
-	// Build lookup key
+	// Construire la clé
 	key := shared.BuildTestTargetKey(target)
-	// Key empty
+	// Vérification clé vide
 	if key == "" {
+		// Retour si vide
 		return
 	}
 
-	// Chercher la fonction dans les signatures
+	// Chercher la fonction
 	info, found := signatures[key]
-	// Fonction non trouvée dans les signatures
+	// Vérification fonction trouvée
 	if !found {
+		// Retour si pas trouvée
 		return
 	}
 
-	// Vérifier si la fonction retourne error
+	// Vérification retourne error
 	if !info.returnsError {
+		// Retour si pas error
 		return
 	}
 
-	// Vérifier la couverture des cas d'erreur
+	// Vérifier couverture erreur
 	if !hasErrorCaseCoverage(testFunc) {
+		// Signaler manque couverture
 		pass.Reportf(
 			testFunc.Pos(),
 			"KTN-TEST-013: le test '%s' teste une fonction qui retourne error, "+
@@ -363,19 +398,21 @@ func analyzeTestFunction(
 // Returns:
 //   - bool: true si cas d'erreur couverts
 func hasErrorCaseCoverage(funcDecl *ast.FuncDecl) bool {
+	// Initialiser drapeau
 	found := false
 
-	// Parcourir le corps de la fonction
+	// Parcourir le corps
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Vérifier les différents types de nœuds
+		// Vérifier erreur dans nœud
 		if checkErrorInNode(n) {
+			// Marquer comme trouvé
 			found = true
 		}
 		// Continuer l'inspection
 		return true
 	})
 
-	// Retour du résultat de l'analyse
+	// Retour du résultat
 	return found
 }
 
@@ -387,22 +424,25 @@ func hasErrorCaseCoverage(funcDecl *ast.FuncDecl) bool {
 // Returns:
 //   - bool: true si indicateur trouvé
 func checkErrorInNode(n ast.Node) bool {
-	// Traiter selon le type de nœud
+	// Sélection selon le type
 	switch node := n.(type) {
-	// Composite literal avec cas d'erreur
+	// Vérification composite literal
 	case *ast.CompositeLit:
-		// Vérifier les cas de test d'erreur
+		// Cas composite literal
+		// Vérifier cas d'erreur
 		return hasErrorTestCases(node)
-	// Identifiant indicateur d'erreur
+	// Vérification identifiant
 	case *ast.Ident:
-		// Vérifier le nom de l'identifiant
+		// Cas identifiant
+		// Vérifier nom indicateur
 		return isErrorIndicatorName(node.Name)
-	// String literal avec error/invalid/fail
+	// Vérification literal basique
 	case *ast.BasicLit:
-		// Vérifier le contenu du literal
+		// Cas literal basique
+		// Vérifier contenu
 		return checkErrorInBasicLit(node)
 	}
-	// Type de nœud non concerné
+	// Retour faux par défaut
 	return false
 }
 
@@ -414,13 +454,14 @@ func checkErrorInNode(n ast.Node) bool {
 // Returns:
 //   - bool: true si indicateur trouvé
 func checkErrorInBasicLit(node *ast.BasicLit) bool {
-	// Vérifier si c'est une string
+	// Vérification type string
 	if node.Kind.String() != "STRING" {
+		// Retour si pas string
 		return false
 	}
-	// Vérifier le contenu de la string
+	// Vérifier le contenu
 	value := strings.ToLower(node.Value)
-	// Vérifier les mots-clés d'erreur
+	// Retour vérification mots-clés
 	return strings.Contains(value, "error") ||
 		strings.Contains(value, "invalid") ||
 		strings.Contains(value, "fail")
@@ -434,18 +475,18 @@ func checkErrorInBasicLit(node *ast.BasicLit) bool {
 // Returns:
 //   - bool: true si cas d'erreur présents
 func hasErrorTestCases(lit *ast.CompositeLit) bool {
-	// Parcourir les éléments
+	// Itération sur les éléments
 	for _, elt := range lit.Elts {
-		// Vérifier si c'est un KeyValueExpr
+		// Vérification KeyValueExpr
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
-			// Vérifier si c'est un cas d'erreur
+			// Vérifier erreur dans kv
 			if checkErrorInKeyValue(kv) {
-				// Cas d'erreur trouvé
+				// Retour trouvé
 				return true
 			}
 		}
 	}
-	// Pas de cas d'erreur
+	// Retour non trouvé
 	return false
 }
 
@@ -457,21 +498,23 @@ func hasErrorTestCases(lit *ast.CompositeLit) bool {
 // Returns:
 //   - bool: true si indicateur trouvé
 func checkErrorInKeyValue(kv *ast.KeyValueExpr) bool {
-	// Vérifier si la clé est "name"
+	// Vérifier la clé
 	ident, ok := kv.Key.(*ast.Ident)
-	// Pas un identifiant ou pas "name"
+	// Vérification clé name
 	if !ok || ident.Name != "name" {
+		// Retour si pas name
 		return false
 	}
-	// Vérifier si la valeur est un BasicLit
+	// Vérifier la valeur
 	basic, basicOk := kv.Value.(*ast.BasicLit)
-	// Pas un BasicLit
+	// Vérification BasicLit
 	if !basicOk {
+		// Retour si pas BasicLit
 		return false
 	}
-	// Vérifier les mots-clés d'erreur
+	// Vérifier mots-clés
 	value := strings.ToLower(basic.Value)
-	// Retour du résultat
+	// Retour vérification
 	return strings.Contains(value, "error") ||
 		strings.Contains(value, "invalid") ||
 		strings.Contains(value, "fail")
@@ -485,17 +528,19 @@ func checkErrorInKeyValue(kv *ast.KeyValueExpr) bool {
 // Returns:
 //   - bool: true si indicateur d'erreur
 func isErrorIndicatorName(name string) bool {
+	// Convertir en minuscules
 	lowerName := strings.ToLower(name)
+	// Définir les indicateurs d'erreur
 	indicators := []string{"err", "error", "invalid", "fail", "bad", "wrong"}
 
-	// Parcourir les indicateurs
+	// Itération sur les indicateurs
 	for _, indicator := range indicators {
-		// Vérifier si le nom contient l'indicateur
+		// Vérification si contient
 		if strings.Contains(lowerName, indicator) {
-			// Indicateur trouvé
+			// Retour trouvé
 			return true
 		}
 	}
-	// Aucun indicateur trouvé
+	// Retour non trouvé
 	return false
 }

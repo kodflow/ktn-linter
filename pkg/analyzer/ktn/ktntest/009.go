@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// INITIAL_PUBLIC_FUNCS_CAP initial capacity for public funcs map
-	INITIAL_PUBLIC_FUNCS_CAP int = 32
+	// initialPublicFuncsCap initial capacity for public funcs map
+	initialPublicFuncsCap int = 32
 )
 
 // Analyzer009 checks that public function tests are in external test files
@@ -55,25 +55,27 @@ func runTest009(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string]bool: map des noms de fonctions publiques
 func collectPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
-	publicFunctions := make(map[string]bool, INITIAL_PUBLIC_FUNCS_CAP)
+	publicFunctions := make(map[string]bool, initialPublicFuncsCap)
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
-	// Parcourir toutes les déclarations de fonctions
+	// Parcourir les fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Ignorer les fichiers de test
+		// Vérification fichier test
 		if shared.IsTestFile(filename) {
+			// Retour si test
 			return
 		}
 
-		// Ignorer les fichiers mock
+		// Vérification fichier mock
 		if shared.IsMockFile(filename) {
+			// Retour si mock
 			return
 		}
 
-		// Ajouter la fonction si elle est publique
+		// Ajouter fonction publique
 		addPublicFunction(funcDecl, publicFunctions)
 	})
 
@@ -87,33 +89,38 @@ func collectPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[
 //   - funcDecl: déclaration de fonction
 //   - publicFunctions: map des fonctions publiques
 func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) {
-	// Vérifier le nom de la fonction
+	// Vérification nom fonction
 	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
+		// Retour si pas de nom
 		return
 	}
 
-	// Skip mock functions
+	// Vérification fonction mock
 	if shared.IsMockName(funcDecl.Name.Name) {
+		// Retour si mock
 		return
 	}
 
-	// Use shared helper to classify function
+	// Classifier la fonction
 	meta := shared.ClassifyFunc(funcDecl)
 
-	// Skip mock receiver types
+	// Vérification receiver mock
 	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		// Retour si mock
 		return
 	}
 
-	// Only add public functions
-	if meta.Visibility != shared.VIS_PUBLIC {
+	// Vérification visibilité publique
+	if meta.Visibility != shared.VisPublic {
+		// Retour si pas publique
 		return
 	}
 
-	// Add lookup key
+	// Construire clé recherche
 	key := shared.BuildTestLookupKey(meta)
-	// Vérification clé valide
+	// Vérification clé non vide
 	if key != "" {
+		// Ajouter à la map
 		publicFunctions[key] = true
 	}
 }
@@ -127,23 +134,25 @@ func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) 
 func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector, publicFunctions map[string]bool) {
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
-	// Parcourir les fonctions de test
+	// Parcourir les tests
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 		baseName := filepath.Base(filename)
 
-		// Vérifier si c'est un test dans un fichier internal
+		// Vérification fichier internal et test unitaire
 		if !strings.HasSuffix(baseName, "_internal_test.go") || !shared.IsUnitTestFunction(funcDecl) {
+			// Retour si pas internal ou pas unitaire
 			return
 		}
 
-		// Skip exempt test files
+		// Vérification fichier exempté
 		if shared.IsExemptTestFile(filename) {
+			// Retour si exempté
 			return
 		}
 
-		// Vérifier si c'est un test de fonction publique
+		// Vérifier et reporter
 		checkAndReportPublicFunctionTest(pass, funcDecl, baseName, publicFunctions)
 	})
 }
@@ -158,27 +167,31 @@ func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.I
 func checkAndReportPublicFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, publicFunctions map[string]bool) {
 	testName := funcDecl.Name.Name
 
-	// Skip exempt test names
+	// Vérification nom exempté
 	if shared.IsExemptTestName(testName) {
+		// Retour si exempté
 		return
 	}
 
-	// Use shared helper to parse test name
+	// Parser nom test
 	target, ok := shared.ParseTestName(testName)
-	// Vérification parsing réussi
+	// Vérification parsing
 	if !ok {
+		// Retour si échec parsing
 		return
 	}
 
-	// Build lookup key
+	// Construire clé
 	key := shared.BuildTestTargetKey(target)
-	// Vérification clé vide
+	// Vérification clé
 	if key == "" {
+		// Retour si clé vide
 		return
 	}
 
-	// Vérifier si c'est un test de fonction publique
+	// Vérification fonction publique
 	if publicFunctions[key] {
+		// Signaler erreur
 		pass.Reportf(
 			funcDecl.Pos(),
 			"KTN-TEST-009: le test '%s' dans '%s' teste une fonction publique '%s'. Les tests de fonctions publiques doivent être dans '%s' (black-box testing avec package xxx_test)",

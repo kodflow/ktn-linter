@@ -115,27 +115,41 @@ func Test_loadPackages(t *testing.T) {
 
 // Test_loadPackagesWithPackageError teste loadPackages avec un package qui a des erreurs.
 func Test_loadPackagesWithPackageError(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
+	tests := []struct {
+		name     string
+		patterns []string
+	}{
+		{
+			name:     "current dir with package errors",
+			patterns: []string{"."},
+		},
+	}
 
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
 
-	// Utiliser un path qui cause des erreurs de package (pas d'erreur de Load() mais pkg.Errors)
-	exitCode, didExit := catchExitInCmd(t, func() {
-		loadPackages([]string{"."}) // Current dir n'est pas un package Go valide
-	})
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
 
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-	os.Stderr = oldStderr
+			// Utiliser un path qui cause des erreurs de package (pas d'erreur de Load() mais pkg.Errors)
+			exitCode, didExit := catchExitInCmd(t, func() {
+				loadPackages(tt.patterns) // Current dir n'est pas un package Go valide
+			})
 
-	// Peut exit ou pas, dépend du contexte
-	_ = didExit
-	_ = exitCode
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
+
+			// Peut exit ou pas, dépend du contexte
+			_ = didExit
+			_ = exitCode
+		})
+	}
 }
 
 // TestCheckLoadErrors teste checkLoadErrors avec des erreurs
@@ -216,21 +230,35 @@ func Test_checkLoadErrors(t *testing.T) {
 
 // TestCheckLoadErrorsNoErrors teste checkLoadErrors sans erreurs
 func Test_checkLoadErrorsNoErrors(t *testing.T) {
-	// Ne devrait pas paniquer ni sortir
-	pkg := &packages.Package{
-		PkgPath: "test/pkg",
-		Errors:  []packages.Error{},
+	tests := []struct {
+		name    string
+		pkgPath string
+	}{
+		{
+			name:    "package without errors",
+			pkgPath: "test/pkg",
+		},
 	}
 
-	// Vérification: la fonction doit s'exécuter sans panique
-	defer func() {
-		// Récupère une éventuelle panique
-		if r := recover(); r != nil {
-			t.Errorf("checkLoadErrors panicked: %v", r)
-		}
-	}()
-	// Exécute la fonction
-	checkLoadErrors([]*packages.Package{pkg})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Ne devrait pas paniquer ni sortir
+			pkg := &packages.Package{
+				PkgPath: tt.pkgPath,
+				Errors:  []packages.Error{},
+			}
+
+			// Vérification: la fonction doit s'exécuter sans panique
+			defer func() {
+				// Récupère une éventuelle panique
+				if r := recover(); r != nil {
+					t.Errorf("checkLoadErrors panicked: %v", r)
+				}
+			}()
+			// Exécute la fonction
+			checkLoadErrors([]*packages.Package{pkg})
+		})
+	}
 }
 
 // TestRunAnalyzers teste runAnalyzers
@@ -358,85 +386,137 @@ func Test_runAnalyzersWithCategory(t *testing.T) {
 
 // TestRunAnalyzersVerbose teste runAnalyzers en mode verbose
 func Test_runAnalyzersVerbose(t *testing.T) {
-	Verbose = true
-	defer func() { Verbose = false }()
+	tests := []struct {
+		name            string
+		packages        []string
+		expectedInMsg   string
+	}{
+		{
+			name:          "verbose mode output",
+			packages:      []string{"../../../pkg/formatter"},
+			expectedInMsg: "Running",
+		},
+	}
 
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Verbose = true
+			defer func() { Verbose = false }()
 
-	pkgs := loadPackages([]string{"../../../pkg/formatter"})
-	diagnostics := runAnalyzers(pkgs)
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
 
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-	os.Stderr = oldStderr
+			pkgs := loadPackages(tt.packages)
+			diagnostics := runAnalyzers(pkgs)
 
-	_ = diagnostics
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
 
-	output := stderr.String()
-	if !strings.Contains(output, "Running") {
-		t.Error("Expected verbose output")
+			_ = diagnostics
+
+			output := stderr.String()
+			if !strings.Contains(output, tt.expectedInMsg) {
+				t.Error("Expected verbose output")
+			}
+		})
 	}
 }
 
 // TestRunAnalyzersVerboseWithCategory teste runAnalyzers en mode verbose avec catégorie
 func Test_runAnalyzersVerboseWithCategory(t *testing.T) {
-	Verbose = true
-	Category = "const"
-	defer func() {
-		Verbose = false
-		Category = ""
-	}()
+	tests := []struct {
+		name         string
+		category     string
+		packages     []string
+		expectedMsg1 string
+		expectedMsg2 string
+	}{
+		{
+			name:         "verbose with const category",
+			category:     "const",
+			packages:     []string{"../../../pkg/formatter"},
+			expectedMsg1: "category",
+			expectedMsg2: "rules",
+		},
+	}
 
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Verbose = true
+			Category = tt.category
+			defer func() {
+				Verbose = false
+				Category = ""
+			}()
 
-	pkgs := loadPackages([]string{"../../../pkg/formatter"})
-	diagnostics := runAnalyzers(pkgs)
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
 
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-	os.Stderr = oldStderr
+			pkgs := loadPackages(tt.packages)
+			diagnostics := runAnalyzers(pkgs)
 
-	_ = diagnostics
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
 
-	output := stderr.String()
-	if !strings.Contains(output, "category") && !strings.Contains(output, "rules") {
-		t.Error("Expected verbose output with category info")
+			_ = diagnostics
+
+			output := stderr.String()
+			if !strings.Contains(output, tt.expectedMsg1) && !strings.Contains(output, tt.expectedMsg2) {
+				t.Error("Expected verbose output with category info")
+			}
+		})
 	}
 }
 
 // TestRunAnalyzersVerboseMultiplePackages teste verbose mode avec plusieurs packages
 func Test_runAnalyzersVerboseMultiplePackages(t *testing.T) {
-	Verbose = true
-	defer func() { Verbose = false }()
+	tests := []struct {
+		name          string
+		packages      []string
+		expectedInMsg string
+	}{
+		{
+			name:          "multiple packages verbose output",
+			packages:      []string{"../../../pkg/formatter", "../../../pkg/analyzer/utils"},
+			expectedInMsg: "Analyzing",
+		},
+	}
 
-	// Capturer stderr
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Verbose = true
+			defer func() { Verbose = false }()
 
-	// Charger plusieurs packages pour couvrir la boucle verbose
-	pkgs := loadPackages([]string{"../../../pkg/formatter", "../../../pkg/analyzer/utils"})
-	diagnostics := runAnalyzers(pkgs)
+			// Capturer stderr
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
 
-	w.Close()
-	var stderr bytes.Buffer
-	stderr.ReadFrom(r)
-	os.Stderr = oldStderr
+			// Charger plusieurs packages pour couvrir la boucle verbose
+			pkgs := loadPackages(tt.packages)
+			diagnostics := runAnalyzers(pkgs)
 
-	_ = diagnostics
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
 
-	output := stderr.String()
-	// Devrait afficher "Analyzing package:" pour chaque package
-	if !strings.Contains(output, "Analyzing") {
-		t.Error("Expected verbose package analysis output")
+			_ = diagnostics
+
+			output := stderr.String()
+			// Devrait afficher "Analyzing package:" pour chaque package
+			if !strings.Contains(output, tt.expectedInMsg) {
+				t.Error("Expected verbose package analysis output")
+			}
+		})
 	}
 }
 
@@ -519,92 +599,138 @@ func Test_filterDiagnostics(t *testing.T) {
 
 // TestExtractDiagnostics teste l'extraction et déduplication
 func Test_extractDiagnostics(t *testing.T) {
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	diagnostics := []diagWithFset{
+	tests := []struct {
+		name          string
+		expectedCount int
+	}{
 		{
-			diag: analysis.Diagnostic{
-				Pos:     file.Pos(10),
-				Message: "message 1",
-			},
-			fset: fset,
-		},
-		{
-			diag: analysis.Diagnostic{
-				Pos:     file.Pos(10),
-				Message: "message 1", // Duplicate
-			},
-			fset: fset,
-		},
-		{
-			diag: analysis.Diagnostic{
-				Pos:     file.Pos(20),
-				Message: "message 2",
-			},
-			fset: fset,
+			name:          "deduplication of diagnostics",
+			expectedCount: 2,
 		},
 	}
 
-	deduped := extractDiagnostics(diagnostics)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
 
-	if len(deduped) != 2 {
-		t.Errorf("Expected 2 diagnostics after deduplication, got %d", len(deduped))
+			diagnostics := []diagWithFset{
+				{
+					diag: analysis.Diagnostic{
+						Pos:     file.Pos(10),
+						Message: "message 1",
+					},
+					fset: fset,
+				},
+				{
+					diag: analysis.Diagnostic{
+						Pos:     file.Pos(10),
+						Message: "message 1", // Duplicate
+					},
+					fset: fset,
+				},
+				{
+					diag: analysis.Diagnostic{
+						Pos:     file.Pos(20),
+						Message: "message 2",
+					},
+					fset: fset,
+				},
+			}
+
+			deduped := extractDiagnostics(diagnostics)
+
+			if len(deduped) != tt.expectedCount {
+				t.Errorf("Expected %d diagnostics after deduplication, got %d", tt.expectedCount, len(deduped))
+			}
+		})
 	}
 }
 
 // TestFormatAndDisplayEmpty teste formatAndDisplay avec une liste vide
 func Test_formatAndDisplay(t *testing.T) {
-	// Capturer stdout
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	tests := []struct {
+		name          string
+		diagnostics   []diagWithFset
+		expectedInMsg string
+	}{
+		{
+			name:          "empty diagnostics list",
+			diagnostics:   []diagWithFset{},
+			expectedInMsg: "No issues found",
+		},
+	}
 
-	formatAndDisplay([]diagWithFset{})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Capturer stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-	w.Close()
-	var stdout bytes.Buffer
-	stdout.ReadFrom(r)
-	os.Stdout = oldStdout
+			formatAndDisplay(tt.diagnostics)
 
-	// Devrait afficher un message de succès
-	output := stdout.String()
-	if !strings.Contains(output, "No issues found") {
-		t.Errorf("Expected success message, got: %s", output)
+			w.Close()
+			var stdout bytes.Buffer
+			stdout.ReadFrom(r)
+			os.Stdout = oldStdout
+
+			// Devrait afficher un message de succès
+			output := stdout.String()
+			if !strings.Contains(output, tt.expectedInMsg) {
+				t.Errorf("Expected success message, got: %s", output)
+			}
+		})
 	}
 }
 
 // TestFormatAndDisplayWithDiagnostics teste formatAndDisplay avec des diagnostics
 func Test_formatAndDisplayWithDiagnostics(t *testing.T) {
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	diagnostics := []diagWithFset{
+	tests := []struct {
+		name          string
+		message       string
+		expectedInMsg string
+	}{
 		{
-			diag: analysis.Diagnostic{
-				Pos:     file.Pos(10),
-				Message: "test issue",
-			},
-			fset: fset,
+			name:          "display diagnostic message",
+			message:       "test issue",
+			expectedInMsg: "test issue",
 		},
 	}
 
-	// Capturer stdout
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
 
-	formatAndDisplay(diagnostics)
+			diagnostics := []diagWithFset{
+				{
+					diag: analysis.Diagnostic{
+						Pos:     file.Pos(10),
+						Message: tt.message,
+					},
+					fset: fset,
+				},
+			}
 
-	w.Close()
-	var stdout bytes.Buffer
-	stdout.ReadFrom(r)
-	os.Stdout = oldStdout
+			// Capturer stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-	// Devrait afficher le diagnostic
-	output := stdout.String()
-	if !strings.Contains(output, "test issue") {
-		t.Errorf("Expected diagnostic in output, got: %s", output)
+			formatAndDisplay(diagnostics)
+
+			w.Close()
+			var stdout bytes.Buffer
+			stdout.ReadFrom(r)
+			os.Stdout = oldStdout
+
+			// Devrait afficher le diagnostic
+			output := stdout.String()
+			if !strings.Contains(output, tt.expectedInMsg) {
+				t.Errorf("Expected diagnostic in output, got: %s", output)
+			}
+		})
 	}
 }
 

@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// INITIAL_PRIVATE_FUNCTIONS_CAP initial cap for private funcs map
-	INITIAL_PRIVATE_FUNCTIONS_CAP int = 32
+	// initialPrivateFunctionsCap initial cap for private funcs map
+	initialPrivateFunctionsCap int = 32
 )
 
 // Analyzer010 checks private function tests are in internal test files
@@ -55,25 +55,27 @@ func runTest010(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string]bool: map des noms de fonctions privées
 func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
-	privateFunctions := make(map[string]bool, INITIAL_PRIVATE_FUNCTIONS_CAP)
+	privateFunctions := make(map[string]bool, initialPrivateFunctionsCap)
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
-	// Parcourir toutes les déclarations de fonctions
+	// Parcourir les fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Ignorer les fichiers de test
+		// Vérification fichier test
 		if shared.IsTestFile(filename) {
+			// Retour si test
 			return
 		}
 
-		// Ignorer les fichiers mock
+		// Vérification fichier mock
 		if shared.IsMockFile(filename) {
+			// Retour si mock
 			return
 		}
 
-		// Ajouter la fonction si elle est privée
+		// Ajouter fonction privée
 		addPrivateFunction(funcDecl, privateFunctions)
 	})
 
@@ -87,33 +89,38 @@ func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map
 //   - funcDecl: déclaration de fonction
 //   - privateFunctions: map des fonctions privées
 func addPrivateFunction(funcDecl *ast.FuncDecl, privateFunctions map[string]bool) {
-	// Vérifier le nom de la fonction
+	// Vérification nom fonction
 	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
+		// Retour si pas de nom
 		return
 	}
 
-	// Skip mock functions
+	// Vérification fonction mock
 	if shared.IsMockName(funcDecl.Name.Name) {
+		// Retour si mock
 		return
 	}
 
-	// Use shared helper to classify function
+	// Classifier la fonction
 	meta := shared.ClassifyFunc(funcDecl)
 
-	// Skip mock receiver types
+	// Vérification receiver mock
 	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		// Retour si mock
 		return
 	}
 
-	// Only add private functions
-	if meta.Visibility != shared.VIS_PRIVATE {
+	// Vérification visibilité privée
+	if meta.Visibility != shared.VisPrivate {
+		// Retour si pas privée
 		return
 	}
 
-	// Add lookup key
+	// Construire clé recherche
 	key := shared.BuildTestLookupKey(meta)
-	// Vérification clé valide
+	// Vérification clé non vide
 	if key != "" {
+		// Ajouter à la map
 		privateFunctions[key] = true
 	}
 }
@@ -127,23 +134,25 @@ func addPrivateFunction(funcDecl *ast.FuncDecl, privateFunctions map[string]bool
 func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector, privateFunctions map[string]bool) {
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
-	// Parcourir les fonctions de test
+	// Parcourir les tests
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 		baseName := filepath.Base(filename)
 
-		// Vérifier si c'est un test dans un fichier external
+		// Vérification fichier external et test unitaire
 		if !strings.HasSuffix(baseName, "_external_test.go") || !shared.IsUnitTestFunction(funcDecl) {
+			// Retour si pas external ou pas unitaire
 			return
 		}
 
-		// Skip exempt test files
+		// Vérification fichier exempté
 		if shared.IsExemptTestFile(filename) {
+			// Retour si exempté
 			return
 		}
 
-		// Vérifier si c'est un test de fonction privée
+		// Vérifier et reporter
 		checkAndReportPrivateFunctionTest(pass, funcDecl, baseName, privateFunctions)
 	})
 }
@@ -158,32 +167,37 @@ func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.
 func checkAndReportPrivateFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, privateFunctions map[string]bool) {
 	testName := funcDecl.Name.Name
 
-	// Skip exempt test names
+	// Vérification nom exempté
 	if shared.IsExemptTestName(testName) {
+		// Retour si exempté
 		return
 	}
 
-	// Use shared helper to parse test name
+	// Parser nom test
 	target, ok := shared.ParseTestName(testName)
-	// Vérification parsing réussi
+	// Vérification parsing
 	if !ok {
+		// Retour si échec parsing
 		return
 	}
 
-	// Only check tests targeting private functions
+	// Vérification fonction privée
 	if !target.IsPrivate {
+		// Retour si pas privée
 		return
 	}
 
-	// Build lookup key
+	// Construire clé
 	key := shared.BuildTestTargetKey(target)
-	// Vérification clé vide
+	// Vérification clé
 	if key == "" {
+		// Retour si clé vide
 		return
 	}
 
-	// Vérifier si c'est un test de fonction privée
+	// Vérification fonction privée
 	if privateFunctions[key] {
+		// Signaler erreur
 		pass.Reportf(
 			funcDecl.Pos(),
 			"KTN-TEST-010: le test '%s' dans '%s' teste une fonction privée '%s'. Les tests de fonctions privées doivent être dans '%s' (white-box testing avec package xxx)",

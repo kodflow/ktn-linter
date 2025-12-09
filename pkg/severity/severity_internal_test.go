@@ -12,9 +12,9 @@ func Test_rulesSeverity(t *testing.T) {
 		ruleCode string
 		expected Level
 	}{
-		{"KTN-VAR-001 is ERROR", "KTN-VAR-001", SEVERITY_ERROR},
-		{"KTN-FUNC-001 is ERROR", "KTN-FUNC-001", SEVERITY_ERROR},
-		{"KTN-TEST-013 is INFO", "KTN-TEST-013", SEVERITY_INFO},
+		{"KTN-VAR-001 is ERROR", "KTN-VAR-001", SeverityError},
+		{"KTN-FUNC-001 is ERROR", "KTN-FUNC-001", SeverityError},
+		{"KTN-TEST-013 is INFO", "KTN-TEST-013", SeverityInfo},
 	}
 
 	// Exécution tests

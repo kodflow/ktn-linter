@@ -12,8 +12,8 @@ import (
 
 // Analyzer006 checks that functions don't have too many parameters
 const (
-	// MAX_PARAMS max params allowed in a function (context.Context excluded)
-	MAX_PARAMS int = 5
+	// maxParams max params allowed in a function (context.Context excluded)
+	maxParams int = 5
 )
 
 // Analyzer006 checks that functions don't have more than MAX_PARAMS parameters
@@ -55,7 +55,7 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 
 			// Skip test functions
 			if shared.IsTestFunction(fn) {
-				// Retour de la fonction
+				// Retour pour ignorer les fonctions de test
 				return
 			}
 		// Traitement
@@ -69,13 +69,13 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 		paramCount := countEffectiveParams(pass, funcType.Params)
 
 		// Vérification de la condition
-		if paramCount > MAX_PARAMS {
+		if paramCount > maxParams {
 			pass.Reportf(
 				pos.Pos(),
 				"KTN-FUNC-006: la fonction '%s' a %d paramètres (max: %d)",
 				name,
 				paramCount,
-				MAX_PARAMS,
+				maxParams,
 			)
 		}
 	})
@@ -105,14 +105,17 @@ func countEffectiveParams(pass *analysis.Pass, params *ast.FieldList) int {
 	for _, field := range params.List {
 		// Skip context.Context parameters (including aliases)
 		if isContextTypeWithPass(pass, field.Type) {
+			// Passage au champ suivant si context.Context
 			continue
 		}
 
 		// Each field can declare multiple params: func(a, b, c int)
 		if len(field.Names) > 0 {
+			// Ajout du nombre de noms
 			count += len(field.Names)
 		} else {
 			// Unnamed parameter (e.g., in interface or func literal)
+			// Incrément pour paramètre sans nom
 			count++
 		}
 	}

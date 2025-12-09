@@ -103,14 +103,46 @@ func Test_testFileInfo_structure(t *testing.T) {
 // Params:
 //   - t: testing context
 func Test_testFileInfo_nilFileNode(t *testing.T) {
-	info := &testFileInfo{
-		basename: "test.go",
-		filename: "/path/test.go",
-		fileNode: nil,
+	tests := []struct {
+		name     string
+		basename string
+		filename string
+		fileNode *ast.File
+		wantNil  bool
+	}{
+		{
+			name:     "nil file node",
+			basename: "test.go",
+			filename: "/path/test.go",
+			fileNode: nil,
+			wantNil:  true,
+		},
+		{
+			name:     "non-nil file node",
+			basename: "other.go",
+			filename: "/path/other.go",
+			fileNode: &ast.File{},
+			wantNil:  false,
+		},
 	}
 
-	// Vérification du nil
-	if info.fileNode != nil {
-		t.Error("expected nil fileNode")
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info := &testFileInfo{
+				basename: tt.basename,
+				filename: tt.filename,
+				fileNode: tt.fileNode,
+			}
+
+			// Vérification du nil
+			if tt.wantNil && info.fileNode != nil {
+				t.Error("expected nil fileNode")
+			}
+			// Vérification du non-nil
+			if !tt.wantNil && info.fileNode == nil {
+				t.Error("expected non-nil fileNode")
+			}
+		})
 	}
 }

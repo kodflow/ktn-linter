@@ -74,20 +74,15 @@ func runConst003(pass *analysis.Pass) (any, error) {
 }
 
 // isValidGoConstantName checks if a constant name follows Go CamelCase convention.
-// Valid names:
-//   - PascalCase for exported: MaxSize, HttpTimeout, APIKey
-//   - camelCase for unexported: maxSize, httpTimeout, apiKey
-//
-// Invalid names:
-//   - SCREAMING_SNAKE_CASE: MAX_SIZE
-//   - snake_case: max_size
-//   - Contains underscores: Max_Size
 //
 // Params:
 //   - name: constant name to check
 //
 // Returns:
 //   - bool: true if the name follows Go conventions
+//
+// Valid names: PascalCase for exported (MaxSize, HttpTimeout, APIKey) or camelCase for unexported (maxSize, httpTimeout, apiKey).
+// Invalid names: SCREAMING_SNAKE_CASE (MAX_SIZE), snake_case (max_size), Contains underscores (Max_Size).
 func isValidGoConstantName(name string) bool {
 	// Empty name is invalid
 	if len(name) == 0 {
@@ -109,6 +104,7 @@ func isValidGoConstantName(name string) bool {
 
 	// Check first character is a letter
 	firstRune := rune(name[0])
+	// Vérification que le premier caractère est une lettre
 	if !unicode.IsLetter(firstRune) {
 		// Return early
 		return false
@@ -116,6 +112,7 @@ func isValidGoConstantName(name string) bool {
 
 	// Check all characters are valid (letters or digits)
 	for _, r := range name {
+		// Vérification que chaque caractère est une lettre ou un chiffre
 		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
 			// Return early
 			return false

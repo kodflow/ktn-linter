@@ -12,8 +12,8 @@ import (
 
 // Analyzer012 checks that functions with >3 return values use named returns
 const (
-	// MAX_UNNAMED_RETURNS max unnamed returns allowed
-	MAX_UNNAMED_RETURNS int = 3
+	// maxUnnamedReturns max unnamed returns allowed
+	maxUnnamedReturns int = 3
 )
 
 // Analyzer012 checks that functions with >3 return values use named returns
@@ -66,21 +66,24 @@ func runFunc012(pass *analysis.Pass) (any, error) {
 			if len(field.Names) == 0 {
 				// Unnamed return
 				hasUnnamedReturns = true
+				// Incrément du compteur
 				returnCount++
 			} else {
 				// Named returns
+				// Ajout du nombre de retours nommés
 				returnCount += len(field.Names)
 			}
 		}
 
 		// If more than 3 returns and has unnamed returns, report error
-		if returnCount > MAX_UNNAMED_RETURNS && hasUnnamedReturns {
+		if returnCount > maxUnnamedReturns && hasUnnamedReturns {
+			// Rapport d'erreur pour named returns requis
 			pass.Reportf(
 				funcDecl.Type.Results.Pos(),
 				"KTN-FUNC-012: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
 				funcName,
 				returnCount,
-				MAX_UNNAMED_RETURNS,
+				maxUnnamedReturns,
 			)
 		}
 	})

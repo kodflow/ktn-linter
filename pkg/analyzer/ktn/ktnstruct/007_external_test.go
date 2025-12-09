@@ -19,5 +19,27 @@ import (
 //   - t: contexte de test
 func TestStruct007(t *testing.T) {
 	// 1 violation: mismatch getter/champ
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer007, "struct007", 1)
+	tests := []struct {
+		name     string
+		analyzer string
+		expected int
+	}{
+		{
+			name:     "struct007_good_getter_naming",
+			analyzer: "struct007",
+			expected: 1,
+		},
+		{
+			name:     "struct007_verify_analyzer",
+			analyzer: "struct007",
+			expected: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Vérifie que bad.go génère exactement 1 erreur
+			testhelper.TestGoodBad(t, ktnstruct.Analyzer007, tt.analyzer, tt.expected)
+		})
+	}
 }

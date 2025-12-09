@@ -37,13 +37,13 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 
 		// Vérifier si le bloc if est vide
 		if ifStmt.Body == nil || len(ifStmt.Body.List) == 0 {
-			// Bloc vide, ignorer
+			// Retour si bloc vide
 			return
 		}
 
 		// Vérifier s'il y a une clause else
 		if ifStmt.Else == nil {
-			// Pas de else, ignorer
+			// Retour si pas de clause else
 			return
 		}
 
@@ -55,8 +55,9 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 
 		// Si sortie anticipée détectée
 		if hasEarlyExit {
-			// Vérifier si c'est un else if
+			// Détermination du type de else
 			elseType := getElseType(ifStmt.Else)
+			// Rapport d'erreur pour else inutile
 			pass.Reportf(
 				ifStmt.Else.Pos(),
 				"KTN-FUNC-003: %s inutile après %s, utiliser early return",

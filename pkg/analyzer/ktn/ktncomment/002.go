@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	// MIN_PACKAGE_COMMENT_LENGTH minimum length for a valid package comment
-	MIN_PACKAGE_COMMENT_LENGTH int = 3
+	// minPackageCommentLength minimum length for a valid package comment
+	minPackageCommentLength int = 3
 )
 
 // Analyzer002 checks that each Go file has a package description comment.
@@ -83,8 +83,8 @@ func checkFileComment(file *ast.File) bool {
 		text = strings.TrimSuffix(text, "*/")
 		text = strings.TrimSpace(text)
 
-		// Si le commentaire contient du texte (au moins MIN_PACKAGE_COMMENT_LENGTH chars)
-		if len(text) >= MIN_PACKAGE_COMMENT_LENGTH {
+		// Si le commentaire contient du texte (au moins minPackageCommentLength chars)
+		if len(text) >= minPackageCommentLength {
 			// Commentaire valide trouvé
 			return true
 		}

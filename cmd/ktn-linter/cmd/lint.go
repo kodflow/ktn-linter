@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	// INITIAL_FILE_EDITS_CAP initial capacity for file edits map
-	INITIAL_FILE_EDITS_CAP int = 16
-	// FILE_PERMISSION_RW read-write permission for file operations
-	FILE_PERMISSION_RW os.FileMode = 0644
+	// initialFileEditsCap initial capacity for file edits map
+	initialFileEditsCap int = 16
+	// filePermissionRw read-write permission for file operations
+	filePermissionRw os.FileMode = 0644
 )
 
 // diagWithFset associe un diagnostic avec son FileSet et son analyseur
@@ -505,7 +505,7 @@ func applyFixes(diagnostics []diagWithFset) int {
 //   - map[string][]textEdit: éditions groupées par fichier
 //   - int: nombre de fixes skippés
 func collectSafeEdits(diagnostics []diagWithFset, safeAnalyzers map[string]bool) (map[string][]textEdit, int) {
-	fileEdits := make(map[string][]textEdit, INITIAL_FILE_EDITS_CAP)
+	fileEdits := make(map[string][]textEdit, initialFileEditsCap)
 	skippedCount := 0
 
 	// Parcourir tous les diagnostics
@@ -649,7 +649,7 @@ func applyEditsToFile(filename string, edits []textEdit) bool {
 	}
 
 	// Write back to file with same permissions
-	err = os.WriteFile(filename, result, FILE_PERMISSION_RW)
+	err = os.WriteFile(filename, result, filePermissionRw)
 	// Vérification de la condition
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", filename, err)

@@ -40,8 +40,8 @@ func TestFormatterConstants(t *testing.T) {
 		check func() bool
 		msg   string
 	}{
-		{name: "RED not empty", check: func() bool { return formatter.RED != "" }, msg: "RED should not be empty"},
-		{name: "INITIAL_FILE_MAP_CAP positive", check: func() bool { return formatter.INITIAL_FILE_MAP_CAP > 0 }, msg: "INITIAL_FILE_MAP_CAP should be > 0"},
+		{name: "Red not empty", check: func() bool { return formatter.Red != "" }, msg: "Red should not be empty"},
+		{name: "InitialFileMapCap positive", check: func() bool { return formatter.InitialFileMapCap > 0 }, msg: "InitialFileMapCap should be > 0"},
 	}
 
 	for _, tt := range tests {

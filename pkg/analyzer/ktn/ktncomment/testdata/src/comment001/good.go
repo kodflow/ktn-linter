@@ -2,18 +2,18 @@
 package comment001
 
 const (
-	// DEFAULT_VALUE valeur par défaut pour les exemples
-	DEFAULT_VALUE int = 42
-	// MAX_COUNTER valeur maximale du compteur
-	MAX_COUNTER int = 100
-	// MULTIPLIER multiplicateur pour les calculs
-	MULTIPLIER int = 2
+	// defaultValue valeur par défaut pour les exemples
+	defaultValue int = 42
+	// maxCounter valeur maximale du compteur
+	maxCounter int = 100
+	// multiplier multiplicateur pour les calculs
+	multiplier int = 2
 )
 
 // goodFunctionWithShortComments demonstrates proper comment length.
 func goodFunctionWithShortComments() {
 	// Short comment within limit
-	x := DEFAULT_VALUE
+	x := defaultValue
 	_ = x
 }
 
@@ -23,14 +23,14 @@ func goodMultipleShortComments() {
 	y := "test"
 
 	// Set counter
-	z := MAX_COUNTER
+	z := maxCounter
 	_, _ = y, z
 }
 
 // goodNoInlineComments has no inline comments.
 func goodNoInlineComments() {
 	x := 1
-	y := MULTIPLIER
+	y := multiplier
 	_ = x + y
 }
 
@@ -46,6 +46,7 @@ func goodExactly80Chars() {
 // to span multiple lines without triggering the rule since
 // each individual line stays within the 80 character limit.
 func goodMultiLineDocComment() {
+	// Retour de la fonction
 	return
 }
 

@@ -27,22 +27,43 @@ func createTempGoFile(t *testing.T, content string) string {
 // Test_runAnalyzerInternal teste le comportement interne de RunAnalyzer.
 // Note: Public API tests are in helper_external_test.go
 func Test_runAnalyzerInternal(t *testing.T) {
-	// Création d'un analyzer de test simple
-	testAnalyzer := &analysis.Analyzer{
-		Name: "test",
-		Doc:  "Test analyzer",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour de la fonction
-			return nil, nil
+	tests := []struct {
+		name             string
+		content          string
+		expectedDiagCount int
+	}{
+		{
+			name:             "valid go file with no errors",
+			content:          "package test\n\nfunc Example() {}\n",
+			expectedDiagCount: 0,
+		},
+		{
+			name:             "another valid go file",
+			content:          "package test\n\nfunc AnotherExample() int { return 42 }\n",
+			expectedDiagCount: 0,
 		},
 	}
 
-	// Test avec un fichier Go valide
-	tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
-	diags := RunAnalyzer(t, testAnalyzer, tmpFile)
-	// Vérification que le slice est vide (peut être nil ou vide)
-	if len(diags) != 0 {
-		t.Errorf("Expected 0 diagnostics, got %d", len(diags))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Création d'un analyzer de test simple
+			testAnalyzer := &analysis.Analyzer{
+				Name: "test",
+				Doc:  "Test analyzer",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour de la fonction
+					return nil, nil
+				},
+			}
+
+			// Test avec un fichier Go valide
+			tmpFile := createTempGoFile(t, tt.content)
+			diags := RunAnalyzer(t, testAnalyzer, tmpFile)
+			// Vérification que le slice est vide (peut être nil ou vide)
+			if len(diags) != tt.expectedDiagCount {
+				t.Errorf("Expected %d diagnostics, got %d", tt.expectedDiagCount, len(diags))
+			}
+		})
 	}
 }
 
@@ -83,107 +104,197 @@ func TestRunAnalyzerWithDiagnostics(t *testing.T) {
 
 // TestRunAnalyzerWithRequiredAnalyzer teste avec un analyzer requis.
 func TestRunAnalyzerWithRequiredAnalyzer(t *testing.T) {
-	// Analyzer qui nécessite inspect
-	testAnalyzer := &analysis.Analyzer{
-		Name:     "test-with-require",
-		Doc:      "Test analyzer with requires",
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Utilisation de l'inspector
-			_ = pass.ResultOf[inspect.Analyzer]
-			// Retour de la fonction
-			return nil, nil
+	tests := []struct {
+		name             string
+		content          string
+		expectedDiagCount int
+	}{
+		{
+			name:             "analyzer with inspect requirement",
+			content:          "package test\n\nfunc Example() {}\n",
+			expectedDiagCount: 0,
+		},
+		{
+			name:             "analyzer with inspect requirement on complex code",
+			content:          "package test\n\nfunc Complex() { if true { return } }\n",
+			expectedDiagCount: 0,
 		},
 	}
 
-	// Test avec un fichier Go valide
-	tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
-	diags := RunAnalyzer(t, testAnalyzer, tmpFile)
-	// Vérification qu'aucun diagnostic n'est généré
-	if len(diags) != 0 {
-		t.Errorf("Expected 0 diagnostics, got %d", len(diags))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Analyzer qui nécessite inspect
+			testAnalyzer := &analysis.Analyzer{
+				Name:     "test-with-require",
+				Doc:      "Test analyzer with requires",
+				Requires: []*analysis.Analyzer{inspect.Analyzer},
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Utilisation de l'inspector
+					_ = pass.ResultOf[inspect.Analyzer]
+					// Retour de la fonction
+					return nil, nil
+				},
+			}
+
+			// Test avec un fichier Go valide
+			tmpFile := createTempGoFile(t, tt.content)
+			diags := RunAnalyzer(t, testAnalyzer, tmpFile)
+			// Vérification qu'aucun diagnostic n'est généré
+			if len(diags) != tt.expectedDiagCount {
+				t.Errorf("Expected %d diagnostics, got %d", tt.expectedDiagCount, len(diags))
+			}
+		})
 	}
 }
 
 // TestRunAnalyzerError teste le cas où l'analyzer retourne une erreur.
 func TestRunAnalyzerError(t *testing.T) {
-	// Utilisation d'un mock qui ne fail pas vraiment
-	mockT := &MockTestingT{}
-
-	// Analyzer qui retourne une erreur
-	errorAnalyzer := &analysis.Analyzer{
-		Name: "test-error",
-		Doc:  "Test analyzer that errors",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour avec erreur
-			return nil, errors.New("analyzer error")
+	tests := []struct {
+		name             string
+		content          string
+		analyzerError    string
+		expectFatalfCall bool
+	}{
+		{
+			name:             "analyzer returns error",
+			content:          "package test\n\nfunc Example() {}\n",
+			analyzerError:    "analyzer error",
+			expectFatalfCall: true,
+		},
+		{
+			name:             "analyzer returns different error",
+			content:          "package test\n\nfunc Test() {}\n",
+			analyzerError:    "another error",
+			expectFatalfCall: true,
 		},
 	}
 
-	// Appel qui devrait trigger Fatalf
-	tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
-	RunAnalyzer(mockT, errorAnalyzer, tmpFile)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Utilisation d'un mock qui ne fail pas vraiment
+			mockT := &MockTestingT{}
 
-	// Vérification que Fatalf a été appelé
-	if !mockT.FatalfCalled {
-		t.Error("Expected Fatalf to be called when analyzer returns error")
+			// Analyzer qui retourne une erreur
+			errorAnalyzer := &analysis.Analyzer{
+				Name: "test-error",
+				Doc:  "Test analyzer that errors",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour avec erreur
+					return nil, errors.New(tt.analyzerError)
+				},
+			}
+
+			// Appel qui devrait trigger Fatalf
+			tmpFile := createTempGoFile(t, tt.content)
+			RunAnalyzer(mockT, errorAnalyzer, tmpFile)
+
+			// Vérification que Fatalf a été appelé
+			if tt.expectFatalfCall && !mockT.FatalfCalled {
+				t.Error("Expected Fatalf to be called when analyzer returns error")
+			}
+		})
 	}
 }
 
 // TestRunAnalyzerRequiredError teste l'erreur d'un analyzer requis.
 func TestRunAnalyzerRequiredError(t *testing.T) {
-	mockT := &MockTestingT{}
-
-	// Analyzer requis qui fail
-	failingRequired := &analysis.Analyzer{
-		Name: "failing-required",
-		Doc:  "Failing required analyzer",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour avec erreur
-			return nil, errors.New("required analyzer failed")
+	tests := []struct {
+		name             string
+		content          string
+		errorMessage     string
+		expectFatalfCall bool
+	}{
+		{
+			name:             "required analyzer fails",
+			content:          "package test\n\nfunc Example() {}\n",
+			errorMessage:     "required analyzer failed",
+			expectFatalfCall: true,
+		},
+		{
+			name:             "required analyzer fails with different error",
+			content:          "package test\n\nfunc Test() {}\n",
+			errorMessage:     "another failure",
+			expectFatalfCall: true,
 		},
 	}
 
-	// Analyzer qui dépend du failing
-	testAnalyzer := &analysis.Analyzer{
-		Name:     "test-with-failing-require",
-		Doc:      "Test with failing require",
-		Requires: []*analysis.Analyzer{failingRequired},
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Ne devrait jamais être appelé
-			return nil, nil
-		},
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := &MockTestingT{}
 
-	// Appel qui devrait trigger Fatalf
-	tmpFile := createTempGoFile(t, "package test\n\nfunc Example() {}\n")
-	RunAnalyzer(mockT, testAnalyzer, tmpFile)
+			// Analyzer requis qui fail
+			failingRequired := &analysis.Analyzer{
+				Name: "failing-required",
+				Doc:  "Failing required analyzer",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour avec erreur
+					return nil, errors.New(tt.errorMessage)
+				},
+			}
 
-	// Vérification que Fatalf a été appelé
-	if !mockT.FatalfCalled {
-		t.Error("Expected Fatalf to be called when required analyzer fails")
+			// Analyzer qui dépend du failing
+			testAnalyzer := &analysis.Analyzer{
+				Name:     "test-with-failing-require",
+				Doc:      "Test with failing require",
+				Requires: []*analysis.Analyzer{failingRequired},
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Ne devrait jamais être appelé
+					return nil, nil
+				},
+			}
+
+			// Appel qui devrait trigger Fatalf
+			tmpFile := createTempGoFile(t, tt.content)
+			RunAnalyzer(mockT, testAnalyzer, tmpFile)
+
+			// Vérification que Fatalf a été appelé
+			if tt.expectFatalfCall && !mockT.FatalfCalled {
+				t.Error("Expected Fatalf to be called when required analyzer fails")
+			}
+		})
 	}
 }
 
 // TestRunAnalyzerInvalidFile teste avec un fichier invalide.
 func TestRunAnalyzerInvalidFile(t *testing.T) {
-	mockT := &MockTestingT{}
-
-	testAnalyzer := &analysis.Analyzer{
-		Name: "test",
-		Doc:  "Test analyzer",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour de la fonction
-			return nil, nil
+	tests := []struct {
+		name             string
+		filename         string
+		expectFatalfCall bool
+	}{
+		{
+			name:             "nonexistent file",
+			filename:         "nonexistent_file.go",
+			expectFatalfCall: true,
+		},
+		{
+			name:             "another nonexistent file",
+			filename:         "/invalid/path/file.go",
+			expectFatalfCall: true,
 		},
 	}
 
-	// Fichier inexistant
-	RunAnalyzer(mockT, testAnalyzer, "nonexistent_file.go")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := &MockTestingT{}
 
-	// Vérification que Fatalf a été appelé
-	if !mockT.FatalfCalled {
-		t.Error("Expected Fatalf to be called for nonexistent file")
+			testAnalyzer := &analysis.Analyzer{
+				Name: "test",
+				Doc:  "Test analyzer",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour de la fonction
+					return nil, nil
+				},
+			}
+
+			// Fichier inexistant
+			RunAnalyzer(mockT, testAnalyzer, tt.filename)
+
+			// Vérification que Fatalf a été appelé
+			if tt.expectFatalfCall && !mockT.FatalfCalled {
+				t.Error("Expected Fatalf to be called for nonexistent file")
+			}
+		})
 	}
 }
 
@@ -229,90 +340,177 @@ func createTestDataStructure(t *testing.T, testDir, goodContent, badContent stri
 // Test_testGoodBadInternal teste le comportement interne de TestGoodBad.
 // Note: Public API tests are in helper_external_test.go
 func Test_testGoodBadInternal(t *testing.T) {
-	mockT := &MockTestingT{}
-
-	// Analyzer simple qui ne génère pas de diagnostic
-	goodAnalyzer := &analysis.Analyzer{
-		Name: "test-good",
-		Doc:  "Test analyzer",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour de la fonction
-			return nil, nil
+	tests := []struct {
+		name            string
+		testDir         string
+		goodContent     string
+		badContent      string
+		expectedErrors  int
+		expectErrorCall bool
+	}{
+		{
+			name:            "valid good and bad files",
+			testDir:         "test001",
+			goodContent:     "package test\n\nfunc Good() {}\n",
+			badContent:      "package test\n\nfunc Bad() {}\n",
+			expectedErrors:  0,
+			expectErrorCall: false,
+		},
+		{
+			name:            "another valid set of files",
+			testDir:         "test002",
+			goodContent:     "package test\n\nfunc AnotherGood() int { return 1 }\n",
+			badContent:      "package test\n\nfunc AnotherBad() int { return 2 }\n",
+			expectedErrors:  0,
+			expectErrorCall: false,
 		},
 	}
 
-	// Création de la structure testdata
-	createTestDataStructure(t, "test001",
-		"package test\n\nfunc Good() {}\n",
-		"package test\n\nfunc Bad() {}\n")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := &MockTestingT{}
 
-	// Test normal - ne devrait pas fail
-	TestGoodBad(mockT, goodAnalyzer, "test001", 0)
+			// Analyzer simple qui ne génère pas de diagnostic
+			goodAnalyzer := &analysis.Analyzer{
+				Name: "test-good",
+				Doc:  "Test analyzer",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour de la fonction
+					return nil, nil
+				},
+			}
 
-	// Vérification qu'aucune erreur n'a été appelée
-	if mockT.ErrorfCalled {
-		t.Error("Expected no errors for valid good.go and bad.go")
+			// Création de la structure testdata
+			createTestDataStructure(t, tt.testDir, tt.goodContent, tt.badContent)
+
+			// Test normal - ne devrait pas fail
+			TestGoodBad(mockT, goodAnalyzer, tt.testDir, tt.expectedErrors)
+
+			// Vérification qu'aucune erreur n'a été appelée
+			if tt.expectErrorCall && !mockT.ErrorfCalled {
+				t.Error("Expected Errorf to be called")
+			}
+			if !tt.expectErrorCall && mockT.ErrorfCalled {
+				t.Error("Expected no errors for valid good.go and bad.go")
+			}
+		})
 	}
 }
 
 // TestTestGoodBadWithErrors teste TestGoodBad avec mauvais nombre d'erreurs.
 func TestTestGoodBadWithErrors(t *testing.T) {
-	mockT := &MockTestingT{}
-
-	// Analyzer qui génère toujours 1 diagnostic
-	badAnalyzer := &analysis.Analyzer{
-		Name: "test-bad",
-		Doc:  "Test analyzer with diagnostics",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Génération d'un diagnostic sur tous les fichiers
-			pass.Report(analysis.Diagnostic{
-				Pos:     pass.Files[0].Package,
-				Message: "test error",
-			})
-			// Retour de la fonction
-			return nil, nil
+	tests := []struct {
+		name             string
+		testDir          string
+		goodContent      string
+		badContent       string
+		expectedErrors   int
+		expectErrorCall  bool
+	}{
+		{
+			name:             "good file has unexpected errors",
+			testDir:          "test002",
+			goodContent:      "package test\n\nfunc Good() {}\n",
+			badContent:       "package test\n\nfunc Bad() {}\n",
+			expectedErrors:   0,
+			expectErrorCall:  true,
+		},
+		{
+			name:             "another error detection case",
+			testDir:          "test003",
+			goodContent:      "package test\n\nfunc AnotherGood() {}\n",
+			badContent:       "package test\n\nfunc AnotherBad() {}\n",
+			expectedErrors:   0,
+			expectErrorCall:  true,
 		},
 	}
 
-	// Création de la structure testdata
-	createTestDataStructure(t, "test002",
-		"package test\n\nfunc Good() {}\n",
-		"package test\n\nfunc Bad() {}\n")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := &MockTestingT{}
 
-	// Test qui devrait détecter des erreurs sur good.go
-	TestGoodBad(mockT, badAnalyzer, "test002", 0)
+			// Analyzer qui génère toujours 1 diagnostic
+			badAnalyzer := &analysis.Analyzer{
+				Name: "test-bad",
+				Doc:  "Test analyzer with diagnostics",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Génération d'un diagnostic sur tous les fichiers
+					pass.Report(analysis.Diagnostic{
+						Pos:     pass.Files[0].Package,
+						Message: "test error",
+					})
+					// Retour de la fonction
+					return nil, nil
+				},
+			}
 
-	// Vérification qu'Errorf a été appelé
-	if !mockT.ErrorfCalled {
-		t.Error("Expected Errorf to be called when good.go has unexpected errors")
+			// Création de la structure testdata
+			createTestDataStructure(t, tt.testDir, tt.goodContent, tt.badContent)
+
+			// Test qui devrait détecter des erreurs sur good.go
+			TestGoodBad(mockT, badAnalyzer, tt.testDir, tt.expectedErrors)
+
+			// Vérification qu'Errorf a été appelé
+			if tt.expectErrorCall && !mockT.ErrorfCalled {
+				t.Error("Expected Errorf to be called when good.go has unexpected errors")
+			}
+		})
 	}
 }
 
 // TestTestGoodBadWrongErrorCount teste avec mauvais nombre d'erreurs dans bad.go.
 func TestTestGoodBadWrongErrorCount(t *testing.T) {
-	mockT := &MockTestingT{}
-
-	// Analyzer qui ne génère jamais de diagnostic
-	noErrorAnalyzer := &analysis.Analyzer{
-		Name: "test-no-error",
-		Doc:  "Test analyzer with no errors",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour de la fonction sans diagnostic
-			return nil, nil
+	tests := []struct {
+		name             string
+		testDir          string
+		goodContent      string
+		badContent       string
+		expectedErrors   int
+		expectErrorCall  bool
+	}{
+		{
+			name:             "bad file has wrong error count",
+			testDir:          "test003",
+			goodContent:      "package test\n\nfunc Good() {}\n",
+			badContent:       "package test\n\nfunc Bad() {}\n",
+			expectedErrors:   10,
+			expectErrorCall:  true,
+		},
+		{
+			name:             "another wrong error count case",
+			testDir:          "test004",
+			goodContent:      "package test\n\nfunc GoodFunc() {}\n",
+			badContent:       "package test\n\nfunc BadFunc() {}\n",
+			expectedErrors:   5,
+			expectErrorCall:  true,
 		},
 	}
 
-	// Création de la structure testdata
-	createTestDataStructure(t, "test003",
-		"package test\n\nfunc Good() {}\n",
-		"package test\n\nfunc Bad() {}\n")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockT := &MockTestingT{}
 
-	// Test qui attend 10 erreurs mais n'en aura 0
-	TestGoodBad(mockT, noErrorAnalyzer, "test003", 10)
+			// Analyzer qui ne génère jamais de diagnostic
+			noErrorAnalyzer := &analysis.Analyzer{
+				Name: "test-no-error",
+				Doc:  "Test analyzer with no errors",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour de la fonction sans diagnostic
+					return nil, nil
+				},
+			}
 
-	// Vérification qu'Errorf a été appelé
-	if !mockT.ErrorfCalled {
-		t.Error("Expected Errorf to be called when bad.go has wrong error count")
+			// Création de la structure testdata
+			createTestDataStructure(t, tt.testDir, tt.goodContent, tt.badContent)
+
+			// Test qui attend des erreurs mais n'en aura 0
+			TestGoodBad(mockT, noErrorAnalyzer, tt.testDir, tt.expectedErrors)
+
+			// Vérification qu'Errorf a été appelé
+			if tt.expectErrorCall && !mockT.ErrorfCalled {
+				t.Error("Expected Errorf to be called when bad.go has wrong error count")
+			}
+		})
 	}
 }
 
@@ -411,30 +609,54 @@ func TestRunAnalyzerWithReadFile(t *testing.T) {
 
 // TestRunAnalyzerWithTypeError teste que Error callback est appelé.
 func TestRunAnalyzerWithTypeError(t *testing.T) {
-	// Simple analyzer - le Error callback sera appelé lors du type checking
-	testAnalyzer := &analysis.Analyzer{
-		Name: "test-type-error",
-		Doc:  "Test with type error",
-		Run: func(pass *analysis.Pass) (any, error) {
-			// Retour de la fonction
-			return nil, nil
-		},
-	}
-
-	// Test avec un fichier qui a une erreur de type
-	// Le Error callback sera appelé pendant types.Config.Check()
-	tmpFile := createTempGoFile(t, `package test
+	tests := []struct {
+		name             string
+		content          string
+		expectedDiagCount int
+	}{
+		{
+			name: "type error ignored",
+			content: `package test
 
 const VALID_CONST string = "valid"
 
 // Type error: cannot use string as int
 var wrongType int = "this is a string"
-`)
-	diags := RunAnalyzer(t, testAnalyzer, tmpFile)
-	// Le test ne devrait pas planter même avec une erreur de type
-	// car Error callback ignore les erreurs
-	if len(diags) != 0 {
-		t.Errorf("Expected 0 diagnostics (type errors are ignored), got %d", len(diags))
+`,
+			expectedDiagCount: 0,
+		},
+		{
+			name: "another type error ignored",
+			content: `package test
+
+var anotherWrongType bool = 42
+`,
+			expectedDiagCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Simple analyzer - le Error callback sera appelé lors du type checking
+			testAnalyzer := &analysis.Analyzer{
+				Name: "test-type-error",
+				Doc:  "Test with type error",
+				Run: func(pass *analysis.Pass) (any, error) {
+					// Retour de la fonction
+					return nil, nil
+				},
+			}
+
+			// Test avec un fichier qui a une erreur de type
+			// Le Error callback sera appelé pendant types.Config.Check()
+			tmpFile := createTempGoFile(t, tt.content)
+			diags := RunAnalyzer(t, testAnalyzer, tmpFile)
+			// Le test ne devrait pas planter même avec une erreur de type
+			// car Error callback ignore les erreurs
+			if len(diags) != tt.expectedDiagCount {
+				t.Errorf("Expected %d diagnostics (type errors are ignored), got %d", tt.expectedDiagCount, len(diags))
+			}
+		})
 	}
 }
 

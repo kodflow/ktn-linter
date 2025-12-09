@@ -80,27 +80,27 @@ func getSourceFileForTest(filename string) string {
 	var base string
 	var ok bool
 
-	// Vérification du suffixe (convention internal/external/bench/integration)
+	// Vérification du suffixe internal
 	if base, ok = strings.CutSuffix(filename, "_internal_test.go"); ok {
-		// Fichier _internal_test.go → chercher .go
+		// Retour du fichier source
 		return base + ".go"
 	}
-	// Cas alternatif: external test
+	// Vérification du suffixe external
 	if base, ok = strings.CutSuffix(filename, "_external_test.go"); ok {
-		// Fichier _external_test.go → chercher .go
+		// Retour du fichier source
 		return base + ".go"
 	}
-	// Cas alternatif: bench test
+	// Vérification du suffixe bench
 	if base, ok = strings.CutSuffix(filename, "_bench_test.go"); ok {
-		// Fichier _bench_test.go → chercher .go
+		// Retour du fichier source
 		return base + ".go"
 	}
-	// Cas alternatif: integration test
+	// Vérification du suffixe integration
 	if base, ok = strings.CutSuffix(filename, "_integration_test.go"); ok {
-		// Fichier _integration_test.go → chercher .go
+		// Retour du fichier source
 		return base + ".go"
 	}
-	// Cas par défaut: standard test
+	// Retour pour fichier test standard
 	return strings.TrimSuffix(filename, "_test.go") + ".go"
 }
 

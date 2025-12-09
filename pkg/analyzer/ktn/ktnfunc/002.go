@@ -62,11 +62,14 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 				nameCount := len(field.Names)
 				// Si pas de noms explicites, compter 1
 				if nameCount == 0 {
+					// Assignation de 1 si pas de noms
 					nameCount = 1
 				}
+				// Ajout au compteur de contextes
 				contextCount += nameCount
 				// Enregistrer la première position trouvée
 				if contextParamIndex == -1 {
+					// Enregistrement de la position
 					contextParamIndex = i
 				}
 			}
@@ -74,6 +77,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 
 		// Signaler si plus d'un context.Context
 		if contextCount > 1 {
+			// Rapport d'erreur pour contextes multiples
 			pass.Reportf(
 				funcDecl.Type.Params.Pos(),
 				"KTN-FUNC-002: la fonction '%s' a %d paramètres context.Context, ce qui est inhabituel",
@@ -84,6 +88,7 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 
 		// If there's a context parameter and it's not first, report error
 		if contextParamIndex > 0 {
+			// Rapport d'erreur pour position incorrecte
 			pass.Reportf(
 				funcDecl.Type.Params.List[contextParamIndex].Pos(),
 				"KTN-FUNC-002: context.Context doit être le premier paramètre de la fonction '%s'",
@@ -129,15 +134,18 @@ func isContextTypeByType(t types.Type) bool {
 	named, ok := t.(*types.Named)
 	// Si ce n'est pas un type nommé, ce n'est pas context.Context
 	if !ok {
+		// Retour false si pas un type nommé
 		return false
 	}
 	obj := named.Obj()
 	// Si pas d'objet associé, invalide
 	if obj == nil {
+		// Retour false si pas d'objet
 		return false
 	}
 	// Check if it's from context package
 	if isContextObj(obj) {
+		// Retour true si objet context.Context
 		return true
 	}
 	// Check underlying type for aliases
@@ -167,6 +175,7 @@ func isContextObj(obj *types.TypeName) bool {
 func isContextUnderlying(t types.Type, obj *types.TypeName) bool {
 	// Si le package n'est pas défini, pas d'alias possible
 	if obj.Pkg() == nil {
+		// Retour false si package non défini
 		return false
 	}
 	underlying := t.Underlying()
@@ -174,6 +183,7 @@ func isContextUnderlying(t types.Type, obj *types.TypeName) bool {
 	underNamed, ok := underlying.(*types.Named)
 	// Si pas un type nommé, retour false
 	if !ok {
+		// Retour false si type sous-jacent pas nommé
 		return false
 	}
 	underObj := underNamed.Obj()

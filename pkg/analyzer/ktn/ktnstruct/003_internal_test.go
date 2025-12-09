@@ -235,8 +235,8 @@ func Test_constants(t *testing.T) {
 		got      int
 		expected int
 	}{
-		{name: "INITIAL_STRUCT_TYPES_CAP", got: INITIAL_STRUCT_TYPES_CAP, expected: 32},
-		{name: "GET_PREFIX_LEN", got: GET_PREFIX_LEN, expected: 3},
+		{name: "initialStructTypesCap", got: initialStructTypesCap, expected: 32},
+		{name: "getPrefixLen", got: getPrefixLen, expected: 3},
 	}
 
 	for _, tt := range tests {

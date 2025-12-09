@@ -34,38 +34,43 @@ func runTest007(pass *analysis.Pass) (any, error) {
 		(*ast.CallExpr)(nil),
 	}
 
+	// Parcourir les appels
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		callExpr := n.(*ast.CallExpr)
 
-		// Vérifier si c'est un appel de méthode
+		// Vérifier si appel de méthode
 		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
-		// Pas un appel de méthode, continuer
+		// Vérification sélecteur
 		if !ok {
+			// Retour si pas sélecteur
 			return
 		}
 
-		// Vérifier si la méthode s'appelle "Skip", "Skipf" ou "SkipNow"
+		// Vérifier nom méthode
 		methodName := selExpr.Sel.Name
-		// Vérification de la condition
+		// Vérification méthode Skip
 		if !isSkipMethod(methodName) {
+			// Retour si pas Skip
 			return
 		}
 
-		// Vérifier si le receiver est un identifiant simple
+		// Vérifier receiver
 		ident, ok := selExpr.X.(*ast.Ident)
-		// Pas un identifiant simple, continuer
+		// Vérification identifiant
 		if !ok {
+			// Retour si pas identifiant
 			return
 		}
 
-		// Vérifier si c'est dans un fichier de test
+		// Vérifier fichier de test
 		filename := pass.Fset.Position(n.Pos()).Filename
-		// Vérification de la condition
+		// Vérification fichier test
 		if !shared.IsTestFile(filename) {
+			// Retour si pas test
 			return
 		}
 
-		// Reporter l'erreur - AUCUNE exception
+		// Signaler l'erreur
 		pass.Reportf(
 			callExpr.Pos(),
 			"KTN-TEST-007: utilisation de %s.%s() interdite. "+

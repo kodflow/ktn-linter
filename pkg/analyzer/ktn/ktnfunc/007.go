@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	// LAZY_FIELDS_CAP est la capacité initiale pour la map des champs lazy load
-	LAZY_FIELDS_CAP int = 4
+	// lazyFieldsCap est la capacité initiale pour la map des champs lazy load
+	lazyFieldsCap int = 4
 )
 
 // Analyzer007 checks that getter functions don't have side effects
@@ -43,15 +43,18 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 		funcDecl := n.(*ast.FuncDecl)
 		// Skip test functions
 		if shared.IsTestFunction(funcDecl) {
+			// Retour pour ignorer les fonctions de test
 			return
 		}
 		funcName := funcDecl.Name.Name
 		// Skip if not a getter (Get*, Is*, Has*)
 		if !isGetter(funcName) {
+			// Retour si pas un getter
 			return
 		}
 		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
+			// Retour si pas de corps
 			return
 		}
 		// Check for side effects in getter
@@ -99,6 +102,7 @@ func reportAssignSideEffect(pass *analysis.Pass, stmt *ast.AssignStmt, funcName 
 		if hasSideEffect(lhs) {
 			// Skip if it's a lazy load assignment
 			if isLazyLoadAssignment(lhs, lazyLoadFields) {
+				// Continuer si lazy load valide
 				continue
 			}
 			pass.Reportf(
@@ -176,18 +180,20 @@ func hasSideEffect(expr ast.Expr) bool {
 // Returns:
 //   - map[string]bool: map of field names that could be lazy loaded
 func collectLazyLoadFields(body *ast.BlockStmt) map[string]bool {
-	lazyFields := make(map[string]bool, LAZY_FIELDS_CAP)
+	lazyFields := make(map[string]bool, lazyFieldsCap)
 	// Inspect the body for nil checks
 	ast.Inspect(body, func(node ast.Node) bool {
 		ifStmt, ok := node.(*ast.IfStmt)
 		// Si pas un if statement, continuer
 		if !ok {
+			// Retour true pour continuer l'inspection
 			return true
 		}
 		// Check if condition is "field == nil"
 		binary, ok := ifStmt.Cond.(*ast.BinaryExpr)
 		// Si pas une expression binaire, continuer
 		if !ok {
+			// Retour true pour continuer l'inspection
 			return true
 		}
 		// Vérifier si c'est une comparaison avec nil

@@ -3,7 +3,6 @@ package ktnstruct
 
 import (
 	"go/ast"
-	"go/types"
 	"strings"
 	"unicode"
 
@@ -13,8 +12,8 @@ import (
 )
 
 const (
-	// METHODS_MAP_CAP est la capacité initiale pour la map des méthodes
-	METHODS_MAP_CAP int = 16
+	// methodsMapCap est la capacité initiale pour la map des méthodes
+	methodsMapCap int = 16
 )
 
 // Analyzer007 checks getter/setter naming conventions.
@@ -46,7 +45,7 @@ func runStruct007(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter les structs avec leurs champs privés
-	structFields := collectStructPrivateFields(pass, insp)
+	structFields := collectStructPrivateFields(insp)
 
 	// Collecter les méthodes avec infos détaillées
 	methods := collectMethodsDetailed(pass, insp)
@@ -68,13 +67,12 @@ type structFieldsInfo struct {
 // collectStructPrivateFields collecte les champs privés des structs exportées.
 //
 // Params:
-//   - pass: contexte d'analyse
 //   - insp: inspecteur AST
 //
 // Returns:
 //   - map[string]structFieldsInfo: map nom struct -> champs privés
-func collectStructPrivateFields(pass *analysis.Pass, insp *inspector.Inspector) map[string]structFieldsInfo {
-	result := make(map[string]structFieldsInfo)
+func collectStructPrivateFields(insp *inspector.Inspector) map[string]structFieldsInfo {
+	result := make(map[string]structFieldsInfo, methodsMapCap)
 
 	nodeFilter := []ast.Node{
 		(*ast.TypeSpec)(nil),
@@ -87,16 +85,18 @@ func collectStructPrivateFields(pass *analysis.Pass, insp *inspector.Inspector) 
 		structType, ok := typeSpec.Type.(*ast.StructType)
 		// Si pas une struct, ignorer
 		if !ok {
+			// Retour anticipé
 			return
 		}
 
 		// Ignorer les structs privées
 		if !ast.IsExported(typeSpec.Name.Name) {
+			// Retour anticipé
 			return
 		}
 
 		// Collecter les champs privés
-		privateFields := make(map[string]bool)
+		privateFields := make(map[string]bool, methodsMapCap)
 		// Vérifier si la struct a des champs
 		if structType.Fields != nil {
 			// Parcourir les champs
@@ -132,7 +132,7 @@ func collectStructPrivateFields(pass *analysis.Pass, insp *inspector.Inspector) 
 // Returns:
 //   - map[string][]methodInfo: map receiver -> liste de méthodes
 func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector) map[string][]methodInfo {
-	methods := make(map[string][]methodInfo, METHODS_MAP_CAP)
+	methods := make(map[string][]methodInfo, methodsMapCap)
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
@@ -143,6 +143,7 @@ func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector) map[
 
 		// Vérifier si c'est une méthode
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
+			// Retour anticipé
 			return
 		}
 
@@ -150,6 +151,7 @@ func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector) map[
 		receiverType := extractReceiverType(funcDecl.Recv.List[0].Type)
 		// Si pas de receiver valide, ignorer
 		if receiverType == "" {
+			// Retour anticipé
 			return
 		}
 
@@ -180,11 +182,13 @@ func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector) map[
 func extractSimpleReturnType(pass *analysis.Pass, funcDecl *ast.FuncDecl) string {
 	// Pas de résultats
 	if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) == 0 {
+		// Retour vide
 		return ""
 	}
 
 	// Si plus d'un résultat, ignorer
 	if len(funcDecl.Type.Results.List) > 1 {
+		// Retour vide
 		return ""
 	}
 
@@ -192,6 +196,7 @@ func extractSimpleReturnType(pass *analysis.Pass, funcDecl *ast.FuncDecl) string
 	result := funcDecl.Type.Results.List[0]
 	// Utiliser le type info pour obtenir le nom du type
 	if tv, ok := pass.TypesInfo.Types[result.Type]; ok {
+		// Retour du type trouvé
 		return tv.Type.String()
 	}
 
@@ -230,12 +235,14 @@ func extractReceiverType(expr ast.Expr) string {
 //   - structFields: map des structs avec champs privés
 //   - methods: map des méthodes par receiver
 func checkNamingConventions(pass *analysis.Pass, structFields map[string]structFieldsInfo, methods map[string][]methodInfo) {
+	// Variable pour stocker les infos de struct
+	var structInfo structFieldsInfo
 	// Parcourir les méthodes
 	for receiverType, methodList := range methods {
 		// Récupérer les champs de la struct
-		structInfo, ok := structFields[receiverType]
+		structInfo = structFields[receiverType]
 		// Si pas de struct connue, ignorer
-		if !ok {
+		if structInfo.privateFields == nil {
 			continue
 		}
 
@@ -248,34 +255,6 @@ func checkNamingConventions(pass *analysis.Pass, structFields map[string]structF
 	}
 }
 
-// checkGetPrefixGetter vérifie qu'un getter n'a pas le préfixe Get.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - method: informations sur la méthode
-//   - structInfo: informations sur la struct
-func checkGetPrefixGetter(pass *analysis.Pass, method methodInfo, structInfo structFieldsInfo) {
-	// Vérifier si c'est un getter avec préfixe Get
-	if !strings.HasPrefix(method.name, "Get") {
-		return
-	}
-
-	// Extraire le nom du champ attendu
-	fieldName := strings.TrimPrefix(method.name, "Get")
-	// Convertir en lowercase pour le champ privé
-	privateField := strings.ToLower(fieldName[:1]) + fieldName[1:]
-
-	// Vérifier si le champ existe
-	if structInfo.privateFields[privateField] {
-		pass.Reportf(
-			method.funcDecl.Pos(),
-			"KTN-STRUCT-007: getter '%s()' devrait être nommé '%s()' (sans préfixe Get)",
-			method.name,
-			fieldName,
-		)
-	}
-}
-
 // checkGetterFieldMismatch vérifie la cohérence entre nom du getter et champ retourné.
 //
 // Params:
@@ -285,11 +264,13 @@ func checkGetPrefixGetter(pass *analysis.Pass, method methodInfo, structInfo str
 func checkGetterFieldMismatch(pass *analysis.Pass, method methodInfo, structInfo structFieldsInfo) {
 	// Ignorer les méthodes sans corps
 	if method.funcDecl.Body == nil {
+		// Retour anticipé
 		return
 	}
 
 	// Ignorer les méthodes avec trop de statements
 	if len(method.funcDecl.Body.List) != 1 {
+		// Retour anticipé
 		return
 	}
 
@@ -297,6 +278,7 @@ func checkGetterFieldMismatch(pass *analysis.Pass, method methodInfo, structInfo
 	retStmt, ok := method.funcDecl.Body.List[0].(*ast.ReturnStmt)
 	// Pas un return simple
 	if !ok || len(retStmt.Results) != 1 {
+		// Retour anticipé
 		return
 	}
 
@@ -304,11 +286,13 @@ func checkGetterFieldMismatch(pass *analysis.Pass, method methodInfo, structInfo
 	fieldName := extractReturnedField(retStmt.Results[0])
 	// Pas un champ retourné
 	if fieldName == "" {
+		// Retour anticipé
 		return
 	}
 
 	// Vérifier si le champ est privé
 	if !structInfo.privateFields[fieldName] {
+		// Retour anticipé
 		return
 	}
 
@@ -339,162 +323,16 @@ func extractReturnedField(expr ast.Expr) string {
 	sel, ok := expr.(*ast.SelectorExpr)
 	// Pas un sélecteur
 	if !ok {
+		// Retour vide
 		return ""
 	}
 
 	// Vérifier si X est un identifiant (receiver)
 	if _, ok := sel.X.(*ast.Ident); !ok {
+		// Retour vide
 		return ""
 	}
 
 	// Retour du nom du champ
 	return sel.Sel.Name
 }
-
-// setterInfo contient les informations sur un setter.
-type setterInfo struct {
-	name     string
-	funcDecl *ast.FuncDecl
-}
-
-// checkSetterNaming vérifie le nommage des setters.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - method: informations sur la méthode
-//   - structInfo: informations sur la struct
-func checkSetterNaming(pass *analysis.Pass, method methodInfo, structInfo structFieldsInfo) {
-	// Ignorer les méthodes sans corps
-	if method.funcDecl.Body == nil {
-		return
-	}
-
-	// Vérifier si la méthode modifie un champ
-	modifiedField := findModifiedField(method.funcDecl.Body)
-	// Pas de champ modifié
-	if modifiedField == "" {
-		return
-	}
-
-	// Vérifier si le champ est privé
-	if !structInfo.privateFields[modifiedField] {
-		return
-	}
-
-	// Calculer le nom de setter attendu
-	expectedSetter := "Set" + strings.ToUpper(modifiedField[:1]) + modifiedField[1:]
-
-	// Si le nom ne correspond pas, signaler
-	if method.name != expectedSetter {
-		pass.Reportf(
-			method.funcDecl.Pos(),
-			"KTN-STRUCT-007: setter pour '%s' devrait être nommé '%s()', pas '%s()'",
-			modifiedField,
-			expectedSetter,
-			method.name,
-		)
-	}
-}
-
-// findModifiedField cherche un champ modifié dans le corps de la fonction.
-//
-// Params:
-//   - body: corps de la fonction
-//
-// Returns:
-//   - string: nom du champ modifié ou vide
-func findModifiedField(body *ast.BlockStmt) string {
-	// Vérifier si le corps est nil
-	if body == nil {
-		return ""
-	}
-
-	// Parcourir les statements
-	for _, stmt := range body.List {
-		// Vérifier si c'est une assignation
-		assign, ok := stmt.(*ast.AssignStmt)
-		// Pas une assignation
-		if !ok {
-			continue
-		}
-
-		// Vérifier si le LHS est un sélecteur
-		if len(assign.Lhs) > 0 {
-			// Extraire le champ assigné
-			if sel, ok := assign.Lhs[0].(*ast.SelectorExpr); ok {
-				// Vérifier si X est un identifiant (receiver)
-				if _, ok := sel.X.(*ast.Ident); ok {
-					// Retour du nom du champ
-					return sel.Sel.Name
-				}
-			}
-		}
-	}
-
-	// Retour vide si pas de champ modifié
-	return ""
-}
-
-// isSetterMethod vérifie si une méthode est un setter.
-//
-// Params:
-//   - method: informations sur la méthode
-//
-// Returns:
-//   - bool: true si setter
-//   - string: nom du champ setté
-func isSetterMethod(method methodInfo) (bool, string) {
-	// Vérifier le préfixe Set
-	if !strings.HasPrefix(method.name, "Set") {
-		return false, ""
-	}
-
-	// Extraire le nom du champ
-	fieldName := strings.TrimPrefix(method.name, "Set")
-	// Convertir en lowercase
-	if len(fieldName) > 0 {
-		fieldName = strings.ToLower(fieldName[:1]) + fieldName[1:]
-	}
-
-	// Vérifier si la méthode a un paramètre et pas de retour
-	if method.funcDecl.Type.Params == nil || len(method.funcDecl.Type.Params.List) == 0 {
-		return false, ""
-	}
-
-	// Retour true avec le nom du champ
-	return true, fieldName
-}
-
-// Utility function to capitalize first letter
-func capitalizeFirst(s string) string {
-	// Vérifier si la chaîne est vide
-	if len(s) == 0 {
-		return ""
-	}
-	// Retour de la chaîne capitalisée
-	return strings.ToUpper(s[:1]) + s[1:]
-}
-
-// hasGetter vérifie si un getter existe pour un champ.
-//
-// Params:
-//   - methods: liste des méthodes
-//   - fieldName: nom du champ
-//
-// Returns:
-//   - bool: true si getter trouvé
-func hasGetter(methods []methodInfo, fieldName string) bool {
-	expectedName := capitalizeFirst(fieldName)
-	// Parcourir les méthodes
-	for _, m := range methods {
-		// Vérifier le nom exact ou avec préfixe Get
-		if m.name == expectedName {
-			return true
-		}
-	}
-	// Retour false si pas trouvé
-	return false
-}
-
-// Placeholder to use types package
-var _ types.Type = nil

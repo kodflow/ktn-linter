@@ -112,7 +112,7 @@ func Test_ClassifyFunc(t *testing.T) {
 			}
 
 			meta := shared.ClassifyFunc(funcDecl)
-			isPublic := meta.Visibility == shared.VIS_PUBLIC
+			isPublic := meta.Visibility == shared.VisPublic
 			// Vérification de la condition
 			if isPublic != tt.wantPublic {
 				t.Errorf("ClassifyFunc(%q) public = %v, want %v", tt.code, isPublic, tt.wantPublic)
@@ -195,8 +195,8 @@ func Test_BuildSuggestedTestName(t *testing.T) {
 			name: "public function",
 			meta: &shared.FuncMeta{
 				Name:       "DoSomething",
-				Kind:       shared.FUNC_TOP_LEVEL,
-				Visibility: shared.VIS_PUBLIC,
+				Kind:       shared.FuncTopLevel,
+				Visibility: shared.VisPublic,
 			},
 			want: "TestDoSomething",
 		},
@@ -204,8 +204,8 @@ func Test_BuildSuggestedTestName(t *testing.T) {
 			name: "private function",
 			meta: &shared.FuncMeta{
 				Name:       "doSomething",
-				Kind:       shared.FUNC_TOP_LEVEL,
-				Visibility: shared.VIS_PRIVATE,
+				Kind:       shared.FuncTopLevel,
+				Visibility: shared.VisPrivate,
 			},
 			want: "Test_doSomething",
 		},
@@ -214,8 +214,8 @@ func Test_BuildSuggestedTestName(t *testing.T) {
 			meta: &shared.FuncMeta{
 				Name:         "Method",
 				ReceiverName: "MyType",
-				Kind:         shared.FUNC_METHOD,
-				Visibility:   shared.VIS_PUBLIC,
+				Kind:         shared.FuncMethod,
+				Visibility:   shared.VisPublic,
 			},
 			want: "TestMyType_Method",
 		},

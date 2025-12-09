@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// INITIAL_ALLOWED_LITERALS_CAP initial cap for allowed literals
-	INITIAL_ALLOWED_LITERALS_CAP int = 32
+	// initialAllowedLiteralsCap initial cap for allowed literals
+	initialAllowedLiteralsCap int = 32
 )
 
 // Analyzer009 checks for magic numbers (hardcoded numeric literals)
@@ -68,7 +68,7 @@ func getAllowedValues() map[string]bool {
 // Returns:
 //   - map[ast.Node]bool: map des littéraux autorisés
 func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
-	allowedLiterals := make(map[ast.Node]bool, INITIAL_ALLOWED_LITERALS_CAP)
+	allowedLiterals := make(map[ast.Node]bool, initialAllowedLiteralsCap)
 
 	// Filter pour GenDecl seulement
 	nodeFilter := []ast.Node{
@@ -80,9 +80,11 @@ func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
 
 		// Si c'est une déclaration const
 		if genDecl.Tok == token.CONST {
+			// Inspection du noeud GenDecl
 			ast.Inspect(genDecl, func(inner ast.Node) bool {
 				// Si c'est un littéral
 				if lit, ok := inner.(*ast.BasicLit); ok {
+					// Ajout du littéral aux valeurs autorisées
 					allowedLiterals[lit] = true
 				}
 				// Continuer l'inspection

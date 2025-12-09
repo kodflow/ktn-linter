@@ -12,8 +12,8 @@ import (
 
 // Analyzer010 checks that functions don't use naked returns (except for very short functions)
 const (
-	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
-	MAX_LINES_FOR_NAKED_RETURN int = 5
+	// maxLinesForNakedReturn max lines for naked return
+	maxLinesForNakedReturn int = 5
 )
 
 // Analyzer010 checks that naked returns are only used in very short functions
@@ -77,13 +77,14 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 			// Naked return has no results specified
 			if len(ret.Results) == 0 {
 				// Allow naked returns in very short functions
-				if pureLines >= MAX_LINES_FOR_NAKED_RETURN {
+				if pureLines >= maxLinesForNakedReturn {
+					// Rapport d'erreur pour naked return interdit
 					pass.Reportf(
 						ret.Pos(),
 						"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
 						funcName,
 						pureLines,
-						MAX_LINES_FOR_NAKED_RETURN-1,
+						maxLinesForNakedReturn-1,
 					)
 				}
 			}

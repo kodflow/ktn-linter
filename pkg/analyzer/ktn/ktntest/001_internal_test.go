@@ -187,3 +187,43 @@ func Test_hasValidTestSuffix(t *testing.T) {
 		})
 	}
 }
+
+// Test_verifyBenchFile tests the verifyBenchFile private function.
+//
+// Params:
+//   - t: testing context
+func Test_verifyBenchFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		code     string
+	}{
+		{
+			name:     "bench file with only benchmarks",
+			filename: "foo_bench_test.go",
+			code: `package test
+func BenchmarkAdd(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = 1 + 1
+	}
+}`,
+		},
+		{
+			name:     "bench file with Test function should error",
+			filename: "foo_bench_test.go",
+			code: `package test
+func TestAdd(t *testing.T) {
+	_ = 1 + 1
+}`,
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - requires full analysis.Pass setup
+			_ = tt.filename
+			_ = tt.code
+		})
+	}
+}

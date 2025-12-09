@@ -7,7 +7,33 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestStruct005 vérifie l'ordre des champs exportés/privés.
+//
+// Params:
+//   - t: contexte de test
 func TestStruct005(t *testing.T) {
 	// good.go: 0 errors (champs exportés avant privés), bad.go: 5 errors (champs mélangés)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer005, "struct005", 5)
+	tests := []struct {
+		name     string
+		analyzer string
+		expected int
+	}{
+		{
+			name:     "struct005_good_exported_before_private",
+			analyzer: "struct005",
+			expected: 5,
+		},
+		{
+			name:     "struct005_verify_analyzer",
+			analyzer: "struct005",
+			expected: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Vérifie que bad.go génère exactement 5 erreurs
+			testhelper.TestGoodBad(t, ktnstruct.Analyzer005, tt.analyzer, tt.expected)
+		})
+	}
 }

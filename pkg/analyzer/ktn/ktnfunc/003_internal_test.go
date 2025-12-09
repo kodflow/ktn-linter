@@ -1,6 +1,7 @@
 package ktnfunc
 
 import (
+	"go/ast"
 	"testing"
 )
 
@@ -71,6 +72,40 @@ func Test_isPanicCall(t *testing.T) {
 			// Test passthrough - nécessite ast.Expr réel
 			_ = tt.funcName
 			_ = tt.expected
+		})
+	}
+}
+
+// Test_getElseType tests the getElseType private function.
+//
+// Params:
+//   - t: testing instance
+func Test_getElseType(t *testing.T) {
+	tests := []struct {
+		name     string
+		stmt     ast.Stmt
+		expected string
+	}{
+		{
+			name:     "else_if_statement",
+			stmt:     &ast.IfStmt{},
+			expected: "else if",
+		},
+		{
+			name:     "else_block_statement",
+			stmt:     &ast.BlockStmt{},
+			expected: "else",
+		},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getElseType(tt.stmt)
+			// Verify result matches expectation
+			if result != tt.expected {
+				t.Errorf("getElseType() = %q, want %q", result, tt.expected)
+			}
 		})
 	}
 }

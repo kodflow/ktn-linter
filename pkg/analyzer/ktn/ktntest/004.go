@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	// MIN_PUBLIC_FUNCS est le nombre minimum de fonctions publiques
-	MIN_PUBLIC_FUNCS int = 1
-	// MAX_TEST_NAMES maximum number of test names to check per function
-	MAX_TEST_NAMES int = 2
+	// minPublicFuncs est le nombre minimum de fonctions publiques
+	minPublicFuncs int = 1
+	// maxTestNames maximum number of test names to check per function
+	maxTestNames int = 2
 )
 
 // funcInfo stores information about a function (public or private)
@@ -54,35 +54,32 @@ func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[st
 			continue
 		}
 
-		// Parcourir l'AST du fichier pour trouver les fonctions
+		// Parcourir l'AST du fichier
 		ast.Inspect(file, func(n ast.Node) bool {
-			// Vérifier si c'est une déclaration de fonction
 			funcDecl, ok := n.(*ast.FuncDecl)
-			// Si ce n'est pas une fonction, continuer
+			// Vérification si déclaration de fonction
 			if !ok {
-				// Continue traversal
+				// Continuer la traversée
 				return true
 			}
 
-			// Vérification de la condition
+			// Vérification si fichier de test
 			if shared.IsTestFile(filename) {
-				// Fichier de test - collecter les fonctions testées
-				// On utilise collectExternalTestedFunctions ici aussi car
-				// les fichiers _internal_test.go sont dans pass.Files mais
-				// shared.IsUnitTestFunction peut échouer sans TypesInfo complet
+				// Collecter les fonctions testées
 				collectExternalTestedFunctions(funcDecl, testedFuncs)
 			} else {
-				// Fichier source - collecter TOUTES les fonctions (publiques et privées)
+				// Cas alternatif: fichier source
+				// Collecter toutes les fonctions
 				meta := shared.ClassifyFunc(funcDecl)
 				*funcs = append(*funcs, funcInfo{
 					name:         meta.Name,
 					receiverName: meta.ReceiverName,
-					isExported:   meta.Visibility == shared.VIS_PUBLIC,
+					isExported:   meta.Visibility == shared.VisPublic,
 					pos:          funcDecl.Pos(),
 					filename:     filename,
 				})
 			}
-			// Continue traversal
+			// Continuer la traversée
 			return true
 		})
 	}
@@ -127,11 +124,12 @@ func runTest004(pass *analysis.Pass) (any, error) {
 func countTestFiles(pass *analysis.Pass) (bool, int) {
 	hasTestFiles := false
 	testFileCount := 0
-	// Parcourir les fichiers pour compter les tests
+	// Parcourir les fichiers du pass
 	for _, file := range pass.Files {
 		pos := pass.Fset.Position(file.Pos())
-		// Vérification de la condition
+		// Vérification si fichier de test
 		if shared.IsTestFile(pos.Filename) {
+			// Incrémenter les compteurs
 			hasTestFiles = true
 			testFileCount++
 		}
@@ -169,36 +167,36 @@ func collectAllFunctionsAndTests(pass *analysis.Pass) ([]funcInfo, map[string]bo
 //   - allFuncs: liste des fonctions
 //   - testedFuncs: map des fonctions testées
 func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFuncs map[string]bool) {
-	// Build lookup map for functions
+	// Construire la map de recherche
 	funcLookup := make(map[string]bool, len(allFuncs))
-	// Populate lookup map
+	// Parcourir les fonctions
 	for _, fn := range allFuncs {
 		key := buildFuncLookupKey(fn)
 		funcLookup[key] = true
 	}
 
 	// Pré-allouer le slice pour les noms de test
-	testNames := make([]string, 0, MAX_TEST_NAMES)
+	testNames := make([]string, 0, maxTestNames)
 
-	// Vérifier chaque fonction
+	// Parcourir toutes les fonctions
 	for _, fn := range allFuncs {
-		// Skip mocks
+		// Vérification si mock
 		if shared.IsMockName(fn.name) {
-			// Mock function, skip
+			// Ignorer les mocks
 			continue
 		}
-		// Skip if receiver is a mock
+		// Vérification si receiver mock
 		if fn.receiverName != "" && shared.IsMockName(fn.receiverName) {
-			// Mock method, skip
+			// Ignorer les méthodes mock
 			continue
 		}
 
-		// Réinitialiser et construire les noms de test possibles
+		// Construire les noms de test possibles
 		testNames = buildTestNames(testNames[:0], fn)
 
-		// Vérifier si au moins un des noms possibles a un test
+		// Vérification si test manquant
 		if !hasMatchingTest(testNames, testedFuncs) && !isExemptFunction(fn.name) {
-			// Report missing test
+			// Signaler le test manquant
 			reportMissingTest(pass, fn)
 		}
 	}
@@ -212,12 +210,12 @@ func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFun
 // Returns:
 //   - string: lookup key
 func buildFuncLookupKey(fn funcInfo) string {
-	// Handle methods
+	// Vérification si méthode
 	if fn.receiverName != "" {
-		// Method: ReceiverName_MethodName
+		// Retour clé avec receiver
 		return fn.receiverName + "_" + fn.name
 	}
-	// Top-level function
+	// Retour clé simple
 	return fn.name
 }
 
@@ -235,15 +233,16 @@ func buildTestNames(testNames []string, fn funcInfo) []string {
 		Name:         fn.name,
 		ReceiverName: fn.receiverName,
 	}
-	// Set kind based on receiver
+	// Vérification si méthode
 	if fn.receiverName != "" {
-		// Method
-		meta.Kind = shared.FUNC_METHOD
+		// Définir comme méthode
+		meta.Kind = shared.FuncMethod
 	} else {
-		// Top-level function
-		meta.Kind = shared.FUNC_TOP_LEVEL
+		// Cas alternatif: fonction
+		// Définir comme fonction
+		meta.Kind = shared.FuncTopLevel
 	}
-	// Add lookup key
+	// Ajouter la clé de recherche
 	testNames = append(testNames, shared.BuildTestLookupKey(meta))
 	// Retour des noms
 	return testNames
@@ -258,18 +257,18 @@ func buildTestNames(testNames []string, fn funcInfo) []string {
 // Returns:
 //   - bool: true si un test existe
 func hasMatchingTest(testNames []string, testedFuncs map[string]bool) bool {
-	// Parcours des noms de test possibles
+	// Itération sur les noms de test
 	for _, testName := range testNames {
-		// Vérification de la condition (case-sensitive)
+		// Vérification case-sensitive
 		if testedFuncs[testName] {
-			// Test trouvé
+			// Retour trouvé
 			return true
 		}
-		// Vérification case-insensitive pour les méthodes
+		// Itération sur les tests enregistrés
 		for testedName := range testedFuncs {
-			// Comparaison insensible à la casse
+			// Vérification case-insensitive
 			if strings.EqualFold(testName, testedName) {
-				// Test trouvé
+				// Retour trouvé
 				return true
 			}
 		}
@@ -289,21 +288,23 @@ func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
 		Name:         fn.name,
 		ReceiverName: fn.receiverName,
 	}
-	// Set kind and visibility
+	// Vérification si méthode
 	if fn.receiverName != "" {
-		// Method
-		meta.Kind = shared.FUNC_METHOD
+		// Définir comme méthode
+		meta.Kind = shared.FuncMethod
 	} else {
-		// Top-level function
-		meta.Kind = shared.FUNC_TOP_LEVEL
+		// Cas alternatif: fonction
+		// Définir comme fonction
+		meta.Kind = shared.FuncTopLevel
 	}
-	// Set visibility
+	// Vérification si publique
 	if fn.isExported {
-		// Public
-		meta.Visibility = shared.VIS_PUBLIC
+		// Définir comme publique
+		meta.Visibility = shared.VisPublic
 	} else {
-		// Private
-		meta.Visibility = shared.VIS_PRIVATE
+		// Cas alternatif: privée
+		// Définir comme privée
+		meta.Visibility = shared.VisPrivate
 	}
 
 	// Use shared helper for suggested name
@@ -335,12 +336,12 @@ func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
 //   - string: type de test
 //   - string: type de fonction
 func getTestFileInfo(isExported bool, fileBase string) (string, string, string) {
-	// Vérification du type de fonction
+	// Vérification si publique
 	if isExported {
-		// Fonction publique → test black-box
+		// Retour info test external
 		return fileBase + "_external_test.go", "black-box testing avec package xxx_test", "publique"
 	}
-	// Fonction privée → test white-box
+	// Retour info test internal
 	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
 }
 
@@ -352,15 +353,15 @@ func getTestFileInfo(isExported bool, fileBase string) (string, string, string) 
 // Returns:
 //   - string: chemin du répertoire ou chaîne vide si non trouvé
 func findPackageDir(pass *analysis.Pass) string {
-	// Parcourir les fichiers pour trouver un chemin valide
+	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
-		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		// Vérification si fichier cache
 		if isCacheOrTempFile(filename) {
-			// Cache file, skip
+			// Ignorer fichier cache
 			continue
 		}
-		// Utiliser le premier fichier source valide
+		// Retour du répertoire
 		return filepath.Dir(filename)
 	}
 	// Pas de fichier source valide
@@ -387,26 +388,26 @@ func isCacheOrTempFile(filename string) bool {
 //   - fullPath: chemin complet du fichier
 //   - testedFuncs: map des fonctions testées à remplir
 func parseTestFile(fullPath string, testedFuncs map[string]bool) {
-	// Parser le fichier pour extraire les tests
+	// Parser le fichier
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, fullPath, nil, 0)
-	// Si erreur de parsing, retourner
+	// Vérification erreur parsing
 	if err != nil {
-		// Parsing failed
+		// Retour en cas d'erreur
 		return
 	}
 
-	// Extraire les fonctions de test du fichier parsé
+	// Parcourir l'AST du fichier
 	ast.Inspect(node, func(n ast.Node) bool {
 		funcDecl, ok := n.(*ast.FuncDecl)
-		// Si ce n'est pas une fonction, continuer
+		// Vérification si fonction
 		if !ok {
-			// Continue traversal
+			// Continuer la traversée
 			return true
 		}
 		// Collecter les fonctions testées
 		collectExternalTestedFunctions(funcDecl, testedFuncs)
-		// Continue traversal
+		// Continuer la traversée
 		return true
 	})
 }
@@ -419,33 +420,33 @@ func parseTestFile(fullPath string, testedFuncs map[string]bool) {
 //   - pass: contexte d'analyse
 //   - testedFuncs: map des fonctions testées à remplir
 func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bool) {
-	// Extraire le répertoire du premier fichier du package
+	// Vérification si fichiers présents
 	if len(pass.Files) == 0 {
-		// Pas de fichiers, rien à faire
+		// Retour si pas de fichiers
 		return
 	}
 
-	// Obtenir le répertoire du package
+	// Obtenir le répertoire
 	packageDir := findPackageDir(pass)
-	// Si pas de répertoire valide trouvé, retourner
+	// Vérification répertoire valide
 	if packageDir == "" {
-		// Pas de fichier source valide
+		// Retour si pas de répertoire
 		return
 	}
 
-	// Scanner tous les fichiers du répertoire
+	// Lire les entrées du répertoire
 	entries, err := os.ReadDir(packageDir)
-	// Si erreur de lecture, retourner sans erreur
+	// Vérification erreur lecture
 	if err != nil {
-		// Retour silencieux
+		// Retour en cas d'erreur
 		return
 	}
 
-	// Parcourir tous les fichiers de test
+	// Itération sur les entrées
 	for _, entry := range entries {
-		// Ignorer les répertoires et non-test files
+		// Vérification si répertoire ou non-test
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), "_test.go") {
-			// Continuer avec le prochain
+			// Continuer l'itération
 			continue
 		}
 		// Parser le fichier de test
@@ -462,45 +463,45 @@ func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bo
 //   - funcDecl: déclaration de fonction de test
 //   - testedFuncs: map des fonctions testées
 func collectExternalTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool) {
-	// Nom de test Go standard: doit commencer par "Test"
+	// Vérification si fonction Test
 	if !strings.HasPrefix(funcDecl.Name.Name, "Test") {
-		// Pas une fonction de test
+		// Retour si pas Test
 		return
 	}
 
-	// Vérification minimale de la signature (func TestXxx(t *testing.T))
+	// Vérification de la signature
 	if funcDecl.Type == nil || funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
-		// Pas de paramètres
+		// Retour si pas de paramètres
 		return
 	}
 
-	// Vérifier que le premier paramètre est "t"
+	// Vérifier le premier paramètre
 	firstParam := funcDecl.Type.Params.List[0]
-	// Check if param has a name
+	// Vérification du nom du paramètre
 	if len(firstParam.Names) == 0 || firstParam.Names[0].Name != "t" {
-		// Premier paramètre n'est pas "t", probablement pas un test standard
+		// Retour si pas "t"
 		return
 	}
 
-	// Skip exempt test names (helper, main, etc.)
+	// Vérification si test exempté
 	if shared.IsExemptTestName(funcDecl.Name.Name) {
-		// Exempt test name
+		// Retour si exempté
 		return
 	}
 
-	// On réutilise la même logique de parsing de nom et de clé cible
+	// Parser le nom du test
 	target, ok := shared.ParseTestName(funcDecl.Name.Name)
-	// Check if parse succeeded
+	// Vérification parsing réussi
 	if !ok {
-		// Could not parse
+		// Retour si échec parsing
 		return
 	}
 
-	// Build lookup key from target
+	// Construire la clé de recherche
 	key := shared.BuildTestTargetKey(target)
-	// Add to tested functions
+	// Vérification clé valide
 	if key != "" {
-		// Add key
+		// Ajouter la clé
 		testedFuncs[key] = true
 	}
 }

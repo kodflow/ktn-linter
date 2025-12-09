@@ -8,6 +8,24 @@ import (
 )
 
 func TestTest003(t *testing.T) {
-	// 1 erreur: bad_test.go sans fichier bad.go correspondant
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer003, "test003", "good_test.go", "bad_test.go", 1)
+	tests := []struct {
+		name     string
+		analyzer string
+	}{
+		{
+			name:     "orphan test detection",
+			analyzer: "test003",
+		},
+		{
+			name:     "validate source file correspondence",
+			analyzer: "test003",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 1 erreur: bad_test.go sans fichier bad.go correspondant
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer003, tt.analyzer, "good_test.go", "bad_test.go", 1)
+		})
+	}
 }

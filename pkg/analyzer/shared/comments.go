@@ -5,14 +5,14 @@ import "go/ast"
 
 // Constantes pour la vérification des directives "want"
 const (
-	// COMMENT_PREFIX_LENGTH est la longueur de "//" ou "/*"
-	COMMENT_PREFIX_LENGTH int = 2
-	// WANT_MIN_LENGTH est la longueur minimale pour "// want" ou "/*want"
-	WANT_MIN_LENGTH int = 8 // "//" + " want" ou "/*" + " want"
-	// WANT_KEYWORD_LENGTH longueur du mot "want"
-	WANT_KEYWORD_LENGTH int = 4
-	// WANT_WITH_SPACE_LENGTH longueur de " want"
-	WANT_WITH_SPACE_LENGTH int = 5
+	// commentPrefixLength est la longueur de "//" ou "/*"
+	commentPrefixLength int = 2
+	// wantMinLength est la longueur minimale pour "// want" ou "/*want"
+	wantMinLength int = 8 // "//" + " want" ou "/*" + " want"
+	// wantKeywordLength longueur du mot "want"
+	wantKeywordLength int = 4
+	// wantWithSpaceLength longueur de " want"
+	wantWithSpaceLength int = 5
 )
 
 // HasValidComment vérifie si un groupe de commentaires contient des commentaires valides et ignore les directives "want" utilisées par analysistest.
@@ -36,16 +36,17 @@ func HasValidComment(cg *ast.CommentGroup) bool {
 
 		// Skip "want" directives used by analysistest
 		// Format: "// want ..." ou "/* want ..."
-		if len(text) >= WANT_MIN_LENGTH {
+		if len(text) >= wantMinLength {
 			// Extraire le contenu après "//" ou "/*"
-			content := text[COMMENT_PREFIX_LENGTH:]
+			content := text[commentPrefixLength:]
 			// Vérifier si c'est une directive "want"
-			if len(content) >= WANT_WITH_SPACE_LENGTH && (content[:WANT_KEYWORD_LENGTH] == "want" || content[:WANT_WITH_SPACE_LENGTH] == " want") {
+			if len(content) >= wantWithSpaceLength && (content[:wantKeywordLength] == "want" || content[:wantWithSpaceLength] == " want") {
 				continue
 			}
 		}
 
 		// Found a valid comment
+		// Retour commentaire valide trouvé
 		return true
 	}
 

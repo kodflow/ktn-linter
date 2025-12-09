@@ -8,14 +8,32 @@ import (
 )
 
 func TestTest005(t *testing.T) {
-	// 8 erreurs: tests sans table-driven pattern (>= 2 assertions)
-	// - TestCalculatorTwoAssertions (2 assertions)
-	// - TestStringLengthMultipleCases
-	// - TestIsEmptyRepeatedAssertions
-	// - TestToUpperManyScenarios
-	// - TestContainsManyChecks
-	// - TestCountWordsMultipleInputs
-	// - TestWithAssertManyScenarios (testify/assert)
-	// - TestWithRequireManyScenarios (testify/require)
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer005, "test005", "good_test.go", "bad_test.go", 8)
+	tests := []struct {
+		name     string
+		analyzer string
+	}{
+		{
+			name:     "table-driven pattern detection",
+			analyzer: "test005",
+		},
+		{
+			name:     "validate test structure compliance",
+			analyzer: "test005",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 8 erreurs: tests sans table-driven pattern (>= 2 assertions)
+			// - TestCalculatorTwoAssertions (2 assertions)
+			// - TestStringLengthMultipleCases
+			// - TestIsEmptyRepeatedAssertions
+			// - TestToUpperManyScenarios
+			// - TestContainsManyChecks
+			// - TestCountWordsMultipleInputs
+			// - TestWithAssertManyScenarios (testify/assert)
+			// - TestWithRequireManyScenarios (testify/require)
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer005, tt.analyzer, "good_test.go", "bad_test.go", 8)
+		})
+	}
 }

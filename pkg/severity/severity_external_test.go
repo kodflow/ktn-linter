@@ -1,3 +1,4 @@
+// External tests for severity.go (black-box testing).
 package severity_test
 
 import (
@@ -6,32 +7,17 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/severity"
 )
 
+// TestLevel_String tests the String method of Level type.
 func TestLevel_String(t *testing.T) {
 	tests := []struct {
 		name  string
 		level severity.Level
 		want  string
 	}{
-		{
-			name:  "INFO level",
-			level: severity.SEVERITY_INFO,
-			want:  "INFO",
-		},
-		{
-			name:  "WARNING level",
-			level: severity.SEVERITY_WARNING,
-			want:  "WARNING",
-		},
-		{
-			name:  "ERROR level",
-			level: severity.SEVERITY_ERROR,
-			want:  "ERROR",
-		},
-		{
-			name:  "Unknown level",
-			level: severity.Level(999),
-			want:  "UNKNOWN",
-		},
+		{name: "INFO level", level: severity.SeverityInfo, want: "INFO"},
+		{name: "WARNING level", level: severity.SeverityWarning, want: "WARNING"},
+		{name: "ERROR level", level: severity.SeverityError, want: "ERROR"},
+		{name: "Unknown level", level: severity.Level(999), want: "UNKNOWN"},
 	}
 
 	for _, tt := range tests {
@@ -43,37 +29,18 @@ func TestLevel_String(t *testing.T) {
 	}
 }
 
+// TestGetSeverity tests the GetSeverity function.
 func TestGetSeverity(t *testing.T) {
 	tests := []struct {
 		name     string
 		ruleCode string
 		want     severity.Level
 	}{
-		{
-			name:     "Known rule KTN-VAR-001 is ERROR",
-			ruleCode: "KTN-VAR-001",
-			want:     severity.SEVERITY_ERROR,
-		},
-		{
-			name:     "Known rule KTN-VAR-003 is WARNING",
-			ruleCode: "KTN-VAR-003",
-			want:     severity.SEVERITY_WARNING,
-		},
-		{
-			name:     "Known rule KTN-CONST-002 is INFO (groupement)",
-			ruleCode: "KTN-CONST-002",
-			want:     severity.SEVERITY_INFO,
-		},
-		{
-			name:     "Unknown rule defaults to WARNING",
-			ruleCode: "KTN-UNKNOWN-999",
-			want:     severity.SEVERITY_WARNING,
-		},
-		{
-			name:     "Empty rule code defaults to WARNING",
-			ruleCode: "",
-			want:     severity.SEVERITY_WARNING,
-		},
+		{name: "Known rule KTN-VAR-001 is ERROR", ruleCode: "KTN-VAR-001", want: severity.SeverityError},
+		{name: "Known rule KTN-VAR-003 is WARNING", ruleCode: "KTN-VAR-003", want: severity.SeverityWarning},
+		{name: "Known rule KTN-CONST-002 is INFO", ruleCode: "KTN-CONST-002", want: severity.SeverityInfo},
+		{name: "Unknown rule defaults to WARNING", ruleCode: "KTN-UNKNOWN-999", want: severity.SeverityWarning},
+		{name: "Empty rule code defaults to WARNING", ruleCode: "", want: severity.SeverityWarning},
 	}
 
 	for _, tt := range tests {
@@ -85,32 +52,17 @@ func TestGetSeverity(t *testing.T) {
 	}
 }
 
+// TestLevel_ColorCode tests the ColorCode method of Level type.
 func TestLevel_ColorCode(t *testing.T) {
 	tests := []struct {
 		name  string
 		level severity.Level
 		want  string
 	}{
-		{
-			name:  "INFO color is blue",
-			level: severity.SEVERITY_INFO,
-			want:  "\033[34m",
-		},
-		{
-			name:  "WARNING color is yellow",
-			level: severity.SEVERITY_WARNING,
-			want:  "\033[33m",
-		},
-		{
-			name:  "ERROR color is red",
-			level: severity.SEVERITY_ERROR,
-			want:  "\033[31m",
-		},
-		{
-			name:  "Unknown level defaults to white",
-			level: severity.Level(999),
-			want:  "\033[37m",
-		},
+		{name: "INFO color is blue", level: severity.SeverityInfo, want: "\033[34m"},
+		{name: "WARNING color is yellow", level: severity.SeverityWarning, want: "\033[33m"},
+		{name: "ERROR color is red", level: severity.SeverityError, want: "\033[31m"},
+		{name: "Unknown level defaults to white", level: severity.Level(999), want: "\033[37m"},
 	}
 
 	for _, tt := range tests {
@@ -122,32 +74,17 @@ func TestLevel_ColorCode(t *testing.T) {
 	}
 }
 
+// TestLevel_Symbol tests the Symbol method of Level type.
 func TestLevel_Symbol(t *testing.T) {
 	tests := []struct {
 		name  string
 		level severity.Level
 		want  string
 	}{
-		{
-			name:  "INFO symbol",
-			level: severity.SEVERITY_INFO,
-			want:  "ℹ",
-		},
-		{
-			name:  "WARNING symbol",
-			level: severity.SEVERITY_WARNING,
-			want:  "⚠",
-		},
-		{
-			name:  "ERROR symbol",
-			level: severity.SEVERITY_ERROR,
-			want:  "✖",
-		},
-		{
-			name:  "Unknown level symbol",
-			level: severity.Level(999),
-			want:  "●",
-		},
+		{name: "INFO symbol", level: severity.SeverityInfo, want: "ℹ"},
+		{name: "WARNING symbol", level: severity.SeverityWarning, want: "⚠"},
+		{name: "ERROR symbol", level: severity.SeverityError, want: "✖"},
+		{name: "Unknown level symbol", level: severity.Level(999), want: "●"},
 	}
 
 	for _, tt := range tests {

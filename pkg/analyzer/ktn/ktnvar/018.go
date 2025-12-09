@@ -93,6 +93,7 @@ func checkVar018Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 func isSnakeCase(name string) bool {
 	// Must contain underscore
 	if !strings.Contains(name, "_") {
+		// Retour de la fonction
 		return false
 	}
 
@@ -100,6 +101,7 @@ func isSnakeCase(name string) bool {
 	for _, ch := range name {
 		// If we find a lowercase letter, it's snake_case
 		if ch >= 'a' && ch <= 'z' {
+			// Retour de la fonction
 			return true
 		}
 	}
@@ -119,11 +121,13 @@ func snakeToCamel(name string) string {
 	parts := strings.Split(name, "_")
 	// Handle empty or single part
 	if len(parts) <= 1 {
+		// Retour de la fonction
 		return name
 	}
 
-	// Build camelCase name
-	result := strings.ToLower(parts[0])
+	// Build camelCase name using strings.Builder
+	var builder strings.Builder
+	builder.WriteString(strings.ToLower(parts[0]))
 	// Iterate over remaining parts
 	for i := 1; i < len(parts); i++ {
 		part := parts[i]
@@ -132,9 +136,9 @@ func snakeToCamel(name string) string {
 			continue
 		}
 		// Capitalize first letter
-		result += strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+		builder.WriteString(strings.ToUpper(part[:1]) + strings.ToLower(part[1:]))
 	}
 
 	// Return camelCase name
-	return result
+	return builder.String()
 }

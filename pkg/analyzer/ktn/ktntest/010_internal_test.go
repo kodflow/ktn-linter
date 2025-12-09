@@ -185,7 +185,7 @@ func PublicFunc() {}`,
 				t.Fatalf("failed to parse code: %v", err)
 			}
 
-			privateFunctions := make(map[string]bool, INITIAL_PRIVATE_FUNCTIONS_CAP)
+			privateFunctions := make(map[string]bool, initialPrivateFunctionsCap)
 
 			// Collect private functions
 			ast.Inspect(file, func(n ast.Node) bool {

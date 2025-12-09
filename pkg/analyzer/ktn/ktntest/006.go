@@ -31,6 +31,7 @@ func runTest006(pass *analysis.Pass) (any, error) {
 	// Vérification de la condition
 	if strings.HasSuffix(packageName, "_test") {
 		// Package xxx_test - pas de contrainte 1:1
+		// Retour si package test
 		return nil, nil
 	}
 
@@ -39,47 +40,52 @@ func runTest006(pass *analysis.Pass) (any, error) {
 	// Map baseName -> file AST node
 	testFiles := make(map[string]*testFileInfo, 0)
 
-	// Parcourir tous les fichiers
+	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
 		basename := filepath.Base(filename)
 
-		// Vérification si fichier de test
+		// Vérification si test
 		if shared.IsTestFile(basename) {
-			// Extract base name without test suffix
+			// Extraire le nom de base
 			var baseName string
 			var base string
 			var ok bool
-			// Vérification du suffixe
+			// Vérification suffixe internal
 			if base, ok = strings.CutSuffix(basename, "_internal_test.go"); ok {
-				// Fichier _internal_test.go → chercher .go
+				// Définir le nom de base
 				baseName = base
-				// Cas alternatif: external test
-			} else if base, ok = strings.CutSuffix(basename, "_external_test.go"); ok {
-				// Fichier _external_test.go → chercher .go
-				baseName = base
-				// Cas par défaut: standard test
 			} else {
-				// Fichier _test.go standard → chercher .go
-				baseName = strings.TrimSuffix(basename, "_test.go")
+				// Vérification suffixe external
+				if base, ok = strings.CutSuffix(basename, "_external_test.go"); ok {
+					// Cas alternatif: external
+					// Définir le nom de base
+					baseName = base
+				} else {
+					// Cas alternatif: test standard
+					// Définir le nom de base
+					baseName = strings.TrimSuffix(basename, "_test.go")
+				}
 			}
+			// Ajouter le fichier de test
 			testFiles[baseName] = &testFileInfo{
 				basename: basename,
 				filename: filename,
 				fileNode: file,
 			}
 		} else {
-			// Fichier source .go (non-test)
+			// Cas alternatif: fichier source
+			// Ajouter le fichier source
 			baseName := strings.TrimSuffix(basename, ".go")
 			sourceFiles[baseName] = true
 		}
 	}
 
-	// Vérifier chaque fichier de test
+	// Itération sur les tests
 	for baseName, info := range testFiles {
-		// Vérifier si le fichier source correspondant existe
+		// Vérification si source existe
 		if !sourceFiles[baseName] {
-			// Fichier de test orphelin - reporter à la position du fichier
+			// Signaler l'erreur
 			pass.Reportf(
 				info.fileNode.Pos(),
 				"KTN-TEST-006: fichier de test '%s' n'a pas de fichier source correspondant '%s.go' dans le même package. Dispatcher son contenu dans les fichiers de test appropriés puis le supprimer",

@@ -397,18 +397,42 @@ func TestIsSliceOrMapTypeWithPass(t *testing.T) {
 
 // TestIsByteSliceNonIdent tests IsByteSlice with non-identifier element type
 func TestIsByteSliceNonIdent(t *testing.T) {
-	// Create a slice with SelectorExpr element (e.g., pkg.Type)
-	sliceExpr := &ast.ArrayType{
-		Len: nil,
-		Elt: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: "pkg"},
-			Sel: &ast.Ident{Name: "Type"},
+	tests := []struct {
+		name     string
+		sliceExpr *ast.ArrayType
+		expected bool
+	}{
+		{
+			name: "slice with SelectorExpr element",
+			sliceExpr: &ast.ArrayType{
+				Len: nil,
+				Elt: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "pkg"},
+					Sel: &ast.Ident{Name: "Type"},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "another slice with SelectorExpr",
+			sliceExpr: &ast.ArrayType{
+				Len: nil,
+				Elt: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "other"},
+					Sel: &ast.Ident{Name: "CustomType"},
+				},
+			},
+			expected: false,
 		},
 	}
 
-	got := utils.IsByteSlice(sliceExpr)
-	if got != false {
-		t.Errorf("utils.IsByteSlice([]pkg.Type) = %v, want false", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.IsByteSlice(tt.sliceExpr)
+			if got != tt.expected {
+				t.Errorf("utils.IsByteSlice([]pkg.Type) = %v, want %v", got, tt.expected)
+			}
+		})
 	}
 }
 

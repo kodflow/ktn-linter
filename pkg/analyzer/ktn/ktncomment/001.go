@@ -14,22 +14,22 @@ import (
 )
 
 const (
-	// MAX_COMMENT_LENGTH max chars for inline comments
-	MAX_COMMENT_LENGTH int = 80
+	// maxCommentLength max chars for inline comments
+	maxCommentLength int = 80
 )
 
 var (
 	// urlPattern matches URLs in comments (http://, https://, file://)
 	urlPattern *regexp.Regexp = regexp.MustCompile(`https?://\S+|file://\S+`)
-)
 
-// Analyzer001 detects inline comments exceeding 80 characters.
-var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktncomment001",
-	Doc:      "KTN-COMMENT-001: commentaire inline trop long (>80 chars)",
-	Run:      runComment001,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+	// Analyzer001 detects inline comments exceeding 80 characters.
+	Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktncomment001",
+		Doc:      "KTN-COMMENT-001: commentaire inline trop long (>80 chars)",
+		Run:      runComment001,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+)
 
 // runComment001 analyzes inline comments for excessive length.
 //
@@ -80,11 +80,11 @@ func runComment001(pass *analysis.Pass) (any, error) {
 				}
 
 				// Check length exceeds limit
-				if len(text) > MAX_COMMENT_LENGTH {
+				if len(text) > maxCommentLength {
 					pass.Reportf(
 						comment.Pos(),
 						"KTN-COMMENT-001: commentaire inline trop long (>%d chars)",
-						MAX_COMMENT_LENGTH,
+						maxCommentLength,
 					)
 				}
 			}
@@ -106,11 +106,8 @@ func checkMultiLineComment(pass *analysis.Pass, comment *ast.Comment, text strin
 	content := strings.TrimPrefix(text, "/*")
 	content = strings.TrimSuffix(content, "*/")
 
-	// Split by newlines
-	lines := strings.Split(content, "\n")
-
-	// Check each line
-	for _, line := range lines {
+	// Check each line using SplitSeq
+	for line := range strings.SplitSeq(content, "\n") {
 		// Trim leading/trailing whitespace for length check
 		trimmed := strings.TrimSpace(line)
 
@@ -127,11 +124,11 @@ func checkMultiLineComment(pass *analysis.Pass, comment *ast.Comment, text strin
 		}
 
 		// Check length exceeds limit
-		if len(trimmed) > MAX_COMMENT_LENGTH {
+		if len(trimmed) > maxCommentLength {
 			pass.Reportf(
 				comment.Pos(),
 				"KTN-COMMENT-001: ligne de commentaire trop longue (>%d chars)",
-				MAX_COMMENT_LENGTH,
+				maxCommentLength,
 			)
 			// Only report once per block comment
 			return

@@ -18,27 +18,27 @@ func Test_getVisibility(t *testing.T) {
 		{
 			name: "public uppercase",
 			id:   "Foo",
-			want: VIS_PUBLIC,
+			want: VisPublic,
 		},
 		{
 			name: "private lowercase",
 			id:   "foo",
-			want: VIS_PRIVATE,
+			want: VisPrivate,
 		},
 		{
 			name: "public uppercase acronym",
 			id:   "HTTPHandler",
-			want: VIS_PUBLIC,
+			want: VisPublic,
 		},
 		{
 			name: "private underscore prefix",
 			id:   "_private",
-			want: VIS_PRIVATE,
+			want: VisPrivate,
 		},
 		{
 			name: "empty string",
 			id:   "",
-			want: VIS_PRIVATE,
+			want: VisPrivate,
 		},
 	}
 

@@ -30,8 +30,8 @@ func Test_makeConstants(t *testing.T) {
 		got      int
 		expected int
 	}{
-		{name: "MAKE_ARGS_WITH_LENGTH", got: MAKE_ARGS_WITH_LENGTH, expected: 2},
-		{name: "MAKE_ARGS_WITH_CAPACITY", got: MAKE_ARGS_WITH_CAPACITY, expected: 3},
+		{name: "makeArgsWithLength", got: makeArgsWithLength, expected: 2},
+		{name: "makeArgsWithCapacity", got: makeArgsWithCapacity, expected: 3},
 	}
 
 	for _, tt := range tests {

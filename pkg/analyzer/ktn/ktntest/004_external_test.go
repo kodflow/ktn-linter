@@ -8,6 +8,24 @@ import (
 )
 
 func TestTest004(t *testing.T) {
-	// 2 erreurs: fonctions Multiply et Divide sans test
-	testhelper.TestGoodBadPackage(t, ktntest.Analyzer004, "test004", 2)
+	tests := []struct {
+		name     string
+		analyzer string
+	}{
+		{
+			name:     "public function test coverage",
+			analyzer: "test004",
+		},
+		{
+			name:     "validate test completeness",
+			analyzer: "test004",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 2 erreurs: fonctions Multiply et Divide sans test
+			testhelper.TestGoodBadPackage(t, ktntest.Analyzer004, tt.analyzer, 2)
+		})
+	}
 }

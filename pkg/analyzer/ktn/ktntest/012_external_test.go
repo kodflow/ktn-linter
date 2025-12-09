@@ -13,6 +13,24 @@ import (
 // Params:
 //   - t: testing context
 func TestTest012(t *testing.T) {
-	// 8 erreurs: 8 tests passthrough dans bad_test.go
-	testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer012, "test012", "good_test.go", "bad_test.go", 8)
+	tests := []struct {
+		name     string
+		analyzer string
+	}{
+		{
+			name:     "passthrough test detection",
+			analyzer: "test012",
+		},
+		{
+			name:     "validate test implementation quality",
+			analyzer: "test012",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 8 erreurs: 8 tests passthrough dans bad_test.go
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer012, tt.analyzer, "good_test.go", "bad_test.go", 8)
+		})
+	}
 }

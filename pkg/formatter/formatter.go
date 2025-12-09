@@ -9,27 +9,27 @@ import (
 
 // Codes de couleurs ANSI pour le formatage terminal
 const (
-	// RED représente le code ANSI pour la couleur rouge
-	RED string = "\033[31m"
-	// GREEN représente le code ANSI pour la couleur verte
-	GREEN string = "\033[32m"
-	// YELLOW représente le code ANSI pour la couleur jaune
-	YELLOW string = "\033[33m"
-	// BLUE représente le code ANSI pour la couleur bleue
-	BLUE string = "\033[34m"
-	// MAGENTA représente le code ANSI pour la couleur magenta
-	MAGENTA string = "\033[35m"
-	// CYAN représente le code ANSI pour la couleur cyan
-	CYAN string = "\033[36m"
-	// GRAY représente le code ANSI pour la couleur grise
-	GRAY string = "\033[90m"
-	// BOLD représente le code ANSI pour le texte en gras
-	BOLD string = "\033[1m"
-	// RESET représente le code ANSI pour réinitialiser le formatage
-	RESET string = "\033[0m"
+	// Red représente le code ANSI pour la couleur rouge
+	Red string = "\033[31m"
+	// Green représente le code ANSI pour la couleur verte
+	Green string = "\033[32m"
+	// Yellow représente le code ANSI pour la couleur jaune
+	Yellow string = "\033[33m"
+	// Blue représente le code ANSI pour la couleur bleue
+	Blue string = "\033[34m"
+	// Magenta représente le code ANSI pour la couleur magenta
+	Magenta string = "\033[35m"
+	// Cyan représente le code ANSI pour la couleur cyan
+	Cyan string = "\033[36m"
+	// Gray représente le code ANSI pour la couleur grise
+	Gray string = "\033[90m"
+	// Bold représente le code ANSI pour le texte en gras
+	Bold string = "\033[1m"
+	// Reset représente le code ANSI pour réinitialiser le formatage
+	Reset string = "\033[0m"
 
-	// INITIAL_FILE_MAP_CAP définit la capacité estimée pour groupement par fichier
-	INITIAL_FILE_MAP_CAP int = 16
+	// InitialFileMapCap définit la capacité estimée pour groupement par fichier
+	InitialFileMapCap int = 16
 )
 
 // DiagnosticGroupData regroupe les diagnostics par fichier.

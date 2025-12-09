@@ -14,12 +14,12 @@ import (
 )
 
 const (
-	// INITIAL_TYPE_MAP_CAP initial cap for Types/Defs/Uses
-	INITIAL_TYPE_MAP_CAP int = 64
-	// INITIAL_SELECTOR_MAP_CAP initial cap for Implicits/Selections
-	INITIAL_SELECTOR_MAP_CAP int = 16
-	// INITIAL_ANALYZER_MAP_CAP initial cap for ResultOf
-	INITIAL_ANALYZER_MAP_CAP int = 8
+	// initialTypeMapCap initial cap for Types/Defs/Uses
+	initialTypeMapCap int = 64
+	// initialSelectorMapCap initial cap for Implicits/Selections
+	initialSelectorMapCap int = 16
+	// initialAnalyzerMapCap initial cap for ResultOf
+	initialAnalyzerMapCap int = 8
 )
 
 // createTypeInfo crée une nouvelle structure types.Info pour le type checking.
@@ -29,12 +29,12 @@ const (
 func createTypeInfo() *types.Info {
 	// Retour de la structure types.Info avec capacités initiales estimées
 	return &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue, INITIAL_TYPE_MAP_CAP),
-		Defs:       make(map[*ast.Ident]types.Object, INITIAL_TYPE_MAP_CAP),
-		Uses:       make(map[*ast.Ident]types.Object, INITIAL_TYPE_MAP_CAP),
-		Implicits:  make(map[ast.Node]types.Object, INITIAL_SELECTOR_MAP_CAP),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection, INITIAL_SELECTOR_MAP_CAP),
-		Scopes:     make(map[ast.Node]*types.Scope, INITIAL_SELECTOR_MAP_CAP),
+		Types:      make(map[ast.Expr]types.TypeAndValue, initialTypeMapCap),
+		Defs:       make(map[*ast.Ident]types.Object, initialTypeMapCap),
+		Uses:       make(map[*ast.Ident]types.Object, initialTypeMapCap),
+		Implicits:  make(map[ast.Node]types.Object, initialSelectorMapCap),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection, initialSelectorMapCap),
+		Scopes:     make(map[ast.Node]*types.Scope, initialSelectorMapCap),
 	}
 }
 
@@ -59,7 +59,7 @@ func createPass(fset *token.FileSet, file *ast.File, pkg *types.Package, info *t
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},
-		ResultOf: make(map[*analysis.Analyzer]any, INITIAL_ANALYZER_MAP_CAP),
+		ResultOf: make(map[*analysis.Analyzer]any, initialAnalyzerMapCap),
 		ReadFile: func(filename string) ([]byte, error) {
 			// Lecture du fichier pour les analyzers qui en ont besoin
 			return os.ReadFile(filename)
@@ -248,7 +248,7 @@ func createPassForPackage(fset *token.FileSet, files []*ast.File, diagnostics *[
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},
-		ResultOf: make(map[*analysis.Analyzer]any, INITIAL_ANALYZER_MAP_CAP),
+		ResultOf: make(map[*analysis.Analyzer]any, initialAnalyzerMapCap),
 		ReadFile: func(filename string) ([]byte, error) {
 			// Lecture du fichier pour les analyzers qui en ont besoin
 			return os.ReadFile(filename)

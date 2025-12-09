@@ -11,8 +11,8 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// MAX_STRUCT_FIELDS définit le nombre maximal de champs pour une struct sans pointeur.
-const MAX_STRUCT_FIELDS int = 3
+// maxStructFields définit le nombre maximal de champs pour une struct sans pointeur.
+const maxStructFields int = 3
 
 // Analyzer009 checks for large struct usage without pointers
 var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
@@ -172,6 +172,7 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
 
 	// Ignorer les types externes (frameworks comme Terraform)
 	if isExternalType(typeInfo, pass) {
+		// Retour de la fonction
 		return
 	}
 
@@ -186,7 +187,7 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos) {
 	// Comptage des champs
 	numFields := structType.NumFields()
 	// Vérification du nombre de champs
-	if numFields > MAX_STRUCT_FIELDS {
+	if numFields > maxStructFields {
 		// Grande struct détectée
 		pass.Reportf(
 			pos,
@@ -209,6 +210,7 @@ func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
 	named, ok := typeInfo.(*types.Named)
 	// Verification de la condition
 	if !ok {
+		// Retour de la fonction
 		return false
 	}
 
@@ -216,6 +218,7 @@ func isExternalType(typeInfo types.Type, pass *analysis.Pass) bool {
 	obj := named.Obj()
 	// Verification de la condition
 	if obj == nil || obj.Pkg() == nil {
+		// Retour de la fonction
 		return false
 	}
 

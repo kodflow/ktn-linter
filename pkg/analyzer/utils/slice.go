@@ -9,6 +9,11 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+const (
+	// maxArraySize seuil pour VAR-016 (préférer array)
+	maxArraySize int64 = 1024
+)
+
 // IsSliceTypeWithPass vérifie si une expression est un type slice en utilisant TypesInfo.
 //
 // Params:
@@ -114,10 +119,12 @@ func IsEmptySliceLiteral(lit *ast.CompositeLit) bool {
 // Returns:
 //   - bool: true si c'est un []byte
 func IsByteSliceWithPass(pass *analysis.Pass, expr ast.Expr) bool {
-	var slice *types.Slice
-	var basic *types.Basic
-	var sliceOk bool
-	var basicOk bool
+	var (
+		slice   *types.Slice
+		basic   *types.Basic
+		sliceOk bool
+		basicOk bool
+	)
 	// Check via TypesInfo
 	if tv, ok := pass.TypesInfo.Types[expr]; ok {
 		// Check if it's a slice
@@ -145,8 +152,10 @@ func IsByteSliceWithPass(pass *analysis.Pass, expr ast.Expr) bool {
 // Returns:
 //   - bool: true si c'est un []byte basé sur l'AST
 func IsByteSlice(expr ast.Expr) bool {
-	var ident *ast.Ident
-	var identOk bool
+	var (
+		ident   *ast.Ident
+		identOk bool
+	)
 	// Check if it's an array type (slice)
 	arrayType, ok := expr.(*ast.ArrayType)
 	// Vérification de la condition
@@ -190,10 +199,5 @@ func IsSmallConstantSize(pass *analysis.Pass, expr ast.Expr) bool {
 		return false
 	}
 	// Check if small positive constant
-	return val > 0 && val <= MAX_ARRAY_SIZE
+	return val > 0 && val <= maxArraySize
 }
-
-const (
-	// MAX_ARRAY_SIZE seuil pour VAR-016 (préférer array)
-	MAX_ARRAY_SIZE int64 = 1024
-)
