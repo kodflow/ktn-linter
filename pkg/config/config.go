@@ -377,6 +377,7 @@ func (c *Config) Merge(other *Config) {
 				}
 				existing.Exclude = append(existing.Exclude, ruleCfg.Exclude...)
 			} else {
+				// Add new rule
 				c.Rules[code] = ruleCfg
 			}
 		}

@@ -15,7 +15,7 @@ const (
 	// AlternateConfigFileName is an alternate configuration file name.
 	AlternateConfigFileName string = ".ktn-linter.yml"
 	// filePermReadWrite is the default file permission (0644 = rw-r--r--).
-	filePermReadWrite = 0644
+	filePermReadWrite os.FileMode = 0644
 )
 
 // Load loads configuration from a file path.
@@ -85,8 +85,8 @@ func loadFromDefaultLocations() (*Config, error) {
 		return DefaultConfig(), nil
 	}
 
-	// Search up the directory tree
 	dir := cwd
+	// Search up the directory tree
 	for {
 		// Try default filename
 		path := filepath.Join(dir, DefaultConfigFileName)
