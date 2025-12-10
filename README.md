@@ -46,7 +46,60 @@ ktn-linter lint ./...                # Lint tout le projet
 ktn-linter lint --help               # Affiche l'aide
 ktn-linter lint --simple ./pkg/...   # Format simplifié sur pkg/
 ktn-linter lint --fix ./...          # Applique automatiquement les fixes modernize
+ktn-linter lint --config .ktn-linter.yaml ./...  # Utilise un fichier de config
 ```
+
+## Configuration (v1.4.0+)
+
+KTN-Linter peut être configuré via un fichier `.ktn-linter.yaml` :
+
+```yaml
+version: 1
+
+# Exclusions globales (toutes les règles)
+exclude:
+  - "**/testdata/**"
+  - "**/*_generated.go"
+  - "vendor/**"
+
+# Configuration par règle
+rules:
+  KTN-FUNC-005:
+    enabled: true
+    threshold: 50          # Lignes max (défaut: 35)
+    exclude:
+      - "cmd/**"           # Exclure pour cette règle
+
+  KTN-FUNC-011:
+    threshold: 15          # Complexité cyclomatique max (défaut: 10)
+
+  KTN-COMMENT-001:
+    enabled: false         # Désactiver la règle
+
+  KTN-VAR-009:
+    threshold: 100         # Taille struct pour pointeur (défaut: 64)
+```
+
+**Règles avec seuils configurables** :
+| Règle | Paramètre | Défaut |
+|-------|-----------|--------|
+| KTN-COMMENT-001 | maxCommentLength | 80 |
+| KTN-COMMENT-002 | minPackageCommentLength | 3 |
+| KTN-COMMENT-005 | minStructDocLines | 2 |
+| KTN-FUNC-005 | maxFunctionLength | 35 |
+| KTN-FUNC-006 | maxParameters | 5 |
+| KTN-FUNC-010 | maxReturnValues | 3 |
+| KTN-FUNC-011 | maxCyclomaticComplexity | 10 |
+| KTN-FUNC-012 | maxNestedDepth | 4 |
+| KTN-VAR-009 | maxScopeLines | 50 |
+| KTN-VAR-012 | maxLineLength | 120 |
+| KTN-VAR-016 | maxDeclarations | 10 |
+
+**Recherche du fichier config** :
+1. Chemin spécifié avec `--config`
+2. `.ktn-linter.yaml` dans le répertoire courant
+3. `.ktn-linter.yml` dans le répertoire courant
+4. Remonte récursivement dans les répertoires parents
 
 **Flag --fix (v1.3.0+)** :
 
