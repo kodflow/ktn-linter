@@ -140,29 +140,38 @@ func fileExists(path string) bool {
 // Returns:
 //   - error: Validation error if any
 func validateConfig(cfg *Config) error {
+	// Vérification si la configuration est nulle
 	if cfg == nil {
+		// Retour immédiat si configuration nulle (pas d'erreur)
 		return nil
 	}
 
 	// Validate version
+	// Vérification que la version est supportée
 	if cfg.Version != 0 && cfg.Version != 1 {
+		// Retour d'erreur si version non supportée
 		return fmt.Errorf("unsupported config version: %d", cfg.Version)
 	}
 
 	// Validate rules
 	for code, ruleCfg := range cfg.Rules {
+		// Vérification si la configuration de règle est nulle
 		if ruleCfg == nil {
 			continue
 		}
 
 		// Validate threshold is positive if set
+		// Vérification que le seuil est non-négatif si défini
 		if ruleCfg.Threshold != nil && *ruleCfg.Threshold < 0 {
+			// Retour d'erreur si seuil négatif
 			return fmt.Errorf("rule %s: threshold must be non-negative, got %d", code, *ruleCfg.Threshold)
 		}
 
 		// Validate exclusion patterns
 		for _, pattern := range ruleCfg.Exclude {
+			// Vérification si le pattern est vide
 			if pattern == "" {
+				// Retour d'erreur si pattern vide
 				return fmt.Errorf("rule %s: empty exclusion pattern", code)
 			}
 		}
@@ -170,11 +179,14 @@ func validateConfig(cfg *Config) error {
 
 	// Validate global exclusions
 	for _, pattern := range cfg.Exclude {
+		// Vérification si le pattern global est vide
 		if pattern == "" {
+			// Retour d'erreur si pattern vide
 			return fmt.Errorf("empty global exclusion pattern")
 		}
 	}
 
+	// Retour sans erreur si toutes les validations passent
 	return nil
 }
 
@@ -187,12 +199,15 @@ func validateConfig(cfg *Config) error {
 //   - error: Error if loading fails
 func LoadAndSet(path string) error {
 	cfg, err := Load(path)
+	// Vérification si le chargement a échoué
 	if err != nil {
+		// Retour de l'erreur de chargement
 		return err
 	}
 
 	Set(cfg)
 
+	// Retour sans erreur après configuration globale définie
 	return nil
 }
 
@@ -205,10 +220,13 @@ func LoadAndSet(path string) error {
 //   - *Config: Loaded configuration (panics on error)
 func MustLoad(path string) *Config {
 	cfg, err := Load(path)
+	// Vérification si le chargement a échoué
 	if err != nil {
+		// Panic avec l'erreur si chargement impossible
 		panic(err)
 	}
 
+	// Retour de la configuration chargée
 	return cfg
 }
 
@@ -222,13 +240,18 @@ func MustLoad(path string) *Config {
 //   - error: Error if saving fails
 func SaveToFile(cfg *Config, path string) error {
 	data, err := yaml.Marshal(cfg)
+	// Vérification si la sérialisation YAML a échoué
 	if err != nil {
+		// Retour d'erreur si impossible de sérialiser
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
+	// Tentative d'écriture du fichier avec permissions rw-r--r--
 	if err := os.WriteFile(path, data, FILE_PERM_RW_R_R); err != nil {
+		// Retour d'erreur si impossible d'écrire le fichier
 		return fmt.Errorf("failed to write config file %s: %w", path, err)
 	}
 
+	// Retour sans erreur après sauvegarde réussie
 	return nil
 }
