@@ -142,11 +142,43 @@ func Test_countPureCodeLines(t *testing.T) {
 		want int
 	}{
 		{
-			name: "error case validation",
+			name: "simple code with comment",
 			code: `package test
 func test() {
 	// This is a comment
 	x := 1
+}`,
+			want: 1,
+		},
+		{
+			name: "code with block comment",
+			code: `package test
+func test() {
+	/* This is
+	   a block comment */
+	x := 1
+	y := 2
+}`,
+			want: 2,
+		},
+		{
+			name: "code with empty lines",
+			code: `package test
+func test() {
+	x := 1
+
+	y := 2
+
+}`,
+			want: 2,
+		},
+		{
+			name: "code with only braces",
+			code: `package test
+func test() {
+	{
+		x := 1
+	}
 }`,
 			want: 1,
 		},
@@ -156,7 +188,47 @@ func test() {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - logique principale testée via API publique
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Trouver la fonction
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					// Assignation de la déclaration de fonction
+					funcDecl = fd
+					// Retour false pour arrêter la recherche
+					return false
+				}
+				// Retour true pour continuer la recherche
+				return true
+			})
+
+			// Vérifier que la fonction a été trouvée
+			if funcDecl == nil || funcDecl.Body == nil {
+				t.Fatal("Expected to find function with body")
+			}
+
+			// Créer un pass avec ReadFile
+			pass := &analysis.Pass{
+				Fset: fset,
+				ReadFile: func(filename string) ([]byte, error) {
+					// Retourner le code source
+					return []byte(tt.code), nil
+				},
+			}
+
+			// Appeler countPureCodeLines
+			result := countPureCodeLines(pass, funcDecl.Body)
+			// Vérification du résultat
+			if result != tt.want {
+				t.Errorf("countPureCodeLines() = %v, want %v", result, tt.want)
+			}
 		})
 	}
 }

@@ -110,6 +110,16 @@ func Test_isPanicCall_edge_cases(t *testing.T) {
 			code:     "obj.Method()",
 			expected: false,
 		},
+		{
+			name:     "not a call expression",
+			code:     "x + y",
+			expected: false,
+		},
+		{
+			name:     "function literal call",
+			code:     "func() {}()",
+			expected: false,
+		},
 	}
 
 	// Itération sur les tests

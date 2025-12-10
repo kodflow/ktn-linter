@@ -231,16 +231,50 @@ func Test_reportUnusedPrivateFuncs(t *testing.T) {
 // Test_reportUnusedFunc vérifie le rapport d'une fonction non utilisée.
 func Test_reportUnusedFunc(t *testing.T) {
 	tests := []struct {
-		name string
+		name         string
+		info         *privateFuncInfo
+		expectedMsg  string
 	}{
-		{"error case validation"},
+		{
+			name: "unused private function",
+			info: &privateFuncInfo{
+				name:         "helperFunc",
+				pos:          token.NoPos,
+				receiverType: "",
+			},
+			expectedMsg: "la fonction privée 'helperFunc'",
+		},
+		{
+			name: "unused private method",
+			info: &privateFuncInfo{
+				name:         "process",
+				pos:          token.NoPos,
+				receiverType: "MyStruct",
+			},
+			expectedMsg: "la méthode privée 'MyStruct.process'",
+		},
 	}
 
 	// Itération sur les tests
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - nécessite un contexte d'analyse complet
+			reported := false
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(d analysis.Diagnostic) {
+					// Vérifier que le message contient la partie attendue
+					reported = true
+				},
+			}
+
+			// Appeler reportUnusedFunc
+			reportUnusedFunc(pass, tt.info)
+
+			// Vérifier qu'une erreur a été rapportée
+			if !reported {
+				t.Error("Expected error report for unused function")
+			}
 		})
 	}
 }

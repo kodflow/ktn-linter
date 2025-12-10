@@ -274,6 +274,17 @@ func Test_checkMakeCall_wrongArgs(t *testing.T) {
 		Args: []ast.Expr{&ast.Ident{Name: "T"}}, // Only 1 arg
 	}
 	checkMakeCall(pass, call)
+
+	// Test with 3 args (has capacity)
+	call3Args := &ast.CallExpr{
+		Fun: &ast.Ident{Name: "make"},
+		Args: []ast.Expr{
+			&ast.Ident{Name: "T"},
+			&ast.BasicLit{Value: "0"},
+			&ast.BasicLit{Value: "10"},
+		},
+	}
+	checkMakeCall(pass, call3Args)
 	// No error expected
 }
 
@@ -289,6 +300,42 @@ func Test_checkEmptySliceLiterals(t *testing.T) {
 			// Test passthrough - function checks empty slice literals
 		})
 	}
+}
+
+// Test_checkMakeCall_notSlice tests checkMakeCall with non-slice type.
+func Test_checkMakeCall_notSlice(t *testing.T) {
+	code := `package test
+func example() {
+	m := make(map[string]int, 10)
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	// Type check the code
+	conf := types.Config{}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+		Report:    func(_d analysis.Diagnostic) {},
+	}
+
+	// Find the make call
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			checkMakeCall(pass, call)
+		}
+		return true
+	})
+	// No error expected for map type
 }
 
 // Test_checkCompositeLit_nonEmptySlice tests non-empty slice.
@@ -333,6 +380,49 @@ func Test_checkCompositeLit_invalidIndex(t *testing.T) {
 	// Index 5 is out of bounds for Lhs with 1 element
 	checkCompositeLit(ctx, assign, 5, lit, []ast.Node{})
 	// No error expected
+}
+
+// Test_checkCompositeLit_notSliceType tests non-slice composite literal.
+func Test_checkCompositeLit_notSliceType(t *testing.T) {
+	code := `package test
+func example() {
+	s := struct{}{}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	// Type check
+	conf := types.Config{}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	ctx := &litCheckContext{
+		pass: &analysis.Pass{
+			Fset:      fset,
+			TypesInfo: info,
+			Report:    func(_d analysis.Diagnostic) {},
+		},
+		appendVars: map[string]bool{},
+	}
+
+	// Find composite lit
+	ast.Inspect(file, func(n ast.Node) bool {
+		if assign, ok := n.(*ast.AssignStmt); ok {
+			for i, rhs := range assign.Rhs {
+				if lit, isLit := rhs.(*ast.CompositeLit); isLit {
+					checkCompositeLit(ctx, assign, i, lit, []ast.Node{})
+				}
+			}
+		}
+		return true
+	})
+	// No error expected for struct type
 }
 
 // Test_runVar004_disabled tests runVar004 with disabled rule.

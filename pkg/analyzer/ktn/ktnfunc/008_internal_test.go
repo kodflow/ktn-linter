@@ -469,6 +469,12 @@ func bar() {}`,
 func baz(_ int, a string) {}`,
 			expected: 1,
 		},
+		{
+			name: "grouped parameters",
+			code: `package test
+func qux(a, b int, c string) {}`,
+			expected: 3,
+		},
 	}
 
 	// Itération sur les tests

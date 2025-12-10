@@ -542,3 +542,219 @@ func Test_validateDocFormat_skipDescriptionLines(t *testing.T) {
 		})
 	}
 }
+
+// Test_runComment006_testFile tests runComment006 with test files.
+//
+// Params:
+//   - t: testing context
+func Test_runComment006_testFile(t *testing.T) {
+	cfg := config.DefaultConfig()
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test
+func TestExample() {}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "example_test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment006(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment006 failed: %v", err)
+	}
+
+	// Should report no errors for test files
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors for test files, got %d", errorCount)
+	}
+}
+
+// Test_runComment006_testFunction tests runComment006 with test functions.
+//
+// Params:
+//   - t: testing context
+func Test_runComment006_testFunction(t *testing.T) {
+	cfg := config.DefaultConfig()
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package example
+func BenchmarkExample() {}
+func ExampleUsage() {}
+func FuzzTarget() {}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "example.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment006(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment006 failed: %v", err)
+	}
+
+	// Should report no errors for test/benchmark/example/fuzz functions
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors for test functions, got %d", errorCount)
+	}
+}
+
+// Test_runComment006_missingDoc tests runComment006 with missing documentation.
+//
+// Params:
+//   - t: testing context
+func Test_runComment006_missingDoc(t *testing.T) {
+	cfg := config.DefaultConfig()
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package example
+func myFunc() {}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "example.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment006(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment006 failed: %v", err)
+	}
+
+	// Should report error for missing documentation
+	if errorCount == 0 {
+		t.Error("expected error for missing documentation, got 0")
+	}
+}
+
+// Test_runComment006_invalidDocFormat tests runComment006 with invalid doc format.
+//
+// Params:
+//   - t: testing context
+func Test_runComment006_invalidDocFormat(t *testing.T) {
+	cfg := config.DefaultConfig()
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package example
+// myFunc does something
+// but is missing the required format
+func myFunc(x int) int { return x }`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "example.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment006(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment006 failed: %v", err)
+	}
+
+	// Should report error for invalid doc format
+	if errorCount == 0 {
+		t.Error("expected error for invalid documentation format, got 0")
+	}
+}

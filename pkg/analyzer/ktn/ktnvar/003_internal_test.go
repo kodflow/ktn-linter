@@ -124,6 +124,36 @@ func example() {
 	// No error expected
 }
 
+// Test_checkStatement_badDecl tests non-GenDecl in DeclStmt.
+func Test_checkStatement_badDecl(t *testing.T) {
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	// Create a DeclStmt with FuncDecl (not GenDecl) - will be skipped
+	badDecl := &ast.DeclStmt{
+		Decl: &ast.FuncDecl{Name: &ast.Ident{Name: "test"}},
+	}
+	checkStatement(pass, badDecl)
+	// No error expected - should skip non-GenDecl
+}
+
+// Test_checkStatement_constDecl tests const declaration.
+func Test_checkStatement_constDecl(t *testing.T) {
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	// Create a const declaration (not var) - will be skipped
+	constDecl := &ast.DeclStmt{
+		Decl: &ast.GenDecl{
+			Tok: token.CONST,
+		},
+	}
+	checkStatement(pass, constDecl)
+	// No error expected - should skip const declarations
+}
+
 // Test_checkNestedBlocks_switch tests checkNestedBlocks with switch stmt.
 func Test_checkNestedBlocks_switch(t *testing.T) {
 	pass := &analysis.Pass{
@@ -135,7 +165,49 @@ func Test_checkNestedBlocks_switch(t *testing.T) {
 		Body: &ast.BlockStmt{},
 	}
 	checkNestedBlocks(pass, switchStmt)
-	// No error expected
+
+	// Test with type switch statement
+	typeSwitchStmt := &ast.TypeSwitchStmt{
+		Body: &ast.BlockStmt{},
+	}
+	checkNestedBlocks(pass, typeSwitchStmt)
+
+	// Test with select statement
+	selectStmt := &ast.SelectStmt{
+		Body: &ast.BlockStmt{},
+	}
+	checkNestedBlocks(pass, selectStmt)
+
+	// Test with for statement
+	forStmt := &ast.ForStmt{
+		Body: &ast.BlockStmt{},
+	}
+	checkNestedBlocks(pass, forStmt)
+
+	// Test with range statement
+	rangeStmt := &ast.RangeStmt{
+		Body: &ast.BlockStmt{},
+	}
+	checkNestedBlocks(pass, rangeStmt)
+
+	// Test with block statement
+	blockStmt := &ast.BlockStmt{
+		List: []ast.Stmt{},
+	}
+	checkNestedBlocks(pass, blockStmt)
+
+	// Test with case clause
+	caseClause := &ast.CaseClause{
+		Body: []ast.Stmt{},
+	}
+	checkNestedBlocks(pass, caseClause)
+
+	// Test with comm clause
+	commClause := &ast.CommClause{
+		Body: []ast.Stmt{},
+	}
+	checkNestedBlocks(pass, commClause)
+	// No error expected for all cases
 }
 
 // Test_checkIfStmt_nilBody tests checkIfStmt with nil body.
@@ -150,6 +222,20 @@ func Test_checkIfStmt_nilBody(t *testing.T) {
 		Else: nil,
 	}
 	checkIfStmt(pass, ifStmt)
+
+	// Test with if statement with body but no else
+	ifStmtWithBody := &ast.IfStmt{
+		Body: &ast.BlockStmt{List: []ast.Stmt{}},
+		Else: nil,
+	}
+	checkIfStmt(pass, ifStmtWithBody)
+
+	// Test with if statement with both body and else
+	ifStmtWithElse := &ast.IfStmt{
+		Body: &ast.BlockStmt{List: []ast.Stmt{}},
+		Else: &ast.BlockStmt{List: []ast.Stmt{}},
+	}
+	checkIfStmt(pass, ifStmtWithElse)
 	// No error expected
 }
 

@@ -48,21 +48,98 @@ func Test_runStruct006(t *testing.T) {
 //   - t: instance de testing
 func Test_checkPrivateFieldsWithTags(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		code        string
+		expectError bool
 	}{
 		{
-			name: "private_fields_with_tags_check",
+			name: "empty struct",
+			code: `package test
+type User struct{}`,
+			expectError: false,
+		},
+		{
+			name: "public field with tag",
+			code: `package test
+type User struct {
+	Name string ` + "`json:\"name\"`" + `
+}`,
+			expectError: false,
+		},
+		{
+			name: "private field without tag",
+			code: `package test
+type User struct {
+	name string
+}`,
+			expectError: false,
+		},
+		{
+			name: "private field with tag",
+			code: `package test
+type UserDTO struct {
+	name string ` + "`json:\"name\"`" + `
+}`,
+			expectError: true,
+		},
+		{
+			name: "field with empty backticks is treated as tag",
+			code: `package test
+type User struct {
+	name string ` + "``" + `
+}`,
+			expectError: true,
 		},
 	}
 
-	// Itération sur les tests
 	for _, tt := range tests {
-		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - nécessite analysis.Pass réel
-			_ = tt.name
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			errCount := 0
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				Report: func(_ analysis.Diagnostic) {
+					errCount++
+				},
+			}
+
+			// Find the struct type
+			ast.Inspect(f, func(n ast.Node) bool {
+				if ts, ok := n.(*ast.TypeSpec); ok {
+					if st, ok := ts.Type.(*ast.StructType); ok {
+						checkPrivateFieldsWithTags(pass, st, ts.Name.Name)
+					}
+				}
+				return true
+			})
+
+			if tt.expectError && errCount == 0 {
+				t.Error("Expected error but got none")
+			}
+			if !tt.expectError && errCount > 0 {
+				t.Errorf("Expected no error but got %d", errCount)
+			}
 		})
 	}
+
+	// Test edge case: struct with nil Fields
+	t.Run("struct with nil fields", func(t *testing.T) {
+		pass := &analysis.Pass{
+			Fset: token.NewFileSet(),
+			Report: func(_ analysis.Diagnostic) {
+				t.Error("Should not report error for nil fields")
+			},
+		}
+		// Create a StructType with nil Fields
+		structType := &ast.StructType{Fields: nil}
+		checkPrivateFieldsWithTags(pass, structType, "TestStruct")
+	})
 }
 
 // Test_isPrivateField teste la fonction isPrivateField.

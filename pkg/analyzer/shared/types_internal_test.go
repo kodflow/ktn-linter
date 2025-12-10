@@ -109,3 +109,34 @@ type User struct {}`,
 		})
 	}
 }
+
+// Test_hasSerializationTags_NilFields tests hasSerializationTags with nil fields.
+//
+// Params:
+//   - t: testing context
+func Test_hasSerializationTags_NilFields(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected bool
+	}{
+		{
+			name:     "nil fields should return false",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create struct with nil fields
+			structType := &ast.StructType{
+				Fields: nil,
+			}
+
+			result := hasSerializationTags(structType)
+			// Vérification résultat
+			if result != tt.expected {
+				t.Errorf("hasSerializationTags() with nil fields = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}

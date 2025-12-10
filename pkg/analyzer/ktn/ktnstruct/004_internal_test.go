@@ -13,14 +13,80 @@ import (
 // Test_runStruct004 tests the private runStruct004 function.
 func Test_runStruct004(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		code        string
+		filename    string
+		expectError bool
 	}{
-		{"error case validation"},
+		{
+			name: "single struct",
+			code: `package test
+type User struct { Name string }`,
+			filename:    "user.go",
+			expectError: false,
+		},
+		{
+			name: "test file with multiple structs",
+			code: `package test
+type User struct { Name string }
+type Admin struct { Role string }`,
+			filename:    "user_test.go",
+			expectError: false,
+		},
+		{
+			name: "multiple serializable structs",
+			code: `package test
+type UserDTO struct { Name string ` + "`json:\"name\"`" + ` }
+type AdminConfig struct { Role string }`,
+			filename:    "dto.go",
+			expectError: false,
+		},
+		{
+			name: "multiple non-serializable structs",
+			code: `package test
+type User struct { Name string }
+type Admin struct { Role string }`,
+			filename:    "models.go",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - logique principale testée via API publique
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, tt.filename, tt.code, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-STRUCT-004": {Enabled: config.Bool(true)},
+				},
+			}
+			config.Set(cfg)
+			defer config.Reset()
+
+			errCount := 0
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				Report: func(_ analysis.Diagnostic) {
+					errCount++
+				},
+			}
+
+			_, err = runStruct004(pass)
+			if err != nil {
+				t.Errorf("runStruct004() error = %v", err)
+			}
+
+			if tt.expectError && errCount == 0 {
+				t.Error("Expected error but got none")
+			}
+			if !tt.expectError && errCount > 0 {
+				t.Errorf("Expected no error but got %d", errCount)
+			}
 		})
 	}
 }

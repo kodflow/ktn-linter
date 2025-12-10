@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -45,13 +46,76 @@ func Test_checkStringConcatInLoop(t *testing.T) {
 // Test_isStringConcatenation tests the private isStringConcatenation function.
 func Test_isStringConcatenation(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		code     string
+		expected bool
 	}{
-		{"error case validation"},
+		{
+			name: "string concatenation",
+			code: `package test
+func example() {
+	s := "hello"
+	s += " world"
+}`,
+			expected: true,
+		},
+		{
+			name: "non-string assignment",
+			code: `package test
+func example() {
+	x := 1
+	x += 2
+}`,
+			expected: false,
+		},
+		{
+			name: "empty lhs",
+			code: `package test
+func example() {
+	_ = 1
+}`,
+			expected: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if string concatenation
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// Find assignment statement
+			foundAssign := false
+			ast.Inspect(file, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok && assign.Tok == token.ADD_ASSIGN {
+					result := isStringConcatenation(pass, assign)
+					if result != tt.expected {
+						t.Errorf("isStringConcatenation() = %v, expected %v", result, tt.expected)
+					}
+					foundAssign = true
+					return false
+				}
+				return true
+			})
+
+			if !foundAssign && tt.expected {
+				t.Error("No assignment found in test code")
+			}
 		})
 	}
 }

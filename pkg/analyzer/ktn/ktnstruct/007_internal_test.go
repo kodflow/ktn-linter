@@ -215,6 +215,23 @@ func (u *User) Age() int {
 			expectedCount:  2,
 			expectedMethod: "Name",
 		},
+		{
+			name: "method with invalid receiver type",
+			code: `package test
+import "io"
+func (r *io.Reader) Method() {}`,
+			expectedCount: 0,
+		},
+		{
+			name: "method with multiple return values",
+			code: `package test
+type User struct { name string }
+func (u *User) GetName() (string, error) {
+	return u.name, nil
+}`,
+			expectedCount:  1,
+			expectedMethod: "GetName",
+		},
 	}
 
 	// Itération sur les tests

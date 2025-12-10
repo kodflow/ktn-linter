@@ -2,6 +2,7 @@ package ktnfunc
 
 import (
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -10,7 +11,6 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/packages"
 )
 
 // Test_runFunc001_disabled tests behavior when rule is disabled.
@@ -131,9 +131,30 @@ func Test_isErrorType(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "error case validation",
+			name: "builtin error type",
 			code: `package test
 func foo() error { return nil }`,
+			expected: true,
+		},
+		{
+			name: "custom type implementing error",
+			code: `package test
+type MyError struct{}
+func (MyError) Error() string { return "" }
+func bar() MyError { return MyError{} }`,
+			expected: true,
+		},
+		{
+			name: "non-error type",
+			code: `package test
+func baz() string { return "" }`,
+			expected: false,
+		},
+		{
+			name: "named error type",
+			code: `package test
+type CustomError error
+func qux() CustomError { return nil }`,
 			expected: true,
 		},
 	}
@@ -142,7 +163,6 @@ func foo() error { return nil }`,
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &packages.Config{Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo}
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
 			// Vérification de l'erreur
@@ -150,16 +170,48 @@ func foo() error { return nil }`,
 				t.Fatalf("Failed to parse: %v", err)
 			}
 
-			// Créer un package minimal
-			pkg := &packages.Package{
-				Fset:      fset,
-				Syntax:    []*ast.File{file},
-				TypesInfo: &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)},
+			// Créer type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
 			}
-			_ = pkg
-			_ = cfg
+			_, err = conf.Check("test", fset, []*ast.File{file}, info)
+			// Vérification erreur type checking
+			if err != nil {
+				t.Fatalf("Failed type check: %v", err)
+			}
 
-			// Test passthrough - le test complet nécessite un contexte d'analyse complet
+			// Créer un pass avec TypesInfo
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+			}
+
+			// Trouver la déclaration de fonction et son type de retour
+			var errorExpr ast.Expr
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+					// Assignation de l'expression du type de retour
+					errorExpr = fd.Type.Results.List[0].Type
+					// Retour false pour arrêter la recherche
+					return false
+				}
+				// Retour true pour continuer la recherche
+				return true
+			})
+
+			// Vérifier que l'expression a été trouvée
+			if errorExpr == nil {
+				t.Fatal("Expected to find return type expression")
+			}
+
+			// Appeler isErrorType
+			result := isErrorType(pass, errorExpr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isErrorType() = %v, want %v", result, tt.expected)
+			}
 		})
 	}
 }
@@ -171,11 +223,41 @@ func foo() error { return nil }`,
 func Test_isBuiltinError(t *testing.T) {
 	tests := []struct {
 		name     string
-		typeName string
+		code     string
+		expected bool
 	}{
 		{
-			name:     "error_interface_detection",
-			typeName: "error",
+			name: "builtin error interface",
+			code: `package test
+func foo() error { return nil }`,
+			expected: true,
+		},
+		{
+			name: "non-interface type",
+			code: `package test
+func bar() int { return 0 }`,
+			expected: false,
+		},
+		{
+			name: "interface with wrong method count",
+			code: `package test
+type MyInterface interface { Foo(); Bar() }
+func baz() MyInterface { return nil }`,
+			expected: false,
+		},
+		{
+			name: "interface with wrong method name",
+			code: `package test
+type WrongError interface { NotError() string }
+func qux() WrongError { return nil }`,
+			expected: false,
+		},
+		{
+			name: "interface with wrong signature",
+			code: `package test
+type BadError interface { Error(int) string }
+func bad() BadError { return nil }`,
+			expected: false,
 		},
 	}
 
@@ -183,8 +265,50 @@ func Test_isBuiltinError(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - nécessite types.Type réel
-			_ = tt.typeName
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Créer type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, err = conf.Check("test", fset, []*ast.File{file}, info)
+			// Vérification erreur type checking
+			if err != nil {
+				t.Fatalf("Failed type check: %v", err)
+			}
+
+			// Trouver le type de retour
+			var returnType types.Type
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+					tv := info.Types[fd.Type.Results.List[0].Type]
+					// Assignation du type
+					returnType = tv.Type
+					// Retour false pour arrêter la recherche
+					return false
+				}
+				// Retour true pour continuer la recherche
+				return true
+			})
+
+			// Vérifier que le type a été trouvé
+			if returnType == nil {
+				t.Fatal("Expected to find return type")
+			}
+
+			// Appeler isBuiltinError
+			result := isBuiltinError(returnType)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isBuiltinError() = %v, want %v", result, tt.expected)
+			}
 		})
 	}
 }

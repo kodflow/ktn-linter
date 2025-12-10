@@ -364,10 +364,29 @@ func Test_extractFieldName(t *testing.T) {
 			expected: "field",
 		},
 		{
+			name: "selector_on_right",
+			binary: &ast.BinaryExpr{
+				X: &ast.Ident{Name: "nil"},
+				Y: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "s"},
+					Sel: &ast.Ident{Name: "cache"},
+				},
+			},
+			expected: "cache",
+		},
+		{
 			name: "no_selector",
 			binary: &ast.BinaryExpr{
 				X: &ast.Ident{Name: "x"},
 				Y: &ast.Ident{Name: "nil"},
+			},
+			expected: "",
+		},
+		{
+			name: "both_sides_not_selector",
+			binary: &ast.BinaryExpr{
+				X: &ast.Ident{Name: "x"},
+				Y: &ast.Ident{Name: "y"},
 			},
 			expected: "",
 		},

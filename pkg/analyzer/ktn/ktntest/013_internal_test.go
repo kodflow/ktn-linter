@@ -11,6 +11,7 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_hasErrorCaseCoverage tests the hasErrorCaseCoverage private function.
@@ -325,25 +326,74 @@ func Test_runTest013(t *testing.T) {
 //   - t: testing context
 func Test_collectFuncSignatures(t *testing.T) {
 	tests := []struct {
-		name string
-		want string
+		name         string
+		code         string
+		wantCount    int
+		checkKey     string
+		wantError    bool
 	}{
 		{
-			name: "function exists",
-			want: "collectFuncSignatures exists and is tested via public API",
+			name:      "function with error return",
+			code:      "package test\nfunc Foo() error { return nil }",
+			wantCount: 1,
+			checkKey:  "Foo",
+			wantError: true,
 		},
 		{
-			name: "function is internal",
-			want: "collectFuncSignatures is not exported",
+			name:      "function without error return",
+			code:      "package test\nfunc Bar() string { return \"\" }",
+			wantCount: 1,
+			checkKey:  "Bar",
+			wantError: false,
+		},
+		{
+			name:      "method with error return",
+			code:      "package test\ntype S struct{}\nfunc (s *S) Method() error { return nil }",
+			wantCount: 2,
+			checkKey:  "Method",
+			wantError: true,
 		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Vérification que la fonction existe
-			// Les tests réels nécessitent un *analysis.Pass complet
-			t.Log(tt.want)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+			}
+
+			insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+			signatures := collectFuncSignatures(pass, insp)
+
+			if len(signatures) < tt.wantCount {
+				t.Errorf("expected at least %d signatures, got %d", tt.wantCount, len(signatures))
+			}
+
+			if tt.checkKey != "" {
+				if info, found := signatures[tt.checkKey]; found {
+					if info.returnsError != tt.wantError {
+						t.Errorf("expected returnsError=%v, got %v", tt.wantError, info.returnsError)
+					}
+				}
+			}
 		})
 	}
 }
@@ -576,6 +626,16 @@ func Test_isErrorType(t *testing.T) {
 			code:     "package test\nfunc Foo() int { return 0 }",
 			expected: false,
 		},
+		{
+			name:     "multiple returns with error",
+			code:     "package test\nfunc Foo() (string, error) { return \"\", nil }",
+			expected: false,
+		},
+		{
+			name:     "pointer type (not error)",
+			code:     "package test\nfunc Foo() *string { return nil }",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -645,25 +705,81 @@ func Test_ExtractReceiverTypeName013(t *testing.T) {
 //   - t: testing context
 func Test_analyzeTestFunction(t *testing.T) {
 	tests := []struct {
-		name string
-		want string
+		name          string
+		testCode      string
+		funcCode      string
+		shouldReport  bool
 	}{
 		{
-			name: "analyzes test function",
-			want: "analyzeTestFunction exists",
+			name:     "test for function with error and error coverage",
+			testCode: `func TestFoo(t *testing.T) { err := Foo(); if err != nil { t.Error(err) } }`,
+			funcCode: `func Foo() error { return nil }`,
+			shouldReport: false,
 		},
 		{
-			name: "function is internal",
-			want: "analyzeTestFunction is not exported",
+			name:     "test for function with error but no error coverage",
+			testCode: `func TestBar(t *testing.T) { result := Bar(); _ = result }`,
+			funcCode: `func Bar() error { return nil }`,
+			shouldReport: true,
+		},
+		{
+			name:     "test for function without error",
+			testCode: `func TestBaz(t *testing.T) { result := Baz(); _ = result }`,
+			funcCode: `func Baz() string { return "" }`,
+			shouldReport: false,
 		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Vérification que la fonction existe et ne panique pas
-			// Les tests réels sont faits via l'API publique
-			t.Log(tt.want)
+			code := "package test\n" + tt.funcCode + "\n" + tt.testCode
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			reportCount := 0
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) { reportCount++ },
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) { reportCount++ },
+			}
+
+			insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+			signatures := collectFuncSignatures(pass, insp)
+
+			// Find test function
+			var testFunc *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Name != nil && shared.IsUnitTestFunction(fd) {
+					testFunc = fd
+					return false
+				}
+				return true
+			})
+
+			if testFunc != nil {
+				analyzeTestFunction(pass, testFunc, signatures)
+			}
+
+			if tt.shouldReport && reportCount == 0 {
+				t.Error("expected error report, got none")
+			} else if !tt.shouldReport && reportCount > 0 {
+				t.Errorf("expected no error report, got %d", reportCount)
+			}
 		})
 	}
 }

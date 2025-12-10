@@ -300,6 +300,16 @@ func Test_buildTestNames(t *testing.T) {
 			fn:   funcInfo{name: "", receiverName: ""},
 			want: []string{""},
 		},
+		{
+			name: "top-level function",
+			fn:   funcInfo{name: "Foo", receiverName: "", isExported: true},
+			want: []string{"Foo"},
+		},
+		{
+			name: "method with receiver",
+			fn:   funcInfo{name: "Method", receiverName: "Type", isExported: true},
+			want: []string{"Type_Method"},
+		},
 	}
 
 	// Parcourir les cas de test
@@ -365,6 +375,24 @@ func Test_hasMatchingTest(t *testing.T) {
 			testedFuncs: map[string]bool{"foo": true},
 			want:        false,
 		},
+		{
+			name:        "exact match found",
+			testNames:   []string{"Foo"},
+			testedFuncs: map[string]bool{"Foo": true},
+			want:        true,
+		},
+		{
+			name:        "case insensitive match found",
+			testNames:   []string{"Foo"},
+			testedFuncs: map[string]bool{"foo": true},
+			want:        true,
+		},
+		{
+			name:        "no match found",
+			testNames:   []string{"Foo"},
+			testedFuncs: map[string]bool{"Bar": true},
+			want:        false,
+		},
 	}
 
 	// Parcourir les cas de test
@@ -405,6 +433,11 @@ func Test_collectExternalTestedFunctions(t *testing.T) {
 			want: map[string]bool{},
 		},
 		{
+			name: "test function with wrong param name",
+			code: "func TestFoo(x *testing.T) {}",
+			want: map[string]bool{},
+		},
+		{
 			name: "valid test function",
 			code: "func TestFoo(t *testing.T) {}",
 			want: map[string]bool{"Foo": true},
@@ -413,6 +446,11 @@ func Test_collectExternalTestedFunctions(t *testing.T) {
 			name: "valid private test function",
 			code: "func Test_foo(t *testing.T) {}",
 			want: map[string]bool{"foo": true},
+		},
+		{
+			name: "test with method receiver",
+			code: "func TestMyType_Method(t *testing.T) {}",
+			want: map[string]bool{"MyType_Method": true},
 		},
 	}
 
@@ -459,10 +497,27 @@ func Test_collectFunctions(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
+		want int
 	}{
 		{
 			name: "error case - empty file",
 			code: "package test",
+			want: 0,
+		},
+		{
+			name: "collects public function",
+			code: "package test\nfunc PublicFunc() {}",
+			want: 1,
+		},
+		{
+			name: "collects private function",
+			code: "package test\nfunc privateFunc() {}",
+			want: 1,
+		},
+		{
+			name: "collects method with receiver",
+			code: "package test\ntype T struct{}\nfunc (t T) Method() {}",
+			want: 1,
 		},
 	}
 
@@ -486,8 +541,8 @@ func Test_collectFunctions(t *testing.T) {
 			collectFunctions(pass, &funcs, testedFuncs)
 
 			// Vérification du résultat
-			if len(funcs) != 0 {
-				t.Errorf("expected 0 functions, got %d", len(funcs))
+			if len(funcs) != tt.want {
+				t.Errorf("expected %d functions, got %d", tt.want, len(funcs))
 			}
 		})
 	}
@@ -612,10 +667,48 @@ func Test_collectAllFunctionsAndTests(t *testing.T) {
 //   - t: testing context
 func Test_checkFunctionsHaveTests(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		allFuncs    []funcInfo
+		testedFuncs map[string]bool
+		wantReports int
 	}{
 		{
-			name: "error case - no functions to check",
+			name:        "error case - no functions to check",
+			allFuncs:    []funcInfo{},
+			testedFuncs: make(map[string]bool),
+			wantReports: 0,
+		},
+		{
+			name: "function with test",
+			allFuncs: []funcInfo{
+				{name: "Foo", receiverName: "", isExported: true, pos: token.Pos(1), filename: "test.go"},
+			},
+			testedFuncs: map[string]bool{"Foo": true},
+			wantReports: 0,
+		},
+		{
+			name: "function without test",
+			allFuncs: []funcInfo{
+				{name: "Bar", receiverName: "", isExported: true, pos: token.Pos(1), filename: "test.go"},
+			},
+			testedFuncs: map[string]bool{},
+			wantReports: 1,
+		},
+		{
+			name: "mock function skipped",
+			allFuncs: []funcInfo{
+				{name: "MockFoo", receiverName: "", isExported: true, pos: token.Pos(1), filename: "test.go"},
+			},
+			testedFuncs: map[string]bool{},
+			wantReports: 0,
+		},
+		{
+			name: "method with mock receiver skipped",
+			allFuncs: []funcInfo{
+				{name: "Method", receiverName: "MockType", isExported: true, pos: token.Pos(1), filename: "test.go"},
+			},
+			testedFuncs: map[string]bool{},
+			wantReports: 0,
 		},
 	}
 
@@ -638,13 +731,11 @@ func Test_checkFunctionsHaveTests(t *testing.T) {
 				},
 			}
 
-			allFuncs := []funcInfo{}
-			testedFuncs := make(map[string]bool)
-			checkFunctionsHaveTests(pass, allFuncs, testedFuncs)
+			checkFunctionsHaveTests(pass, tt.allFuncs, tt.testedFuncs)
 
-			// Vérification pas de rapport
-			if reportCount != 0 {
-				t.Errorf("expected 0 reports, got %d", reportCount)
+			// Vérification du nombre de rapports
+			if reportCount != tt.wantReports {
+				t.Errorf("expected %d reports, got %d", tt.wantReports, reportCount)
 			}
 		})
 	}

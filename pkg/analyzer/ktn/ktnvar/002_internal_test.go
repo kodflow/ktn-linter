@@ -54,9 +54,9 @@ func Test_checkVarSpec(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "no value - ERROR",
+			name:        "type without value - OK (zero-value)",
 			code:        "package test\nvar x int",
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name:        "slice with type and value - OK",
@@ -67,6 +67,11 @@ func Test_checkVarSpec(t *testing.T) {
 			name:        "blank identifier - skip",
 			code:        "package test\nvar _ = 42",
 			expectError: false,
+		},
+		{
+			name:        "multiple names without type - ERROR",
+			code:        "package test\nvar x, y = 1, 2",
+			expectError: true,
 		},
 	}
 
@@ -98,12 +103,11 @@ func Test_checkVarSpec(t *testing.T) {
 
 			// Vérification des conditions
 			hasType := valueSpec.Type != nil
-			hasValues := len(valueSpec.Values) > 0
 
-			// Le format obligatoire est: var name type = value
-			// hasError = !hasType || !hasValues (sauf blank identifier)
+			// Le format obligatoire est: var name type (avec ou sans valeur)
+			// hasError = !hasType (sauf blank identifier)
 			isBlank := len(valueSpec.Names) == 1 && valueSpec.Names[0].Name == "_"
-			hasError := (!hasType || !hasValues) && !isBlank
+			hasError := !hasType && !isBlank
 
 			// Vérification résultat
 			if hasError != tt.expectError {
@@ -162,9 +166,8 @@ var (
 				// Vérification du type
 				if vs, ok := n.(*ast.ValueSpec); ok {
 					hasType := vs.Type != nil
-					hasValues := len(vs.Values) > 0
-					// Vérification format valide
-					if hasType && hasValues {
+					// Vérification format valide (type explicite requis)
+					if hasType {
 						validCount++
 					}
 				}

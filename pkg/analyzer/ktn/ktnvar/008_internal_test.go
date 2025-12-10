@@ -102,7 +102,13 @@ func Test_checkStmtForAlloc_emptyStmt(t *testing.T) {
 
 	// Test with empty statement (not assign or decl)
 	checkStmtForAlloc(pass, &ast.EmptyStmt{})
-	// No error expected
+
+	// Test with other statement types
+	checkStmtForAlloc(pass, &ast.ReturnStmt{})
+	checkStmtForAlloc(pass, &ast.IfStmt{})
+	checkStmtForAlloc(pass, &ast.ForStmt{})
+	checkStmtForAlloc(pass, &ast.ExprStmt{})
+	// No error expected for non-assign/decl statements
 }
 
 // Test_checkAssignForAlloc tests the private checkAssignForAlloc function.

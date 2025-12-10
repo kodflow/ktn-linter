@@ -164,6 +164,20 @@ func NewUser() User { return User{} }`,
 func NewUser() {}`,
 			expected: "",
 		},
+		{
+			name: "pointer to non-ident",
+			src: `package test
+import "io"
+func NewReader() *io.Reader { return nil }`,
+			expected: "",
+		},
+		{
+			name: "selector expr return",
+			src: `package test
+import "time"
+func NewTime() time.Time { return time.Now() }`,
+			expected: "",
+		},
 	}
 
 	for _, tt := range tests {

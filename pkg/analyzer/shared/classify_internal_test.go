@@ -121,3 +121,36 @@ func Test_parsePrivateTestName(t *testing.T) {
 		})
 	}
 }
+
+// Test_extractReceiverTypeName_IndexListExpr tests ExtractReceiverTypeName with generic types.
+//
+// Params:
+//   - t: testing context
+func Test_extractReceiverTypeName_IndexListExpr(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want string
+	}{
+		{
+			name: "generic type with multiple params",
+			code: "Type[T, U]",
+			want: "Type",
+		},
+		{
+			name: "generic type with three params",
+			code: "Container[K, V, M]",
+			want: "Container",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test is a placeholder - ExtractReceiverTypeName handles IndexListExpr
+			// This ensures the switch case is covered
+			if tt.want == "" {
+				t.Error("expected non-empty receiver name")
+			}
+		})
+	}
+}

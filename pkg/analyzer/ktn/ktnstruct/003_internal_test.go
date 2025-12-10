@@ -14,14 +14,91 @@ import (
 // Test_runStruct003 tests the private runStruct003 function.
 func Test_runStruct003(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		code        string
+		expectError bool
 	}{
-		{"error case validation"},
+		{
+			name: "method without receiver",
+			code: `package test
+func GetName() string { return "test" }`,
+			expectError: false,
+		},
+		{
+			name: "private method",
+			code: `package test
+type User struct { name string }
+func (u *User) getName() string { return u.name }`,
+			expectError: false,
+		},
+		{
+			name: "method on private struct",
+			code: `package test
+type user struct { name string }
+func (u *user) GetName() string { return u.name }`,
+			expectError: false,
+		},
+		{
+			name: "method named just Get",
+			code: `package test
+type User struct{}
+func (u *User) Get() string { return "" }`,
+			expectError: false,
+		},
+		{
+			name: "simple getter with Get prefix",
+			code: `package test
+type User struct { name string }
+func (u *User) GetName() string { return u.name }`,
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - logique principale testée via API publique
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-STRUCT-003": {Enabled: config.Bool(true)},
+				},
+			}
+			config.Set(cfg)
+			defer config.Reset()
+
+			errCount := 0
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{f},
+				Report:   func(d analysis.Diagnostic) { errCount++ },
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(_ analysis.Diagnostic) { errCount++ },
+			}
+
+			_, err = runStruct003(pass)
+			if err != nil {
+				t.Errorf("runStruct003() error = %v", err)
+			}
+
+			if tt.expectError && errCount == 0 {
+				t.Error("Expected error but got none")
+			}
+			if !tt.expectError && errCount > 0 {
+				t.Errorf("Expected no error but got %d", errCount)
+			}
 		})
 	}
 }
@@ -135,6 +212,41 @@ type User struct {
 func (u *User) GetName() {}`,
 			expected: false,
 		},
+		{
+			name: "getter with multiple returns is still getter",
+			src: `package test
+type User struct {
+	name string
+}
+func (u *User) GetName() (string, error) { return u.name, nil }`,
+			expected: true,
+		},
+		{
+			name: "getter with multiple statements is still getter",
+			src: `package test
+type User struct {
+	name string
+}
+func (u *User) GetName() string {
+	x := u.name
+	return x
+}`,
+			expected: true,
+		},
+		{
+			name: "getter with unknown receiver type",
+			src: `package test
+import "io"
+func (r *io.Reader) GetData() string { return "" }`,
+			expected: true,
+		},
+		{
+			name: "getter with matching field in struct",
+			src: `package test
+type User struct { name string }
+func (u *User) GetName() string { return u.name }`,
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -174,6 +286,40 @@ func (u *User) GetName() {}`,
 			}
 		})
 	}
+
+	// Test edge case: receiver type not in struct map
+	t.Run("receiver type not in struct map", func(t *testing.T) {
+		src := `package test
+type User struct { name string }
+func (u *User) GetData() string { return "" }`
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, "test.go", src, 0)
+		if err != nil {
+			t.Fatalf("failed to parse source: %v", err)
+		}
+
+		// Create empty struct types map (User not included)
+		structTypes := make(map[string][]string)
+
+		// Find the method
+		var funcDecl *ast.FuncDecl
+		ast.Inspect(file, func(n ast.Node) bool {
+			if fd, ok := n.(*ast.FuncDecl); ok && fd.Recv != nil {
+				funcDecl = fd
+				return false
+			}
+			return true
+		})
+
+		if funcDecl == nil {
+			t.Fatal("no method found")
+		}
+
+		result := isSimpleGetter(funcDecl, structTypes)
+		if !result {
+			t.Errorf("expected true for type not in map, got false")
+		}
+	})
 }
 
 // Test_getReceiverTypeName tests the private getReceiverTypeName function.
@@ -196,6 +342,20 @@ func (u *User) Method() {}`,
 type User struct{}
 func (u User) Method() {}`,
 			expected: "User",
+		},
+		{
+			name: "selector expr receiver",
+			src: `package test
+import "io"
+func (u *io.Reader) Method() {}`,
+			expected: "",
+		},
+		{
+			name: "array type receiver extracts type name",
+			src: `package test
+type IntSlice []int
+func (is IntSlice) Method() {}`,
+			expected: "IntSlice",
 		},
 	}
 

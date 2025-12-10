@@ -443,6 +443,62 @@ func Test_isContextTypeByType_notNamed(t *testing.T) {
 	}
 }
 
+// Test_isContextTypeByType_realContext tests with real context.Context.
+//
+// Params:
+//   - t: instance de testing
+func Test_isContextTypeByType_realContext(t *testing.T) {
+	// Test avec context.Context réel
+	code := `package test
+import "context"
+func foo(ctx context.Context) { }
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer type checker
+	conf := types.Config{Importer: importer.Default()}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, err = conf.Check("test", fset, []*ast.File{file}, info)
+	// Vérification erreur type checking
+	if err != nil {
+		t.Fatalf("Failed type check: %v", err)
+	}
+
+	// Trouver le type context.Context
+	var ctxType types.Type
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérifier si c'est une fonction
+		if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Params != nil && len(fd.Type.Params.List) > 0 {
+			tv := info.Types[fd.Type.Params.List[0].Type]
+			// Assignation du type
+			ctxType = tv.Type
+			// Retour false pour arrêter la recherche
+			return false
+		}
+		// Retour true pour continuer la recherche
+		return true
+	})
+
+	// Vérifier que le type a été trouvé
+	if ctxType == nil {
+		t.Fatal("Expected to find context.Context type")
+	}
+
+	// Appeler isContextTypeByType
+	result := isContextTypeByType(ctxType)
+	// Vérifier true car c'est context.Context
+	if !result {
+		t.Error("Expected true for context.Context type")
+	}
+}
+
 // Test_isContextTypeByType_noObject tests when Named type has no object.
 //
 // Params:

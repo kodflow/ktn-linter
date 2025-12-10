@@ -261,13 +261,59 @@ func Test_checkAndReportPrivateFunctionTest(t *testing.T) {
 			privateFunctions:  map[string]bool{},
 			shouldReportError: false,
 		},
+		{
+			name:              "test for non-existent function",
+			testFuncName:      "Test_unknownFunction",
+			privateFunctions:  map[string]bool{"otherFunc": true},
+			shouldReportError: false,
+		},
+		{
+			name:              "empty key generated from test name",
+			testFuncName:      "Test_foo",
+			privateFunctions:  map[string]bool{},
+			shouldReportError: false,
+		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test conceptual logic
-			t.Logf("Testing: %s", tt.testFuncName)
+			code := "package test\nfunc " + tt.testFuncName + "(t *testing.T) {}"
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test_external_test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					return false
+				}
+				return true
+			})
+
+			if funcDecl == nil {
+				t.Fatal("no function declaration found")
+			}
+
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+				Report: func(d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkAndReportPrivateFunctionTest(pass, funcDecl, "test_external_test.go", tt.privateFunctions)
+
+			if tt.shouldReportError && reportCount == 0 {
+				t.Error("expected error to be reported")
+			} else if !tt.shouldReportError && reportCount > 0 {
+				t.Errorf("expected no error, got %d reports", reportCount)
+			}
 		})
 	}
 }
