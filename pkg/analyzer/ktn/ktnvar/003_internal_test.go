@@ -2,7 +2,14 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_runVar003 tests the private runVar003 function.
@@ -83,45 +90,67 @@ func Test_checkFunctionBody(t *testing.T) {
 }
 
 // Test_checkStatement tests the private checkStatement function.
-func Test_checkStatement(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks statements
-		})
+func Test_checkStatement_nilBody(t *testing.T) {
+	// Create a function with nil statement (edge case)
+	code := `package test
+func example() {
+	if true {
+		var x = 1
 	}
 }
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
 
-// Test_checkNestedBlocks tests the private checkNestedBlocks function.
-func Test_checkNestedBlocks(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks nested blocks
-		})
-	}
+
+	// Call checkStatement with nil to cover nil branch
+	checkStatement(pass, &ast.EmptyStmt{})
+	// No error expected
 }
 
-// Test_checkIfStmt tests the private checkIfStmt function.
-func Test_checkIfStmt(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+// Test_checkNestedBlocks_switch tests checkNestedBlocks with switch stmt.
+func Test_checkNestedBlocks_switch(t *testing.T) {
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if statements
-		})
+
+	// Test with switch statement
+	switchStmt := &ast.SwitchStmt{
+		Body: &ast.BlockStmt{},
 	}
+	checkNestedBlocks(pass, switchStmt)
+	// No error expected
+}
+
+// Test_checkIfStmt_nilBody tests checkIfStmt with nil body.
+func Test_checkIfStmt_nilBody(t *testing.T) {
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	// Test with if statement with nil body
+	ifStmt := &ast.IfStmt{
+		Body: nil,
+		Else: nil,
+	}
+	checkIfStmt(pass, ifStmt)
+	// No error expected
 }
 
 // Test_checkBlockIfNotNil tests the private checkBlockIfNotNil function.
@@ -191,5 +220,99 @@ func Test_reportVarErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function reports errors
 		})
+	}
+}
+
+// Test_runVar003_disabled tests runVar003 with disabled rule.
+func Test_runVar003_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-003": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar003(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar003() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 when disabled", reportCount)
+	}
+}
+
+// Test_runVar003_fileExcluded tests runVar003 with excluded file.
+func Test_runVar003_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-003": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar003(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar003() error = %v", err)
+	}
+
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

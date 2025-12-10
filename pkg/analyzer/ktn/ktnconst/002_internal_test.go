@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -415,5 +416,45 @@ func Test_fileDeclarations(t *testing.T) {
 				t.Error("fileDeclarations.funcDecls should not be nil")
 			}
 		})
+	}
+}
+
+// Test_runConst002_disabled tests that the rule is skipped when disabled.
+func Test_runConst002_disabled(t *testing.T) {
+	// Setup: disable the rule
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-CONST-002": {Enabled: config.Bool(false)},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	// Create minimal pass - should not report anything
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: token.NewFileSet(),
+		Files: []*ast.File{
+			{
+				Decls: []ast.Decl{
+					&ast.GenDecl{Tok: token.VAR},
+					&ast.GenDecl{Tok: token.CONST},
+				},
+			},
+		},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+			t.Error("Unexpected error reported when rule is disabled")
+		},
+	}
+
+	// Run the analyzer - should not report anything
+	_, err := runConst002(pass)
+	if err != nil {
+		t.Errorf("runConst002() error = %v", err)
+	}
+	// Verify no reports
+	if reportCount != 0 {
+		t.Errorf("Expected 0 reports, got %d", reportCount)
 	}
 }

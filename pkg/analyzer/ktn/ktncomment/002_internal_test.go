@@ -6,6 +6,9 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_checkFileComment tests the checkFileComment function.
@@ -114,4 +117,99 @@ func helperParseFile(t *testing.T, source string) *ast.File {
 	}
 	// Return parsed file
 	return file
+}
+
+// Test_runComment002_ruleDisabled tests behavior when rule is disabled.
+//
+// Params:
+//   - t: testing context
+func Test_runComment002_ruleDisabled(t *testing.T) {
+	// Import config package for test
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-002": {Enabled: config.Bool(false)},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+	}
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment002(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment002 failed: %v", err)
+	}
+
+	// Should report no errors when rule disabled
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+	}
+}
+
+// Test_runComment002_fileExcluded tests behavior when file is excluded.
+//
+// Params:
+//   - t: testing context
+func Test_runComment002_fileExcluded(t *testing.T) {
+	// Import config package for test
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-002": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"*.go"},
+			},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+	}
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment002(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment002 failed: %v", err)
+	}
+
+	// Should report no errors when file excluded
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+	}
 }

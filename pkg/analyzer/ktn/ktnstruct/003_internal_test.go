@@ -6,7 +6,9 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_runStruct003 tests the private runStruct003 function.
@@ -245,5 +247,94 @@ func Test_constants(t *testing.T) {
 				t.Errorf("expected %s to be %d, got %d", tt.name, tt.expected, tt.got)
 			}
 		})
+	}
+}
+
+// Test_runStruct003_disabled tests that the rule is skipped when disabled.
+func Test_runStruct003_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-STRUCT-003": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test
+type User struct { Name string }
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runStruct003(pass)
+	if err != nil {
+		t.Errorf("runStruct003() error = %v", err)
+	}
+}
+
+// Test_runStruct003_excludedFile tests that excluded files are skipped.
+func Test_runStruct003_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-STRUCT-003": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test
+type User struct { Name string }
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runStruct003(pass)
+	if err != nil {
+		t.Errorf("runStruct003() error = %v", err)
 	}
 }

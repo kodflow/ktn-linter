@@ -3,7 +3,13 @@ package ktncomment
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_extractCommentLines tests the extractCommentLines function.
@@ -145,6 +151,13 @@ func Test_validateParamsSection(t *testing.T) {
 			wantErr:  true,
 			wantIdx:  1,
 		},
+		{
+			name:     "params section with blank line after",
+			comments: []string{"// Params:", "//   - arg: description", "//"},
+			startIdx: 0,
+			wantErr:  false,
+			wantIdx:  3,
+		},
 	}
 
 	// Iterate over test cases
@@ -280,6 +293,45 @@ func Test_validateDocFormat(t *testing.T) {
 			hasReturns: false,
 			wantErr:    true,
 		},
+		{
+			name: "function with only returns",
+			comments: []string{
+				"// myFunc does something",
+				"//",
+				"// Returns:",
+				"//   - error: error description",
+			},
+			funcName:   "myFunc",
+			hasParams:  false,
+			hasReturns: true,
+			wantErr:    false,
+		},
+		{
+			name: "missing returns section",
+			comments: []string{
+				"// myFunc does something",
+				"//",
+			},
+			funcName:   "myFunc",
+			hasParams:  false,
+			hasReturns: true,
+			wantErr:    true,
+		},
+		{
+			name: "multiline description before params",
+			comments: []string{
+				"// myFunc does something",
+				"// with multiple lines",
+				"// of description",
+				"//",
+				"// Params:",
+				"//   - arg: description",
+			},
+			funcName:   "myFunc",
+			hasParams:  true,
+			hasReturns: false,
+			wantErr:    false,
+		},
 	}
 
 	// Iterate over test cases
@@ -316,6 +368,176 @@ func Test_runComment006(t *testing.T) {
 			// Check analyzer name
 			if Analyzer006.Name != "ktncomment006" {
 				t.Errorf("Analyzer006.Name = %q, want %q", Analyzer006.Name, "ktncomment006")
+			}
+		})
+	}
+}
+
+// Test_runComment006_ruleDisabled tests behavior when rule is disabled.
+//
+// Params:
+//   - t: testing context
+func Test_runComment006_ruleDisabled(t *testing.T) {
+	// Import config package for test
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-006": {Enabled: config.Bool(false)},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test
+func myFunc() {}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment006(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment006 failed: %v", err)
+	}
+
+	// Should report no errors when rule disabled
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+	}
+}
+
+// Test_runComment006_fileExcluded tests behavior when file is excluded.
+//
+// Params:
+//   - t: testing context
+func Test_runComment006_fileExcluded(t *testing.T) {
+	// Import config package for test
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-006": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"*.go"},
+			},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test
+func myFunc() {}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment006(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment006 failed: %v", err)
+	}
+
+	// Should report no errors when file excluded
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+	}
+}
+
+// Test_validateDocFormat_skipDescriptionLines tests skipping description lines.
+//
+// Params:
+//   - t: testing context
+func Test_validateDocFormat_skipDescriptionLines(t *testing.T) {
+	tests := []struct {
+		name       string
+		comments   []string
+		funcName   string
+		hasParams  bool
+		hasReturns bool
+		wantErr    bool
+	}{
+		{
+			name: "direct params without blank line",
+			comments: []string{
+				"// myFunc does something",
+				"// Params:",
+				"//   - arg: description",
+			},
+			funcName:   "myFunc",
+			hasParams:  true,
+			hasReturns: false,
+			wantErr:    false,
+		},
+		{
+			name: "direct returns without blank line",
+			comments: []string{
+				"// myFunc does something",
+				"// Returns:",
+				"//   - error: error description",
+			},
+			funcName:   "myFunc",
+			hasParams:  false,
+			hasReturns: true,
+			wantErr:    false,
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateDocFormat(tt.comments, tt.funcName, tt.hasParams, tt.hasReturns)
+			// Check error presence
+			if (err != "") != tt.wantErr {
+				t.Errorf("validateDocFormat() error = %q, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

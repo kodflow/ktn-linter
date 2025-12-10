@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -735,8 +736,8 @@ func Test_collectExternalTestFunctions(t *testing.T) {
 //   - t: testing context
 func Test_findPackageDir(t *testing.T) {
 	tests := []struct {
-		name     string
-		files    []*ast.File
+		name      string
+		files     []*ast.File
 		wantEmpty bool
 	}{
 		{
@@ -833,5 +834,74 @@ func Test_parseTestFile(t *testing.T) {
 				t.Errorf("parseTestFile() collected %d funcs, want 0", len(testedFuncs))
 			}
 		})
+	}
+}
+
+// Test_runTest004_disabled tests that the rule is skipped when disabled.
+func Test_runTest004_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-004": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest004(pass)
+	if err != nil {
+		t.Errorf("runTest004() error = %v", err)
+	}
+}
+
+// Test_runTest004_excludedFile tests that excluded files are skipped.
+func Test_runTest004_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-004": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runTest004(pass)
+	if err != nil {
+		t.Errorf("runTest004() error = %v", err)
 	}
 }

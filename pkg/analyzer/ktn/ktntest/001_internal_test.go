@@ -2,7 +2,13 @@
 package ktntest
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_runTest001 tests the runTest001 private function with table-driven tests.
@@ -188,42 +194,219 @@ func Test_hasValidTestSuffix(t *testing.T) {
 	}
 }
 
+// mockReporter simulates a reporter to capture reported errors.
+type mockReporter struct {
+	// diagnostics contains the reported error messages
+	diagnostics []string
+}
+
+// Report adds a diagnostic to the list.
+//
+// Params:
+//   - d: diagnostic to report
+func (m *mockReporter) Report(d analysis.Diagnostic) {
+	// Add the diagnostic message
+	m.diagnostics = append(m.diagnostics, d.Message)
+}
+
 // Test_verifyBenchFile tests the verifyBenchFile private function.
 //
 // Params:
 //   - t: testing context
 func Test_verifyBenchFile(t *testing.T) {
 	tests := []struct {
-		name     string
-		filename string
-		code     string
+		name              string
+		filename          string
+		code              string
+		expectedDiagCount int
 	}{
 		{
 			name:     "bench file with only benchmarks",
 			filename: "foo_bench_test.go",
 			code: `package test
+import "testing"
 func BenchmarkAdd(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = 1 + 1
 	}
+}
+func BenchmarkMultiply(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = 2 * 2
+	}
 }`,
+			expectedDiagCount: 0,
 		},
 		{
 			name:     "bench file with Test function should error",
 			filename: "foo_bench_test.go",
 			code: `package test
+import "testing"
 func TestAdd(t *testing.T) {
 	_ = 1 + 1
+}
+func BenchmarkAdd(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = 1 + 1
+	}
 }`,
+			expectedDiagCount: 1,
+		},
+		{
+			name:     "bench file with multiple Test functions",
+			filename: "foo_bench_test.go",
+			code: `package test
+import "testing"
+func TestAdd(t *testing.T) {
+	_ = 1 + 1
+}
+func TestSubtract(t *testing.T) {
+	_ = 2 - 1
+}`,
+			expectedDiagCount: 2,
+		},
+		{
+			name:     "bench file with helper functions",
+			filename: "foo_bench_test.go",
+			code: `package test
+import "testing"
+func helperFunc() int {
+	return 42
+}
+func BenchmarkWithHelper(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = helperFunc()
+	}
+}`,
+			expectedDiagCount: 0,
 		},
 	}
 
 	// Iterate over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - requires full analysis.Pass setup
-			_ = tt.filename
-			_ = tt.code
+			// Parse the code
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, tt.filename, tt.code, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse code: %v", err)
+			}
+
+			// Create a mock reporter
+			reporter := &mockReporter{}
+
+			// Create a mock analysis.Pass
+			pass := &analysis.Pass{
+				Fset:   fset,
+				Files:  []*ast.File{f},
+				Report: reporter.Report,
+			}
+
+			// Call verifyBenchFile
+			verifyBenchFile(pass, f, tt.filename)
+
+			// Check the number of diagnostics
+			if len(reporter.diagnostics) != tt.expectedDiagCount {
+				t.Errorf("Expected %d diagnostics, got %d: %v",
+					tt.expectedDiagCount, len(reporter.diagnostics), reporter.diagnostics)
+			}
 		})
+	}
+}
+
+// Test_runTest001_disabled tests that the rule is skipped when disabled.
+//
+// Params:
+//   - t: testing context
+func Test_runTest001_disabled(t *testing.T) {
+	// Save current config and restore it
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Set config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-001": {Enabled: config.Bool(false)},
+		},
+	})
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create mock reporter
+	reporter := &mockReporter{}
+
+	pass := &analysis.Pass{
+		Fset:   fset,
+		Files:  []*ast.File{f},
+		Report: reporter.Report,
+	}
+
+	_, err = runTest001(pass)
+	if err != nil {
+		t.Errorf("runTest001() error = %v", err)
+	}
+
+	// Check no diagnostics reported
+	if len(reporter.diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics (rule disabled), got %d: %v",
+			len(reporter.diagnostics), reporter.diagnostics)
+	}
+}
+
+// Test_runTest001_excludedFile tests that excluded files are skipped.
+//
+// Params:
+//   - t: testing context
+func Test_runTest001_excludedFile(t *testing.T) {
+	// Save current config and restore it
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Set config with file excluded
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-001": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"test_test.go"},
+			},
+		},
+	})
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create mock reporter
+	reporter := &mockReporter{}
+
+	pass := &analysis.Pass{
+		Fset:   fset,
+		Files:  []*ast.File{f},
+		Report: reporter.Report,
+	}
+
+	_, err = runTest001(pass)
+	if err != nil {
+		t.Errorf("runTest001() error = %v", err)
+	}
+
+	// Check no diagnostics reported
+	if len(reporter.diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics (file excluded), got %d: %v",
+			len(reporter.diagnostics), reporter.diagnostics)
 	}
 }

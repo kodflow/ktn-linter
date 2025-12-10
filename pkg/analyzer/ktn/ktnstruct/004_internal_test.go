@@ -5,6 +5,9 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_runStruct004 tests the private runStruct004 function.
@@ -87,10 +90,10 @@ type Reader interface {
 // Test_structInfo tests the structInfo type.
 func Test_structInfo(t *testing.T) {
 	tests := []struct {
-		name           string
-		src            string
-		expectedName   string
-		expectedCount  int
+		name          string
+		src           string
+		expectedName  string
+		expectedCount int
 	}{
 		{
 			name: "verify struct info fields",
@@ -193,5 +196,72 @@ type Admin struct { Role string }`,
 				t.Errorf("allStructsAreSerializable() = %v, want %v", result, tt.expected)
 			}
 		})
+	}
+}
+
+// Test_runStruct004_disabled tests that the rule is skipped when disabled.
+func Test_runStruct004_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-STRUCT-004": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test
+type User struct { Name string }
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runStruct004(pass)
+	if err != nil {
+		t.Errorf("runStruct004() error = %v", err)
+	}
+}
+
+// Test_runStruct004_excludedFile tests that excluded files are skipped.
+func Test_runStruct004_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-STRUCT-004": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test
+type User struct { Name string }
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runStruct004(pass)
+	if err != nil {
+		t.Errorf("runStruct004() error = %v", err)
 	}
 }

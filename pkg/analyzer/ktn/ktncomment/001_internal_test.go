@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
@@ -125,6 +126,16 @@ func main() {
 			code: `package test
 // Comment at start
 var x = 1`,
+			want: true,
+		},
+		{
+			name: "GenDecl doc comment",
+			code: `package test
+// This is a group comment
+const (
+	A = 1
+	B = 2
+)`,
 			want: true,
 		},
 	}
@@ -352,5 +363,300 @@ func Test_checkMultiLineComment(t *testing.T) {
 				t.Errorf("checkMultiLineComment() errors = %d, want %d", errorCount, tt.wantErrs)
 			}
 		})
+	}
+}
+
+// Test_runComment001_ruleDisabled tests behavior when rule is disabled.
+//
+// Params:
+//   - t: testing context
+func Test_runComment001_ruleDisabled(t *testing.T) {
+	// Import config package for test
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-001": {Enabled: config.Bool(false)},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test
+func main() {
+	x := 1 // ` + strings.Repeat("a", 100) + `
+}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment001(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment001 failed: %v", err)
+	}
+
+	// Should report no errors when rule disabled
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+	}
+}
+
+// Test_runComment001_fileExcluded tests behavior when file is excluded.
+//
+// Params:
+//   - t: testing context
+func Test_runComment001_fileExcluded(t *testing.T) {
+	// Import config package for test
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-001": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"*.go"},
+			},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test
+func main() {
+	x := 1 // ` + strings.Repeat("a", 100) + `
+}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment001(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment001 failed: %v", err)
+	}
+
+	// Should report no errors when file excluded
+	if errorCount != 0 {
+		t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+	}
+}
+
+// Test_runComment001_customThreshold tests behavior with custom threshold.
+//
+// Params:
+//   - t: testing context
+func Test_runComment001_customThreshold(t *testing.T) {
+	// Configure custom threshold
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-COMMENT-001": {
+				Enabled:   config.Bool(true),
+				Threshold: config.Int(50),
+			},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	code := `package test
+func main() {
+	x := 1 // ` + strings.Repeat("a", 51) + `
+}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment001(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment001 failed: %v", err)
+	}
+
+	// Should report error with custom threshold
+	if errorCount != 1 {
+		t.Errorf("expected 1 error with custom threshold, got %d", errorCount)
+	}
+}
+
+// Test_isDocComment_edgeCases tests edge cases for isDocComment.
+//
+// Params:
+//   - t: testing context
+func Test_isDocComment_edgeCases(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "comment on same line as declaration",
+			code: `package test
+// Doc comment
+const X = 1`,
+			want: true,
+		},
+		{
+			name: "comment not at line start",
+			code: `package test
+func main() {
+		// Indented comment
+		x := 1
+		_ = x
+}`,
+			want: false,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			pass := &analysis.Pass{
+				Fset: fset,
+			}
+
+			// Get first comment
+			if len(file.Comments) == 0 {
+				t.Fatal("no comments found in code")
+			}
+			comment := file.Comments[0].List[0]
+
+			got := isDocComment(pass, file, comment)
+			// Check result matches expectation
+			if got != tt.want {
+				t.Errorf("isDocComment() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_runComment001_multiLineBlock tests multi-line block comments.
+//
+// Params:
+//   - t: testing context
+func Test_runComment001_multiLineBlock(t *testing.T) {
+	code := `package test
+func main() {
+	x := 1 /* ` + strings.Repeat("a", 85) + ` */
+}`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+	// Check parsing success
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+	pass.ResultOf[inspect.Analyzer] = inspectResult
+
+	errorCount := 0
+	pass.Report = func(d analysis.Diagnostic) {
+		errorCount++
+	}
+
+	// Run analyzer
+	_, err = runComment001(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runComment001 failed: %v", err)
+	}
+
+	// Should report error for long multi-line comment
+	if errorCount != 1 {
+		t.Errorf("expected 1 error for long multi-line comment, got %d", errorCount)
 	}
 }

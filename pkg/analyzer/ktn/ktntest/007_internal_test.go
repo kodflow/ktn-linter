@@ -2,7 +2,14 @@
 package ktntest
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_runTest007 tests the runTest007 private function with table-driven tests.
@@ -105,5 +112,96 @@ func Test_isSkipMethod(t *testing.T) {
 				t.Errorf("isSkipMethod(%q) = %v, want %v", tt.methodName, got, tt.want)
 			}
 		})
+	}
+}
+
+// Test_runTest007_disabled tests that the rule is skipped when disabled.
+func Test_runTest007_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-007": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest007(pass)
+	if err != nil {
+		t.Errorf("runTest007() error = %v", err)
+	}
+}
+
+// Test_runTest007_excludedFile tests that excluded files are skipped.
+func Test_runTest007_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-007": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runTest007(pass)
+	if err != nil {
+		t.Errorf("runTest007() error = %v", err)
 	}
 }

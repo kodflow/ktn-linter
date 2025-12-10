@@ -8,6 +8,9 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_ParseTestNameForPrivate tests the shared.ParseTestName helper for private functions.
@@ -86,6 +89,11 @@ func Test_addPrivateFunction(t *testing.T) {
 			code:         "func (r MyType) privateMethod() {}",
 			wantFuncName: "MyType_privateMethod",
 		},
+		{
+			name:         "mock function (excluded)",
+			code:         "func mockPrivateFunc() {}",
+			wantFuncName: "",
+		},
 	}
 
 	// Parcourir les cas de test
@@ -93,7 +101,7 @@ func Test_addPrivateFunction(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
+			file, err := parser.ParseFile(fset, "", "package test\ntype MyType struct{}\n"+tt.code, 0)
 			// Vérification de l'erreur
 			if err != nil {
 				t.Fatalf("failed to parse code: %v", err)
@@ -305,5 +313,96 @@ func Test_checkExternalTestsForPrivateFunctions(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
 		})
+	}
+}
+
+// Test_runTest010_disabled tests that the rule is skipped when disabled.
+func Test_runTest010_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-010": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest010(pass)
+	if err != nil {
+		t.Errorf("runTest010() error = %v", err)
+	}
+}
+
+// Test_runTest010_excludedFile tests that excluded files are skipped.
+func Test_runTest010_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-010": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runTest010(pass)
+	if err != nil {
+		t.Errorf("runTest010() error = %v", err)
 	}
 }

@@ -8,6 +8,9 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_hasErrorCaseCoverage tests the hasErrorCaseCoverage private function.
@@ -119,54 +122,54 @@ func Test_hasErrorCaseCoverage(t *testing.T) {
 //   - t: testing context
 func Test_isErrorIndicatorName(t *testing.T) {
 	tests := []struct {
-		name     string
-		varName  string
-		want     bool
+		name    string
+		varName string
+		want    bool
 	}{
 		{
-			name:     "err is error indicator",
-			varName:  "err",
-			want:     true,
+			name:    "err is error indicator",
+			varName: "err",
+			want:    true,
 		},
 		{
-			name:     "error is error indicator",
-			varName:  "error",
-			want:     true,
+			name:    "error is error indicator",
+			varName: "error",
+			want:    true,
 		},
 		{
-			name:     "invalid is error indicator",
-			varName:  "invalid",
-			want:     true,
+			name:    "invalid is error indicator",
+			varName: "invalid",
+			want:    true,
 		},
 		{
-			name:     "fail is error indicator",
-			varName:  "fail",
-			want:     true,
+			name:    "fail is error indicator",
+			varName: "fail",
+			want:    true,
 		},
 		{
-			name:     "bad is error indicator",
-			varName:  "bad",
-			want:     true,
+			name:    "bad is error indicator",
+			varName: "bad",
+			want:    true,
 		},
 		{
-			name:     "wrong is error indicator",
-			varName:  "wrong",
-			want:     true,
+			name:    "wrong is error indicator",
+			varName: "wrong",
+			want:    true,
 		},
 		{
-			name:     "myError contains error",
-			varName:  "myError",
-			want:     true,
+			name:    "myError contains error",
+			varName: "myError",
+			want:    true,
 		},
 		{
-			name:     "regular variable not indicator",
-			varName:  "result",
-			want:     false,
+			name:    "regular variable not indicator",
+			varName: "result",
+			want:    false,
 		},
 		{
-			name:     "empty name not indicator",
-			varName:  "",
-			want:     false,
+			name:    "empty name not indicator",
+			varName: "",
+			want:    false,
 		},
 	}
 
@@ -351,10 +354,37 @@ func Test_collectFuncSignatures(t *testing.T) {
 //   - t: testing context
 func Test_addFuncSignature(t *testing.T) {
 	tests := []struct {
-		name string
-		code string
+		name         string
+		code         string
+		expectCount  int
+		expectName   string
+		returnsError bool
 	}{
-		{name: "adds signature", code: "package test\nfunc Foo() error { return nil }"},
+		{
+			name:         "function with error",
+			code:         "package test\nfunc Foo() error { return nil }",
+			expectCount:  1,
+			expectName:   "Foo",
+			returnsError: true,
+		},
+		{
+			name:         "function without error",
+			code:         "package test\nfunc Bar() string { return \"\" }",
+			expectCount:  1,
+			expectName:   "Bar",
+			returnsError: false,
+		},
+		{
+			name:        "method with receiver",
+			code:        "package test\ntype S struct{}\nfunc (s *S) Method() error { return nil }",
+			expectCount: 2,
+			expectName:  "Method",
+		},
+		{
+			name:        "mock function (included, not filtered at this level)",
+			code:        "package test\nfunc MockFunc() error { return nil }",
+			expectCount: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -370,8 +400,17 @@ func Test_addFuncSignature(t *testing.T) {
 					addFuncSignature(result, fd)
 				}
 			}
-			if len(result) == 0 {
-				t.Error("expected signature to be added")
+			if len(result) != tt.expectCount {
+				t.Errorf("expected %d signatures, got %d", tt.expectCount, len(result))
+			}
+			if tt.expectName != "" && tt.expectCount > 0 {
+				if info, found := result[tt.expectName]; found {
+					if tt.returnsError && !info.returnsError {
+						t.Error("expected function to return error")
+					}
+				} else if tt.expectCount == 1 {
+					t.Errorf("expected to find signature %q", tt.expectName)
+				}
 			}
 		})
 	}
@@ -518,10 +557,25 @@ func Test_functionReturnsError(t *testing.T) {
 //   - t: testing context
 func Test_isErrorType(t *testing.T) {
 	tests := []struct {
-		name string
-		code string
+		name     string
+		code     string
+		expected bool
 	}{
-		{name: "identifies error type", code: "package test\nfunc Foo() error { return nil }"},
+		{
+			name:     "error type",
+			code:     "package test\nfunc Foo() error { return nil }",
+			expected: true,
+		},
+		{
+			name:     "non-error type (string)",
+			code:     "package test\nfunc Foo() string { return \"\" }",
+			expected: false,
+		},
+		{
+			name:     "non-error type (int)",
+			code:     "package test\nfunc Foo() int { return 0 }",
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -535,8 +589,8 @@ func Test_isErrorType(t *testing.T) {
 				if fd, ok := decl.(*ast.FuncDecl); ok {
 					if fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
 						result := isErrorType(fd.Type.Results.List[0].Type)
-						if !result {
-							t.Error("expected error type to be identified")
+						if result != tt.expected {
+							t.Errorf("isErrorType() = %v, want %v", result, tt.expected)
 						}
 					}
 				}
@@ -753,5 +807,96 @@ func Test_checkErrorInKeyValue(t *testing.T) {
 				t.Error("expected to find error in key-value expression")
 			}
 		})
+	}
+}
+
+// Test_runTest013_disabled tests that the rule is skipped when disabled.
+func Test_runTest013_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-013": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest013(pass)
+	if err != nil {
+		t.Errorf("runTest013() error = %v", err)
+	}
+}
+
+// Test_runTest013_excludedFile tests that excluded files are skipped.
+func Test_runTest013_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-013": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runTest013(pass)
+	if err != nil {
+		t.Errorf("runTest013() error = %v", err)
 	}
 }
