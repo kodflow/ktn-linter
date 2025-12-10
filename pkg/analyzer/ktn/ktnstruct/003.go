@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -49,13 +48,6 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 	// Parcourir les déclarations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
-
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-		// Ignorer les fichiers de test
-		if shared.IsTestFile(filename) {
-			// Continuer avec le noeud suivant
-			return
-		}
 
 		// Vérifier si c'est une méthode (a un receiver)
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {

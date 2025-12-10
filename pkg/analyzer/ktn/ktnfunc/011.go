@@ -40,14 +40,6 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// runFunc011 exécute l'analyse KTN-FUNC-011.
-		//
-		// Params:
-		//   - pass: contexte d'analyse
-		//
-		// Returns:
-		//   - any: résultat de l'analyse
-		//   - error: erreur éventuelle
 		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip if no body (external functions)
