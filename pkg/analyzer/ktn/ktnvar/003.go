@@ -5,9 +5,15 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar003 is the rule code for this analyzer
+	ruleCodeVar003 string = "KTN-VAR-003"
 )
 
 // Analyzer003 checks that local variables use := instead of var
@@ -27,6 +33,15 @@ var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar003(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar003) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// We need to track function bodies to check local variables only
@@ -36,6 +51,13 @@ func runVar003(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar003, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Check if function has a body
 		if funcDecl.Body == nil {

@@ -5,15 +5,17 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer011 checks that functions don't exceed cyclomatic complexity of 10
 const (
-	// maxCyclomaticComplexity max cyclomatic complexity
-	maxCyclomaticComplexity int = 10
+	// ruleCodeFunc011 is the rule code for this analyzer
+	ruleCodeFunc011 string = "KTN-FUNC-011"
+	// defaultMaxCyclomaticComplexity is the default max cyclomatic complexity
+	defaultMaxCyclomaticComplexity int = 10
 )
 
 // Analyzer011 checks that functions don't exceed maximum cyclomatic complexity
@@ -33,6 +35,18 @@ var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runFunc011(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc011) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxComplexity := cfg.GetThreshold(ruleCodeFunc011, defaultMaxCyclomaticComplexity)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -41,6 +55,13 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc011, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
@@ -60,14 +81,14 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 		complexity := calculateComplexity(funcDecl.Body)
 
 		// Vérification de la condition
-		if complexity > maxCyclomaticComplexity {
+		if complexity > maxComplexity {
 			// Rapport d'erreur pour complexité excessive
 			pass.Reportf(
 				funcDecl.Name.Pos(),
 				"KTN-FUNC-011: la fonction '%s' a une complexité cyclomatique de %d (max: %d)",
 				funcName,
 				complexity,
-				maxCyclomaticComplexity,
+				maxComplexity,
 			)
 		}
 	})

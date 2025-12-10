@@ -6,9 +6,15 @@ import (
 	"go/token"
 	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar011 is the rule code for this analyzer
+	ruleCodeVar011 string = "KTN-VAR-011"
 )
 
 var (
@@ -47,6 +53,15 @@ var (
 //   - interface{}: toujours nil
 //   - error: erreur éventuelle
 func runVar011(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar011) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -57,6 +72,13 @@ func runVar011(pass *analysis.Pass) (any, error) {
 
 	// Parcours des assignations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar011, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Vérification de l'assignation courte
 		checkShortVarDecl(pass, n)
 	})

@@ -5,15 +5,17 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer012 checks that functions with >3 return values use named returns
 const (
-	// maxUnnamedReturns max unnamed returns allowed
-	maxUnnamedReturns int = 3
+	// ruleCodeFunc012 is the rule code for this analyzer
+	ruleCodeFunc012 string = "KTN-FUNC-012"
+	// defaultMaxUnnamedReturns max unnamed returns allowed
+	defaultMaxUnnamedReturns int = 3
 )
 
 // Analyzer012 checks that functions with >3 return values use named returns
@@ -33,6 +35,18 @@ var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runFunc012(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc012) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxUnnamed := cfg.GetThreshold(ruleCodeFunc012, defaultMaxUnnamedReturns)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -41,6 +55,13 @@ func runFunc012(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc012, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Skip test functions
 		if shared.IsTestFunction(funcDecl) {
@@ -75,15 +96,15 @@ func runFunc012(pass *analysis.Pass) (any, error) {
 			}
 		}
 
-		// If more than 3 returns and has unnamed returns, report error
-		if returnCount > maxUnnamedReturns && hasUnnamedReturns {
+		// If more than maxUnnamed returns and has unnamed returns, report error
+		if returnCount > maxUnnamed && hasUnnamedReturns {
 			// Rapport d'erreur pour named returns requis
 			pass.Reportf(
 				funcDecl.Type.Results.Pos(),
 				"KTN-FUNC-012: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
 				funcName,
 				returnCount,
-				maxUnnamedReturns,
+				maxUnnamed,
 			)
 		}
 	})

@@ -7,9 +7,14 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeTest011 string = "KTN-TEST-011"
 )
 
 // Analyzer011 checks package naming convention for internal/external test files
@@ -29,12 +34,28 @@ var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest011(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest011) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest011, filename) {
+			// Fichier exclu
+			continue
+		}
+
 		// Extraire le nom de base
 		basename := filepath.Base(filename)
 

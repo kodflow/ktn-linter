@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
@@ -144,7 +145,8 @@ type MyStruct struct {
 			interfaces := make(map[string]*ast.TypeSpec)
 			structNames := make(map[string]bool)
 
-			collectDeclarations(pass, interfaces, structNames)
+			cfg := config.Get()
+			collectDeclarations(pass, cfg, interfaces, structNames)
 
 			// Check interface was collected
 			if _, exists := interfaces["MyInterface"]; !exists {

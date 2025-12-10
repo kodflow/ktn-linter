@@ -6,9 +6,14 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeTest005 string = "KTN-TEST-005"
 )
 
 // Analyzer005 checks that tests use table-driven test pattern
@@ -28,6 +33,15 @@ var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest005(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest005) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -38,6 +52,12 @@ func runTest005(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest005, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérification de la condition
 		if !shared.IsTestFile(filename) {

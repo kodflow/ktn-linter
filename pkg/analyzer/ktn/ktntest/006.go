@@ -7,7 +7,12 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	ruleCodeTest006 string = "KTN-TEST-006"
 )
 
 // Analyzer006 checks that each test file has a corresponding source file (1:1 pattern)
@@ -26,6 +31,15 @@ var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest006(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest006) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Ignore xxx_test packages (test entire package)
 	packageName := pass.Pkg.Name()
 	// Vérification de la condition
@@ -43,6 +57,13 @@ func runTest006(pass *analysis.Pass) (any, error) {
 	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest006, filename) {
+			// Fichier exclu
+			continue
+		}
+
 		basename := filepath.Base(filename)
 
 		// Vérification si test

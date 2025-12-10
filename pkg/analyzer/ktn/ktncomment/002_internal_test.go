@@ -59,7 +59,7 @@ package example`,
 				t.Fatalf("failed to parse source: %v", err)
 			}
 
-			got := checkFileComment(file)
+			got := checkFileComment(file, defaultMinPackageCommentLength)
 			// Check result
 			if got != tt.want {
 				t.Errorf("checkFileComment() = %v, want %v", got, tt.want)

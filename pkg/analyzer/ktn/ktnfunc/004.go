@@ -6,12 +6,15 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeFunc004 is the rule code for this analyzer
+	ruleCodeFunc004 string = "KTN-FUNC-004"
 	// initialPrivateFuncsCap initial capacity for private funcs map
 	initialPrivateFuncsCap int = 32
 	// initialCalledFuncsCap initial capacity for called funcs map
@@ -42,14 +45,23 @@ type privateFuncInfo struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc004(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc004) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter les fonctions privées et les appels
-	privateFuncs := collectPrivateFunctions(pass, insp)
-	calledInProduction := collectCalledFunctions(pass, insp)
+	privateFuncs := collectPrivateFunctions(pass, insp, cfg)
+	calledInProduction := collectCalledFunctions(pass, insp, cfg)
 
 	// Détecter les fonctions passées comme callbacks
-	collectCallbackUsages(pass, insp, privateFuncs, calledInProduction)
+	collectCallbackUsages(pass, insp, privateFuncs, calledInProduction, cfg)
 
 	// Reporter les fonctions privées non utilisées
 	reportUnusedPrivateFuncs(pass, privateFuncs, calledInProduction)
@@ -63,16 +75,23 @@ func runFunc004(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - insp: inspector AST
+//   - cfg: configuration
 //
 // Returns:
 //   - map[string][]*privateFuncInfo: map des fonctions privées par nom
-func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string][]*privateFuncInfo {
+func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string][]*privateFuncInfo {
 	privateFuncs := make(map[string][]*privateFuncInfo, initialPrivateFuncsCap)
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeFunc004, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
@@ -140,16 +159,23 @@ func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
 // Params:
 //   - pass: contexte d'analyse
 //   - insp: inspector AST
+//   - cfg: configuration
 //
 // Returns:
 //   - map[string]bool: map des fonctions appelées
-func collectCalledFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
+func collectCalledFunctions(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string]bool {
 	calledInProduction := make(map[string]bool, initialCalledFuncsCap)
 	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		callExpr := n.(*ast.CallExpr)
 		filename := pass.Fset.Position(callExpr.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeFunc004, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
@@ -175,7 +201,8 @@ func collectCalledFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[
 //   - insp: inspector AST
 //   - privateFuncs: map des fonctions privées
 //   - calledInProduction: map des fonctions appelées (modifiée)
-func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+//   - cfg: configuration
+func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool, cfg *config.Config) {
 	nodeFilter := []ast.Node{
 		(*ast.CompositeLit)(nil),
 		(*ast.AssignStmt)(nil),
@@ -185,6 +212,12 @@ func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, priva
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		filename := pass.Fset.Position(n.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeFunc004, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {

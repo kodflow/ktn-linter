@@ -5,15 +5,17 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer010 checks that functions don't use naked returns (except for very short functions)
 const (
-	// maxLinesForNakedReturn max lines for naked return
-	maxLinesForNakedReturn int = 5
+	// ruleCodeFunc010 is the rule code for this analyzer
+	ruleCodeFunc010 string = "KTN-FUNC-010"
+	// defaultMaxLinesForNakedReturn max lines for naked return
+	defaultMaxLinesForNakedReturn int = 5
 )
 
 // Analyzer010 checks that naked returns are only used in very short functions
@@ -33,6 +35,18 @@ var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runFunc010(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc010) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxLinesNaked := cfg.GetThreshold(ruleCodeFunc010, defaultMaxLinesForNakedReturn)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -41,6 +55,13 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc010, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
@@ -77,14 +98,14 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 			// Naked return has no results specified
 			if len(ret.Results) == 0 {
 				// Allow naked returns in very short functions
-				if pureLines >= maxLinesForNakedReturn {
+				if pureLines >= maxLinesNaked {
 					// Rapport d'erreur pour naked return interdit
 					pass.Reportf(
 						ret.Pos(),
 						"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
 						funcName,
 						pureLines,
-						maxLinesForNakedReturn-1,
+						maxLinesNaked-1,
 					)
 				}
 			}

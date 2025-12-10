@@ -6,12 +6,15 @@ import (
 	"go/token"
 	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeFunc008 is the rule code for this analyzer
+	ruleCodeFunc008 string = "KTN-FUNC-008"
 	// initialParamsCap initial capacity for params map
 	initialParamsCap int = 8
 	// initialUsedVarsCap initial capacity for used vars map
@@ -43,6 +46,15 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc008(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc008) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Filtrer uniquement les déclarations de fonction
@@ -52,6 +64,14 @@ func runFunc008(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc008, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Analyser la fonction
 		analyzeFunc008(pass, funcDecl)
 	})

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/formatter"
 	"github.com/spf13/cobra"
 	"golang.org/x/tools/go/analysis"
@@ -55,6 +56,37 @@ func init() {
 	rootCmd.AddCommand(lintCmd)
 }
 
+// loadConfiguration charge la configuration du linter.
+//
+// Returns: aucun
+//
+// Params: aucun
+func loadConfiguration() {
+	// Vérification si un fichier de config est spécifié
+	if ConfigPath != "" {
+		// Charger depuis le fichier spécifié
+		if err := config.LoadAndSet(ConfigPath); err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading config file %s: %v\n", ConfigPath, err)
+			OsExit(1)
+		}
+		// Log si verbose
+		if Verbose {
+			fmt.Fprintf(os.Stderr, "Loaded configuration from %s\n", ConfigPath)
+		}
+		// Retour de la fonction
+		return
+	}
+
+	// Tenter de charger depuis les emplacements par défaut
+	if err := config.LoadAndSet(""); err == nil {
+		// Log si verbose et config trouvée
+		if Verbose {
+			fmt.Fprintf(os.Stderr, "Loaded configuration from default location\n")
+		}
+	}
+	// Si pas de config par défaut, utiliser les valeurs par défaut (pas d'erreur)
+}
+
 // runLint exécute l'analyse du linter.
 //
 // Params:
@@ -63,6 +95,9 @@ func init() {
 //
 // Returns: aucun
 func runLint(_cmd *cobra.Command, args []string) {
+	// Charger la configuration si spécifiée
+	loadConfiguration()
+
 	pkgs := loadPackages(args)
 	diagnostics := runAnalyzers(pkgs)
 

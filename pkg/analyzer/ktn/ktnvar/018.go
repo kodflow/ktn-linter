@@ -6,9 +6,15 @@ import (
 	"go/token"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar018 is the rule code for this analyzer
+	ruleCodeVar018 string = "KTN-VAR-018"
 )
 
 // Analyzer018 checks that variables don't use snake_case naming
@@ -28,6 +34,15 @@ var Analyzer018 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar018(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar018) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -36,6 +51,13 @@ func runVar018(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		genDecl := n.(*ast.GenDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar018, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Only check var declarations
 		if genDecl.Tok != token.VAR {

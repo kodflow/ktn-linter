@@ -5,9 +5,14 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeConst001 string = "KTN-CONST-001"
 )
 
 // Analyzer001 checks that constants have explicit types
@@ -27,6 +32,15 @@ var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runConst001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeConst001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -34,6 +48,12 @@ func runConst001(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeConst001, filename) {
+			// Fichier exclu
+			return
+		}
 		genDecl := n.(*ast.GenDecl)
 
 		// Only check const declarations

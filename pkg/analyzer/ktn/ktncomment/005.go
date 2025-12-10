@@ -6,14 +6,17 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// minStructDocLines nombre minimum de lignes de documentation pour une struct
-	minStructDocLines int = 2
+	// ruleCodeComment005 is the rule code for this analyzer
+	ruleCodeComment005 string = "KTN-COMMENT-005"
+	// defaultMinStructDocLines nombre minimum de lignes de documentation pour une struct
+	defaultMinStructDocLines int = 2
 )
 
 // Analyzer005 vérifie que les structs exportées ont une documentation
@@ -33,6 +36,18 @@ var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runComment005(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeComment005) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	minDocLines := cfg.GetThreshold(ruleCodeComment005, defaultMinStructDocLines)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Filtrer les nœuds de type GenDecl
@@ -46,6 +61,13 @@ func runComment005(pass *analysis.Pass) (any, error) {
 
 		// Ignorer les fichiers de test
 		filename := pass.Fset.Position(genDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeComment005, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Vérification si fichier test
 		if shared.IsTestFile(filename) {
 			// Continue avec le nœud suivant
@@ -77,11 +99,12 @@ func runComment005(pass *analysis.Pass) (any, error) {
 			}
 
 			// Vérifier la documentation
-			if !hasValidDocumentation(genDecl.Doc, typeSpec.Name.Name) {
+			if !hasValidDocumentation(genDecl.Doc, typeSpec.Name.Name, minDocLines) {
 				pass.Reportf(
 					typeSpec.Pos(),
-					"KTN-COMMENT-005: la struct exportée '%s' doit avoir une documentation complète (au moins 2 lignes décrivant son rôle)",
+					"KTN-COMMENT-005: la struct exportée '%s' doit avoir une documentation complète (au moins %d lignes décrivant son rôle)",
 					typeSpec.Name.Name,
+					minDocLines,
 				)
 			}
 		}
@@ -96,10 +119,11 @@ func runComment005(pass *analysis.Pass) (any, error) {
 // Params:
 //   - doc: groupe de commentaires
 //   - structName: nom de la struct
+//   - minLines: nombre minimum de lignes requis
 //
 // Returns:
 //   - bool: true si documentation valide
-func hasValidDocumentation(doc *ast.CommentGroup, structName string) bool {
+func hasValidDocumentation(doc *ast.CommentGroup, structName string, minLines int) bool {
 	// Si pas de documentation
 	if doc == nil || len(doc.List) == 0 {
 		// Documentation manquante
@@ -133,6 +157,6 @@ func hasValidDocumentation(doc *ast.CommentGroup, structName string) bool {
 		realLines++
 	}
 
-	// Il faut au moins minStructDocLines lignes de documentation réelle
-	return realLines >= minStructDocLines
+	// Il faut au moins minLines lignes de documentation réelle
+	return realLines >= minLines
 }

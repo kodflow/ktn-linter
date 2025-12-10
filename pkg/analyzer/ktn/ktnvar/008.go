@@ -5,9 +5,15 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar008 is the rule code for this analyzer
+	ruleCodeVar008 string = "KTN-VAR-008"
 )
 
 // Analyzer008 checks for slice/map allocations inside loops
@@ -27,6 +33,15 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar008(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar008) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -35,6 +50,12 @@ func runVar008(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar008, filename) {
+			// Fichier exclu
+			return
+		}
 		// Récupération du corps de la boucle
 		var body *ast.BlockStmt
 		// Vérification du type de boucle

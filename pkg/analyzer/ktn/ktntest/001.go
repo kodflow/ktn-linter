@@ -6,7 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	ruleCodeTest001 string = "KTN-TEST-001"
 )
 
 // Analyzer001 detects test files not following naming convention.
@@ -25,9 +30,25 @@ var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: always nil
 //   - error: analysis error if any
 func runTest001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Parcourir tous les fichiers du package
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest001, filename) {
+			// Fichier exclu
+			continue
+		}
+
 		base := filepath.Base(filename)
 
 		// Vérification si fichier de test

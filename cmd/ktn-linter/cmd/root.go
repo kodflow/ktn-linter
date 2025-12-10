@@ -22,6 +22,8 @@ var (
 	Category string = ""
 	// Fix enables automatic fix application for modernize analyzers.
 	Fix bool = false
+	// ConfigPath is the path to the configuration file.
+	ConfigPath string = ""
 	// version stocke la version du linter.
 	version string = "dev"
 
@@ -78,4 +80,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.PersistentFlags().StringVar(&Category, "category", "", "Run only rules from specific category (func, var, error, etc.)")
 	rootCmd.PersistentFlags().BoolVar(&Fix, "fix", false, "Automatically apply suggested fixes from modernize analyzers")
+	rootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", "", "Path to configuration file (.ktn-linter.yaml)")
 }

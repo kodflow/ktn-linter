@@ -7,9 +7,14 @@ import (
 	"slices"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeTest002 string = "KTN-TEST-002"
 )
 
 // Analyzer002 checks that test files use external test packages (xxx_test)
@@ -29,11 +34,27 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest002(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest002) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Vérifier si on est dans un fichier de test
 	for _, f := range pass.Files {
 		filename := pass.Fset.Position(f.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest002, filename) {
+			// Fichier exclu
+			continue
+		}
+
 		// Vérification de la condition
 		if !shared.IsTestFile(filename) {
 			// Pas un fichier de test, continuer

@@ -5,12 +5,15 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeFunc009 is the rule code for this analyzer
+	ruleCodeFunc009 string = "KTN-FUNC-009"
 	// initialAllowedLiteralsCap initial cap for allowed literals
 	initialAllowedLiteralsCap int = 32
 )
@@ -32,6 +35,15 @@ var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc009(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc009) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Map des valeurs autorisées (non magic numbers)
@@ -41,7 +53,7 @@ func runFunc009(pass *analysis.Pass) (any, error) {
 	allowedLiterals := collectAllowedLiterals(insp)
 
 	// Vérifier les magic numbers
-	checkMagicNumbers(insp, pass, allowedValues, allowedLiterals)
+	checkMagicNumbers(insp, pass, allowedValues, allowedLiterals, cfg)
 
 	// Retour succès
 	return nil, nil
@@ -104,7 +116,8 @@ func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
 //   - pass: contexte d'analyse
 //   - allowedValues: valeurs autorisées
 //   - allowedLiterals: littéraux autorisés
-func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool) {
+//   - cfg: configuration
+func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool, cfg *config.Config) {
 	// Filter pour les littéraux
 	nodeFilter := []ast.Node{
 		(*ast.BasicLit)(nil),
@@ -112,6 +125,13 @@ func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedVa
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		lit := n.(*ast.BasicLit)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(lit.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc009, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si c'est un nombre (INT ou FLOAT)
 		if lit.Kind != token.INT && lit.Kind != token.FLOAT {

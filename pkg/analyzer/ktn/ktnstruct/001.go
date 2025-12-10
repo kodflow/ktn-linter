@@ -7,9 +7,15 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeStruct001 code de la règle KTN-STRUCT-001
+	ruleCodeStruct001 string = "KTN-STRUCT-001"
 )
 
 // Analyzer001 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
@@ -37,11 +43,26 @@ type structWithMethods struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Parcourir chaque fichier du package
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeStruct001, filename) {
+			// Fichier exclu
+			continue
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {

@@ -7,9 +7,15 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeComment006 is the rule code for this analyzer
+	ruleCodeComment006 string = "KTN-COMMENT-006"
 )
 
 var (
@@ -43,6 +49,15 @@ var (
 //   - any: résultat
 //   - error: erreur éventuelle
 func runComment006(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeComment006) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -54,6 +69,13 @@ func runComment006(pass *analysis.Pass) (any, error) {
 
 		// Skip test files entirely (all _test.go files)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeComment006, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Vérification si fichier de test
 		if shared.IsTestFile(filename) {
 			// Pas de documentation requise pour les fichiers de test

@@ -4,9 +4,15 @@ package ktnfunc
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeFunc003 is the rule code for this analyzer
+	ruleCodeFunc003 string = "KTN-FUNC-003"
 )
 
 // Analyzer003 checks for unnecessary else blocks after return/continue/break/panic
@@ -26,6 +32,15 @@ var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc003(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc003) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -34,6 +49,13 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		ifStmt := n.(*ast.IfStmt)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(ifStmt.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc003, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si le bloc if est vide
 		if ifStmt.Body == nil || len(ifStmt.Body.List) == 0 {

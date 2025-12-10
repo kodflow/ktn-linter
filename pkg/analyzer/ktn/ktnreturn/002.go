@@ -5,9 +5,15 @@ import (
 	"go/ast"
 	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeReturn002 rule code for RETURN-002
+	ruleCodeReturn002 string = "KTN-RETURN-002"
 )
 
 // Analyzer002 detects nil returns for slice and map types.
@@ -26,6 +32,15 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: always nil
 //   - error: analysis error if any
 func runReturn002(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeReturn002) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -33,6 +48,13 @@ func runReturn002(pass *analysis.Pass) (any, error) {
 	}
 
 	inspectResult.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeReturn002, filename) {
+			// Fichier exclu
+			return
+		}
+
 		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip if function has no return type

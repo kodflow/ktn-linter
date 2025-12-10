@@ -6,14 +6,17 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// maxPureCodeLines max lines of pure code in a function
-	maxPureCodeLines int = 35
+	// ruleCodeFunc005 is the rule code for this analyzer
+	ruleCodeFunc005 string = "KTN-FUNC-005"
+	// defaultMaxPureCodeLines is the default max lines of pure code in a function
+	defaultMaxPureCodeLines int = 35
 )
 
 // Analyzer005 checks that functions don't exceed 35 lines of pure code
@@ -33,6 +36,18 @@ var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc005(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc005) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxLines := cfg.GetThreshold(ruleCodeFunc005, defaultMaxPureCodeLines)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -41,6 +56,13 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc005, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Skip if no body (external functions)
 		if funcDecl.Body == nil {
@@ -66,13 +88,13 @@ func runFunc005(pass *analysis.Pass) (any, error) {
 		pureLines := countPureCodeLines(pass, funcDecl.Body)
 
 		// Vérification de la condition
-		if pureLines > maxPureCodeLines {
+		if pureLines > maxLines {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
 				"KTN-FUNC-005: la fonction '%s' contient %d lignes de code pur (max: %d)",
 				funcName,
 				pureLines,
-				maxPureCodeLines,
+				maxLines,
 			)
 		}
 	})

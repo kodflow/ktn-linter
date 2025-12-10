@@ -6,18 +6,21 @@ import (
 	"go/constant"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeVar016 is the rule code for this analyzer
+	ruleCodeVar016 string = "KTN-VAR-016"
 	// minMakeArgsVar016 is minimum arguments for make([]T, N)
 	minMakeArgsVar016 int = 2
 	// minMakeArgsWithCapVar016 is minimum arguments for make with capacity
 	minMakeArgsWithCapVar016 int = 3
-	// maxArraySizeVar016 is maximum size for recommending array over slice
-	maxArraySizeVar016 int64 = 1024
+	// defaultMaxArraySize is maximum size for recommending array over slice
+	defaultMaxArraySize int = 1024
 )
 
 // Analyzer016 checks for make([]T, N) with small constant N
@@ -37,6 +40,18 @@ var Analyzer016 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar016(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar016) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxArraySize := int64(cfg.GetThreshold(ruleCodeVar016, defaultMaxArraySize))
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -46,6 +61,13 @@ func runVar016(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
 
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(call.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar016, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Check if it's a make call
 		if !utils.IsIdentCall(call, "make") {
 			// Not a make call
@@ -53,7 +75,7 @@ func runVar016(pass *analysis.Pass) (any, error) {
 		}
 
 		// Check if it's make([]T, N) with small constant N
-		if shouldUseArray(pass, call) {
+		if shouldUseArray(pass, call, maxArraySize) {
 			reportArraySuggestion(pass, call)
 		}
 	})
@@ -67,10 +89,11 @@ func runVar016(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
+//   - maxArraySize: taille max pour suggérer un array
 //
 // Returns:
 //   - bool: true si un array est préférable
-func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
+func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr, maxArraySize int64) bool {
 	// Need at least 2 args: make([]T, size)
 	if len(call.Args) < minMakeArgsVar016 {
 		// Not enough arguments
@@ -92,7 +115,7 @@ func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
 	// Second arg should be small constant
 	size := getConstantSize(pass, call.Args[1])
 	// Return true if size is small constant
-	return isSmallConstant(size)
+	return isSmallConstant(size, maxArraySize)
 }
 
 // hasDifferentCapacity vérifie si make a une capacité différente.
@@ -138,12 +161,13 @@ func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
 //
 // Params:
 //   - size: taille à vérifier
+//   - maxArraySize: taille max autorisée
 //
 // Returns:
-//   - bool: true si petite constante (<= MAX_ARRAY_SIZE_VAR016)
-func isSmallConstant(size int64) bool {
+//   - bool: true si petite constante (<= maxArraySize)
+func isSmallConstant(size int64, maxArraySize int64) bool {
 	// Check if it's a positive small constant
-	return size > 0 && size <= maxArraySizeVar016
+	return size > 0 && size <= maxArraySize
 }
 
 // reportArraySuggestion rapporte la suggestion d'utiliser un array.

@@ -95,19 +95,19 @@ func Test_isSmallConstant(t *testing.T) {
 		},
 		{
 			name:     "max allowed",
-			size:     maxArraySizeVar016,
+			size:     int64(defaultMaxArraySize),
 			expected: true,
 		},
 		{
 			name:     "too large",
-			size:     maxArraySizeVar016 + 1,
+			size:     int64(defaultMaxArraySize + 1),
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isSmallConstant(tt.size)
+			result := isSmallConstant(tt.size, int64(defaultMaxArraySize))
 			// Vérification du résultat
 			if result != tt.expected {
 				t.Errorf("isSmallConstant(%d) = %v, expected %v", tt.size, result, tt.expected)

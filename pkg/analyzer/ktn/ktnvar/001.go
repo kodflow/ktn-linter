@@ -6,9 +6,15 @@ import (
 	"go/token"
 	"regexp"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar001 is the rule code for this analyzer
+	ruleCodeVar001 string = "KTN-VAR-001"
 )
 
 var (
@@ -33,6 +39,15 @@ var (
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -41,6 +56,13 @@ func runVar001(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		genDecl := n.(*ast.GenDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar001, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Only check var declarations
 		if genDecl.Tok != token.VAR {

@@ -5,12 +5,15 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeVar005 is the rule code for this analyzer
+	ruleCodeVar005 string = "KTN-VAR-005"
 	// minMakeArgsVar008 is the minimum number of arguments for make call
 	minMakeArgsVar008 int = 2
 )
@@ -75,6 +78,15 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar005(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar005) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -83,6 +95,14 @@ func runVar005(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar005, filename) {
+			// Fichier exclu
+			return
+		}
+
 		checkMakeCallVar008(pass, call)
 	})
 

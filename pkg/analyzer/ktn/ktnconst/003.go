@@ -7,9 +7,14 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeConst003 string = "KTN-CONST-003"
 )
 
 // Analyzer003 checks that constants use standard Go naming conventions (CamelCase).
@@ -29,6 +34,15 @@ var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: analysis result
 //   - error: potential error
 func runConst003(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeConst003) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -36,6 +50,12 @@ func runConst003(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeConst003, filename) {
+			// Fichier exclu
+			return
+		}
 		genDecl := n.(*ast.GenDecl)
 
 		// Only check const declarations

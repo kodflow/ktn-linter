@@ -5,9 +5,15 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar002 is the rule code for this analyzer
+	ruleCodeVar002 string = "KTN-VAR-002"
 )
 
 // Analyzer002 checks that package-level variables have explicit type AND value
@@ -27,6 +33,15 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar002(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar002) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Filter for File nodes to access package-level declarations
@@ -36,6 +51,13 @@ func runVar002(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar002, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Check package-level declarations only
 		for _, decl := range file.Decls {

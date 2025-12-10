@@ -6,9 +6,15 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeComment004 is the rule code for this analyzer
+	ruleCodeComment004 string = "KTN-COMMENT-004"
 )
 
 // Analyzer004 checks that every package-level variable has an associated comment
@@ -28,6 +34,15 @@ var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runComment004(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeComment004) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Filter for File nodes to access package-level declarations only
@@ -37,6 +52,13 @@ func runComment004(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeComment004, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Check package-level declarations only
 		for _, decl := range file.Decls {

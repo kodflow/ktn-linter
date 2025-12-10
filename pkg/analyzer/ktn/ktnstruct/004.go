@@ -5,7 +5,13 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	// ruleCodeStruct004 code de la règle KTN-STRUCT-004
+	ruleCodeStruct004 string = "KTN-STRUCT-004"
 )
 
 // Analyzer004 vérifie qu'il n'y a qu'une seule struct par fichier Go
@@ -31,9 +37,24 @@ type structInfo struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct004(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct004) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Parcourir chaque fichier du package
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeStruct004, filename) {
+			// Fichier exclu
+			continue
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {

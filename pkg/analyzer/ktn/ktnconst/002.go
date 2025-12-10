@@ -5,7 +5,12 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	ruleCodeConst002 string = "KTN-CONST-002"
 )
 
 // Analyzer002 checks that constants are grouped together and placed at the top.
@@ -33,8 +38,24 @@ type fileDeclarations struct {
 //   - any: analysis result
 //   - error: potential error
 func runConst002(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeConst002) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Analyze each file independently
 	for _, file := range pass.Files {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(file.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeConst002, filename) {
+			// Fichier exclu
+			continue
+		}
+
 		decls := collectDeclarations(file)
 		checkConstOrder(pass, decls)
 	}

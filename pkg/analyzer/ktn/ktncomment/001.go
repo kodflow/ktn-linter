@@ -8,14 +8,17 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// maxCommentLength max chars for inline comments
-	maxCommentLength int = 80
+	// ruleCodeComment001 is the rule code for this analyzer
+	ruleCodeComment001 string = "KTN-COMMENT-001"
+	// defaultMaxCommentLength max chars for inline comments
+	defaultMaxCommentLength int = 80
 )
 
 var (
@@ -40,6 +43,18 @@ var (
 //   - any: always nil
 //   - error: analysis error if any
 func runComment001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeComment001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxLength := cfg.GetThreshold(ruleCodeComment001, defaultMaxCommentLength)
+
 	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -48,6 +63,13 @@ func runComment001(pass *analysis.Pass) (any, error) {
 
 	inspectResult.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(file.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeComment001, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Parcours des groupes de commentaires
 		for _, commentGroup := range file.Comments {
@@ -65,7 +87,7 @@ func runComment001(pass *analysis.Pass) (any, error) {
 				// Handle multi-line block comments /* ... */
 				if strings.HasPrefix(text, "/*") {
 					// Check each line separately for multi-line comments
-					checkMultiLineComment(pass, comment, text)
+					checkMultiLineComment(pass, comment, text, maxLength)
 					// Continue au commentaire suivant
 					continue
 				}
@@ -80,11 +102,11 @@ func runComment001(pass *analysis.Pass) (any, error) {
 				}
 
 				// Check length exceeds limit
-				if len(text) > maxCommentLength {
+				if len(text) > maxLength {
 					pass.Reportf(
 						comment.Pos(),
 						"KTN-COMMENT-001: commentaire inline trop long (>%d chars)",
-						maxCommentLength,
+						maxLength,
 					)
 				}
 			}
@@ -101,7 +123,8 @@ func runComment001(pass *analysis.Pass) (any, error) {
 //   - pass: Analysis pass
 //   - comment: The comment node
 //   - text: The comment text
-func checkMultiLineComment(pass *analysis.Pass, comment *ast.Comment, text string) {
+//   - maxLength: Maximum allowed length
+func checkMultiLineComment(pass *analysis.Pass, comment *ast.Comment, text string, maxLength int) {
 	// Remove /* and */ markers
 	content := strings.TrimPrefix(text, "/*")
 	content = strings.TrimSuffix(content, "*/")
@@ -124,11 +147,11 @@ func checkMultiLineComment(pass *analysis.Pass, comment *ast.Comment, text strin
 		}
 
 		// Check length exceeds limit
-		if len(trimmed) > maxCommentLength {
+		if len(trimmed) > maxLength {
 			pass.Reportf(
 				comment.Pos(),
 				"KTN-COMMENT-001: ligne de commentaire trop longue (>%d chars)",
-				maxCommentLength,
+				maxLength,
 			)
 			// Only report once per block comment
 			return

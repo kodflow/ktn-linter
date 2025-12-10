@@ -4,6 +4,7 @@ package ktninterface
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
@@ -13,6 +14,8 @@ const (
 	initialInterfacesCap int = 16
 	// interfaceSuffixLen length of "Interface" suffix
 	interfaceSuffixLen int = 9
+	// ruleCodeInterface001 rule code for INTERFACE-001
+	ruleCodeInterface001 string = "KTN-INTERFACE-001"
 )
 
 // Analyzer001 detects unused interface declarations.
@@ -31,13 +34,22 @@ var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: always nil
 //   - error: analysis error if any
 func runInterface001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeInterface001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Collect all interface declarations
 	interfaces := make(map[string]*ast.TypeSpec, initialInterfacesCap)
 	usedInterfaces := make(map[string]bool, initialInterfacesCap)
 	structNames := make(map[string]bool, initialInterfacesCap)
 
 	// First pass: collect all interface and struct declarations
-	collectDeclarations(pass, interfaces, structNames)
+	collectDeclarations(pass, cfg, interfaces, structNames)
 
 	// Second pass: find interface usages
 	findInterfaceUsages(pass, usedInterfaces)
@@ -53,9 +65,10 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 //
 // Params:
 //   - pass: contexte d'analyse
+//   - cfg: configuration du linter
 //   - interfaces: map pour stocker les interfaces
 //   - structNames: map pour stocker les noms de structs
-func collectDeclarations(pass *analysis.Pass, interfaces map[string]*ast.TypeSpec, structNames map[string]bool) {
+func collectDeclarations(pass *analysis.Pass, cfg *config.Config, interfaces map[string]*ast.TypeSpec, structNames map[string]bool) {
 	// Parcourir tous les fichiers
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
@@ -63,6 +76,13 @@ func collectDeclarations(pass *analysis.Pass, interfaces map[string]*ast.TypeSpe
 			// Continue if not general declaration
 			if !isGenDecl {
 				// Continuer l'itération
+				return true
+			}
+
+			// Vérifier si le fichier est exclu
+			filename := pass.Fset.Position(genDecl.Pos()).Filename
+			if cfg.IsFileExcluded(ruleCodeInterface001, filename) {
+				// Fichier exclu
 				return true
 			}
 

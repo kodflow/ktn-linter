@@ -6,9 +6,15 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeStruct005 code de la règle KTN-STRUCT-005
+	ruleCodeStruct005 string = "KTN-STRUCT-005"
 )
 
 // Analyzer005 vérifie que les champs exportés sont avant les champs privés
@@ -28,6 +34,15 @@ var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct005(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct005) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Filtrer les nœuds de type TypeSpec
@@ -39,6 +54,13 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 		// Cast vers TypeSpec
 		typeSpec := n.(*ast.TypeSpec)
 
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeStruct005, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Vérifier que c'est une struct
 		structType, ok := typeSpec.Type.(*ast.StructType)
 		// Si ce n'est pas une struct, continuer
@@ -48,7 +70,7 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 		}
 
 		// Ignorer les fichiers de test
-		filename := pass.Fset.Position(typeSpec.Pos()).Filename
+		filename = pass.Fset.Position(typeSpec.Pos()).Filename
 		// Vérification si fichier test
 		if shared.IsTestFile(filename) {
 			// Continue avec le nœud suivant

@@ -5,12 +5,15 @@ import (
 	"go/ast"
 	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeVar017 is the rule code for this analyzer
+	ruleCodeVar017 string = "KTN-VAR-017"
 	// initialValueReceiversCap initial cap for value receivers
 	initialValueReceiversCap int = 10
 )
@@ -35,6 +38,15 @@ var Analyzer017 *analysis.Analyzer = &analysis.Analyzer{
 //   - interface{}: toujours nil
 //   - error: erreur éventuelle
 func runVar017(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar017) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -114,6 +126,9 @@ func collectTypesWithValueReceivers(_pass *analysis.Pass, insp *inspector.Inspec
 //   - insp: inspecteur AST
 //   - typesWithValueRecv: types ayant des receivers par valeur
 func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, typesWithValueRecv map[string]bool) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
 		(*ast.TypeSpec)(nil),
@@ -121,6 +136,13 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 
 	// Parcours des types
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Cast en type spec
 		typeSpec, ok := n.(*ast.TypeSpec)
 		// Vérification de la condition
@@ -165,6 +187,9 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 //   - pass: contexte d'analyse
 //   - inspect: inspecteur AST
 func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
@@ -172,6 +197,13 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Cast en fonction
 		funcDecl, ok := n.(*ast.FuncDecl)
 		// Vérification de la condition
@@ -212,6 +244,9 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 //   - pass: contexte d'analyse
 //   - inspect: inspecteur AST
 func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
@@ -219,6 +254,13 @@ func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Cast en fonction
 		funcDecl, ok := n.(*ast.FuncDecl)
 		// Vérification de la condition
@@ -251,6 +293,9 @@ func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
 //   - pass: contexte d'analyse
 //   - inspect: inspecteur AST
 func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
 		(*ast.AssignStmt)(nil),
@@ -258,6 +303,13 @@ func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des assignations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Cast en assignation
 		assign, ok := n.(*ast.AssignStmt)
 		// Vérification de la condition

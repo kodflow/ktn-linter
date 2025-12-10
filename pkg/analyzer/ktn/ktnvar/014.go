@@ -5,9 +5,15 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeVar014 is the rule code for this analyzer
+	ruleCodeVar014 string = "KTN-VAR-014"
 )
 
 // Analyzer014 checks that package-level variables are declared after constants
@@ -27,6 +33,15 @@ var Analyzer014 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar014(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar014) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -36,6 +51,13 @@ func runVar014(pass *analysis.Pass) (any, error) {
 	// Process each file
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar014, filename) {
+			// Fichier exclu
+			return
+		}
 		varSeen := false
 
 		// Check declarations in order

@@ -5,9 +5,14 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeTest007 string = "KTN-TEST-007"
 )
 
 // Analyzer007 checks that tests don't use t.Skip()
@@ -28,6 +33,15 @@ var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest007(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest007) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -37,6 +51,13 @@ func runTest007(pass *analysis.Pass) (any, error) {
 	// Parcourir les appels
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		callExpr := n.(*ast.CallExpr)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeTest007, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si appel de méthode
 		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
@@ -62,8 +83,6 @@ func runTest007(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Vérifier fichier de test
-		filename := pass.Fset.Position(n.Pos()).Filename
 		// Vérification fichier test
 		if !shared.IsTestFile(filename) {
 			// Retour si pas test

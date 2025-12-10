@@ -6,12 +6,15 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeStruct003 code de la règle KTN-STRUCT-003
+	ruleCodeStruct003 string = "KTN-STRUCT-003"
 	// initialStructTypesCap initial capacity for struct types map
 	initialStructTypesCap int = 32
 	// getPrefixLen length of "Get" prefix
@@ -35,6 +38,15 @@ var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct003(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct003) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter les types struct pour pouvoir vérifier les méthodes
@@ -48,6 +60,13 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 	// Parcourir les déclarations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeStruct003, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si c'est une méthode (a un receiver)
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {

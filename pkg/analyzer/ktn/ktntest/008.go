@@ -9,10 +9,12 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 )
 
 const (
+	ruleCodeTest008 string = "KTN-TEST-008"
 	// maxFuncsToDisplay nombre max de fonctions affichées.
 	maxFuncsToDisplay int = 3
 	// initialFuncsCap capacité initiale des listes.
@@ -43,9 +45,24 @@ type fileAnalysisResult struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest008(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest008) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest008, filename) {
+			// Fichier exclu
+			continue
+		}
 
 		// Vérification si test
 		if shared.IsTestFile(filename) {

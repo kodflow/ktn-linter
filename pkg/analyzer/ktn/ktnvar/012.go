@@ -5,16 +5,19 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeVar012 is the rule code for this analyzer
+	ruleCodeVar012 string = "KTN-VAR-012"
 	// initialConversionsCap est la capacité initiale pour la map de conversions
 	initialConversionsCap int = 10
-	// maxAllowedConversions est le nombre maximum de conversions tolérées
-	maxAllowedConversions int = 2
+	// defaultMaxAllowedConversions est le nombre maximum de conversions tolérées
+	defaultMaxAllowedConversions int = 2
 )
 
 // Analyzer012 détecte les conversions string() répétées.
@@ -37,6 +40,18 @@ var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 //   - interface{}: toujours nil
 //   - error: erreur éventuelle
 func runVar012(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar012) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxConversions := cfg.GetThreshold(ruleCodeVar012, defaultMaxAllowedConversions)
+
 	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -47,8 +62,15 @@ func runVar012(pass *analysis.Pass) (any, error) {
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar012, filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Vérification des conversions dans la fonction
-		checkFuncForRepeatedConversions(pass, n)
+		checkFuncForRepeatedConversions(pass, n, maxConversions)
 	})
 
 	// Traitement
@@ -60,7 +82,8 @@ func runVar012(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - n: nœud AST à analyser
-func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node) {
+//   - maxConversions: nombre max de conversions autorisées
+func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node, maxConversions int) {
 	// Cast en fonction
 	funcDecl, ok := n.(*ast.FuncDecl)
 	// Vérification de la condition
@@ -73,7 +96,7 @@ func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node) {
 	checkLoopsForStringConversion(pass, funcDecl.Body)
 
 	// Analyse des conversions multiples
-	checkMultipleConversions(pass, funcDecl.Body)
+	checkMultipleConversions(pass, funcDecl.Body, maxConversions)
 }
 
 // checkLoopsForStringConversion détecte string() dans les boucles.
@@ -202,7 +225,8 @@ func isStringConversion(n ast.Node) bool {
 // Params:
 //   - pass: contexte d'analyse
 //   - body: corps de la fonction
-func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
+//   - maxConversions: nombre max de conversions autorisées
+func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt, maxConversions int) {
 	// Map pour compter les conversions par variable
 	conversions := make(map[string]int, initialConversionsCap)
 	var firstPos map[string]ast.Node = make(map[string]ast.Node, initialConversionsCap)
@@ -236,7 +260,7 @@ func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
 	// Rapport des conversions multiples
 	for varName, count := range conversions {
 		// Vérification de la condition
-		if count > maxAllowedConversions {
+		if count > maxConversions {
 			pos := firstPos[varName]
 			pass.Reportf(
 				pos.Pos(),

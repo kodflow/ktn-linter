@@ -345,7 +345,7 @@ func Test_checkMultiLineComment(t *testing.T) {
 			}
 
 			// Run the function
-			checkMultiLineComment(pass, comment, tt.text)
+			checkMultiLineComment(pass, comment, tt.text, defaultMaxCommentLength)
 
 			// Check error count matches expectation
 			if errorCount != tt.wantErrs {

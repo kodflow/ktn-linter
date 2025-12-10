@@ -5,9 +5,15 @@ import (
 	"go/ast"
 	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeFunc001 is the rule code for this analyzer
+	ruleCodeFunc001 string = "KTN-FUNC-001"
 )
 
 // Analyzer001 checks that error is always the last return value
@@ -83,6 +89,15 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -91,6 +106,13 @@ func runFunc001(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc001, filename) {
+			// Fichier exclu
+			return
+		}
+
 		var funcType *ast.FuncType
 		// Sélection selon la valeur
 		switch node := n.(type) {

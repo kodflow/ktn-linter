@@ -5,15 +5,17 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer006 checks that functions don't have too many parameters
 const (
-	// maxParams max params allowed in a function (context.Context excluded)
-	maxParams int = 5
+	// ruleCodeFunc006 is the rule code for this analyzer
+	ruleCodeFunc006 string = "KTN-FUNC-006"
+	// defaultMaxParams max params allowed in a function (context.Context excluded)
+	defaultMaxParams int = 5
 )
 
 // Analyzer006 checks that functions don't have more than MAX_PARAMS parameters
@@ -33,6 +35,18 @@ var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc006(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc006) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxParams := cfg.GetThreshold(ruleCodeFunc006, defaultMaxParams)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -44,6 +58,13 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 		var funcType *ast.FuncType
 		var pos ast.Node
 		var name string
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeFunc006, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Sélection selon la valeur
 		switch fn := n.(type) {

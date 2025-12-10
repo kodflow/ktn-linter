@@ -10,13 +10,17 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// initialMapCapacity est la capacité initiale des maps de signatures.
-const initialMapCapacity int = 32
+const (
+	ruleCodeTest013 string = "KTN-TEST-013"
+	// initialMapCapacity est la capacité initiale des maps de signatures.
+	initialMapCapacity int = 32
+)
 
 // testedFuncInfo contient les informations sur une fonction testée.
 type testedFuncInfo struct {
@@ -43,6 +47,15 @@ var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest013(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest013) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter toutes les fonctions du package avec leur signature
@@ -59,6 +72,12 @@ func runTest013(pass *analysis.Pass) (any, error) {
 		funcDecl := n.(*ast.FuncDecl)
 		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest013, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérification si fichier de test
 		if !shared.IsTestFile(filename) {

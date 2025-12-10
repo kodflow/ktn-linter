@@ -6,12 +6,15 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeStruct007 code de la règle KTN-STRUCT-007
+	ruleCodeStruct007 string = "KTN-STRUCT-007"
 	// methodsMapCap est la capacité initiale pour la map des méthodes
 	methodsMapCap int = 16
 )
@@ -42,13 +45,22 @@ type methodInfo struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct007(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct007) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter les structs avec leurs champs privés
-	structFields := collectStructPrivateFields(insp)
+	structFields := collectStructPrivateFields(pass, insp, cfg)
 
 	// Collecter les méthodes avec infos détaillées
-	methods := collectMethodsDetailed(pass, insp)
+	methods := collectMethodsDetailed(pass, insp, cfg)
 
 	// Vérifier la convention de nommage
 	checkNamingConventions(pass, structFields, methods)
@@ -67,11 +79,13 @@ type structFieldsInfo struct {
 // collectStructPrivateFields collecte les champs privés des structs exportées.
 //
 // Params:
+//   - pass: contexte d'analyse
 //   - insp: inspecteur AST
+//   - cfg: configuration
 //
 // Returns:
 //   - map[string]structFieldsInfo: map nom struct -> champs privés
-func collectStructPrivateFields(insp *inspector.Inspector) map[string]structFieldsInfo {
+func collectStructPrivateFields(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string]structFieldsInfo {
 	result := make(map[string]structFieldsInfo, methodsMapCap)
 
 	nodeFilter := []ast.Node{
@@ -80,6 +94,13 @@ func collectStructPrivateFields(insp *inspector.Inspector) map[string]structFiel
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		typeSpec := n.(*ast.TypeSpec)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeStruct007, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si c'est une struct
 		structType, ok := typeSpec.Type.(*ast.StructType)
@@ -128,10 +149,11 @@ func collectStructPrivateFields(insp *inspector.Inspector) map[string]structFiel
 // Params:
 //   - pass: contexte d'analyse
 //   - insp: inspecteur AST
+//   - cfg: configuration
 //
 // Returns:
 //   - map[string][]methodInfo: map receiver -> liste de méthodes
-func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector) map[string][]methodInfo {
+func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string][]methodInfo {
 	methods := make(map[string][]methodInfo, methodsMapCap)
 
 	nodeFilter := []ast.Node{
@@ -140,6 +162,13 @@ func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector) map[
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeStruct007, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si c'est une méthode
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {

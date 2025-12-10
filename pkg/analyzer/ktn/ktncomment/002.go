@@ -6,12 +6,15 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 )
 
 const (
-	// minPackageCommentLength minimum length for a valid package comment
-	minPackageCommentLength int = 3
+	// ruleCodeComment002 is the rule code for this analyzer
+	ruleCodeComment002 string = "KTN-COMMENT-002"
+	// defaultMinPackageCommentLength minimum length for a valid package comment
+	defaultMinPackageCommentLength int = 3
 )
 
 // Analyzer002 checks that each Go file has a package description comment.
@@ -30,10 +33,28 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runComment002(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeComment002) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	minLength := cfg.GetThreshold(ruleCodeComment002, defaultMinPackageCommentLength)
+
 	// Parcourir tous les fichiers
 	for _, file := range pass.Files {
 		// Récupérer le nom du fichier
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeComment002, filename) {
+			// Fichier exclu
+			continue
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
@@ -42,7 +63,7 @@ func runComment002(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier si le fichier a un commentaire de package
-		hasFileComment := checkFileComment(file)
+		hasFileComment := checkFileComment(file, minLength)
 
 		// Si pas de commentaire, reporter l'erreur
 		if !hasFileComment {
@@ -63,10 +84,11 @@ func runComment002(pass *analysis.Pass) (any, error) {
 //
 // Params:
 //   - file: fichier AST à analyser
+//   - minLength: longueur minimale requise
 //
 // Returns:
 //   - bool: true si le fichier a un commentaire valide
-func checkFileComment(file *ast.File) bool {
+func checkFileComment(file *ast.File, minLength int) bool {
 	// Vérifier s'il y a des commentaires dans le fichier
 	if file.Doc == nil || len(file.Doc.List) == 0 {
 		// Pas de commentaire de package
@@ -83,8 +105,8 @@ func checkFileComment(file *ast.File) bool {
 		text = strings.TrimSuffix(text, "*/")
 		text = strings.TrimSpace(text)
 
-		// Si le commentaire contient du texte (au moins minPackageCommentLength chars)
-		if len(text) >= minPackageCommentLength {
+		// Si le commentaire contient du texte (au moins minLength chars)
+		if len(text) >= minLength {
 			// Commentaire valide trouvé
 			return true
 		}

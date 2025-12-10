@@ -11,10 +11,12 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 )
 
 const (
+	ruleCodeTest004 string = "KTN-TEST-004"
 	// minPublicFuncs est le nombre minimum de fonctions publiques
 	minPublicFuncs int = 1
 	// maxTestNames maximum number of test names to check per function
@@ -44,9 +46,18 @@ var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 //   - funcs: pointeur vers slice de toutes les fonctions
 //   - testedFuncs: map des fonctions testées
 func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[string]bool) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	// Parcourir tous les fichiers du pass
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest004, filename) {
+			// Fichier exclu
+			continue
+		}
 
 		// Skip mock files
 		if shared.IsMockFile(filename) {
@@ -94,6 +105,15 @@ func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[st
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest004(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest004) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Vérifier s'il y a des fichiers de test dans ce pass
 	hasTestFiles, testFileCount := countTestFiles(pass)
 

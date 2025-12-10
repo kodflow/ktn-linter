@@ -6,9 +6,15 @@ import (
 	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	// ruleCodeStruct006 code de la règle KTN-STRUCT-006
+	ruleCodeStruct006 string = "KTN-STRUCT-006"
 )
 
 // Analyzer006 checks that DTO private fields don't have serialization tags
@@ -28,6 +34,15 @@ var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct006(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct006) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -36,6 +51,13 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		typeSpec := n.(*ast.TypeSpec)
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeStruct006, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérifier si c'est une struct
 		structType, ok := typeSpec.Type.(*ast.StructType)

@@ -80,7 +80,7 @@ func Test_hasValidDocumentation(t *testing.T) {
 	// Iterate over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := hasValidDocumentation(tt.doc, tt.structName)
+			got := hasValidDocumentation(tt.doc, tt.structName, defaultMinStructDocLines)
 			// Check result
 			if got != tt.want {
 				t.Errorf("hasValidDocumentation() = %v, want %v", got, tt.want)

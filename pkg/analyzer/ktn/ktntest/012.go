@@ -8,9 +8,14 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
+)
+
+const (
+	ruleCodeTest012 string = "KTN-TEST-012"
 )
 
 var (
@@ -45,6 +50,15 @@ var (
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest012(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest012) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -57,6 +71,12 @@ func runTest012(pass *analysis.Pass) (any, error) {
 		funcDecl := n.(*ast.FuncDecl)
 		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeTest012, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérification si test
 		if !shared.IsTestFile(filename) {

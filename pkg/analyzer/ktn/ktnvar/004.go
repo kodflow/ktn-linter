@@ -5,12 +5,15 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
+	// ruleCodeVar004 is the rule code for this analyzer
+	ruleCodeVar004 string = "KTN-VAR-004"
 	// minMakeArgs is the minimum number of arguments for make call
 	minMakeArgs int = 2
 	// initialAppendVarsCap initial capacity for append variables map
@@ -34,6 +37,15 @@ var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar004(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar004) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter les variables utilisées avec append
@@ -124,6 +136,9 @@ func isAppendCall(expr ast.Expr) bool {
 //   - pass: contexte d'analyse
 //   - insp: inspecteur AST
 func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	nodeFilter := []ast.Node{
 		(*ast.CallExpr)(nil),
 	}
@@ -134,6 +149,13 @@ func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
 		// Vérification de la condition
 		if !ok {
 			// Continue traversing AST nodes
+			return
+		}
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar004, filename) {
+			// Fichier exclu
 			return
 		}
 
@@ -196,6 +218,9 @@ func checkEmptySliceLiterals(
 	insp *inspector.Inspector,
 	appendVars map[string]bool,
 ) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	nodeFilter := []ast.Node{
 		(*ast.AssignStmt)(nil),
 	}
@@ -218,6 +243,13 @@ func checkEmptySliceLiterals(
 		// Vérification de la condition
 		if !ok {
 			// Continuer le parcours
+			return true
+		}
+
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(n.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar004, filename) {
+			// Fichier exclu
 			return true
 		}
 

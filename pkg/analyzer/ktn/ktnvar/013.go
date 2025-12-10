@@ -6,7 +6,13 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	// ruleCodeVar013 is the rule code for this analyzer
+	ruleCodeVar013 string = "KTN-VAR-013"
 )
 
 // Analyzer013 checks that variables are grouped together in a single var block
@@ -25,8 +31,24 @@ var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar013(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar013) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Analyze each file independently
 	for _, file := range pass.Files {
+		// Vérifier si le fichier est exclu
+		filename := pass.Fset.Position(file.Pos()).Filename
+		if cfg.IsFileExcluded(ruleCodeVar013, filename) {
+			// Fichier exclu
+			continue
+		}
+
 		varGroups := collectVarGroups(file)
 		checkVarGrouping(pass, varGroups)
 	}
