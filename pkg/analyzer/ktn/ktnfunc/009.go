@@ -126,8 +126,8 @@ func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedVa
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		lit := n.(*ast.BasicLit)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(lit.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeFunc009, filename) {
 			// Fichier exclu
 			return

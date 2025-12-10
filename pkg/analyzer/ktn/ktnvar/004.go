@@ -152,9 +152,8 @@ func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
 			return
 		}
 
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar004, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
@@ -246,9 +245,8 @@ func checkEmptySliceLiterals(
 			return true
 		}
 
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar004, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return true
 		}

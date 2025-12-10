@@ -15,7 +15,7 @@ import (
 const (
 	// ruleCodeComment005 is the rule code for this analyzer
 	ruleCodeComment005 string = "KTN-COMMENT-005"
-	// defaultMinStructDocLines nombre minimum de lignes de documentation pour une struct
+	// defaultMinStructDocLines minimum lines for struct doc
 	defaultMinStructDocLines int = 2
 )
 

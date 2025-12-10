@@ -136,9 +136,8 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 
 	// Parcours des types
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar017, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
@@ -197,9 +196,8 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar017, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
@@ -254,9 +252,8 @@ func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar017, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
@@ -303,9 +300,8 @@ func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des assignations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar017, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar017, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}

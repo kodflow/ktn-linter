@@ -54,8 +54,9 @@ func runComment003(pass *analysis.Pass) (any, error) {
 
 		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeComment003, filename) {
-			// Fichier exclu
+			// File excluded by configuration
 			return
 		}
 

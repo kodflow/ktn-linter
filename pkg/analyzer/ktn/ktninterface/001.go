@@ -81,6 +81,7 @@ func collectDeclarations(pass *analysis.Pass, cfg *config.Config, interfaces map
 
 			// Vérifier si le fichier est exclu
 			filename := pass.Fset.Position(genDecl.Pos()).Filename
+			// Vérification si le fichier courant est exclu par la configuration de la règle
 			if cfg.IsFileExcluded(ruleCodeInterface001, filename) {
 				// Fichier exclu
 				return true

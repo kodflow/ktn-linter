@@ -54,8 +54,8 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 		// Cast vers TypeSpec
 		typeSpec := n.(*ast.TypeSpec)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeStruct005, filename) {
 			// Fichier exclu
 			return

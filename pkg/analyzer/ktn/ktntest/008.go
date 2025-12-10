@@ -57,8 +57,7 @@ func runTest008(pass *analysis.Pass) (any, error) {
 	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
-
-		// Vérifier si le fichier est exclu
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeTest008, filename) {
 			// Fichier exclu
 			continue

@@ -52,60 +52,94 @@ func runComment007(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Skip test files entirely (all _test.go files)
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-
-		// Vérifier si le fichier est exclu
-		if cfg.IsFileExcluded(ruleCodeComment007, filename) {
-			// Fichier exclu
-			return
-		}
-
-		// Vérification si fichier de test
-		if shared.IsTestFile(filename) {
-			// Pas de vérification pour les fichiers de test
-			return
-		}
-
-		// Skip if no body (external functions)
-		if funcDecl.Body == nil {
-			// Retour de la fonction
-			return
-		}
-
-		// Skip test functions (Test*, Benchmark*, Example*, Fuzz*)
-		if shared.IsTestFunction(funcDecl) {
-			// Retour de la fonction
+		// Check if function should be skipped
+		if shouldSkipFunction(pass, cfg, funcDecl) {
+			// Function should be skipped
 			return
 		}
 
 		// Check all statements in the function body
-		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
-			// Sélection selon la valeur
-			switch stmt := node.(type) {
-			// Traitement
-			case *ast.IfStmt:
-				checkIfStmt(pass, stmt)
-			// Traitement
-			case *ast.SwitchStmt:
-				checkSwitchStmt(pass, stmt)
-			// Traitement
-			case *ast.TypeSwitchStmt:
-				checkTypeSwitchStmt(pass, stmt)
-			// Traitement
-			case *ast.ForStmt, *ast.RangeStmt:
-				checkLoopStmt(pass, stmt)
-			// Traitement
-			case *ast.ReturnStmt:
-				checkReturnStmt(pass, stmt)
-			}
-			// Retour de la fonction
-			return true
-		})
+		checkFunctionBody(pass, funcDecl.Body)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// shouldSkipFunction checks if a function should be skipped from analysis.
+//
+// Params:
+//   - pass: analysis pass
+//   - cfg: configuration
+//   - funcDecl: function declaration to check
+//
+// Returns:
+//   - bool: true if function should be skipped
+func shouldSkipFunction(
+	pass *analysis.Pass,
+	cfg *config.Config,
+	funcDecl *ast.FuncDecl,
+) bool {
+	// Skip test files entirely
+	filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+	// Skip excluded files
+	if cfg.IsFileExcluded(ruleCodeComment007, filename) {
+		// File excluded by configuration
+		return true
+	}
+
+	// Skip test files
+	if shared.IsTestFile(filename) {
+		// Test file should be skipped
+		return true
+	}
+
+	// Skip if no body
+	if funcDecl.Body == nil {
+		// External function has no body
+		return true
+	}
+
+	// Skip test functions
+	if shared.IsTestFunction(funcDecl) {
+		// Test function should be skipped
+		return true
+	}
+
+	// Function should be analyzed
+	return false
+}
+
+// checkFunctionBody checks all statements in a function body.
+//
+// Params:
+//   - pass: analysis pass
+//   - body: function body to check
+func checkFunctionBody(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Check all statements
+	ast.Inspect(body, func(node ast.Node) bool {
+		// Check different statement types
+		switch stmt := node.(type) {
+		// Check if statement
+		case *ast.IfStmt:
+			checkIfStmt(pass, stmt)
+		// Check switch statement
+		case *ast.SwitchStmt:
+			checkSwitchStmt(pass, stmt)
+		// Check type switch statement
+		case *ast.TypeSwitchStmt:
+			checkTypeSwitchStmt(pass, stmt)
+		// Check loop statements
+		case *ast.ForStmt, *ast.RangeStmt:
+			checkLoopStmt(pass, stmt)
+		// Check return statement
+		case *ast.ReturnStmt:
+			checkReturnStmt(pass, stmt)
+		}
+		// Continue traversal
+		return true
+	})
 }
 
 // checkIfStmt checks if an if statement has a comment

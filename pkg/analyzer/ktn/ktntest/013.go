@@ -72,8 +72,7 @@ func runTest013(pass *analysis.Pass) (any, error) {
 		funcDecl := n.(*ast.FuncDecl)
 		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-
-		// Vérifier si le fichier est exclu
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeTest013, filename) {
 			// Fichier exclu
 			return

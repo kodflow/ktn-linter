@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	// ruleCodeConst002 est le code de la règle KTN-CONST-002.
 	ruleCodeConst002 string = "KTN-CONST-002"
 )
 
@@ -49,10 +50,10 @@ func runConst002(pass *analysis.Pass) (any, error) {
 
 	// Analyze each file independently
 	for _, file := range pass.Files {
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(file.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeConst002, filename) {
-			// Fichier exclu
+			// File is excluded
 			continue
 		}
 

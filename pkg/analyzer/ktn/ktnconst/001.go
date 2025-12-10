@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// ruleCodeConst001 est le code de la règle KTN-CONST-001.
 	ruleCodeConst001 string = "KTN-CONST-001"
 )
 
@@ -48,10 +49,10 @@ func runConst001(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeConst001, filename) {
-			// Fichier exclu
+			// File is excluded
 			return
 		}
 		genDecl := n.(*ast.GenDecl)

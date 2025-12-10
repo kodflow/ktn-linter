@@ -52,9 +52,8 @@ func runVar014(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
 
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(n.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar014, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar014, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}

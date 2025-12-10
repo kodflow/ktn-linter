@@ -25,7 +25,7 @@ var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc002 description à compléter.
+// runFunc002 exécute l'analyse KTN-FUNC-002.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -52,8 +52,8 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeFunc002, filename) {
 			// Fichier exclu
 			return
@@ -65,62 +65,96 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		funcName := funcDecl.Name.Name
-
-		// Vérification de la condition
-		if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
-			// Retour de la fonction
-			return
-		}
-
-		// Check each parameter and count contexts
-		contextParamIndex := -1
-		contextCount := 0
-		// Itération sur les éléments
-		for i, field := range funcDecl.Type.Params.List {
-			// Vérification de la condition
-			if isContextTypeWithPass(pass, field.Type) {
-				// Compte le nombre de noms dans ce champ (pour gérer a, b context.Context)
-				nameCount := len(field.Names)
-				// Si pas de noms explicites, compter 1
-				if nameCount == 0 {
-					// Assignation de 1 si pas de noms
-					nameCount = 1
-				}
-				// Ajout au compteur de contextes
-				contextCount += nameCount
-				// Enregistrer la première position trouvée
-				if contextParamIndex == -1 {
-					// Enregistrement de la position
-					contextParamIndex = i
-				}
-			}
-		}
-
-		// Signaler si plus d'un context.Context
-		if contextCount > 1 {
-			// Rapport d'erreur pour contextes multiples
-			pass.Reportf(
-				funcDecl.Type.Params.Pos(),
-				"KTN-FUNC-002: la fonction '%s' a %d paramètres context.Context, ce qui est inhabituel",
-				funcName,
-				contextCount,
-			)
-		}
-
-		// If there's a context parameter and it's not first, report error
-		if contextParamIndex > 0 {
-			// Rapport d'erreur pour position incorrecte
-			pass.Reportf(
-				funcDecl.Type.Params.List[contextParamIndex].Pos(),
-				"KTN-FUNC-002: context.Context doit être le premier paramètre de la fonction '%s'",
-				funcName,
-			)
-		}
+		// Analyze function parameters
+		analyzeContextParams(pass, funcDecl)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// analyzeContextParams analyzes context.Context parameters in a function.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcDecl: fonction à analyser
+func analyzeContextParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
+	funcName := funcDecl.Name.Name
+
+	// Vérification de la condition
+	if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
+		// Retour de la fonction
+		return
+	}
+
+	// Check each parameter and count contexts
+	contextParamIndex := -1
+	contextCount := 0
+	// Itération sur les éléments
+	for i, field := range funcDecl.Type.Params.List {
+		// Vérification de la condition
+		if isContextTypeWithPass(pass, field.Type) {
+			// Compte le nombre de noms dans ce champ (pour gérer a, b context.Context)
+			nameCount := len(field.Names)
+			// Si pas de noms explicites, compter 1
+			if nameCount == 0 {
+				// Assignation de 1 si pas de noms
+				nameCount = 1
+			}
+			// Ajout au compteur de contextes
+			contextCount += nameCount
+			// Enregistrer la première position trouvée
+			if contextParamIndex == -1 {
+				// Enregistrement de la position
+				contextParamIndex = i
+			}
+		}
+	}
+
+	// Report multiple contexts
+	reportMultipleContexts(pass, funcDecl, funcName, contextCount)
+
+	// Report misplaced context
+	reportMisplacedContext(pass, funcDecl, funcName, contextParamIndex)
+}
+
+// reportMultipleContexts reports if function has multiple context.Context params.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcDecl: fonction à analyser
+//   - funcName: nom de la fonction
+//   - contextCount: nombre de contextes
+func reportMultipleContexts(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, contextCount int) {
+	// Signaler si plus d'un context.Context
+	if contextCount > 1 {
+		// Rapport d'erreur pour contextes multiples
+		pass.Reportf(
+			funcDecl.Type.Params.Pos(),
+			"KTN-FUNC-002: la fonction '%s' a %d paramètres context.Context, ce qui est inhabituel",
+			funcName,
+			contextCount,
+		)
+	}
+}
+
+// reportMisplacedContext reports if context.Context is not the first parameter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcDecl: fonction à analyser
+//   - funcName: nom de la fonction
+//   - contextParamIndex: position du contexte
+func reportMisplacedContext(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, contextParamIndex int) {
+	// If there's a context parameter and it's not first, report error
+	if contextParamIndex > 0 {
+		// Rapport d'erreur pour position incorrecte
+		pass.Reportf(
+			funcDecl.Type.Params.List[contextParamIndex].Pos(),
+			"KTN-FUNC-002: context.Context doit être le premier paramètre de la fonction '%s'",
+			funcName,
+		)
+	}
 }
 
 // isContextTypeWithPass checks if a type is context.Context using type info.

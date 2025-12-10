@@ -55,58 +55,83 @@ func runComment004(pass *analysis.Pass) (any, error) {
 
 		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeComment004, filename) {
-			// Fichier exclu
+			// File excluded by configuration
 			return
 		}
 
 		// Check package-level declarations only
-		for _, decl := range file.Decls {
-			genDecl, ok := decl.(*ast.GenDecl)
-			// Skip if not a GenDecl
-			if !ok {
-				continue
-			}
-
-			// Only check var declarations
-			if genDecl.Tok != token.VAR {
-				continue
-			}
-
-			// Check if the GenDecl has a doc comment (applies to all variables in the group)
-			// Filter out "want" directives used by analysistest
-			hasGenDeclDoc := shared.HasValidComment(genDecl.Doc)
-
-			// Itération sur les éléments
-			for _, spec := range genDecl.Specs {
-				valueSpec := spec.(*ast.ValueSpec)
-
-				// Check if this specific ValueSpec has a doc comment or line comment
-				// Filter out "want" directives used by analysistest
-				hasValueSpecDoc := shared.HasValidComment(valueSpec.Doc)
-				hasValueSpecComment := shared.HasValidComment(valueSpec.Comment)
-
-				// A variable is considered documented if:
-				// 1. The GenDecl has a doc comment (group documentation), OR
-				// 2. The ValueSpec has a doc comment (above the variable), OR
-				// 3. The ValueSpec has a line comment (on the same line)
-				hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
-
-				// Vérification de la condition
-				if !hasComment {
-					// Itération sur les éléments
-					for _, name := range valueSpec.Names {
-						pass.Reportf(
-							name.Pos(),
-							"KTN-COMMENT-004: la variable '%s' doit avoir un commentaire associé",
-							name.Name,
-						)
-					}
-				}
-			}
-		}
+		checkFileDeclarations(pass, file)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// checkFileDeclarations checks all declarations in a file for var documentation.
+//
+// Params:
+//   - pass: analysis pass
+//   - file: file to check
+func checkFileDeclarations(pass *analysis.Pass, file *ast.File) {
+	// Check package-level declarations
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		// Skip if not a GenDecl
+		if !ok {
+			continue
+		}
+
+		// Only check var declarations
+		if genDecl.Tok != token.VAR {
+			continue
+		}
+
+		// Check var declaration
+		checkVarDeclaration(pass, genDecl)
+	}
+}
+
+// checkVarDeclaration checks a single var declaration for documentation.
+//
+// Params:
+//   - pass: analysis pass
+//   - genDecl: var declaration to check
+func checkVarDeclaration(pass *analysis.Pass, genDecl *ast.GenDecl) {
+	// Check if the GenDecl has a doc comment
+	hasGenDeclDoc := shared.HasValidComment(genDecl.Doc)
+
+	// Check each variable spec
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+
+		// Check if this specific ValueSpec has documentation
+		hasValueSpecDoc := shared.HasValidComment(valueSpec.Doc)
+		hasValueSpecComment := shared.HasValidComment(valueSpec.Comment)
+
+		// A variable is considered documented if it has any comment
+		hasComment := hasGenDeclDoc || hasValueSpecDoc || hasValueSpecComment
+
+		// Report missing documentation
+		if !hasComment {
+			reportMissingVarDoc(pass, valueSpec)
+		}
+	}
+}
+
+// reportMissingVarDoc reports missing documentation for a variable.
+//
+// Params:
+//   - pass: analysis pass
+//   - valueSpec: variable spec with missing documentation
+func reportMissingVarDoc(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
+	// Report for each variable name
+	for _, name := range valueSpec.Names {
+		pass.Reportf(
+			name.Pos(),
+			"KTN-COMMENT-004: la variable '%s' doit avoir un commentaire associé",
+			name.Name,
+		)
+	}
 }

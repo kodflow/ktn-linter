@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// ruleCodeConst003 est le code de la règle KTN-CONST-003.
 	ruleCodeConst003 string = "KTN-CONST-003"
 )
 
@@ -50,10 +51,10 @@ func runConst003(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeConst003, filename) {
-			// Fichier exclu
+			// File is excluded
 			return
 		}
 		genDecl := n.(*ast.GenDecl)

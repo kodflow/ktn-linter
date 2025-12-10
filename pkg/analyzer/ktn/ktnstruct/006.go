@@ -52,8 +52,8 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		typeSpec := n.(*ast.TypeSpec)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeStruct006, filename) {
 			// Fichier exclu
 			return

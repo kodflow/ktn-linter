@@ -48,8 +48,7 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 	// Parcourir chaque fichier du package
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
-
-		// Vérifier si le fichier est exclu
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeStruct002, filename) {
 			// Fichier exclu
 			continue

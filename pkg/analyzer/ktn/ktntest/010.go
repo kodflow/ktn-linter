@@ -152,8 +152,7 @@ func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-
-		// Vérifier si le fichier est exclu
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeTest010, filename) {
 			// Fichier exclu
 			return

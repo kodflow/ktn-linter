@@ -52,8 +52,7 @@ func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[st
 	// Parcourir tous les fichiers du pass
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
-
-		// Vérifier si le fichier est exclu
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeTest004, filename) {
 			// Fichier exclu
 			continue

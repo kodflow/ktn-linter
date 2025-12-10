@@ -55,54 +55,65 @@ func runFunc006(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		var funcType *ast.FuncType
-		var pos ast.Node
-		var name string
-
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeFunc006, filename) {
 			// Fichier exclu
 			return
 		}
 
-		// Sélection selon la valeur
-		switch fn := n.(type) {
-		// Traitement
-		case *ast.FuncDecl:
-			funcType = fn.Type
-			pos = fn.Name
-			name = fn.Name.Name
-
-			// Skip test functions
-			if shared.IsTestFunction(fn) {
-				// Retour pour ignorer les fonctions de test
-				return
-			}
-		// Traitement
-		case *ast.FuncLit:
-			funcType = fn.Type
-			pos = fn
-			name = "function literal"
-		}
-
-		// Count total parameters (excluding context.Context)
-		paramCount := countEffectiveParams(pass, funcType.Params)
-
-		// Vérification de la condition
-		if paramCount > maxParams {
-			pass.Reportf(
-				pos.Pos(),
-				"KTN-FUNC-006: la fonction '%s' a %d paramètres (max: %d)",
-				name,
-				paramCount,
-				maxParams,
-			)
-		}
+		// Analyze function parameters
+		analyzeFuncParams(pass, n, maxParams)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// analyzeFuncParams analyzes function parameters for FUNC-006.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - n: node to analyze
+//   - maxParams: max parameters allowed
+func analyzeFuncParams(pass *analysis.Pass, n ast.Node, maxParams int) {
+	var funcType *ast.FuncType
+	var pos ast.Node
+	var name string
+
+	// Sélection selon la valeur
+	switch fn := n.(type) {
+	// Traitement
+	case *ast.FuncDecl:
+		funcType = fn.Type
+		pos = fn.Name
+		name = fn.Name.Name
+
+		// Skip test functions
+		if shared.IsTestFunction(fn) {
+			// Retour pour ignorer les fonctions de test
+			return
+		}
+	// Traitement
+	case *ast.FuncLit:
+		funcType = fn.Type
+		pos = fn
+		name = "function literal"
+	}
+
+	// Count total parameters (excluding context.Context)
+	paramCount := countEffectiveParams(pass, funcType.Params)
+
+	// Vérification de la condition
+	if paramCount > maxParams {
+		pass.Reportf(
+			pos.Pos(),
+			"KTN-FUNC-006: la fonction '%s' a %d paramètres (max: %d)",
+			name,
+			paramCount,
+			maxParams,
+		)
+	}
 }
 
 // countEffectiveParams counts parameters excluding context.Context.

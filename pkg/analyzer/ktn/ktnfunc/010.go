@@ -26,7 +26,7 @@ var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc010 description à compléter.
+// runFunc010 exécute l'analyse KTN-FUNC-010.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -56,8 +56,8 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeFunc010, filename) {
 			// Fichier exclu
 			return
@@ -75,48 +75,59 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		funcName := funcDecl.Name.Name
-
-		// Skip if function doesn't have named return values
-		if !hasNamedReturns(funcDecl.Type.Results) {
-			// Retour de la fonction
-			return
-		}
-
-		// Count the lines of the function
-		pureLines := countPureCodeLines(pass, funcDecl.Body)
-
-		// Check for naked returns
-		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
-			ret, ok := node.(*ast.ReturnStmt)
-			// Vérification de la condition
-			if !ok {
-				// Retour de la fonction
-				return true
-			}
-
-			// Naked return has no results specified
-			if len(ret.Results) == 0 {
-				// Allow naked returns in very short functions
-				if pureLines >= maxLinesNaked {
-					// Rapport d'erreur pour naked return interdit
-					pass.Reportf(
-						ret.Pos(),
-						"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
-						funcName,
-						pureLines,
-						maxLinesNaked-1,
-					)
-				}
-			}
-
-			// Retour de la fonction
-			return true
-		})
+		// Analyze naked returns
+		analyzeNakedReturns(pass, funcDecl, maxLinesNaked)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// analyzeNakedReturns analyzes naked returns in a function.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcDecl: fonction à analyser
+//   - maxLinesNaked: max lines for naked return
+func analyzeNakedReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl, maxLinesNaked int) {
+	funcName := funcDecl.Name.Name
+
+	// Skip if function doesn't have named return values
+	if !hasNamedReturns(funcDecl.Type.Results) {
+		// Retour de la fonction
+		return
+	}
+
+	// Count the lines of the function
+	pureLines := countPureCodeLines(pass, funcDecl.Body)
+
+	// Check for naked returns
+	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+		ret, ok := node.(*ast.ReturnStmt)
+		// Vérification de la condition
+		if !ok {
+			// Retour de la fonction
+			return true
+		}
+
+		// Naked return has no results specified
+		if len(ret.Results) == 0 {
+			// Allow naked returns in very short functions
+			if pureLines >= maxLinesNaked {
+				// Rapport d'erreur pour naked return interdit
+				pass.Reportf(
+					ret.Pos(),
+					"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
+					funcName,
+					pureLines,
+					maxLinesNaked-1,
+				)
+			}
+		}
+
+		// Retour de la fonction
+		return true
+	})
 }
 
 // hasNamedReturns checks if the function has named return values

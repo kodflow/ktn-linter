@@ -95,8 +95,8 @@ func collectStructPrivateFields(pass *analysis.Pass, insp *inspector.Inspector, 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		typeSpec := n.(*ast.TypeSpec)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeStruct007, filename) {
 			// Fichier exclu
 			return
@@ -163,8 +163,8 @@ func collectMethodsDetailed(pass *analysis.Pass, insp *inspector.Inspector, cfg 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeStruct007, filename) {
 			// Fichier exclu
 			return

@@ -20,8 +20,8 @@ func Test_runVar009(t *testing.T) {
 	}
 }
 
-// Test_checkFuncBody tests the private checkFuncBody function.
-func Test_checkFuncBody(t *testing.T) {
+// Test_checkFuncBodyVar009 tests the private checkFuncBodyVar009 function.
+func Test_checkFuncBodyVar009(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -29,7 +29,7 @@ func Test_checkFuncBody(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks function bodies
+			// Test passthrough - function checks function bodies for VAR-009
 		})
 	}
 }

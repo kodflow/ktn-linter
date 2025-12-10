@@ -42,9 +42,8 @@ func runVar013(pass *analysis.Pass) (any, error) {
 
 	// Analyze each file independently
 	for _, file := range pass.Files {
-		// Vérifier si le fichier est exclu
-		filename := pass.Fset.Position(file.Pos()).Filename
-		if cfg.IsFileExcluded(ruleCodeVar013, filename) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar013, pass.Fset.Position(file.Pos()).Filename) {
 			// Fichier exclu
 			continue
 		}

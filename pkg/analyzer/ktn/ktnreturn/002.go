@@ -50,6 +50,7 @@ func runReturn002(pass *analysis.Pass) (any, error) {
 	inspectResult.Preorder(nodeFilter, func(n ast.Node) {
 		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Vérification si le fichier courant est exclu par la configuration de la règle
 		if cfg.IsFileExcluded(ruleCodeReturn002, filename) {
 			// Fichier exclu
 			return
