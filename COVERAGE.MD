@@ -21,11 +21,11 @@ Rapport de couverture généré automatiquement.
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.2% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.3% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 97.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 91.3% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 91.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 91.8% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
@@ -55,11 +55,11 @@ Rapport de couverture généré automatiquement.
 | 🟢 `002.go:runComment002` | 92.9% |
 | 🟢 `005.go:runComment005` | 92.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.2%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.3%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🔴 `001.go:isErrorType` | 76.9% |
+| 🟡 `001.go:isErrorType` | 84.6% |
 | 🟢 `001.go:isBuiltinError` | 93.3% |
 | 🟢 `002.go:analyzeContextParams` | 93.3% |
 | 🟡 `002.go:isContextTypeByType` | 88.9% |
@@ -111,7 +111,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `007.go:collectMethodsDetailed` | 93.3% |
 | 🟢 `007.go:checkGetterFieldMismatch` | 93.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 91.3%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 91.6%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -130,8 +130,6 @@ Rapport de couverture généré automatiquement.
 | 🟡 `008.go:classifyFunction` | 85.7% |
 | 🟡 `008.go:extractReceiverTypeString` | 85.7% |
 | 🟡 `008.go:checkVariables` | 84.6% |
-| 🔴 `008.go:reportTestFileIssues` | 75.0% |
-| 🟡 `008.go:reportMixedFunctionsIssues` | 88.9% |
 | 🟡 `009.go:collectPublicFunctions` | 90.9% |
 | 🟡 `009.go:addPublicFunction` | 83.3% |
 | 🟢 `009.go:checkInternalTestsForPublicFunctions` | 92.3% |
@@ -224,4 +222,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-10 22:17:34*
+*Généré le: 2025-12-10 22:29:08*

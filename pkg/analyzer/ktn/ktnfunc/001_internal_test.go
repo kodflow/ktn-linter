@@ -319,10 +319,32 @@ func bad() BadError { return nil }`,
 //   - t: instance de testing
 func Test_implementsError(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		code     string
+		expected bool
 	}{
 		{
-			name: "implements_error_detection",
+			name: "struct implementing error",
+			code: `package test
+type MyError struct{}
+func (MyError) Error() string { return "" }
+func foo() MyError { return MyError{} }`,
+			expected: true,
+		},
+		{
+			name: "struct not implementing error",
+			code: `package test
+type NotError struct{}
+func foo() NotError { return NotError{} }`,
+			expected: false,
+		},
+		{
+			name: "pointer implementing error",
+			code: `package test
+type PtrError struct{}
+func (*PtrError) Error() string { return "" }
+func foo() *PtrError { return nil }`,
+			expected: true,
 		},
 	}
 
@@ -330,8 +352,321 @@ func Test_implementsError(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - nécessite types.Type réel
-			_ = tt.name
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Créer type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, err = conf.Check("test", fset, []*ast.File{file}, info)
+			// Vérification erreur type checking
+			if err != nil {
+				t.Fatalf("Failed type check: %v", err)
+			}
+
+			// Trouver le type de retour
+			var returnType types.Type
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Name.Name == "foo" && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+					tv := info.Types[fd.Type.Results.List[0].Type]
+					// Assignation du type
+					returnType = tv.Type
+					// Retour false pour arrêter la recherche
+					return false
+				}
+				// Retour true pour continuer la recherche
+				return true
+			})
+
+			// Vérifier que le type a été trouvé
+			if returnType == nil {
+				t.Fatal("Expected to find return type")
+			}
+
+			// Appeler implementsError
+			result := implementsError(returnType)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("implementsError() = %v, want %v", result, tt.expected)
+			}
 		})
+	}
+}
+
+// Test_isErrorType_nilType tests isErrorType with nil type.
+//
+// Params:
+//   - t: instance de testing
+func Test_isErrorType_nilType(t *testing.T) {
+	fset := token.NewFileSet()
+
+	// Créer un pass avec TypesInfo vide (expression sans type)
+	pass := &analysis.Pass{
+		Fset: fset,
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+
+	// Créer une expression qui n'a pas de type dans TypesInfo
+	expr := &ast.Ident{Name: "unknown"}
+
+	// Appeler isErrorType avec une expression sans type
+	result := isErrorType(pass, expr)
+
+	// Vérifier false car tv.Type == nil
+	if result {
+		t.Error("Expected false for expression without type info")
+	}
+}
+
+// Test_isErrorType_namedBuiltinError tests the named error with nil package path.
+//
+// Params:
+//   - t: instance de testing
+func Test_isErrorType_namedBuiltinError(t *testing.T) {
+	// Test le cas où le type est nommé "error" avec pkg == nil
+	code := `package test
+var e error
+func foo() error { return e }`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer type checker
+	conf := types.Config{Importer: importer.Default()}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, err = conf.Check("test", fset, []*ast.File{file}, info)
+	// Vérification erreur type checking
+	if err != nil {
+		t.Fatalf("Failed type check: %v", err)
+	}
+
+	// Créer un pass
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+	}
+
+	// Trouver l'expression du type de retour
+	var errorExpr ast.Expr
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérification du type de nœud
+		if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+			// Assignation de l'expression du type de retour
+			errorExpr = fd.Type.Results.List[0].Type
+			// Retour false pour arrêter la recherche
+			return false
+		}
+		// Retour true pour continuer la recherche
+		return true
+	})
+
+	// Vérifier que l'expression a été trouvée
+	if errorExpr == nil {
+		t.Fatal("Expected to find return type expression")
+	}
+
+	// Appeler isErrorType
+	result := isErrorType(pass, errorExpr)
+	// Vérification du résultat
+	if !result {
+		t.Error("Expected true for builtin error type")
+	}
+}
+
+// Test_isErrorType_aliasedError tests isErrorType with error type alias.
+//
+// Params:
+//   - t: instance de testing
+func Test_isErrorType_aliasedError(t *testing.T) {
+	// Test le cas où le type est un alias de error
+	code := `package test
+type MyErr = error
+func foo() MyErr { return nil }`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer type checker
+	conf := types.Config{Importer: importer.Default()}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, err = conf.Check("test", fset, []*ast.File{file}, info)
+	// Vérification erreur type checking
+	if err != nil {
+		t.Fatalf("Failed type check: %v", err)
+	}
+
+	// Créer un pass
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+	}
+
+	// Trouver l'expression du type de retour
+	var errorExpr ast.Expr
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérification du type de nœud
+		if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+			// Assignation de l'expression du type de retour
+			errorExpr = fd.Type.Results.List[0].Type
+			// Retour false pour arrêter la recherche
+			return false
+		}
+		// Retour true pour continuer la recherche
+		return true
+	})
+
+	// Vérifier que l'expression a été trouvée
+	if errorExpr == nil {
+		t.Fatal("Expected to find return type expression")
+	}
+
+	// Appeler isErrorType
+	result := isErrorType(pass, errorExpr)
+	// Vérification du résultat
+	if !result {
+		t.Error("Expected true for error alias type")
+	}
+}
+
+// Test_isErrorType_namedNonError tests isErrorType with non-error named type.
+//
+// Params:
+//   - t: instance de testing
+func Test_isErrorType_namedNonError(t *testing.T) {
+	// Test avec un type nommé qui n'est pas error
+	code := `package test
+type MyString string
+func foo() MyString { return "" }`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer type checker
+	conf := types.Config{Importer: importer.Default()}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, err = conf.Check("test", fset, []*ast.File{file}, info)
+	// Vérification erreur type checking
+	if err != nil {
+		t.Fatalf("Failed type check: %v", err)
+	}
+
+	// Créer un pass
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+	}
+
+	// Trouver l'expression du type de retour
+	var errorExpr ast.Expr
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérification du type de nœud
+		if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+			// Assignation de l'expression du type de retour
+			errorExpr = fd.Type.Results.List[0].Type
+			// Retour false pour arrêter la recherche
+			return false
+		}
+		// Retour true pour continuer la recherche
+		return true
+	})
+
+	// Vérifier que l'expression a été trouvée
+	if errorExpr == nil {
+		t.Fatal("Expected to find return type expression")
+	}
+
+	// Appeler isErrorType - devrait retourner false
+	result := isErrorType(pass, errorExpr)
+	// Vérification du résultat
+	if result {
+		t.Error("Expected false for non-error named type")
+	}
+}
+
+// Test_isErrorType_underlyingError tests isErrorType with named type having error underlying.
+//
+// Params:
+//   - t: instance de testing
+func Test_isErrorType_underlyingError(t *testing.T) {
+	// Test avec un type nommé dont le underlying est error
+	code := `package test
+type CustomError error
+func foo() CustomError { return nil }`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer type checker
+	conf := types.Config{Importer: importer.Default()}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+	_, err = conf.Check("test", fset, []*ast.File{file}, info)
+	// Vérification erreur type checking
+	if err != nil {
+		t.Fatalf("Failed type check: %v", err)
+	}
+
+	// Créer un pass
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+	}
+
+	// Trouver l'expression du type de retour
+	var errorExpr ast.Expr
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérification du type de nœud
+		if fd, ok := n.(*ast.FuncDecl); ok && fd.Type.Results != nil && len(fd.Type.Results.List) > 0 {
+			// Assignation de l'expression du type de retour
+			errorExpr = fd.Type.Results.List[0].Type
+			// Retour false pour arrêter la recherche
+			return false
+		}
+		// Retour true pour continuer la recherche
+		return true
+	})
+
+	// Vérifier que l'expression a été trouvée
+	if errorExpr == nil {
+		t.Fatal("Expected to find return type expression")
+	}
+
+	// Appeler isErrorType - devrait retourner true car underlying est error
+	result := isErrorType(pass, errorExpr)
+	// Vérification du résultat
+	if !result {
+		t.Error("Expected true for named type with error underlying")
 	}
 }

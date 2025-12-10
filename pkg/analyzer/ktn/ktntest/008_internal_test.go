@@ -370,7 +370,7 @@ func Test_reportTestFileIssues(t *testing.T) {
 		hasPrivate  bool
 		hasInternal bool
 		hasExternal bool
-		expectIssue bool
+		expectCount int
 	}{
 		{
 			name:        "public only with external test - OK",
@@ -378,7 +378,7 @@ func Test_reportTestFileIssues(t *testing.T) {
 			hasPrivate:  false,
 			hasInternal: false,
 			hasExternal: true,
-			expectIssue: false,
+			expectCount: 0,
 		},
 		{
 			name:        "private only with internal test - OK",
@@ -386,7 +386,7 @@ func Test_reportTestFileIssues(t *testing.T) {
 			hasPrivate:  true,
 			hasInternal: true,
 			hasExternal: false,
-			expectIssue: false,
+			expectCount: 0,
 		},
 		{
 			name:        "both with both tests - OK",
@@ -394,32 +394,107 @@ func Test_reportTestFileIssues(t *testing.T) {
 			hasPrivate:  true,
 			hasInternal: true,
 			hasExternal: true,
-			expectIssue: false,
+			expectCount: 0,
 		},
 		{
-			name:        "public only missing test",
+			name:        "public only missing external test",
 			hasPublic:   true,
 			hasPrivate:  false,
 			hasInternal: false,
 			hasExternal: false,
-			expectIssue: true,
+			expectCount: 1,
 		},
 		{
-			name:        "error case - missing all tests",
+			name:        "private only missing internal test",
+			hasPublic:   false,
+			hasPrivate:  true,
+			hasInternal: false,
+			hasExternal: false,
+			expectCount: 1,
+		},
+		{
+			name:        "mixed missing both tests",
+			hasPublic:   true,
+			hasPrivate:  true,
+			hasInternal: false,
+			hasExternal: false,
+			expectCount: 1, // Un seul rapport combiné
+		},
+		{
+			name:        "mixed missing only internal test",
+			hasPublic:   true,
+			hasPrivate:  true,
+			hasInternal: false,
+			hasExternal: true,
+			expectCount: 1, // Rapport pour internal manquant
+		},
+		{
+			name:        "mixed missing only external test",
+			hasPublic:   true,
+			hasPrivate:  true,
+			hasInternal: true,
+			hasExternal: false,
+			expectCount: 1, // Rapport pour external manquant
+		},
+		{
+			name:        "no functions no tests - no issues",
 			hasPublic:   false,
 			hasPrivate:  false,
 			hasInternal: false,
 			hasExternal: false,
-			expectIssue: true,
+			expectCount: 0,
 		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test conceptual logic
-			t.Logf("Testing case: hasPublic=%v, hasPrivate=%v, hasInternal=%v, hasExternal=%v",
-				tt.hasPublic, tt.hasPrivate, tt.hasInternal, tt.hasExternal)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+				Report: func(d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			status := testFilesStatus{
+				baseName:    "test.go",
+				fileBase:    "test",
+				hasInternal: tt.hasInternal,
+				hasExternal: tt.hasExternal,
+			}
+
+			result := &fileAnalysisResult{
+				hasPublic:    tt.hasPublic,
+				hasPrivate:   tt.hasPrivate,
+				publicFuncs:  []string{},
+				privateFuncs: []string{},
+			}
+
+			// Ajouter des fonctions si nécessaire
+			if tt.hasPublic {
+				result.publicFuncs = []string{"PublicFunc"}
+			}
+			// Vérification private
+			if tt.hasPrivate {
+				result.privateFuncs = []string{"privateFunc"}
+			}
+
+			// Appel réel de la fonction
+			reportTestFileIssues(pass, file, result, status)
+
+			// Vérification du nombre de rapports
+			if reportCount != tt.expectCount {
+				t.Errorf("reportTestFileIssues() reports = %d, want %d", reportCount, tt.expectCount)
+			}
 		})
 	}
 }
