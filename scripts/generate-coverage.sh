@@ -32,7 +32,9 @@ get_icon() {
     # Extraire la partie entière du pourcentage
     local int_percent=${percent%.*}
 
-    if [ "$int_percent" -gt 90 ]; then
+    if [ "$percent" == "100.0" ] || [ "$int_percent" -eq 100 ]; then
+        echo "🔵"
+    elif [ "$int_percent" -gt 90 ]; then
         echo "🟢"
     elif [ "$int_percent" -ge 80 ]; then
         echo "🟡"
@@ -54,6 +56,7 @@ cat > "$OUTPUT_FILE" << 'EOF'
 Rapport de couverture généré automatiquement.
 
 **Légende:**
+- 🔵 100% - Couverture parfaite
 - 🟢 >90% - Excellente couverture
 - 🟡 80-90% - Bonne couverture
 - 🔴 <80% - Couverture insuffisante

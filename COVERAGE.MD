@@ -3,6 +3,7 @@
 Rapport de couverture généré automatiquement.
 
 **Légende:**
+- 🔵 100% - Couverture parfaite
 - 🟢 >90% - Excellente couverture
 - 🟡 80-90% - Bonne couverture
 - 🔴 <80% - Couverture insuffisante
@@ -15,9 +16,9 @@ Rapport de couverture généré automatiquement.
 | Icon | Package | Coverage |
 |:----:|---------|----------|
 | 🟢 | **TOTAL (Global)** | **95.3%** |
-| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 99.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 99.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.2% |
@@ -26,13 +27,13 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 91.3% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 91.8% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 99.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 97.5% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
 
 ---
 
@@ -229,4 +230,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-10 22:09:07*
+*Généré le: 2025-12-10 22:11:45*
