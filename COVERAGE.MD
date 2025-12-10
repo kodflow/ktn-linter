@@ -15,12 +15,12 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **95.3%** |
+| 🟢 | **TOTAL (Global)** | **95.4%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 99.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.5% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 99.0% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 97.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
@@ -54,12 +54,6 @@ Rapport de couverture généré automatiquement.
 | 🟢 `001.go:isDocComment` | 91.7% |
 | 🟢 `002.go:runComment002` | 92.9% |
 | 🟢 `005.go:runComment005` | 92.0% |
-
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 99.0%
-
-| Fichier:Fonction | Couverture |
-|------------------|------------|
-| 🟡 `002.go:runConst002` | 90.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.2%
 
@@ -230,4 +224,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-10 22:11:45*
+*Généré le: 2025-12-10 22:17:34*

@@ -458,3 +458,51 @@ func Test_runConst002_disabled(t *testing.T) {
 		t.Errorf("Expected 0 reports, got %d", reportCount)
 	}
 }
+
+// Test_runConst002_excludedFile tests that excluded files are skipped.
+func Test_runConst002_excludedFile(t *testing.T) {
+	// Setup: exclude test.go
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-CONST-002": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"test.go"},
+			},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	// Create fset and file with bad order (var before const)
+	fset := token.NewFileSet()
+	file := fset.AddFile("test.go", -1, 100)
+
+	// Create pass with file that would trigger error if not excluded
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Files: []*ast.File{
+			{
+				Package: file.Pos(1),
+				Decls: []ast.Decl{
+					&ast.GenDecl{Tok: token.VAR, TokPos: file.Pos(10)},
+					&ast.GenDecl{Tok: token.CONST, TokPos: file.Pos(50)},
+				},
+			},
+		},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+			t.Error("Unexpected error reported for excluded file")
+		},
+	}
+
+	// Run the analyzer
+	_, err := runConst002(pass)
+	if err != nil {
+		t.Errorf("runConst002() error = %v", err)
+	}
+	// Verify no reports for excluded file
+	if reportCount != 0 {
+		t.Errorf("Expected 0 reports for excluded file, got %d", reportCount)
+	}
+}
