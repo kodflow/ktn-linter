@@ -12,9 +12,9 @@ func Test_rulesSeverity(t *testing.T) {
 		ruleCode string
 		expected Level
 	}{
-		{"KTN-VAR-001 is WARNING", "KTN-VAR-001", SEVERITY_WARNING},
-		{"KTN-FUNC-006 is ERROR", "KTN-FUNC-006", SEVERITY_ERROR},
-		{"KTN-TEST-004 is INFO", "KTN-TEST-004", SEVERITY_INFO},
+		{"KTN-VAR-001 is ERROR", "KTN-VAR-001", SeverityError},
+		{"KTN-FUNC-001 is ERROR", "KTN-FUNC-001", SeverityError},
+		{"KTN-TEST-013 is INFO", "KTN-TEST-013", SeverityInfo},
 	}
 
 	// Exécution tests
@@ -37,25 +37,32 @@ func Test_rulesSeverity(t *testing.T) {
 
 // Test_rulesSeverityCompleteness tests that all rule categories are covered.
 func Test_rulesSeverityCompleteness(t *testing.T) {
-	// Vérification map non vide
-	if len(rulesSeverity) == 0 {
-		t.Error("rulesSeverity should not be empty")
+	tests := []struct {
+		name       string
+		categories []string
+	}{
+		{name: "all categories covered", categories: []string{"COMMENT", "CONST", "VAR", "FUNC", "STRUCT", "TEST"}},
 	}
 
-	// Vérification présence catégories
-	categories := []string{"CONST", "VAR", "FUNC", "STRUCT", "TEST", "PACKAGE"}
-	for _, cat := range categories {
-		found := false
-		// Recherche catégorie
-		for rule := range rulesSeverity {
-			if len(rule) > 4 && rule[4:4+len(cat)] == cat {
-				found = true
-				break
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if len(rulesSeverity) == 0 {
+				t.Error("rulesSeverity should not be empty")
+				return
 			}
-		}
-		// Vérification trouvé
-		if !found {
-			t.Errorf("No rules found for category %q", cat)
-		}
+
+			for _, cat := range tt.categories {
+				found := false
+				for rule := range rulesSeverity {
+					if len(rule) > 4 && rule[4:4+len(cat)] == cat {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("No rules found for category %q", cat)
+				}
+			}
+		})
 	}
 }

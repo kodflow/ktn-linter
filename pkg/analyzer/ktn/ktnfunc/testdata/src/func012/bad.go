@@ -1,117 +1,65 @@
+// Bad examples for the func014 test case.
 package func012
 
 const (
-	// MULTIPLIER represents the multiplication factor
-	MULTIPLIER int = 2
-	// LOOP_MAX represents the maximum loop iterations
-	LOOP_MAX int = 10
-	// THRESHOLD represents the threshold value
-	THRESHOLD int = 10
+	// TWO_COUNT représente la valeur 2 pour les compteurs
+	TWO_COUNT int = 2
+	// THIRTY_AGE représente l'âge 30
+	THIRTY_AGE int = 30
+	// NINETY_FIVE_SCORE représente le score 95.5
+	NINETY_FIVE_SCORE float64 = 95.5
 )
 
-// badCheckPositive vérifie si un nombre est positif avec else inutile.
-//
-// Params:
-//   - x: nombre à vérifier
+// FourUnnamedReturns demonstrates a function with 4 unnamed return values (violates KTN-FUNC-012).
 //
 // Returns:
-//   - string: "positive" ou "negative"
-func badCheckPositive(x int) string {
-	// Check if number is positive
-	if x > 0 {
-		// Return positive case
-		return "positive"
-	} else {
-		// Return negative case
-		return "negative"
-	}
+//   - int: identifier
+//   - string: message
+//   - bool: status
+//   - error: operation error
+func FourUnnamedReturns() (int, string, bool, error) {
+	// Return successful test data with no error
+	return 1, "test", true, nil
 }
 
-// badProcessValue traite une valeur avec else inutile après return.
-//
-// Params:
-//   - val: valeur à traiter
+// FiveUnnamedReturns demonstrates a function with 5 unnamed return values (violates KTN-FUNC-012).
 //
 // Returns:
-//   - int: 0 si négatif, sinon val doublée
-func badProcessValue(val int) int {
-	// Check if value is negative
-	if val < 0 {
-		// Return zero for negative values
-		return 0
-	} else {
-		// Return multiplied value
-		return val * MULTIPLIER
-	}
+//   - int: identifier
+//   - int: count value
+//   - string: message
+//   - bool: status
+//   - error: operation error
+func FiveUnnamedReturns() (int, int, string, bool, error) {
+	// Return successful test data with counts and no error
+	return 1, TWO_COUNT, "test", true, nil
 }
 
-// badFindMax trouve le maximum avec else inutile après return.
-//
-// Params:
-//   - a: premier nombre
-//   - b: deuxième nombre
+// ManyUnnamedReturns demonstrates a function with 6 unnamed return values (violates KTN-FUNC-012).
 //
 // Returns:
-//   - int: le maximum des deux
-func badFindMax(a, b int) int {
-	// Check if a is greater than b
-	if a > b {
-		// Return a if it's larger
-		return a
-	} else {
-		// Return b otherwise
-		return b
-	}
+//   - int: identifier
+//   - string: message
+//   - int: age value
+//   - bool: status
+//   - float64: score value
+//   - error: operation error
+func ManyUnnamedReturns() (int, string, int, bool, float64, error) {
+	// Return complete test data including score with no error
+	return 1, "test", THIRTY_AGE, true, NINETY_FIVE_SCORE, nil
 }
 
-// badLoopExample demonstrates a loop with unnecessary else after continue.
-// This function violates KTN-FUNC-012 by using else after continue.
-func badLoopExample() {
-	// Iterate from 0 to LOOP_MAX
-	for i := 0; i < LOOP_MAX; i++ {
-		// Check if i is even
-		if i%MULTIPLIER == 0 {
-			// Skip even numbers
-			continue
-		} else {
-			// Process odd numbers
-			_ = i
-		}
-	}
-}
-
-// badSwitchExample illustre else inutile après break.
-//
-// Params:
-//   - x: valeur à traiter
-func badSwitchExample(x int) {
-	// Loop until x exceeds threshold
-	for {
-		// Check if threshold exceeded
-		if x > THRESHOLD {
-			// Exit loop when threshold exceeded
-			break
-		} else {
-			// Increment x otherwise
-			x++
-		}
-	}
-}
-
-// badValidateInput valide une entrée avec else inutile après return.
-//
-// Params:
-//   - input: chaîne à valider
+// SevenUnnamedReturns demonstrates a function with 7 unnamed return values (violates KTN-FUNC-012).
 //
 // Returns:
-//   - error: erreur ou nil
-func badValidateInput(input string) error {
-	// Check if input is empty
-	if input == "" {
-		// Return nil for empty input
-		return nil
-	} else {
-		// Return nil for non-empty input
-		return nil
-	}
+//   - int: identifier
+//   - string: message
+//   - int: age value
+//   - bool: status
+//   - float64: score value
+//   - string: extra information
+//   - error: operation error
+func SevenUnnamedReturns() (int, string, int, bool, float64, string, error) {
+	// Return full test data with extra field and no error
+	return 1, "test", THIRTY_AGE, true, NINETY_FIVE_SCORE, "extra", nil
 }

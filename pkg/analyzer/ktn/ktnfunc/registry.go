@@ -6,23 +6,21 @@ import "golang.org/x/tools/go/analysis"
 // GetAnalyzers retourne tous les analyseurs relatifs aux fonctions.
 //
 // Returns:
-//   - []*analysis.Analyzer: liste des analyseurs de fonctions (001-014)
+//   - []*analysis.Analyzer: liste des analyseurs de fonctions (001-012)
 func GetAnalyzers() []*analysis.Analyzer {
 	// Retourne la liste complète des analyseurs de fonctions
 	return []*analysis.Analyzer{
-		Analyzer001, // Max 35 lines of pure code
-		Analyzer002, // Max 5 parameters
-		Analyzer003, // No magic numbers
-		Analyzer004, // No naked returns (except short functions)
-		Analyzer005, // Max cyclomatic complexity 10
-		Analyzer006, // Error must be last
-		Analyzer007, // Documentation stricte
-		Analyzer008, // Context must be first parameter
-		Analyzer009, // No side effects in getters
-		Analyzer010, // Named returns for >3 return values
-		Analyzer011, // Comments on branches/returns
-		Analyzer012, // No else after return/continue/break
-		Analyzer013, // Unused parameters must be prefixed with _ or assigned to _
-		Analyzer014, // Private functions must be used in production code
+		Analyzer001, // Error must be last return
+		Analyzer002, // Context must be first parameter
+		Analyzer003, // No else after return/continue/break
+		Analyzer004, // Private functions must be used
+		Analyzer005, // Max 35 lines of pure code
+		Analyzer006, // Max 5 parameters
+		Analyzer007, // No side effects in getters
+		Analyzer008, // Unused parameters must be prefixed with _
+		Analyzer009, // No magic numbers
+		Analyzer010, // No naked returns (except short functions)
+		Analyzer011, // Max cyclomatic complexity 10
+		Analyzer012, // Named returns for >3 return values
 	}
 }

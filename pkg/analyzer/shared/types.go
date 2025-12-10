@@ -15,7 +15,7 @@ type DeclGroup struct {
 }
 
 // dtoSuffixes contient les suffixes typiques des DTOs.
-var dtoSuffixes = []string{
+var dtoSuffixes []string = []string{
 	"Config",
 	"Settings",
 	"Options",
@@ -59,10 +59,12 @@ var dtoSuffixes = []string{
 func IsSerializableStruct(structType *ast.StructType, structName string) bool {
 	// Vérifier par le nom de la struct
 	if hasSerializableSuffix(structName) {
+		// Retour si suffixe DTO trouvé
 		return true
 	}
 
 	// Vérifier par les tags des champs
+	// Retour résultat de la vérification par tags
 	return hasSerializationTags(structType)
 }
 
@@ -78,6 +80,7 @@ func hasSerializableSuffix(name string) bool {
 	for _, suffix := range dtoSuffixes {
 		// Vérifier le suffixe
 		if strings.HasSuffix(name, suffix) {
+			// Retour si suffixe DTO trouvé
 			return true
 		}
 	}
@@ -96,6 +99,7 @@ func hasSerializableSuffix(name string) bool {
 func hasSerializationTags(structType *ast.StructType) bool {
 	// Pas de champs
 	if structType.Fields == nil {
+		// Retour si pas de champs
 		return false
 	}
 
@@ -125,6 +129,7 @@ func hasSerializationTags(structType *ast.StructType) bool {
 func IsPureDataStruct(structType *ast.StructType) bool {
 	// Pas de champs = pas une struct de données
 	if structType.Fields == nil || len(structType.Fields.List) == 0 {
+		// Retour si pas de champs
 		return false
 	}
 

@@ -1,109 +1,97 @@
+// Bad examples for the var008 test case.
 package var007
 
-// Bad: Slices created without capacity when it could be known
-
-// Constantes pour les tests
-const (
-	MAX_SIZE         int = 50
-	SMALL_LOOP_COUNT int = 20
-)
-
-// badMakeStringSlice creates a string slice without capacity
+// badStringConcatInForLoop concatenates strings in a for loop.
+//
+// Params:
+//   - items: slice of strings
 //
 // Returns:
-//   - []string: slice without preallocated capacity
-func badMakeStringSlice() []string {
-	// Bad: make without capacity argument
-	items := make([]string, 0)
-	// Retour de la fonction
-	return items
-}
+//   - string: concatenated result
+func badStringConcatInForLoop(items []string) string {
+	result := ""
 
-// badMakeWithoutCapacity creates a slice using make without capacity
-//
-// Returns:
-//   - []string: slice without preallocated capacity
-func badMakeWithoutCapacity() []string {
-	// Bad: make without capacity argument
-	result := make([]string, 0)
-	// Retour de la fonction
+	// Bad: string concatenation in loop
+	for _, item := range items {
+		result += item
+	}
+
+	// Return the result
 	return result
 }
 
-// badMakeInLoop creates a slice without capacity in loop
+// badStringConcatWithSeparator concatenates with separator in loop.
+//
+// Params:
+//   - items: slice of strings
 //
 // Returns:
-//   - []int: slice without preallocated capacity
-func badMakeInLoop() []int {
-	// Bad: Known size but no capacity
-	numbers := make([]int, 0)
-	// Itération sur les éléments
-	for i := 0; i < MAX_SIZE; i++ {
-		numbers = append(numbers, i)
+//   - string: concatenated result
+func badStringConcatWithSeparator(items []string) string {
+	result := ""
+
+	// Bad: string concatenation in loop
+	for i, item := range items {
+		// Check if separator is needed
+		if i > 0 {
+			result += ", "
+		}
+		result += item
 	}
-	// Retour de la fonction
-	return numbers
+
+	// Return the result
+	return result
 }
 
-// badMakeFloatSlice creates a float slice without capacity
+// badNestedLoopConcat concatenates in nested loop.
+//
+// Params:
+//   - matrix: 2D slice of strings
 //
 // Returns:
-//   - []float64: slice without preallocated capacity
-func badMakeFloatSlice() []float64 {
-	// Bad: make for float64 without capacity
-	values := make([]float64, 0)
-	// Retour de la fonction
-	return values
+//   - string: concatenated result
+func badNestedLoopConcat(matrix [][]string) string {
+	result := ""
+
+	// Iteration over rows
+	for _, row := range matrix {
+		// Bad: string concatenation in nested loop
+		for _, cell := range row {
+			result += cell
+		}
+	}
+
+	// Return the result
+	return result
 }
 
-// badMakeInterfaceSlice creates an interface slice without capacity
+// badClassicForLoop uses classic for loop with concatenation.
+//
+// Params:
+//   - n: number of iterations
 //
 // Returns:
-//   - []interface{}: interface slice without capacity
-func badMakeInterfaceSlice() []interface{} {
-	// Bad: make for interface{} without capacity
-	items := make([]interface{}, 0)
-	// Retour de la fonction
-	return items
+//   - string: concatenated result
+func badClassicForLoop(n int) string {
+	result := ""
+
+	// Bad: string concatenation in classic for loop
+	for i := 0; i < n; i++ {
+		result += "x"
+	}
+
+	// Return the result
+	return result
 }
 
-// Item is a test struct
-type Item struct {
-	value int
-}
-
-// badMakeStructSlice creates a slice of structs without capacity
-//
-// Returns:
-//   - []Item: slice of structs without capacity
-func badMakeStructSlice() []Item {
-	// Bad: make for struct slice without capacity
-	items := make([]Item, 0)
-	// Retour de la fonction
-	return items
-}
-
-// badMakeByteSlice creates a byte slice without capacity
-//
-// Returns:
-//   - []byte: byte slice without capacity
-func badMakeByteSlice() []byte {
-	// Bad: Byte slice without capacity
-	buffer := make([]byte, 0)
-	// Retour de la fonction
-	return buffer
-}
-
-// badEmptyLiteralWithAppend creates empty literal then appends
-//
-// Returns:
-//   - []int: slice that should use make with capacity
-func badEmptyLiteralWithAppend() []int {
-	// Bad: []T{} with subsequent append should use make
-	numbers := []int{}
-	// Ajout d'éléments
-	numbers = append(numbers, SMALL_LOOP_COUNT)
-	numbers = append(numbers, MAX_SIZE)
-	// Retour de la fonction
-	return numbers
+// init utilise les fonctions privées
+func init() {
+	// Appel de badStringConcatInForLoop
+	_ = badStringConcatInForLoop(nil)
+	// Appel de badStringConcatWithSeparator
+	_ = badStringConcatWithSeparator(nil)
+	// Appel de badNestedLoopConcat
+	_ = badNestedLoopConcat(nil)
+	// Appel de badClassicForLoop
+	_ = badClassicForLoop(0)
 }

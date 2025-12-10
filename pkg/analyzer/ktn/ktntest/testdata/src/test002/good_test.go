@@ -3,24 +3,24 @@ package test002_test
 import (
 	"testing"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test002"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test001"
 )
 
-// TestProcessItemComplete teste avec couverture complète (BIEN).
-// A un fichier source good.go correspondant.
+// TestValidateWithErrors teste avec couverture complète (BIEN).
+// Utilise le package externe test001_test et table-driven tests.
 //
 // Params:
 //   - t: contexte de test
-func TestProcessItemComplete(t *testing.T) {
+func TestValidateWithErrors(t *testing.T) {
 	// Table de tests
 	tests := []struct {
 		name      string
-		item      string
-		want      string
+		value     int
 		wantError bool
 	}{
-		{"valid item", "data", "processed:data", false},
-		{"empty item", "", "", true},
+		{"valid value", 50, false},
+		{"negative value", -1, true},
+		{"exceeds maximum", 150, true},
 	}
 
 	// Parcours des tests
@@ -28,37 +28,30 @@ func TestProcessItemComplete(t *testing.T) {
 		// Exécution sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Appel fonction
-			result, err := test002.ProcessItem(tt.item)
+			err := test001.Validate(tt.value)
 			// Vérification erreur
 			if (err != nil) != tt.wantError {
-				t.Errorf("ProcessItem(%q) error = %v, wantError %v", tt.item, err, tt.wantError)
-			}
-			// Vérification résultat
-			if !tt.wantError && result != tt.want {
-				t.Errorf("ProcessItem(%q) = %q, want %q", tt.item, result, tt.want)
+				t.Errorf("Validate(%d) error = %v, wantError %v", tt.value, err, tt.wantError)
 			}
 		})
 	}
 }
 
-// TestCountItemsComplete teste avec couverture complète (BIEN).
-// A un fichier source good.go correspondant.
+// TestTransformWithErrors teste avec couverture complète (BIEN).
+// Utilise le package externe test001_test et table-driven tests.
 //
 // Params:
 //   - t: contexte de test
-func TestCountItemsComplete(t *testing.T) {
-	const MAX_ITEMS int = 1000
+func TestTransformWithErrors(t *testing.T) {
 	// Table de tests
 	tests := []struct {
 		name      string
-		items     []string
-		want      int
+		input     string
+		want      string
 		wantError bool
 	}{
-		{"empty list", []string{}, 0, false},
-		{"single item", []string{"a"}, 1, false},
-		{"multiple items", []string{"a", "b", "c"}, 3, false},
-		{"too many items", make([]string, MAX_ITEMS+1), 0, true},
+		{"valid input", "test", "[test]", false},
+		{"empty string", "", "", true},
 	}
 
 	// Parcours des tests
@@ -66,14 +59,14 @@ func TestCountItemsComplete(t *testing.T) {
 		// Exécution sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Appel fonction
-			result, err := test002.CountItems(tt.items)
+			result, err := test001.Transform(tt.input)
 			// Vérification erreur
 			if (err != nil) != tt.wantError {
-				t.Errorf("CountItems() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("Transform(%q) error = %v, wantError %v", tt.input, err, tt.wantError)
 			}
-			// Vérification résultat
+			// Vérification résultat si pas d'erreur
 			if !tt.wantError && result != tt.want {
-				t.Errorf("CountItems() = %d, want %d", result, tt.want)
+				t.Errorf("Transform(%q) = %q, want %q", tt.input, result, tt.want)
 			}
 		})
 	}

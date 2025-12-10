@@ -5,26 +5,28 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer010 checks that functions with >3 return values use named returns
 const (
-	// MAX_UNNAMED_RETURNS max unnamed returns allowed
-	MAX_UNNAMED_RETURNS int = 3
+	// ruleCodeFunc010 is the rule code for this analyzer
+	ruleCodeFunc010 string = "KTN-FUNC-010"
+	// defaultMaxLinesForNakedReturn max lines for naked return
+	defaultMaxLinesForNakedReturn int = 5
 )
 
-// Analyzer010 checks that functions with >3 return values use named returns
-var Analyzer010 = &analysis.Analyzer{
+// Analyzer010 checks that naked returns are only used in very short functions
+var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc010",
-	Doc:      "KTN-FUNC-010: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
+	Doc:      "KTN-FUNC-010: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
 	Run:      runFunc010,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc010 description à compléter.
+// runFunc010 exécute l'analyse KTN-FUNC-010.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -33,6 +35,18 @@ var Analyzer010 = &analysis.Analyzer{
 //   - any: résultat
 //   - error: erreur éventuelle
 func runFunc010(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc010) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxLinesNaked := cfg.GetThreshold(ruleCodeFunc010, defaultMaxLinesForNakedReturn)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -42,49 +56,102 @@ func runFunc010(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeFunc010, filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Skip if no body (external functions)
+		if funcDecl.Body == nil {
+			// Retour de la fonction
+			return
+		}
+
 		// Skip test functions
 		if shared.IsTestFunction(funcDecl) {
 			// Retour de la fonction
 			return
 		}
 
-		funcName := funcDecl.Name.Name
-
-		// Vérification de la condition
-		if funcDecl.Type.Results == nil {
-			// Retour de la fonction
-			return
-		}
-
-		// Count total return values
-		returnCount := 0
-		hasUnnamedReturns := false
-
-		// Itération sur les éléments
-		for _, field := range funcDecl.Type.Results.List {
-			// Vérification de la condition
-			if len(field.Names) == 0 {
-				// Unnamed return
-				hasUnnamedReturns = true
-				returnCount++
-			} else {
-				// Named returns
-				returnCount += len(field.Names)
-			}
-		}
-
-		// If more than 3 returns and has unnamed returns, report error
-		if returnCount > MAX_UNNAMED_RETURNS && hasUnnamedReturns {
-			pass.Reportf(
-				funcDecl.Type.Results.Pos(),
-				"KTN-FUNC-010: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
-				funcName,
-				returnCount,
-				MAX_UNNAMED_RETURNS,
-			)
-		}
+		// Analyze naked returns
+		analyzeNakedReturns(pass, funcDecl, maxLinesNaked)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// analyzeNakedReturns analyzes naked returns in a function.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcDecl: fonction à analyser
+//   - maxLinesNaked: max lines for naked return
+func analyzeNakedReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl, maxLinesNaked int) {
+	funcName := funcDecl.Name.Name
+
+	// Skip if function doesn't have named return values
+	if !hasNamedReturns(funcDecl.Type.Results) {
+		// Retour de la fonction
+		return
+	}
+
+	// Count the lines of the function
+	pureLines := countPureCodeLines(pass, funcDecl.Body)
+
+	// Check for naked returns
+	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+		ret, ok := node.(*ast.ReturnStmt)
+		// Vérification de la condition
+		if !ok {
+			// Retour de la fonction
+			return true
+		}
+
+		// Naked return has no results specified
+		if len(ret.Results) == 0 {
+			// Allow naked returns in very short functions
+			if pureLines >= maxLinesNaked {
+				// Rapport d'erreur pour naked return interdit
+				pass.Reportf(
+					ret.Pos(),
+					"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
+					funcName,
+					pureLines,
+					maxLinesNaked-1,
+				)
+			}
+		}
+
+		// Retour de la fonction
+		return true
+	})
+}
+
+// hasNamedReturns checks if the function has named return values
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si retours nommés
+func hasNamedReturns(results *ast.FieldList) bool {
+	// Vérification de la condition
+	if results == nil || len(results.List) == 0 {
+		// Retour de la fonction
+		return false
+	}
+
+	// Itération sur les éléments
+	for _, field := range results.List {
+		// Vérification de la condition
+		if len(field.Names) > 0 {
+			// Retour de la fonction
+			return true
+		}
+	}
+
+	// Retour de la fonction
+	return false
 }

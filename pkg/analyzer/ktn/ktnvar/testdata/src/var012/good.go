@@ -1,93 +1,60 @@
+// Good examples for the var012 test case.
 package var012
 
-import "strings"
+import "bytes"
 
-const (
-	// AVG_ITEM_LENGTH is the average item length estimate
-	AVG_ITEM_LENGTH int = 10
-)
+// init demonstrates correct usage patterns
+func init() {
+	// Conversion une seule fois hors de la boucle
+	data := [][]byte{[]byte("hello"), []byte("world")}
+	target := "hello"
+	targetBytes := []byte(target) // OK: Conversion une seule fois
+	count := 0
+	// Parcours des éléments
+	for _, item := range data {
+		// Vérification de la condition
+		if bytes.Equal(item, targetBytes) {
+			count++
+		}
+	}
+	_ = count
 
-// goodStringsBuilder uses strings.Builder for concatenation.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilder(items []string) string {
-	// sb is the strings builder
-	var sb strings.Builder
+	// Conversion une seule fois puis réutilisation
+	byteData := []byte("test")
+	str := string(byteData) // OK: Conversion une seule fois
+	// Vérification de la condition
+	if str == "hello" {
+		println("found hello")
+	}
+	// Vérification de la condition
+	if str == "world" {
+		println("found world")
+	}
+	println(str)
 
-	// Good: using strings.Builder
-	for _, item := range items {
-		sb.WriteString(item)
+	// Utilisation de bytes.Equal au lieu de string()
+	items := [][]byte{[]byte("test")}
+	targetTest := []byte("test")
+	// Parcours des éléments
+	for i := range len(items) {
+		// Vérification de la condition
+		if bytes.Equal(items[i], targetTest) { // OK: Pas de conversion string
+			println("found")
+		}
 	}
 
-	// Return the result
-	return sb.String()
-}
-
-// goodStringsBuilderWithGrow uses strings.Builder with Grow.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilderWithGrow(items []string) string {
-	// sb is the strings builder
-	var sb strings.Builder
-	sb.Grow(len(items) * AVG_ITEM_LENGTH)
-
-	// Good: using strings.Builder with preallocated size
-	for _, item := range items {
-		sb.WriteString(item)
+	// Une seule utilisation
+	singleData := []byte("unique")
+	// Vérification de la condition
+	if string(singleData) == "unique" { // OK: Une seule utilisation
+		println("found unique")
 	}
 
-	// Return the result
-	return sb.String()
-}
-
-// goodStringsJoin uses strings.Join for simple concatenation.
-//
-// Params:
-//   - items: slice of strings
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsJoin(items []string) string {
-	// Good: using strings.Join for simple cases
-	return strings.Join(items, "")
-}
-
-// goodSingleConcat performs single concatenation outside loop.
-//
-// Params:
-//   - a: first string
-//   - b: second string
-//
-// Returns:
-//   - string: concatenated result
-func goodSingleConcat(a string, b string) string {
-	// Good: single concatenation, not in a loop
-	return a + b
-}
-
-// goodNoStringConcat uses int concatenation in loop (allowed).
-//
-// Params:
-//   - n: number of iterations
-//
-// Returns:
-//   - int: sum result
-func goodNoStringConcat(n int) int {
-	result := 0
-
-	// Good: not string concatenation
-	for i := 0; i < n; i++ {
-		result += i
-	}
-
-	// Return the result
-	return result
+	// Chaque variable convertie une seule fois
+	a := []byte("a")
+	b := []byte("b")
+	c := []byte("c")
+	println(string(a))
+	println(string(b))
+	println(string(c))
 }

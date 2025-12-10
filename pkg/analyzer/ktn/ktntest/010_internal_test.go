@@ -6,97 +6,139 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Test_extractPrivateFunctionName tests the extractPrivateFunctionName private function.
+// Test_ParseTestNameForPrivate tests the shared.ParseTestName helper for private functions.
 //
 // Params:
 //   - t: testing context
-func Test_extractPrivateFunctionName(t *testing.T) {
+func Test_ParseTestNameForPrivate(t *testing.T) {
 	tests := []struct {
-		name           string
-		testedFuncName string
-		want           string
+		name        string
+		testName    string
+		wantFunc    string
+		wantPrivate bool
 	}{
 		{
-			name:           "simple function name",
-			testedFuncName: "doSomething",
-			want:           "doSomething",
+			name:        "simple private function test",
+			testName:    "Test_doSomething",
+			wantFunc:    "doSomething",
+			wantPrivate: true,
 		},
 		{
-			name:           "method pattern Type_method",
-			testedFuncName: "MyType_doSomething",
-			want:           "doSomething",
+			name:        "method pattern Type_method",
+			testName:    "TestMyType_doSomething",
+			wantFunc:    "doSomething",
+			wantPrivate: true,
 		},
 		{
-			name:           "nested pattern with multiple underscores",
-			testedFuncName: "Outer_Inner_method",
-			want:           "method",
-		},
-		{
-			name:           "empty string",
-			testedFuncName: "",
-			want:           "",
+			name:        "public function",
+			testName:    "TestDoSomething",
+			wantFunc:    "DoSomething",
+			wantPrivate: false,
 		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractPrivateFunctionName(tt.testedFuncName)
-			// Vérification de la condition
-			if got != tt.want {
-				t.Errorf("extractPrivateFunctionName(%q) = %q, want %q", tt.testedFuncName, got, tt.want)
+			target, ok := shared.ParseTestName(tt.testName)
+			// Vérification parsing
+			if !ok {
+				t.Fatalf("ParseTestName(%q) failed", tt.testName)
+			}
+			// Vérification fonction
+			if target.FuncName != tt.wantFunc {
+				t.Errorf("ParseTestName(%q).FuncName = %q, want %q", tt.testName, target.FuncName, tt.wantFunc)
+			}
+			// Vérification private
+			if target.IsPrivate != tt.wantPrivate {
+				t.Errorf("ParseTestName(%q).IsPrivate = %v, want %v", tt.testName, target.IsPrivate, tt.wantPrivate)
 			}
 		})
 	}
 }
 
-// Test_isPrivateFunctionTested tests the isPrivateFunctionTested private function.
+// Test_addPrivateFunction tests the addPrivateFunction function.
 //
 // Params:
 //   - t: testing context
-func Test_isPrivateFunctionTested(t *testing.T) {
-	privateFunctions := map[string]bool{
-		"doSomething":   true,
-		"helperFunc":    true,
-		"internalLogic": true,
-	}
-
+func Test_addPrivateFunction(t *testing.T) {
 	tests := []struct {
-		name           string
-		testedFuncName string
-		want           bool
+		name         string
+		code         string
+		wantFuncName string
 	}{
 		{
-			name:           "existing private function",
-			testedFuncName: "doSomething",
-			want:           true,
+			name:         "private function",
+			code:         "func privateFunc() {}",
+			wantFuncName: "privateFunc",
 		},
 		{
-			name:           "public function",
-			testedFuncName: "DoSomething",
-			want:           false,
+			name:         "public function",
+			code:         "func PublicFunc() {}",
+			wantFuncName: "",
 		},
 		{
-			name:           "non-existing private function",
-			testedFuncName: "notInMap",
-			want:           false,
+			name:         "private method",
+			code:         "func (r MyType) privateMethod() {}",
+			wantFuncName: "MyType_privateMethod",
 		},
 		{
-			name:           "empty name",
-			testedFuncName: "",
-			want:           false,
+			name:         "mock function (excluded)",
+			code:         "func mockPrivateFunc() {}",
+			wantFuncName: "",
 		},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isPrivateFunctionTested(tt.testedFuncName, privateFunctions)
-			// Vérification de la condition
-			if got != tt.want {
-				t.Errorf("isPrivateFunctionTested(%q) = %v, want %v", tt.testedFuncName, got, tt.want)
+			// Parse the code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", "package test\ntype MyType struct{}\n"+tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			// Extract function declaration
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					// Retour false pour arrêter
+					return false
+				}
+				// Continuer la traversée
+				return true
+			})
+
+			// Vérification de la déclaration
+			if funcDecl == nil {
+				t.Fatal("no function declaration found")
+			}
+
+			privateFunctions := make(map[string]bool)
+			addPrivateFunction(funcDecl, privateFunctions)
+
+			// Vérification fonction privée
+			if tt.wantFuncName != "" {
+				// Vérification de la condition
+				if !privateFunctions[tt.wantFuncName] {
+					t.Errorf("expected private function %q to be added, got %v", tt.wantFuncName, privateFunctions)
+				}
+			} else {
+				// Vérification de la condition
+				if len(privateFunctions) > 0 {
+					t.Errorf("expected no functions to be added, got %v", privateFunctions)
+				}
 			}
 		})
 	}
@@ -151,7 +193,7 @@ func PublicFunc() {}`,
 				t.Fatalf("failed to parse code: %v", err)
 			}
 
-			privateFunctions := make(map[string]bool, INITIAL_PRIVATE_FUNCTIONS_CAP)
+			privateFunctions := make(map[string]bool, initialPrivateFunctionsCap)
 
 			// Collect private functions
 			ast.Inspect(file, func(n ast.Node) bool {
@@ -271,5 +313,96 @@ func Test_checkExternalTestsForPrivateFunctions(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
 		})
+	}
+}
+
+// Test_runTest010_disabled tests that the rule is skipped when disabled.
+func Test_runTest010_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-010": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest010(pass)
+	if err != nil {
+		t.Errorf("runTest010() error = %v", err)
+	}
+}
+
+// Test_runTest010_excludedFile tests that excluded files are skipped.
+func Test_runTest010_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-010": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runTest010(pass)
+	if err != nil {
+		t.Errorf("runTest010() error = %v", err)
 	}
 }

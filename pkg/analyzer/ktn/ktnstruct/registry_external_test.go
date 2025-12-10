@@ -29,7 +29,7 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "returns_expected_count",
 			check: func(t *testing.T) {
-				const expectedCount = 6
+				const expectedCount int = 7 // 5 + STRUCT-006 + STRUCT-007
 				// Vérification nombre d'analyseurs
 				if len(analyzers) != expectedCount {
 					t.Errorf("Expected %d analyzers, got %d", expectedCount, len(analyzers))
@@ -58,6 +58,7 @@ func TestGetAnalyzers(t *testing.T) {
 					"ktnstruct004",
 					"ktnstruct005",
 					"ktnstruct006",
+					"ktnstruct007",
 				}
 
 				// Vérification noms

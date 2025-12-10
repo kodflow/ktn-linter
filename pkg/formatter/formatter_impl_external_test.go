@@ -35,16 +35,34 @@ func TestNewFormatter(t *testing.T) {
 	}
 }
 
-func TestFormat(t *testing.T) {
-	var buf bytes.Buffer
-	f := formatter.NewFormatter(&buf, false, true, false)
-	fset := token.NewFileSet()
+func TestFormatterImpl_Format(t *testing.T) {
+	tests := []struct {
+		name        string
+		diagnostics []analysis.Diagnostic
+		wantSuccess bool
+	}{
+		{
+			name:        "empty diagnostics shows success",
+			diagnostics: []analysis.Diagnostic{},
+			wantSuccess: true,
+		},
+	}
 
-	// Test avec diagnostics vides
-	f.Format(fset, []analysis.Diagnostic{})
-	output := buf.String()
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			f := formatter.NewFormatter(&buf, false, true, false)
+			fset := token.NewFileSet()
 
-	if !strings.Contains(output, "No issues found") {
-		t.Errorf("Expected success message for empty diagnostics, got: %s", output)
+			// Execute format
+			f.Format(fset, tt.diagnostics)
+			output := buf.String()
+
+			// Vérification résultat
+			if tt.wantSuccess && !strings.Contains(output, "No issues found") {
+				t.Errorf("Expected success message, got: %s", output)
+			}
+		})
 	}
 }

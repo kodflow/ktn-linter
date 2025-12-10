@@ -5,21 +5,23 @@ import (
 	"go/ast"
 	"path/filepath"
 	"strings"
-	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// INITIAL_PUBLIC_FUNCS_CAP initial capacity for public funcs map
-	INITIAL_PUBLIC_FUNCS_CAP int = 32
+	// ruleCode est le code de la règle.
+	ruleCodeTest009 string = "KTN-TEST-009"
+	// initialPublicFuncsCap initial capacity for public funcs map
+	initialPublicFuncsCap int = 32
 )
 
 // Analyzer009 checks that public function tests are in external test files
-var Analyzer009 = &analysis.Analyzer{
+var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest009",
 	Doc:      "KTN-TEST-009: Les tests de fonctions publiques (exportées) doivent être dans _external_test.go uniquement (black-box testing)",
 	Run:      runTest009,
@@ -35,6 +37,15 @@ var Analyzer009 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest009(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest009) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Collecter toutes les fonctions publiques
@@ -56,20 +67,27 @@ func runTest009(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - map[string]bool: map des noms de fonctions publiques
 func collectPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
-	publicFunctions := make(map[string]bool, INITIAL_PUBLIC_FUNCS_CAP)
+	publicFunctions := make(map[string]bool, initialPublicFuncsCap)
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
-	// Parcourir toutes les déclarations de fonctions
+	// Parcourir les fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 
-		// Ignorer les fichiers de test
+		// Vérification fichier test
 		if shared.IsTestFile(filename) {
+			// Retour si test
 			return
 		}
 
-		// Ajouter la fonction si elle est publique
+		// Vérification fichier mock
+		if shared.IsMockFile(filename) {
+			// Retour si mock
+			return
+		}
+
+		// Ajouter fonction publique
 		addPublicFunction(funcDecl, publicFunctions)
 	})
 
@@ -83,27 +101,39 @@ func collectPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[
 //   - funcDecl: déclaration de fonction
 //   - publicFunctions: map des fonctions publiques
 func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) {
-	// Vérifier le nom de la fonction
+	// Vérification nom fonction
 	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
+		// Retour si pas de nom
 		return
 	}
 
-	firstRune := rune(funcDecl.Name.Name[0])
-	// Vérification fonction publique
-	if !unicode.IsUpper(firstRune) {
+	// Vérification fonction mock
+	if shared.IsMockName(funcDecl.Name.Name) {
+		// Retour si mock
 		return
 	}
 
-	// Ajouter le nom de la fonction
-	publicFunctions[funcDecl.Name.Name] = true
+	// Classifier la fonction
+	meta := shared.ClassifyFunc(funcDecl)
 
-	// Pour les méthodes, ajouter aussi le pattern Type_Method
-	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
-		receiverType := extractReceiverType(funcDecl.Recv.List[0].Type)
-		// Vérification receiver valide
-		if receiverType != "" {
-			publicFunctions[receiverType+"_"+funcDecl.Name.Name] = true
-		}
+	// Vérification receiver mock
+	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
+		// Retour si mock
+		return
+	}
+
+	// Vérification visibilité publique
+	if meta.Visibility != shared.VisPublic {
+		// Retour si pas publique
+		return
+	}
+
+	// Construire clé recherche
+	key := shared.BuildTestLookupKey(meta)
+	// Vérification clé non vide
+	if key != "" {
+		// Ajouter à la map
+		publicFunctions[key] = true
 	}
 }
 
@@ -114,20 +144,36 @@ func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) 
 //   - insp: inspecteur AST
 //   - publicFunctions: map des fonctions publiques
 func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector, publicFunctions map[string]bool) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
-	// Parcourir les fonctions de test
+	// Parcourir les tests
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-		baseName := filepath.Base(filename)
-
-		// Vérifier si c'est un test dans un fichier internal
-		if !strings.HasSuffix(baseName, "_internal_test.go") || !shared.IsUnitTestFunction(funcDecl) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeTest009, filename) {
+			// Fichier exclu
 			return
 		}
 
-		// Vérifier si c'est un test de fonction publique
+		baseName := filepath.Base(filename)
+
+		// Vérification fichier internal et test unitaire
+		if !strings.HasSuffix(baseName, "_internal_test.go") || !shared.IsUnitTestFunction(funcDecl) {
+			// Retour si pas internal ou pas unitaire
+			return
+		}
+
+		// Vérification fichier exempté
+		if shared.IsExemptTestFile(filename) {
+			// Retour si exempté
+			return
+		}
+
+		// Vérifier et reporter
 		checkAndReportPublicFunctionTest(pass, funcDecl, baseName, publicFunctions)
 	})
 }
@@ -140,44 +186,38 @@ func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.I
 //   - baseName: nom de base du fichier
 //   - publicFunctions: map des fonctions publiques
 func checkAndReportPublicFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, publicFunctions map[string]bool) {
-	// Extraire le nom de la fonction testée
-	testedFuncName := strings.TrimPrefix(funcDecl.Name.Name, "Test")
-	// Vérification nom valide
-	if testedFuncName == "" {
+	testName := funcDecl.Name.Name
+
+	// Vérification nom exempté
+	if shared.IsExemptTestName(testName) {
+		// Retour si exempté
 		return
 	}
 
-	// Vérifier si c'est un test de fonction publique
-	if publicFunctions[testedFuncName] {
+	// Parser nom test
+	target, ok := shared.ParseTestName(testName)
+	// Vérification parsing
+	if !ok {
+		// Retour si échec parsing
+		return
+	}
+
+	// Construire clé
+	key := shared.BuildTestTargetKey(target)
+	// Vérification clé
+	if key == "" {
+		// Retour si clé vide
+		return
+	}
+
+	// Vérification fonction publique
+	if publicFunctions[key] {
+		// Signaler erreur
 		pass.Reportf(
 			funcDecl.Pos(),
 			"KTN-TEST-009: le test '%s' dans '%s' teste une fonction publique '%s'. Les tests de fonctions publiques doivent être dans '%s' (black-box testing avec package xxx_test)",
-			funcDecl.Name.Name, baseName, testedFuncName,
+			testName, baseName, key,
 			strings.Replace(baseName, "_internal_test.go", "_external_test.go", 1),
 		)
 	}
-}
-
-// extractReceiverType extrait le nom du type du receiver.
-//
-// Params:
-//   - expr: expression du receiver
-//
-// Returns:
-//   - string: nom du type
-func extractReceiverType(expr ast.Expr) string {
-	// Gérer les pointeurs
-	if starExpr, ok := expr.(*ast.StarExpr); ok {
-		// Retour récursif
-		return extractReceiverType(starExpr.X)
-	}
-
-	// Gérer les identifiants
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Retour du nom
-		return ident.Name
-	}
-
-	// Type non géré
-	return ""
 }

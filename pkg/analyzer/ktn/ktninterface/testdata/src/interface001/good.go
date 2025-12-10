@@ -1,3 +1,4 @@
+// Good examples for the interface001 test case.
 package interface001
 
 // goodUsedInterface is used in function parameter.
@@ -69,4 +70,26 @@ type goodStruct struct{}
 //   - mr: interface avec méthode Process
 func (g goodStruct) goodMethod(mr goodMethodReceiver) {
 	mr.Process()
+}
+
+// UserServiceInterface interface suit le pattern XXXInterface pour struct UserService.
+// Elle est légitime pour le mocking même si non utilisée directement.
+type UserServiceInterface interface {
+	Process() error
+}
+
+// UserService struct pour laquelle UserServiceInterface existe.
+// Cette struct valide le pattern XXXInterface.
+type UserService struct {
+	db string
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de goodProcess
+	_ = goodProcess(goodUsedInterface{})
+	// Appel de goodFactory
+	goodFactory()
+	// Appel de goodUseComposite
+	_ = goodUseComposite(goodCompositeInterface{})
 }

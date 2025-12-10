@@ -7,7 +7,33 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestStruct001 vérifie la détection des structs sans interface.
+//
+// Params:
+//   - t: contexte de test
 func TestStruct001(t *testing.T) {
-	// good.go: 0 errors (1 struct), bad.go: 2 errors (3 structs - les 2 dernières sont en violation)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer001, "struct001", 2)
+	// good.go: 0 errors (interface complète), bad.go: 1 error (struct sans interface complète)
+	tests := []struct {
+		name     string
+		analyzer string
+		expected int
+	}{
+		{
+			name:     "struct001_good_interface_complete",
+			analyzer: "struct001",
+			expected: 1,
+		},
+		{
+			name:     "struct001_verify_analyzer",
+			analyzer: "struct001",
+			expected: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Vérifie que bad.go génère exactement 1 erreur
+			testhelper.TestGoodBad(t, ktnstruct.Analyzer001, tt.analyzer, tt.expected)
+		})
+	}
 }

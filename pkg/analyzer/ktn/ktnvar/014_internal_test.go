@@ -1,7 +1,15 @@
 package ktnvar
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_runVar014 tests the private runVar014 function.
@@ -20,100 +28,96 @@ func Test_runVar014(t *testing.T) {
 	}
 }
 
-// Test_checkFuncBody tests the private checkFuncBody function.
-func Test_checkFuncBody(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+// Test_runVar014_disabled tests runVar014 with disabled rule.
+func Test_runVar014_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-014": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks function bodies
-		})
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar014(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar014() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar014() reported %d issues, expected 0 when disabled", reportCount)
 	}
 }
 
-// Test_checkStmtForLargeStruct tests the private checkStmtForLargeStruct function.
-func Test_checkStmtForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks statements for large structs
-		})
-	}
-}
+// Test_runVar014_fileExcluded tests runVar014 with excluded file.
+func Test_runVar014_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-014": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
 
-// Test_checkAssignForLargeStruct tests the private checkAssignForLargeStruct function.
-func Test_checkAssignForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks assignments for large structs
-		})
-	}
-}
 
-// Test_checkDeclForLargeStruct tests the private checkDeclForLargeStruct function.
-func Test_checkDeclForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks declarations for large structs
-		})
-	}
-}
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
 
-// Test_checkExprForLargeStruct tests the private checkExprForLargeStruct function.
-func Test_checkExprForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks expressions for large structs
-		})
-	}
-}
 
-// Test_checkTypeForLargeStruct tests the private checkTypeForLargeStruct function.
-func Test_checkTypeForLargeStruct(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	_, err = runVar014(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar014() error = %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks types for large structs
-		})
-	}
-}
 
-// Test_isExternalType tests the private isExternalType function.
-func Test_isExternalType(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if type is external
-		})
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar014() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

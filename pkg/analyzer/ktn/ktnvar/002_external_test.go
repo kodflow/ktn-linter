@@ -3,11 +3,37 @@ package ktnvar_test
 import (
 	"testing"
 
+	"golang.org/x/tools/go/analysis"
+
 	ktnvar "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
 func TestVar002(t *testing.T) {
-	// 5 scattered var declarations (2 single + 3 groups after first)
-	testhelper.TestGoodBad(t, ktnvar.Analyzer002, "var002", 4)
+	tests := []struct {
+		name           string
+		analyzer       *analysis.Analyzer
+		testdataDir    string
+		expectedErrors int
+	}{
+		{
+			name:           "Variables without explicit type",
+			analyzer:       ktnvar.Analyzer002,
+			testdataDir:    "var002",
+			expectedErrors: 8,
+		},
+		{
+			name:           "Valid explicit type declarations",
+			analyzer:       ktnvar.Analyzer002,
+			testdataDir:    "var002",
+			expectedErrors: 8,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 8 variables without explicit type (zero-values are now valid)
+			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
+		})
+	}
 }

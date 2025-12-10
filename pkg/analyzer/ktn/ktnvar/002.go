@@ -5,15 +5,23 @@ import (
 	"go/ast"
 	"go/token"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer002 checks that variables are grouped together in a single var block
-var Analyzer002 = &analysis.Analyzer{
-	Name: "ktnvar002",
-	Doc:  "KTN-VAR-002: Vérifie que les variables de package sont groupées dans un seul bloc var ()",
-	Run:  runVar002,
+const (
+	// ruleCodeVar002 is the rule code for this analyzer
+	ruleCodeVar002 string = "KTN-VAR-002"
+)
+
+// Analyzer002 checks that package-level variables have explicit type AND value
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnvar002",
+	Doc:      "KTN-VAR-002: Les variables de package doivent avoir le format 'var name type = value'",
+	Run:      runVar002,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
 // runVar002 exécute l'analyse KTN-VAR-002.
@@ -25,64 +33,85 @@ var Analyzer002 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar002(pass *analysis.Pass) (any, error) {
-	// Analyze each file independently
-	for _, file := range pass.Files {
-		varGroups := collectVarGroups(file)
-		checkVarGrouping(pass, varGroups)
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar002) {
+		// Règle désactivée
+		return nil, nil
 	}
+
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	// Filter for File nodes to access package-level declarations
+	nodeFilter := []ast.Node{
+		(*ast.File)(nil),
+	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		file := n.(*ast.File)
+
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar002, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Check package-level declarations only
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Skip if not a GenDecl
+			if !ok {
+				// Not a general declaration
+				continue
+			}
+
+			// Only check var declarations
+			if genDecl.Tok != token.VAR {
+				// Continue traversing AST nodes.
+				continue
+			}
+
+			// Itération sur les spécifications
+			for _, spec := range genDecl.Specs {
+				valueSpec := spec.(*ast.ValueSpec)
+				// Vérifier si le type est explicite ou visible dans la valeur
+				checkVarSpec(pass, valueSpec)
+			}
+		}
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectVarGroups collecte les déclarations var du fichier.
-//
-// Params:
-//   - file: fichier à analyser
-//
-// Returns:
-//   - []shared.DeclGroup: liste des groupes de variables
-func collectVarGroups(file *ast.File) []shared.DeclGroup {
-	var varGroups []shared.DeclGroup
-
-	// Collect var declarations
-	for _, decl := range file.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
-		// Vérification de la condition
-		if !ok {
-			continue
-		}
-
-		// Only collect var declarations
-		if genDecl.Tok == token.VAR {
-			varGroups = append(varGroups, shared.DeclGroup{
-				Decl: genDecl,
-				Pos:  genDecl.Pos(),
-			})
-		}
-	}
-
-	// Retour de la fonction
-	return varGroups
-}
-
-// checkVarGrouping vérifie le groupement des variables.
+// checkVarSpec vérifie une spécification de variable.
+// Style requis: var name type (= value optionnel, zéro-value accepté)
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - varGroups: groupes de variables à vérifier
-func checkVarGrouping(pass *analysis.Pass, varGroups []shared.DeclGroup) {
-	// If 0 or 1 var group, they're properly grouped
-	if len(varGroups) <= 1 {
-		// Retour de la fonction
-		return
-	}
+//   - valueSpec: spécification de variable
+func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
+	hasExplicitType := valueSpec.Type != nil
 
-	// Report all var groups except the first as scattered
-	for i := 1; i < len(varGroups); i++ {
-		pass.Reportf(
-			varGroups[i].Pos,
-			"KTN-VAR-002: les variables doivent être groupées ensemble dans un seul bloc var ()",
-		)
+	// Seule exigence: type explicite obligatoire
+	// L'initialisation est optionnelle (zéro-value idiomatique en Go)
+	if !hasExplicitType {
+		// Parcourir les noms
+		for _, name := range valueSpec.Names {
+			// Ignorer les blank identifiers
+			if name.Name == "_" {
+				continue
+			}
+
+			pass.Reportf(
+				name.Pos(),
+				"KTN-VAR-002: la variable '%s' doit avoir un type explicite (format: var name type ou var name type = value)",
+				name.Name,
+			)
+		}
 	}
+	// Type explicite présent = OK (avec ou sans valeur)
 }
+

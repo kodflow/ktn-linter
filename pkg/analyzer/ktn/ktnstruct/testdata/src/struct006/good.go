@@ -1,73 +1,38 @@
-// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
-// Ce fichier démontre les getters idiomatiques Go (sans préfixe Get).
+// Good examples for the struct006 test case.
 package struct006
 
-// GoodUser représente un utilisateur avec encapsulation correcte.
-// Les getters suivent la convention Go idiomatique sans préfixe "Get".
-type GoodUser struct {
-	id    int
-	name  string
-	email string
+// GoodUserDTO est un DTO avec seulement des champs publics tagués.
+// Représente un utilisateur pour le transfert de données.
+type GoodUserDTO struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
-// GoodUserInterface définit le contrat public de GoodUser.
-type GoodUserInterface interface {
-	ID() int
-	Name() string
-	Email() string
-	SetName(name string)
+// GoodConfigRequest est un DTO correct.
+// Contient les paramètres de configuration YAML.
+type GoodConfigRequest struct {
+	Timeout int    `yaml:"timeout"`
+	Secret  string `yaml:"secret"`
 }
 
-// NewGoodUser crée une nouvelle instance de GoodUser.
-//
-// Params:
-//   - id: identifiant unique de l'utilisateur
-//   - name: nom de l'utilisateur
-//   - email: adresse email de l'utilisateur
-//
-// Returns:
-//   - *GoodUser: nouvelle instance initialisée
-func NewGoodUser(id int, name, email string) *GoodUser {
-	// Retourne une nouvelle instance avec les valeurs fournies
-	return &GoodUser{
-		id:    id,
-		name:  name,
-		email: email,
-	}
+// GoodResponseData est un DTO avec tous les champs publics.
+// Représente la structure de réponse standard.
+type GoodResponseData struct {
+	Status  int    `json:"status"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
-// ID retourne l'identifiant de l'utilisateur.
-//
-// Returns:
-//   - int: identifiant unique
-func (u *GoodUser) ID() int {
-	// Retourne le champ id
-	return u.id
+// GoodPrivateWithoutTag est un DTO avec champ privé sans tag.
+// Démontre qu'un champ privé sans tag est conforme.
+type GoodPrivateWithoutTag struct {
+	ID      int `json:"id"`
+	counter int // Pas de tag = OK
 }
 
-// Name retourne le nom de l'utilisateur.
-//
-// Returns:
-//   - string: nom de l'utilisateur
-func (u *GoodUser) Name() string {
-	// Retourne le champ name
-	return u.name
-}
-
-// Email retourne l'adresse email de l'utilisateur.
-//
-// Returns:
-//   - string: adresse email
-func (u *GoodUser) Email() string {
-	// Retourne le champ email
-	return u.email
-}
-
-// SetName définit le nom de l'utilisateur.
-//
-// Params:
-//   - name: nouveau nom à définir
-func (u *GoodUser) SetName(name string) {
-	// Modifie le champ name
-	u.name = name
+// goodRegularStruct est une struct privée non-DTO avec champs privés.
+// Les structs privées ne nécessitent pas de getters.
+type goodRegularStruct struct {
+	name string
+	age  int
 }

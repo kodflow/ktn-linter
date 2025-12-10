@@ -3,29 +3,26 @@ package ktnstruct
 
 import (
 	"go/ast"
-	"go/types"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer002 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
-var Analyzer002 = &analysis.Analyzer{
+const (
+	// ruleCodeStruct002 code de la règle KTN-STRUCT-002
+	ruleCodeStruct002 string = "KTN-STRUCT-002"
+)
+
+// Analyzer002 vérifie que les structs exportées avec méthodes ont un constructeur
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct002",
-	Doc:      "KTN-STRUCT-002: Chaque struct doit avoir une interface reprenant 100% de ses méthodes publiques",
+	Doc:      "KTN-STRUCT-002: Struct exportée avec méthodes doit avoir un constructeur NewX()",
 	Run:      runStruct002,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
-
-// structWithMethods stocke une struct et ses méthodes publiques
-type structWithMethods struct {
-	name       string
-	node       *ast.TypeSpec
-	structType *ast.StructType
-	methods    []shared.MethodSignature
 }
 
 // runStruct002 exécute l'analyse KTN-STRUCT-002.
@@ -37,11 +34,25 @@ type structWithMethods struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct002(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct002) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// Parcourir chaque fichier du package
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeStruct002, filename) {
+			// Fichier exclu
+			continue
+		}
 
 		// Ignorer les fichiers de test
 		if shared.IsTestFile(filename) {
@@ -49,11 +60,11 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 			continue
 		}
 
-		// Collecter les interfaces et leurs méthodes
-		interfaces := collectInterfaces(file, pass)
+		// Collecter les structs exportées et leurs méthodes
+		structs := collectExportedStructsWithMethods(file, pass, insp)
 
-		// Collecter les structs et leurs méthodes
-		structs := collectStructsWithMethods(file, pass, insp)
+		// Collecter les constructeurs disponibles
+		constructors := collectConstructors(file)
 
 		// Vérifier chaque struct
 		for _, s := range structs {
@@ -63,19 +74,22 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 				continue
 			}
 
-			// Exception: les DTOs n'ont pas besoin d'interface
+			// Exception: les DTOs n'ont pas besoin de constructeur
 			if shared.IsSerializableStruct(s.structType, s.name) {
-				// DTO - pas besoin d'interface
+				// DTO - pas besoin de constructeur
 				continue
 			}
 
-			// Trouver une interface qui couvre toutes les méthodes
-			if !hasMatchingInterface(s, interfaces) {
+			// Chercher un constructeur pour cette struct
+			expectedName := "New" + s.name
+			// Vérification si constructeur trouvé
+			if !hasConstructor(constructors, expectedName, s.name) {
 				pass.Reportf(
 					s.node.Pos(),
-					"KTN-STRUCT-002: la struct '%s' a %d méthode(s) publique(s) mais aucune interface ne les reprend toutes. Créer une interface complète dans le même fichier",
+					"KTN-STRUCT-002: la struct exportée '%s' a %d méthode(s) publique(s) mais aucun constructeur '%s'. Créer une fonction constructeur dans le même fichier",
 					s.name,
 					len(s.methods),
+					expectedName,
 				)
 			}
 		}
@@ -85,146 +99,7 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// collectInterfaces collecte toutes les interfaces et leurs méthodes.
-//
-// Params:
-//   - file: fichier AST
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - map[string][]shared.MethodSignature: map nom interface -> signatures méthodes
-func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]shared.MethodSignature {
-	interfaces := make(map[string][]shared.MethodSignature, 0)
-
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier si c'est une TypeSpec
-		typeSpec, ok := n.(*ast.TypeSpec)
-		// Si ce n'est pas une TypeSpec, continuer
-		if !ok {
-			// Continue traversal
-			return true
-		}
-
-		// Vérifier si c'est une interface
-		ifaceType, isInterface := typeSpec.Type.(*ast.InterfaceType)
-		// Si ce n'est pas une interface, continuer
-		if !isInterface {
-			// Continue traversal
-			return true
-		}
-
-		// Collecter les méthodes de l'interface
-		var methods []shared.MethodSignature
-		// Parcourir les méthodes de l'interface
-		for _, method := range ifaceType.Methods.List {
-			// Vérifier si c'est une méthode (pas un embedded interface)
-			funcType, isFunc := method.Type.(*ast.FuncType)
-			// Si ce n'est pas une fonction, continuer
-			if !isFunc {
-				// Continue with next method
-				continue
-			}
-
-			// Extraire le nom de la méthode
-			for _, name := range method.Names {
-				methods = append(methods, shared.MethodSignature{
-					Name:       name.Name,
-					ParamsStr:  formatFieldList(funcType.Params, pass),
-					ResultsStr: formatFieldList(funcType.Results, pass),
-				})
-			}
-		}
-
-		interfaces[typeSpec.Name.Name] = methods
-		// Continue traversal
-		return true
-	})
-
-	// Retour de la map
-	return interfaces
-}
-
-// extractStructNameFromReceiver extrait le nom de la struct depuis le receiver.
-//
-// Params:
-//   - recvType: type du receiver
-//
-// Returns:
-//   - string: nom de la struct
-func extractStructNameFromReceiver(recvType ast.Expr) string {
-	var structName string
-	// Gérer les receivers de type *T ou T
-	switch t := recvType.(type) {
-	// Traitement
-	case *ast.StarExpr:
-		// Receiver de type *T
-		if ident, ok := t.X.(*ast.Ident); ok {
-			structName = ident.Name
-		}
-	// Traitement
-	case *ast.Ident:
-		// Receiver de type T
-		structName = t.Name
-	}
-	// Retour du nom
-	return structName
-}
-
-// collectMethodsByStruct collecte les méthodes publiques pour chaque struct.
-//
-// Params:
-//   - file: fichier AST
-//   - pass: contexte d'analyse
-//
-// Returns:
-//   - map[string][]shared.MethodSignature: map des méthodes par struct
-func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]shared.MethodSignature {
-	methodsByStruct := make(map[string][]shared.MethodSignature, 0)
-
-	// Collecter les méthodes du fichier
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier FuncDecl
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Vérification si FuncDecl
-		if !ok {
-			// Continue traversal
-			return true
-		}
-
-		// Vérifier receiver
-		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
-			// Pas de receiver
-			return true
-		}
-
-		// Vérifier méthode publique
-		if !ast.IsExported(funcDecl.Name.Name) {
-			// Méthode privée
-			return true
-		}
-
-		// Extraire nom de struct
-		recvType := funcDecl.Recv.List[0].Type
-		structName := extractStructNameFromReceiver(recvType)
-
-		// Ajouter méthode
-		if structName != "" {
-			methodsByStruct[structName] = append(methodsByStruct[structName], shared.MethodSignature{
-				Name:       funcDecl.Name.Name,
-				ParamsStr:  formatFieldList(funcDecl.Type.Params, pass),
-				ResultsStr: formatFieldList(funcDecl.Type.Results, pass),
-			})
-		}
-
-		// Continue traversal
-		return true
-	})
-
-	// Retour de la map
-	return methodsByStruct
-}
-
-// collectStructsWithMethods collecte les structs et leurs méthodes publiques.
+// collectExportedStructsWithMethods collecte les structs exportées et leurs méthodes.
 //
 // Params:
 //   - file: fichier AST
@@ -233,11 +108,11 @@ func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]sh
 //
 // Returns:
 //   - []structWithMethods: liste des structs avec méthodes
-func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
+func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
 	// Collecter les méthodes
 	methodsByStruct := collectMethodsByStruct(file, pass)
 
-	// Collecter les structs du fichier
+	// Collecter les structs exportées du fichier
 	var structs []structWithMethods
 	ast.Inspect(file, func(n ast.Node) bool {
 		// Vérifier si c'est une TypeSpec
@@ -250,8 +125,8 @@ func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspe
 
 		// Vérifier si c'est une struct
 		structType, isStruct := typeSpec.Type.(*ast.StructType)
-		// Si c'est une struct
-		if isStruct {
+		// Si c'est une struct ET exportée
+		if isStruct && ast.IsExported(typeSpec.Name.Name) {
 			structs = append(structs, structWithMethods{
 				name:       typeSpec.Name.Name,
 				node:       typeSpec,
@@ -268,83 +143,123 @@ func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspe
 	return structs
 }
 
-// hasMatchingInterface vérifie si une interface couvre toutes les méthodes.
+// constructorInfo stocke les informations d'un constructeur.
+type constructorInfo struct {
+	name       string
+	returnType string
+}
+
+// collectConstructors collecte tous les constructeurs du fichier.
 //
 // Params:
-//   - s: struct avec méthodes
-//   - interfaces: map des interfaces
+//   - file: fichier AST
 //
 // Returns:
-//   - bool: true si une interface matching existe
-func hasMatchingInterface(s structWithMethods, interfaces map[string][]shared.MethodSignature) bool {
-	// Parcourir toutes les interfaces
-	for _, ifaceMethods := range interfaces {
-		// Vérifier si cette interface couvre toutes les méthodes de la struct
-		if interfaceCoversAllMethods(s.methods, ifaceMethods) {
-			// Interface trouvée
+//   - []constructorInfo: liste des constructeurs
+func collectConstructors(file *ast.File) []constructorInfo {
+	var constructors []constructorInfo
+
+	// Parcourir les fonctions du fichier
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérifier FuncDecl
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Vérification si FuncDecl
+		if !ok {
+			// Continue traversal
 			return true
 		}
-	}
 
-	// Aucune interface ne couvre toutes les méthodes
-	return false
-}
-
-// interfaceCoversAllMethods vérifie si l'interface couvre toutes les méthodes.
-//
-// Params:
-//   - structMethods: méthodes de la struct
-//   - ifaceMethods: méthodes de l'interface
-//
-// Returns:
-//   - bool: true si toutes les méthodes sont couvertes
-func interfaceCoversAllMethods(structMethods []shared.MethodSignature, ifaceMethods []shared.MethodSignature) bool {
-	// Chaque méthode de la struct doit être dans l'interface
-	for _, sm := range structMethods {
-		found := false
-		// Chercher la méthode dans l'interface
-		for _, im := range ifaceMethods {
-			// Comparer nom et signatures
-			if sm.Name == im.Name && sm.ParamsStr == im.ParamsStr && sm.ResultsStr == im.ResultsStr {
-				found = true
-				// Sortir de la boucle
-				break
-			}
+		// Ignorer les méthodes (avec receiver)
+		if funcDecl.Recv != nil {
+			// Continue traversal
+			return true
 		}
 
-		// Si une méthode n'est pas trouvée, l'interface ne couvre pas tout
-		if !found {
-			// Retour false
-			return false
+		// Vérifier que le nom commence par "New"
+		if !strings.HasPrefix(funcDecl.Name.Name, "New") {
+			// Continue traversal
+			return true
 		}
-	}
 
-	// Toutes les méthodes sont couvertes
-	return true
+		// Vérifier qu'il y a un type de retour
+		if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) == 0 {
+			// Continue traversal
+			return true
+		}
+
+		// Extraire le type de retour
+		returnType := extractReturnTypeName(funcDecl.Type.Results)
+		// Si type de retour valide
+		if returnType != "" {
+			constructors = append(constructors, constructorInfo{
+				name:       funcDecl.Name.Name,
+				returnType: returnType,
+			})
+		}
+
+		// Continue traversal
+		return true
+	})
+
+	// Retour de la liste
+	return constructors
 }
 
-// formatFieldList formate une liste de champs en string.
+// extractReturnTypeName extrait le nom du type de retour.
 //
 // Params:
-//   - fields: liste de champs
-//   - pass: contexte d'analyse
+//   - results: liste des résultats
 //
 // Returns:
-//   - string: représentation string
-func formatFieldList(fields *ast.FieldList, _pass *analysis.Pass) string {
-	// Si pas de champs
-	if fields == nil {
+//   - string: nom du type
+func extractReturnTypeName(results *ast.FieldList) string {
+	// Si pas de résultats
+	if results == nil || len(results.List) == 0 {
 		// Retour vide
 		return ""
 	}
 
-	var parts []string
-	// Parcourir les champs
-	for _, field := range fields.List {
-		typeStr := types.ExprString(field.Type)
-		parts = append(parts, typeStr)
+	// Prendre le premier type de retour
+	firstResult := results.List[0].Type
+
+	// Gérer les différents types
+	switch t := firstResult.(type) {
+	// Traitement du pointeur
+	case *ast.StarExpr:
+		// Retour de type pointeur (*T)
+		if ident, ok := t.X.(*ast.Ident); ok {
+			// Retour du nom du type extrait
+			return ident.Name
+		}
+	// Traitement de l'identifiant
+	case *ast.Ident:
+		// Retour de type direct (T)
+		return t.Name
 	}
 
-	// Retour de la string jointe
-	return strings.Join(parts, ",")
+	// Type non géré
+	return ""
+}
+
+// hasConstructor vérifie si un constructeur existe pour la struct.
+//
+// Params:
+//   - constructors: liste des constructeurs
+//   - expectedName: nom attendu du constructeur
+//   - structName: nom de la struct
+//
+// Returns:
+//   - bool: true si constructeur trouvé
+func hasConstructor(constructors []constructorInfo, expectedName string, structName string) bool {
+	// Parcourir les constructeurs
+	for _, c := range constructors {
+		// Vérifier le nom ET le type de retour
+		if c.name == expectedName && c.returnType == structName {
+			// Constructeur trouvé
+			return true
+		}
+	}
+
+	// Constructeur non trouvé
+	return false
 }

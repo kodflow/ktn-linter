@@ -3,145 +3,115 @@ package ktncomment
 
 import (
 	"go/ast"
-	"go/token"
-	"slices"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// MAX_COMMENT_LENGTH max chars for inline comments
-	MAX_COMMENT_LENGTH int = 80
+	// ruleCodeComment002 is the rule code for this analyzer
+	ruleCodeComment002 string = "KTN-COMMENT-002"
+	// defaultMinPackageCommentLength minimum length for a valid package comment
+	defaultMinPackageCommentLength int = 3
 )
 
-// Analyzer002 detects inline comments exceeding 80 characters.
-var Analyzer002 = &analysis.Analyzer{
-	Name:     "ktncomment002",
-	Doc:      "KTN-COMMENT-002: commentaire inline trop long (>80 chars)",
-	Run:      runComment002,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
+// Analyzer002 checks that each Go file has a package description comment.
+var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
+	Name: "ktncomment002",
+	Doc:  "KTN-COMMENT-002: chaque fichier .go doit avoir un commentaire descriptif avant la déclaration package",
+	Run:  runComment002,
 }
 
-// runComment002 analyzes inline comments for excessive length.
+// runComment002 exécute l'analyse KTN-COMMENT-002.
+//
 // Params:
-//   - pass: Analysis pass
+//   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: always nil
-//   - error: analysis error if any
+//   - any: résultat de l'analyse
+//   - error: erreur éventuelle
 func runComment002(pass *analysis.Pass) (any, error) {
-	inspectResult := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	nodeFilter := []ast.Node{
-		(*ast.File)(nil),
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeComment002) {
+		// Règle désactivée
+		return nil, nil
 	}
 
-	inspectResult.Preorder(nodeFilter, func(n ast.Node) {
-		file := n.(*ast.File)
+	// Récupérer le seuil configuré
+	minLength := cfg.GetThreshold(ruleCodeComment002, defaultMinPackageCommentLength)
 
-		// Verification de la condition
-		for _, commentGroup := range file.Comments {
-			// Verification de la condition
-			for _, comment := range commentGroup.List {
-				// Skip doc comments (start at beginning of line)
-				if isDocComment(pass, file, comment) {
-					continue
-				}
+	// Parcourir tous les fichiers
+	for _, file := range pass.Files {
+		// Récupérer le nom du fichier
+		filename := pass.Fset.Position(file.Pos()).Filename
 
-				// Check inline comment length
-				text := comment.Text
-				// Remove comment markers
-				text = strings.TrimPrefix(text, "//")
-				text = strings.TrimPrefix(text, "/*")
-				text = strings.TrimSuffix(text, "*/")
-
-				// Check length exceeds limit
-				if len(text) > MAX_COMMENT_LENGTH {
-					pass.Reportf(
-						comment.Pos(),
-						"KTN-COMMENT-002: commentaire inline trop long (>%d chars)",
-						MAX_COMMENT_LENGTH,
-					)
-				}
-			}
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeComment002, filename) {
+			// Fichier exclu
+			continue
 		}
-	})
 
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			// Skip les fichiers de test
+			continue
+		}
+
+		// Vérifier si le fichier a un commentaire de package
+		hasFileComment := checkFileComment(file, minLength)
+
+		// Si pas de commentaire, reporter l'erreur
+		if !hasFileComment {
+			// Reporter à la position de la déclaration package
+			pass.Reportf(
+				file.Name.Pos(),
+				"KTN-COMMENT-002: le fichier doit avoir un commentaire descriptif avant 'package %s'. Ajouter une description légère du contenu/rôle du fichier",
+				file.Name.Name,
+			)
+		}
+	}
+
+	// Retour de la fonction
 	return nil, nil
 }
 
-// isDocComment checks if comment is documentation comment.
+// checkFileComment vérifie si le fichier a un commentaire avant la déclaration package.
 //
 // Params:
-//   - pass: Analysis pass
-//   - file: File containing comment
-//   - comment: Comment to check
+//   - file: fichier AST à analyser
+//   - minLength: longueur minimale requise
 //
 // Returns:
-//   - bool: true if comment is documentation comment
-func isDocComment(
-	pass *analysis.Pass,
-	file *ast.File,
-	comment *ast.Comment,
-) bool {
-	// Get comment line using helper function
-	line := getCommentLine(pass.Fset, comment)
+//   - bool: true si le fichier a un commentaire valide
+func checkFileComment(file *ast.File, minLength int) bool {
+	// Vérifier s'il y a des commentaires dans le fichier
+	if file.Doc == nil || len(file.Doc.List) == 0 {
+		// Pas de commentaire de package
+		return false
+	}
 
-	// Check if comment is at start of line
-	for _, decl := range file.Decls {
-		declLine := pass.Fset.Position(decl.Pos()).Line
-		// Check if comment precedes declaration
-		if declLine == line+1 || declLine == line {
+	// Vérifier que le commentaire n'est pas vide et contient du texte utile
+	for _, comment := range file.Doc.List {
+		text := strings.TrimSpace(comment.Text)
+
+		// Enlever les // ou /* */
+		text = strings.TrimPrefix(text, "//")
+		text = strings.TrimPrefix(text, "/*")
+		text = strings.TrimSuffix(text, "*/")
+		text = strings.TrimSpace(text)
+
+		// Si le commentaire contient du texte (au moins minLength chars)
+		if len(text) >= minLength {
+			// Commentaire valide trouvé
 			return true
-		}
-
-		// Check function declarations
-		if funcDecl, ok := decl.(*ast.FuncDecl); ok {
-			// Check if comment is doc comment
-			if funcDecl.Doc != nil && slices.Contains(funcDecl.Doc.List, comment) {
-				return true
-			}
-		}
-
-		// Check general declarations
-		if genDecl, ok := decl.(*ast.GenDecl); ok {
-			// Check if comment is doc comment
-			if genDecl.Doc != nil && slices.Contains(genDecl.Doc.List, comment) {
-				return true
-			}
 		}
 	}
 
-	// Verification de la condition
-	return isCommentAtLineStart(pass, comment)
+	// Aucun commentaire valide
+	return false
 }
-
-// isCommentAtLineStart checks if comment starts at line beginning.
-// Params:
-//   - pass: Analysis pass
-//   - comment: Comment to check
-//
-// Returns:
-//   - bool: true if at line start
-func isCommentAtLineStart(pass *analysis.Pass, comment *ast.Comment) bool {
-	pos := pass.Fset.Position(comment.Pos())
-	// Check if comment is at column 1
-	return pos.Column == 1
-}
-
-// getCommentLine returns line number of a comment.
-//
-// Params:
-//   - fset: File set
-//   - comment: Comment to get line for
-//
-// Returns:
-//   - int: line number of the comment
-func getCommentLine(fset *token.FileSet, comment *ast.Comment) int {
-	// Return the line number
-	return fset.Position(comment.Pos()).Line
-}
-

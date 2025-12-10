@@ -1,195 +1,103 @@
+// Package func002 contient des exemples de fonctions utilisant context.Context.
 package func002
 
-// processNoParams fonction sans paramètre
-func processNoParams() {
-	// Fonction vide
-}
+import "context"
 
-// calculateOneParam fonction avec 1 paramètre
+// ProcessWithContext demonstrates context.Context as first parameter.
 //
 // Params:
-//   - a: paramètre de test
-func calculateOneParam(a int) {
-	// Utilisation du paramètre
-	_ = a
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+//   - _data: input data string (non utilisé dans cet exemple)
+func ProcessWithContext(_ctx context.Context, _data string) {
 }
 
-// buildFiveParams exactement 5 paramètres (à la limite)
+// HandleRequestGood demonstrates context as first parameter with multiple params.
 //
 // Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-func buildFiveParams(a, b, c, d, e int) {
-	// Utilisation des paramètres
-	_ = a + b + c + d + e
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+//   - _id: identifier (non utilisé dans cet exemple)
+//   - _name: name string (non utilisé dans cet exemple)
+func HandleRequestGood(_ctx context.Context, _id int, _name string) {
 }
 
-// createFiveParamsMixed 5 paramètres de types différents
+// SimpleFunctionGood demonstrates no context parameter at all.
 //
 // Params:
-//   - a: entier
-//   - b: chaîne
-//   - c: booléen
-//   - d: flottant
-//   - e: slice
-func createFiveParamsMixed(a int, b string, c bool, d float64, e []int) {
-	// Utilisation des paramètres
-	_, _, _, _, _ = a, b, c, d, e
+//   - _id: identifier (non utilisé dans cet exemple)
+//   - _name: name string (non utilisé dans cet exemple)
+func SimpleFunctionGood(_id int, _name string) {
 }
 
-// MyType structure de test pour les méthodes.
-// Utilisée pour démontrer les règles sur les paramètres de méthodes.
-type MyType struct{}
+// ServiceGood demonstrates a service type.
+// Provides data processing capabilities with context support.
+type ServiceGood struct{}
 
-// processMethodFourParams méthode avec 4 paramètres (le receiver ne compte pas)
+// ServiceGoodInterface définit les méthodes publiques de ServiceGood.
+type ServiceGoodInterface interface {
+	ProcessData(ctx context.Context, data string)
+}
+
+// NewServiceGood crée une nouvelle instance de ServiceGood.
+//
+// Returns:
+//   - *ServiceGood: nouvelle instance du service
+func NewServiceGood() *ServiceGood {
+	// Retour de la nouvelle instance
+	return &ServiceGood{}
+}
+
+// ProcessData demonstrates method with context as first parameter after receiver.
 //
 // Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-func (m MyType) processMethodFourParams(a, b, c, d int) {
-	// Utilisation des paramètres
-	_ = a + b + c + d
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+//   - _data: input data string (non utilisé dans cet exemple)
+func (s *ServiceGood) ProcessData(_ctx context.Context, _data string) {
 }
 
-// TestWithManyParams les fonctions de test sont exemptées
+// NoParams demonstrates a function with no parameters.
+func NoParams() {
+}
+
+// OnlyContextParam demonstrates context first with only one parameter.
 //
 // Params:
-//   - t: paramètre de test
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - f: paramètre de test
-func TestWithManyParams(t, a, b, c, d, e, f int) {
-	// Utilisation des paramètres
-	_ = t + a + b + c + d + e + f
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func OnlyContextParam(_ctx context.Context) {
 }
 
-// BenchmarkWithManyParams les fonctions de benchmark sont exemptées
+// UseContextBackground demonstrates using context.Background() - not a type but tests context package usage.
+func UseContextBackground() {
+	_ = context.Background()
+}
+
+// TakesCancelFunc demonstrates a function that takes context.CancelFunc (different from context.Context).
 //
 // Params:
-//   - b: paramètre de test
-//   - a: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - f: paramètre de test
-//   - g: paramètre de test
-func BenchmarkWithManyParams(b, a, c, d, e, f, g int) {
-	// Utilisation des paramètres
-	_ = b + a + c + d + e + f + g
+//   - _id: identifier (non utilisé dans cet exemple)
+//   - _cancel: cancellation function (non utilisée dans cet exemple)
+func TakesCancelFunc(_id int, _cancel context.CancelFunc) {
 }
 
-// ExampleWithManyParams les fonctions d'exemple sont exemptées
+// TestSomething demonstrates test functions should be ignored even if context is not first.
 //
 // Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - f: paramètre de test
-//   - g: paramètre de test
-func ExampleWithManyParams(a, b, c, d, e, f, g int) {
-	// Utilisation des paramètres
-	_ = a + b + c + d + e + f + g
+//   - _t: testing interface (non utilisé dans cet exemple)
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func TestSomething(_t any, _ctx context.Context) {
 }
 
-// FuzzWithManyParams les fonctions de fuzzing sont exemptées
+// TestAnotherThing demonstrates another test function.
 //
 // Params:
-//   - f: paramètre de test
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - g: paramètre de test
-func FuzzWithManyParams(f, a, b, c, d, e, g int) {
-	// Utilisation des paramètres
-	_ = f + a + b + c + d + e + g
+//   - _data: test data string (non utilisé dans cet exemple)
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func TestAnotherThing(_data string, _ctx context.Context) {
 }
 
-// formatThreeParams fonction avec 3 paramètres
+// BenchmarkProcess demonstrates a benchmark function.
 //
 // Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-func formatThreeParams(a, b, c int) {
-	// Utilisation des paramètres
-	_ = a + b + c
+//   - _b: benchmark interface (non utilisé dans cet exemple)
+//   - _ctx: context for cancellation (non utilisé dans cet exemple)
+func BenchmarkProcess(_b any, _ctx context.Context) {
 }
-
-// convertTwoParamsMixed fonction avec 2 paramètres de types différents
-//
-// Params:
-//   - a: entier
-//   - b: chaîne
-func convertTwoParamsMixed(a int, b string) {
-	// Utilisation des paramètres
-	_, _ = a, b
-}
-
-// validateFourParamsGrouped fonction avec 4 paramètres groupés par type
-//
-// Params:
-//   - a: entier
-//   - b: entier
-//   - c: chaîne
-//   - d: chaîne
-func validateFourParamsGrouped(a, b int, c, d string) {
-	// Utilisation des paramètres
-	_, _, _, _ = a, b, c, d
-}
-
-// convertWithVariadic fonction variadique avec 5 paramètres (variadique compte pour 1)
-//
-// Params:
-//   - a: paramètre régulier
-//   - b: paramètre régulier
-//   - c: paramètre régulier
-//   - d: paramètre régulier
-//   - e: paramètre variadique
-func convertWithVariadic(a, b, c, d int, e ...string) {
-	// Utilisation des paramètres
-	_, _, _, _, _ = a, b, c, d, e
-}
-
-var (
-	// goodLiteralUnnamed fonction avec 5 paramètres non nommés
-	goodLiteralUnnamed func(int, string, bool, float64, []int) = func(int, string, bool, float64, []int) {
-		// Fonction vide
-	}
-
-	// goodLiteralFourUnnamed fonction littérale avec 4 paramètres non nommés
-	goodLiteralFourUnnamed func(int, int, int, int) = func(int, int, int, int) {
-		// Fonction vide
-	}
-
-	// goodLiteralOneUnnamed fonction littérale avec 1 paramètre non nommé
-	goodLiteralOneUnnamed func(int) = func(int) {
-		// Fonction vide
-	}
-
-	// goodLiteralNoParams fonction littérale sans paramètre
-	goodLiteralNoParams func() = func() {
-		// Fonction vide
-	}
-
-	// goodLiteralThreeUnnamed fonction littérale avec 3 paramètres non nommés
-	goodLiteralThreeUnnamed func(int, string, bool) = func(int, string, bool) {
-		// Fonction vide
-	}
-
-	// goodLiteralTwoUnnamed fonction littérale avec 2 paramètres non nommés
-	goodLiteralTwoUnnamed func(int, string) = func(int, string) {
-		// Fonction vide
-	}
-)

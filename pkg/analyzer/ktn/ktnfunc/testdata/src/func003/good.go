@@ -1,107 +1,205 @@
+// Good examples for the func003 test case.
 package func003
 
-// Constantes bien définies
 const (
-	DEFAULT_ITEM_COUNT  int     = 6
-	MIN_LEGAL_AGE       int     = 18
-	MAX_HUMAN_AGE       int     = 120
-	DISCOUNT_RATE       float64 = 0.15
-	MAX_RETRIES         int     = 3
-	BUFFER_SIZE         int     = 1024
-	HIGH_THRESHOLD      int     = 100
-	DEFAULT_TIMEOUT_SEC int     = 30
-	DEFAULT_PORT        int     = 8080
-	ARRAY_SIZE          int     = 10
+	// MULTIPLIER_DOUBLE constante pour doubler une valeur
+	MULTIPLIER_DOUBLE int = 2
+	// MULTIPLIER_TRIPLE constante pour tripler une valeur
+	MULTIPLIER_TRIPLE int = 3
+	// MAX_LOOP_ITERATIONS nombre maximum d'itérations de boucle
+	MAX_LOOP_ITERATIONS int = 10
+	// MODULO_EVEN modulo pour vérifier les nombres pairs
+	MODULO_EVEN int = 2
 )
 
-// processSixItems utilise une constante nommée
-func processSixItems() {
-	items := [DEFAULT_ITEM_COUNT]int{}
-	_ = items
-}
-
-// validateAge utilise des constantes nommées
+// checkPositive vérifie si un nombre est positif
 //
 // Params:
-//   - age: âge à valider
+//   - x: nombre à vérifier
 //
 // Returns:
-//   - bool: true si l'âge est valide
-func validateAge(age int) bool {
-	// Retourne la validation de l'âge
-	return age >= MIN_LEGAL_AGE && age <= MAX_HUMAN_AGE
+//   - string: "positive" ou "negative"
+func checkPositive(x int) string {
+	// Vérification si positif
+	if x > 0 {
+		// Retour cas positif
+		return "positive"
+	}
+	// Retour cas négatif ou zéro
+	return "negative"
 }
 
-// calculateDiscount utilise une constante nommée
+// processValue traite une valeur en la doublant si positive
 //
 // Params:
-//   - price: prix d'origine
+//   - val: valeur à traiter
 //
 // Returns:
-//   - float64: montant de la réduction
-func calculateDiscount(price float64) float64 {
-	// Retourne le montant de la réduction
-	return price * DISCOUNT_RATE
+//   - int: 0 si négatif, sinon valeur doublée
+func processValue(val int) int {
+	// Vérification si négatif
+	if val < 0 {
+		// Retour zéro pour valeur négative
+		return 0
+	}
+	// Retour valeur doublée
+	return val * MULTIPLIER_DOUBLE
 }
 
-// processRetries utilise une constante nommée
-func processRetries() {
-	maxRetries := MAX_RETRIES
-	_ = maxRetries
-}
-
-// setBufferSize utilise une constante nommée
-func setBufferSize() {
-	buffer := [BUFFER_SIZE]byte{}
-	_ = buffer
-}
-
-// checkThreshold utilise une constante nommée
+// findMax trouve le maximum entre deux nombres
 //
 // Params:
-//   - value: valeur à vérifier
+//   - a: premier nombre
+//   - b: deuxième nombre
 //
 // Returns:
-//   - bool: true si la valeur dépasse le seuil
-func checkThreshold(value int) bool {
-	// Retourne true si la valeur dépasse le seuil
-	return value > HIGH_THRESHOLD
+//   - int: le maximum des deux nombres
+func findMax(a, b int) int {
+	// Comparaison a > b
+	if a > b {
+		// Retour a si supérieur
+		return a
+	}
+	// Retour b sinon
+	return b
 }
 
-// waitTimeout utilise une constante nommée
-func waitTimeout() {
-	timeout := DEFAULT_TIMEOUT_SEC
-	_ = timeout
+// loopExample illustre l'utilisation de continue sans else
+func loopExample() {
+	// Boucle sur les 10 premières valeurs
+	for i := 0; i < MAX_LOOP_ITERATIONS; i++ {
+		// Vérification si pair
+		if i%MODULO_EVEN == 0 {
+			// Continue si pair
+			continue
+		}
+		// Utilisation de la valeur impaire
+		_ = i
+	}
 }
 
-// setPort utilise une constante nommée
-func setPort() {
-	port := DEFAULT_PORT
-	_ = port
+// switchExample illustre l'utilisation de break sans else
+//
+// Params:
+//   - x: valeur initiale
+func switchExample(x int) {
+	// Boucle infinie avec condition de sortie
+	for {
+		// Vérification condition de sortie
+		if x > MAX_LOOP_ITERATIONS {
+			// Sortie de boucle
+			break
+		}
+		// Incrémentation
+		x++
+	}
 }
 
-// allowedNumbers utilise des nombres autorisés (0, 1, -1)
-func allowedNumbers() {
-	zero := 0
-	one := 1
-	minusOne := -1
-	_ = zero
-	_ = one
-	_ = minusOne
+// validateInput valide une entrée
+//
+// Params:
+//   - input: chaîne à valider
+//
+// Returns:
+//   - error: erreur de validation ou nil
+func validateInput(input string) error {
+	// Vérification si vide
+	if input == "" {
+		// Retour nil si vide
+		return nil
+	}
+	// Retour nil pour entrée valide
+	return nil
 }
 
-// arraySize tailles de tableaux doivent utiliser des constantes
-func arraySize() {
-	// arr tableau d'entiers de taille définie par constante
-	var arr [ARRAY_SIZE]int
-	_ = arr
+// complexLogic applique une logique avec else acceptable
+//
+// Params:
+//   - x: nombre à traiter
+//
+// Returns:
+//   - int: résultat après transformation
+func complexLogic(x int) int {
+	// Vérification si positif
+	if x > 0 {
+		// Doublement si positif
+		x = x * MULTIPLIER_DOUBLE
+	} else {
+		// Triplement si négatif ou nul
+		x = x * MULTIPLIER_TRIPLE
+	}
+	// Retour résultat transformé
+	return x
 }
 
-// stringLiterals les littéraux string ne sont pas des magic numbers
-func stringLiterals() {
-	// Les strings ne déclenchent pas KTN-FUNC-003
-	message := "hello"
-	code := "CODE123"
-	_ = message
-	_ = code
+// nestedConditions gère des conditions imbriquées avec early returns
+//
+// Params:
+//   - a: premier nombre
+//   - b: deuxième nombre
+//
+// Returns:
+//   - int: résultat selon les conditions
+func nestedConditions(a, b int) int {
+	// Vérification si a positif
+	if a > 0 {
+		// Vérification si b positif
+		if b > 0 {
+			// Retour somme si les deux positifs
+			return a + b
+		}
+		// Retour a si seul a positif
+		return a
+	}
+	// Retour b si a non positif
+	return b
+}
+
+// emptyIfBody teste les blocs if vides (edge case)
+//
+// Params:
+//   - x: valeur à tester
+func emptyIfBody(x int) {
+	// Bloc if vide (ne déclenche pas KTN-FUNC-003)
+	if x > 0 {
+	}
+	// Retour de la fonction
+}
+
+// goodPanicExample illustre panic sans else (bon usage)
+//
+// Params:
+//   - x: valeur à vérifier
+func goodPanicExample(x int) {
+	// Vérification si négatif
+	if x < 0 {
+		// Panic pour valeur négative
+		panic("negative value")
+	}
+	// Traitement de la valeur positive
+	_ = x
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de checkPositive
+	_ = checkPositive(0)
+	// Appel de processValue
+	_ = processValue(0)
+	// Appel de findMax
+	_ = findMax(1, 0)
+	// Appel de loopExample
+	loopExample()
+	// Appel de switchExample
+	switchExample(0)
+	// Appel de validateInput
+	_ = validateInput("")
+	// Appel de complexLogic
+	_ = complexLogic(0)
+	// Appel de nestedConditions
+	_ = nestedConditions(1, 0)
+	// Appel de emptyIfBody
+	emptyIfBody(0)
+	// Appel de goodPanicExample
+	goodPanicExample(1)
 }

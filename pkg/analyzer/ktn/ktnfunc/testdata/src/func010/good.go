@@ -1,132 +1,199 @@
+// Good examples for the func012 test case.
 package func010
 
-const (
-	// TWO_INT représente la valeur 2
-	TWO_INT int = 2
-	// THIRTY_INT représente la valeur 30
-	THIRTY_INT int = 30
-	// NINETY_FIVE_DOT représente la valeur 95.5
-	NINETY_FIVE_DOT float64 = 95.5
-)
+import "unsafe"
 
-// OneReturn retourne une seule valeur entière.
+// NoNamedReturns vérifie le cas sans returns nommés
 //
 // Returns:
-//   - int: valeur 1
-func OneReturn() int {
-	// Retourne la valeur 1
+//   - int: résultat
+func NoNamedReturns() int {
+	// Retour de 1
 	return 1
 }
 
-// TwoReturns retourne deux valeurs.
+// ShortWithNakedReturn utilise naked return car courte
 //
 // Returns:
-//   - int: valeur 1
-//   - error: nil
-func TwoReturns() (int, error) {
-	// Retourne un entier et nil pour l'erreur
-	return 1, nil
+//   - result: résultat
+func ShortWithNakedReturn() (result int) {
+	result = 1
+	// Retour naked autorisé car < 5 lignes
+	return
 }
 
-// ThreeReturns retourne trois valeurs.
+// ExplicitReturn utilise return explicite
 //
 // Returns:
-//   - int: valeur 1
-//   - string: chaîne "test"
-//   - error: nil
-func ThreeReturns() (int, string, error) {
-	// Retourne un entier, une chaîne et nil pour l'erreur
-	return 1, "test", nil
+//   - result: résultat
+//   - err: erreur potentielle
+func ExplicitReturn() (result int, err error) {
+	result = 1
+	err = nil
+	// Retour explicite
+	return result, err
 }
 
-// FourNamedReturns retourne quatre valeurs nommées.
+// ShortFourLines a 4 lignes donc naked return OK
 //
 // Returns:
-//   - count: valeur 1
-//   - name: chaîne "test"
-//   - valid: true
-//   - err: nil
-func FourNamedReturns() (count int, name string, valid bool, err error) {
-	// Retourne les quatre valeurs nommées
-	return 1, "test", true, nil
+//   - x: valeur calculée
+func ShortFourLines() (x int) {
+	x = 1
+	x = x + 1
+	x = x + 1
+	// Retour naked autorisé
+	return
 }
 
-// FiveNamedReturns retourne cinq valeurs nommées.
+// MultipleExplicit retourne explicitement plusieurs valeurs
 //
 // Returns:
-//   - a: valeur 1
-//   - b: valeur 2
-//   - c: chaîne "test"
-//   - d: true
-//   - e: nil
-func FiveNamedReturns() (a int, b int, c string, d bool, e error) {
-	// Retourne les cinq valeurs nommées
-	return 1, TWO_INT, "test", true, nil
+//   - a: premier entier
+//   - b: chaîne
+//   - c: booléen
+func MultipleExplicit() (a int, b string, c bool) {
+	a = 1
+	b = "test"
+	c = true
+	// Retour explicite
+	return a, b, c
 }
 
-// ManyNamedReturns retourne plusieurs valeurs nommées.
-//
-// Returns:
-//   - id: valeur 1
-//   - name: chaîne "test"
-//   - age: valeur 30
-//   - active: true
-//   - score: valeur 95.5
-func ManyNamedReturns() (id int, name string, age int, active bool, score float64) {
-	// Retourne les valeurs pour id, name, age, active et score
-	return 1, "test", THIRTY_INT, true, NINETY_FIVE_DOT
-}
-
-// NoReturn ne retourne aucune valeur.
-func NoReturn() {
+// NoReturnValues n'a pas de valeur de retour
+func NoReturnValues() {
 	x := 1
 	_ = x
 }
 
-// TestManyUnnamedReturns est une fonction de test avec plusieurs retours non nommés.
+// UnnamedReturn utilise return sans nom
 //
 // Returns:
-//   - int: valeur 1
-//   - string: chaîne "test"
-//   - bool: true
-//   - error: nil
-func TestManyUnnamedReturns() (int, string, bool, error) {
-	// Retourne les valeurs de test
-	return 1, "test", true, nil
+//   - int: valeur
+func UnnamedReturn() int {
+	// Retour de 1
+	return 1
 }
 
-// BenchmarkManyUnnamedReturns est une fonction de benchmark avec plusieurs retours non nommés.
+// TestNakedReturn est exempté car fonction test
+//
+// Params:
+//   - t: paramètre de test
 //
 // Returns:
-//   - int: valeur 1
-//   - string: chaîne "test"
-//   - bool: true
-//   - error: nil
-func BenchmarkManyUnnamedReturns() (int, string, bool, error) {
-	// Retourne les valeurs de benchmark
-	return 1, "test", true, nil
+//   - result: résultat
+func TestNakedReturn(t int) (result int) {
+	result = 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car test
+	return
 }
 
-// NoReturnValue ne retourne aucune valeur.
-func NoReturnValue() {
-	x := 1
-	_ = x
-}
-
-// GetFourValuesCompact retourne quatre valeurs nommées (format compact).
+// BenchmarkNakedReturn est exempté car fonction benchmark
+//
+// Params:
+//   - b: paramètre de benchmark
 //
 // Returns:
-//   - x, y: coordonnées
-//   - name: nom
-//   - err: erreur éventuelle
-func GetFourValuesCompact() (x, y int, name string, err error) {
-	// Retour des coordonnées et du nom
-	return 1, TWO_INT, "point", nil
+//   - result: résultat
+func BenchmarkNakedReturn(b int) (result int) {
+	result = 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	result = result + 1
+	// Retour exempté car benchmark
+	return
 }
 
-// TestSomething est une fonction de test.
-func TestSomething() {
-	// Les fonctions de test ne sont pas vérifiées
-	x := 1
-	_ = x
+// Calculator est une interface de test.
+// Utilisée pour démontrer l'utilisation d'interfaces.
+type Calculator interface {
+	Calculate() (int, error)
+}
+
+// simpleCalculator implémente Calculator
+type simpleCalculator struct{}
+
+// Calculate implémente l'interface Calculator
+//
+// Returns:
+//   - int: résultat du calcul
+//   - error: erreur éventuelle
+func (s simpleCalculator) Calculate() (int, error) {
+	// Retour du résultat
+	return 0, nil
+}
+
+// useCalculator utilise l'interface Calculator
+//
+// Params:
+//   - calc: calculateur à utiliser
+//
+// Returns:
+//   - int: résultat
+//   - error: erreur éventuelle
+func useCalculator(calc Calculator) (int, error) {
+	// Utilisation du calculateur
+	return calc.Calculate()
+}
+
+// SingleUnnamedReturn retourne une valeur sans nom
+//
+// Returns:
+//   - int: valeur
+func SingleUnnamedReturn() int {
+	// Retour de 1
+	return 1
+}
+
+// MultipleUnnamedReturns retourne plusieurs valeurs sans nom
+//
+// Returns:
+//   - int: entier
+//   - string: chaîne
+//   - bool: booléen
+func MultipleUnnamedReturns() (int, string, bool) {
+	// Retour de plusieurs valeurs
+	return 1, "test", true
+}
+
+// Prevent "unsafe imported but not used" error
+var _ unsafe.Pointer = unsafe.Pointer(nil)
+
+// externalLinkedFunc est une fonction externe liée
+//
+// Params:
+//   - v: valeur d'entrée
+//
+// Returns:
+//   - result: pointeur résultat
+//
+//go:linkname externalLinkedFunc runtime.convT64
+func externalLinkedFunc(v int) (result unsafe.Pointer)
+
+// anotherExternal est une autre fonction externe
+//
+// Params:
+//   - v: chaîne d'entrée
+//
+// Returns:
+//   - ptr: pointeur résultat
+//
+//go:linkname anotherExternal runtime.convTstring
+func anotherExternal(v string) (ptr unsafe.Pointer)
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de useCalculator
+	_ = useCalculator(Calculator{})
+	// Appel de externalLinkedFunc
+	_ = externalLinkedFunc(0)
+	// Appel de anotherExternal
+	_ = anotherExternal("")
 }

@@ -1,63 +1,85 @@
+// Good examples for the var001 test case.
 package var001
 
-// Good: Variables with correct type visibility
+// Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)
 
 const (
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// DEFAULT_PORT is the default port
-	DEFAULT_PORT int = 8080
-	// MAX_CONNECTIONS is the maximum connections
-	MAX_CONNECTIONS int = 100
-	// ANSWER is the answer to everything
-	ANSWER int = 42
+	// DefaultTimeout is a constant in CamelCase
+	DefaultTimeout int = 30
+	// MaxRetries is a constant
+	MaxRetries int = 3
+	// ServerPort is the server port
+	ServerPort int = 8080
+	// MaxConnections is maximum connections
+	MaxConnections int = 100
+	// MinTimeout is minimum timeout
+	MinTimeout int = 5
+	// TheAnswer is the answer to life
+	TheAnswer int = 42
 )
 
-// Cas 1: Type non visible (constante, variable) → type explicite requis
+// All package-level variables grouped in a single block
 var (
-	// defaultRetries defines the default number of retries
-	defaultRetries int = DEFAULT_TIMEOUT
-	// configuration holds the app configuration
+	// defaultRetries uses camelCase (good for private variables)
+	defaultRetries int = DefaultTimeout
+
+	// configuration uses camelCase
 	configuration string = "default"
-	// isEnabled indicates if feature is enabled
+
+	// isEnabled uses camelCase
 	isEnabled bool = false
-	// serverPort is the server port number
-	serverPort int = DEFAULT_PORT
-	// serverHost is the server hostname
-	serverHost string = "localhost"
-	// maxConnections is the maximum connections
-	maxConnections int = MAX_CONNECTIONS
+
+	// serverPort uses camelCase
+	serverPort int = ServerPort
+
+	// maxConnections uses camelCase
+	maxConnections int = MaxConnections
+
+	// minTimeout uses camelCase
+	minTimeout int = MinTimeout
+
+	// apiEndpoint uses camelCase
+	apiEndpoint string = "http://localhost"
+
+	// DefaultConfig uses PascalCase (good for exported variables)
+	DefaultConfig string = "production"
+
+	// ServerAddress uses PascalCase
+	ServerAddress string = "0.0.0.0"
+
+	// ===== Acronyms handling (valid Go naming) =====
+
+	// HTTPClient uses PascalCase with acronym (exported, valid Go convention)
+	HTTPClient string = "http-client"
+
+	// httpClient uses camelCase (private, valid Go convention)
+	httpClient string = "http-client-private"
+
+	// XMLParser uses PascalCase with acronym (exported)
+	XMLParser string = "xml-parser"
+
+	// xmlParser uses camelCase (private)
+	xmlParser string = "xml-parser-private"
+
+	// APIEndpoint uses PascalCase with acronym
+	APIEndpoint string = "/api/v1"
+
+	// apiKey uses camelCase (private)
+	apiKey string = "secret-key"
 )
 
-// Cas 2: Type visible dans composite literal → pas de type explicite
-var (
-	// endpoints is a list of endpoints
-	endpoints = []string{"http://localhost:8080", "http://localhost:9090"}
-	// configMap is a map of configuration values
-	configMap = map[string]int{"timeout": 30, "retries": 3}
-	// buffer is created with make
-	buffer = make([]byte, 1024)
-	// cache is a map created with make
-	cache = make(map[string]string)
-)
-
-// Cas 3: Type visible via conversion de type → pas de type explicite
-var (
-	// convertedInt is a type conversion
-	convertedInt = int(42)
-	// convertedStr is a type conversion
-	convertedStr = string([]byte{72, 101, 108, 108, 111})
-	// convertedFloat is a type conversion
-	convertedFloat = float64(3)
-)
-
-// goodFunction demonstrates correct local variable usage (not checked by VAR-001).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-001
-	localVar := ANSWER
-	// Continue traversing AST nodes.
-	return localVar
+// init utilise les variables pour éviter les erreurs de compilation
+func init() {
+	// Utilisation des variables privées
+	_ = defaultRetries
+	_ = configuration
+	_ = isEnabled
+	_ = serverPort
+	_ = maxConnections
+	_ = minTimeout
+	_ = apiEndpoint
+	// Utilisation des variables avec acronymes
+	_ = httpClient
+	_ = xmlParser
+	_ = apiKey
 }

@@ -3,247 +3,203 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
+	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer011 checks for strings.Builder/bytes.Buffer without Grow preallocate
-var Analyzer011 = &analysis.Analyzer{
-	Name:     "ktnvar011",
-	Doc:      "KTN-VAR-011: Préallouer bytes.Buffer/strings.Builder avec Grow",
-	Run:      runVar011,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+const (
+	// ruleCodeVar011 is the rule code for this analyzer
+	ruleCodeVar011 string = "KTN-VAR-011"
+)
 
-// runVar011 exécute l'analyse KTN-VAR-011.
+var (
+	// Analyzer011 détecte le shadowing de variables avec := au lieu de =.
+	//
+	// Le shadowing se produit quand on redéclare une variable avec := alors
+	// qu'elle existe déjà dans un scope parent, créant une nouvelle variable
+	// locale qui masque l'originale.
+	//
+	// Exceptions (patterns idiomatiques Go):
+	// - "err" : réutilisation courante dans le chaînage d'erreurs
+	// - "ok" : pattern idiomatique (_, ok := m[k] ou v, ok := x.(T))
+	// - "ctx" : context souvent redéfini dans les sous-scopes
+	Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktnvar011",
+		Doc:      "KTN-VAR-011: Vérifie le shadowing de variables avec := au lieu de =",
+		Run:      runVar011,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+
+	// allowedShadowing contains variable names that are allowed to shadow.
+	// These are idiomatic Go patterns where shadowing is expected.
+	allowedShadowing map[string]bool = map[string]bool{
+		"err": true, // Error chaining pattern
+		"ok":  true, // Map/type assertion pattern
+		"ctx": true, // Context redefinition in sub-scopes
+	}
+)
+
+// runVar011 exécute l'analyse de détection du shadowing.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - interface{}: toujours nil
 //   - error: erreur éventuelle
 func runVar011(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	nodeFilter := []ast.Node{
-		(*ast.ValueSpec)(nil),
-		(*ast.AssignStmt)(nil),
-	}
-
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		checkBuilderWithoutGrow(pass, n)
-	})
-
-	// Retour de la fonction
-	return nil, nil
-}
-
-// checkBuilderWithoutGrow checks if Builder/Buffer lacks Grow call.
-//
-// Params:
-//   - pass: analysis pass context
-//   - n: AST node to check
-func checkBuilderWithoutGrow(pass *analysis.Pass, n ast.Node) {
-	// Composite literal found
-	var compositeLit *ast.CompositeLit
-	// Position for reporting
-	var pos ast.Node
-
-	// Check type of node
-	switch node := n.(type) {
-	// Case: variable specification
-	case *ast.ValueSpec:
-		compositeLit, pos = checkValueSpec(node)
-	// Case: assignment statement
-	case *ast.AssignStmt:
-		compositeLit, pos = checkAssignStmt(node)
-	}
-
-	// Report if composite literal found
-	if compositeLit != nil && pos != nil {
-		reportMissingGrow(pass, pos)
-	}
-}
-
-// checkValueSpec checks var declaration for Builder/Buffer.
-//
-// Params:
-//   - node: variable specification node
-//
-// Returns:
-//   - *ast.CompositeLit: composite literal if found
-//   - ast.Node: position node for reporting
-func checkValueSpec(node *ast.ValueSpec) (*ast.CompositeLit, ast.Node) {
-	// Only check var sb = strings.Builder{}
-	if len(node.Values) == 0 {
-		// Return nil if no values
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar011) {
+		// Règle désactivée
 		return nil, nil
 	}
 
-	// Check var sb = strings.Builder{}
-	for _, val := range node.Values {
-		// Check if value is composite literal
-		if lit, ok := val.(*ast.CompositeLit); ok {
-			// Check if it's Builder/Buffer type
-			if isBuilderCompositeLit(lit) {
-				// Return found composite literal
-				return lit, node
-			}
-		}
+	// Récupération de l'inspecteur AST
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	// Types de nœuds à analyser
+	nodeFilter := []ast.Node{
+		(*ast.AssignStmt)(nil),
 	}
 
-	// Return nil if not found
+	// Parcours des assignations
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar011, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Vérification de l'assignation courte
+		checkShortVarDecl(pass, n)
+	})
+
+	// Traitement
 	return nil, nil
 }
 
-// checkAssignStmt checks assignment for Builder/Buffer.
+// checkShortVarDecl vérifie si une assignation courte fait du shadowing.
 //
 // Params:
-//   - node: assignment statement node
-//
-// Returns:
-//   - *ast.CompositeLit: composite literal if found
-//   - ast.Node: position node for reporting
-func checkAssignStmt(node *ast.AssignStmt) (*ast.CompositeLit, ast.Node) {
-	// Check short declaration (sb := strings.Builder{})
-	for _, rhs := range node.Rhs {
-		// Check if right-hand side is composite literal
-		if lit, ok := rhs.(*ast.CompositeLit); ok {
-			// Check if it's Builder/Buffer type
-			if isBuilderCompositeLit(lit) {
-				// Return found composite literal
-				return lit, node
-			}
+//   - pass: contexte d'analyse
+//   - n: nœud AST à analyser
+func checkShortVarDecl(pass *analysis.Pass, n ast.Node) {
+	// Cast en assignation
+	assign, ok := n.(*ast.AssignStmt)
+	// Vérification de la condition
+	if !ok || assign.Tok != token.DEFINE {
+		return // Pas une assignation courte (:=)
+	}
+
+	// Pour chaque variable assignée
+	for _, lhs := range assign.Lhs {
+		// Récupération de l'identifiant
+		ident := extractIdent(lhs)
+		// Vérification de la condition
+		if ident == nil {
+			continue
 		}
-	}
 
-	// Return nil if not found
-	return nil, nil
-}
-
-// isBuilderCompositeLit checks if composite is Builder/Buffer.
-//
-// Params:
-//   - lit: composite literal to check
-//
-// Returns:
-//   - bool: true if Builder/Buffer composite literal
-func isBuilderCompositeLit(lit *ast.CompositeLit) bool {
-	// Check if type is selector expression
-	if sel, ok := lit.Type.(*ast.SelectorExpr); ok {
-		var pkg *ast.Ident
-		// Check package and type names
-		if pkg, ok = sel.X.(*ast.Ident); ok {
-			pkgName := pkg.Name
-			typeName := sel.Sel.Name
-			// Check for strings.Builder or bytes.Buffer
-			return (pkgName == "strings" && typeName == "Builder") ||
-				(pkgName == "bytes" && typeName == "Buffer")
+		// Vérification du shadowing
+		if isShadowing(pass, ident) {
+			// Rapport d'erreur
+			pass.Reportf(
+				assign.Pos(),
+				"KTN-VAR-011: shadowing de la variable '%s' avec ':=' au lieu de '='",
+				ident.Name,
+			)
 		}
-	}
-	// Return false if not Builder/Buffer
-	return false
-}
-
-// reportMissingGrow reports missing Grow() call.
-//
-// Params:
-//   - pass: analysis pass context
-//   - node: AST node position for reporting
-func reportMissingGrow(pass *analysis.Pass, node ast.Node) {
-	// Get type information
-	var typeStr string
-	// Check type of node
-	switch n := node.(type) {
-	// Case: variable specification
-	case *ast.ValueSpec:
-		typeStr = extractTypeString(n.Type, n.Values)
-	// Case: assignment statement
-	case *ast.AssignStmt:
-		typeStr = extractAssignTypeString(n)
-	}
-
-	// Check if type string is valid
-	if typeStr != "" {
-		pass.Reportf(
-			node.Pos(),
-			"KTN-VAR-011: préallouer %s avec Grow() avant boucle pour optimiser les allocations",
-			typeStr,
-		)
 	}
 }
 
-// extractTypeString extracts type name from ValueSpec.
+// extractIdent extrait l'identifiant d'une expression.
 //
 // Params:
-//   - typeExpr: type expression
-//   - values: initialization values
+//   - expr: expression à analyser
 //
 // Returns:
-//   - string: type name as string
-func extractTypeString(typeExpr ast.Expr, values []ast.Expr) string {
-	// Check if type expression exists
-	if typeExpr != nil {
-		// Check if selector expression
-		if sel, ok := typeExpr.(*ast.SelectorExpr); ok {
-			var pkg *ast.Ident
-			// Check package name
-			if pkg, ok = sel.X.(*ast.Ident); ok {
-				// Return package.Type format
-				return pkg.Name + "." + sel.Sel.Name
-			}
-		}
+//   - *ast.Ident: identifiant extrait ou nil
+func extractIdent(expr ast.Expr) *ast.Ident {
+	// Si c'est directement un identifiant
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Traitement
+		return ident
 	}
-
-	// Check values for composite literal
-	if len(values) > 0 {
-		// Check first value
-		if lit, ok := values[0].(*ast.CompositeLit); ok {
-			var sel *ast.SelectorExpr
-			// Check if type is selector expression
-			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
-				var pkg *ast.Ident
-				// Check package name
-				if pkg, ok = sel.X.(*ast.Ident); ok {
-					// Return package.Type format
-					return pkg.Name + "." + sel.Sel.Name
-				}
-			}
-		}
-	}
-
-	// Return empty if type cannot be extracted
-	return ""
+	// Traitement
+	return nil
 }
 
-// extractAssignTypeString extracts type from assignment.
+// isShadowing vérifie si un identifiant fait du shadowing.
 //
 // Params:
-//   - assign: assignment statement
+//   - pass: contexte d'analyse
+//   - ident: identifiant à vérifier
 //
 // Returns:
-//   - string: type name as string
-func extractAssignTypeString(assign *ast.AssignStmt) string {
-	// Iteration over right-hand side expressions
-	for _, rhs := range assign.Rhs {
-		// Check if composite literal
-		if lit, ok := rhs.(*ast.CompositeLit); ok {
-			var sel *ast.SelectorExpr
-			// Check if type is selector expression
-			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
-				var pkg *ast.Ident
-				// Check package name
-				if pkg, ok = sel.X.(*ast.Ident); ok {
-					// Return package.Type format
-					return pkg.Name + "." + sel.Sel.Name
-				}
-			}
-		}
+//   - bool: true si shadowing détecté (et non exempté)
+func isShadowing(pass *analysis.Pass, ident *ast.Ident) bool {
+	// Ignorer les blank identifiers
+	if ident.Name == "_" {
+		// Traitement
+		return false
 	}
 
-	// Return empty if type cannot be extracted
-	return ""
+	// Vérifier si c'est une variable exemptée (patterns idiomatiques)
+	if allowedShadowing[ident.Name] {
+		// Shadowing autorisé pour cette variable
+		return false
+	}
+
+	// Récupération de l'objet défini (nouvelle définition avec :=)
+	obj := pass.TypesInfo.Defs[ident]
+	// Vérification de la condition
+	if obj == nil {
+		return false // Pas une nouvelle définition
+	}
+
+	// Récupération du scope de l'objet
+	scope := obj.Parent()
+	// Vérification de la condition
+	if scope == nil {
+		// Traitement
+		return false
+	}
+
+	// Vérification dans le scope parent
+	return lookupInParentScope(scope.Parent(), ident.Name)
+}
+
+// lookupInParentScope cherche une variable dans le scope parent.
+//
+// Params:
+//   - scope: scope parent à vérifier
+//   - name: nom de la variable
+//
+// Returns:
+//   - bool: true si la variable existe dans le scope parent
+func lookupInParentScope(scope *types.Scope, name string) bool {
+	// Vérification de nil
+	if scope == nil {
+		// Traitement
+		return false
+	}
+
+	// Recherche de la variable dans le scope courant
+	obj := scope.Lookup(name)
+	// Vérification de la condition
+	if obj != nil {
+		// Traitement
+		return true
+	}
+
+	// Recherche récursive dans le scope parent
+	return lookupInParentScope(scope.Parent(), name)
 }

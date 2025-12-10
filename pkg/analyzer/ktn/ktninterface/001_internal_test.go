@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
@@ -53,6 +54,17 @@ type User struct {
 	Name string
 }
 type UserInterface interface {
+	GetName() string
+}`,
+			wantErrs: 0,
+		},
+		{
+			name: "interface with same name as struct - should not report",
+			code: `package test
+type Service struct {
+	Name string
+}
+type Service interface {
 	GetName() string
 }`,
 			wantErrs: 0,
@@ -144,7 +156,8 @@ type MyStruct struct {
 			interfaces := make(map[string]*ast.TypeSpec)
 			structNames := make(map[string]bool)
 
-			collectDeclarations(pass, interfaces, structNames)
+			cfg := config.Get()
+			collectDeclarations(pass, cfg, interfaces, structNames)
 
 			// Check interface was collected
 			if _, exists := interfaces["MyInterface"]; !exists {
@@ -208,12 +221,39 @@ func Test_isStructInterfacePattern(t *testing.T) {
 // Test_collectTypeSpecs tests the collectTypeSpecs private function.
 func Test_collectTypeSpecs(t *testing.T) {
 	tests := []struct {
-		name string
-		code string
+		name              string
+		code              string
+		wantInterfaces    int
+		wantStructs       int
 	}{
 		{
 			name: "error case - empty specs",
 			code: `package test`,
+			wantInterfaces: 0,
+			wantStructs: 0,
+		},
+		{
+			name: "with imports - non TypeSpec should be skipped",
+			code: `package test
+import "fmt"
+type MyInterface interface {
+	Method()
+}`,
+			wantInterfaces: 1,
+			wantStructs: 0,
+		},
+		{
+			name: "with const declaration - non TypeSpec should be skipped",
+			code: `package test
+const MaxSize = 100
+type Reader interface {
+	Read() error
+}
+type Writer struct {
+	Name string
+}`,
+			wantInterfaces: 1,
+			wantStructs: 1,
 		},
 	}
 
@@ -239,9 +279,14 @@ func Test_collectTypeSpecs(t *testing.T) {
 				return true
 			})
 
-			// Verify no interfaces or structs collected for empty code
-			if len(interfaces) != 0 {
-				t.Errorf("expected 0 interfaces, got %d", len(interfaces))
+			// Verify interfaces count
+			if len(interfaces) != tt.wantInterfaces {
+				t.Errorf("expected %d interfaces, got %d", tt.wantInterfaces, len(interfaces))
+			}
+
+			// Verify structs count
+			if len(structNames) != tt.wantStructs {
+				t.Errorf("expected %d structs, got %d", tt.wantStructs, len(structNames))
 			}
 		})
 	}
@@ -356,8 +401,9 @@ func Test_checkFuncDeclForInterfaces(t *testing.T) {
 // Test_checkEmbeddedInterfaces tests the checkEmbeddedInterfaces private function.
 func Test_checkEmbeddedInterfaces(t *testing.T) {
 	tests := []struct {
-		name string
-		code string
+		name         string
+		code         string
+		wantUsedCount int
 	}{
 		{
 			name: "error case - interface with no embedded interfaces",
@@ -365,6 +411,22 @@ func Test_checkEmbeddedInterfaces(t *testing.T) {
 type Simple interface {
 	Method()
 }`,
+			wantUsedCount: 0,
+		},
+		{
+			name: "interface with embedded interface",
+			code: `package test
+type Reader interface {
+	Read() error
+}
+type Writer interface {
+	Write() error
+}
+type ReadWriter interface {
+	Reader
+	Writer
+}`,
+			wantUsedCount: 2,
 		},
 	}
 
@@ -388,12 +450,25 @@ type Simple interface {
 				return true
 			})
 
-			// Verify no embedded interfaces found
-			if len(usedInterfaces) != 0 {
-				t.Errorf("expected 0 embedded interfaces, got %d", len(usedInterfaces))
+			// Verify expected count
+			if len(usedInterfaces) != tt.wantUsedCount {
+				t.Errorf("expected %d embedded interfaces, got %d", tt.wantUsedCount, len(usedInterfaces))
 			}
 		})
 	}
+
+	// Test special case - interface with nil Methods field
+	t.Run("interface with nil Methods field", func(t *testing.T) {
+		usedInterfaces := make(map[string]bool)
+		interfaceType := &ast.InterfaceType{
+			Methods: nil,
+		}
+		checkEmbeddedInterfaces(interfaceType, usedInterfaces)
+		// Verify no interfaces marked
+		if len(usedInterfaces) != 0 {
+			t.Errorf("expected 0 interfaces with nil Methods, got %d", len(usedInterfaces))
+		}
+	})
 }
 
 // Test_reportUnusedInterfaces tests the reportUnusedInterfaces private function.
@@ -480,6 +555,62 @@ func Test_checkType(t *testing.T) {
 			expr: nil,
 			want: 0,
 		},
+		{
+			name: "Ident type",
+			expr: &ast.Ident{Name: "MyInterface"},
+			want: 1,
+		},
+		{
+			name: "StarExpr pointer type",
+			expr: &ast.StarExpr{
+				X: &ast.Ident{Name: "Reader"},
+			},
+			want: 1,
+		},
+		{
+			name: "ArrayType slice type",
+			expr: &ast.ArrayType{
+				Elt: &ast.Ident{Name: "Writer"},
+			},
+			want: 1,
+		},
+		{
+			name: "MapType with key and value",
+			expr: &ast.MapType{
+				Key:   &ast.Ident{Name: "string"},
+				Value: &ast.Ident{Name: "Handler"},
+			},
+			want: 2,
+		},
+		{
+			name: "ChanType channel",
+			expr: &ast.ChanType{
+				Value: &ast.Ident{Name: "Message"},
+			},
+			want: 1,
+		},
+		{
+			name: "SelectorExpr qualified type",
+			expr: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "io"},
+				Sel: &ast.Ident{Name: "Reader"},
+			},
+			want: 1,
+		},
+		{
+			name: "nested pointer to slice",
+			expr: &ast.StarExpr{
+				X: &ast.ArrayType{
+					Elt: &ast.Ident{Name: "Service"},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "unknown expression type",
+			expr: &ast.BasicLit{Value: "42"},
+			want: 0,
+		},
 	}
 
 	// Iteration over table-driven tests
@@ -490,6 +621,40 @@ func Test_checkType(t *testing.T) {
 			// Verify expected count
 			if len(used) != tt.want {
 				t.Errorf("expected %d types, got %d", tt.want, len(used))
+			}
+		})
+	}
+}
+
+// Test_hasCorrespondingStruct tests the hasCorrespondingStruct private function.
+func Test_hasCorrespondingStruct(t *testing.T) {
+	tests := []struct {
+		name          string
+		interfaceName string
+		structs       map[string]bool
+		want          bool
+	}{
+		{
+			name:          "struct exists with same name",
+			interfaceName: "UserService",
+			structs:       map[string]bool{"UserService": true},
+			want:          true,
+		},
+		{
+			name:          "struct does not exist",
+			interfaceName: "UserService",
+			structs:       map[string]bool{"OrderService": true},
+			want:          false,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hasCorrespondingStruct(tt.interfaceName, tt.structs)
+			// Verify result matches expectation
+			if got != tt.want {
+				t.Errorf("hasCorrespondingStruct() = %v, want %v", got, tt.want)
 			}
 		})
 	}

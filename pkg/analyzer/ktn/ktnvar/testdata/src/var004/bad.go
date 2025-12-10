@@ -1,86 +1,154 @@
+// Bad examples for the var005 test case.
 package var004
 
+// Bad: Slices created without capacity when it could be known
+
+// Constantes pour les tests
 const (
-	// SMTP_PORT_VALUE defines SMTP port value
-	SMTP_PORT_VALUE int = 25
-	// SSH_PORT_VALUE defines SSH port value
-	SSH_PORT_VALUE int = 22
-	// TELNET_PORT_VALUE defines telnet port value
-	TELNET_PORT_VALUE int = 23
-	// POOL_MAX_SIZE_VALUE defines pool max size
-	POOL_MAX_SIZE_VALUE int = 500
-	// POOL_MIN_SIZE_VALUE defines pool min size
-	POOL_MIN_SIZE_VALUE int = 5
-	// CONNECTION_TIMEOUT_VALUE defines connection timeout
-	CONNECTION_TIMEOUT_VALUE int = 60
-	// SERVER_VERSION_VALUE defines server version
-	SERVER_VERSION_VALUE string = "v2.0"
-	// BASE_PATH_VALUE defines base path
-	BASE_PATH_VALUE string = "/base"
-	// AUTH_TOKEN_VALUE defines auth token
-	AUTH_TOKEN_VALUE string = "token123"
-	// AUTO_RELOAD_VALUE defines auto reload setting
-	AUTO_RELOAD_VALUE bool = false
-	// STRICT_MODE_VALUE defines strict mode setting
-	STRICT_MODE_VALUE bool = true
-	// LOG_ENABLED_VALUE defines log enabled setting
-	LOG_ENABLED_VALUE bool = true
-	// ATTEMPTS_LIMIT_VALUE defines attempts limit
-	ATTEMPTS_LIMIT_VALUE int = 3
-	// WAIT_TIME_MS_VALUE defines wait time in ms
-	WAIT_TIME_MS_VALUE int = 500
-	// SCALE_FACTOR_VALUE defines scale factor
-	SCALE_FACTOR_VALUE float64 = 2.0
-	// CACHE_HOST_VALUE defines cache host
-	CACHE_HOST_VALUE string = "127.0.0.1"
-	// CACHE_PORT_VALUE defines cache port
-	CACHE_PORT_VALUE int = 6379
-	// SCHEMA_NAME_VALUE defines schema name
-	SCHEMA_NAME_VALUE string = "public"
-	// ADMIN_USER_VALUE defines admin user
-	ADMIN_USER_VALUE string = "root"
-	// MISSING_COMMENT_VALUE defines missing comment value
-	MISSING_COMMENT_VALUE int = 999
+	MaxSize        int = 50
+	SmallLoopCount int = 20
 )
 
-var (
-	badSmtpPort int = SMTP_PORT_VALUE
+// badMakeStringSlice creates a string slice without capacity
+//
+// Returns:
+//   - []string: slice without preallocated capacity
+func badMakeStringSlice() []string {
+	// Bad: make without capacity argument
+	items := make([]string, 0)
+	// Retour de la fonction
+	return items
+}
 
-	badSshPort int = SSH_PORT_VALUE
+// badMakeWithoutCapacity creates a slice using make without capacity
+//
+// Returns:
+//   - []string: slice without preallocated capacity
+func badMakeWithoutCapacity() []string {
+	// Bad: make without capacity argument
+	result := make([]string, 0)
+	// Retour de la fonction
+	return result
+}
 
-	badTelnetPort int = TELNET_PORT_VALUE
+// badMakeInLoop creates a slice without capacity in loop
+//
+// Returns:
+//   - []int: slice without preallocated capacity
+func badMakeInLoop() []int {
+	// Bad: Known size but no capacity
+	numbers := make([]int, 0)
+	// Itération sur les éléments
+	for i := range MaxSize {
+		numbers = append(numbers, i)
+	}
+	// Retour de la fonction
+	return numbers
+}
 
-	badPoolMaxSize int = POOL_MAX_SIZE_VALUE
+// badMakeFloatSlice creates a float slice without capacity
+//
+// Returns:
+//   - []float64: slice without preallocated capacity
+func badMakeFloatSlice() []float64 {
+	// Bad: make for float64 without capacity
+	values := make([]float64, 0)
+	// Retour de la fonction
+	return values
+}
 
-	badPoolMinSize int = POOL_MIN_SIZE_VALUE
+// badMakeInterfaceSlice creates an interface slice without capacity
+//
+// Returns:
+//   - []any: interface slice without capacity
+func badMakeInterfaceSlice() []any {
+	// Bad: make for any without capacity
+	items := make([]any, 0)
+	// Retour de la fonction
+	return items
+}
 
-	badConnectionTimeout int = CONNECTION_TIMEOUT_VALUE
+// Item represents a test item with a single value field.
+// This struct is used for testing slice allocation patterns.
+type Item struct {
+	value int
+}
 
-	badServerVersion string = SERVER_VERSION_VALUE
+// ItemInterface définit les méthodes de Item.
+type ItemInterface interface {
+	Value() int
+}
 
-	badBasePath string = BASE_PATH_VALUE
+// NewItem crée une nouvelle instance de Item.
+//
+// Returns:
+//   - *Item: nouvelle instance
+func NewItem() *Item {
+	// Retourne une nouvelle instance
+	return &Item{}
+}
 
-	badAuthToken string = AUTH_TOKEN_VALUE
+// Value retourne la valeur.
+//
+// Returns:
+//   - int: valeur du champ
+func (i *Item) Value() int {
+	// Retourne le champ value
+	return i.value
+}
 
-	badAutoReload bool = AUTO_RELOAD_VALUE
+// badMakeStructSlice creates a slice of structs without capacity
+//
+// Returns:
+//   - []Item: slice of structs without capacity
+func badMakeStructSlice() []Item {
+	// Bad: make for struct slice without capacity
+	items := make([]Item, 0)
+	// Retour de la fonction
+	return items
+}
 
-	badStrictMode bool = STRICT_MODE_VALUE
+// badMakeByteSlice creates a byte slice without capacity
+//
+// Returns:
+//   - []byte: byte slice without capacity
+func badMakeByteSlice() []byte {
+	// Bad: Byte slice without capacity
+	buffer := make([]byte, 0)
+	// Retour de la fonction
+	return buffer
+}
 
-	badLogEnabled bool = LOG_ENABLED_VALUE
+// badEmptyLiteralWithAppend creates empty literal then appends
+//
+// Returns:
+//   - []int: slice that should use make with capacity
+func badEmptyLiteralWithAppend() []int {
+	// Bad: make([]T, 0) without capacity when size could be known
+	numbers := make([]int, 0)
+	// Ajout d'éléments
+	numbers = append(numbers, SmallLoopCount)
+	numbers = append(numbers, MaxSize)
+	// Retour de la fonction
+	return numbers
+}
 
-	badAttemptsLimit int = ATTEMPTS_LIMIT_VALUE
-
-	badWaitTimeMs int = WAIT_TIME_MS_VALUE
-
-	badScaleFactor float64 = SCALE_FACTOR_VALUE
-
-	badCacheHost string = CACHE_HOST_VALUE
-
-	badCachePort int = CACHE_PORT_VALUE
-
-	badSchemaName string = SCHEMA_NAME_VALUE
-
-	badAdminUser string = ADMIN_USER_VALUE
-
-	badMissingComment int = MISSING_COMMENT_VALUE
-)
+// init utilise les fonctions privées
+func init() {
+	// Appel de badMakeStringSlice
+	badMakeStringSlice()
+	// Appel de badMakeWithoutCapacity
+	badMakeWithoutCapacity()
+	// Appel de badMakeInLoop
+	badMakeInLoop()
+	// Appel de badMakeFloatSlice
+	badMakeFloatSlice()
+	// Appel de badMakeInterfaceSlice
+	badMakeInterfaceSlice()
+	// Appel de badMakeStructSlice
+	badMakeStructSlice()
+	// Appel de badMakeByteSlice
+	badMakeByteSlice()
+	// Appel de badEmptyLiteralWithAppend
+	badEmptyLiteralWithAppend()
+}

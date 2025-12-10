@@ -3,25 +3,24 @@ package ktntest
 
 import (
 	"go/ast"
-	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// MIN_TEST_CASES est le nombre minimum de cas de test pour table-driven
-	// Note: 2 assertions = pattern répétitif qui devrait utiliser table-driven
-	MIN_TEST_CASES int = 2
+	// ruleCode est le code de la règle.
+	ruleCodeTest005 string = "KTN-TEST-005"
 )
 
 // Analyzer005 checks that tests use table-driven test pattern
-var Analyzer005 = &analysis.Analyzer{
+var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest005",
-	Doc:      "KTN-TEST-005: Les tests avec plusieurs cas doivent utiliser table-driven tests",
+	Doc:      "KTN-TEST-005: TOUS les tests doivent utiliser le pattern table-driven",
 	Run:      runTest005,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -35,6 +34,15 @@ var Analyzer005 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest005(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest005) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -45,6 +53,11 @@ func runTest005(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeTest005, filename) {
+			// Fichier exclu
+			return
+		}
 
 		// Vérification de la condition
 		if !shared.IsTestFile(filename) {
@@ -58,12 +71,12 @@ func runTest005(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Vérifier si le test a plusieurs assertions sans table-driven
-		if hasMultipleAssertions(funcDecl) && !hasTableDrivenPattern(funcDecl) {
+		// Vérifier si le test utilise le pattern table-driven (obligatoire)
+		if !hasTableDrivenPattern(funcDecl) {
 			// Pas de table-driven test
 			pass.Reportf(
 				funcDecl.Pos(),
-				"KTN-TEST-005: le test '%s' devrait utiliser table-driven tests",
+				"KTN-TEST-005: le test '%s' DOIT utiliser le pattern table-driven",
 				funcDecl.Name.Name,
 			)
 		}
@@ -71,38 +84,6 @@ func runTest005(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// hasMultipleAssertions vérifie si le test a plusieurs assertions.
-//
-// Params:
-//   - funcDecl: déclaration de fonction de test
-//
-// Returns:
-//   - bool: true si plusieurs assertions
-func hasMultipleAssertions(funcDecl *ast.FuncDecl) bool {
-	assertionCount := 0
-
-	// Parcourir le corps de la fonction
-	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		call, ok := n.(*ast.CallExpr)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversal
-			return true
-		}
-
-		// Utiliser la nouvelle fonction isAssertionCall
-		if isAssertionCall(call) {
-			assertionCount++
-		}
-
-		// Continue traversal
-		return true
-	})
-
-	// Retour du résultat
-	return assertionCount >= MIN_TEST_CASES
 }
 
 // isTestsVariableName vérifie si le nom correspond à une variable de tests.
@@ -192,100 +173,4 @@ func hasTableDrivenPattern(funcDecl *ast.FuncDecl) bool {
 
 	// Retour du résultat
 	return hasTestsVar && hasRangeLoop
-}
-
-// isAssertionCall vérifie si c'est un appel d'assertion (testing, testify/assert, testify/require).
-//
-// Params:
-//   - call: appel de fonction AST
-//
-// Returns:
-//   - bool: true si c'est une assertion
-func isAssertionCall(call *ast.CallExpr) bool {
-	sel, ok := call.Fun.(*ast.SelectorExpr)
-	// Vérification de la condition
-	if !ok {
-		// Pas un SelectorExpr
-		return false
-	}
-
-	ident, ok := sel.X.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Pas un Ident
-		return false
-	}
-
-	methodName := sel.Sel.Name
-
-	// Case 1: testing package (t.Error, t.Fatal, etc.)
-	if ident.Name == "t" && isTestingMethod(methodName) {
-		// Méthode testing détectée
-		return true
-	}
-
-	// Case 2: testify/assert package
-	if ident.Name == "assert" && isAssertMethod(methodName) {
-		// Méthode assert détectée
-		return true
-	}
-
-	// Case 3: testify/require package
-	if ident.Name == "require" && isRequireMethod(methodName) {
-		// Méthode require détectée
-		return true
-	}
-
-	// Pas une assertion
-	return false
-}
-
-// isTestingMethod vérifie si c'est une méthode du package testing.
-//
-// Params:
-//   - methodName: nom de la méthode
-//
-// Returns:
-//   - bool: true si c'est une méthode testing
-func isTestingMethod(methodName string) bool {
-	methods := []string{
-		"Error", "Errorf", "Fatal", "Fatalf", "Fail", "FailNow",
-		"Log", "Logf", "Skip", "Skipf", "SkipNow",
-	}
-	// Vérifier si c'est une méthode testing
-	return slices.Contains(methods, methodName)
-}
-
-// isAssertMethod vérifie si c'est une méthode de testify/assert.
-//
-// Params:
-//   - methodName: nom de la méthode
-//
-// Returns:
-//   - bool: true si c'est une méthode assert
-func isAssertMethod(methodName string) bool {
-	// Liste des méthodes assert les plus courantes
-	methods := []string{
-		"Equal", "NotEqual", "Nil", "NotNil", "True", "False",
-		"Empty", "NotEmpty", "Len", "Contains", "NotContains",
-		"Greater", "GreaterOrEqual", "Less", "LessOrEqual",
-		"Same", "NotSame", "Implements", "IsType", "Panics",
-		"NotPanics", "WithinDuration", "InDelta", "InEpsilon",
-		"JSONEq", "YAMLEq", "Error", "NoError", "ErrorIs", "ErrorAs",
-		"ErrorContains", "Regexp", "NotRegexp", "Zero", "NotZero",
-	}
-	// Vérifier si c'est une méthode assert
-	return slices.Contains(methods, methodName)
-}
-
-// isRequireMethod vérifie si c'est une méthode de testify/require.
-//
-// Params:
-//   - methodName: nom de la méthode
-//
-// Returns:
-//   - bool: true si c'est une méthode require
-func isRequireMethod(methodName string) bool {
-	// require a les mêmes méthodes que assert
-	return isAssertMethod(methodName)
 }

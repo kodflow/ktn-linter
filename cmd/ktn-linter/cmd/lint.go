@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/formatter"
 	"github.com/spf13/cobra"
 	"golang.org/x/tools/go/analysis"
@@ -18,10 +19,10 @@ import (
 )
 
 const (
-	// INITIAL_FILE_EDITS_CAP initial capacity for file edits map
-	INITIAL_FILE_EDITS_CAP int = 16
-	// FILE_PERMISSION_RW read-write permission for file operations
-	FILE_PERMISSION_RW os.FileMode = 0644
+	// initialFileEditsCap initial capacity for file edits map
+	initialFileEditsCap int = 16
+	// filePermissionRw read-write permission for file operations
+	filePermissionRw os.FileMode = 0644
 )
 
 // diagWithFset associe un diagnostic avec son FileSet et son analyseur
@@ -31,8 +32,8 @@ type diagWithFset struct {
 	analyzerName string
 }
 
-// lintCmd represents the lint command
-var lintCmd = &cobra.Command{
+// lintCmd represents the lint command.
+var lintCmd *cobra.Command = &cobra.Command{
 	Use:   "lint [packages...]",
 	Short: "Lint Go packages using KTN rules",
 	Long: `Lint analyzes Go packages and reports issues based on KTN conventions.
@@ -55,6 +56,37 @@ func init() {
 	rootCmd.AddCommand(lintCmd)
 }
 
+// loadConfiguration charge la configuration du linter.
+//
+// Returns: aucun
+//
+// Params: aucun
+func loadConfiguration() {
+	// Vérification si un fichier de config est spécifié
+	if ConfigPath != "" {
+		// Charger depuis le fichier spécifié
+		if err := config.LoadAndSet(ConfigPath); err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading config file %s: %v\n", ConfigPath, err)
+			OsExit(1)
+		}
+		// Log si verbose
+		if Verbose {
+			fmt.Fprintf(os.Stderr, "Loaded configuration from %s\n", ConfigPath)
+		}
+		// Retour de la fonction
+		return
+	}
+
+	// Tenter de charger depuis les emplacements par défaut
+	if err := config.LoadAndSet(""); err == nil {
+		// Log si verbose et config trouvée
+		if Verbose {
+			fmt.Fprintf(os.Stderr, "Loaded configuration from default location\n")
+		}
+	}
+	// Si pas de config par défaut, utiliser les valeurs par défaut (pas d'erreur)
+}
+
 // runLint exécute l'analyse du linter.
 //
 // Params:
@@ -63,6 +95,9 @@ func init() {
 //
 // Returns: aucun
 func runLint(_cmd *cobra.Command, args []string) {
+	// Charger la configuration si spécifiée
+	loadConfiguration()
+
 	pkgs := loadPackages(args)
 	diagnostics := runAnalyzers(pkgs)
 
@@ -505,7 +540,7 @@ func applyFixes(diagnostics []diagWithFset) int {
 //   - map[string][]textEdit: éditions groupées par fichier
 //   - int: nombre de fixes skippés
 func collectSafeEdits(diagnostics []diagWithFset, safeAnalyzers map[string]bool) (map[string][]textEdit, int) {
-	fileEdits := make(map[string][]textEdit, INITIAL_FILE_EDITS_CAP)
+	fileEdits := make(map[string][]textEdit, initialFileEditsCap)
 	skippedCount := 0
 
 	// Parcourir tous les diagnostics
@@ -649,7 +684,7 @@ func applyEditsToFile(filename string, edits []textEdit) bool {
 	}
 
 	// Write back to file with same permissions
-	err = os.WriteFile(filename, result, FILE_PERMISSION_RW)
+	err = os.WriteFile(filename, result, filePermissionRw)
 	// Vérification de la condition
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", filename, err)

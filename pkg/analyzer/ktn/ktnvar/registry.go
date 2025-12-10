@@ -8,7 +8,7 @@ import "golang.org/x/tools/go/analysis"
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs VAR
 func Analyzers() []*analysis.Analyzer {
-	// Retour de la liste complète des analyseurs VAR
+	// Retour de la liste complète des analyseurs VAR (18 règles)
 	return []*analysis.Analyzer{
 		Analyzer001,
 		Analyzer002,
@@ -19,7 +19,7 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer007,
 		Analyzer008,
 		Analyzer009,
-		// Analyzer010 supprimé (contradiction avec KTN-RETURN-002)
+		Analyzer010,
 		Analyzer011,
 		Analyzer012,
 		Analyzer013,
@@ -28,6 +28,5 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer016,
 		Analyzer017,
 		Analyzer018,
-		Analyzer019,
 	}
 }

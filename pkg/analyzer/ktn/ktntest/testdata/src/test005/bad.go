@@ -1,3 +1,4 @@
+// Package test005 provides test cases for table-driven tests.
 package test005
 
 import "strings"

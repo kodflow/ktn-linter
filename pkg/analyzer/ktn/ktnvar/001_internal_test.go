@@ -5,12 +5,14 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_runVar001 tests the private runVar001 function.
-//
-// Params:
-//   - t: testing context
 func Test_runVar001(t *testing.T) {
 	tests := []struct {
 		name string
@@ -19,216 +21,158 @@ func Test_runVar001(t *testing.T) {
 		{"error case validation"},
 	}
 
-	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
-			t.Log("runVar001 tested via external tests")
 		})
 	}
 }
 
-// Test_checkVarSpec tests the checkVarSpec function.
-//
-// Params:
-//   - t: testing context
-func Test_checkVarSpec(t *testing.T) {
-	t.Run("function exists", func(t *testing.T) {
-		// La fonction checkVarSpec est testée via l'API publique
-		t.Log("checkVarSpec tested via external tests")
+// Test_isScreamingSnakeCase tests the private isScreamingSnakeCase helper function.
+func Test_isScreamingSnakeCase(t *testing.T) {
+	tests := []struct {
+		name     string
+		varName  string
+		expected bool
+	}{
+		{
+			name:     "screaming snake case",
+			varName:  "MAX_SIZE",
+			expected: true,
+		},
+		{
+			name:     "screaming snake case with digits",
+			varName:  "HTTP_200_OK",
+			expected: true,
+		},
+		{
+			name:     "camelCase",
+			varName:  "maxSize",
+			expected: false,
+		},
+		{
+			name:     "PascalCase",
+			varName:  "MaxSize",
+			expected: false,
+		},
+		{
+			name:     "single letter",
+			varName:  "X",
+			expected: false,
+		},
+		{
+			name:     "all uppercase no underscore",
+			varName:  "HTTP",
+			expected: false,
+		},
+		{
+			name:     "blank identifier",
+			varName:  "_",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isScreamingSnakeCase(tt.varName)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isScreamingSnakeCase(%q) = %v, expected %v", tt.varName, result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_runVar001_disabled tests runVar001 with disabled rule.
+func Test_runVar001_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-001": {Enabled: config.Bool(false)},
+		},
 	})
-}
+	defer config.Reset()
 
-// Test_hasVisibleType tests the hasVisibleType function.
-//
-// Params:
-//   - t: testing context
-func Test_hasVisibleType(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		expected bool
-	}{
-		{"composite literal", "var x = []string{}", true},
-		{"make call", "var x = make([]int, 10)", true},
-		{"no type visible", "var x = y", false},
-		{"empty values", "", false},
+	// Parse code with SCREAMING_SNAKE_CASE variable
+	code := `package test
+var BAD_VARIABLE int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Vérification cas vide
-			if tt.code == "" {
-				result := hasVisibleType(nil)
-				// Vérification résultat
-				if result != tt.expected {
-					t.Errorf("hasVisibleType(nil) = %v, want %v", result, tt.expected)
-				}
-				return
-			}
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
 
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", "package test\n"+tt.code, 0)
-			// Vérification erreur
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
 
-			// Trouver la var
-			var values []ast.Expr
-			ast.Inspect(file, func(n ast.Node) bool {
-				// Vérification du type
-				if vs, ok := n.(*ast.ValueSpec); ok {
-					values = vs.Values
-					return false
-				}
-				return true
-			})
+	_, err = runVar001(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar001() error = %v", err)
+	}
 
-			result := hasVisibleType(values)
-			// Vérification résultat
-			if result != tt.expected {
-				t.Errorf("hasVisibleType() = %v, want %v", result, tt.expected)
-			}
-		})
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar001() reported %d issues, expected 0 when disabled", reportCount)
 	}
 }
 
-// Test_isTypeVisible tests the isTypeVisible function.
-//
-// Params:
-//   - t: testing context
-func Test_isTypeVisible(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		expected bool
-	}{
-		{"composite literal slice", "var x = []string{}", true},
-		{"composite literal map", "var x = map[string]int{}", true},
-		{"make slice", "var x = make([]int, 10)", true},
-		{"make map", "var x = make(map[string]int)", true},
-		{"new struct", "var x = new(Foo)", true},
-		{"pointer to composite", "var x = &Foo{}", true},
-		{"ident", "var x = y", false},
+// Test_runVar001_fileExcluded tests runVar001 with excluded file.
+func Test_runVar001_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-001": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Parse code with SCREAMING_SNAKE_CASE variable
+	code := `package test
+var BAD_VARIABLE int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", "package test\n"+tt.code, 0)
-			// Vérification erreur
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
 
-			// Trouver l'expression
-			var expr ast.Expr
-			ast.Inspect(file, func(n ast.Node) bool {
-				// Vérification du type
-				if vs, ok := n.(*ast.ValueSpec); ok && len(vs.Values) > 0 {
-					expr = vs.Values[0]
-					return false
-				}
-				return true
-			})
-
-			// Vérification expression trouvée
-			if expr == nil {
-				t.Fatal("no expression found")
-			}
-
-			result := isTypeVisible(expr)
-			// Vérification résultat
-			if result != tt.expected {
-				t.Errorf("isTypeVisible() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isTypedCall tests the isTypedCall function.
-//
-// Params:
-//   - t: testing context
-func Test_isTypedCall(t *testing.T) {
-	tests := []struct {
-		name     string
-		code     string
-		expected bool
-	}{
-		{"make call", "var x = make([]int, 10)", true},
-		{"new call", "var x = new(Foo)", true},
-		{"int conversion", "var x = int(42)", true},
-		{"string conversion", "var x = string(data)", true},
-		{"regular call", "var x = foo()", false},
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
 	}
 
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", "package test\n"+tt.code, 0)
-			// Vérification erreur
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			// Trouver le CallExpr
-			var call *ast.CallExpr
-			ast.Inspect(file, func(n ast.Node) bool {
-				// Vérification du type
-				if c, ok := n.(*ast.CallExpr); ok {
-					call = c
-					return false
-				}
-				return true
-			})
-
-			// Vérification call trouvé
-			if call == nil {
-				t.Fatal("no call expression found")
-			}
-
-			result := isTypedCall(call)
-			// Vérification résultat
-			if result != tt.expected {
-				t.Errorf("isTypedCall() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isBuiltinOrTypeConversion tests the isBuiltinOrTypeConversion function.
-//
-// Params:
-//   - t: testing context
-func Test_isBuiltinOrTypeConversion(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected bool
-	}{
-		{"make", "make", true},
-		{"new", "new", true},
-		{"int", "int", true},
-		{"string", "string", true},
-		{"float64", "float64", true},
-		{"byte", "byte", true},
-		{"custom function", "foo", false},
-		{"empty", "", false},
+	_, err = runVar001(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar001() error = %v", err)
 	}
 
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isBuiltinOrTypeConversion(tt.input)
-			// Vérification résultat
-			if result != tt.expected {
-				t.Errorf("isBuiltinOrTypeConversion(%q) = %v, want %v", tt.input, result, tt.expected)
-			}
-		})
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar001() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

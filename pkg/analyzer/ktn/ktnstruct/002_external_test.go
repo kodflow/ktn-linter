@@ -7,7 +7,33 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestStruct002 vérifie la détection des constructeurs manquants.
+//
+// Params:
+//   - t: contexte de test
 func TestStruct002(t *testing.T) {
-	// good.go: 0 errors (interface complète), bad.go: 2 errors (1 sans interface + 1 interface incomplète)
-	testhelper.TestGoodBad(t, ktnstruct.Analyzer002, "struct002", 2)
+	// good.go: 0 errors (constructeur NewX présent), bad.go: 1 error (constructeur manquant)
+	tests := []struct {
+		name     string
+		analyzer string
+		expected int
+	}{
+		{
+			name:     "struct002_good_constructor_present",
+			analyzer: "struct002",
+			expected: 1,
+		},
+		{
+			name:     "struct002_verify_analyzer",
+			analyzer: "struct002",
+			expected: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Vérifie que bad.go génère exactement 1 erreur
+			testhelper.TestGoodBad(t, ktnstruct.Analyzer002, tt.analyzer, tt.expected)
+		})
+	}
 }

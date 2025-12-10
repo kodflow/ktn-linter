@@ -1,102 +1,93 @@
+// Good examples for the func008 test case.
 package func008
 
 import "context"
 
-// ProcessWithContext demonstrates context.Context as first parameter.
+// AllParamsUsed utilise tous les paramètres.
 //
 // Params:
-//   - ctx: context for cancellation
-//   - data: input data string
-func ProcessWithContext(ctx context.Context, data string) {
-}
-
-// HandleRequestGood demonstrates context as first parameter with multiple params.
-//
-// Params:
-//   - ctx: context for cancellation
-//   - id: identifier
-//   - name: name string
-func HandleRequestGood(ctx context.Context, id int, name string) {
-}
-
-// SimpleFunctionGood demonstrates no context parameter at all.
-//
-// Params:
-//   - id: identifier
-//   - name: name string
-func SimpleFunctionGood(id int, name string) {
-}
-
-// ServiceGood demonstrates a service type.
-// Provides data processing capabilities with context support.
-type ServiceGood struct{}
-
-// ServiceGoodInterface définit les méthodes publiques de ServiceGood.
-type ServiceGoodInterface interface {
-	ProcessData(ctx context.Context, data string)
-}
-
-// NewServiceGood crée une nouvelle instance de ServiceGood.
+//   - ctx: context
+//   - name: nom
+//   - value: valeur
 //
 // Returns:
-//   - *ServiceGood: nouvelle instance du service
-func NewServiceGood() *ServiceGood {
-	// Retour de la nouvelle instance
-	return &ServiceGood{}
+//   - string: résultat
+func AllParamsUsed(ctx context.Context, name string, value int) string {
+	// Utilise ctx
+	_ = ctx.Done()
+	// Retourne avec name et value
+	return name + string(rune(value))
 }
 
-// ProcessData demonstrates method with context as first parameter after receiver.
+// UnusedWithUnderscore préfixe les params non utilisés.
 //
 // Params:
-//   - ctx: context for cancellation
-//   - data: input data string
-func (s *ServiceGood) ProcessData(ctx context.Context, data string) {
+//   - _ctx: context (non utilisé)
+//   - name: nom
+//   - _value: valeur (non utilisée)
+//
+// Returns:
+//   - string: nom
+func UnusedWithUnderscore(_ctx context.Context, name string, _value int) string {
+	// Retourne uniquement name
+	return name
 }
 
-// NoParams demonstrates a function with no parameters.
-func NoParams() {
-}
-
-// OnlyContextParam demonstrates context first with only one parameter.
+// MixedApproach utilise le préfixe _ pour tous les non-utilisés.
 //
 // Params:
-//   - ctx: context for cancellation
-func OnlyContextParam(ctx context.Context) {
+//   - _ctx: context (non utilisé)
+//   - _unused1: non utilisé
+//   - used: utilisé
+//   - _unused2: non utilisé
+//
+// Returns:
+//   - string: résultat
+func MixedApproach(_ctx context.Context, _unused1 string, used string, _unused2 int) string {
+	// Retourne used
+	return used
 }
 
-// UseContextBackground demonstrates using context.Background() - not a type but tests context package usage.
-func UseContextBackground() {
-	_ = context.Background()
+// Handler interface pour les gestionnaires de requêtes.
+type Handler interface {
+	Handle(ctx context.Context, data string) error
 }
 
-// TakesCancelFunc demonstrates a function that takes context.CancelFunc (different from context.Context).
+// ProcessHandler traite un handler.
 //
 // Params:
-//   - id: identifier
-//   - cancel: cancellation function
-func TakesCancelFunc(id int, cancel context.CancelFunc) {
+//   - h: handler à traiter
+//
+// Returns:
+//   - error: erreur éventuelle
+func ProcessHandler(h Handler) error {
+	// Retourne nil si succès
+	return h.Handle(context.Background(), "")
 }
 
-// TestSomething demonstrates test functions should be ignored even if context is not first.
+// NoOpHandler implémente Handler mais n'utilise pas tous les params.
+// C'est un cas valide car les paramètres sont requis par l'interface.
+type NoOpHandler struct{}
+
+// NewNoOpHandler crée une nouvelle instance de NoOpHandler.
 //
-// Params:
-//   - t: testing interface
-//   - ctx: context for cancellation
-func TestSomething(t interface{}, ctx context.Context) {
+// Returns:
+//   - *NoOpHandler: instance qui implémente l'interface Handler
+func NewNoOpHandler() *NoOpHandler {
+	// Retourne une nouvelle instance
+	return &NoOpHandler{}
 }
 
-// TestAnotherThing demonstrates another test function.
+// Handle implémente Handler.Handle.
+// Les paramètres ctx et data sont requis par l'interface mais non utilisés ici.
 //
 // Params:
-//   - data: test data string
-//   - ctx: context for cancellation
-func TestAnotherThing(data string, ctx context.Context) {
-}
-
-// BenchmarkProcess demonstrates a benchmark function.
+//   - _ctx: context (requis par interface)
+//   - _data: données (requis par interface)
 //
-// Params:
-//   - b: benchmark interface
-//   - ctx: context for cancellation
-func BenchmarkProcess(b interface{}, ctx context.Context) {
+// Returns:
+//   - error: nil
+func (h *NoOpHandler) Handle(_ctx context.Context, _data string) error {
+	// Ne fait rien
+	return nil
 }

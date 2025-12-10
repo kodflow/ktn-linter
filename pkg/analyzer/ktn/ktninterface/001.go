@@ -4,19 +4,22 @@ package ktninterface
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 const (
-	// INITIAL_INTERFACES_CAP initial capacity for interfaces map
-	INITIAL_INTERFACES_CAP int = 16
-	// INTERFACE_SUFFIX_LEN length of "Interface" suffix
-	INTERFACE_SUFFIX_LEN int = 9
+	// initialInterfacesCap initial capacity for interfaces map
+	initialInterfacesCap int = 16
+	// interfaceSuffixLen length of "Interface" suffix
+	interfaceSuffixLen int = 9
+	// ruleCodeInterface001 rule code for INTERFACE-001
+	ruleCodeInterface001 string = "KTN-INTERFACE-001"
 )
 
 // Analyzer001 detects unused interface declarations.
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktninterface001",
 	Doc:      "KTN-INTERFACE-001: interface non utilisée",
 	Run:      runInterface001,
@@ -31,13 +34,22 @@ var Analyzer001 = &analysis.Analyzer{
 //   - any: always nil
 //   - error: analysis error if any
 func runInterface001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeInterface001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	// Collect all interface declarations
-	interfaces := make(map[string]*ast.TypeSpec, INITIAL_INTERFACES_CAP)
-	usedInterfaces := make(map[string]bool, INITIAL_INTERFACES_CAP)
-	structNames := make(map[string]bool, INITIAL_INTERFACES_CAP)
+	interfaces := make(map[string]*ast.TypeSpec, initialInterfacesCap)
+	usedInterfaces := make(map[string]bool, initialInterfacesCap)
+	structNames := make(map[string]bool, initialInterfacesCap)
 
 	// First pass: collect all interface and struct declarations
-	collectDeclarations(pass, interfaces, structNames)
+	collectDeclarations(pass, cfg, interfaces, structNames)
 
 	// Second pass: find interface usages
 	findInterfaceUsages(pass, usedInterfaces)
@@ -53,15 +65,25 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 //
 // Params:
 //   - pass: contexte d'analyse
+//   - cfg: configuration du linter
 //   - interfaces: map pour stocker les interfaces
 //   - structNames: map pour stocker les noms de structs
-func collectDeclarations(pass *analysis.Pass, interfaces map[string]*ast.TypeSpec, structNames map[string]bool) {
+func collectDeclarations(pass *analysis.Pass, cfg *config.Config, interfaces map[string]*ast.TypeSpec, structNames map[string]bool) {
 	// Parcourir tous les fichiers
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
 			genDecl, isGenDecl := node.(*ast.GenDecl)
 			// Continue if not general declaration
 			if !isGenDecl {
+				// Continuer l'itération
+				return true
+			}
+
+			// Vérifier si le fichier est exclu
+			filename := pass.Fset.Position(genDecl.Pos()).Filename
+			// Vérification si le fichier courant est exclu par la configuration de la règle
+			if cfg.IsFileExcluded(ruleCodeInterface001, filename) {
+				// Fichier exclu
 				return true
 			}
 
@@ -162,6 +184,7 @@ func checkFuncDeclForInterfaces(funcDecl *ast.FuncDecl, usedInterfaces map[strin
 func checkEmbeddedInterfaces(interfaceType *ast.InterfaceType, usedInterfaces map[string]bool) {
 	// Vérifier si les méthodes existent
 	if interfaceType.Methods == nil {
+		// Retour de la fonction
 		return
 	}
 	// Itération sur les méthodes
@@ -188,14 +211,44 @@ func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.Type
 			continue
 		}
 
-		// Skip if interface follows XXXInterface pattern for struct XXX (KTN-STRUCT-002)
+		// Skip if interface follows XXXInterface pattern for struct XXX
+		// Ces interfaces sont légitimes pour le mocking de la struct
 		if isStructInterfacePattern(name, structNames) {
 			continue
 		}
 
-		// Report unused interface
-		pass.Reportf(typeSpec.Pos(), "KTN-INTERFACE-001: interface non utilisée")
+		// Skip if a struct with same name exists (interface for struct)
+		// L'interface est légitime car elle permet de mocker la struct
+		if hasCorrespondingStruct(name, structNames) {
+			continue
+		}
+
+		// Report unused interface with helpful message for developers/AI
+		pass.Reportf(
+			typeSpec.Pos(),
+			"KTN-INTERFACE-001: interface '%s' non utilisée. "+
+				"Options: (1) créer une struct '%s' qui l'implémente pour permettre le mocking, "+
+				"(2) utiliser cette interface en paramètre/retour de fonction, "+
+				"(3) supprimer si vraiment inutile. "+
+				"Les interfaces permettent de créer des mocks et d'améliorer la couverture de tests",
+			name,
+			name,
+		)
 	}
+}
+
+// hasCorrespondingStruct vérifie si une struct correspondante existe.
+// Par exemple, pour une interface "UserService", vérifie si "UserService" struct existe.
+//
+// Params:
+//   - interfaceName: nom de l'interface
+//   - structs: map des noms de structs
+//
+// Returns:
+//   - bool: true si une struct correspondante existe
+func hasCorrespondingStruct(interfaceName string, structs map[string]bool) bool {
+	// Vérifier si une struct avec le même nom existe
+	return structs[interfaceName]
 }
 
 // isStructInterfacePattern checks if interface follows XXXInterface pattern.
@@ -208,12 +261,13 @@ func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.Type
 //   - bool: true if interface follows the pattern
 func isStructInterfacePattern(interfaceName string, structs map[string]bool) bool {
 	// Check if interface name ends with "Interface"
-	if len(interfaceName) <= INTERFACE_SUFFIX_LEN || interfaceName[len(interfaceName)-INTERFACE_SUFFIX_LEN:] != "Interface" {
+	if len(interfaceName) <= interfaceSuffixLen || interfaceName[len(interfaceName)-interfaceSuffixLen:] != "Interface" {
+		// Retour de la fonction
 		return false
 	}
 
 	// Extract potential struct name (remove "Interface" suffix)
-	structName := interfaceName[:len(interfaceName)-INTERFACE_SUFFIX_LEN]
+	structName := interfaceName[:len(interfaceName)-interfaceSuffixLen]
 
 	// Check if corresponding struct exists
 	return structs[structName]

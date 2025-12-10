@@ -1,27 +1,31 @@
-// Analyzer 004 for the ktnstruct package.
+// Package ktnstruct implements KTN linter rules.
 package ktnstruct
 
 import (
 	"go/ast"
-	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// MIN_DOC_LINES nombre minimum de lignes de documentation pour une struct
-	MIN_DOC_LINES int = 2
+	// ruleCodeStruct004 code de la règle KTN-STRUCT-004
+	ruleCodeStruct004 string = "KTN-STRUCT-004"
 )
 
-// Analyzer004 vérifie que les structs exportées ont une documentation
-var Analyzer004 = &analysis.Analyzer{
-	Name:     "ktnstruct004",
-	Doc:      "KTN-STRUCT-004: Toute struct exportée doit avoir une documentation complète",
-	Run:      runStruct004,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
+// Analyzer004 vérifie qu'il n'y a qu'une seule struct par fichier Go
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+	Name: "ktnstruct004",
+	Doc:  "KTN-STRUCT-004: Un fichier Go ne doit contenir qu'une seule struct (évite les fichiers de 10000 lignes)",
+	Run:  runStruct004,
+}
+
+// structInfo stocke les informations d'une struct trouvée
+type structInfo struct {
+	name       string
+	node       *ast.TypeSpec
+	structType *ast.StructType
 }
 
 // runStruct004 exécute l'analyse KTN-STRUCT-004.
@@ -33,106 +37,123 @@ var Analyzer004 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct004(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	// Filtrer les nœuds de type GenDecl
-	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeStruct004) {
+		// Règle désactivée
+		return nil, nil
 	}
 
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Cast vers GenDecl
-		genDecl := n.(*ast.GenDecl)
-
-		// Ignorer les fichiers de test
-		filename := pass.Fset.Position(genDecl.Pos()).Filename
-		// Vérification si fichier test
-		if shared.IsTestFile(filename) {
-			// Continue avec le nœud suivant
-			return
+	// Parcourir chaque fichier du package
+	for _, file := range pass.Files {
+		filename := pass.Fset.Position(file.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeStruct004, filename) {
+			// Fichier exclu
+			continue
 		}
 
-		// Vérifier chaque spec dans la déclaration
-		for _, spec := range genDecl.Specs {
-			// Vérifier si c'est une TypeSpec
-			typeSpec, ok := spec.(*ast.TypeSpec)
-			// Si ce n'est pas une TypeSpec, continuer
-			if !ok {
-				// Continue avec le spec suivant
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			// Continuer avec le fichier suivant
+			continue
+		}
+
+		// Collecter toutes les structs du fichier
+		structs := collectStructs(file)
+
+		// If more than one struct, check if they are all DTOs
+		if len(structs) > 1 {
+			// Exception: si toutes les structs sont des DTOs/serializable liés
+			if allStructsAreSerializable(structs) {
+				// DTOs groupés sont autorisés
 				continue
 			}
 
-			// Vérifier si c'est une struct
-			_, isStruct := typeSpec.Type.(*ast.StructType)
-			// Si ce n'est pas une struct, continuer
-			if !isStruct {
-				// Continue avec le spec suivant
-				continue
-			}
-
-			// Vérifier si c'est exporté
-			if !ast.IsExported(typeSpec.Name.Name) {
-				// Struct privée, pas besoin de doc
-				continue
-			}
-
-			// Vérifier la documentation
-			if !hasValidDocumentation(genDecl.Doc, typeSpec.Name.Name) {
+			// Itération sur les structs (à partir de la 2ème)
+			for i := 1; i < len(structs); i++ {
+				s := structs[i]
 				pass.Reportf(
-					typeSpec.Pos(),
-					"KTN-STRUCT-004: la struct exportée '%s' doit avoir une documentation complète (au moins 2 lignes décrivant son rôle)",
-					typeSpec.Name.Name,
+					s.node.Pos(),
+					"KTN-STRUCT-004: le fichier contient plusieurs structs (%d au total). Déplacer '%s' dans un fichier séparé pour respecter le principe 'une struct par fichier'",
+					len(structs),
+					s.name,
 				)
 			}
 		}
-	})
+	}
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// hasValidDocumentation vérifie si la documentation est valide.
+// allStructsAreSerializable vérifie si toutes les structs sont des DTOs.
 //
 // Params:
-//   - doc: groupe de commentaires
-//   - structName: nom de la struct
+//   - structs: liste des structs à vérifier
 //
 // Returns:
-//   - bool: true si documentation valide
-func hasValidDocumentation(doc *ast.CommentGroup, structName string) bool {
-	// Si pas de documentation
-	if doc == nil || len(doc.List) == 0 {
-		// Documentation manquante
-		return false
+//   - bool: true si toutes sont des DTOs
+func allStructsAreSerializable(structs []structInfo) bool {
+	// Parcourir les structs
+	for _, s := range structs {
+		// Vérifier si c'est un DTO
+		if !shared.IsSerializableStruct(s.structType, s.name) {
+			// Une struct n'est pas un DTO
+			return false
+		}
 	}
+	// Toutes sont des DTOs
+	return true
+}
 
-	// Compter les lignes de documentation réelle
-	var realLines int
-	// Parcourir les commentaires
-	for _, comment := range doc.List {
-		text := strings.TrimSpace(strings.TrimPrefix(comment.Text, "//"))
-		text = strings.TrimSpace(strings.TrimPrefix(text, "/*"))
-		text = strings.TrimSpace(strings.TrimSuffix(text, "*/"))
+// collectStructs collecte toutes les déclarations de struct d'un fichier.
+//
+// Params:
+//   - file: fichier AST à analyser
+//
+// Returns:
+//   - []structInfo: liste des structs trouvées
+func collectStructs(file *ast.File) []structInfo {
+	var structs []structInfo
 
-		// Ignorer les lignes vides
-		if text == "" {
-			// Continue avec le commentaire suivant
-			continue
+	// Parcourir l'AST du fichier
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérifier si c'est une déclaration de type générale
+		genDecl, ok := n.(*ast.GenDecl)
+		// Si ce n'est pas une GenDecl, continuer
+		if !ok {
+			// Continue traversal
+			return true
 		}
 
-		// Vérifier que la première ligne commence par le nom de la struct
-		if realLines == 0 {
-			// La première ligne doit commencer par le nom
-			if !strings.HasPrefix(text, structName) {
-				// Format invalide
-				return false
+		// Parcourir les specs de la déclaration
+		for _, spec := range genDecl.Specs {
+			typeSpec, isTypeSpec := spec.(*ast.TypeSpec)
+			// Si ce n'est pas une TypeSpec, continuer
+			if !isTypeSpec {
+				// Continue with next spec
+				continue
+			}
+
+			// Vérifier si le type est une struct
+			structType, isStruct := typeSpec.Type.(*ast.StructType)
+			// Si c'est une struct, l'ajouter à la liste
+			if isStruct {
+				structs = append(structs, structInfo{
+					name:       typeSpec.Name.Name,
+					node:       typeSpec,
+					structType: structType,
+				})
 			}
 		}
 
-		// Compter cette ligne
-		realLines++
-	}
+		// Continue traversal
+		return true
+	})
 
-	// Il faut au moins MIN_DOC_LINES lignes de documentation réelle
-	return realLines >= MIN_DOC_LINES
+	// Retour de la liste des structs
+	return structs
 }

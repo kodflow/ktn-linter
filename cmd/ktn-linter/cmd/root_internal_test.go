@@ -55,42 +55,50 @@ func catchExitInCmd(t *testing.T, fn func()) (exitCode int, didExit bool) {
 	return 0, false
 }
 
-// TestExecuteSuccess teste l'exécution réussie de Execute
+// TestExecuteSuccess teste l'exécution réussie de Execute.
 func TestExecuteSuccess(t *testing.T) {
-	restore := mockExitInCmd(t)
-	defer restore()
-
-	// Capturer stdout pour éviter le bruit
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	defer func() {
-		os.Stdout = oldStdout
-	}()
-
-	// Simuler des arguments valides avec un chemin qui existe
-	oldArgs := os.Args
-	os.Args = []string{"ktn-linter", "lint", "../../pkg/formatter"}
-	defer func() {
-		os.Args = oldArgs
-	}()
-
-	exitCode, didExit := catchExitInCmd(t, func() {
-		Execute()
-	})
-
-	w.Close()
-	r.Close()
-
-	// Vérification de la condition
-	if !didExit {
-		t.Error("Expected Execute() to call OsExit")
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "valid formatter package",
+			args: []string{"ktn-linter", "lint", "../../pkg/formatter"},
+		},
 	}
 
-	// Le code peut être 0 (succès) ou 1 (quelques warnings)
-	// L'important est que le programme ne crash pas
-	if exitCode != 0 && exitCode != 1 {
-		t.Errorf("Expected exit code 0 or 1, got %d", exitCode)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
+
+			// Capturer stdout pour éviter le bruit
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+			defer func() {
+				os.Stdout = oldStdout
+			}()
+
+			// Simuler des arguments valides
+			oldArgs := os.Args
+			os.Args = tt.args
+			defer func() {
+				os.Args = oldArgs
+			}()
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				Execute()
+			})
+
+			w.Close()
+			r.Close()
+
+			// Vérification combinée
+			if !didExit || (exitCode != 0 && exitCode != 1) {
+				t.Errorf("Expected exit with code 0 or 1, got didExit=%v code=%d", didExit, exitCode)
+			}
+		})
 	}
 }
 
@@ -232,18 +240,31 @@ func TestRootCmdStructure(t *testing.T) {
 // Test_execute tests internal execute behavior with mocked dependencies.
 // Note: Public API tests are in root_external_test.go
 func Test_execute(t *testing.T) {
-	// This test verifies internal execution behavior
-	// using mocked dependencies (OsExit, etc.)
-	// The actual Execute function is tested in root_external_test.go
-	errorCases := "tests panic and error recovery"
-	_ = errorCases
+	tests := []struct {
+		name       string
+		errorCases string
+	}{
+		{
+			name:       "tests panic and error recovery",
+			errorCases: "tests panic and error recovery",
+		},
+	}
 
-	defer func() {
-		// Vérification panic
-		if r := recover(); r != nil {
-			t.Logf("execute caused panic: %v (may be expected)", r)
-		}
-	}()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// This test verifies internal execution behavior
+			// using mocked dependencies (OsExit, etc.)
+			// The actual Execute function is tested in root_external_test.go
+			_ = tt.errorCases
+
+			defer func() {
+				// Vérification panic
+				if r := recover(); r != nil {
+					t.Logf("execute caused panic: %v (may be expected)", r)
+				}
+			}()
+		})
+	}
 }
 
 // Test_setVersion teste la configuration interne de la version.

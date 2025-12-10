@@ -1,40 +1,41 @@
+// Bad examples for the var002 test case.
 package var002
 
-// Bad: Multiple separate var declarations (violates KTN-VAR-002)
-// But respects: VAR-001 (explicit types), VAR-003 (camelCase), VAR-004 (comments), VAR-006 (const before var)
+// Bad: Variables without explicit type (violates KTN-VAR-002)
+// Note: Zero-values (type without init) are now valid
 
 const (
-	// BAD_MAX_RETRIES defines maximum retries
-	BAD_MAX_RETRIES int = 3
-	// PORT_VALUE is port value
-	PORT_VALUE int = 8080
-	// RATIO_VALUE is ratio value
-	RATIO_VALUE float64 = 1.5
+	// MaxRetries defines maximum retries
+	MaxRetries int = 3
+	// PortValue is port value
+	PortValue int = 8080
+	// RatioValue is ratio value
+	RatioValue float64 = 1.5
 )
 
-// badRetries is the first var declaration
-var badRetries int = BAD_MAX_RETRIES
-
-// badConfig is a separate var declaration
-var badConfig string = "config"
-
-// Multiple variables in a group (still separate from other vars)
+// Cas: Pas de type explicite = ERREUR
 var (
-	// badPort is the server port
-	badPort int = PORT_VALUE
+	// badRetries has no explicit type
+	badRetries = MaxRetries // want "KTN-VAR-002"
 
-	// badHost is the server hostname
-	badHost string = "localhost"
-)
+	// badConfig has no explicit type
+	badConfig = "config" // want "KTN-VAR-002"
 
-// Another separate var declaration
-var badEnabled bool = true
+	// badPort has no explicit type
+	badPort = PortValue // want "KTN-VAR-002"
 
-// Yet another separate var block
-var (
-	// badRatio is a ratio value
-	badRatio float64 = RATIO_VALUE
+	// badHost has no explicit type
+	badHost = "localhost" // want "KTN-VAR-002"
 
-	// badCount is a counter
-	badCount int = 0
+	// badEnabled has no explicit type
+	badEnabled = true // want "KTN-VAR-002"
+
+	// badRatio has no explicit type
+	badRatio = RatioValue // want "KTN-VAR-002"
+
+	// badSlice has no explicit type
+	badSlice = []string{"a", "b"} // want "KTN-VAR-002"
+
+	// badMap has no explicit type
+	badMap = map[string]int{"x": 1} // want "KTN-VAR-002"
 )

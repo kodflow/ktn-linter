@@ -26,10 +26,7 @@ RUN apt-get update \
     # Add HashiCorp repository
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /etc/apt/keyrings/hashicorp-archive-keyring.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list \
-    # Add 1Password repository
-    && curl -fsSL https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /etc/apt/keyrings/1password-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" | tee /etc/apt/sources.list.d/1password.list \
-    # Update with new repositories and install ALL packages in one command
+    # Update with new repositories and install packages
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
@@ -37,7 +34,6 @@ RUN apt-get update \
         zlib1g-dev \
         git \
         jq \
-        yq \
         zsh \
         unzip \
         nodejs \
@@ -46,7 +42,17 @@ RUN apt-get update \
         vault \
         consul \
         nomad \
-        1password-cli \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    # Install yq binary (not available in Ubuntu repos)
+    && YQ_ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${YQ_ARCH}" -o /usr/local/bin/yq \
+    && chmod +x /usr/local/bin/yq \
+    # Install 1Password CLI separately (may fail on some architectures)
+    && curl -fsSL https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /etc/apt/keyrings/1password-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" > /etc/apt/sources.list.d/1password.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends 1password-cli || true \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -128,5 +134,12 @@ RUN mkdir -p /home/vscode/.npm-global && \
     echo 'export PATH=/home/vscode/.npm-global/bin:$PATH' >> /home/vscode/.zshrc && \
     npm install -g @anthropic-ai/claude-code@latest @bazel/bazelisk
 
+# Create .devcontainer directory with empty mcp.json (fallback if setup-mcp.sh fails)
+RUN mkdir -p /home/vscode/.devcontainer && \
+    echo '{"mcpServers":{}}' > /home/vscode/.devcontainer/mcp.json
+
 # Set working directory
 WORKDIR /workspace
+
+# Copy and set permissions for setup-mcp.sh
+COPY --chown=vscode:vscode --chmod=755 setup-mcp.sh /workspace/.devcontainer/setup-mcp.sh

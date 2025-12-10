@@ -2,7 +2,14 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_runVar005 tests the private runVar005 function.
@@ -21,175 +28,125 @@ func Test_runVar005(t *testing.T) {
 	}
 }
 
-// Test_hasInitWithoutType tests the private hasInitWithoutType helper function.
-func Test_hasInitWithoutType(t *testing.T) {
-	tests := []struct {
-		name     string
-		spec     *ast.ValueSpec
-		expected bool
-	}{
-		{
-			name: "has init without type",
-			spec: &ast.ValueSpec{
-				Names:  []*ast.Ident{{Name: "x"}},
-				Type:   nil,
-				Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
-			},
-			expected: true,
+// Test_checkMakeCallVar008_notMake tests with non-make call.
+func Test_checkMakeCallVar008_notMake(t *testing.T) {
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	// Test with non-make call
+	call := &ast.CallExpr{
+		Fun: &ast.Ident{Name: "len"},
+	}
+	checkMakeCallVar008(pass, call)
+	// No error expected
+}
+
+// Test_checkMakeCallVar008_tooFewArgs tests with insufficient args.
+func Test_checkMakeCallVar008_tooFewArgs(t *testing.T) {
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	// Test with make but only 1 arg
+	call := &ast.CallExpr{
+		Fun:  &ast.Ident{Name: "make"},
+		Args: []ast.Expr{&ast.Ident{Name: "T"}},
+	}
+	checkMakeCallVar008(pass, call)
+	// No error expected
+}
+
+// Test_runVar005_disabled tests runVar005 with disabled rule.
+func Test_runVar005_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-005": {Enabled: config.Bool(false)},
 		},
-		{
-			name: "has init with type",
-			spec: &ast.ValueSpec{
-				Names:  []*ast.Ident{{Name: "x"}},
-				Type:   &ast.Ident{Name: "int"},
-				Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
-			},
-			expected: false,
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
 		},
-		{
-			name: "no init",
-			spec: &ast.ValueSpec{
-				Names:  []*ast.Ident{{Name: "x"}},
-				Type:   &ast.Ident{Name: "int"},
-				Values: nil,
-			},
-			expected: false,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := hasInitWithoutType(tt.spec)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("hasInitWithoutType() = %v, expected %v", result, tt.expected)
-			}
-		})
+	_, err = runVar005(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar005() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar005() reported %d issues, expected 0 when disabled", reportCount)
 	}
 }
 
-// Test_checkFunctionBody tests the private checkFunctionBody function.
-func Test_checkFunctionBody(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function walks AST nodes
-		})
-	}
-}
+// Test_runVar005_fileExcluded tests runVar005 with excluded file.
+func Test_runVar005_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-005": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
 
-// Test_checkStatement tests the private checkStatement function.
-func Test_checkStatement(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks statements
-		})
-	}
-}
 
-// Test_checkNestedBlocks tests the private checkNestedBlocks function.
-func Test_checkNestedBlocks(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks nested blocks
-		})
-	}
-}
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
 
-// Test_checkIfStmt tests the private checkIfStmt function.
-func Test_checkIfStmt(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if statements
-		})
-	}
-}
 
-// Test_checkBlockIfNotNil tests the private checkBlockIfNotNil function.
-func Test_checkBlockIfNotNil(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	_, err = runVar005(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar005() error = %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks blocks
-		})
-	}
-}
 
-// Test_checkCaseClause tests the private checkCaseClause function.
-func Test_checkCaseClause(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks case clauses
-		})
-	}
-}
-
-// Test_checkCommClause tests the private checkCommClause function.
-func Test_checkCommClause(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks comm clauses
-		})
-	}
-}
-
-// Test_checkVarSpecs tests the private checkVarSpecs function.
-func Test_checkVarSpecs(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks var specs
-		})
-	}
-}
-
-// Test_reportVarErrors tests the private reportVarErrors function.
-func Test_reportVarErrors(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function reports errors
-		})
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar005() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

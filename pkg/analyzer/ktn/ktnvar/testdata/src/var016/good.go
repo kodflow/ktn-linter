@@ -1,66 +1,49 @@
+// Good examples for the var017 test case.
 package var016
 
 // Good: Using arrays for small fixed sizes or slices when appropriate
 
 const (
-	// ARRAY_SIZE_SMALL is small array size
-	ARRAY_SIZE_SMALL int = 10
-	// BUFFER_SIZE is buffer size
-	BUFFER_SIZE int = 64
-	// LARGE_SIZE is large allocation size
-	LARGE_SIZE int = 2048
-	// CAPACITY_MEDIUM is medium capacity
-	CAPACITY_MEDIUM int = 100
-	// LENGTH_SMALL is small length
-	LENGTH_SMALL int = 10
-	// CAPACITY_SMALL is small capacity
-	CAPACITY_SMALL int = 20
+	// ArraySizeSmall is small array size
+	ArraySizeSmall int = 10
+	// BufferSize is buffer size
+	BufferSize int = 64
+	// LargeSize is large allocation size
+	LargeSize int = 2048
+	// CapacityMedium is medium capacity
+	CapacityMedium int = 100
+	// LengthSmall is small length
+	LengthSmall int = 10
+	// CapacitySmall is small capacity
+	CapacitySmall int = 20
 )
 
-// goodArray uses array for fixed small size
-func goodArray() {
-	// Array allocated on stack
-	var items [ARRAY_SIZE_SMALL]int
+// init demonstrates good practices for array and slice allocation
+func init() {
+	// Array allocated on stack - good for small fixed sizes
+	var items [ArraySizeSmall]int
 	_ = items
-}
 
-// goodArrayBuffer uses array for buffer
-func goodArrayBuffer() {
 	// Fixed size buffer as array
-	var buffer [BUFFER_SIZE]byte
+	var buffer [BufferSize]byte
 	_ = buffer
-}
 
-// goodDynamicSize uses make with variable size
-//
-// Params:
-//   - n: dynamic size for slice allocation
-func goodDynamicSize(n int) {
-	// Size is variable, must use slice with capacity
-	items := make([]int, 0, n)
-	items = append(items, n)
-	_ = items
-}
+	// Dynamic size - use slice with capacity
+	dynamicItems := make([]int, 0, CapacitySmall)
+	dynamicItems = append(dynamicItems, LengthSmall)
+	_ = dynamicItems
 
-// goodLargeSlice uses make for large allocation
-func goodLargeSlice() {
 	// Size > 1024, slice is appropriate
-	large := make([]byte, 0, LARGE_SIZE)
+	large := make([]byte, 0, LargeSize)
 	_ = large
-}
 
-// goodGrowingSlice uses make with capacity for growing slice
-func goodGrowingSlice() {
 	// Slice will grow, needs heap allocation
-	items := make([]string, 0, CAPACITY_MEDIUM)
-	items = append(items, "test")
-	_ = items
-}
+	growingItems := make([]string, 0, CapacityMedium)
+	growingItems = append(growingItems, "test")
+	_ = growingItems
 
-// goodMakeWithCapacity uses make with different len/cap
-func goodMakeWithCapacity() {
 	// Different length and capacity
-	items := make([]int, 0, CAPACITY_SMALL)
-	items = append(items, LENGTH_SMALL)
-	_ = items
+	withCapacity := make([]int, 0, CapacitySmall)
+	withCapacity = append(withCapacity, LengthSmall)
+	_ = withCapacity
 }

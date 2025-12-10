@@ -1,71 +1,80 @@
+// Bad examples for the struct003 test case.
 package struct005
 
-// BadUserService service sans constructeur - VIOLATION
-type BadUserService struct { // want "KTN-STRUCT-005"
-	users map[int]string
+// BadMixedFields représente une struct avec mauvais ordre des champs.
+// Les champs exportés sont mélangés avec les champs privés (violation STRUCT-003).
+type BadMixedFields struct {
+	id        int
+	Name      string // want "KTN-STRUCT-005"
+	email     string
+	Age       int // want "KTN-STRUCT-005"
+	visible   bool
+	Public    string // want "KTN-STRUCT-005"
+	hidden    int
+	Exported  bool // want "KTN-STRUCT-005"
+	another   string
+	LastField int // want "KTN-STRUCT-005"
 }
 
-// Create méthode présente mais pas de NewBadUserService()
-func (b *BadUserService) Create(name string) error {
-	return nil
+// BadMixedFieldsInterface définit les méthodes de BadMixedFields.
+type BadMixedFieldsInterface interface {
+	Id() int
+	Email() string
+	Visible() bool
+	Hidden() int
+	Another() string
 }
 
-// GetByID méthode présente
-func (b *BadUserService) GetByID(id int) string {
-	return ""
+// NewBadMixedFields crée une nouvelle instance de BadMixedFields.
+//
+// Returns:
+//   - *BadMixedFields: nouvelle instance
+func NewBadMixedFields() *BadMixedFields {
+	// Retourne une nouvelle instance
+	return &BadMixedFields{}
 }
 
-// MisnamedService service avec constructeur mal nommé - VIOLATION
-type MisnamedService struct { // want "KTN-STRUCT-005"
-	data map[string]string
+// Id retourne l'identifiant.
+//
+// Returns:
+//   - int: identifiant
+func (b *BadMixedFields) Id() int {
+	// Retourne le champ id
+	return b.id
 }
 
-// CreateService mauvais nom (devrait être NewMisnamedService) - NE COMPTE PAS
-func CreateService() *MisnamedService {
-	return &MisnamedService{data: make(map[string]string)}
+// Email retourne l'email.
+//
+// Returns:
+//   - string: adresse email
+func (b *BadMixedFields) Email() string {
+	// Retourne le champ email
+	return b.email
 }
 
-// Process méthode présente
-func (m *MisnamedService) Process(key string) error {
-	return nil
+// Visible retourne le statut visible.
+//
+// Returns:
+//   - bool: statut de visibilité
+func (b *BadMixedFields) Visible() bool {
+	// Retourne le champ visible
+	return b.visible
 }
 
-// Cache gère un cache - VIOLATION
-type Cache struct { // want "KTN-STRUCT-005"
-	items map[string]interface{}
+// Hidden retourne la valeur cachée.
+//
+// Returns:
+//   - int: valeur cachée
+func (b *BadMixedFields) Hidden() int {
+	// Retourne le champ hidden
+	return b.hidden
 }
 
-// Get récupère un item
-func (c *Cache) Get(key string) interface{} {
-	return nil
-}
-
-// Set définit un item
-func (c *Cache) Set(key string, value interface{}) {
-	c.items[key] = value
-}
-
-// Delete supprime un item
-func (c *Cache) Delete(key string) {
-	delete(c.items, key)
-}
-
-// Clear vide le cache
-func (c *Cache) Clear() {
-	c.items = make(map[string]interface{})
-}
-
-// WrongReturnType constructeur retournant mauvais type - VIOLATION
-type WrongReturnType struct { // want "KTN-STRUCT-005"
-	value int
-}
-
-// NewWrongReturnType retourne string au lieu de *WrongReturnType - NE COMPTE PAS
-func NewWrongReturnType() string {
-	return "wrong"
-}
-
-// GetValue méthode présente
-func (w *WrongReturnType) GetValue() int {
-	return w.value
+// Another retourne l'autre valeur.
+//
+// Returns:
+//   - string: autre valeur
+func (b *BadMixedFields) Another() string {
+	// Retourne le champ another
+	return b.another
 }

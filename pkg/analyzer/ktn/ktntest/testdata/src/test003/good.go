@@ -1,71 +1,48 @@
+// Package test003 provides item processing utilities.
 package test003
 
-// GoodResource représente une ressource avec des méthodes publiques.
-// Toutes les méthodes ont des tests correspondants.
-type GoodResource struct {
-	name string
-}
+import "errors"
 
-// NewGoodResource crée une nouvelle instance.
-//
-// Returns:
-//   - *GoodResource: nouvelle instance
-func NewGoodResource() *GoodResource {
-	// Retour de la nouvelle instance
-	return &GoodResource{}
-}
+const (
+	// MIN_LENGTH longueur minimale
+	MIN_LENGTH int = 1
+	// MAX_COUNT compteur maximal
+	MAX_COUNT int = 1000
+)
 
-// Metadata retourne les métadonnées.
-//
-// Returns:
-//   - string: nom de la ressource
-func (r *GoodResource) Metadata() string {
-	// Retour des métadonnées
-	return "good_resource"
-}
-
-// Schema retourne le schéma.
-//
-// Returns:
-//   - map[string]string: schéma de la ressource
-func (r *GoodResource) Schema() map[string]string {
-	// Retour du schéma
-	return map[string]string{"type": "test"}
-}
-
-// Configure configure la ressource.
+// ProcessItem traite un item.
 //
 // Params:
-//   - config: configuration à appliquer
+//   - item: item à traiter
 //
 // Returns:
-//   - error: erreur éventuelle
-func (r *GoodResource) Configure(config string) error {
-	r.name = config
-	// Retour succès
-	return nil
+//   - string: résultat
+//   - error: erreur si invalide
+func ProcessItem(item string) (string, error) {
+	// Vérification longueur
+	if len(item) < MIN_LENGTH {
+		// Retour erreur
+		return "", errors.New("item too short")
+	}
+	// Retour résultat
+	return "processed:" + item, nil
 }
 
-// validateConfig valide la configuration (fonction privée avec test).
+// CountItems compte des items.
 //
 // Params:
-//   - config: configuration à valider
+//   - items: liste d'items
 //
 // Returns:
-//   - bool: true si valide
-func validateConfig(config string) bool {
-	// Validation
-	return len(config) > 0
-}
-
-// sanitize nettoie les données (fonction privée avec test).
-//
-// Params:
-//   - data: données à nettoyer
-//
-// Returns:
-//   - string: données nettoyées
-func (r *GoodResource) sanitize(data string) string {
-	// Nettoyage
-	return data + "_sanitized"
+//   - int: nombre d'items
+//   - error: erreur si trop d'items
+func CountItems(items []string) (int, error) {
+	count := len(items)
+	// Vérification dépassement
+	if count > MAX_COUNT {
+		// Retour erreur
+		return 0, errors.New("too many items")
+	}
+	// Retour compteur
+	return count, nil
 }

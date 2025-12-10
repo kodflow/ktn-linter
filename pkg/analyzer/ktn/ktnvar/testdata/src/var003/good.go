@@ -1,60 +1,62 @@
+// Good examples for the var003 test case.
 package var003
 
-// Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)
-
 const (
-	// GOOD_DEFAULT_TIMEOUT is a constant (SCREAMING_SNAKE_CASE is OK for constants)
-	GOOD_DEFAULT_TIMEOUT int = 30
-	// GOOD_MAX_RETRIES is a constant
-	GOOD_MAX_RETRIES int = 3
-	// GOOD_SERVER_PORT is the server port
-	GOOD_SERVER_PORT int = 8080
-	// GOOD_MAX_CONNECTIONS is maximum connections
-	GOOD_MAX_CONNECTIONS int = 100
-	// GOOD_MIN_TIMEOUT is minimum timeout
-	GOOD_MIN_TIMEOUT int = 5
-	// GOOD_ANSWER is the answer to life
-	GOOD_ANSWER int = 42
+	// MaxRetriesValue is the max retries value
+	MaxRetriesValue int = 3
+	// TheAnswer is the answer
+	TheAnswer int = 42
+	// ExampleAge is example age
+	ExampleAge int = 30
+	// XValue is example x value
+	XValue int = 10
+	// YValue is example y value
+	YValue int = 20
+	// Int64Value is int64 example
+	Int64Value int64 = 5
+	// InitialCount is the initial count
+	InitialCount int = 0
 )
 
-// All package-level variables grouped in a single block
+// Package-level variables can use var with explicit type
 var (
-	// defaultRetries uses camelCase (good for private variables)
-	defaultRetries int = GOOD_DEFAULT_TIMEOUT
-
-	// configuration uses camelCase
-	configuration string = "default"
-
-	// isEnabled uses camelCase
-	isEnabled bool = false
-
-	// serverPort uses camelCase
-	serverPort int = GOOD_SERVER_PORT
-
-	// maxConnections uses camelCase
-	maxConnections int = GOOD_MAX_CONNECTIONS
-
-	// minTimeout uses camelCase
-	minTimeout int = GOOD_MIN_TIMEOUT
-
-	// apiEndpoint uses camelCase
-	apiEndpoint string = "http://localhost"
-
-	// DefaultConfig uses PascalCase (good for exported variables)
-	DefaultConfig string = "production"
-
-	// ServerAddress uses PascalCase
-	ServerAddress string = "0.0.0.0"
+	// GlobalConfig is the global configuration
+	GlobalConfig string = "default"
+	// MaxRetries is the maximum retries
+	MaxRetries int = MaxRetriesValue
 )
 
-// goodFunction demonstrates local variables (not checked by VAR-003).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-003
-	localVar := GOOD_ANSWER
-	ANOTHER_LOCAL := GOOD_MAX_CONNECTIONS
-	// Continue traversing AST nodes.
-	return localVar + ANOTHER_LOCAL
+// init demonstrates correct usage of short declarations
+func init() {
+	// Good: Use := for local variables
+	name := "Alice"
+	age := ExampleAge
+	x, y := XValue, YValue
+	_ = name
+	_ = age
+	_ = x
+	_ = y
+	// Good: var with explicit type is OK (11 lines)
+	var x64 int64 = Int64Value
+	var result int
+	result = TheAnswer
+	_ = x64
+	_ = result
+	// Good: := for reassign
+	count := InitialCount
+	count = count + 1
+	_ = count
+	// Cases where var is NECESSARY (nil values)
+	var nilSlice []string
+	var nilMap map[string]int
+	var nilPointer *int
+	var nilChan chan int
+	var nilFunc func()
+	var nilInterface any
+	_ = nilSlice
+	_ = nilMap
+	_ = nilPointer
+	_ = nilChan
+	_ = nilFunc
+	_ = nilInterface
 }

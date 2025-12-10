@@ -1,47 +1,51 @@
+// Package test002 provides validation utilities for testing.
 package test002
 
 import "errors"
 
 const (
-	// MIN_LENGTH longueur minimale
+	// MIN_LENGTH longueur minimale pour les strings
 	MIN_LENGTH int = 1
-	// MAX_COUNT compteur maximal
-	MAX_COUNT int = 1000
+	// MAX_VALUE valeur maximale autorisée
+	MAX_VALUE int = 100
 )
 
-// ProcessItem traite un item.
+// Validate valide une valeur numérique.
 //
 // Params:
-//   - item: item à traiter
+//   - value: valeur à valider
 //
 // Returns:
-//   - string: résultat
-//   - error: erreur si invalide
-func ProcessItem(item string) (string, error) {
-	// Vérification longueur
-	if len(item) < MIN_LENGTH {
+//   - error: erreur si invalide, nil sinon
+func Validate(value int) error {
+	// Vérification valeur négative
+	if value < 0 {
 		// Retour erreur
-		return "", errors.New("item too short")
+		return errors.New("value must be non-negative")
 	}
-	// Retour résultat
-	return "processed:" + item, nil
+	// Vérification valeur trop grande
+	if value > MAX_VALUE {
+		// Retour erreur
+		return errors.New("value exceeds maximum")
+	}
+	// Retour succès
+	return nil
 }
 
-// CountItems compte des items.
+// Transform transforme une string.
 //
 // Params:
-//   - items: liste d'items
+//   - input: string à transformer
 //
 // Returns:
-//   - int: nombre d'items
-//   - error: erreur si trop d'items
-func CountItems(items []string) (int, error) {
-	count := len(items)
-	// Vérification dépassement
-	if count > MAX_COUNT {
+//   - string: string transformée
+//   - error: erreur si vide
+func Transform(input string) (string, error) {
+	// Vérification longueur
+	if len(input) < MIN_LENGTH {
 		// Retour erreur
-		return 0, errors.New("too many items")
+		return "", errors.New("input too short")
 	}
-	// Retour compteur
-	return count, nil
+	// Retour résultat
+	return "[" + input + "]", nil
 }

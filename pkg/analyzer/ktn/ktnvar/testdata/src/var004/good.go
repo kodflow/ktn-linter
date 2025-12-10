@@ -1,88 +1,65 @@
+// Good examples for the var005 test case.
 package var004
 
-// Good: All variables have comments, explicit types, proper naming, single-block grouping
+// Good: Slices preallocated with capacity when known
 
 const (
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// HTTP_PORT is the default HTTP port
-	HTTP_PORT int = 80
-	// HTTPS_PORT is the default HTTPS port
-	HTTPS_PORT int = 443
-	// FTP_PORT is the default FTP port
-	FTP_PORT int = 21
-	// MAX_CONNECTIONS defines maximum concurrent connections
-	MAX_CONNECTIONS int = 1000
-	// MIN_CONNECTIONS defines minimum concurrent connections
-	MIN_CONNECTIONS int = 10
-	// MAX_RETRY_COUNT defines maximum number of retries
-	MAX_RETRY_COUNT int = 5
-	// RETRY_DELAY_MS defines delay between retries in milliseconds
-	RETRY_DELAY_MS int = 1000
-	// BACKOFF_MULTIPLIER defines the backoff multiplier
-	BACKOFF_MULTIPLIER float64 = 1.5
-	// DB_PORT is the database port
-	DB_PORT int = 5432
-	// ONLY_CONST is valid edge case
-	ONLY_CONST int = 999
+	// MaxItems defines the maximum number of items
+	MaxItems int = 100
+	// CapacityTen is capacity of ten
+	CapacityTen int = 10
+	// ValueOne is value one
+	ValueOne int = 1
+	// ValueTwo is value two
+	ValueTwo int = 2
+	// ValueThree is value three
+	ValueThree int = 3
 )
 
-// All package-level variables grouped in a single block
-var (
-	// httpPort is the default HTTP port
-	httpPort int = HTTP_PORT
+// init demonstrates good slice preallocation patterns
+func init() {
+	// Good: Capacity specified
+	items := make([]int, 0, MaxItems)
+	_ = items
 
-	// httpsPort is the default HTTPS port
-	httpsPort int = HTTPS_PORT
+	// Good: Capacity specified based on known size
+	result := make([]string, 0, CapacityTen)
+	// Itération sur les éléments
+	for i := range CapacityTen {
+		result = append(result, "item")
+		// Utilisation de i pour éviter le warning
+		_ = i
+	}
 
-	// ftpPort is the default FTP port
-	ftpPort int = FTP_PORT
+	// Good: Literal with values is acceptable
+	values := []int{ValueOne, ValueTwo, ValueThree}
+	_ = values
 
-	// maxConnections defines maximum concurrent connections
-	maxConnections int = MAX_CONNECTIONS
+	// Good: Maps don't need capacity
+	m := map[string]int{}
+	_ = m
 
-	// minConnections defines minimum concurrent connections
-	minConnections int = MIN_CONNECTIONS
+	// Good: Even when size is unknown, providing a reasonable capacity is better
+	data := []string{"a", "b"}
+	filtered := make([]string, 0, len(data))
+	// Itération sur les données
+	for _, item := range data {
+		// Vérification d'une condition
+		if len(item) > 0 {
+			filtered = append(filtered, item)
+		}
+	}
+	_ = filtered
 
-	// defaultTimeout defines the default timeout in seconds
-	defaultTimeout int = DEFAULT_TIMEOUT
+	// Good: []T{} is acceptable when capacity unknown
+	empty := []int{}
+	_ = empty
 
-	// apiVersion is the current API version
-	apiVersion string = "v1.0"
+	// Good: Direct return with []T{} is a common pattern
+	items2 := []string{}
+	_ = items2
 
-	// apiEndpoint is the base API endpoint
-	apiEndpoint string = "/api"
-
-	// apiKey is the authentication key
-	apiKey string = "secret"
-
-	// featureEnabled indicates if the feature is enabled
-	featureEnabled bool = true
-
-	// debugMode indicates if debug mode is active
-	debugMode bool = false
-
-	// verboseLogging indicates if verbose logging is enabled
-	verboseLogging bool = false
-
-	// maxRetryCount defines maximum number of retries
-	maxRetryCount int = MAX_RETRY_COUNT
-
-	// retryDelayMs defines delay between retries in milliseconds
-	retryDelayMs int = RETRY_DELAY_MS
-
-	// backoffMultiplier defines the backoff multiplier
-	backoffMultiplier float64 = BACKOFF_MULTIPLIER
-
-	// dbHost is the database host
-	dbHost string = "localhost"
-
-	// dbPort is the database port
-	dbPort int = DB_PORT
-
-	// dbName is the database name
-	dbName string = "mydb"
-
-	// dbUser is the database user
-	dbUser string = "admin"
-)
+	// Good: [][]T{} acceptable when capacity unknown
+	nested := [][]int{}
+	_ = nested
+}

@@ -1,84 +1,68 @@
+// Bad examples for the var016 test case.
 package var015
 
-// Bad: Creating []byte buffers repeatedly in loops without sync.Pool
+const (
+	// UserIdTwo est un ID d'utilisateur
+	UserIdTwo int = 2
+	// TestIdOne est un ID de test
+	TestIdOne int = 1
+	// TestIndexZero est un index de test
+	TestIndexZero int = 0
+)
 
-// badProcessInLoop creates buffer in loop without sync.Pool
-func badProcessInLoop() {
-	// Loop processes items
-	for i := 0; i < 100; i++ {
-		// Buffer created repeatedly in loop
-		buffer := make([]byte, 1024)
-		_ = buffer
-	}
+// badInitUsers creates a map without capacity.
+//
+// Returns:
+//   - map[string]int: map des utilisateurs
+func badInitUsers() map[string]int {
+	// Map without capacity hint - VIOLATES VAR-009
+	users := make(map[string]int)
+	users["alice"] = TestIdOne
+	users["bob"] = UserIdTwo
+	// Retour du résultat
+	return users
 }
 
-// badRangeLoop creates buffer in range loop without sync.Pool
-func badRangeLoop() {
-	items := []string{"a", "b", "c"}
-	// Loop processes items
-	for _, item := range items {
-		// Buffer created in each iteration
-		buf := make([]byte, 512)
-		_ = item
-		_ = buf
-	}
+// badInitConfig creates a map without capacity in var declaration.
+func badInitConfig() {
+	// Map without capacity hint - VIOLATES VAR-009
+	config := make(map[string]string)
+	config["host"] = "localhost"
+	// Utilisation de la config
+	_ = config
 }
 
-// badInfiniteLoop creates buffer in infinite loop
-func badInfiniteLoop() {
-	// Infinite loop processing
-	for {
-		// Buffer allocated every iteration
-		b := make([]byte, 128)
-		_ = b
-		break
-	}
+// badProcessData creates multiple maps without capacity.
+func badProcessData() {
+	// Multiple maps without capacity hints - VIOLATES VAR-009 (3 times)
+	data := make(map[int]string)
+	cache := make(map[string]bool)
+	index := make(map[int][]string)
+
+	// Utilisation des maps
+	data[TestIdOne] = "test"
+	cache["key"] = true
+	index[TestIndexZero] = []string{"a", "b"}
 }
 
-// badWhileStyle creates buffer in while-style loop
-func badWhileStyle() {
-	counter := 0
-	// While-style loop
-	for counter < 100 {
-		// Buffer created each iteration
-		data := make([]byte, 256)
-		_ = data
-		counter++
-	}
+// badNestedMap creates a map of maps without capacity.
+func badNestedMap() {
+	// Map without capacity hint - VIOLATES VAR-009
+	nested := make(map[string]map[int]string)
+	// Inner map also without capacity - VIOLATES VAR-009
+	nested["key"] = make(map[int]string)
+	// Utilisation de la map
+	_ = nested
 }
 
-// BUFFER_SIZE defines buffer size
-const BUFFER_SIZE int = 2048
-
-// badConstSizeBuffer creates buffer with const size in loop
-func badConstSizeBuffer() {
-	// Loop processes items
-	for i := 0; i < 50; i++ {
-		// Buffer with const size
-		buf := make([]byte, BUFFER_SIZE)
-		_ = buf
-	}
-}
-
-// badNestedLoop creates buffer in nested loop
-func badNestedLoop() {
-	// Outer loop
-	for i := 0; i < 10; i++ {
-		// Inner loop
-		for j := 0; j < 10; j++ {
-			// Buffer allocated in nested loop
-			temp := make([]byte, 64)
-			_ = temp
-		}
-	}
-}
-
-// badMakeWithCapacity creates buffer with capacity in loop
-func badMakeWithCapacity() {
-	// Loop processes items
-	for i := 0; i < 100; i++ {
-		// Buffer with both length and capacity
-		buffer := make([]byte, 512, 1024)
-		_ = buffer
-	}
+// init utilise les fonctions privées
+func init() {
+	// Appel de badInitUsers
+	badInitUsers()
+	// Appel de badInitConfig
+	badInitConfig()
+	// Appel de badProcessData
+	badProcessData()
+	// Appel de badNestedMap
+	badNestedMap()
 }

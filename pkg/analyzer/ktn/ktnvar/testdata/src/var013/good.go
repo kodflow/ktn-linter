@@ -1,71 +1,47 @@
+// Good examples for the var013 test case.
 package var013
 
 const (
-	// VALUE_TWO is constant value 2
-	VALUE_TWO int = 2
-	// VALUE_THREE is constant value 3
-	VALUE_THREE int = 3
-	// VALUE_FIVE is constant value 5
-	VALUE_FIVE int = 5
-	// VALUE_TEN is constant value 10
-	VALUE_TEN int = 10
+	// MaxRetries defines maximum retries
+	MaxRetries int = 3
+	// DefaultTimeout is the default timeout
+	DefaultTimeout int = 30
+	// ServerPort is the server port number
+	ServerPort int = 8080
+	// MaxConnections is the maximum connections
+	MaxConnections int = 100
 )
 
-// goodLoopSliceReuse réutilise un slice déclaré avant la boucle.
-func goodLoopSliceReuse() {
-	// Déclaration avant la boucle
-	data := make([]int, 0, VALUE_TEN)
-	// Loop appends values to reused slice
-	for i := 0; i < VALUE_TEN; i++ {
-		// Append current iteration value
-		data = append(data, i)
-	}
-	_ = data
-}
+// All variables grouped in a single block
+var (
+	// defaultRetries defines the default number of retries
+	defaultRetries int = MaxRetries
 
-// goodLoopMapReuse réutilise une map déclarée avant la boucle.
-func goodLoopMapReuse() {
-	// Déclaration avant la boucle avec capacité
-	cache := make(map[string]int, VALUE_TEN)
-	// Loop reuses map
-	for i := 0; i < VALUE_TEN; i++ {
-		// Store current value
-		cache["key"] = i
-	}
-	_ = cache
-}
+	// configuration holds the app configuration
+	configuration string = "default"
 
-// goodRangeSliceReuse réutilise un slice dans une boucle range.
-func goodRangeSliceReuse() {
-	items := []int{1, VALUE_TWO, VALUE_THREE}
-	// Déclaration avant la boucle avec capacité
-	buffer := make([]byte, 0, VALUE_THREE)
-	// Range loop reuses buffer
-	for _, item := range items {
-		// Convert and append item
-		buffer = append(buffer, byte(item))
-	}
-	_ = buffer
-}
+	// serverPort is the server port number
+	serverPort int = ServerPort
 
-// goodNoLoopAlloc alloue hors d'une boucle.
-func goodNoLoopAlloc() {
-	// Pas de boucle, allocation OK avec array
-	var data [VALUE_TEN]int
-	_ = data
-}
+	// serverHost is the server hostname
+	serverHost string = "localhost"
 
-// goodNestedLoopReuse réutilise dans une boucle imbriquée.
-func goodNestedLoopReuse() {
-	// Déclaration avant la boucle avec array
-	var temp [VALUE_TEN]int
-	// Outer loop iterates
-	for i := 0; i < VALUE_FIVE; i++ {
-		// Inner loop modifies temp
-		for j := 0; j < VALUE_FIVE; j++ {
-			// Store multiplication result
-			temp[j] = i * j
-		}
-	}
-	_ = temp
+	// isEnabled indicates if feature is enabled
+	isEnabled bool = false
+
+	// maxConnections is the maximum connections
+	maxConnections int = MaxConnections
+)
+
+// init demonstrates correct usage patterns
+func init() {
+	// Local variables are not checked by VAR-013
+	localVar := MaxRetries
+	_ = localVar
+	_ = defaultRetries
+	_ = configuration
+	_ = serverPort
+	_ = serverHost
+	_ = isEnabled
+	_ = maxConnections
 }

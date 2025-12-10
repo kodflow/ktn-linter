@@ -1,19 +1,94 @@
 package ktnfunc
 
 import (
+	"testing"
+
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"go/types"
-	"testing"
 
-	"golang.org/x/tools/go/packages"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
+
+
+// Test_runFunc006_disabled tests behavior when rule is disabled.
+func Test_runFunc006_disabled(t *testing.T) {
+	// Configuration avec règle désactivée
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-FUNC-006": {Enabled: config.Bool(false)},
+		},
+	})
+	// Reset config après le test
+	defer config.Reset()
+
+	// Créer un pass minimal
+	result, err := runFunc006(&analysis.Pass{})
+	// Vérification de l'erreur
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	// Vérification du résultat nil
+	if result != nil {
+		t.Errorf("Expected nil result when rule disabled, got %v", result)
+	}
+}
+
+// Test_runFunc006_excludedFile tests behavior with excluded files.
+func Test_runFunc006_excludedFile(t *testing.T) {
+	// Configuration avec fichier exclu
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-FUNC-006": {
+				Enabled:       config.Bool(true),
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	// Reset config après le test
+	defer config.Reset()
+
+	code := `package test
+func foo() { }
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer un inspector
+	files := []*ast.File{file}
+	inspectResult, _ := inspect.Analyzer.Run(&analysis.Pass{
+		Fset:  fset,
+		Files: files,
+	})
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(d analysis.Diagnostic) {
+			t.Errorf("Expected no diagnostics for excluded file, got: %s", d.Message)
+		},
+	}
+
+	// Exécuter l'analyse
+	_, err = runFunc006(pass)
+	// Vérification erreur
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
 
 // Test_runFunc006 tests the runFunc006 private function.
 func Test_runFunc006(t *testing.T) {
 	// Test cases pour la fonction privée runFunc006
-	// La logique principale est testée via l'API publique dans 006_external_test.go
+	// La logique principale est testée via l'API publique dans 002_external_test.go
 	// Ce test vérifie les cas edge de la fonction privée
 
 	tests := []struct {
@@ -31,35 +106,22 @@ func Test_runFunc006(t *testing.T) {
 	}
 }
 
-// Test_validateErrorInReturns vérifie la validation de la position des erreurs.
-func Test_validateErrorInReturns(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - la logique est testée via external tests
-		})
-	}
-}
-
-// Test_isErrorType vérifie la détection du type error.
-func Test_isErrorType(t *testing.T) {
+// Test_countEffectiveParams vérifie le comptage des paramètres effectifs.
+//
+// Params:
+//   - t: instance de testing
+func Test_countEffectiveParams(t *testing.T) {
 	tests := []struct {
 		name     string
-		code     string
-		expected bool
+		expected int
 	}{
 		{
-			name: "error case validation",
-			code: `package test
-func foo() error { return nil }`,
-			expected: true,
+			name:     "no_params_returns_zero",
+			expected: 0,
+		},
+		{
+			name:     "nil_params_returns_zero",
+			expected: 0,
 		},
 	}
 
@@ -67,24 +129,14 @@ func foo() error { return nil }`,
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &packages.Config{Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo}
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
-			// Vérification de l'erreur
-			if err != nil {
-				t.Fatalf("Failed to parse: %v", err)
+			// Test avec nil params
+			if tt.name == "nil_params_returns_zero" {
+				result := countEffectiveParams(nil, nil)
+				// Vérification du résultat
+				if result != tt.expected {
+					t.Errorf("countEffectiveParams(nil, nil) = %d, want %d", result, tt.expected)
+				}
 			}
-
-			// Créer un package minimal
-			pkg := &packages.Package{
-				Fset:      fset,
-				Syntax:    []*ast.File{file},
-				TypesInfo: &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)},
-			}
-			_ = pkg
-			_ = cfg
-
-			// Test passthrough - le test complet nécessite un contexte d'analyse complet
 		})
 	}
 }

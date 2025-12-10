@@ -1,106 +1,64 @@
+// Bad examples for the func002 test case.
 package func002
 
-// processSixParams dépasse la limite avec 6 paramètres
+import "context"
+
+// ProcessDataBad demonstrates context.Context as second parameter (intentional violation).
 //
 // Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - f: paramètre de test
-func processSixParams(a, b, c, d, e, f int) {
+//   - id: identifier
+//   - ctx: context for cancellation (BAD: should be first)
+func ProcessDataBad(id int, ctx context.Context) {
 	// Utilisation des paramètres
-	_ = a + b + c + d + e + f
+	_, _ = id, ctx
 }
 
-// calculateSevenParams dépasse largement avec 7 paramètres
+// HandleRequestBad demonstrates context.Context as last parameter (intentional violation).
 //
 // Params:
-//   - a: entier
-//   - b: chaîne
-//   - c: booléen
-//   - d: flottant
-//   - e: slice d'entiers
-//   - f: map
-//   - g: canal
-func calculateSevenParams(a int, b string, c bool, d float64, e []int, f map[string]int, g chan int) {
+//   - id: identifier
+//   - name: name string
+//   - ctx: context for cancellation (BAD: should be first)
+func HandleRequestBad(id int, name string, ctx context.Context) {
 	// Utilisation des paramètres
-	_, _, _, _, _, _, _ = a, b, c, d, e, f, g
+	_, _, _ = id, name, ctx
 }
 
-// buildTenParams fonction avec beaucoup trop de paramètres
+// ComplexFunctionBad demonstrates context.Context in the middle (intentional violation).
 //
 // Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - f: paramètre de test
-//   - g: paramètre de test
-//   - h: paramètre de test
-//   - i: paramètre de test
-//   - j: paramètre de test
-func buildTenParams(a, b, c, d, e, f, g, h, i, j int) {
+//   - id: identifier
+//   - ctx: context for cancellation (BAD: should be first)
+//   - name: name string
+func ComplexFunctionBad(id int, ctx context.Context, name string) {
 	// Utilisation des paramètres
-	_ = a + b + c + d + e + f + g + h + i + j
+	_, _, _ = id, ctx, name
 }
 
-// createEightParams cas avec 8 paramètres groupés
+// ServiceBad demonstrates a service type with bad context positioning.
+// Used to test context position in method receivers.
+type ServiceBad struct{}
+
+// ServiceBadInterface defines the public methods of ServiceBad.
+type ServiceBadInterface interface {
+	Process(data string, ctx context.Context)
+}
+
+// NewServiceBad creates a new instance of ServiceBad.
+//
+// Returns:
+//   - *ServiceBad: new instance
+func NewServiceBad() *ServiceBad {
+	// Return new instance
+	return &ServiceBad{}
+}
+
+// Process demonstrates method with context not first (intentional violation).
 //
 // Params:
-//   - a: entier
-//   - b, c: chaînes
-//   - d, e, f: booléens
-//   - g, h: flottants
-func createEightParams(a int, b, c string, d, e, f bool, g, h float64) {
+//   - data: input data string
+//   - ctx: context for cancellation (BAD: should be first)
+func (s *ServiceBad) Process(data string, ctx context.Context) {
 	// Utilisation des paramètres
-	_, _, _, _, _, _, _, _ = a, b, c, d, e, f, g, h
+	_, _ = data, ctx
 }
-
-// formatSixParams exactement 6 paramètres (juste au-dessus de la limite)
-//
-// Params:
-//   - a: paramètre de test
-//   - b: paramètre de test
-//   - c: paramètre de test
-//   - d: paramètre de test
-//   - e: paramètre de test
-//   - f: paramètre de test
-func formatSixParams(a, b, c, d, e, f int) {
-	// Utilisation des paramètres
-	_ = a + b + c + d + e + f
-}
-
-// convertWithVariadicBad fonction variadique avec 6 paramètres au total
-//
-// Params:
-//   - a: paramètre régulier
-//   - b: paramètre régulier
-//   - c: paramètre régulier
-//   - d: paramètre régulier
-//   - e: paramètre régulier
-//   - f: paramètre variadique
-func convertWithVariadicBad(a, b, c, d, e int, f ...string) {
-	// Utilisation des paramètres
-	_, _, _, _, _, _ = a, b, c, d, e, f
-}
-
-var (
-	// badLiteralSix fonction littérale avec 6 paramètres
-	badLiteralSix func(int, int, int, int, int, int) = func(a, b, c, d, e, f int) {
-		// Utilisation des paramètres
-		_ = a + b + c + d + e + f
-	}
-
-	// badLiteralUnnamed fonction littérale avec 6 paramètres non nommés
-	badLiteralUnnamed func(int, string, bool, float64, []int, map[string]int) = func(int, string, bool, float64, []int, map[string]int) {
-		// Fonction vide
-	}
-
-	// badLiteralSixUnnamed fonction littérale avec 6 paramètres non nommés identiques
-	badLiteralSixUnnamed func(int, int, int, int, int, int) = func(int, int, int, int, int, int) {
-		// Fonction vide
-	}
-)

@@ -1,3 +1,4 @@
+// External tests for analyzer 012.
 package ktntest_test
 
 import (
@@ -7,9 +8,29 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-func TestAnalyzer012(t *testing.T) {
-	// Expected 2 errors in bad package:
-	// - helper_test.go (should be renamed to helper_internal_test.go or helper_external_test.go)
-	// - resource_test.go (should be renamed to resource_internal_test.go or resource_external_test.go)
-	testhelper.TestGoodBadPackage(t, ktntest.Analyzer012, "test012", 2)
+// TestTest012 tests the passthrough test detection.
+//
+// Params:
+//   - t: testing context
+func TestTest012(t *testing.T) {
+	tests := []struct {
+		name     string
+		analyzer string
+	}{
+		{
+			name:     "passthrough test detection",
+			analyzer: "test012",
+		},
+		{
+			name:     "validate test implementation quality",
+			analyzer: "test012",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 8 erreurs: 8 tests passthrough dans bad_test.go
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer012, tt.analyzer, "good_test.go", "bad_test.go", 8)
+		})
+	}
 }

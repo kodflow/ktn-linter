@@ -1,170 +1,344 @@
+// Internal tests for 018.go private functions
 package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Test_runVar018 tests the private runVar018 function.
-func Test_runVar018(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"passthrough validation"},
-		{"error case validation"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - main logic tested via public API in external tests
-		})
-	}
-}
-
-// Test_extractLoop tests the private extractLoop helper function.
-func Test_extractLoop(t *testing.T) {
+// TestIsSnakeCase teste la fonction isSnakeCase.
+//
+// Params:
+//   - t: contexte de test
+func TestIsSnakeCase(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     ast.Node
+		input    string
 		expected bool
 	}{
 		{
-			name:     "for stmt",
-			node:     &ast.ForStmt{Body: &ast.BlockStmt{}},
+			name:     "snake_case avec underscore",
+			input:    "my_variable",
 			expected: true,
 		},
 		{
-			name:     "range stmt",
-			node:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
-			expected: true,
+			name:     "camelCase sans underscore",
+			input:    "myVariable",
+			expected: false,
 		},
 		{
-			name:     "other node",
-			node:     &ast.IfStmt{},
+			name:     "SCREAMING_SNAKE_CASE tout en majuscules",
+			input:    "MY_CONSTANT",
+			expected: false,
+		},
+		{
+			name:     "nom simple sans underscore",
+			input:    "simple",
 			expected: false,
 		},
 	}
 
+	// Itération sur les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractLoop(tt.node)
-			// Vérification du résultat
-			if (result != nil) != tt.expected {
-				t.Errorf("extractLoop() returned %v, expected non-nil: %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isStringConversion tests the private isStringConversion helper function.
-func Test_isStringConversion(t *testing.T) {
-	tests := []struct {
-		name     string
-		node     ast.Node
-		expected bool
-	}{
-		{
-			name: "string conversion",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "b"}},
-			},
-			expected: true,
-		},
-		{
-			name: "other function",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "len"},
-				Args: []ast.Expr{&ast.Ident{Name: "s"}},
-			},
-			expected: false,
-		},
-		{
-			name: "no args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{},
-			},
-			expected: false,
-		},
-		{
-			name: "multiple args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
-			},
-			expected: false,
-		},
-		{
-			name:     "not call expr",
-			node:     &ast.Ident{Name: "x"},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isStringConversion(tt.node)
+			result := isSnakeCase(tt.input)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("isStringConversion() = %v, expected %v", result, tt.expected)
+				t.Errorf("isSnakeCase(%q) = %v, expected %v", tt.input, result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkFuncForRepeatedConversions tests the private checkFuncForRepeatedConversions function.
-func Test_checkFuncForRepeatedConversions(t *testing.T) {
+// TestSnakeToCamel teste la fonction snakeToCamel.
+//
+// Params:
+//   - t: contexte de test
+func TestSnakeToCamel(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		input    string
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "conversion simple snake_case",
+			input:    "my_variable",
+			expected: "myVariable",
+		},
+		{
+			name:     "conversion multiple underscores",
+			input:    "my_long_variable_name",
+			expected: "myLongVariableName",
+		},
+		{
+			name:     "pas d'underscore retourne inchangé",
+			input:    "simple",
+			expected: "simple",
+		},
+		{
+			name:     "underscore en fin ignoré",
+			input:    "my_var_",
+			expected: "myVar",
+		},
 	}
+
+	// Itération sur les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for repeated conversions
+			result := snakeToCamel(tt.input)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("snakeToCamel(%q) = %q, expected %q", tt.input, result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_checkLoopsForStringConversion tests the private checkLoopsForStringConversion function.
-func Test_checkLoopsForStringConversion(t *testing.T) {
+// TestCheckVar018Names teste la fonction checkVar018Names.
+//
+// Params:
+//   - t: contexte de test
+func TestCheckVar018Names(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		code        string
+		expectError bool
 	}{
-		{"error case validation"},
+		{
+			name:        "snake_case détecté",
+			code:        "var my_variable int",
+			expectError: true,
+		},
+		{
+			name:        "camelCase accepté",
+			code:        "var myVariable int",
+			expectError: false,
+		},
+		{
+			name:        "blank identifier ignoré",
+			code:        "var _ int",
+			expectError: false,
+		},
+		{
+			name:        "nom simple sans underscore accepté",
+			code:        "var simple int",
+			expectError: false,
+		},
 	}
+
+	// Itération sur les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks loops for string conversion
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", "package test\n"+tt.code, 0)
+			// Vérification parsing
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			errorFound := false
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(d analysis.Diagnostic) {
+					errorFound = true
+				},
+			}
+
+			// Parcours des déclarations
+			for _, decl := range file.Decls {
+				// Vérification type GenDecl
+				if genDecl, ok := decl.(*ast.GenDecl); ok {
+					// Parcours des specs
+					for _, spec := range genDecl.Specs {
+						// Vérification type ValueSpec
+						if valueSpec, ok := spec.(*ast.ValueSpec); ok {
+							checkVar018Names(pass, valueSpec)
+						}
+					}
+				}
+			}
+
+			// Vérification résultat
+			if errorFound != tt.expectError {
+				t.Errorf("checkVar018Names() error = %v, expectError %v", errorFound, tt.expectError)
+			}
 		})
 	}
 }
 
-// Test_hasStringConversion tests the private hasStringConversion function.
-func Test_hasStringConversion(t *testing.T) {
+// TestRunVar018 teste la fonction runVar018.
+//
+// Params:
+//   - t: contexte de test
+func TestRunVar018(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		code        string
+		expectError bool
 	}{
-		{"error case validation"},
+		{
+			name: "snake_case dans déclaration var",
+			code: `package test
+var my_variable int`,
+			expectError: true,
+		},
+		{
+			name: "camelCase valide",
+			code: `package test
+var myVariable int`,
+			expectError: false,
+		},
+		{
+			name: "déclaration const ignorée",
+			code: `package test
+const MY_CONSTANT = 42`,
+			expectError: false,
+		},
+		{
+			name: "plusieurs variables dont snake_case",
+			code: `package test
+var (
+	valid int
+	my_invalid int
+)`,
+			expectError: true,
+		},
 	}
+
+	// Itération sur les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if has string conversion
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification parsing
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			errorFound := false
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(d analysis.Diagnostic) {
+					errorFound = true
+				},
+			}
+
+			_, err = runVar018(pass)
+			// Vérification absence d'erreur d'exécution
+			if err != nil {
+				t.Fatalf("runVar018() returned error: %v", err)
+			}
+
+			// Vérification résultat
+			if errorFound != tt.expectError {
+				t.Errorf("runVar018() error = %v, expectError %v", errorFound, tt.expectError)
+			}
 		})
 	}
 }
 
-// Test_checkMultipleConversions tests the private checkMultipleConversions function.
-func Test_checkMultipleConversions(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+// Test_runVar018_disabled tests runVar018 with disabled rule.
+func Test_runVar018_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-018": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for multiple conversions
-		})
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar018(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar018() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar018() reported %d issues, expected 0 when disabled", reportCount)
+	}
+}
+
+// Test_runVar018_fileExcluded tests runVar018 with excluded file.
+func Test_runVar018_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-018": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar018(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar018() error = %v", err)
+	}
+
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar018() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

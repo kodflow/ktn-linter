@@ -1,3 +1,4 @@
+// Package test005 provides calculation and validation utilities.
 package test005
 
 import (

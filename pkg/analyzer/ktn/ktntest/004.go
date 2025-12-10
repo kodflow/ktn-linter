@@ -7,32 +7,93 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
-// INITIAL_MAP_CAPACITY est la capacité initiale des maps de signatures.
-const INITIAL_MAP_CAPACITY int = 32
+const (
+	// ruleCode est le code de la règle.
+	ruleCodeTest004 string = "KTN-TEST-004"
+	// minPublicFuncs est le nombre minimum de fonctions publiques
+	minPublicFuncs int = 1
+	// maxTestNames maximum number of test names to check per function
+	maxTestNames int = 2
+)
 
-// testedFuncInfo contient les informations sur une fonction testée.
-type testedFuncInfo struct {
-	name          string
-	returnsError  bool
-	hasReceiver   bool
-	receiverName  string
+// funcInfo stores information about a function (public or private)
+type funcInfo struct {
+	name         string
+	receiverName string // Nom du receiver pour les méthodes (vide pour les fonctions)
+	isExported   bool   // true si fonction publique, false si privée
+	pos          token.Pos
+	filename     string
 }
 
+// Analyzer004 checks that all functions (public and private) have corresponding tests
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+	Name: "ktntest004",
+	Doc:  "KTN-TEST-004: Toutes les fonctions (publiques et privées) doivent avoir des tests",
+	Run:  runTest004,
+}
 
-// Analyzer004 checks that tests cover error cases
-var Analyzer004 = &analysis.Analyzer{
-	Name:     "ktntest004",
-	Doc:      "KTN-TEST-004: Les tests doivent couvrir les cas d'erreur et exceptions",
-	Run:      runTest004,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
+// collectFunctions collecte toutes les fonctions (publiques et privées) et les fonctions testées.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcs: pointeur vers slice de toutes les fonctions
+//   - testedFuncs: map des fonctions testées
+func collectFunctions(pass *analysis.Pass, funcs *[]funcInfo, testedFuncs map[string]bool) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Parcourir tous les fichiers du pass
+	for _, file := range pass.Files {
+		filename := pass.Fset.Position(file.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeTest004, filename) {
+			// Fichier exclu
+			continue
+		}
+
+		// Skip mock files
+		if shared.IsMockFile(filename) {
+			// Mock file, skip
+			continue
+		}
+
+		// Parcourir l'AST du fichier
+		ast.Inspect(file, func(n ast.Node) bool {
+			funcDecl, ok := n.(*ast.FuncDecl)
+			// Vérification si déclaration de fonction
+			if !ok {
+				// Continuer la traversée
+				return true
+			}
+
+			// Vérification si fichier de test
+			if shared.IsTestFile(filename) {
+				// Collecter les fonctions testées
+				collectExternalTestedFunctions(funcDecl, testedFuncs)
+			} else {
+				// Cas alternatif: fichier source
+				// Collecter toutes les fonctions
+				meta := shared.ClassifyFunc(funcDecl)
+				*funcs = append(*funcs, funcInfo{
+					name:         meta.Name,
+					receiverName: meta.ReceiverName,
+					isExported:   meta.Visibility == shared.VisPublic,
+					pos:          funcDecl.Pos(),
+					filename:     filename,
+				})
+			}
+			// Continuer la traversée
+			return true
+		})
+	}
 }
 
 // runTest004 exécute l'analyse KTN-TEST-004.
@@ -44,452 +105,441 @@ var Analyzer004 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest004(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	// Collecter toutes les fonctions du package avec leur signature
-	funcSignatures := collectFuncSignatures(pass, insp)
-
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest004) {
+		// Règle désactivée
+		return nil, nil
 	}
 
-	// Analyser les fonctions de test
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+	// Vérifier s'il y a des fichiers de test dans ce pass
+	hasTestFiles, testFileCount := countTestFiles(pass)
 
-		// Vérification fichier de test
-		if !shared.IsTestFile(filename) {
-			return
-		}
+	// Si pas de fichiers de test ou que des fichiers de test, skip
+	if !hasTestFiles || testFileCount == len(pass.Files) {
+		// Early return from function
+		return nil, nil
+	}
 
-		// Vérifier si c'est une fonction de test unitaire
-		if !shared.IsUnitTestFunction(funcDecl) {
-			return
-		}
+	// Collecter toutes les fonctions et les tests
+	allFuncs, testedFuncs := collectAllFunctionsAndTests(pass)
 
-		// Analyser le test par rapport à la fonction testée
-		analyzeTestFunction(pass, funcDecl, funcSignatures)
-	})
+	// Vérifier que chaque fonction a un test
+	checkFunctionsHaveTests(pass, allFuncs, testedFuncs)
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectFuncSignatures collecte les signatures des fonctions.
+// countTestFiles compte les fichiers de test dans le pass.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - insp: inspecteur AST
 //
 // Returns:
-//   - map[string]testedFuncInfo: map nom -> info fonction
-func collectFuncSignatures(pass *analysis.Pass, insp *inspector.Inspector) map[string]testedFuncInfo {
-	// Initialiser avec capacité estimée
-	signatures := make(map[string]testedFuncInfo, INITIAL_MAP_CAPACITY)
-
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
-	}
-
-	// Parcourir toutes les fonctions du pass
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-
-		// Ignorer les fichiers de test
-		if shared.IsTestFile(filename) {
-			return
+//   - bool: true si des fichiers de test existent
+//   - int: nombre de fichiers de test
+func countTestFiles(pass *analysis.Pass) (bool, int) {
+	hasTestFiles := false
+	testFileCount := 0
+	// Parcourir les fichiers du pass
+	for _, file := range pass.Files {
+		pos := pass.Fset.Position(file.Pos())
+		// Vérification si fichier de test
+		if shared.IsTestFile(pos.Filename) {
+			// Incrémenter les compteurs
+			hasTestFiles = true
+			testFileCount++
 		}
-
-		// Ajouter la signature
-		addFuncSignature(signatures, funcDecl)
-	})
-
-	// Scanner les fichiers sources du répertoire (pour tests externes)
-	collectExternalSourceSignatures(pass, signatures)
-
-	// Retour des signatures
-	return signatures
-}
-
-// addFuncSignature ajoute une signature de fonction.
-//
-// Params:
-//   - signatures: map des signatures
-//   - funcDecl: déclaration de fonction
-func addFuncSignature(signatures map[string]testedFuncInfo, funcDecl *ast.FuncDecl) {
-	info := extractFuncInfo(funcDecl)
-	// Stocker avec le nom simple
-	signatures[info.name] = *info
-	// Stocker aussi avec Receiver_Method si méthode
-	if info.hasReceiver {
-		signatures[info.receiverName+"_"+info.name] = *info
 	}
+	// Retour des compteurs
+	return hasTestFiles, testFileCount
 }
 
-// collectExternalSourceSignatures scanne les fichiers sources du répertoire.
+// collectAllFunctionsAndTests collecte les fonctions et les tests.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - signatures: map des signatures à remplir
-func collectExternalSourceSignatures(pass *analysis.Pass, signatures map[string]testedFuncInfo) {
-	// Pas de fichiers dans le pass
-	if len(pass.Files) == 0 {
-		return
+//
+// Returns:
+//   - []funcInfo: liste des fonctions
+//   - map[string]bool: map des fonctions testées
+func collectAllFunctionsAndTests(pass *analysis.Pass) ([]funcInfo, map[string]bool) {
+	var allFuncs []funcInfo
+	testedFuncs := make(map[string]bool, 0)
+
+	// Collecter toutes les fonctions et les tests
+	collectFunctions(pass, &allFuncs, testedFuncs)
+
+	// Scanner les packages _test externes
+	collectExternalTestFunctions(pass, testedFuncs)
+
+	// Retour des collections
+	return allFuncs, testedFuncs
+}
+
+// checkFunctionsHaveTests vérifie que chaque fonction a un test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - allFuncs: liste des fonctions
+//   - testedFuncs: map des fonctions testées
+func checkFunctionsHaveTests(pass *analysis.Pass, allFuncs []funcInfo, testedFuncs map[string]bool) {
+	// Construire la map de recherche
+	funcLookup := make(map[string]bool, len(allFuncs))
+	// Parcourir les fonctions
+	for _, fn := range allFuncs {
+		key := buildFuncLookupKey(fn)
+		funcLookup[key] = true
 	}
 
-	// Obtenir le répertoire du package
-	firstFile := pass.Fset.Position(pass.Files[0].Pos()).Filename
-	packageDir := filepath.Dir(firstFile)
+	// Pré-allouer le slice pour les noms de test
+	testNames := make([]string, 0, maxTestNames)
 
-	// Lire les fichiers du répertoire
-	entries, err := os.ReadDir(packageDir)
-	// Erreur de lecture
-	if err != nil {
-		return
-	}
-
-	// Parcourir les fichiers
-	for _, entry := range entries {
-		// Ignorer les répertoires
-		if entry.IsDir() {
+	// Parcourir toutes les fonctions
+	for _, fn := range allFuncs {
+		// Vérification si mock
+		if shared.IsMockName(fn.name) {
+			// Ignorer les mocks
 			continue
 		}
-		// Scanner les fichiers Go non-test
-		scanSourceFile(packageDir, entry.Name(), signatures)
+		// Vérification si receiver mock
+		if fn.receiverName != "" && shared.IsMockName(fn.receiverName) {
+			// Ignorer les méthodes mock
+			continue
+		}
+
+		// Construire les noms de test possibles
+		testNames = buildTestNames(testNames[:0], fn)
+
+		// Vérification si test manquant
+		if !hasMatchingTest(testNames, testedFuncs) && !isExemptFunction(fn.name) {
+			// Signaler le test manquant
+			reportMissingTest(pass, fn)
+		}
 	}
 }
 
-// scanSourceFile scanne un fichier source pour les signatures.
+// buildFuncLookupKey builds the lookup key for a function.
 //
 // Params:
-//   - dir: répertoire du fichier
-//   - filename: nom du fichier
-//   - signatures: map des signatures
-func scanSourceFile(dir string, filename string, signatures map[string]testedFuncInfo) {
-	// Ignorer les fichiers non-Go
-	if !strings.HasSuffix(filename, ".go") {
-		return
+//   - fn: function info
+//
+// Returns:
+//   - string: lookup key
+func buildFuncLookupKey(fn funcInfo) string {
+	// Vérification si méthode
+	if fn.receiverName != "" {
+		// Retour clé avec receiver
+		return fn.receiverName + "_" + fn.name
 	}
-	// Ignorer les fichiers de test
-	if strings.HasSuffix(filename, "_test.go") {
-		return
-	}
+	// Retour clé simple
+	return fn.name
+}
 
-	// Parser le fichier
-	fullPath := filepath.Join(dir, filename)
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, fullPath, nil, 0)
-	// Erreur de parsing
-	if err != nil {
-		return
+// buildTestNames construit les noms de test possibles pour une fonction.
+//
+// Params:
+//   - testNames: slice à remplir (doit être vide)
+//   - fn: information sur la fonction
+//
+// Returns:
+//   - []string: noms de test possibles
+func buildTestNames(testNames []string, fn funcInfo) []string {
+	// Use shared helper to build lookup key
+	meta := &shared.FuncMeta{
+		Name:         fn.name,
+		ReceiverName: fn.receiverName,
 	}
+	// Vérification si méthode
+	if fn.receiverName != "" {
+		// Définir comme méthode
+		meta.Kind = shared.FuncMethod
+	} else {
+		// Cas alternatif: fonction
+		// Définir comme fonction
+		meta.Kind = shared.FuncTopLevel
+	}
+	// Ajouter la clé de recherche
+	testNames = append(testNames, shared.BuildTestLookupKey(meta))
+	// Retour des noms
+	return testNames
+}
 
-	// Extraire les signatures
-	ast.Inspect(file, func(n ast.Node) bool {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Pas une fonction
-		if !ok {
+// hasMatchingTest vérifie si un test existe pour les noms donnés.
+//
+// Params:
+//   - testNames: noms de test à chercher
+//   - testedFuncs: map des fonctions testées
+//
+// Returns:
+//   - bool: true si un test existe
+func hasMatchingTest(testNames []string, testedFuncs map[string]bool) bool {
+	// Itération sur les noms de test
+	for _, testName := range testNames {
+		// Vérification case-sensitive
+		if testedFuncs[testName] {
+			// Retour trouvé
 			return true
 		}
-		// Ajouter la signature
-		addFuncSignature(signatures, funcDecl)
-		return true
-	})
-}
-
-// extractFuncInfo extrait les informations d'une fonction.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//
-// Returns:
-//   - *testedFuncInfo: informations extraites
-func extractFuncInfo(funcDecl *ast.FuncDecl) *testedFuncInfo {
-	// Créer les infos de base
-	info := &testedFuncInfo{
-		name:         funcDecl.Name.Name,
-		returnsError: functionReturnsError(funcDecl),
-	}
-
-	// Vérifier si c'est une méthode
-	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
-		info.hasReceiver = true
-		info.receiverName = extractReceiverName(funcDecl.Recv.List[0].Type)
-	}
-
-	// Retour des infos
-	return info
-}
-
-// functionReturnsError vérifie si une fonction retourne error.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//
-// Returns:
-//   - bool: true si retourne error
-func functionReturnsError(funcDecl *ast.FuncDecl) bool {
-	// Pas de type de fonction
-	if funcDecl.Type == nil {
-		return false
-	}
-	// Pas de résultats
-	if funcDecl.Type.Results == nil {
-		return false
-	}
-
-	// Parcourir les types de retour
-	for _, field := range funcDecl.Type.Results.List {
-		// Vérifier si c'est "error"
-		if isErrorType(field.Type) {
-			// Type error trouvé
-			return true
-		}
-	}
-
-	// Aucun type error trouvé
-	return false
-}
-
-// isErrorType vérifie si un type est error.
-//
-// Params:
-//   - expr: expression du type
-//
-// Returns:
-//   - bool: true si c'est error
-func isErrorType(expr ast.Expr) bool {
-	// Identifiant simple "error"
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Comparer avec "error"
-		return ident.Name == "error"
-	}
-	// Pas un type error
-	return false
-}
-
-// extractReceiverName extrait le nom du receiver.
-//
-// Params:
-//   - expr: expression du type
-//
-// Returns:
-//   - string: nom du receiver
-func extractReceiverName(expr ast.Expr) string {
-	// Gérer les pointeurs
-	if star, ok := expr.(*ast.StarExpr); ok {
-		// Appel récursif sur le type pointé
-		return extractReceiverName(star.X)
-	}
-	// Identifiant simple
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Retour du nom de l'identifiant
-		return ident.Name
-	}
-	// Type non supporté
-	return ""
-}
-
-// analyzeTestFunction analyse une fonction de test.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - testFunc: fonction de test
-//   - signatures: signatures des fonctions
-func analyzeTestFunction(
-	pass *analysis.Pass,
-	testFunc *ast.FuncDecl,
-	signatures map[string]testedFuncInfo,
-) {
-	// Extraire le nom de la fonction testée
-	testedName := extractTestedFuncName(testFunc.Name.Name)
-	// Nom vide = pas de fonction testée identifiable
-	if testedName == "" {
-		return
-	}
-
-	// Chercher la fonction dans les signatures
-	info, found := signatures[testedName]
-	// Fonction non trouvée dans les signatures
-	if !found {
-		return
-	}
-
-	// Vérifier si la fonction retourne error
-	if !info.returnsError {
-		return
-	}
-
-	// Vérifier la couverture des cas d'erreur
-	if !hasErrorCaseCoverage(testFunc) {
-		pass.Reportf(
-			testFunc.Pos(),
-			"KTN-TEST-004: le test '%s' teste une fonction qui retourne error, "+
-				"il devrait couvrir les cas d'erreur",
-			testFunc.Name.Name,
-		)
-	}
-}
-
-// extractTestedFuncName extrait le nom de la fonction testée.
-//
-// Params:
-//   - testName: nom du test (ex: TestParseConfig)
-//
-// Returns:
-//   - string: nom de la fonction testée
-func extractTestedFuncName(testName string) string {
-	// Retirer le préfixe "Test"
-	name := strings.TrimPrefix(testName, "Test")
-	// Retirer le _ pour les fonctions privées
-	name = strings.TrimPrefix(name, "_")
-	// Retour du nom extrait
-	return name
-}
-
-// hasErrorCaseCoverage vérifie la couverture des cas d'erreur.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//
-// Returns:
-//   - bool: true si cas d'erreur couverts
-func hasErrorCaseCoverage(funcDecl *ast.FuncDecl) bool {
-	found := false
-
-	// Parcourir le corps de la fonction
-	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// Vérifier les différents types de nœuds
-		if checkErrorInNode(n) {
-			found = true
-		}
-		// Continuer l'inspection
-		return true
-	})
-
-	// Retour du résultat de l'analyse
-	return found
-}
-
-// checkErrorInNode vérifie si un nœud contient un indicateur d'erreur.
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si indicateur trouvé
-func checkErrorInNode(n ast.Node) bool {
-	// Traiter selon le type de nœud
-	switch node := n.(type) {
-	// Composite literal avec cas d'erreur
-	case *ast.CompositeLit:
-		// Vérifier les cas de test d'erreur
-		return hasErrorTestCases(node)
-	// Identifiant indicateur d'erreur
-	case *ast.Ident:
-		// Vérifier le nom de l'identifiant
-		return isErrorIndicatorName(node.Name)
-	// String literal avec error/invalid/fail
-	case *ast.BasicLit:
-		// Vérifier le contenu du literal
-		return checkErrorInBasicLit(node)
-	}
-	// Type de nœud non concerné
-	return false
-}
-
-// checkErrorInBasicLit vérifie un literal string.
-//
-// Params:
-//   - node: nœud BasicLit
-//
-// Returns:
-//   - bool: true si indicateur trouvé
-func checkErrorInBasicLit(node *ast.BasicLit) bool {
-	// Vérifier si c'est une string
-	if node.Kind.String() != "STRING" {
-		return false
-	}
-	// Vérifier le contenu de la string
-	value := strings.ToLower(node.Value)
-	// Vérifier les mots-clés d'erreur
-	return strings.Contains(value, "error") ||
-		strings.Contains(value, "invalid") ||
-		strings.Contains(value, "fail")
-}
-
-// hasErrorTestCases vérifie les cas d'erreur dans un composite.
-//
-// Params:
-//   - lit: composite literal
-//
-// Returns:
-//   - bool: true si cas d'erreur présents
-func hasErrorTestCases(lit *ast.CompositeLit) bool {
-	// Parcourir les éléments
-	for _, elt := range lit.Elts {
-		// Vérifier si c'est un KeyValueExpr
-		if kv, ok := elt.(*ast.KeyValueExpr); ok {
-			// Vérifier si c'est un cas d'erreur
-			if checkErrorInKeyValue(kv) {
-				// Cas d'erreur trouvé
+		// Itération sur les tests enregistrés
+		for testedName := range testedFuncs {
+			// Vérification case-insensitive
+			if strings.EqualFold(testName, testedName) {
+				// Retour trouvé
 				return true
 			}
 		}
 	}
-	// Pas de cas d'erreur
+	// Pas de test trouvé
 	return false
 }
 
-// checkErrorInKeyValue vérifie un KeyValueExpr.
+// reportMissingTest reporte une fonction sans test.
 //
 // Params:
-//   - kv: KeyValueExpr
-//
-// Returns:
-//   - bool: true si indicateur trouvé
-func checkErrorInKeyValue(kv *ast.KeyValueExpr) bool {
-	// Vérifier si la clé est "name"
-	ident, ok := kv.Key.(*ast.Ident)
-	// Pas un identifiant ou pas "name"
-	if !ok || ident.Name != "name" {
-		return false
+//   - pass: contexte d'analyse
+//   - fn: information sur la fonction
+func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
+	// Build meta for suggested test name
+	meta := &shared.FuncMeta{
+		Name:         fn.name,
+		ReceiverName: fn.receiverName,
 	}
-	// Vérifier si la valeur est un BasicLit
-	basic, basicOk := kv.Value.(*ast.BasicLit)
-	// Pas un BasicLit
-	if !basicOk {
-		return false
+	// Vérification si méthode
+	if fn.receiverName != "" {
+		// Définir comme méthode
+		meta.Kind = shared.FuncMethod
+	} else {
+		// Cas alternatif: fonction
+		// Définir comme fonction
+		meta.Kind = shared.FuncTopLevel
 	}
-	// Vérifier les mots-clés d'erreur
-	value := strings.ToLower(basic.Value)
-	// Retour du résultat
-	return strings.Contains(value, "error") ||
-		strings.Contains(value, "invalid") ||
-		strings.Contains(value, "fail")
+	// Vérification si publique
+	if fn.isExported {
+		// Définir comme publique
+		meta.Visibility = shared.VisPublic
+	} else {
+		// Cas alternatif: privée
+		// Définir comme privée
+		meta.Visibility = shared.VisPrivate
+	}
+
+	// Use shared helper for suggested name
+	suggestedTestName := shared.BuildSuggestedTestName(meta)
+
+	// Extraire le nom de base du fichier
+	baseName := filepath.Base(fn.filename)
+	fileBase := strings.TrimSuffix(baseName, ".go")
+
+	// Déterminer le fichier et le type de test
+	suggestedTestFile, testType, funcType := getTestFileInfo(fn.isExported, fileBase)
+
+	// Reporter la fonction non testée
+	pass.Reportf(
+		fn.pos,
+		"KTN-TEST-004: fonction %s '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (%s)",
+		funcType, fn.name, suggestedTestName, suggestedTestFile, testType,
+	)
 }
 
-// isErrorIndicatorName vérifie si un nom indique une erreur.
+// getTestFileInfo retourne les informations sur le fichier de test.
 //
 // Params:
-//   - name: nom à vérifier
+//   - isExported: true si fonction publique
+//   - fileBase: nom de base du fichier
 //
 // Returns:
-//   - bool: true si indicateur d'erreur
-func isErrorIndicatorName(name string) bool {
-	lowerName := strings.ToLower(name)
-	indicators := []string{"err", "error", "invalid", "fail", "bad", "wrong"}
+//   - string: nom du fichier de test suggéré
+//   - string: type de test
+//   - string: type de fonction
+func getTestFileInfo(isExported bool, fileBase string) (string, string, string) {
+	// Vérification si publique
+	if isExported {
+		// Retour info test external
+		return fileBase + "_external_test.go", "black-box testing avec package xxx_test", "publique"
+	}
+	// Retour info test internal
+	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
+}
 
-	// Parcourir les indicateurs
-	for _, indicator := range indicators {
-		// Vérifier si le nom contient l'indicateur
-		if strings.Contains(lowerName, indicator) {
-			// Indicateur trouvé
+// findPackageDir trouve le répertoire du package à partir des fichiers du pass.
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: chemin du répertoire ou chaîne vide si non trouvé
+func findPackageDir(pass *analysis.Pass) string {
+	// Itération sur les fichiers
+	for _, file := range pass.Files {
+		filename := pass.Fset.Position(file.Pos()).Filename
+		// Vérification si fichier cache
+		if isCacheOrTempFile(filename) {
+			// Ignorer fichier cache
+			continue
+		}
+		// Retour du répertoire
+		return filepath.Dir(filename)
+	}
+	// Pas de fichier source valide
+	return ""
+}
+
+// isCacheOrTempFile vérifie si un fichier est dans le cache Go ou temporaire.
+//
+// Params:
+//   - filename: chemin du fichier
+//
+// Returns:
+//   - bool: true si c'est un fichier cache/temp
+func isCacheOrTempFile(filename string) bool {
+	// Vérifier les patterns de cache et temp
+	return strings.Contains(filename, "/.cache/go-build/") ||
+		strings.Contains(filename, "/tmp/") ||
+		strings.Contains(filename, "\\cache\\go-build\\")
+}
+
+// parseTestFile parse un fichier de test et extrait les fonctions testées.
+//
+// Params:
+//   - fullPath: chemin complet du fichier
+//   - testedFuncs: map des fonctions testées à remplir
+func parseTestFile(fullPath string, testedFuncs map[string]bool) {
+	// Parser le fichier
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, fullPath, nil, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		// Retour en cas d'erreur
+		return
+	}
+
+	// Parcourir l'AST du fichier
+	ast.Inspect(node, func(n ast.Node) bool {
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Vérification si fonction
+		if !ok {
+			// Continuer la traversée
 			return true
 		}
+		// Collecter les fonctions testées
+		collectExternalTestedFunctions(funcDecl, testedFuncs)
+		// Continuer la traversée
+		return true
+	})
+}
+
+// collectExternalTestFunctions scanne les packages _test externes.
+// Cette fonction détecte les fichiers _external_test.go même s'ils utilisent
+// package xxx_test et sont dans XTestGoFiles (package séparé de Go).
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - testedFuncs: map des fonctions testées à remplir
+func collectExternalTestFunctions(pass *analysis.Pass, testedFuncs map[string]bool) {
+	// Vérification si fichiers présents
+	if len(pass.Files) == 0 {
+		// Retour si pas de fichiers
+		return
 	}
-	// Aucun indicateur trouvé
-	return false
+
+	// Obtenir le répertoire
+	packageDir := findPackageDir(pass)
+	// Vérification répertoire valide
+	if packageDir == "" {
+		// Retour si pas de répertoire
+		return
+	}
+
+	// Lire les entrées du répertoire
+	entries, err := os.ReadDir(packageDir)
+	// Vérification erreur lecture
+	if err != nil {
+		// Retour en cas d'erreur
+		return
+	}
+
+	// Itération sur les entrées
+	for _, entry := range entries {
+		// Vérification si répertoire ou non-test
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), "_test.go") {
+			// Continuer l'itération
+			continue
+		}
+		// Parser le fichier de test
+		parseTestFile(filepath.Join(packageDir, entry.Name()), testedFuncs)
+	}
+}
+
+// collectExternalTestedFunctions collecte les fonctions testées à partir
+// d'un fichier _test.go parsé en dehors du Pass (sans TypesInfo).
+// On ne peut pas utiliser shared.IsUnitTestFunction ici, on se base donc
+// uniquement sur une heuristique syntaxique.
+//
+// Params:
+//   - funcDecl: déclaration de fonction de test
+//   - testedFuncs: map des fonctions testées
+func collectExternalTestedFunctions(funcDecl *ast.FuncDecl, testedFuncs map[string]bool) {
+	// Vérification si fonction Test
+	if !strings.HasPrefix(funcDecl.Name.Name, "Test") {
+		// Retour si pas Test
+		return
+	}
+
+	// Vérification de la signature
+	if funcDecl.Type == nil || funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
+		// Retour si pas de paramètres
+		return
+	}
+
+	// Vérifier le premier paramètre
+	firstParam := funcDecl.Type.Params.List[0]
+	// Vérification du nom du paramètre
+	if len(firstParam.Names) == 0 || firstParam.Names[0].Name != "t" {
+		// Retour si pas "t"
+		return
+	}
+
+	// Vérification si test exempté
+	if shared.IsExemptTestName(funcDecl.Name.Name) {
+		// Retour si exempté
+		return
+	}
+
+	// Parser le nom du test
+	target, ok := shared.ParseTestName(funcDecl.Name.Name)
+	// Vérification parsing réussi
+	if !ok {
+		// Retour si échec parsing
+		return
+	}
+
+	// Construire la clé de recherche
+	key := shared.BuildTestTargetKey(target)
+	// Vérification clé valide
+	if key != "" {
+		// Ajouter la clé
+		testedFuncs[key] = true
+	}
+}
+
+// isExemptFunction vérifie si une fonction est exemptée.
+//
+// Params:
+//   - funcName: nom de la fonction
+//
+// Returns:
+//   - bool: true si la fonction est exemptée
+func isExemptFunction(funcName string) bool {
+	// Fonctions exemptées (uniquement init et main)
+	exemptFuncs := []string{
+		"init",
+		"main",
+	}
+
+	// Vérifier si la fonction est exemptée
+	return slices.Contains(exemptFuncs, funcName)
 }

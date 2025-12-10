@@ -7,13 +7,19 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const (
+	// ruleCode est le code de la règle.
+	ruleCodeTest011 string = "KTN-TEST-011"
+)
+
 // Analyzer011 checks package naming convention for internal/external test files
-var Analyzer011 = &analysis.Analyzer{
+var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest011",
 	Doc:      "KTN-TEST-011: Les fichiers _internal_test.go doivent utiliser 'package xxx', les fichiers _external_test.go doivent utiliser 'package xxx_test'",
 	Run:      runTest011,
@@ -29,26 +35,44 @@ var Analyzer011 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runTest011(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeTest011) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Parcourir tous les fichiers de test
+	// Itération sur les fichiers
 	for _, file := range pass.Files {
+		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(file.Pos()).Filename
-		basename := filepath.Base(filename)
-
-		// Vérification si fichier de test
-		if !shared.IsTestFile(basename) {
-			// Pas un fichier de test
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeTest011, filename) {
+			// Fichier exclu
 			continue
 		}
 
+		// Extraire le nom de base
+		basename := filepath.Base(filename)
+
+		// Vérification si test
+		if !shared.IsTestFile(basename) {
+			// Continuer si pas test
+			continue
+		}
+
+		// Extraire le package actuel
 		actualPkg := file.Name.Name
 
-		// Vérifier les conventions internal/external
+		// Vérification suffixe internal
 		if strings.HasSuffix(basename, "_internal_test.go") {
-			// Fichier _internal_test.go → doit utiliser package xxx (sans _test)
+			// Vérification package _test
 			if basePkg, ok := strings.CutSuffix(actualPkg, "_test"); ok {
-				// Erreur : package xxx_test dans _internal_test.go
+				// Signaler erreur package
 				pass.Reportf(
 					file.Name.Pos(),
 					"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s' (white-box testing) au lieu de 'package %s'. Les fichiers _internal_test.go testent les fonctions privées et doivent partager le même package",
@@ -57,29 +81,33 @@ func runTest011(pass *analysis.Pass) (any, error) {
 					actualPkg,
 				)
 			}
-			// Verification de la condition
-			// Alternative path handling
-		} else if strings.HasSuffix(basename, "_external_test.go") {
-			// Fichier _external_test.go → doit utiliser package xxx_test
-			if !strings.HasSuffix(actualPkg, "_test") {
-				// Extraire le nom du package attendu depuis le nom de fichier
-				expectedPkg := extractExpectedPackageFromFilename(basename)
-				// Erreur : package xxx dans _external_test.go
-				pass.Reportf(
-					file.Name.Pos(),
-					"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s_test' (black-box testing) au lieu de 'package %s'. Les fichiers _external_test.go testent l'API publique et doivent utiliser un package externe",
-					basename,
-					expectedPkg,
-					actualPkg,
-				)
+		} else {
+			// Vérification suffixe external
+			if strings.HasSuffix(basename, "_external_test.go") {
+				// Cas alternatif: external
+				// Vérification package sans _test
+				if !strings.HasSuffix(actualPkg, "_test") {
+					// Extraire package attendu
+					expectedPkg := extractExpectedPackageFromFilename(basename)
+					// Signaler erreur package
+					pass.Reportf(
+						file.Name.Pos(),
+						"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s_test' (black-box testing) au lieu de 'package %s'. Les fichiers _external_test.go testent l'API publique et doivent utiliser un package externe",
+						basename,
+						expectedPkg,
+						actualPkg,
+					)
+				}
 			}
 		}
 	}
 
+	// Définir le filtre de nœuds
 	nodeFilter := []ast.Node{
 		(*ast.File)(nil),
 	}
 
+	// Parcourir les nœuds
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Rien à faire dans preorder
 	})

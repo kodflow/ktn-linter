@@ -3,247 +3,163 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
+	"strings"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// INITIAL_CONVERSIONS_CAP est la capacité initiale pour la map de conversions
-	INITIAL_CONVERSIONS_CAP int = 10
-	// MAX_ALLOWED_CONVERSIONS est le nombre maximum de conversions tolérées
-	MAX_ALLOWED_CONVERSIONS int = 2
+	// ruleCodeVar018 is the rule code for this analyzer
+	ruleCodeVar018 string = "KTN-VAR-018"
 )
 
-// Analyzer018 détecte les conversions string() répétées.
-//
-// Les conversions string([]byte) répétées créent des allocations inutiles.
-// Il vaut mieux convertir une seule fois et réutiliser la variable.
-var Analyzer018 = &analysis.Analyzer{
+// Analyzer018 checks that variables don't use snake_case naming
+var Analyzer018 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar018",
-	Doc:      "KTN-VAR-018: Vérifie les conversions string() répétées",
+	Doc:      "KTN-VAR-018: Les variables ne doivent pas utiliser snake_case (underscores)",
 	Run:      runVar018,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runVar018 exécute l'analyse de détection des conversions répétées.
+// runVar018 exécute l'analyse KTN-VAR-018.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - interface{}: toujours nil
+//   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar018(pass *analysis.Pass) (any, error) {
-	// Récupération de l'inspecteur AST
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	// Types de nœuds à analyser
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar018) {
+		// Règle désactivée
+		return nil, nil
 	}
 
-	// Parcours des fonctions
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.GenDecl)(nil),
+	}
+
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Vérification des conversions dans la fonction
-		checkFuncForRepeatedConversions(pass, n)
+		genDecl := n.(*ast.GenDecl)
+
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar018, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Only check var declarations
+		if genDecl.Tok != token.VAR {
+			// Continue traversing AST nodes
+			return
+		}
+
+		// Iterate over specifications
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+			// Check each variable name
+			checkVar018Names(pass, valueSpec)
+		}
 	})
 
-	// Traitement
+	// Return analysis result
 	return nil, nil
 }
 
-// checkFuncForRepeatedConversions vérifie une fonction entière.
+// checkVar018Names vérifie les noms de variables pour snake_case.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - n: nœud AST à analyser
-func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node) {
-	// Cast en fonction
-	funcDecl, ok := n.(*ast.FuncDecl)
-	// Vérification de la condition
-	if !ok || funcDecl.Body == nil {
-		// Traitement
-		return
+//   - valueSpec: spécification de variable
+func checkVar018Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
+	// Iterate over variable names
+	for _, name := range valueSpec.Names {
+		varName := name.Name
+
+		// Skip blank identifier
+		if varName == "_" {
+			continue
+		}
+
+		// Check for snake_case (lowercase with underscores)
+		if isSnakeCase(varName) {
+			pass.Reportf(
+				name.Pos(),
+				"KTN-VAR-018: la variable '%s' utilise snake_case. Utilisez camelCase (ex: '%s')",
+				varName,
+				snakeToCamel(varName),
+			)
+		}
 	}
-
-	// Analyse des boucles
-	checkLoopsForStringConversion(pass, funcDecl.Body)
-
-	// Analyse des conversions multiples
-	checkMultipleConversions(pass, funcDecl.Body)
 }
 
-// checkLoopsForStringConversion détecte string() dans les boucles.
+// isSnakeCase vérifie si un nom utilise snake_case (minuscules avec underscores).
+// Exclut SCREAMING_SNAKE_CASE qui est déjà géré par VAR-001.
 //
 // Params:
-//   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkLoopsForStringConversion(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Parcours de tous les statements
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Vérification des boucles
-		loop := extractLoop(n)
-		// Vérification de la condition
-		if loop == nil {
-			// Traitement
+//   - name: nom à vérifier
+//
+// Returns:
+//   - bool: true si le nom est en snake_case
+func isSnakeCase(name string) bool {
+	// Must contain underscore
+	if !strings.Contains(name, "_") {
+		// Retour de la fonction
+		return false
+	}
+
+	// Check if it's NOT all uppercase (SCREAMING_SNAKE_CASE is handled by VAR-001)
+	for _, ch := range name {
+		// If we find a lowercase letter, it's snake_case
+		if ch >= 'a' && ch <= 'z' {
+			// Retour de la fonction
 			return true
 		}
+	}
 
-		// Vérification des conversions dans la boucle
-		if hasStringConversion(loop) {
-			// Rapport d'erreur
-			pass.Reportf(
-				loop.Pos(),
-				"KTN-VAR-018: conversion string() répétée dans la boucle, préallouer hors de la boucle",
-			)
-		}
-
-		// Traitement
-		return true
-	})
+	// All uppercase = SCREAMING_SNAKE_CASE, not snake_case
+	return false
 }
 
-// extractLoop extrait le corps d'une boucle.
+// snakeToCamel convertit un nom snake_case en camelCase.
 //
 // Params:
-//   - n: nœud AST
+//   - name: nom en snake_case
 //
 // Returns:
-//   - ast.Node: corps de la boucle ou nil
-func extractLoop(n ast.Node) ast.Node {
-	// Switch sur le type de nœud
-	switch loop := n.(type) {
-	// Traitement
-	case *ast.ForStmt:
-		// Traitement
-		return loop.Body
-	// Traitement
-	case *ast.RangeStmt:
-		// Traitement
-		return loop.Body
-	// Traitement
-	default:
-		// Traitement
-		return nil
+//   - string: nom en camelCase
+func snakeToCamel(name string) string {
+	parts := strings.Split(name, "_")
+	// Handle empty or single part
+	if len(parts) <= 1 {
+		// Retour de la fonction
+		return name
 	}
-}
 
-// hasStringConversion vérifie si un nœud contient string().
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si conversion trouvée
-func hasStringConversion(n ast.Node) bool {
-	// Recherche de conversions
-	found := false
-
-	ast.Inspect(n, func(node ast.Node) bool {
-		// Vérification des appels de fonction
-		if isStringConversion(node) {
-			found = true
-			// Traitement
-			return false
+	// Build camelCase name using strings.Builder
+	var builder strings.Builder
+	builder.WriteString(strings.ToLower(parts[0]))
+	// Iterate over remaining parts
+	for i := 1; i < len(parts); i++ {
+		part := parts[i]
+		// Skip empty parts
+		if len(part) == 0 {
+			continue
 		}
-		// Traitement
-		return true
-	})
-
-	// Traitement
-	return found
-}
-
-// isStringConversion vérifie si un nœud est une conversion string().
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si c'est une conversion string()
-func isStringConversion(n ast.Node) bool {
-	// Cast en appel
-	call, ok := n.(*ast.CallExpr)
-	// Vérification de la condition
-	if !ok {
-		// Traitement
-		return false
+		// Capitalize first letter
+		builder.WriteString(strings.ToUpper(part[:1]) + strings.ToLower(part[1:]))
 	}
 
-	// Vérification du type de fonction
-	ident, ok := call.Fun.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Traitement
-		return false
-	}
-
-	// Vérification que c'est "string"
-	if ident.Name != "string" {
-		// Traitement
-		return false
-	}
-
-	// Vérification qu'il y a exactement 1 argument
-	if len(call.Args) != 1 {
-		// Traitement
-		return false
-	}
-
-	// Vérification que l'argument est un []byte
-	return true
-}
-
-// checkMultipleConversions détecte les conversions multiples.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Map pour compter les conversions par variable
-	conversions := make(map[string]int, INITIAL_CONVERSIONS_CAP)
-	var firstPos map[string]ast.Node = make(map[string]ast.Node, INITIAL_CONVERSIONS_CAP)
-
-	// Parcours pour compter
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Skip les boucles (déjà traité)
-		if extractLoop(n) != nil {
-			// Traitement
-			return false
-		}
-
-		// Vérification des conversions
-		if call, ok := n.(*ast.CallExpr); ok && isStringConversion(call) {
-			// Extraction de la variable convertie
-			varName := utils.ExtractVarName(call.Args[0])
-			// Vérification de la condition
-			if varName != "" {
-				conversions[varName]++
-				// Vérification de la condition
-				if _, exists := firstPos[varName]; !exists {
-					firstPos[varName] = call
-				}
-			}
-		}
-
-		// Traitement
-		return true
-	})
-
-	// Rapport des conversions multiples
-	for varName, count := range conversions {
-		// Vérification de la condition
-		if count > MAX_ALLOWED_CONVERSIONS {
-			pos := firstPos[varName]
-			pass.Reportf(
-				pos.Pos(),
-				"KTN-VAR-018: conversion string() de '%s' répétée %d fois, stocker dans une variable",
-				varName,
-				count,
-			)
-		}
-	}
+	// Return camelCase name
+	return builder.String()
 }

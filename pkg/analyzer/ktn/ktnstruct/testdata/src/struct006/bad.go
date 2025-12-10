@@ -1,76 +1,24 @@
-// Package struct006 contient les exemples de test pour KTN-STRUCT-006.
-// Ce fichier démontre les getters non idiomatiques avec préfixe "Get".
+// Bad examples for the struct006 test case.
 package struct006
 
-// BadUser représente un utilisateur avec getters non idiomatiques.
-// Les getters utilisent le préfixe "Get" contrairement à la convention Go.
-type BadUser struct {
-	id    int
-	name  string
-	email string
+// BadUserDTO est un DTO avec un champ privé tagué.
+// Démontre la violation STRUCT-006 avec tag json sur champ privé.
+type BadUserDTO struct {
+	ID   int    `json:"id"`
+	name string `json:"name"` // want "KTN-STRUCT-006: le champ privé 'name' du DTO 'BadUserDTO' ne devrait pas avoir de tag"
 }
 
-// BadUserInterface définit le contrat public de BadUser.
-type BadUserInterface interface {
-	GetID() int
-	GetName() string
-	GetEmail() string
-	Save() error
+// BadConfigRequest est une struct avec suffixe DTO et champ privé tagué.
+// Démontre la violation STRUCT-006 avec tag yaml sur champ privé.
+type BadConfigRequest struct {
+	Timeout int    `yaml:"timeout"`
+	secret  string `yaml:"secret"` // want "KTN-STRUCT-006: le champ privé 'secret' du DTO 'BadConfigRequest' ne devrait pas avoir de tag"
 }
 
-// NewBadUser crée une nouvelle instance de BadUser.
-//
-// Params:
-//   - id: identifiant unique de l'utilisateur
-//   - name: nom de l'utilisateur
-//   - email: adresse email de l'utilisateur
-//
-// Returns:
-//   - *BadUser: nouvelle instance initialisée
-func NewBadUser(id int, name, email string) *BadUser {
-	// Retourne une nouvelle instance avec les valeurs fournies
-	return &BadUser{
-		id:    id,
-		name:  name,
-		email: email,
-	}
-}
-
-// GetID retourne l'identifiant de l'utilisateur.
-// VIOLATION: devrait être ID() selon la convention Go.
-//
-// Returns:
-//   - int: identifiant unique
-func (u *BadUser) GetID() int { // want "KTN-STRUCT-006"
-	// Retourne le champ id
-	return u.id
-}
-
-// GetName retourne le nom de l'utilisateur.
-// VIOLATION: devrait être Name() selon la convention Go.
-//
-// Returns:
-//   - string: nom de l'utilisateur
-func (u *BadUser) GetName() string { // want "KTN-STRUCT-006"
-	// Retourne le champ name
-	return u.name
-}
-
-// GetEmail retourne l'adresse email de l'utilisateur.
-// VIOLATION: devrait être Email() selon la convention Go.
-//
-// Returns:
-//   - string: adresse email
-func (u *BadUser) GetEmail() string { // want "KTN-STRUCT-006"
-	// Retourne le champ email
-	return u.email
-}
-
-// Save sauvegarde l'utilisateur.
-//
-// Returns:
-//   - error: erreur éventuelle
-func (u *BadUser) Save() error {
-	// Retourne nil si succès
-	return nil
+// BadResponseData est un DTO avec plusieurs champs privés tagués.
+// Démontre la violation STRUCT-006 avec plusieurs tags sur champs privés.
+type BadResponseData struct {
+	Status  int    `json:"status"`
+	code    int    `json:"code"`    // want "KTN-STRUCT-006: le champ privé 'code' du DTO 'BadResponseData' ne devrait pas avoir de tag"
+	message string `json:"message"` // want "KTN-STRUCT-006: le champ privé 'message' du DTO 'BadResponseData' ne devrait pas avoir de tag"
 }

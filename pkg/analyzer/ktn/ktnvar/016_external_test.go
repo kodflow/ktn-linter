@@ -3,10 +3,36 @@ package ktnvar_test
 import (
 	"testing"
 
+	"golang.org/x/tools/go/analysis"
+
 	ktnvar "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
 func TestVar016(t *testing.T) {
-	testhelper.TestGoodBad(t, ktnvar.Analyzer016, "var016", 5)
+	tests := []struct {
+		name           string
+		analyzer       *analysis.Analyzer
+		testdataDir    string
+		expectedErrors int
+	}{
+		{
+			name:           "Slice literal with initial capacity",
+			analyzer:       ktnvar.Analyzer016,
+			testdataDir:    "var016",
+			expectedErrors: 5,
+		},
+		{
+			name:           "Valid make for empty slices",
+			analyzer:       ktnvar.Analyzer016,
+			testdataDir:    "var016",
+			expectedErrors: 5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
+		})
+	}
 }

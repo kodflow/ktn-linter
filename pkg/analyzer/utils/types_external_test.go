@@ -118,13 +118,36 @@ func TestGetTypeName(t *testing.T) {
 
 // TestGetTypeNameWithUnsupportedType tests the functionality of the corresponding implementation.
 func TestGetTypeNameWithUnsupportedType(t *testing.T) {
-	// Test avec un type non supporté
-	expr := &ast.FuncType{
-		Params: &ast.FieldList{},
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected string
+	}{
+		{
+			name: "FuncType not supported",
+			expr: &ast.FuncType{
+				Params: &ast.FieldList{},
+			},
+			expected: "T",
+		},
+		{
+			name: "Another FuncType",
+			expr: &ast.FuncType{
+				Params: &ast.FieldList{
+					List: []*ast.Field{},
+				},
+			},
+			expected: "T",
+		},
 	}
-	got := utils.GetTypeName(expr)
-	if got != "T" {
-		t.Errorf("utils.GetTypeName(unsupported) = %s, want T", got)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.GetTypeName(tt.expr)
+			if got != tt.expected {
+				t.Errorf("utils.GetTypeName(unsupported) = %s, want %s", got, tt.expected)
+			}
+		})
 	}
 }
 
@@ -157,23 +180,61 @@ func TestIsMakeSliceZero(t *testing.T) {
 
 // TestIsMakeSliceZeroWithNonCallExpr tests the functionality of the corresponding implementation.
 func TestIsMakeSliceZeroWithNonCallExpr(t *testing.T) {
-	// Test avec une expression qui n'est pas un appel
-	expr := &ast.Ident{Name: "test"}
-	got := utils.IsMakeSliceZero(expr)
-	if got != false {
-		t.Errorf("utils.IsMakeSliceZero(non-call) = %v, want false", got)
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected bool
+	}{
+		{
+			name:     "non-call expression",
+			expr:     &ast.Ident{Name: "test"},
+			expected: false,
+		},
+		{
+			name:     "another non-call expression",
+			expr:     &ast.Ident{Name: "variable"},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.IsMakeSliceZero(tt.expr)
+			if got != tt.expected {
+				t.Errorf("utils.IsMakeSliceZero(non-call) = %v, want %v", got, tt.expected)
+			}
+		})
 	}
 }
 
 // TestIsMakeSliceZeroWithNonMake tests the functionality of the corresponding implementation.
 func TestIsMakeSliceZeroWithNonMake(t *testing.T) {
-	// Test avec un appel qui n'est pas make
-	fset := token.NewFileSet()
-	code := "append(s, 1)"
-	expr, _ := parser.ParseExprFrom(fset, "", code, 0)
-	got := utils.IsMakeSliceZero(expr)
-	if got != false {
-		t.Errorf("utils.IsMakeSliceZero(non-make) = %v, want false", got)
+	tests := []struct {
+		name     string
+		code     string
+		expected bool
+	}{
+		{
+			name:     "append call not make",
+			code:     "append(s, 1)",
+			expected: false,
+		},
+		{
+			name:     "len call not make",
+			code:     "len(s)",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			expr, _ := parser.ParseExprFrom(fset, "", tt.code, 0)
+			got := utils.IsMakeSliceZero(expr)
+			if got != tt.expected {
+				t.Errorf("utils.IsMakeSliceZero(non-make) = %v, want %v", got, tt.expected)
+			}
+		})
 	}
 }
 

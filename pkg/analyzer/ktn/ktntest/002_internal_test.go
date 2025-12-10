@@ -2,9 +2,14 @@
 package ktntest
 
 import (
-	"os"
-	"path/filepath"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_runTest002 tests the runTest002 private function with table-driven tests.
@@ -13,14 +18,13 @@ import (
 //   - t: testing context
 func Test_runTest002(t *testing.T) {
 	tests := []struct {
-		name    string
-		pkgPath string
-		wantErr bool
+		name string
 	}{
 		{
-			name:    "test file with source file",
-			pkgPath: "test002",
-			wantErr: false,
+			name: "basic test of runTest002 structure",
+		},
+		{
+			name: "error case validation",
 		},
 	}
 
@@ -28,164 +32,169 @@ func Test_runTest002(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
-			t.Logf("Testing package: %s", tt.pkgPath)
+			t.Logf("Testing: %s", tt.name)
 		})
 	}
 }
 
-// Test_fileExists tests the fileExists private function.
+// Test_isExemptPackage tests the isExemptPackage private function.
 //
 // Params:
 //   - t: testing context
-func Test_fileExists(t *testing.T) {
-	// Créer un fichier temporaire
-	tmpFile, err := os.CreateTemp("", "test_*.go")
-	// Vérification de l'erreur
+func Test_isExemptPackage(t *testing.T) {
+	tests := []struct {
+		name    string
+		pkgName string
+		want    bool
+	}{
+		{
+			name:    "main package is exempt",
+			pkgName: "main",
+			want:    true,
+		},
+		{
+			name:    "testhelper package is exempt",
+			pkgName: "testhelper",
+			want:    true,
+		},
+		{
+			name:    "ktntest package is exempt",
+			pkgName: "ktntest",
+			want:    true,
+		},
+		{
+			name:    "regular package not exempt",
+			pkgName: "mypackage",
+			want:    false,
+		},
+		{
+			name:    "empty package not exempt",
+			pkgName: "",
+			want:    false,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isExemptPackage(tt.pkgName)
+			// Vérification de la condition
+			if got != tt.want {
+				t.Errorf("isExemptPackage(%q) = %v, want %v", tt.pkgName, got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_runTest001_integration tests the analyzer structure.
+//
+// Params:
+//   - t: testing context
+func Test_runTest001_integration(t *testing.T) {
+	tests := []struct {
+		name         string
+		expectedName string
+	}{
+		{name: "analyzer structure", expectedName: "ktntest002"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if Analyzer002 == nil || Analyzer002.Name != tt.expectedName {
+				t.Errorf("Analyzer002 invalid: nil=%v, Name=%q, want %q",
+					Analyzer002 == nil, Analyzer002.Name, tt.expectedName)
+			}
+		})
+	}
+}
+
+// Test_runTest002_disabled tests that the rule is skipped when disabled.
+func Test_runTest002_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-002": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
 	if err != nil {
-		t.Fatalf("failed to create temp file: %v", err)
+		t.Fatalf("Failed to parse: %v", err)
 	}
-	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	// Nettoyage
-	defer os.Remove(tmpPath)
 
-	// Créer un répertoire temporaire
-	tmpDir, err := os.MkdirTemp("", "test_dir_*")
-	// Vérification de l'erreur
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest002(pass)
 	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	// Nettoyage
-	defer os.RemoveAll(tmpDir)
-
-	tests := []struct {
-		name string
-		path string
-		want bool
-	}{
-		{
-			name: "existing file returns true",
-			path: tmpPath,
-			want: true,
-		},
-		{
-			name: "non-existing file returns false",
-			path: "/nonexistent/file.go",
-			want: false,
-		},
-		{
-			name: "directory returns false",
-			path: tmpDir,
-			want: false,
-		},
-		{
-			name: "empty path returns false",
-			path: "",
-			want: false,
-		},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := fileExists(tt.path)
-			// Vérification de la condition
-			if got != tt.want {
-				t.Errorf("fileExists(%q) = %v, want %v", tt.path, got, tt.want)
-			}
-		})
+		t.Errorf("runTest002() error = %v", err)
 	}
 }
 
-// Test_isExemptTestFile tests the isExemptTestFile private function.
-//
-// Params:
-//   - t: testing context
-func Test_isExemptTestFile(t *testing.T) {
-	tests := []struct {
-		name     string
-		filename string
-		want     bool
-	}{
-		{
-			name:     "helper_test.go is exempt",
-			filename: "/path/to/helper_test.go",
-			want:     true,
+// Test_runTest002_excludedFile tests that excluded files are skipped.
+func Test_runTest002_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-002": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
 		},
-		{
-			name:     "integration_test.go is exempt",
-			filename: "/path/to/integration_test.go",
-			want:     true,
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
 		},
-		{
-			name:     "suite_test.go is exempt",
-			filename: "/path/to/suite_test.go",
-			want:     true,
-		},
-		{
-			name:     "main_test.go is exempt",
-			filename: "/path/to/main_test.go",
-			want:     true,
-		},
-		{
-			name:     "regular test file not exempt",
-			filename: "/path/to/myfile_test.go",
-			want:     false,
-		},
-		{
-			name:     "internal test file not exempt",
-			filename: "/path/to/myfile_internal_test.go",
-			want:     false,
-		},
-		{
-			name:     "external test file not exempt",
-			filename: "/path/to/myfile_external_test.go",
-			want:     false,
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
 		},
 	}
 
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isExemptTestFile(tt.filename)
-			// Vérification de la condition
-			if got != tt.want {
-				t.Errorf("isExemptTestFile(%q) = %v, want %v", tt.filename, got, tt.want)
-			}
-		})
-	}
-}
-
-// Test_fileExists_edgeCases tests edge cases for fileExists.
-//
-// Params:
-//   - t: testing context
-func Test_fileExists_edgeCases(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-		want bool
-	}{
-		{
-			name: "path with spaces",
-			path: filepath.Join(os.TempDir(), "test file with spaces.go"),
-			want: false,
-		},
-		{
-			name: "path with unicode",
-			path: filepath.Join(os.TempDir(), "テスト.go"),
-			want: false,
-		},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := fileExists(tt.path)
-			// Vérification de la condition
-			if got != tt.want {
-				t.Errorf("fileExists(%q) = %v, want %v", tt.path, got, tt.want)
-			}
-		})
+	_, err = runTest002(pass)
+	if err != nil {
+		t.Errorf("runTest002() error = %v", err)
 	}
 }

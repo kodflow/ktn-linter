@@ -3,11 +3,38 @@ package ktnconst_test
 import (
 	"testing"
 
+	"golang.org/x/tools/go/analysis"
+
 	ktnconst "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
 func TestConst001(t *testing.T) {
-	// good.go: 0 errors, bad.go: 10 errors (one per constant without explicit type)
-	testhelper.TestGoodBad(t, ktnconst.Analyzer001, "const001", 10)
+	tests := []struct {
+		name           string
+		analyzer       *analysis.Analyzer
+		testdataDir    string
+		expectedErrors int
+	}{
+		{
+			name:           "constants without explicit type",
+			analyzer:       ktnconst.Analyzer001,
+			testdataDir:    "const001",
+			expectedErrors: 13,
+		},
+		{
+			name:           "valid constants with explicit type",
+			analyzer:       ktnconst.Analyzer001,
+			testdataDir:    "const001",
+			expectedErrors: 13,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// good.go: 0 errors, bad.go: 13 errors (constants without explicit type)
+			// - 10 in block + 1 iota + 2 multi-name
+			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
+		})
+	}
 }

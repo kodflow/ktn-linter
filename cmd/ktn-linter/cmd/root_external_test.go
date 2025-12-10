@@ -36,18 +36,33 @@ func TestSetVersion(t *testing.T) {
 
 // TestExecute tests that Execute can be called without panicking.
 func TestExecute(t *testing.T) {
-	// This test verifies Execute doesn't panic when called
-	// More detailed testing is done in internal tests
-	// that can mock os.Exit and other internals
-	errorCases := "tests panic and error recovery"
-	_ = errorCases
+	tests := []struct {
+		name         string
+		errorCases   string
+		expectPanic  bool
+	}{
+		{
+			name:       "tests panic and error recovery",
+			errorCases: "tests panic and error recovery",
+			expectPanic: false,
+		},
+	}
 
-	defer func() {
-		// Vérification panic
-		if r := recover(); r != nil {
-			// Note: Execute may call os.Exit which can cause issues in tests
-			// This is expected behavior for certain error conditions
-			t.Logf("Execute() caused panic or exit: %v (this may be expected)", r)
-		}
-	}()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// This test verifies Execute doesn't panic when called
+			// More detailed testing is done in internal tests
+			// that can mock os.Exit and other internals
+			_ = tt.errorCases
+
+			defer func() {
+				// Vérification panic
+				if r := recover(); r != nil {
+					// Note: Execute may call os.Exit which can cause issues in tests
+					// This is expected behavior for certain error conditions
+					t.Logf("Execute() caused panic or exit: %v (this may be expected)", r)
+				}
+			}()
+		})
+	}
 }

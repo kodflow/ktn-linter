@@ -42,13 +42,36 @@ func TestGetExprAsString(t *testing.T) {
 
 // TestGetExprAsStringWithUnknownType tests the functionality of the corresponding implementation.
 func TestGetExprAsStringWithUnknownType(t *testing.T) {
-	// Test avec un type non supporté (FuncType)
-	expr := &ast.FuncType{
-		Params: &ast.FieldList{},
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected string
+	}{
+		{
+			name: "FuncType not supported",
+			expr: &ast.FuncType{
+				Params: &ast.FieldList{},
+			},
+			expected: "unknown",
+		},
+		{
+			name: "Another FuncType",
+			expr: &ast.FuncType{
+				Params: &ast.FieldList{
+					List: []*ast.Field{},
+				},
+			},
+			expected: "unknown",
+		},
 	}
-	got := utils.GetExprAsString(expr)
-	if got != "unknown" {
-		t.Errorf("utils.GetExprAsString(unsupported) = %q, want \"unknown\"", got)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := utils.GetExprAsString(tt.expr)
+			if got != tt.expected {
+				t.Errorf("utils.GetExprAsString(unsupported) = %q, want %q", got, tt.expected)
+			}
+		})
 	}
 }
 
@@ -87,20 +110,30 @@ func TestGetTypeString(t *testing.T) {
 
 // TestGetTypeStringWithNoType tests the functionality of the corresponding implementation.
 func TestGetTypeStringWithNoType(t *testing.T) {
-	// Test avec une ValueSpec sans type explicite
-	fset := token.NewFileSet()
-	code := "package test\nvar x = 5"
-	file, err := parser.ParseFile(fset, "", code, 0)
-	if err != nil {
-		t.Fatalf("Failed to parse: %v", err)
+	tests := []struct {
+		name     string
+		code     string
+		expected string
+	}{
+		{name: "no type spec", code: "package test\nvar x = 5", expected: "<type>"},
 	}
 
-	genDecl := file.Decls[0].(*ast.GenDecl)
-	spec := genDecl.Specs[0].(*ast.ValueSpec)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
 
-	got := utils.GetTypeString(spec)
-	if got != "<type>" {
-		t.Errorf("utils.GetTypeString(no type) = %q, want \"<type>\"", got)
+			genDecl := file.Decls[0].(*ast.GenDecl)
+			spec := genDecl.Specs[0].(*ast.ValueSpec)
+
+			got := utils.GetTypeString(spec)
+			if got != tt.expected {
+				t.Errorf("utils.GetTypeString(no type) = %q, want %q", got, tt.expected)
+			}
+		})
 	}
 }
 

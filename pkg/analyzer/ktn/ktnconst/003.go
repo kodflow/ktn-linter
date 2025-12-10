@@ -4,36 +4,46 @@ package ktnconst
 import (
 	"go/ast"
 	"go/token"
-	"regexp"
+	"strings"
+	"unicode"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var (
-	// Analyzer003 checks that constants use CAPITAL_UNDERSCORE naming convention
-	Analyzer003 = &analysis.Analyzer{
-		Name:     "ktnconst003",
-		Doc:      "KTN-CONST-003: Vérifie que les constantes utilisent la convention CAPITAL_UNDERSCORE",
-		Run:      runConst003,
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
-	}
-
-	// validConstNamePattern matches CAPITAL_UNDERSCORE names
-	// Starts with uppercase, then uppercase/digits/underscores
-	validConstNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+const (
+	// ruleCodeConst003 est le code de la règle KTN-CONST-003.
+	ruleCodeConst003 string = "KTN-CONST-003"
 )
 
-// runConst003 description à compléter.
+// Analyzer003 checks that constants use standard Go naming conventions (CamelCase).
+var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnconst003",
+	Doc:      "KTN-CONST-003: Vérifie que les constantes utilisent les conventions Go standard (CamelCase)",
+	Run:      runConst003,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
+
+// runConst003 executes KTN-CONST-003 analysis.
 //
 // Params:
-//   - pass: contexte d'analyse
+//   - pass: analysis context
 //
 // Returns:
-//   - any: résultat
-//   - error: erreur éventuelle
+//   - any: analysis result
+//   - error: potential error
 func runConst003(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeConst003) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -41,19 +51,25 @@ func runConst003(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeConst003, filename) {
+			// File is excluded
+			return
+		}
 		genDecl := n.(*ast.GenDecl)
 
 		// Only check const declarations
 		if genDecl.Tok != token.CONST {
-			// Retour de la fonction
+			// Return early
 			return
 		}
 
-		// Itération sur les éléments
+		// Iterate over specs
 		for _, spec := range genDecl.Specs {
 			valueSpec := spec.(*ast.ValueSpec)
 
-			// Itération sur les éléments
+			// Iterate over names
 			for _, name := range valueSpec.Names {
 				constName := name.Name
 
@@ -62,11 +78,11 @@ func runConst003(pass *analysis.Pass) (any, error) {
 					continue
 				}
 
-				// Check if the constant name follows CAPITAL_UNDERSCORE convention
-				if !isValidConstantName(constName) {
+				// Check if the constant name follows Go conventions
+				if !isValidGoConstantName(constName) {
 					pass.Reportf(
 						name.Pos(),
-						"KTN-CONST-003: la constante '%s' doit utiliser la convention CAPITAL_UNDERSCORE (ex: MAX_SIZE, API_KEY, HTTP_TIMEOUT)",
+						"KTN-CONST-003: la constante '%s' doit utiliser la convention CamelCase (ex: MaxSize, httpTimeout)",
 						constName,
 					)
 				}
@@ -74,35 +90,56 @@ func runConst003(pass *analysis.Pass) (any, error) {
 		}
 	})
 
-	// Retour de la fonction
+	// Return result
 	return nil, nil
 }
 
-// isValidConstantName checks if a constant name follows CAPITAL_UNDERSCORE convention.
+// isValidGoConstantName checks if a constant name follows Go CamelCase convention.
 //
 // Params:
-//   - name: nom de la constante à vérifier
+//   - name: constant name to check
 //
 // Returns:
-//   - bool: true si le nom est valide
-func isValidConstantName(name string) bool {
-	// Must match pattern: uppercase + digits/underscores
-	if !validConstNamePattern.MatchString(name) {
-		// Retour de la fonction
+//   - bool: true if the name follows Go conventions
+//
+// Valid names: PascalCase for exported (MaxSize, HttpTimeout, APIKey) or camelCase for unexported (maxSize, httpTimeout, apiKey).
+// Invalid names: SCREAMING_SNAKE_CASE (MAX_SIZE), snake_case (max_size), Contains underscores (Max_Size).
+func isValidGoConstantName(name string) bool {
+	// Empty name is invalid
+	if len(name) == 0 {
+		// Return early
 		return false
 	}
 
-	// Single letter constants are valid (e.g., A, B, C)
+	// Single character is valid if letter
 	if len(name) == 1 {
-		// Retour de la fonction
-		return true
+		// Return early
+		return unicode.IsLetter(rune(name[0]))
 	}
 
-	// Pattern already validates SCREAMING_SNAKE_CASE:
-	// - Single letters: A, B, C
-	// - Acronyms: API, HTTP, URL, HTTPS, EOF
-	// - Underscored names: MAX_SIZE, API_KEY, HTTP_TIMEOUT
-	// - With numbers: HTTP2, TLS1_2_VERSION
-	// Retour de la fonction
+	// Check for underscores (not allowed in Go CamelCase)
+	if strings.Contains(name, "_") {
+		// Return early
+		return false
+	}
+
+	// Check first character is a letter
+	firstRune := rune(name[0])
+	// Vérification que le premier caractère est une lettre
+	if !unicode.IsLetter(firstRune) {
+		// Return early
+		return false
+	}
+
+	// Check all characters are valid (letters or digits)
+	for _, r := range name {
+		// Vérification que chaque caractère est une lettre ou un chiffre
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			// Return early
+			return false
+		}
+	}
+
+	// Name is valid CamelCase
 	return true
 }

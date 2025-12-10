@@ -1,10 +1,11 @@
 package ktnconst
 
 import (
+	"go/ast"
 	"go/token"
 	"testing"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -18,114 +19,127 @@ func Test_runConst002(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - logique principale testée via API publique
+			// Test passthrough - main logic tested via public API
 		})
 	}
 }
 
-// Test_checkConstGrouping tests the private checkConstGrouping function.
-func Test_checkConstGrouping(t *testing.T) {
+// Test_collectDeclarations tests the private collectDeclarations function.
+func Test_collectDeclarations(t *testing.T) {
 	tests := []struct {
-		name        string
-		constGroups []shared.DeclGroup
-		varGroups   []shared.DeclGroup
-		wantReports int
+		name          string
+		wantConst     int
+		wantVar       int
+		wantType      int
+		wantFunc      int
+		setupFile     func() *ast.File
 	}{
 		{
-			name:        "no var declarations",
-			constGroups: []shared.DeclGroup{},
-			varGroups:   []shared.DeclGroup{},
-			wantReports: 0,
+			name:      "empty file",
+			wantConst: 0,
+			wantVar:   0,
+			wantType:  0,
+			wantFunc:  0,
+			setupFile: func() *ast.File {
+				// Return empty file
+				return &ast.File{Decls: []ast.Decl{}}
+			},
 		},
 		{
-			name: "consts before vars",
-			constGroups: []shared.DeclGroup{
-				{Pos: token.Pos(100)},
+			name:      "file with const only",
+			wantConst: 1,
+			wantVar:   0,
+			wantType:  0,
+			wantFunc:  0,
+			setupFile: func() *ast.File {
+				// Return file with one const
+				return &ast.File{
+					Decls: []ast.Decl{
+						&ast.GenDecl{Tok: token.CONST},
+					},
+				}
 			},
-			varGroups: []shared.DeclGroup{
-				{Pos: token.Pos(200)},
-			},
-			wantReports: 0,
 		},
 		{
-			name: "consts after vars",
-			constGroups: []shared.DeclGroup{
-				{Pos: token.Pos(200)},
+			name:      "file with all declaration types",
+			wantConst: 1,
+			wantVar:   1,
+			wantType:  1,
+			wantFunc:  1,
+			setupFile: func() *ast.File {
+				// Return file with all types
+				return &ast.File{
+					Decls: []ast.Decl{
+						&ast.GenDecl{Tok: token.CONST},
+						&ast.GenDecl{Tok: token.VAR},
+						&ast.GenDecl{Tok: token.TYPE},
+						&ast.FuncDecl{
+							Name: &ast.Ident{Name: "testFunc"},
+							Type: &ast.FuncType{},
+						},
+					},
+				}
 			},
-			varGroups: []shared.DeclGroup{
-				{Pos: token.Pos(100)},
-			},
-			wantReports: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Création d'un pass mock minimal
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset: token.NewFileSet(),
-				Report: func(_ analysis.Diagnostic) {
-					reportCount++
-				},
+			file := tt.setupFile()
+			decls := collectDeclarations(file)
+
+			// Verify const count
+			if len(decls.constDecls) != tt.wantConst {
+				t.Errorf("constDecls = %d, want %d", len(decls.constDecls), tt.wantConst)
 			}
-
-			tracker := &declTracker{
-				constGroups: tt.constGroups,
-				varGroups:   tt.varGroups,
+			// Verify var count
+			if len(decls.varDecls) != tt.wantVar {
+				t.Errorf("varDecls = %d, want %d", len(decls.varDecls), tt.wantVar)
 			}
-
-			checkConstGrouping(pass, tracker)
-
-			// Vérification du nombre de rapports
-			if reportCount != tt.wantReports {
-				t.Errorf("checkConstGrouping() reports = %d, want %d", reportCount, tt.wantReports)
+			// Verify type count
+			if len(decls.typeDecls) != tt.wantType {
+				t.Errorf("typeDecls = %d, want %d", len(decls.typeDecls), tt.wantType)
+			}
+			// Verify func count
+			if len(decls.funcDecls) != tt.wantFunc {
+				t.Errorf("funcDecls = %d, want %d", len(decls.funcDecls), tt.wantFunc)
 			}
 		})
 	}
 }
 
-// Test_checkScatteredConsts tests the private checkScatteredConsts function.
-func Test_checkScatteredConsts(t *testing.T) {
+// Test_checkScatteredConstBlocks tests the private checkScatteredConstBlocks function.
+func Test_checkScatteredConstBlocks(t *testing.T) {
 	tests := []struct {
 		name        string
-		constGroups []shared.DeclGroup
+		constDecls  []token.Pos
 		wantReports int
 	}{
 		{
 			name:        "no const groups",
-			constGroups: []shared.DeclGroup{},
+			constDecls:  []token.Pos{},
 			wantReports: 0,
 		},
 		{
-			name: "single const group",
-			constGroups: []shared.DeclGroup{
-				{Pos: token.Pos(100)},
-			},
+			name:        "single const group",
+			constDecls:  []token.Pos{token.Pos(100)},
 			wantReports: 0,
 		},
 		{
-			name: "two const groups",
-			constGroups: []shared.DeclGroup{
-				{Pos: token.Pos(100)},
-				{Pos: token.Pos(200)},
-			},
+			name:        "two const groups",
+			constDecls:  []token.Pos{token.Pos(100), token.Pos(200)},
 			wantReports: 1,
 		},
 		{
-			name: "three const groups",
-			constGroups: []shared.DeclGroup{
-				{Pos: token.Pos(100)},
-				{Pos: token.Pos(200)},
-				{Pos: token.Pos(300)},
-			},
+			name:        "three const groups",
+			constDecls:  []token.Pos{token.Pos(100), token.Pos(200), token.Pos(300)},
 			wantReports: 2,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Création d'un pass mock minimal
+			// Create minimal mock pass
 			reportCount := 0
 			pass := &analysis.Pass{
 				Fset: token.NewFileSet(),
@@ -134,18 +148,241 @@ func Test_checkScatteredConsts(t *testing.T) {
 				},
 			}
 
-			checkScatteredConsts(pass, tt.constGroups)
+			checkScatteredConstBlocks(pass, tt.constDecls)
 
-			// Vérification du nombre de rapports
+			// Verify report count
 			if reportCount != tt.wantReports {
-				t.Errorf("checkScatteredConsts() reports = %d, want %d", reportCount, tt.wantReports)
+				t.Errorf("checkScatteredConstBlocks() reports = %d, want %d", reportCount, tt.wantReports)
 			}
 		})
 	}
 }
 
-// Test_declTracker tests the declTracker type structure.
-func Test_declTracker(t *testing.T) {
+// Test_checkConstBeforeVar tests the private checkConstBeforeVar function.
+func Test_checkConstBeforeVar(t *testing.T) {
+	tests := []struct {
+		name        string
+		constDecls  []token.Pos
+		varDecls    []token.Pos
+		wantReports int
+	}{
+		{
+			name:        "no var declarations",
+			constDecls:  []token.Pos{token.Pos(100)},
+			varDecls:    []token.Pos{},
+			wantReports: 0,
+		},
+		{
+			name:        "const before var",
+			constDecls:  []token.Pos{token.Pos(100)},
+			varDecls:    []token.Pos{token.Pos(200)},
+			wantReports: 0,
+		},
+		{
+			name:        "const after var",
+			constDecls:  []token.Pos{token.Pos(200)},
+			varDecls:    []token.Pos{token.Pos(100)},
+			wantReports: 1,
+		},
+		{
+			name:        "multiple consts some after var",
+			constDecls:  []token.Pos{token.Pos(50), token.Pos(200)},
+			varDecls:    []token.Pos{token.Pos(100)},
+			wantReports: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create minimal mock pass
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			decls := &fileDeclarations{
+				constDecls: tt.constDecls,
+				varDecls:   tt.varDecls,
+			}
+
+			checkConstBeforeVar(pass, decls)
+
+			// Verify report count
+			if reportCount != tt.wantReports {
+				t.Errorf("checkConstBeforeVar() reports = %d, want %d", reportCount, tt.wantReports)
+			}
+		})
+	}
+}
+
+// Test_checkConstBeforeType tests the private checkConstBeforeType function.
+func Test_checkConstBeforeType(t *testing.T) {
+	tests := []struct {
+		name        string
+		constDecls  []token.Pos
+		typeDecls   []token.Pos
+		wantReports int
+	}{
+		{
+			name:        "no type declarations",
+			constDecls:  []token.Pos{token.Pos(100)},
+			typeDecls:   []token.Pos{},
+			wantReports: 0,
+		},
+		{
+			name:        "const before type",
+			constDecls:  []token.Pos{token.Pos(100)},
+			typeDecls:   []token.Pos{token.Pos(200)},
+			wantReports: 0,
+		},
+		{
+			name:        "const after type",
+			constDecls:  []token.Pos{token.Pos(200)},
+			typeDecls:   []token.Pos{token.Pos(100)},
+			wantReports: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create minimal mock pass
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			decls := &fileDeclarations{
+				constDecls: tt.constDecls,
+				typeDecls:  tt.typeDecls,
+			}
+
+			checkConstBeforeType(pass, decls)
+
+			// Verify report count
+			if reportCount != tt.wantReports {
+				t.Errorf("checkConstBeforeType() reports = %d, want %d", reportCount, tt.wantReports)
+			}
+		})
+	}
+}
+
+// Test_checkConstBeforeFunc tests the private checkConstBeforeFunc function.
+func Test_checkConstBeforeFunc(t *testing.T) {
+	tests := []struct {
+		name        string
+		constDecls  []token.Pos
+		funcDecls   []token.Pos
+		wantReports int
+	}{
+		{
+			name:        "no func declarations",
+			constDecls:  []token.Pos{token.Pos(100)},
+			funcDecls:   []token.Pos{},
+			wantReports: 0,
+		},
+		{
+			name:        "const before func",
+			constDecls:  []token.Pos{token.Pos(100)},
+			funcDecls:   []token.Pos{token.Pos(200)},
+			wantReports: 0,
+		},
+		{
+			name:        "const after func",
+			constDecls:  []token.Pos{token.Pos(200)},
+			funcDecls:   []token.Pos{token.Pos(100)},
+			wantReports: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create minimal mock pass
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			decls := &fileDeclarations{
+				constDecls: tt.constDecls,
+				funcDecls:  tt.funcDecls,
+			}
+
+			checkConstBeforeFunc(pass, decls)
+
+			// Verify report count
+			if reportCount != tt.wantReports {
+				t.Errorf("checkConstBeforeFunc() reports = %d, want %d", reportCount, tt.wantReports)
+			}
+		})
+	}
+}
+
+// Test_checkConstOrder tests the private checkConstOrder function.
+func Test_checkConstOrder(t *testing.T) {
+	tests := []struct {
+		name        string
+		decls       *fileDeclarations
+		wantReports int
+	}{
+		{
+			name:        "no const declarations",
+			decls:       &fileDeclarations{},
+			wantReports: 0,
+		},
+		{
+			name: "correct order const before all",
+			decls: &fileDeclarations{
+				constDecls: []token.Pos{token.Pos(100)},
+				varDecls:   []token.Pos{token.Pos(200)},
+				typeDecls:  []token.Pos{token.Pos(300)},
+				funcDecls:  []token.Pos{token.Pos(400)},
+			},
+			wantReports: 0,
+		},
+		{
+			name: "const after everything",
+			decls: &fileDeclarations{
+				constDecls: []token.Pos{token.Pos(500)},
+				varDecls:   []token.Pos{token.Pos(100)},
+				typeDecls:  []token.Pos{token.Pos(200)},
+				funcDecls:  []token.Pos{token.Pos(300)},
+			},
+			wantReports: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create minimal mock pass
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkConstOrder(pass, tt.decls)
+
+			// Verify report count
+			if reportCount != tt.wantReports {
+				t.Errorf("checkConstOrder() reports = %d, want %d", reportCount, tt.wantReports)
+			}
+		})
+	}
+}
+
+// Test_fileDeclarations tests the fileDeclarations type structure.
+func Test_fileDeclarations(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -154,21 +391,70 @@ func Test_declTracker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Création d'un tracker
-			tracker := &declTracker{
-				constGroups: []shared.DeclGroup{},
-				varGroups:   []shared.DeclGroup{},
+			// Create declarations
+			decls := &fileDeclarations{
+				constDecls: []token.Pos{},
+				varDecls:   []token.Pos{},
+				typeDecls:  []token.Pos{},
+				funcDecls:  []token.Pos{},
 			}
 
-			// Vérification que les champs sont initialisés
-			if tracker.constGroups == nil {
-				t.Error("declTracker.constGroups should not be nil")
+			// Verify fields are initialized
+			if decls.constDecls == nil {
+				t.Error("fileDeclarations.constDecls should not be nil")
 			}
-			// Vérification que les champs sont initialisés
-			if tracker.varGroups == nil {
-				t.Error("declTracker.varGroups should not be nil")
+			// Verify fields are initialized
+			if decls.varDecls == nil {
+				t.Error("fileDeclarations.varDecls should not be nil")
+			}
+			// Verify fields are initialized
+			if decls.typeDecls == nil {
+				t.Error("fileDeclarations.typeDecls should not be nil")
+			}
+			// Verify fields are initialized
+			if decls.funcDecls == nil {
+				t.Error("fileDeclarations.funcDecls should not be nil")
 			}
 		})
 	}
 }
 
+// Test_runConst002_disabled tests that the rule is skipped when disabled.
+func Test_runConst002_disabled(t *testing.T) {
+	// Setup: disable the rule
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-CONST-002": {Enabled: config.Bool(false)},
+		},
+	}
+	config.Set(cfg)
+	defer config.Reset()
+
+	// Create minimal pass - should not report anything
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: token.NewFileSet(),
+		Files: []*ast.File{
+			{
+				Decls: []ast.Decl{
+					&ast.GenDecl{Tok: token.VAR},
+					&ast.GenDecl{Tok: token.CONST},
+				},
+			},
+		},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+			t.Error("Unexpected error reported when rule is disabled")
+		},
+	}
+
+	// Run the analyzer - should not report anything
+	_, err := runConst002(pass)
+	if err != nil {
+		t.Errorf("runConst002() error = %v", err)
+	}
+	// Verify no reports
+	if reportCount != 0 {
+		t.Errorf("Expected 0 reports, got %d", reportCount)
+	}
+}

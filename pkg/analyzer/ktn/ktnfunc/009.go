@@ -1,135 +1,161 @@
-// Analyzer 009 for the ktnfunc package.
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
 	"go/ast"
-	"strings"
+	"go/token"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer009 checks that getter functions don't have side effects
-var Analyzer009 = &analysis.Analyzer{
+const (
+	// ruleCodeFunc009 is the rule code for this analyzer
+	ruleCodeFunc009 string = "KTN-FUNC-009"
+	// initialAllowedLiteralsCap initial cap for allowed literals
+	initialAllowedLiteralsCap int = 32
+)
+
+// Analyzer009 checks for magic numbers (hardcoded numeric literals)
+var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc009",
-	Doc:      "KTN-FUNC-009: Les getters (Get*/Is*/Has*) ne doivent pas avoir de side effects (assignations, appels de fonctions modifiant l'état)",
+	Doc:      "KTN-FUNC-009: Les nombres littéraux doivent être des constantes nommées (pas de magic numbers)",
 	Run:      runFunc009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc009 description à compléter.
+// runFunc009 exécute l'analyse KTN-FUNC-009.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat
+//   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc009(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc009) {
+		// Règle désactivée
+		return nil, nil
 	}
 
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-		// Skip test functions
-		if shared.IsTestFunction(funcDecl) {
-			// Retour de la fonction
-			return
-		}
+	// Map des valeurs autorisées (non magic numbers)
+	allowedValues := getAllowedValues()
 
-		funcName := funcDecl.Name.Name
+	// Collecter les littéraux autorisés (const, array sizes)
+	allowedLiterals := collectAllowedLiterals(insp)
 
-		// Skip if not a getter (Get*, Is*, Has*)
-		if !isGetter(funcName) {
-			// Retour de la fonction
-			return
-		}
+	// Vérifier les magic numbers
+	checkMagicNumbers(insp, pass, allowedValues, allowedLiterals, cfg)
 
-		// Skip if no body (external functions)
-		if funcDecl.Body == nil {
-			// Retour de la fonction
-			return
-		}
-
-		// Check for side effects
-		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
-			// Sélection selon la valeur
-			switch stmt := node.(type) {
-			// Traitement
-			case *ast.AssignStmt:
-				// Check if it's assigning to a field or external variable
-				// Assignments to local variables (created in the function) are OK
-				for _, lhs := range stmt.Lhs {
-					// Vérification de la condition
-					if hasSideEffect(lhs) {
-						pass.Reportf(
-							stmt.Pos(),
-							"KTN-FUNC-009: le getter '%s' ne doit pas modifier l'état (assignation détectée)",
-							funcName,
-						)
-					}
-				}
-			// Traitement
-			case *ast.IncDecStmt:
-				// ++ or -- on fields
-				if hasSideEffect(stmt.X) {
-					pass.Reportf(
-						stmt.Pos(),
-						"KTN-FUNC-009: le getter '%s' ne doit pas modifier l'état (incrémentation/décrémentation détectée)",
-						funcName,
-					)
-				}
-			}
-			// Retour de la fonction
-			return true
-		})
-	})
-
-	// Retour de la fonction
+	// Retour succès
 	return nil, nil
 }
 
-// isGetter checks if a function name suggests it's a getter
-// Params:
-//   - pass: contexte d'analyse
+// getAllowedValues retourne les valeurs numériques autorisées (non magic).
 //
 // Returns:
-//   - bool: true si fonction getter
-func isGetter(name string) bool {
-	// Retour de la fonction
-	return strings.HasPrefix(name, "Get") ||
-		strings.HasPrefix(name, "Is") ||
-		strings.HasPrefix(name, "Has")
+//   - map[string]bool: map des valeurs autorisées
+func getAllowedValues() map[string]bool {
+	// Retour de la map des valeurs autorisées
+	return map[string]bool{
+		"0":  true,
+		"1":  true,
+		"-1": true,
+	}
 }
 
-// hasSideEffect checks if an expression modifies external state
+// collectAllowedLiterals collecte les littéraux dans const declarations.
+//
 // Params:
-//   - pass: contexte d'analyse
+//   - inspect: inspecteur AST
 //
 // Returns:
-//   - bool: true si effet de bord détecté
-func hasSideEffect(expr ast.Expr) bool {
-	// Sélection selon la valeur
-	switch e := expr.(type) {
-	// Traitement
-	case *ast.SelectorExpr:
-		// Modifying a field is a side effect
-		return true
-	// Traitement
-	case *ast.IndexExpr:
-		// Modifying an index (array/map/slice element) could be a side effect
-		// Check if the base is a selector
-		if _, ok := e.X.(*ast.SelectorExpr); ok {
-			// Retour de la fonction
-			return true
-		}
+//   - map[ast.Node]bool: map des littéraux autorisés
+func collectAllowedLiterals(insp *inspector.Inspector) map[ast.Node]bool {
+	allowedLiterals := make(map[ast.Node]bool, initialAllowedLiteralsCap)
+
+	// Filter pour GenDecl seulement
+	nodeFilter := []ast.Node{
+		(*ast.GenDecl)(nil),
 	}
-	// Retour de la fonction
-	return false
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		genDecl := n.(*ast.GenDecl)
+
+		// Si c'est une déclaration const
+		if genDecl.Tok == token.CONST {
+			// Inspection du noeud GenDecl
+			ast.Inspect(genDecl, func(inner ast.Node) bool {
+				// Si c'est un littéral
+				if lit, ok := inner.(*ast.BasicLit); ok {
+					// Ajout du littéral aux valeurs autorisées
+					allowedLiterals[lit] = true
+				}
+				// Continuer l'inspection
+				return true
+			})
+		}
+	})
+
+	// Retour de la map
+	return allowedLiterals
+}
+
+// checkMagicNumbers vérifie et rapporte les magic numbers.
+//
+// Params:
+//   - inspect: inspecteur AST
+//   - pass: contexte d'analyse
+//   - allowedValues: valeurs autorisées
+//   - allowedLiterals: littéraux autorisés
+//   - cfg: configuration
+func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedValues map[string]bool, allowedLiterals map[ast.Node]bool, cfg *config.Config) {
+	// Filter pour les littéraux
+	nodeFilter := []ast.Node{
+		(*ast.BasicLit)(nil),
+	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		lit := n.(*ast.BasicLit)
+
+		filename := pass.Fset.Position(lit.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeFunc009, filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Vérifier si c'est un nombre (INT ou FLOAT)
+		if lit.Kind != token.INT && lit.Kind != token.FLOAT {
+			// Pas un nombre, ignorer
+			return
+		}
+
+		// Vérifier si c'est une valeur autorisée
+		if allowedValues[lit.Value] {
+			// Valeur autorisée, ignorer
+			return
+		}
+
+		// Vérifier si c'est dans les littéraux autorisés
+		if allowedLiterals[lit] {
+			// Littéral autorisé, ignorer
+			return
+		}
+
+		// Reporter l'erreur
+		pass.Reportf(
+			lit.Pos(),
+			"KTN-FUNC-009: le nombre '%s' devrait être une constante nommée (magic number)",
+			lit.Value,
+		)
+	})
 }

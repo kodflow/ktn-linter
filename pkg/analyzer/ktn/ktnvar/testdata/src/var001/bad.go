@@ -1,48 +1,47 @@
+// Bad examples for the var001 test case.
 package var001
 
-// Bad: Variables with incorrect type visibility (violates KTN-VAR-001)
+// Bad: Package-level variables using SCREAMING_SNAKE_CASE (violates KTN-VAR-001)
 
 const (
-	// MAX_RETRIES defines maximum retries
-	MAX_RETRIES int = 3
-	// PORT_VALUE is port value
-	PORT_VALUE int = 8080
-	// RATIO_VALUE is ratio value
-	RATIO_VALUE float64 = 1.5
+	// ApiKey is a constant in CamelCase
+	ApiKey string = "secret"
+	// TimeoutValue is timeout value
+	TimeoutValue int = 30
+	// PortValue is port value
+	PortValue int = 8080
+	// MaxConnValue is max connections value
+	MaxConnValue int = 100
 )
 
-// Cas 1: Type non visible sans type explicite → ERREUR
+// Variables with SCREAMING_SNAKE_CASE (violates KTN-VAR-001)
 var (
-	// badRetries has inferred type (should be explicit)
-	badRetries = MAX_RETRIES // want "KTN-VAR-001: la variable 'badRetries' doit avoir un type explicite"
+	// BAD_TIMEOUT uses SCREAMING_SNAKE_CASE (reserved for constants)
+	BAD_TIMEOUT int = TimeoutValue // want "KTN-VAR-001"
 
-	// badConfig has inferred type (should be explicit)
-	badConfig = "config" // want "KTN-VAR-001: la variable 'badConfig' doit avoir un type explicite"
+	// WRONG_CONFIG uses SCREAMING_SNAKE_CASE (should be camelCase)
+	WRONG_CONFIG string = "config" // want "KTN-VAR-001"
 
-	// badPort has inferred type
-	badPort = PORT_VALUE // want "KTN-VAR-001: la variable 'badPort' doit avoir un type explicite"
+	// SERVER_PORT uses SCREAMING_SNAKE_CASE
+	SERVER_PORT int = PortValue // want "KTN-VAR-001"
 
-	// badHost has inferred type
-	badHost = "localhost" // want "KTN-VAR-001: la variable 'badHost' doit avoir un type explicite"
+	// SERVER_HOST uses SCREAMING_SNAKE_CASE
+	SERVER_HOST string = "localhost" // want "KTN-VAR-001"
 
-	// badEnabled has inferred type
-	badEnabled = true // want "KTN-VAR-001: la variable 'badEnabled' doit avoir un type explicite"
+	// MAX_CONNECTIONS uses SCREAMING_SNAKE_CASE
+	MAX_CONNECTIONS int = MaxConnValue // want "KTN-VAR-001"
 
-	// badRatio has inferred type
-	badRatio = RATIO_VALUE // want "KTN-VAR-001: la variable 'badRatio' doit avoir un type explicite"
-)
+	// IS_ENABLED uses SCREAMING_SNAKE_CASE
+	IS_ENABLED bool = false // want "KTN-VAR-001"
 
-// Cas 2: Type redondant (type visible + type explicite) → ERREUR
-var (
-	// redundantSlice has redundant type
-	redundantSlice []string = []string{"a", "b"} // want "KTN-VAR-001: la variable 'redundantSlice' a un type redondant"
+	// ===== Acronyms with SCREAMING_SNAKE_CASE (should be flagged) =====
 
-	// redundantMap has redundant type
-	redundantMap map[string]int = map[string]int{"x": 1} // want "KTN-VAR-001: la variable 'redundantMap' a un type redondant"
+	// HTTP_CLIENT uses SCREAMING_SNAKE_CASE with acronym
+	HTTP_CLIENT string = "bad" // want "KTN-VAR-001"
 
-	// redundantMake has redundant type
-	redundantMake []byte = make([]byte, 10) // want "KTN-VAR-001: la variable 'redundantMake' a un type redondant"
+	// XML_PARSER uses SCREAMING_SNAKE_CASE with acronym
+	XML_PARSER string = "bad" // want "KTN-VAR-001"
 
-	// redundantConv has redundant type
-	redundantConv int = int(42) // want "KTN-VAR-001: la variable 'redundantConv' a un type redondant"
+	// API_KEY uses SCREAMING_SNAKE_CASE with acronym
+	API_KEY string = "bad" // want "KTN-VAR-001"
 )

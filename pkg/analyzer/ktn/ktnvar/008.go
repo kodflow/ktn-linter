@@ -5,59 +5,23 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// MIN_MAKE_ARGS_VAR008 is the minimum number of arguments for make call
-	MIN_MAKE_ARGS_VAR008 int = 2
+	// ruleCodeVar008 is the rule code for this analyzer
+	ruleCodeVar008 string = "KTN-VAR-008"
 )
 
-// Analyzer008 checks that make with length > 0 is avoided when append is used
-var Analyzer008 = &analysis.Analyzer{
+// Analyzer008 checks for slice/map allocations inside loops
+var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar008",
-	Doc:      "KTN-VAR-008: Vérifie d'éviter make([]T, length) si utilisation avec append",
+	Doc:      "KTN-VAR-008: Évite les allocations de slices/maps dans les boucles chaudes",
 	Run:      runVar008,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
-
-// checkMakeCallVar008 vérifie un appel à make avec length > 0.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: appel de fonction à vérifier
-func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
-	// Vérification que c'est un appel à make
-	if !utils.IsMakeCall(call) {
-		// Continue traversing AST nodes.
-		return
-	}
-
-	// Vérification du nombre d'arguments (2 ou 3: type, length, [capacity])
-	if len(call.Args) < MIN_MAKE_ARGS_VAR008 {
-		// Continue traversing AST nodes.
-		return
-	}
-
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(pass, call.Args[0]) {
-		// Continue traversing AST nodes.
-		return
-	}
-
-	// Vérification que la longueur est > 0
-	if !utils.HasPositiveLength(pass, call.Args[1]) {
-		// Continue traversing AST nodes.
-		return
-	}
-
-	// Signalement de l'erreur
-	pass.Reportf(
-		call.Pos(),
-		"KTN-VAR-008: utiliser make([]T, 0, capacity) au lieu de make([]T, length) pour éviter les zéro-values inutiles avant append",
-	)
 }
 
 // runVar008 exécute l'analyse KTN-VAR-008.
@@ -69,17 +33,191 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar008(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar008) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.CallExpr)(nil),
+		(*ast.ForStmt)(nil),
+		(*ast.RangeStmt)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call := n.(*ast.CallExpr)
-		checkMakeCallVar008(pass, call)
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
+		// Récupération du corps de la boucle
+		var body *ast.BlockStmt
+		// Vérification du type de boucle
+		switch loop := n.(type) {
+		// Cas d'une boucle for classique
+		case *ast.ForStmt:
+			// Boucle for classique
+			body = loop.Body
+		// Cas d'une boucle range
+		case *ast.RangeStmt:
+			// Boucle range
+			body = loop.Body
+		// Cas par défaut
+		default:
+			// Type de boucle non supporté
+			return
+		}
+
+		// Parcours des instructions du corps
+		checkLoopBodyForAlloc(pass, body)
 	})
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// checkLoopBodyForAlloc vérifie les allocations dans le corps d'une boucle.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - body: corps de la boucle à vérifier
+func checkLoopBodyForAlloc(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Vérification du corps de la boucle
+	if body == nil {
+		// Corps de boucle vide
+		return
+	}
+
+	// Parcours des instructions
+	for _, stmt := range body.List {
+		checkStmtForAlloc(pass, stmt)
+	}
+}
+
+// checkStmtForAlloc vérifie une instruction pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: instruction à vérifier
+func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
+	// Vérification du type d'instruction
+	switch s := stmt.(type) {
+	// Cas d'une affectation
+	case *ast.AssignStmt:
+		// Vérification des affectations
+		checkAssignForAlloc(pass, s)
+	// Cas d'une déclaration
+	case *ast.DeclStmt:
+		// Vérification des déclarations
+		checkDeclForAlloc(pass, s)
+		// Note: les boucles imbriquées sont déjà gérées par Preorder
+	}
+}
+
+// checkAssignForAlloc vérifie une affectation pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - assign: affectation à vérifier
+func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
+	// Parcours des valeurs affectées
+	for _, rhs := range assign.Rhs {
+		// Vérification si allocation de slice ou map
+		if isSliceOrMapAlloc(rhs) {
+			// Allocation de slice/map détectée
+			pass.Reportf(
+				rhs.Pos(),
+				"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle",
+			)
+		}
+	}
+}
+
+// checkDeclForAlloc vérifie une déclaration pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - decl: déclaration à vérifier
+func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
+	genDecl, ok := decl.Decl.(*ast.GenDecl)
+	// Vérification du type de déclaration
+	if !ok {
+		// Pas une déclaration générale
+		return
+	}
+
+	var valueSpec *ast.ValueSpec
+	// Parcours des spécifications
+	for _, spec := range genDecl.Specs {
+		valueSpec, ok = spec.(*ast.ValueSpec)
+		// Vérification de la spécification de valeur
+		if !ok {
+			// Pas une spécification de valeur
+			continue
+		}
+
+		// Parcours des valeurs
+		for _, value := range valueSpec.Values {
+			// Vérification si allocation de slice ou map
+			if isSliceOrMapAlloc(value) {
+				// Allocation de slice/map détectée
+				pass.Reportf(
+					value.Pos(),
+					"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle",
+				)
+			}
+		}
+	}
+}
+
+// isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
+// Exclut les []byte qui sont gérés par VAR-010.
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si allocation détectée
+func isSliceOrMapAlloc(expr ast.Expr) bool {
+	// Vérification du type d'expression
+	switch e := expr.(type) {
+	// Cas d'un littéral composite
+	case *ast.CompositeLit:
+		// Vérification du type composite (exclut []byte géré par VAR-010)
+		if utils.IsSliceOrMapType(e.Type) && !utils.IsByteSlice(e.Type) {
+			// Allocation de slice/map sous forme de littéral
+			return true
+		}
+	// Cas d'un appel de fonction
+	case *ast.CallExpr:
+		// Vérification des appels make() (exclut []byte géré par VAR-010)
+		if utils.IsMakeCall(e) && !isByteSliceMake(e) {
+			// Appel à make() détecté
+			return true
+		}
+	}
+	// Pas d'allocation détectée
+	return false
+}
+
+// isByteSliceMake vérifie si make crée un []byte.
+//
+// Params:
+//   - call: expression d'appel make
+//
+// Returns:
+//   - bool: true si make([]byte, ...)
+func isByteSliceMake(call *ast.CallExpr) bool {
+	// Vérification des arguments
+	if len(call.Args) == 0 {
+		// Pas d'arguments
+		return false
+	}
+	// Vérification du type
+	return utils.IsByteSlice(call.Args[0])
 }

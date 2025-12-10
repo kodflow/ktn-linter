@@ -1,80 +1,94 @@
+// Bad examples for the var011 test case.
 package var011
 
-import (
-	"bytes"
-	"strings"
-)
-
-// Constantes pour les tests
 const (
-	BAD_LOOP_COUNT_LARGE int = 100
-	BAD_LOOP_COUNT_SMALL int = 50
+	// LoopMaxIterations est le nombre maximum d'itérations
+	LoopMaxIterations int = 10
+	// MultiplierValue est le multiplicateur utilisé
+	MultiplierValue int = 2
 )
 
-// badStringsBuilderNoGrow creates a strings.Builder without Grow.
+// badShadowingCount démontre le shadowing d'une variable non exemptée.
 //
-// Returns:
-//   - string: concatenated result
-func badStringsBuilderNoGrow() string {
-	// Bad: composite literal without Grow() call
-	sb := strings.Builder{}
-
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
-		sb.WriteString("item")
+// Note: Les variables err, ok, ctx sont exemptées car ce sont des patterns idiomatiques Go.
+func badShadowingCount() {
+	count := 0
+	// Boucle sur les itérations
+	for range LoopMaxIterations {
+		count := count * MultiplierValue // want "KTN-VAR-011: shadowing de la variable 'count'"
+		_ = count
 	}
-
-	// Return the result
-	return sb.String()
+	_ = count
 }
 
-// badBytesBufferNoGrow creates a bytes.Buffer without Grow.
-//
-// Returns:
-//   - []byte: concatenated result
-func badBytesBufferNoGrow() []byte {
-	// Bad: composite literal without Grow() call
-	buf := bytes.Buffer{}
-
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_LARGE; i++ {
-		buf.WriteString("item")
+// badShadowingValue démontre le shadowing d'une variable value.
+func badShadowingValue() {
+	value := "outer"
+	// Bloc imbriqué
+	{
+		value := "inner" // want "KTN-VAR-011: shadowing de la variable 'value'"
+		_ = value
 	}
-
-	// Return the result
-	return buf.Bytes()
+	_ = value
 }
 
-// badShortFormBuilder uses short form without Grow.
-//
-// Returns:
-//   - string: concatenated result
-func badShortFormBuilder() string {
-	// Bad: short declaration without Grow
-	sb := strings.Builder{}
-
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
-		sb.WriteString("x")
+// badShadowingResult démontre le shadowing d'une variable result.
+func badShadowingResult() {
+	result, _ := doSomething()
+	// Bloc if
+	if result > 0 {
+		result := result * MultiplierValue // want "KTN-VAR-011: shadowing de la variable 'result'"
+		_ = result
 	}
-
-	// Return the result
-	return sb.String()
+	_ = result
 }
 
-// badShortFormBuffer uses short form bytes.Buffer without Grow.
+// badShadowingData démontre le shadowing d'une variable data.
+func badShadowingData() {
+	data := []int{1, 2, 3}
+	// Boucle range
+	for i := range data {
+		data := append(data, i) // want "KTN-VAR-011: shadowing de la variable 'data'"
+		_ = data
+	}
+	_ = data
+}
+
+// badShadowingName démontre le shadowing dans une fonction.
+//
+// Params:
+//   - name: nom passé en paramètre
+func badShadowingName(name string) {
+	// Bloc imbriqué
+	{
+		name := "shadowed" // want "KTN-VAR-011: shadowing de la variable 'name'"
+		_ = name
+	}
+	_ = name
+}
+
+// doSomething effectue une opération.
 //
 // Returns:
-//   - []byte: concatenated result
-func badShortFormBuffer() []byte {
-	// Bad: short declaration without Grow
-	buf := bytes.Buffer{}
+//   - int: résultat de l'opération
+//   - error: erreur éventuelle
+func doSomething() (int, error) {
+	// Retour avec résultat
+	return 0, nil
+}
 
-	// Iteration over data to append
-	for i := 0; i < BAD_LOOP_COUNT_SMALL; i++ {
-		buf.Write([]byte("x"))
-	}
-
-	// Return the result
-	return buf.Bytes()
+// init utilise les fonctions privées
+func init() {
+	// Appel de badShadowingCount
+	badShadowingCount()
+	// Appel de badShadowingValue
+	badShadowingValue()
+	// Appel de badShadowingResult
+	badShadowingResult()
+	// Appel de badShadowingData
+	badShadowingData()
+	// Appel de badShadowingName
+	badShadowingName("test")
+	// Appel de doSomething
+	doSomething()
 }

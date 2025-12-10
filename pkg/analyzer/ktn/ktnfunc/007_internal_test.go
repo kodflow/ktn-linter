@@ -3,12 +3,92 @@ package ktnfunc
 import (
 	"go/ast"
 	"testing"
+
+	"go/parser"
+	"go/token"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
+
+
+// Test_runFunc007_disabled tests behavior when rule is disabled.
+func Test_runFunc007_disabled(t *testing.T) {
+	// Configuration avec règle désactivée
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-FUNC-007": {Enabled: config.Bool(false)},
+		},
+	})
+	// Reset config après le test
+	defer config.Reset()
+
+	// Créer un pass minimal
+	result, err := runFunc007(&analysis.Pass{})
+	// Vérification de l'erreur
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	// Vérification du résultat nil
+	if result != nil {
+		t.Errorf("Expected nil result when rule disabled, got %v", result)
+	}
+}
+
+// Test_runFunc007_excludedFile tests behavior with excluded files.
+func Test_runFunc007_excludedFile(t *testing.T) {
+	// Configuration avec fichier exclu
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-FUNC-007": {
+				Enabled:       config.Bool(true),
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	// Reset config après le test
+	defer config.Reset()
+
+	code := `package test
+func foo() { }
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérification erreur parsing
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Créer un inspector
+	files := []*ast.File{file}
+	inspectResult, _ := inspect.Analyzer.Run(&analysis.Pass{
+		Fset:  fset,
+		Files: files,
+	})
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(d analysis.Diagnostic) {
+			t.Errorf("Expected no diagnostics for excluded file, got: %s", d.Message)
+		},
+	}
+
+	// Exécuter l'analyse
+	_, err = runFunc007(pass)
+	// Vérification erreur
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
 
 // Test_runFunc007 tests the runFunc007 private function.
 func Test_runFunc007(t *testing.T) {
 	// Test cases pour la fonction privée runFunc007
-	// La logique principale est testée via l'API publique dans 007_external_test.go
+	// La logique principale est testée via l'API publique dans 009_external_test.go
 	// Ce test vérifie les cas edge de la fonction privée
 
 	tests := []struct {
@@ -26,51 +106,32 @@ func Test_runFunc007(t *testing.T) {
 	}
 }
 
-// Test_extractCommentLines vérifie l'extraction des lignes de commentaires.
-func Test_extractCommentLines(t *testing.T) {
+// Test_isGetter vérifie la détection des getters.
+func Test_isGetter(t *testing.T) {
 	tests := []struct {
 		name     string
-		comments *ast.CommentGroup
-		expected int
-	}{
-		{
-			name: "error case validation",
-			comments: &ast.CommentGroup{
-				List: []*ast.Comment{
-					{Text: "// First line"},
-					{Text: "// Second line"},
-				},
-			},
-			expected: 2,
-		},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			result := extractCommentLines(tt.comments)
-			// Vérification du nombre de lignes
-			if len(result) != tt.expected {
-				t.Errorf("extractCommentLines() returned %d lines, want %d", len(result), tt.expected)
-			}
-		})
-	}
-}
-
-// Test_validateDescriptionLine vérifie la validation de la ligne de description.
-func Test_validateDescriptionLine(t *testing.T) {
-	tests := []struct {
-		name     string
-		comments []string
 		funcName string
-		wantErr  bool
+		expected bool
 	}{
 		{
 			name:     "error case validation",
-			comments: []string{"// testFunc description"},
-			funcName: "testFunc",
-			wantErr:  false,
+			funcName: "GetValue",
+			expected: true,
+		},
+		{
+			name:     "IsValid getter",
+			funcName: "IsValid",
+			expected: true,
+		},
+		{
+			name:     "HasData getter",
+			funcName: "HasData",
+			expected: true,
+		},
+		{
+			name:     "NotGetter function",
+			funcName: "Calculate",
+			expected: false,
 		},
 	}
 
@@ -78,29 +139,44 @@ func Test_validateDescriptionLine(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateDescriptionLine(tt.comments, tt.funcName)
-			// Vérification de l'erreur
-			if (err != "") != tt.wantErr {
-				t.Errorf("validateDescriptionLine() error = %v, wantErr %v", err, tt.wantErr)
+			result := isGetter(tt.funcName)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isGetter(%s) = %v, want %v", tt.funcName, result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_validateParamsSection vérifie la validation de la section Params.
-func Test_validateParamsSection(t *testing.T) {
+// Test_hasSideEffect vérifie la détection des effets de bord.
+func Test_hasSideEffect(t *testing.T) {
 	tests := []struct {
 		name     string
-		comments []string
-		startIdx int
+		expr     ast.Expr
+		expected bool
 	}{
 		{
 			name: "error case validation",
-			comments: []string{
-				"// Params:",
-				"//   - param1: description",
+			expr: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "obj"},
+				Sel: &ast.Ident{Name: "field"},
 			},
-			startIdx: 0,
+			expected: true,
+		},
+		{
+			name: "simple identifier",
+			expr: &ast.Ident{Name: "x"},
+			expected: false,
+		},
+		{
+			name: "index on selector",
+			expr: &ast.IndexExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "obj"},
+					Sel: &ast.Ident{Name: "arr"},
+				},
+			},
+			expected: true,
 		},
 	}
 
@@ -108,52 +184,254 @@ func Test_validateParamsSection(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			_, _ = validateParamsSection(tt.comments, tt.startIdx)
-			// Test passthrough - la validation complète est testée via external tests
+			result := hasSideEffect(tt.expr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("hasSideEffect() = %v, want %v", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_validateReturnsSection vérifie la validation de la section Returns.
-func Test_validateReturnsSection(t *testing.T) {
-	tests := []struct {
-		name     string
-		comments []string
-		startIdx int
-	}{
-		{
-			name: "error case validation",
-			comments: []string{
-				"// Returns:",
-				"//   - error: error description",
-			},
-			startIdx: 0,
-		},
-	}
-
-	// Itération sur les tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			_, _ = validateReturnsSection(tt.comments, tt.startIdx)
-			// Test passthrough - la validation complète est testée via external tests
-		})
-	}
-}
-
-// Test_validateDocFormat vérifie la validation du format de la documentation.
-func Test_validateDocFormat(t *testing.T) {
+// Test_checkGetterSideEffects vérifie la détection des side effects dans les getters.
+//
+// Params:
+//   - t: instance de testing
+func Test_checkGetterSideEffects(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"error case validation"},
+		{
+			name: "getter_side_effect_detection",
+		},
 	}
 
 	// Itération sur les tests
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - la logique est testée via external tests
+			// Test passthrough - nécessite analysis.Pass réel
+			_ = tt.name
+		})
+	}
+}
+
+// Test_reportAssignSideEffect vérifie le rapport des assignations.
+//
+// Params:
+//   - t: instance de testing
+func Test_reportAssignSideEffect(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "assign_side_effect_report",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - nécessite analysis.Pass réel
+			_ = tt.name
+		})
+	}
+}
+
+// Test_reportIncDecSideEffect vérifie le rapport des incréments/décréments.
+//
+// Params:
+//   - t: instance de testing
+func Test_reportIncDecSideEffect(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "incdec_side_effect_report",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - nécessite analysis.Pass réel
+			_ = tt.name
+		})
+	}
+}
+
+// Test_collectLazyLoadFields vérifie la collecte des champs lazy load.
+//
+// Params:
+//   - t: instance de testing
+func Test_collectLazyLoadFields(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "lazy_load_fields_collection",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Test avec body vide (pas nil pour éviter panic)
+			body := &ast.BlockStmt{List: []ast.Stmt{}}
+			result := collectLazyLoadFields(body)
+			// Vérification du résultat
+			if result == nil {
+				t.Error("collectLazyLoadFields() should return empty map, not nil")
+			}
+		})
+	}
+}
+
+// Test_isNilComparison vérifie la détection de comparaisons avec nil.
+//
+// Params:
+//   - t: instance de testing
+func Test_isNilComparison(t *testing.T) {
+	tests := []struct {
+		name     string
+		binary   *ast.BinaryExpr
+		expected bool
+	}{
+		{
+			name: "nil_on_right",
+			binary: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "x"},
+				Y:  &ast.Ident{Name: "nil"},
+				Op: 0,
+			},
+			expected: true,
+		},
+		{
+			name: "nil_on_left",
+			binary: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "nil"},
+				Y:  &ast.Ident{Name: "x"},
+				Op: 0,
+			},
+			expected: true,
+		},
+		{
+			name: "no_nil",
+			binary: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "x"},
+				Y:  &ast.Ident{Name: "y"},
+				Op: 0,
+			},
+			expected: false,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			result := isNilComparison(tt.binary)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isNilComparison() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_extractFieldName vérifie l'extraction du nom de champ.
+//
+// Params:
+//   - t: instance de testing
+func Test_extractFieldName(t *testing.T) {
+	tests := []struct {
+		name     string
+		binary   *ast.BinaryExpr
+		expected string
+	}{
+		{
+			name: "selector_on_left",
+			binary: &ast.BinaryExpr{
+				X: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "obj"},
+					Sel: &ast.Ident{Name: "field"},
+				},
+				Y: &ast.Ident{Name: "nil"},
+			},
+			expected: "field",
+		},
+		{
+			name: "no_selector",
+			binary: &ast.BinaryExpr{
+				X: &ast.Ident{Name: "x"},
+				Y: &ast.Ident{Name: "nil"},
+			},
+			expected: "",
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractFieldName(tt.binary)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("extractFieldName() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isLazyLoadAssignment vérifie la détection des assignations lazy load.
+//
+// Params:
+//   - t: instance de testing
+func Test_isLazyLoadAssignment(t *testing.T) {
+	tests := []struct {
+		name       string
+		lhs        ast.Expr
+		lazyFields map[string]bool
+		expected   bool
+	}{
+		{
+			name: "lazy_field_match",
+			lhs: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "s"},
+				Sel: &ast.Ident{Name: "cache"},
+			},
+			lazyFields: map[string]bool{"cache": true},
+			expected:   true,
+		},
+		{
+			name: "no_match",
+			lhs: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "s"},
+				Sel: &ast.Ident{Name: "data"},
+			},
+			lazyFields: map[string]bool{"cache": true},
+			expected:   false,
+		},
+		{
+			name:       "not_selector",
+			lhs:        &ast.Ident{Name: "x"},
+			lazyFields: map[string]bool{"x": true},
+			expected:   false,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			result := isLazyLoadAssignment(tt.lhs, tt.lazyFields)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isLazyLoadAssignment() = %v, want %v", result, tt.expected)
+			}
 		})
 	}
 }

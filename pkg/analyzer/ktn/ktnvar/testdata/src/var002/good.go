@@ -1,48 +1,98 @@
+// Good examples for the var002 test case.
 package var002
 
-// Good: All package-level variables are grouped in a single var block
+// Good: Variables with explicit type AND value (format: var name type = value)
 
 const (
-	// MAX_RETRIES defines maximum retries
-	MAX_RETRIES int = 3
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// SERVER_PORT is the server port number
-	SERVER_PORT int = 8080
-	// MAX_CONNECTIONS is the maximum connections
-	MAX_CONNECTIONS int = 100
-	// ANSWER is the answer to life
-	ANSWER int = 42
+	// DefaultTimeout is the default timeout
+	DefaultTimeout int = 30
+	// DefaultPort is the default port
+	DefaultPort int = 8080
+	// MaxConnections is the maximum connections
+	MaxConnections int = 100
+	// TheAnswer is the answer to everything
+	TheAnswer int = 42
+	// BufferSize is the buffer size
+	BufferSize int = 1024
+	// ByteH is the byte value for H
+	ByteH byte = 72
+	// ByteE is the byte value for e
+	ByteE byte = 101
+	// ByteL is the byte value for l
+	ByteL byte = 108
+	// ByteO is the byte value for o
+	ByteO byte = 111
+	// DefaultRetries is the default retry count
+	DefaultRetries int = 3
+	// DefaultCacheSize is the default cache size
+	DefaultCacheSize int = 10
 )
 
-// All variables grouped in a single block
+// Style requis: var name type (= value optionnel)
 var (
-	// defaultRetries defines the default number of retries
-	defaultRetries int = MAX_RETRIES
+	// ===== Avec type explicite ET valeur =====
 
-	// configuration holds the app configuration
+	// defaultRetries has explicit type and value
+	defaultRetries int = DefaultTimeout
+	// configuration has explicit type and value
 	configuration string = "default"
-
-	// serverPort is the server port number
-	serverPort int = SERVER_PORT
-
-	// serverHost is the server hostname
-	serverHost string = "localhost"
-
-	// isEnabled indicates if feature is enabled
+	// isEnabled has explicit type and value
 	isEnabled bool = false
+	// serverPort has explicit type and value
+	serverPort int = DefaultPort
+	// serverHost has explicit type and value
+	serverHost string = "localhost"
+	// maxConnections has explicit type and value
+	maxConnections int = MaxConnections
+	// endpoints has explicit type and value
+	endpoints []string = []string{"http://localhost:8080", "http://localhost:9090"}
+	// configMap has explicit type and value
+	configMap map[string]int = map[string]int{"timeout": DefaultTimeout, "retries": DefaultRetries}
+	// buffer has explicit type and value
+	buffer []byte = make([]byte, 0, BufferSize)
+	// cache has explicit type and value
+	cache map[string]string = make(map[string]string, DefaultCacheSize)
+	// convertedInt has explicit type and value
+	convertedInt int = int(TheAnswer)
+	// convertedStr has explicit type and value
+	convertedStr string = string([]byte{ByteH, ByteE, ByteL, ByteL, ByteO})
+	// convertedFloat has explicit type and value
+	convertedFloat float64 = float64(TheAnswer)
 
-	// maxConnections is the maximum connections
-	maxConnections int = MAX_CONNECTIONS
+	// ===== Zéro-values (type explicite, pas de valeur) =====
+
+	// zeroInt uses zero-value (idiomatic Go)
+	zeroInt int
+	// zeroString uses zero-value
+	zeroString string
+	// zeroBool uses zero-value
+	zeroBool bool
+	// zeroSlice uses zero-value (nil slice)
+	zeroSlice []string
+	// zeroMap uses zero-value (nil map)
+	zeroMap map[string]int
 )
 
-// goodFunction demonstrates local variable usage (not checked by VAR-002).
-//
-// Returns:
-//   - int: calculated value
-func goodFunction() int {
-	// Local variables are not checked by VAR-002
-	localVar := ANSWER
-	// Continue traversing AST nodes.
-	return localVar
+// init utilise les variables pour éviter les erreurs de compilation
+func init() {
+	// Utilisation des variables privées
+	_ = defaultRetries
+	_ = configuration
+	_ = isEnabled
+	_ = serverPort
+	_ = serverHost
+	_ = maxConnections
+	_ = endpoints
+	_ = configMap
+	_ = buffer
+	_ = cache
+	_ = convertedInt
+	_ = convertedStr
+	_ = convertedFloat
+	// Utilisation des zéro-values
+	_ = zeroInt
+	_ = zeroString
+	_ = zeroBool
+	_ = zeroSlice
+	_ = zeroMap
 }

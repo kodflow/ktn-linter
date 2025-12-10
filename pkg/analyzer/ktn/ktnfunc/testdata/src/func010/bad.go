@@ -1,64 +1,92 @@
+// Bad examples for the func012 test case.
 package func010
 
 const (
-	// TWO_COUNT représente la valeur 2 pour les compteurs
-	TWO_COUNT int = 2
-	// THIRTY_AGE représente l'âge 30
-	THIRTY_AGE int = 30
-	// NINETY_FIVE_SCORE représente le score 95.5
-	NINETY_FIVE_SCORE float64 = 95.5
+	// INCREMENT_ONE représente l'incrément de 1
+	INCREMENT_ONE int = 1
+	// INCREMENT_TWO représente l'incrément de 2
+	INCREMENT_TWO int = 2
+	// INCREMENT_THREE représente l'incrément de 3
+	INCREMENT_THREE int = 3
+	// INCREMENT_FOUR représente l'incrément de 4
+	INCREMENT_FOUR int = 4
+	// INCREMENT_FIVE représente l'incrément de 5
+	INCREMENT_FIVE int = 5
+	// INCREMENT_SIX représente l'incrément de 6
+	INCREMENT_SIX int = 6
+	// INCREMENT_TEN représente l'incrément de 10
+	INCREMENT_TEN int = 10
+	// INCREMENT_TWENTY représente l'incrément de 20
+	INCREMENT_TWENTY int = 20
+	// INCREMENT_THIRTY représente l'incrément de 30
+	INCREMENT_THIRTY int = 30
+	// INCREMENT_FORTY représente l'incrément de 40
+	INCREMENT_FORTY int = 40
+	// INCREMENT_FIFTY représente l'incrément de 50
+	INCREMENT_FIFTY int = 50
 )
 
-// FourUnnamedReturns demonstrates a function with 4 unnamed return values (violates KTN-FUNC-010).
+// badLongWithNakedReturn utilise naked return dans fonction de 5 lignes
 //
 // Returns:
-//   - int: identifier
-//   - string: message
-//   - bool: status
-//   - error: operation error
-func FourUnnamedReturns() (int, string, bool, error) {
-	// Return successful test data with no error
-	return 1, "test", true, nil
+//   - result: résultat calculé
+func badLongWithNakedReturn() (result int) {
+	result = INCREMENT_ONE
+	result += INCREMENT_TWO
+	result += INCREMENT_THREE
+	result += INCREMENT_FOUR
+	result += INCREMENT_FIVE
+	// Retour naked interdit car >= 5 lignes
+	return
 }
 
-// FiveUnnamedReturns demonstrates a function with 5 unnamed return values (violates KTN-FUNC-010).
+// badVeryLongNakedReturn utilise naked return dans fonction longue
 //
 // Returns:
-//   - int: identifier
-//   - int: count value
-//   - string: message
-//   - bool: status
-//   - error: operation error
-func FiveUnnamedReturns() (int, int, string, bool, error) {
-	// Return successful test data with counts and no error
-	return 1, TWO_COUNT, "test", true, nil
+//   - a: premier entier
+//   - b: chaîne de caractères
+func badVeryLongNakedReturn() (a int, b string) {
+	a = INCREMENT_ONE
+	a += INCREMENT_TWO
+	a += INCREMENT_THREE
+	a += INCREMENT_FOUR
+	a += INCREMENT_FIVE
+	a += INCREMENT_SIX
+	b = "test"
+	// Retour naked interdit car >= 5 lignes
+	return
 }
 
-// ManyUnnamedReturns demonstrates a function with 6 unnamed return values (violates KTN-FUNC-010).
+// badMultipleNakedReturns utilise plusieurs naked returns dans fonction longue
 //
 // Returns:
-//   - int: identifier
-//   - string: message
-//   - int: age value
-//   - bool: status
-//   - float64: score value
-//   - error: operation error
-func ManyUnnamedReturns() (int, string, int, bool, float64, error) {
-	// Return complete test data including score with no error
-	return 1, "test", THIRTY_AGE, true, NINETY_FIVE_SCORE, nil
+//   - result: résultat calculé
+func badMultipleNakedReturns() (result int) {
+	// Vérification de la condition
+	if true {
+		result = INCREMENT_ONE
+		result += INCREMENT_TWO
+		result += INCREMENT_THREE
+		result += INCREMENT_FOUR
+		result += INCREMENT_FIVE
+		// Retour naked interdit car >= 5 lignes
+		return
+	}
+	result = INCREMENT_TEN
+	result += INCREMENT_TWENTY
+	result += INCREMENT_THIRTY
+	result += INCREMENT_FORTY
+	result += INCREMENT_FIFTY
+	// Retour naked interdit car >= 5 lignes
+	return
 }
 
-// SevenUnnamedReturns demonstrates a function with 7 unnamed return values (violates KTN-FUNC-010).
-//
-// Returns:
-//   - int: identifier
-//   - string: message
-//   - int: age value
-//   - bool: status
-//   - float64: score value
-//   - string: extra information
-//   - error: operation error
-func SevenUnnamedReturns() (int, string, int, bool, float64, string, error) {
-	// Return full test data with extra field and no error
-	return 1, "test", THIRTY_AGE, true, NINETY_FIVE_SCORE, "extra", nil
+// init utilise les fonctions privées
+func init() {
+	// Appel de badLongWithNakedReturn
+	badLongWithNakedReturn()
+	// Appel de badVeryLongNakedReturn
+	badVeryLongNakedReturn()
+	// Appel de badMultipleNakedReturns
+	badMultipleNakedReturns()
 }

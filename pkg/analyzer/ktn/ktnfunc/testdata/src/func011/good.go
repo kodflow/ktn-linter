@@ -1,413 +1,420 @@
+// Good examples for the func013 test case.
 package func011
 
-// Good: All branches and returns have comments
-
 const (
-	// DOUBLE_MULTIPLIER is the multiplier used for doubling values
-	DOUBLE_MULTIPLIER int = 2
-	// BENCHMARK_LIMIT is the iteration limit for benchmark tests
-	BENCHMARK_LIMIT int = 100
+	// THRESHOLD_FIVE represents a threshold value of 5
+	THRESHOLD_FIVE int = 5
+	// THRESHOLD_TEN represents a threshold value of 10
+	THRESHOLD_TEN int = 10
+	// LOOP_ITERATIONS represents the number of iterations in loops
+	LOOP_ITERATIONS int = 3
+	// CASE_VALUE_TWO represents case value 2
+	CASE_VALUE_TWO int = 2
+	// CASE_VALUE_THREE represents case value 3
+	CASE_VALUE_THREE int = 3
+	// CASE_VALUE_FOUR represents case value 4
+	CASE_VALUE_FOUR int = 4
+	// CASE_VALUE_FIVE represents case value 5
+	CASE_VALUE_FIVE int = 5
 )
 
-// GoodExample demonstrates proper commenting.
-//
+// Simple is a simple function with minimal complexity.
+// Returns: nothing
+func Simple() {
+	// Initialize x with value 1
+	x := 1
+	// Use x to avoid unused variable
+	_ = x
+}
+
+// OneIf demonstrates a function with a single if statement.
 // Params:
-//   - x: the integer to check
+//   - x: input value to check
 //
-// Returns:
-//   - bool: true if x is positive, false otherwise
-func GoodExample(x int) bool {
+// Returns: nothing
+func OneIf(x int) {
 	// Check if x is positive
 	if x > 0 {
-		// Return true because x is positive
-		return true
+		// Use x to avoid unused variable
+		_ = x
 	}
-	// Return false because x is not positive
-	return false
 }
 
-// GoodSwitch demonstrates proper switch commenting.
-//
+// ComplexityTen demonstrates a function with complexity exactly at the limit of 10 (1 base + 3 if + 3 for + 3 case).
 // Params:
-//   - x: the integer to determine the result
+//   - x: input value to process
 //
-// Returns:
-//   - string: "zero", "one", or "other"
-func GoodSwitch(x int) string {
-	// Determine result based on x value
+// Returns: nothing
+func ComplexityTen(x int) {
+	// Check if x is positive
+	if x > 0 {
+		// Increment x
+		x++
+	}
+	// Check if x exceeds threshold of 5
+	if x > THRESHOLD_FIVE {
+		// Increment x
+		x++
+	}
+	// Check if x exceeds threshold of 10
+	if x > THRESHOLD_TEN {
+		// Increment x
+		x++
+	}
+
+	// First loop to increment x
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment x in loop
+		x++
+	}
+	// Second loop to increment x
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment x in loop
+		x++
+	}
+	// Third loop to increment x
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment x in loop
+		x++
+	}
+
+	// Switch to handle different cases of x
 	switch x {
-	// Handle zero case
-	case 0:
-		// Return "zero" for zero value
-		return "zero"
-	// Handle positive case
+	// Handle case 1
 	case 1:
-		// Return "one" for one value
-		return "one"
-	// Handle all other cases
-	default:
-		// Return "other" for all other values
-		return "other"
+		x++
+	// Handle case 2
+	case CASE_VALUE_TWO:
+		x++
+	// Handle case 3
+	case CASE_VALUE_THREE:
+		x++
 	}
 }
 
-// GoodLoop demonstrates proper loop commenting.
-//
+// MultipleIfs demonstrates a function with multiple if statements.
 // Params:
-//   - items: the slice of integers to sum
+//   - x: input value to evaluate
 //
 // Returns:
-//   - int: the sum of all items
-func GoodLoop(items []int) int {
+//   - int: normalized value based on input
+func MultipleIfs(x int) int {
+	// Check if x is positive
+	if x > 0 {
+		// Return 1 for positive values
+		return 1
+	}
+	// Check if x is negative
+	if x < 0 {
+		// Return -1 for negative values
+		return -1
+	}
+	// Check if x is zero
+	if x == 0 {
+		// Return 0 for zero value
+		return 0
+	}
+	// Check if x exceeds upper threshold
+	if x > THRESHOLD_TEN {
+		// Return capped value
+		return THRESHOLD_TEN
+	}
+	// Check if x is below lower threshold
+	if x < -THRESHOLD_TEN {
+		// Return capped negative value
+		return -THRESHOLD_TEN
+	}
+	// Return original value
+	return x
+}
+
+// SwitchWithDefault demonstrates a switch statement with default case (complexity 4: 1 base + 3 cases).
+// Params:
+//   - x: input value to match
+//
+// Returns:
+//   - int: matched case value or 0
+func SwitchWithDefault(x int) int {
+	// Switch on x value
+	switch x {
+	// Return 1 for case 1
+	case 1:
+		// Return 1 for case 1
+		return 1
+	// Return 2 for case 2
+	case CASE_VALUE_TWO:
+		// Return 2 for case 2
+		return CASE_VALUE_TWO
+	// Return 3 for case 3
+	case CASE_VALUE_THREE:
+		// Return 3 for case 3
+		return CASE_VALUE_THREE
+	// Return 0 for default case
+	default:
+		// Return 0 for default case
+		return 0
+	}
+}
+
+// SelectWithDefault demonstrates a select statement with channels (complexity 3: 1 base + 2 comm cases).
+// Params:
+//   - ch1: first channel to receive from
+//   - ch2: second channel to receive from
+//
+// Returns:
+//   - int: received value or 0
+func SelectWithDefault(ch1, ch2 chan int) int {
+	// Select from channels
+	select {
+	case x := <-ch1:
+		// Return value from first channel
+		return x
+	case y := <-ch2:
+		// Return value from second channel
+		return y
+	default:
+		// Return 0 if no channel ready
+		return 0
+	}
+}
+
+// RangeLoop demonstrates a range loop over a slice.
+// Params:
+//   - items: slice of integers to sum
+//
+// Returns:
+//   - int: sum of all items
+func RangeLoop(items []int) int {
+	// Initialize sum
 	sum := 0
-	// Iterate through all items to calculate sum
+	// Iterate over all items
 	for _, item := range items {
+		// Add item to sum
 		sum += item
 	}
-	// Return the total sum
+	// Return total sum
 	return sum
 }
 
-// GoodInlineComment demonstrates inline comments on returns.
-//
+// TestComplexFunction is a test helper function that should be skipped by linting.
 // Params:
-//   - x: the integer to double
+//   - t: test parameter
 //
-// Returns:
-//   - int: double of x
-func GoodInlineComment(x int) int {
-	// Retour de la fonction
-	return x * DOUBLE_MULTIPLIER // Return double of x
+// Returns: nothing
+func TestComplexFunction(t int) {
+	// Check if t is positive
+	if t > 0 {
+		// Increment t
+		t++
+	}
+	// Check if t exceeds threshold of 5
+	if t > THRESHOLD_FIVE {
+		// Increment t
+		t++
+	}
+	// Check if t exceeds threshold of 10
+	if t > THRESHOLD_TEN {
+		// Increment t
+		t++
+	}
+	// First loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment t in loop
+		t++
+	}
+	// Second loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment t in loop
+		t++
+	}
+	// Third loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment t in loop
+		t++
+	}
+	// Switch on t value
+	switch t {
+	case 1:
+		// Handle case 1
+		t++
+	case CASE_VALUE_TWO:
+		// Handle case 2
+		t++
+	case CASE_VALUE_THREE:
+		// Handle case 3
+		t++
+	case CASE_VALUE_FOUR:
+		// Handle case 4
+		t++
+	case CASE_VALUE_FIVE:
+		// Handle case 5
+		t++
+	}
 }
 
-// GoodMultipleReturns demonstrates multiple returns with comments.
-//
+// BenchmarkComplexFunction is a benchmark helper function that should be skipped by linting.
 // Params:
-//   - x: the integer to process
+//   - b: benchmark parameter
 //
-// Returns:
-//   - int: doubled value or 0
-//   - error: nil always
-func GoodMultipleReturns(x int) (int, error) {
-	// Check for negative input
-	if x < 0 {
-		// Return error for negative input
-		return 0, nil
+// Returns: nothing
+func BenchmarkComplexFunction(b int) {
+	// Check if b is positive
+	if b > 0 {
+		// Increment b
+		b++
 	}
-	// Return success with doubled value
-	return x * DOUBLE_MULTIPLIER, nil
+	// Check if b exceeds threshold of 5
+	if b > THRESHOLD_FIVE {
+		// Increment b
+		b++
+	}
+	// Check if b exceeds threshold of 10
+	if b > THRESHOLD_TEN {
+		// Increment b
+		b++
+	}
+	// First loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment b in loop
+		b++
+	}
+	// Second loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment b in loop
+		b++
+	}
+	// Third loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment b in loop
+		b++
+	}
+	// Switch on b value
+	switch b {
+	case 1:
+		// Handle case 1
+		b++
+	case CASE_VALUE_TWO:
+		// Handle case 2
+		b++
+	case CASE_VALUE_THREE:
+		// Handle case 3
+		b++
+	case CASE_VALUE_FOUR:
+		// Handle case 4
+		b++
+	case CASE_VALUE_FIVE:
+		// Handle case 5
+		b++
+	}
 }
 
-// GoodTypeSwitch demonstrates proper type switch commenting.
-//
-// Params:
-//   - v: the interface value to check
-//
-// Returns:
-//   - string: the type name or "unknown"
-func GoodTypeSwitch(v interface{}) string {
-	// Determine type of value
-	switch v.(type) {
-	// Handle string type
-	case string:
-		// Return "string" for string type
-		return "string"
-	// Handle int type
-	case int:
-		// Return "int" for int type
-		return "int"
-	// Handle all other types
-	default:
-		// Return "unknown" for unknown types
-		return "unknown"
-	}
-}
-
-// GoodElseIf demonstrates proper else if commenting with early return.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - string: "negative", "positive", or "zero"
-func GoodElseIf(x int) string {
-	// Check if x is negative
-	if x < 0 {
-		// Return "negative" for negative values
-		return "negative"
-	}
+// ExampleComplexFunction is an example function that should be skipped by linting.
+// Returns: nothing
+func ExampleComplexFunction() {
+	// Initialize x
+	x := 0
 	// Check if x is positive
 	if x > 0 {
-		// Return "positive" for positive values
-		return "positive"
+		// Increment x
+		x++
 	}
-	// Return "zero" for zero value
-	return "zero"
+	// Check if x exceeds threshold of 5
+	if x > THRESHOLD_FIVE {
+		// Increment x
+		x++
+	}
+	// Check if x exceeds threshold of 10
+	if x > THRESHOLD_TEN {
+		// Increment x
+		x++
+	}
+	// First loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment x in loop
+		x++
+	}
+	// Second loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment x in loop
+		x++
+	}
+	// Third loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment x in loop
+		x++
+	}
+	// Switch on x value
+	switch x {
+	case 1:
+		// Handle case 1
+		x++
+	case CASE_VALUE_TWO:
+		// Handle case 2
+		x++
+	case CASE_VALUE_THREE:
+		// Handle case 3
+		x++
+	case CASE_VALUE_FOUR:
+		// Handle case 4
+		x++
+	case CASE_VALUE_FIVE:
+		// Handle case 5
+		x++
+	}
 }
 
-// GoodElseCommentInside demonstrates else with comment inside block.
-//
+// FuzzComplexFunction is a fuzz test function that should be skipped by linting.
 // Params:
-//   - x: the integer to check
+//   - f: fuzz parameter
 //
-// Returns:
-//   - string: "positive" or "non-positive"
-func GoodElseCommentInside(x int) string {
-	// Check if x is positive
-	if x > 0 {
-		// Return "positive" for positive values
-		return "positive"
+// Returns: nothing
+func FuzzComplexFunction(f int) {
+	// Check if f is positive
+	if f > 0 {
+		// Increment f
+		f++
 	}
-	// Return "non-positive" for non-positive values
-	return "non-positive"
-}
-
-// GoodInterface defines an interface method (no body needed).
-type GoodInterface interface {
-	GoodNoBody(x int) bool
-}
-
-// goodImplementation implémente GoodInterface.
-type goodImplementation struct{}
-
-// GoodNoBody implémente la méthode de l'interface.
-//
-// Params:
-//   - x: valeur à tester
-//
-// Returns:
-//   - bool: true si x est positif
-func (g *goodImplementation) GoodNoBody(x int) bool {
-	// Vérifie si x est positif
-	if x > 0 {
-		// Retourne true pour valeur positive
-		return true
+	// Check if f exceeds threshold of 5
+	if f > THRESHOLD_FIVE {
+		// Increment f
+		f++
 	}
-	// Retourne false pour valeur négative ou nulle
-	return false
-}
-
-// useGoodInterface utilise l'interface.
-//
-// Params:
-//   - gi: interface à utiliser
-//
-// Returns:
-//   - bool: résultat de GoodNoBody
-func useGoodInterface(gi GoodInterface) bool {
-	// Appelle la méthode de l'interface
-	return gi.GoodNoBody(0)
-}
-
-// GoodElseIfCommentBefore demonstrates else if with comment before the if part.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - string: "negative", "positive", or "zero"
-func GoodElseIfCommentBefore(x int) string {
-	// Check if x is negative
-	if x < 0 {
-		// Return "negative" for negative values
-		return "negative"
+	// Check if f exceeds threshold of 10
+	if f > THRESHOLD_TEN {
+		// Increment f
+		f++
 	}
-	// Check if x is positive
-	if x > 0 {
-		// Return "positive" for positive values
-		return "positive"
+	// First loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment f in loop
+		f++
 	}
-	// Return "zero" for zero value
-	return "zero"
-}
-
-// GoodElseBlockWithCommentInside demonstrates else block with comment at the start.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - string: "positive" or "non-positive"
-func GoodElseBlockWithCommentInside(x int) string {
-	// Check if x is positive
-	if x > 0 {
-		// Return "positive" for positive values
-		return "positive"
+	// Second loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment f in loop
+		f++
 	}
-	// Return "non-positive" for non-positive values
-	return "non-positive"
-}
-
-// TestGoodFunction demonstrates that test functions are skipped by the analyzer.
-//
-// Params:
-//   - t: the test interface
-func TestGoodFunction(t interface{}) {
-	// This is a test function, it should be skipped
-	if true {
-		// Retour de la fonction
-		return
+	// Third loop iteration
+	for i := 0; i < LOOP_ITERATIONS; i++ {
+		// Increment f in loop
+		f++
 	}
-	// Retour de la fonction
-	return
-}
-
-// BenchmarkGoodFunction demonstrates that benchmark functions are skipped.
-//
-// Params:
-//   - b: the benchmark interface
-func BenchmarkGoodFunction(b interface{}) {
-	// This is a benchmark function, it should be skipped
-	for i := 0; i < BENCHMARK_LIMIT; i++ {
-		_ = i * DOUBLE_MULTIPLIER
+	// Switch on f value
+	switch f {
+	case 1:
+		// Handle case 1
+		f++
+	case CASE_VALUE_TWO:
+		// Handle case 2
+		f++
+	case CASE_VALUE_THREE:
+		// Handle case 3
+		f++
+	case CASE_VALUE_FOUR:
+		// Handle case 4
+		f++
+	case CASE_VALUE_FIVE:
+		// Handle case 5
+		f++
 	}
-	// Retour de la fonction
-	return
-}
-
-// ExampleGoodFunction demonstrates that example functions are skipped.
-func ExampleGoodFunction() {
-	// This is an example function, it should be skipped
-	if true {
-		// Retour de la fonction
-		return
-	}
-	// Retour de la fonction
-	return
-}
-
-// FuzzGoodFunction demonstrates that fuzz functions are skipped.
-//
-// Params:
-//   - f: the fuzz interface
-func FuzzGoodFunction(f interface{}) {
-	// This is a fuzz function, it should be skipped
-	if true {
-		// Retour de la fonction
-		return
-	}
-	// Retour de la fonction
-	return
-}
-
-// GoodElseEmptyBlock demonstrates empty else block with comment.
-//
-// Params:
-//   - x: the integer to check
-func GoodElseEmptyBlock(x int) {
-	// Check if x is positive
-	if x > 0 {
-		// Return for positive values
-		return
-	}
-	// Handle non-positive case with empty block
-}
-
-// GoodElseWithCommentBefore demonstrates else with comment before.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - string: classification result
-func GoodElseWithCommentBefore(x int) string {
-	// Check if x is positive
-	if x > 0 {
-		// Return "positive" for positive values
-		return "positive"
-	}
-	// Handle non-positive case
-	// Return "non-positive" for non-positive values
-	return "non-positive"
-}
-
-// GoodElseBlockWithCommentAtStart demonstrates else block with comment at start.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - string: classification result
-func GoodElseBlockWithCommentAtStart(x int) string {
-	// Check if x is positive
-	if x > 0 {
-		// Return "positive" for positive values
-		return "positive"
-	}
-	// Handle non-positive case - comment at start of block
-	// Return "non-positive" for non-positive values
-	return "non-positive"
-}
-
-// GoodInlineCommentSameLine demonstrates inline comments on same line as code.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - int: doubled value
-func GoodInlineCommentSameLine(x int) int {
-	// Check if x is positive
-	if x > 0 {
-		return x * DOUBLE_MULTIPLIER // Inline comment: double the positive value
-	}
-	// Return zero for non-positive values
-	return 0
-}
-
-// GoodTrivialBoolReturn demonstrates trivial bool returns don't need comments.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - bool: true if positive, false otherwise
-func GoodTrivialBoolReturn(x int) bool {
-	// Check if x is positive
-	if x > 0 {
-		return true
-	}
-	return false
-}
-
-// GoodTrivialNilReturn demonstrates trivial nil returns don't need comments.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - error: nil always
-func GoodTrivialNilReturn(x int) error {
-	// Check if x is positive
-	if x > 0 {
-		return nil
-	}
-	return nil
-}
-
-// GoodBareReturn demonstrates bare returns don't need comments.
-//
-// Params:
-//   - x: the integer to check
-func GoodBareReturn(x int) {
-	// Check if x is positive
-	if x > 0 {
-		return
-	}
-	return
-}
-
-// GoodEmptySliceReturn demonstrates empty slice returns don't need comments.
-//
-// Params:
-//   - x: the integer to check
-//
-// Returns:
-//   - []int: empty slice
-func GoodEmptySliceReturn(x int) []int {
-	// Check if x is positive
-	if x > 0 {
-		return []int{}
-	}
-	return []int{}
 }

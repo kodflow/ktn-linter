@@ -1,30 +1,46 @@
+// Bad examples for the const001 test case.
 package const001
 
-// Bad: All constants in a single grouped block WITHOUT explicit types (violates KTN-CONST-001)
-// But respects other rules: proper naming, comments, and single-block grouping
+// Bad: All constants WITHOUT explicit types (violates KTN-CONST-001)
+// Names use CamelCase to avoid CONST-003 errors
 const (
-	// MAX_CONNECTIONS defines the maximum number of connections
-	MAX_CONNECTIONS = 100
-	// PORT_NUMBER defines the server port number
-	PORT_NUMBER = 8080
-	// TIMEOUT_MS defines the timeout in milliseconds
-	TIMEOUT_MS = 5000
+	// BadMaxConnections defines max connections
+	BadMaxConnections = 100 // want "KTN-CONST-001"
+	// BadPortNumber defines server port
+	BadPortNumber = 8080 // want "KTN-CONST-001"
+	// BadTimeoutMs defines timeout in ms
+	BadTimeoutMs = 5000 // want "KTN-CONST-001"
 
-	// HTTP_OK represents the HTTP 200 status code
-	HTTP_OK = 200
-	// HTTP_NOT_FOUND represents the HTTP 404 status code
-	HTTP_NOT_FOUND = 404
+	// BadHttpOk represents HTTP 200 status
+	BadHttpOk = 200 // want "KTN-CONST-001"
+	// BadHttpNotFound represents 404
+	BadHttpNotFound = 404 // want "KTN-CONST-001"
 
-	// API_VERSION defines the API version string
-	API_VERSION = "v1.0"
-	// DEFAULT_LANG defines the default language code
-	DEFAULT_LANG = "en"
+	// BadApiVersion defines API version
+	BadApiVersion = "v1.0" // want "KTN-CONST-001"
+	// BadDefaultLang defines default lang
+	BadDefaultLang = "en" // want "KTN-CONST-001"
 
-	// IS_PRODUCTION indicates if running in production mode
-	IS_PRODUCTION = true
-	// ENABLE_CACHE indicates if caching is enabled
-	ENABLE_CACHE = false
+	// BadIsProduction indicates prod mode
+	BadIsProduction = true // want "KTN-CONST-001"
+	// BadEnableCache indicates cache on
+	BadEnableCache = false // want "KTN-CONST-001"
 
-	// BAD_RATIO defines a calculation ratio (renamed to avoid redeclaration)
-	BAD_RATIO = 1.5
+	// BadRatio defines calculation ratio
+	BadRatio = 1.5 // want "KTN-CONST-001"
+
+	// BadStateA without explicit type
+	BadStateA = iota // want "KTN-CONST-001"
+	// BadStateB inherits (no error)
+	BadStateB
+	// BadStateC inherits (no error)
+	BadStateC
+
+	// BadMultiA without explicit type
+	// want "KTN-CONST-001"
+	// want "KTN-CONST-001"
+	BadMultiA, BadMultiB = 10, 20
 )
+
+// BadStatus is a type declared after const (for testing purposes only)
+type BadStatus int

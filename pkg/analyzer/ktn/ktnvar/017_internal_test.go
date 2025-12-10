@@ -2,7 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_runVar017 tests the private runVar017 function.
@@ -21,76 +29,108 @@ func Test_runVar017(t *testing.T) {
 	}
 }
 
-// Test_extractIdent tests the private extractIdent helper function.
-func Test_extractIdent(t *testing.T) {
+// Test_isPointerType tests the private isPointerType helper function.
+func Test_isPointerType(t *testing.T) {
 	tests := []struct {
 		name     string
 		expr     ast.Expr
-		expected *ast.Ident
+		expected bool
 	}{
 		{
-			name:     "ident",
-			expr:     &ast.Ident{Name: "x"},
-			expected: &ast.Ident{Name: "x"},
+			name:     "pointer type",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "T"}},
+			expected: true,
 		},
 		{
-			name:     "not ident",
-			expr:     &ast.BasicLit{Value: "1"},
-			expected: nil,
+			name:     "non-pointer type",
+			expr:     &ast.Ident{Name: "T"},
+			expected: false,
+		},
+		{
+			name:     "selector expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "pkg"}, Sel: &ast.Ident{Name: "Type"}},
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractIdent(tt.expr)
+			result := isPointerType(tt.expr)
 			// Vérification du résultat
-			if tt.expected == nil {
-				// Vérification que result est nil
-				if result != nil {
-					t.Errorf("extractIdent() = %v, expected nil", result)
-				}
-			} else {
-				// Vérification que result n'est pas nil et a le bon nom
-				if result == nil {
-					t.Errorf("extractIdent() = nil, expected ident with name %s", tt.expected.Name)
-				} else if result.Name != tt.expected.Name {
-					t.Errorf("extractIdent() = %s, expected %s", result.Name, tt.expected.Name)
-				}
+			if result != tt.expected {
+				t.Errorf("isPointerType() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkShortVarDecl tests the private checkShortVarDecl function.
-func Test_checkShortVarDecl(t *testing.T) {
+// Test_getTypeName tests the private getTypeName helper function.
+func Test_getTypeName(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		expr     ast.Expr
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "ident",
+			expr:     &ast.Ident{Name: "MyStruct"},
+			expected: "MyStruct",
+		},
+		{
+			name:     "star expr",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "MyStruct"}},
+			expected: "MyStruct",
+		},
+		{
+			name:     "selector expr",
+			expr:     &ast.SelectorExpr{X: &ast.Ident{Name: "pkg"}, Sel: &ast.Ident{Name: "Type"}},
+			expected: "",
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks short var declarations
+			result := getTypeName(tt.expr)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("getTypeName() = %q, expected %q", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_isShadowing tests the private isShadowing function.
-func Test_isShadowing(t *testing.T) {
+// Test_getMutexTypeName tests the private getMutexTypeName helper function.
+func Test_getMutexTypeName(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typ      types.Type
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "not named type",
+			typ:      types.Typ[types.Int],
+			expected: "",
+		},
+		{
+			name:     "named type without package",
+			typ:      types.NewNamed(types.NewTypeName(0, nil, "Test", nil), types.Typ[types.Int], nil),
+			expected: "",
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if shadowing
+			result := getMutexTypeName(tt.typ)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("getMutexTypeName() = %q, expected %q", result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_lookupInParentScope tests the private lookupInParentScope function.
-func Test_lookupInParentScope(t *testing.T) {
+// Test_collectTypesWithValueReceivers tests the private collectTypesWithValueReceivers function.
+func Test_collectTypesWithValueReceivers(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -98,7 +138,256 @@ func Test_lookupInParentScope(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function looks up in parent scope
+			// Test passthrough - function collects types with value receivers
 		})
+	}
+}
+
+// Test_checkStructsWithMutex tests the private checkStructsWithMutex function.
+func Test_checkStructsWithMutex(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks structs with mutex
+		})
+	}
+}
+
+// Test_checkValueReceivers tests the private checkValueReceivers function.
+func Test_checkValueReceivers(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks value receivers
+		})
+	}
+}
+
+// Test_checkValueParams tests the private checkValueParams function.
+func Test_checkValueParams(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks value params
+		})
+	}
+}
+
+// Test_checkAssignments tests the private checkAssignments function.
+func Test_checkAssignments(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks assignments
+		})
+	}
+}
+
+// Test_getMutexType_notInTypesInfo tests with expr not in TypesInfo.
+func Test_getMutexType_notInTypesInfo(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+
+	// Test with expression not in TypesInfo
+	expr := &ast.Ident{Name: "x"}
+	result := getMutexType(pass, expr)
+	// Vérification du résultat
+	if result != "" {
+		t.Errorf("getMutexType() = %q, expected empty string", result)
+	}
+}
+
+// Test_hasMutex_notInTypesInfo tests with expr not in TypesInfo.
+func Test_hasMutex_notInTypesInfo(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+
+	// Test with expression not in TypesInfo
+	expr := &ast.Ident{Name: "x"}
+	result := hasMutex(pass, expr)
+	// Vérification du résultat
+	if result {
+		t.Errorf("hasMutex() = true, expected false")
+	}
+}
+
+// Test_hasMutexInType tests the private hasMutexInType function.
+func Test_hasMutexInType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if has mutex in type
+		})
+	}
+}
+
+// Test_getMutexTypeFromType_notInTypesInfo tests with expr not in TypesInfo.
+func Test_getMutexTypeFromType_notInTypesInfo(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+
+	// Test with expression not in TypesInfo
+	expr := &ast.Ident{Name: "x"}
+	result := getMutexTypeFromType(pass, expr)
+	// Vérification du résultat
+	if result != "" {
+		t.Errorf("getMutexTypeFromType() = %q, expected empty string", result)
+	}
+}
+
+// Test_getMutexTypeFromType_nonStruct tests with non-struct type.
+func Test_getMutexTypeFromType_nonStruct(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+
+	// Test with basic type
+	expr := &ast.Ident{Name: "x"}
+	pass.TypesInfo.Types[expr] = types.TypeAndValue{
+		Type: types.Typ[types.Int],
+	}
+	result := getMutexTypeFromType(pass, expr)
+	// Vérification du résultat
+	if result != "" {
+		t.Errorf("getMutexTypeFromType() = %q, expected empty string for int", result)
+	}
+}
+
+// Test_isMutexCopy tests the private isMutexCopy function.
+func Test_isMutexCopy(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks if is mutex copy
+		})
+	}
+}
+
+// Test_runVar017_disabled tests runVar017 with disabled rule.
+func Test_runVar017_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-017": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar017(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar017() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar017() reported %d issues, expected 0 when disabled", reportCount)
+	}
+}
+
+// Test_runVar017_fileExcluded tests runVar017 with excluded file.
+func Test_runVar017_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-017": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar017(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar017() error = %v", err)
+	}
+
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar017() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

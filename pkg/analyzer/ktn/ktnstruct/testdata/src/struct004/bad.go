@@ -1,23 +1,23 @@
+// Bad examples for the struct001 test case.
 package struct004
 
-// BadUser documentation insuffisante (1 seule ligne) - VIOLATION
-type BadUser struct { // want "KTN-STRUCT-004"
-	Name string
-	Age  int
+// BadProduct représente un produit de test.
+// Utilisé pour démontrer la violation de une struct par fichier.
+type BadProduct struct { // want "KTN-STRUCT-004"
+	ID    int
+	Price float64
 }
 
-// NoDoc struct exportée sans documentation - VIOLATION
-type NoDoc struct { // want "KTN-STRUCT-004"
-	Value string
+// BadOrder représente une commande de test.
+// Démontre la violation avec une deuxième struct dans le même fichier.
+type BadOrder struct { // want "KTN-STRUCT-004"
+	OrderID   int
+	ProductID int
 }
 
-type MissingDoc struct { // want "KTN-STRUCT-004"
-	Data int
-}
-
-// Ceci est une mauvaise documentation - VIOLATION
-// Car elle ne commence pas par le nom de la struct
-type BadConfig struct { // want "KTN-STRUCT-004"
-	Host string
-	Port int
+// BadCustomer représente un client de test.
+// Démontre la violation avec une troisième struct dans le même fichier.
+type BadCustomer struct { // want "KTN-STRUCT-004"
+	Name  string
+	Email string
 }

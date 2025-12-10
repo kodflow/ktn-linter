@@ -8,12 +8,11 @@ import (
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
 func TestGetAnalyzers(t *testing.T) {
-	const EXPECTED_COUNT int = 4
+	const EXPECTED_COUNT int = 3
 	expectedNames := []string{
 		"ktnconst001",
 		"ktnconst002",
 		"ktnconst003",
-		"ktnconst004",
 	}
 
 	tests := []struct {

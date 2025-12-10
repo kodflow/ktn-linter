@@ -3,24 +3,24 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
+	"go/types"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// MIN_MAKE_ARGS is the minimum number of arguments for make call
-	MIN_MAKE_ARGS int = 2
-	// INITIAL_APPEND_VARS_CAP initial capacity for append variables map
-	INITIAL_APPEND_VARS_CAP int = 16
+	// ruleCodeVar007 is the rule code for this analyzer
+	ruleCodeVar007 string = "KTN-VAR-007"
 )
 
-// Analyzer007 checks that slices are preallocated with capacity when known
-var Analyzer007 = &analysis.Analyzer{
+// Analyzer007 checks for string concatenation in loops
+var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar007",
-	Doc:      "KTN-VAR-007: Vérifie que les slices sont préalloués avec une capacité si elle est connue",
+	Doc:      "KTN-VAR-007: Utiliser strings.Builder pour >2 concaténations",
 	Run:      runVar007,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -34,349 +34,109 @@ var Analyzer007 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar007(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar007) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Collecter les variables utilisées avec append
-	appendVars := collectAppendVariables(insp)
+	nodeFilter := []ast.Node{
+		(*ast.ForStmt)(nil),
+		(*ast.RangeStmt)(nil),
+	}
 
-	// Vérifier les make() sans capacité
-	checkMakeCalls(pass, insp)
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar007, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
 
-	// Vérifier les []T{} qui devraient être préalloués
-	checkEmptySliceLiterals(pass, insp, appendVars)
+		checkStringConcatInLoop(pass, n)
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectAppendVariables collecte les variables utilisées avec append.
+// checkStringConcatInLoop checks for string += in loops.
 //
 // Params:
-//   - insp: inspecteur AST
-//
-// Returns:
-//   - map[string]bool: map des noms de variables utilisées avec append
-func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
-	appendVars := make(map[string]bool, INITIAL_APPEND_VARS_CAP)
+//   - pass: analysis pass context
+//   - n: AST node (ForStmt or RangeStmt)
+func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
+	// Body of the loop
+	var loopBody *ast.BlockStmt
 
-	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
+	// Check type of loop
+	switch node := n.(type) {
+	// Case: for loop
+	case *ast.ForStmt:
+		loopBody = node.Body
+	// Case: range loop
+	case *ast.RangeStmt:
+		loopBody = node.Body
 	}
 
-	// Parcours des assignations pour trouver les appends
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
+	// Check if loop body exists
+	if loopBody == nil {
+		// Return early if no body
+		return
+	}
 
-		// Vérification de chaque expression à droite
-		for _, rhs := range assign.Rhs {
-			// Vérification si c'est un appel à append
-			if isAppendCall(rhs) {
-				// Récupération des variables à gauche
-				for _, lhs := range assign.Lhs {
-					// Extraction du nom de la variable
-					if ident, isIdent := lhs.(*ast.Ident); isIdent {
-						appendVars[ident.Name] = true
-					}
+	// Traverse statements in loop body
+	ast.Inspect(loopBody, func(child ast.Node) bool {
+		// Check if assignment statement
+		if assign, ok := child.(*ast.AssignStmt); ok {
+			// Check if += operator
+			if assign.Tok == token.ADD_ASSIGN {
+				// Check if string concatenation
+				if isStringConcatenation(pass, assign) {
+					pass.Reportf(
+						assign.Pos(),
+						"KTN-VAR-007: utiliser strings.Builder au lieu de += pour concaténer des strings dans une boucle",
+					)
 				}
 			}
 		}
-	})
-
-	// Retour de la map
-	return appendVars
-}
-
-// isAppendCall vérifie si une expression est un appel à append.
-//
-// Params:
-//   - expr: expression à vérifier
-//
-// Returns:
-//   - bool: true si c'est un appel à append
-func isAppendCall(expr ast.Expr) bool {
-	call, ok := expr.(*ast.CallExpr)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un appel de fonction
-		return false
-	}
-
-	// Vérification du nom de la fonction
-	ident, ok := call.Fun.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return false
-	}
-
-	// Retour du résultat
-	return ident.Name == "append"
-}
-
-// checkMakeCalls vérifie les appels à make sans capacité.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
-	nodeFilter := []ast.Node{
-		(*ast.CallExpr)(nil),
-	}
-
-	// Parcours des appels de fonction
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call, ok := n.(*ast.CallExpr)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
-
-		// Vérification de l'appel make
-		checkMakeCall(pass, call)
-	})
-}
-
-// checkMakeCall vérifie un appel à make pour les slices sans capacité.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: appel de fonction à vérifier
-func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
-	// Vérification que c'est un appel à make
-	if !utils.IsMakeCall(call) {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Vérification du nombre d'arguments (doit être 2: type et length)
-	if len(call.Args) != MIN_MAKE_ARGS {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(pass, call.Args[0]) {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Signalement de l'erreur
-	pass.Reportf(
-		call.Pos(),
-		"KTN-VAR-007: spécifier une capacité avec make([]T, 0, capacity) au lieu de make([]T, 0)",
-	)
-}
-
-// litCheckContext contains context for slice literal checking.
-type litCheckContext struct {
-	pass       *analysis.Pass
-	appendVars map[string]bool
-}
-
-// checkEmptySliceLiterals vérifie les []T{} qui devraient être préalloués.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//   - appendVars: variables utilisées avec append
-func checkEmptySliceLiterals(
-	pass *analysis.Pass,
-	insp *inspector.Inspector,
-	appendVars map[string]bool,
-) {
-	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
-	}
-
-	// Créer le contexte de vérification
-	ctx := &litCheckContext{
-		pass:       pass,
-		appendVars: appendVars,
-	}
-
-	// Parcours des assignations
-	insp.WithStack(nodeFilter, func(n ast.Node, push bool, stack []ast.Node) bool {
-		// Ignorer le pop
-		if !push {
-			// Continuer le parcours
-			return true
-		}
-
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continuer le parcours
-			return true
-		}
-
-		// Vérification de chaque paire lhs/rhs
-		for i, rhs := range assign.Rhs {
-			// Vérification que c'est un composite literal
-			lit, isLit := rhs.(*ast.CompositeLit)
-			// Vérification de la condition
-			if !isLit {
-				// Continuer avec l'élément suivant
-				continue
-			}
-
-			// Vérification de la slice vide
-			checkCompositeLit(ctx, assign, i, lit, stack)
-		}
-
-		// Continuer le parcours
+		// Continue traversing
 		return true
 	})
 }
 
-// checkCompositeLit vérifie un composite literal pour les slices vides.
+// isStringConcatenation checks if += operates on string.
 //
 // Params:
-//   - ctx: contexte de vérification
-//   - assign: assignation contenant le literal
-//   - index: index dans la liste des rhs
-//   - lit: composite literal à vérifier
-//   - stack: pile des nœuds parents
-func checkCompositeLit(
-	ctx *litCheckContext,
-	assign *ast.AssignStmt,
-	index int,
-	lit *ast.CompositeLit,
-	stack []ast.Node,
-) {
-	// Vérification que c'est un slice vide
-	if len(lit.Elts) > 0 {
-		// Le slice n'est pas vide
-		return
-	}
-
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(ctx.pass, lit.Type) {
-		// Ce n'est pas un slice
-		return
-	}
-
-	// Vérification si on est dans un return statement
-	if isInReturnStatement(stack) {
-		// Pas de préallocation nécessaire pour un return
-		return
-	}
-
-	// Vérification si on est dans un struct literal
-	if isInStructLiteral(stack) {
-		// Pas de préallocation nécessaire pour init de struct
-		return
-	}
-
-	// Récupération du nom de la variable assignée
-	if index >= len(assign.Lhs) {
-		// Index invalide
-		return
-	}
-
-	ident, ok := assign.Lhs[index].(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return
-	}
-
-	// Vérification si la variable est utilisée avec append
-	if !ctx.appendVars[ident.Name] {
-		// La variable n'est jamais utilisée avec append
-		return
-	}
-
-	// Signalement de l'erreur
-	ctx.pass.Reportf(
-		lit.Pos(),
-		"KTN-VAR-007: préallouer le slice '%s' avec make([]T, 0, capacity) au lieu de []T{}",
-		ident.Name,
-	)
-}
-
-// isInReturnStatement vérifie si le nœud est dans un return statement.
-//
-// Params:
-//   - stack: pile des nœuds parents
+//   - pass: analysis pass context
+//   - assign: assignment statement to check
 //
 // Returns:
-//   - bool: true si dans un return
-func isInReturnStatement(stack []ast.Node) bool {
-	// Parcours de la pile des parents
-	for _, node := range stack {
-		// Vérification si c'est un return statement
-		if _, ok := node.(*ast.ReturnStmt); ok {
-			// Trouvé un return parent
-			return true
-		}
-	}
-
-	// Pas de return parent trouvé
-	return false
-}
-
-// isInStructLiteral vérifie si le nœud est dans un struct literal.
-//
-// Params:
-//   - stack: pile des nœuds parents
-//
-// Returns:
-//   - bool: true si dans un struct literal
-func isInStructLiteral(stack []ast.Node) bool {
-	// Parcours de la pile des parents (en excluant le nœud courant)
-	for i := len(stack) - 1; i >= 0; i-- {
-		node := stack[i]
-
-		// Vérification si c'est un composite literal (struct)
-		if lit, ok := node.(*ast.CompositeLit); ok {
-			// Vérification que ce n'est pas un slice/array/map
-			if !isSliceArrayOrMap(lit.Type) {
-				// C'est un struct literal
-				return true
-			}
-		}
-
-		// Vérification si c'est un key-value expression
-		if _, ok := node.(*ast.KeyValueExpr); ok {
-			// Dans une initialisation de champ
-			return true
-		}
-	}
-
-	// Pas de struct parent trouvé
-	return false
-}
-
-// isSliceArrayOrMap vérifie si le type est un slice, array ou map.
-//
-// Params:
-//   - typeExpr: expression de type
-//
-// Returns:
-//   - bool: true si slice, array ou map
-func isSliceArrayOrMap(typeExpr ast.Expr) bool {
-	// Vérification du type nil
-	if typeExpr == nil {
-		// Type implicite (peut être struct)
+//   - bool: true if string concatenation
+func isStringConcatenation(pass *analysis.Pass, assign *ast.AssignStmt) bool {
+	// Check if left-hand side exists
+	if len(assign.Lhs) == 0 {
+		// Return false if no left-hand side
 		return false
 	}
 
-	// Vérification des différents types
-	switch typeExpr.(type) {
-	// Traitement des types slice/array/map
-	case *ast.ArrayType, *ast.MapType:
-		// C'est un slice, array ou map
-		return true
-	// Traitement des autres types
-	default:
-		// Ce n'est pas un slice, array ou map
-		return false
-	}
-}
+	// Get first left-hand side expression
+	lhs := assign.Lhs[0]
 
+	// Get type information
+	if tv, ok := pass.TypesInfo.Types[lhs]; ok {
+		var basic *types.Basic
+		// Check if type is string
+		if basic, ok = tv.Type.Underlying().(*types.Basic); ok {
+			// Return true if string type
+			return basic.Kind() == types.String
+		}
+	}
+
+	// Return false if not string
+	return false
+}

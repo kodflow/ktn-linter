@@ -1,55 +1,74 @@
+// Bad examples for the var010 test case.
 package var009
 
+// Constantes pour les valeurs de test
 const (
-	// USER_ID_TWO est un ID d'utilisateur
-	USER_ID_TWO int = 2
-	// TEST_ID_ONE est un ID de test
-	TEST_ID_ONE int = 1
-	// TEST_INDEX_ZERO est un index de test
-	TEST_INDEX_ZERO int = 0
+	TestField1Value   int     = 42
+	TestField4Value   float64 = 3.14
+	TestAgeValue      int     = 30
+	TestBalanceValue  float64 = 100.0
+	TestStruct1Field1 int     = 1
+	TestConfigField1  int     = 10
 )
 
-// badInitUsers creates a map without capacity.
-//
-// Returns:
-//   - map[string]int: map des utilisateurs
-func badInitUsers() map[string]int {
-	// Map without capacity hint - VIOLATES VAR-009
-	users := make(map[string]int)
-	users["alice"] = TEST_ID_ONE
-	users["bob"] = USER_ID_TWO
-	// Retour du résultat
-	return users
+// LargeStruct est une structure avec plus de 3 champs.
+// Cette structure contient plusieurs champs et est utilisée dans les tests.
+type LargeStruct struct {
+	Field1 int
+	Field2 string
+	Field3 bool
+	Field4 float64
 }
 
-// badInitConfig creates a map without capacity in var declaration.
-func badInitConfig() {
-	// Map without capacity hint - VIOLATES VAR-009
-	config := make(map[string]string)
-	config["host"] = "localhost"
-	// Utilisation de la config
+// badLargeStructValue utilise une structure par valeur.
+func badLargeStructValue() {
+	// Variable locale de grande structure
+	data := LargeStruct{
+		Field1: TestField1Value,
+		Field2: "test",
+		Field3: true,
+		Field4: TestField4Value,
+	}
+	_ = data
+}
+
+// badLargeStructValue2 utilise une autre grande structure par valeur.
+func badLargeStructValue2() {
+	// Variable locale de grande structure
+	user := LargeStruct{
+		Field1: TestAgeValue,
+		Field2: "John",
+		Field3: true,
+		Field4: TestBalanceValue,
+	}
+	_ = user
+}
+
+// badMultipleVars déclare plusieurs grandes structures.
+func badMultipleVars() {
+	// Première variable
+	a := LargeStruct{Field1: TestStruct1Field1}
+	// Deuxième variable
+	b := LargeStruct{Field2: "test"}
+	_, _ = a, b
+}
+
+// badVarDecl déclare une grande structure avec var.
+func badVarDecl() {
+	// Déclaration var explicite
+	var config LargeStruct
+	config.Field1 = TestConfigField1
 	_ = config
 }
 
-// badProcessData creates multiple maps without capacity.
-func badProcessData() {
-	// Multiple maps without capacity hints - VIOLATES VAR-009 (3 times)
-	data := make(map[int]string)
-	cache := make(map[string]bool)
-	index := make(map[int][]string)
-
-	// Utilisation des maps
-	data[TEST_ID_ONE] = "test"
-	cache["key"] = true
-	index[TEST_INDEX_ZERO] = []string{"a", "b"}
-}
-
-// badNestedMap creates a map of maps without capacity.
-func badNestedMap() {
-	// Map without capacity hint - VIOLATES VAR-009
-	nested := make(map[string]map[int]string)
-	// Inner map also without capacity - VIOLATES VAR-009
-	nested["key"] = make(map[int]string)
-	// Utilisation de la map
-	_ = nested
+// init utilise les fonctions privées
+func init() {
+	// Appel de badLargeStructValue
+	badLargeStructValue()
+	// Appel de badLargeStructValue2
+	badLargeStructValue2()
+	// Appel de badMultipleVars
+	badMultipleVars()
+	// Appel de badVarDecl
+	badVarDecl()
 }

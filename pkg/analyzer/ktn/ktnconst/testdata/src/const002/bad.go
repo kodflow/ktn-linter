@@ -1,71 +1,49 @@
+// Bad examples for the const002 test case.
 package const002
 
-// Bad: Multiple const blocks (scattered) - violates KTN-CONST-002
-
-// First group of constants
+// First const block (OK - at the top)
 const (
-	// FIRST_GROUP_A is in the first group
-	FIRST_GROUP_A string = "first"
-	// FIRST_GROUP_B is in the first group
-	FIRST_GROUP_B string = "group"
+	// FirstConst is the first constant
+	FirstConst string = "first"
 )
 
-// Second group - scattered (ERROR #1)
-const (
-	// SECOND_GROUP is in a second group
-	SECOND_GROUP string = "scattered"
-)
-
-// Third scattered const group (ERROR #2)
-const (
-	// BAD_SCATTERED_A is scattered
-	BAD_SCATTERED_A string = "bad"
-)
-
-// Fourth scattered const group (ERROR #3)
-const (
-	// SCATTERED_ONE in another block
-	SCATTERED_ONE string = "one"
-)
-
-// Fifth scattered const group (ERROR #4)
-const (
-	// SCATTERED_TWO in yet another block
-	SCATTERED_TWO string = "two"
-)
-
-// Sixth scattered const group (ERROR #5)
-const (
-	// THIRD_SCATTERED also scattered
-	THIRD_SCATTERED int = 1
-)
-
-// Seventh scattered const group (ERROR #6)
-const (
-	// FOURTH_SCATTERED also scattered
-	FOURTH_SCATTERED int = 2
-)
-
-// Eighth scattered const group (ERROR #7)
-const (
-	// CONST_FINAL is yet another scattered const
-	CONST_FINAL string = "final"
+// Second scattered const block (ERROR - scattered)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc"
+	// ScatteredConst is scattered
+	ScatteredConst string = "scattered"
 )
 
 // Variable declaration
-var GlobalVar string = "some var"
+var globalVar string = "var"
 
-// Bad: Const after var (ERROR #8)
-const (
-	// CONST_AFTER_VAR appears after a var declaration
-	CONST_AFTER_VAR string = "after var"
+// Third const block after var (ERROR - after var + scattered)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc" "KTN-CONST-002: les constantes doivent être placées avant les déclarations var"
+	// ConstAfterVar is after var
+	ConstAfterVar string = "after_var"
 )
 
-// helperFunction is used to demonstrate const blocks separated by other declarations.
-//
-// Returns:
-//   - string: a helper message
-func helperFunction() string {
-	// Retour de la fonction
-	return "helper"
+// MyType is a type for testing const order.
+// This struct demonstrates type declarations in file order.
+type MyType struct {
+	// Field is a field
+	Field string
 }
+
+// Fourth const block after type (ERROR - after type + after var + scattered)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc" "KTN-CONST-002: les constantes doivent être placées avant les déclarations var" "KTN-CONST-002: les constantes doivent être placées avant les déclarations type"
+	// ConstAfterType is after type
+	ConstAfterType string = "after_type"
+)
+
+// init uses the declarations to avoid unused errors
+func init() {
+	// Use all declarations
+	_ = globalVar
+	_ = MyType{}
+}
+
+// Fifth const block after func (ERROR - all violations)
+const ( // want "KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc" "KTN-CONST-002: les constantes doivent être placées avant les déclarations var" "KTN-CONST-002: les constantes doivent être placées avant les déclarations type" "KTN-CONST-002: les constantes doivent être placées avant les déclarations func"
+	// ConstAfterFunc is after func
+	ConstAfterFunc string = "after_func"
+)

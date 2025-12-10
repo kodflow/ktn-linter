@@ -1,101 +1,114 @@
-// Analyzer 012 for the ktnfunc package.
+// Package ktnfunc implements KTN linter rules.
 package ktnfunc
 
 import (
 	"go/ast"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer012 checks for unnecessary else blocks after return/continue/break
-var Analyzer012 = &analysis.Analyzer{
+const (
+	// ruleCodeFunc012 is the rule code for this analyzer
+	ruleCodeFunc012 string = "KTN-FUNC-012"
+	// defaultMaxUnnamedReturns max unnamed returns allowed
+	defaultMaxUnnamedReturns int = 3
+)
+
+// Analyzer012 checks that functions with >3 return values use named returns
+var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc012",
-	Doc:      "KTN-FUNC-012: Éviter else après return/continue/break (early return préféré)",
+	Doc:      "KTN-FUNC-012: Les fonctions avec plus de 3 valeurs de retour doivent utiliser des named returns",
 	Run:      runFunc012,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc012 exécute l'analyse KTN-FUNC-012.
+// runFunc012 description à compléter.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat de l'analyse
+//   - any: résultat
 //   - error: erreur éventuelle
 func runFunc012(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc012) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxUnnamed := cfg.GetThreshold(ruleCodeFunc012, defaultMaxUnnamedReturns)
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.IfStmt)(nil),
+		(*ast.FuncDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		ifStmt := n.(*ast.IfStmt)
+		funcDecl := n.(*ast.FuncDecl)
 
-		// Vérifier si le bloc if est vide
-		if ifStmt.Body == nil || len(ifStmt.Body.List) == 0 {
-			// Bloc vide, ignorer
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeFunc012, filename) {
+			// Fichier exclu
 			return
 		}
 
-		// Vérifier s'il y a une clause else
-		if ifStmt.Else == nil {
-			// Pas de else, ignorer
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour de la fonction
 			return
 		}
 
-		// Récupérer la dernière instruction du bloc if
-		lastStmt := ifStmt.Body.List[len(ifStmt.Body.List)-1]
+		funcName := funcDecl.Name.Name
 
-		// Déterminer le type de sortie anticipée
-		hasEarlyExit, exitType := checkEarlyExit(lastStmt)
+		// Vérification de la condition
+		if funcDecl.Type.Results == nil {
+			// Retour de la fonction
+			return
+		}
 
-		// Si sortie anticipée détectée, reporter l'erreur
-		if hasEarlyExit {
+		// Count total return values
+		returnCount := 0
+		hasUnnamedReturns := false
+
+		// Itération sur les éléments
+		for _, field := range funcDecl.Type.Results.List {
+			// Vérification de la condition
+			if len(field.Names) == 0 {
+				// Unnamed return
+				hasUnnamedReturns = true
+				// Incrément du compteur
+				returnCount++
+			} else {
+				// Named returns
+				// Ajout du nombre de retours nommés
+				returnCount += len(field.Names)
+			}
+		}
+
+		// If more than maxUnnamed returns and has unnamed returns, report error
+		if returnCount > maxUnnamed && hasUnnamedReturns {
+			// Rapport d'erreur pour named returns requis
 			pass.Reportf(
-				ifStmt.Else.Pos(),
-				"KTN-FUNC-012: else inutile après %s, utiliser early return",
-				exitType,
+				funcDecl.Type.Results.Pos(),
+				"KTN-FUNC-012: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
+				funcName,
+				returnCount,
+				maxUnnamed,
 			)
 		}
 	})
 
-	// Retour succès
+	// Retour de la fonction
 	return nil, nil
-}
-
-// checkEarlyExit vérifie si une instruction est une sortie anticipée.
-//
-// Params:
-//   - stmt: instruction à vérifier
-//
-// Returns:
-//   - bool: true si sortie anticipée
-//   - string: type de sortie (return, continue, break)
-func checkEarlyExit(stmt ast.Stmt) (bool, string) {
-	// Switch sur le type d'instruction
-	switch s := stmt.(type) {
-	// Cas return
-	case *ast.ReturnStmt:
-		// Retour true car c'est une sortie anticipée de type return
-		return true, "return"
-	// Cas branch (continue/break)
-	case *ast.BranchStmt:
-		// Si c'est continue
-		if s.Tok.String() == "continue" {
-			// Retour true car c'est une sortie anticipée de type continue
-			return true, "continue"
-		}
-		// Si c'est break
-		if s.Tok.String() == "break" {
-			// Retour true car c'est une sortie anticipée de type break
-			return true, "break"
-		}
-	}
-
-	// Pas de sortie anticipée
-	return false, ""
 }

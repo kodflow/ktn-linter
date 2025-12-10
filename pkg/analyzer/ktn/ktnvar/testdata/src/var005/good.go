@@ -1,101 +1,60 @@
+// Good examples for the var006 test case.
 package var005
 
+// Good: Proper use of make with capacity or without length
+
 const (
-	// MAX_RETRIES_VALUE is the max retries value
-	MAX_RETRIES_VALUE int = 3
-	// ANSWER is the answer
-	ANSWER int = 42
-	// AGE is example age
-	AGE int = 30
-	// X_VALUE is example x value
-	X_VALUE int = 10
-	// Y_VALUE is example y value
-	Y_VALUE int = 20
-	// INT64_VALUE is int64 example
-	INT64_VALUE int64 = 5
-	// FLOAT_VALUE is float example
-	FLOAT_VALUE float64 = 3.14
+	// BufferSize defines the buffer size
+	BufferSize int = 100
+	// LoopCount is the loop count
+	LoopCount int = 10
+	// ValueOne is value one
+	ValueOne int = 1
+	// ValueTwo is value two
+	ValueTwo int = 2
+	// ValueThree is value three
+	ValueThree int = 3
+	// CapacityFifty is capacity of 50
+	CapacityFifty int = 50
 )
 
-// Package-level variables can use var with explicit type
-var (
-	// GlobalConfig is the global configuration
-	GlobalConfig string = "default"
-	// MaxRetries is the maximum retries
-	MaxRetries int = MAX_RETRIES_VALUE
-)
+// init demonstrates proper make usage
+func init() {
+	// Good: Capacity specified, length is 0
+	items := make([]int, 0, BufferSize)
+	// Itération sur les éléments
+	for i := range LoopCount {
+		items = append(items, i)
+	}
+	_ = items
 
-// goodShortDeclaration shows correct use of short declaration
-func goodShortDeclaration() {
-	// Use := for local variables
-	name := "Alice"
-	age := AGE
-	isActive := true
+	// Good: Using make([]T, 0, cap) with append is the proper way
+	items2 := make([]string, 0, BufferSize)
+	// Itération sur les éléments
+	for i := range BufferSize {
+		items2 = append(items2, "value")
+		// Utilisation de i pour éviter le warning
+		_ = i
+	}
+	_ = items2
 
-	_ = name
-	_ = age
-	_ = isActive
-}
+	// Good: Literal with values
+	values := []int{ValueOne, ValueTwo, ValueThree}
+	_ = values
 
-// goodMultipleAssignment shows correct use of := with multiple variables
-func goodMultipleAssignment() {
-	// Use := for multiple variables
-	x, y := X_VALUE, Y_VALUE
-
-	_ = x
-	_ = y
-}
-
-// goodExplicitTypeWhenNeeded shows when var is acceptable with explicit type
-func goodExplicitTypeWhenNeeded() {
-	// This is OK: explicit type conversion is necessary
-	// x is an int64 value
-	var x int64 = INT64_VALUE
-	// y is a float64 value
-	var y float64 = FLOAT_VALUE
-
-	_ = x
-	_ = y
-}
-
-// goodVarWithoutInit shows var without initialization is OK
-func goodVarWithoutInit() {
-	// This is OK: no initialization
-	var result int
-	result = ANSWER
-
+	// Good: Use make with capacity based on input length
+	data := []string{"a", "b"}
+	result := make([]string, 0, len(data))
+	// Itération sur les données
+	for _, item := range data {
+		// Vérification d'une condition
+		if len(item) > 0 {
+			result = append(result, item)
+		}
+	}
 	_ = result
-}
 
-// goodMultipleVarWithoutInit shows multiple var without init is OK
-func goodMultipleVarWithoutInit() {
-	const (
-		// A_VALUE is value for a
-		A_VALUE int = 1
-		// B_VALUE is value for b
-		B_VALUE int = 2
-		// C_VALUE is value for c
-		C_VALUE int = 3
-	)
-	// This is OK: no initialization
-	var a, b, c int
-	a, b, c = A_VALUE, B_VALUE, C_VALUE
-
-	_ = a
-	_ = b
-	_ = c
-}
-
-// goodReassignment shows that := is used for new variables
-func goodReassignment() {
-	const (
-		// INITIAL_COUNT is the initial count
-		INITIAL_COUNT int = 0
-		// NEW_COUNT is the new count
-		NEW_COUNT int = 5
-	)
-	count := INITIAL_COUNT
-	count = NEW_COUNT // Regular assignment is fine
-
-	_ = count
+	// Good: Length is 0, capacity is specified
+	slice := make([]int, 0, CapacityFifty)
+	_ = slice
 }

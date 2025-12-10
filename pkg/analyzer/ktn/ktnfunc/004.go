@@ -1,124 +1,391 @@
-// Package ktnfunc implements KTN linter rules.
+// Analyzer 004 for the ktnfunc package.
 package ktnfunc
 
 import (
 	"go/ast"
+	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Analyzer004 checks that functions don't use naked returns (except for very short functions)
 const (
-	// MAX_LINES_FOR_NAKED_RETURN max lines for naked return
-	MAX_LINES_FOR_NAKED_RETURN int = 5
+	// ruleCodeFunc004 is the rule code for this analyzer
+	ruleCodeFunc004 string = "KTN-FUNC-004"
+	// initialPrivateFuncsCap initial capacity for private funcs map
+	initialPrivateFuncsCap int = 32
+	// initialCalledFuncsCap initial capacity for called funcs map
+	initialCalledFuncsCap int = 64
 )
 
-// Analyzer004 checks that naked returns are only used in very short functions
-var Analyzer004 = &analysis.Analyzer{
+// Analyzer004 checks that all private functions are used in production.
+var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc004",
-	Doc:      "KTN-FUNC-004: Les naked returns sont interdits sauf pour les fonctions très courtes (<5 lignes)",
+	Doc:      "KTN-FUNC-004: fonctions privées non utilisées dans le code de production (code mort)",
 	Run:      runFunc004,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runFunc004 description à compléter.
+// privateFuncInfo stocke les informations sur une fonction privée.
+type privateFuncInfo struct {
+	name         string
+	pos          token.Pos
+	receiverType string // vide si fonction, nom du type si méthode
+}
+
+// runFunc004 exécute l'analyse KTN-FUNC-004.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - any: résultat
+//   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runFunc004(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Récupération de la configuration
+	cfg := config.Get()
 
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc004) {
+		// Règle désactivée
+		return nil, nil
 	}
 
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-		// Skip if no body (external functions)
-		if funcDecl.Body == nil {
-			// Retour de la fonction
-			return
-		}
+	// Collecter les fonctions privées et les appels
+	privateFuncs := collectPrivateFunctions(pass, insp, cfg)
+	calledInProduction := collectCalledFunctions(pass, insp, cfg)
 
-		// Skip test functions
-		if shared.IsTestFunction(funcDecl) {
-			// Retour de la fonction
-			return
-		}
+	// Détecter les fonctions passées comme callbacks
+	collectCallbackUsages(pass, insp, privateFuncs, calledInProduction, cfg)
 
-		funcName := funcDecl.Name.Name
+	// Reporter les fonctions privées non utilisées
+	reportUnusedPrivateFuncs(pass, privateFuncs, calledInProduction)
 
-		// Skip if function doesn't have named return values
-		if !hasNamedReturns(funcDecl.Type.Results) {
-			// Retour de la fonction
-			return
-		}
-
-		// Count the lines of the function
-		pureLines := countPureCodeLines(pass, funcDecl.Body)
-
-		// Check for naked returns
-		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
-			ret, ok := node.(*ast.ReturnStmt)
-			// Vérification de la condition
-			if !ok {
-				// Retour de la fonction
-				return true
-			}
-
-			// Naked return has no results specified
-			if len(ret.Results) == 0 {
-				// Allow naked returns in very short functions
-				if pureLines >= MAX_LINES_FOR_NAKED_RETURN {
-					pass.Reportf(
-						ret.Pos(),
-						"KTN-FUNC-004: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
-						funcName,
-						pureLines,
-						MAX_LINES_FOR_NAKED_RETURN-1,
-					)
-				}
-			}
-
-			// Retour de la fonction
-			return true
-		})
-	})
-
-	// Retour de la fonction
+	// Retour succès de l'analyse
 	return nil, nil
 }
 
-// hasNamedReturns checks if the function has named return values
+// collectPrivateFunctions collecte toutes les fonctions privées du code de production.
+//
 // Params:
 //   - pass: contexte d'analyse
+//   - insp: inspector AST
+//   - cfg: configuration
 //
 // Returns:
-//   - bool: true si retours nommés
-func hasNamedReturns(results *ast.FieldList) bool {
-	// Vérification de la condition
-	if results == nil || len(results.List) == 0 {
-		// Retour de la fonction
-		return false
+//   - map[string][]*privateFuncInfo: map des fonctions privées par nom
+func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string][]*privateFuncInfo {
+	privateFuncs := make(map[string][]*privateFuncInfo, initialPrivateFuncsCap)
+	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		funcDecl := n.(*ast.FuncDecl)
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeFunc004, filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			// Retour pour ignorer le fichier de test
+			return
+		}
+
+		// Vérifier et collecter la fonction privée
+		info := extractPrivateFuncInfo(funcDecl)
+		// Ajouter à la map si valide
+		if info != nil {
+			// Ajout de la fonction privée à la collection
+			privateFuncs[info.name] = append(privateFuncs[info.name], info)
+		}
+	})
+
+	// Retour de la map des fonctions privées
+	return privateFuncs
+}
+
+// extractPrivateFuncInfo extrait les infos d'une fonction privée si applicable.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - *privateFuncInfo: infos de la fonction ou nil si non applicable
+func extractPrivateFuncInfo(funcDecl *ast.FuncDecl) *privateFuncInfo {
+	// Vérifier le nom
+	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
+		// Retour si nom invalide
+		return nil
 	}
 
-	// Itération sur les éléments
-	for _, field := range results.List {
-		// Vérification de la condition
-		if len(field.Names) > 0 {
-			// Retour de la fonction
-			return true
+	funcName := funcDecl.Name.Name
+
+	// Ignorer les fonctions spéciales Go
+	if funcName == "main" || funcName == "init" {
+		// Retour si fonction spéciale
+		return nil
+	}
+
+	// Vérifier si c'est privé (première lettre en minuscule)
+	firstChar := rune(funcName[0])
+	// Ignorer les fonctions publiques
+	if firstChar < 'a' || firstChar > 'z' {
+		// Retour si fonction publique
+		return nil
+	}
+
+	info := &privateFuncInfo{name: funcName, pos: funcDecl.Pos()}
+
+	// Si c'est une méthode, extraire le type du receiver
+	if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+		// Extraction du type du receiver
+		info.receiverType = extractReceiverType(funcDecl.Recv.List[0].Type)
+	}
+
+	// Retour des infos de la fonction privée
+	return info
+}
+
+// collectCalledFunctions collecte les fonctions appelées dans le code de production.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - insp: inspector AST
+//   - cfg: configuration
+//
+// Returns:
+//   - map[string]bool: map des fonctions appelées
+func collectCalledFunctions(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string]bool {
+	calledInProduction := make(map[string]bool, initialCalledFuncsCap)
+	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		callExpr := n.(*ast.CallExpr)
+		filename := pass.Fset.Position(callExpr.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeFunc004, filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			// Retour pour ignorer le fichier de test
+			return
+		}
+
+		// Marquer la fonction comme appelée
+		if funcName := extractCalledFuncName(callExpr); funcName != "" {
+			// Marquage de la fonction comme appelée
+			calledInProduction[funcName] = true
+		}
+	})
+
+	// Retour de la map des fonctions appelées
+	return calledInProduction
+}
+
+// collectCallbackUsages détecte les fonctions passées comme callbacks.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - insp: inspector AST
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+//   - cfg: configuration
+func collectCallbackUsages(pass *analysis.Pass, insp *inspector.Inspector, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool, cfg *config.Config) {
+	nodeFilter := []ast.Node{
+		(*ast.CompositeLit)(nil),
+		(*ast.AssignStmt)(nil),
+		(*ast.ValueSpec)(nil),
+		(*ast.CallExpr)(nil),
+	}
+
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		filename := pass.Fset.Position(n.Pos()).Filename
+
+		// Vérifier si le fichier est exclu
+		if cfg.IsFileExcluded(ruleCodeFunc004, filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Ignorer les fichiers de test
+		if shared.IsTestFile(filename) {
+			// Retour pour ignorer le fichier de test
+			return
+		}
+
+		// Traitement spécial pour les CallExpr (méthodes passées en arguments)
+		if callExpr, ok := n.(*ast.CallExpr); ok {
+			// Collection des callbacks dans les CallExpr
+			collectCallExprCallbacks(callExpr, privateFuncs, calledInProduction)
+			// Retour après traitement CallExpr
+			return
+		}
+
+		// Parcourir tous les identifiants pour les autres types de noeuds
+		collectIdentCallbacks(n, privateFuncs, calledInProduction)
+	})
+}
+
+// collectCallExprCallbacks détecte les callbacks passés comme arguments à des appels.
+//
+// Params:
+//   - callExpr: expression d'appel de fonction
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+func collectCallExprCallbacks(callExpr *ast.CallExpr, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	// Parcourir tous les arguments de l'appel
+	for _, arg := range callExpr.Args {
+		// Cas 1: fonction directe (ex: handler)
+		if ident, ok := arg.(*ast.Ident); ok {
+			// Marquage de la fonction identifiant
+			markIfPrivateFunc(ident.Name, privateFuncs, calledInProduction)
+			// Passage au prochain argument
+			continue
+		}
+
+		// Cas 2: méthode (ex: a.handleLiveness, obj.Method)
+		if selExpr, ok := arg.(*ast.SelectorExpr); ok {
+			// Marquage de la méthode sélectionnée
+			markIfPrivateFunc(selExpr.Sel.Name, privateFuncs, calledInProduction)
 		}
 	}
+}
 
-	// Retour de la fonction
-	return false
+// collectIdentCallbacks parcourt un noeud pour détecter les identifiants de callbacks.
+//
+// Params:
+//   - n: noeud AST à parcourir
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+func collectIdentCallbacks(n ast.Node, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	ast.Inspect(n, func(node ast.Node) bool {
+		// Vérifier si c'est un identifiant
+		if ident, ok := node.(*ast.Ident); ok {
+			// Marquage si fonction privée
+			markIfPrivateFunc(ident.Name, privateFuncs, calledInProduction)
+		}
+		// Continuer la traversée
+		return true
+	})
+}
+
+// markIfPrivateFunc marque une fonction comme appelée si elle est privée.
+//
+// Params:
+//   - funcName: nom de la fonction
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées (modifiée)
+func markIfPrivateFunc(funcName string, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	// Vérifier si c'est une fonction privée connue
+	if _, exists := privateFuncs[funcName]; exists {
+		// Marquage de la fonction comme appelée
+		calledInProduction[funcName] = true
+	}
+}
+
+// reportUnusedPrivateFuncs reporte les fonctions privées non utilisées.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - privateFuncs: map des fonctions privées
+//   - calledInProduction: map des fonctions appelées
+func reportUnusedPrivateFuncs(pass *analysis.Pass, privateFuncs map[string][]*privateFuncInfo, calledInProduction map[string]bool) {
+	// Parcours des fonctions privées
+	for key, infos := range privateFuncs {
+		// Vérifier si la fonction est appelée
+		if calledInProduction[key] {
+			// Passage à la fonction suivante si appelée
+			continue
+		}
+
+		// Reporter toutes les fonctions avec ce nom
+		for _, info := range infos {
+			// Rapport de fonction non utilisée
+			reportUnusedFunc(pass, info)
+		}
+	}
+}
+
+// reportUnusedFunc reporte une fonction privée non utilisée.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - info: infos de la fonction
+func reportUnusedFunc(pass *analysis.Pass, info *privateFuncInfo) {
+	// Vérifier si c'est une méthode
+	if info.receiverType != "" {
+		pass.Reportf(info.pos,
+			"KTN-FUNC-004: la méthode privée '%s.%s' n'est jamais appelée dans le code de production. Si elle n'est utilisée que dans les tests, c'est du code mort créé pour contourner les règles - supprimez-la",
+			info.receiverType, info.name)
+		// Fin du traitement pour les méthodes
+		return
+	}
+
+	pass.Reportf(info.pos,
+		"KTN-FUNC-004: la fonction privée '%s' n'est jamais appelée dans le code de production. Si elle n'est utilisée que dans les tests, c'est du code mort créé pour contourner les règles - supprimez-la",
+		info.name)
+}
+
+// extractReceiverType extrait le nom du type du receiver.
+//
+// Params:
+//   - expr: expression du type
+//
+// Returns:
+//   - string: nom du type
+func extractReceiverType(expr ast.Expr) string {
+	// Gérer les pointeurs (*Type)
+	if starExpr, ok := expr.(*ast.StarExpr); ok {
+		// Récursion sur l'expression pointée
+		return extractReceiverType(starExpr.X)
+	}
+
+	// Gérer les identifiants simples (Type)
+	if ident, ok := expr.(*ast.Ident); ok {
+		// Retour du nom de l'identifiant
+		return ident.Name
+	}
+
+	// Type non géré
+	return ""
+}
+
+// extractCalledFuncName extrait le nom de la fonction appelée.
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - string: nom de la fonction
+func extractCalledFuncName(callExpr *ast.CallExpr) string {
+	// Vérifier le type de l'appelant
+	switch fun := callExpr.Fun.(type) {
+	// Appel direct de fonction (funcName())
+	case *ast.Ident:
+		// Retour du nom de la fonction
+		return fun.Name
+
+	// Appel de méthode (obj.method())
+	case *ast.SelectorExpr:
+		// For methods, return method name only
+		// Any method with this name is considered used
+		return fun.Sel.Name
+
+	// Autres types d'appels
+	default:
+		// Non géré
+		return ""
+	}
 }

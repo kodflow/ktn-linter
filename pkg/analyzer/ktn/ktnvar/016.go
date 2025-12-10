@@ -6,22 +6,25 @@ import (
 	"go/constant"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
-	// MIN_MAKE_ARGS_VAR016 is minimum arguments for make([]T, N)
-	MIN_MAKE_ARGS_VAR016 int = 2
-	// MIN_MAKE_ARGS_WITH_CAP_VAR016 is minimum arguments for make with capacity
-	MIN_MAKE_ARGS_WITH_CAP_VAR016 int = 3
-	// MAX_ARRAY_SIZE_VAR016 is maximum size for recommending array over slice
-	MAX_ARRAY_SIZE_VAR016 int64 = 1024
+	// ruleCodeVar016 is the rule code for this analyzer
+	ruleCodeVar016 string = "KTN-VAR-016"
+	// minMakeArgsVar016 is minimum arguments for make([]T, N)
+	minMakeArgsVar016 int = 2
+	// minMakeArgsWithCapVar016 is minimum arguments for make with capacity
+	minMakeArgsWithCapVar016 int = 3
+	// defaultMaxArraySize is maximum size for recommending array over slice
+	defaultMaxArraySize int = 1024
 )
 
 // Analyzer016 checks for make([]T, N) with small constant N
-var Analyzer016 = &analysis.Analyzer{
+var Analyzer016 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar016",
 	Doc:      "KTN-VAR-016: Vérifie l'utilisation de [N]T au lieu de make([]T, N)",
 	Run:      runVar016,
@@ -37,6 +40,18 @@ var Analyzer016 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar016(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeVar016) {
+		// Règle désactivée
+		return nil, nil
+	}
+
+	// Récupérer le seuil configuré
+	maxArraySize := int64(cfg.GetThreshold(ruleCodeVar016, defaultMaxArraySize))
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -46,6 +61,12 @@ func runVar016(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
 
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar016, pass.Fset.Position(call.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
+
 		// Check if it's a make call
 		if !utils.IsIdentCall(call, "make") {
 			// Not a make call
@@ -53,7 +74,7 @@ func runVar016(pass *analysis.Pass) (any, error) {
 		}
 
 		// Check if it's make([]T, N) with small constant N
-		if shouldUseArray(pass, call) {
+		if shouldUseArray(pass, call, maxArraySize) {
 			reportArraySuggestion(pass, call)
 		}
 	})
@@ -67,12 +88,13 @@ func runVar016(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
+//   - maxArraySize: taille max pour suggérer un array
 //
 // Returns:
 //   - bool: true si un array est préférable
-func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
+func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr, maxArraySize int64) bool {
 	// Need at least 2 args: make([]T, size)
-	if len(call.Args) < MIN_MAKE_ARGS_VAR016 {
+	if len(call.Args) < minMakeArgsVar016 {
 		// Not enough arguments
 		return false
 	}
@@ -92,7 +114,7 @@ func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
 	// Second arg should be small constant
 	size := getConstantSize(pass, call.Args[1])
 	// Return true if size is small constant
-	return isSmallConstant(size)
+	return isSmallConstant(size, maxArraySize)
 }
 
 // hasDifferentCapacity vérifie si make a une capacité différente.
@@ -104,7 +126,7 @@ func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
 //   - bool: true si capacité différente spécifiée
 func hasDifferentCapacity(call *ast.CallExpr) bool {
 	// Return true if 3rd argument exists
-	return len(call.Args) >= MIN_MAKE_ARGS_WITH_CAP_VAR016
+	return len(call.Args) >= minMakeArgsWithCapVar016
 }
 
 // getConstantSize obtient la taille constante d'une expression.
@@ -138,12 +160,13 @@ func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
 //
 // Params:
 //   - size: taille à vérifier
+//   - maxArraySize: taille max autorisée
 //
 // Returns:
-//   - bool: true si petite constante (<= MAX_ARRAY_SIZE_VAR016)
-func isSmallConstant(size int64) bool {
+//   - bool: true si petite constante (<= maxArraySize)
+func isSmallConstant(size int64, maxArraySize int64) bool {
 	// Check if it's a positive small constant
-	return size > 0 && size <= MAX_ARRAY_SIZE_VAR016
+	return size > 0 && size <= maxArraySize
 }
 
 // reportArraySuggestion rapporte la suggestion d'utiliser un array.

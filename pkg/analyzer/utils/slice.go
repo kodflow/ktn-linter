@@ -3,9 +3,15 @@ package utils
 
 import (
 	"go/ast"
+	"go/constant"
 	"go/types"
 
 	"golang.org/x/tools/go/analysis"
+)
+
+const (
+	// maxArraySize seuil pour VAR-016 (préférer array)
+	maxArraySize int64 = 1024
 )
 
 // IsSliceTypeWithPass vérifie si une expression est un type slice en utilisant TypesInfo.
@@ -113,10 +119,12 @@ func IsEmptySliceLiteral(lit *ast.CompositeLit) bool {
 // Returns:
 //   - bool: true si c'est un []byte
 func IsByteSliceWithPass(pass *analysis.Pass, expr ast.Expr) bool {
-	var slice *types.Slice
-	var basic *types.Basic
-	var sliceOk bool
-	var basicOk bool
+	var (
+		slice   *types.Slice
+		basic   *types.Basic
+		sliceOk bool
+		basicOk bool
+	)
 	// Check via TypesInfo
 	if tv, ok := pass.TypesInfo.Types[expr]; ok {
 		// Check if it's a slice
@@ -144,8 +152,10 @@ func IsByteSliceWithPass(pass *analysis.Pass, expr ast.Expr) bool {
 // Returns:
 //   - bool: true si c'est un []byte basé sur l'AST
 func IsByteSlice(expr ast.Expr) bool {
-	var ident *ast.Ident
-	var identOk bool
+	var (
+		ident   *ast.Ident
+		identOk bool
+	)
 	// Check if it's an array type (slice)
 	arrayType, ok := expr.(*ast.ArrayType)
 	// Vérification de la condition
@@ -162,4 +172,32 @@ func IsByteSlice(expr ast.Expr) bool {
 	}
 	// Not a byte slice
 	return false
+}
+
+// IsSmallConstantSize vérifie si une expression est une constante <= 1024.
+// Utilisé pour éviter que VAR-004/VAR-005 se déclenchent quand VAR-016 s'applique.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - expr: expression de taille à vérifier
+//
+// Returns:
+//   - bool: true si c'est une constante positive <= 1024
+func IsSmallConstantSize(pass *analysis.Pass, expr ast.Expr) bool {
+	// Check via TypesInfo
+	tv := pass.TypesInfo.Types[expr]
+	// Vérification de la condition
+	if tv.Value == nil {
+		// Not a constant
+		return false
+	}
+	// Get constant value
+	val, ok := constant.Int64Val(tv.Value)
+	// Vérification de la condition
+	if !ok {
+		// Not an int constant
+		return false
+	}
+	// Check if small positive constant
+	return val > 0 && val <= maxArraySize
 }

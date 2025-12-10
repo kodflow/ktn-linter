@@ -180,7 +180,7 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 // Returns:
 //   - []DiagnosticGroupData: groupes de diagnostics
 func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.Diagnostic) []DiagnosticGroupData {
-	fileMap := make(map[string][]analysis.Diagnostic, INITIAL_FILE_MAP_CAP)
+	fileMap := make(map[string][]analysis.Diagnostic, InitialFileMapCap)
 
 	// Itération sur les éléments
 	for _, diag := range diagnostics {
@@ -274,9 +274,9 @@ func (f *formatterImpl) printHeader(count int) {
 		fmt.Fprintf(f.writer, "╚════════════════════════════════════════════════════════════╝\n\n")
 		// Cas alternatif
 	} else {
-		fmt.Fprintf(f.writer, "\n%s%s╔════════════════════════════════════════════════════════════╗%s\n", BOLD, BLUE, RESET)
-		fmt.Fprintf(f.writer, "%s%s║  KTN-LINTER REPORT - %d issue(s) found                     ║%s\n", BOLD, BLUE, count, RESET)
-		fmt.Fprintf(f.writer, "%s%s╚════════════════════════════════════════════════════════════╝%s\n\n", BOLD, BLUE, RESET)
+		fmt.Fprintf(f.writer, "\n%s%s╔════════════════════════════════════════════════════════════╗%s\n", Bold, Blue, Reset)
+		fmt.Fprintf(f.writer, "%s%s║  KTN-LINTER REPORT - %d issue(s) found                     ║%s\n", Bold, Blue, count, Reset)
+		fmt.Fprintf(f.writer, "%s%s╚════════════════════════════════════════════════════════════╝%s\n\n", Bold, Blue, Reset)
 	}
 }
 
@@ -292,8 +292,8 @@ func (f *formatterImpl) printFileHeader(filename string, count int) {
 		// Cas alternatif
 	} else {
 		fmt.Fprintf(f.writer, "%s📁 File: %s%s %s(%d issues)%s\n",
-			BOLD+CYAN, filename, RESET, GRAY, count, RESET)
-		fmt.Fprintf(f.writer, "%s────────────────────────────────────────────────────────────%s\n", GRAY, RESET)
+			Bold+Cyan, filename, Reset, Gray, count, Reset)
+		fmt.Fprintf(f.writer, "%s────────────────────────────────────────────────────────────%s\n", Gray, Reset)
 	}
 }
 
@@ -317,14 +317,14 @@ func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analys
 		codeColor := f.getCodeColor(code)
 		symbol := f.getSymbol(code)
 		fmt.Fprintf(f.writer, "\n%s[%d]%s %s%s%s\n",
-			BOLD+YELLOW, num, RESET,
-			CYAN, location, RESET)
+			Bold+Yellow, num, Reset,
+			Cyan, location, Reset)
 		fmt.Fprintf(f.writer, "  %s%s%s %sCode:%s %s%s%s\n",
-			codeColor, symbol, RESET,
-			GRAY, RESET,
-			BOLD, code, RESET)
+			codeColor, symbol, Reset,
+			Gray, Reset,
+			Bold, code, Reset)
 		fmt.Fprintf(f.writer, "  %s▶%s %s\n",
-			BLUE, RESET, message)
+			Blue, Reset, message)
 	}
 }
 
@@ -335,7 +335,7 @@ func (f *formatterImpl) printSuccess() {
 		fmt.Fprintf(f.writer, "\n✅ No issues found! Code is compliant.\n\n")
 		// Cas alternatif
 	} else {
-		fmt.Fprintf(f.writer, "\n%s✅ No issues found! Code is compliant.%s\n\n", BOLD+GREEN, RESET)
+		fmt.Fprintf(f.writer, "\n%s✅ No issues found! Code is compliant.%s\n\n", Bold+Green, Reset)
 	}
 }
 
@@ -350,10 +350,10 @@ func (f *formatterImpl) printSummary(count int) {
 		fmt.Fprintf(f.writer, "════════════════════════════════════════════════════════════\n\n")
 		// Cas alternatif
 	} else {
-		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n", GRAY, RESET)
+		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n", Gray, Reset)
 		fmt.Fprintf(f.writer, "%s📊 Total: %s%d%s issue(s) to fix (WARNING)\n",
-			BOLD, YELLOW, count, RESET)
-		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n\n", GRAY, RESET)
+			Bold, Yellow, count, Reset)
+		fmt.Fprintf(f.writer, "%s════════════════════════════════════════════════════════════%s\n\n", Gray, Reset)
 	}
 }
 

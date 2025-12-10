@@ -1,166 +1,139 @@
+// Good examples for the func014 test case.
 package func012
 
 const (
-	// MULTIPLIER_DOUBLE constante pour doubler une valeur
-	MULTIPLIER_DOUBLE int = 2
-	// MULTIPLIER_TRIPLE constante pour tripler une valeur
-	MULTIPLIER_TRIPLE int = 3
-	// MAX_LOOP_ITERATIONS nombre maximum d'itérations de boucle
-	MAX_LOOP_ITERATIONS int = 10
-	// MODULO_EVEN modulo pour vérifier les nombres pairs
-	MODULO_EVEN int = 2
+	// TWO_INT représente la valeur 2
+	TWO_INT int = 2
+	// THIRTY_INT représente la valeur 30
+	THIRTY_INT int = 30
+	// NINETY_FIVE_DOT représente la valeur 95.5
+	NINETY_FIVE_DOT float64 = 95.5
 )
 
-// checkPositive vérifie si un nombre est positif
-//
-// Params:
-//   - x: nombre à vérifier
+// OneReturn retourne une seule valeur entière.
 //
 // Returns:
-//   - string: "positive" ou "negative"
-func checkPositive(x int) string {
-	// Vérification si positif
-	if x > 0 {
-		// Retour cas positif
-		return "positive"
-	}
-	// Retour cas négatif ou zéro
-	return "negative"
+//   - int: valeur 1
+func OneReturn() int {
+	// Retourne la valeur 1
+	return 1
 }
 
-// processValue traite une valeur en la doublant si positive
-//
-// Params:
-//   - val: valeur à traiter
+// TwoReturns retourne deux valeurs.
 //
 // Returns:
-//   - int: 0 si négatif, sinon valeur doublée
-func processValue(val int) int {
-	// Vérification si négatif
-	if val < 0 {
-		// Retour zéro pour valeur négative
-		return 0
-	}
-	// Retour valeur doublée
-	return val * MULTIPLIER_DOUBLE
+//   - int: valeur 1
+//   - error: nil
+func TwoReturns() (int, error) {
+	// Retourne un entier et nil pour l'erreur
+	return 1, nil
 }
 
-// findMax trouve le maximum entre deux nombres
-//
-// Params:
-//   - a: premier nombre
-//   - b: deuxième nombre
+// ThreeReturns retourne trois valeurs.
 //
 // Returns:
-//   - int: le maximum des deux nombres
-func findMax(a, b int) int {
-	// Comparaison a > b
-	if a > b {
-		// Retour a si supérieur
-		return a
-	}
-	// Retour b sinon
-	return b
+//   - int: valeur 1
+//   - string: chaîne "test"
+//   - error: nil
+func ThreeReturns() (int, string, error) {
+	// Retourne un entier, une chaîne et nil pour l'erreur
+	return 1, "test", nil
 }
 
-// loopExample illustre l'utilisation de continue sans else
-func loopExample() {
-	// Boucle sur les 10 premières valeurs
-	for i := 0; i < MAX_LOOP_ITERATIONS; i++ {
-		// Vérification si pair
-		if i%MODULO_EVEN == 0 {
-			// Continue si pair
-			continue
-		}
-		// Utilisation de la valeur impaire
-		_ = i
-	}
-}
-
-// switchExample illustre l'utilisation de break sans else
-//
-// Params:
-//   - x: valeur initiale
-func switchExample(x int) {
-	// Boucle infinie avec condition de sortie
-	for {
-		// Vérification condition de sortie
-		if x > MAX_LOOP_ITERATIONS {
-			// Sortie de boucle
-			break
-		}
-		// Incrémentation
-		x++
-	}
-}
-
-// validateInput valide une entrée
-//
-// Params:
-//   - input: chaîne à valider
+// FourNamedReturns retourne quatre valeurs nommées.
 //
 // Returns:
-//   - error: erreur de validation ou nil
-func validateInput(input string) error {
-	// Vérification si vide
-	if input == "" {
-		// Retour nil si vide
-		return nil
-	}
-	// Retour nil pour entrée valide
-	return nil
+//   - count: valeur 1
+//   - name: chaîne "test"
+//   - valid: true
+//   - err: nil
+func FourNamedReturns() (count int, name string, valid bool, err error) {
+	// Retourne les quatre valeurs nommées
+	return 1, "test", true, nil
 }
 
-// complexLogic applique une logique avec else acceptable
-//
-// Params:
-//   - x: nombre à traiter
+// FiveNamedReturns retourne cinq valeurs nommées.
 //
 // Returns:
-//   - int: résultat après transformation
-func complexLogic(x int) int {
-	// Vérification si positif
-	if x > 0 {
-		// Doublement si positif
-		x = x * MULTIPLIER_DOUBLE
-	} else {
-		// Triplement si négatif ou nul
-		x = x * MULTIPLIER_TRIPLE
-	}
-	// Retour résultat transformé
-	return x
+//   - a: valeur 1
+//   - b: valeur 2
+//   - c: chaîne "test"
+//   - d: true
+//   - e: nil
+func FiveNamedReturns() (a int, b int, c string, d bool, e error) {
+	// Retourne les cinq valeurs nommées
+	return 1, TWO_INT, "test", true, nil
 }
 
-// nestedConditions gère des conditions imbriquées avec early returns
-//
-// Params:
-//   - a: premier nombre
-//   - b: deuxième nombre
+// ManyNamedReturns retourne plusieurs valeurs nommées.
 //
 // Returns:
-//   - int: résultat selon les conditions
-func nestedConditions(a, b int) int {
-	// Vérification si a positif
-	if a > 0 {
-		// Vérification si b positif
-		if b > 0 {
-			// Retour somme si les deux positifs
-			return a + b
-		}
-		// Retour a si seul a positif
-		return a
-	}
-	// Retour b si a non positif
-	return b
+//   - id: valeur 1
+//   - name: chaîne "test"
+//   - age: valeur 30
+//   - active: true
+//   - score: valeur 95.5
+func ManyNamedReturns() (id int, name string, age int, active bool, score float64) {
+	// Retourne les valeurs pour id, name, age, active et score
+	return 1, "test", THIRTY_INT, true, NINETY_FIVE_DOT
 }
 
-// emptyIfBody teste les blocs if vides (edge case)
+// NoReturn ne retourne aucune valeur.
+func NoReturn() {
+	x := 1
+	_ = x
+}
+
+// TestManyUnnamedReturns est une fonction de test avec plusieurs retours non nommés.
 //
-// Params:
-//   - x: valeur à tester
-func emptyIfBody(x int) {
-	// Bloc if vide (ne déclenche pas KTN-FUNC-012)
-	if x > 0 {
-	}
-	// Retour de la fonction
+// Returns:
+//   - int: valeur 1
+//   - string: chaîne "test"
+//   - bool: true
+//   - error: nil
+func TestManyUnnamedReturns() (int, string, bool, error) {
+	// Retourne les valeurs de test
+	return 1, "test", true, nil
+}
+
+// BenchmarkManyUnnamedReturns est une fonction de benchmark avec plusieurs retours non nommés.
+//
+// Returns:
+//   - int: valeur 1
+//   - string: chaîne "test"
+//   - bool: true
+//   - error: nil
+func BenchmarkManyUnnamedReturns() (int, string, bool, error) {
+	// Retourne les valeurs de benchmark
+	return 1, "test", true, nil
+}
+
+// NoReturnValue ne retourne aucune valeur.
+func NoReturnValue() {
+	x := 1
+	_ = x
+}
+
+// GetFourValuesCompact retourne quatre valeurs nommées (format compact).
+//
+// Returns:
+//   - x, y: coordonnées
+//   - name: nom
+//   - err: erreur éventuelle
+func GetFourValuesCompact() (x, y int, name string, err error) {
+	// Retour des coordonnées et du nom
+	return 1, TWO_INT, "point", nil
+}
+
+// testSomething est une fonction de test.
+func testSomething() {
+	// Les fonctions de test ne sont pas vérifiées
+	x := 1
+	_ = x
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de testSomething
+	testSomething()
 }

@@ -1,4 +1,4 @@
-.PHONY: help test lint coverage build validate fmt install
+.PHONY: help test lint lint-testdata coverage build validate fmt install
 
 # Couleurs
 GREEN := \033[0;32m
@@ -53,4 +53,7 @@ lint: ## Lance le linter sur le projet (exclut *_test.go)
 	@go run -buildvcs=false ./cmd/ktn-linter lint ./...
 
 validate: build ## Valide que tous les testdata good.go/bad.go sont corrects
+	@./scripts/validate-testdata.sh
+
+lint-testdata: build ## Alias pour validate - vérifie les testdata (good=0 erreur, bad=UNIQUEMENT sa règle)
 	@./scripts/validate-testdata.sh

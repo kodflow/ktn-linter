@@ -64,10 +64,11 @@ func TestGetRulesByCategory(t *testing.T) {
 		category         string
 		minExpectedRules int
 	}{
-		{"const category", "const", 4},
+		{"const category", "const", 3},
 		{"func category", "func", 12},
-		{"var category", "var", 18},
+		{"var category", "var", 17},
 		{"test category", "test", 6},
+		{"comment category", "comment", 7},
 		{"unknown category error case", "unknown", 0},
 		{"empty category error case", "", 0},
 	}

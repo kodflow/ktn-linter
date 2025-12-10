@@ -3,14 +3,37 @@ package ktnvar_test
 import (
 	"testing"
 
+	"golang.org/x/tools/go/analysis"
+
 	ktnvar "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestVar006 vérifie que les variables de package sont déclarées après les constantes.
-//
-// Params:
-//   - t: instance de test
 func TestVar006(t *testing.T) {
-	testhelper.TestGoodBad(t, ktnvar.Analyzer006, "var006", 1)
+	tests := []struct {
+		name           string
+		analyzer       *analysis.Analyzer
+		testdataDir    string
+		expectedErrors int
+	}{
+		{
+			name:           "Builder/Buffer without Grow",
+			analyzer:       ktnvar.Analyzer006,
+			testdataDir:    "var006",
+			expectedErrors: 4,
+		},
+		{
+			name:           "Valid Builder/Buffer with Grow",
+			analyzer:       ktnvar.Analyzer006,
+			testdataDir:    "var006",
+			expectedErrors: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 4 Builder/Buffer declarations without Grow
+			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
+		})
+	}
 }

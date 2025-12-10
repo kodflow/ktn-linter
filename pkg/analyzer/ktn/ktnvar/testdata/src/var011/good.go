@@ -1,101 +1,43 @@
+// Good examples for the var011 test case.
 package var011
 
 import (
-	"bytes"
-	"strings"
+	"context"
+	"fmt"
 )
 
 const (
-	// GROW_SIZE_LARGE is large grow size
-	GROW_SIZE_LARGE int = 400
-	// LOOP_COUNT_LARGE is large loop count
-	LOOP_COUNT_LARGE int = 100
-	// LOOP_COUNT_SMALL is small loop count
-	LOOP_COUNT_SMALL int = 10
-	// GROW_SIZE_SMALL is small grow size
-	GROW_SIZE_SMALL int = 50
+	// KeyValue is a constant test value
+	KeyValue int = 42
 )
 
-// goodStringsBuilderTypeDecl uses type declaration (not composite literal).
-//
-// Returns:
-//   - string: concatenated result
-func goodStringsBuilderTypeDecl() string {
-	// Good: var declaration without composite literal is allowed
-	var sb strings.Builder
-	sb.Grow(GROW_SIZE_LARGE)
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
-		sb.WriteString("item")
+// init demonstrates correct usage patterns
+func init() {
+	// Shadowing de err est autorisé (pattern idiomatique Go)
+	var err error
+	// Vérification de la condition
+	if err != nil {
+		err := fmt.Errorf("wrapped: %w", err) // OK: 'err' est exemptée
+		_ = err
 	}
 
-	// Return the result
-	return sb.String()
-}
-
-// goodBytesBufferTypeDecl uses type declaration (not composite literal).
-//
-// Returns:
-//   - []byte: concatenated result
-func goodBytesBufferTypeDecl() []byte {
-	// Good: var declaration without composite literal is allowed
-	var buf bytes.Buffer
-	buf.Grow(GROW_SIZE_LARGE)
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_LARGE; i++ {
-		buf.WriteString("item")
+	// Shadowing de ok est autorisé (map access/type assertion)
+	m := map[string]int{"key": KeyValue}
+	v, ok := m["key"]
+	// Vérification de la condition
+	if ok {
+		_, ok := m["other"] // OK: 'ok' est exemptée
+		_ = ok
 	}
+	_ = v
 
-	// Return the result
-	return buf.Bytes()
-}
-
-// goodBuilderPointer uses a pointer to strings.Builder (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodBuilderPointer() string {
-	// Good: pointer type is allowed (different use case)
-	sb := &strings.Builder{}
-
-	// Iteration over data to append
-	for i := 0; i < LOOP_COUNT_SMALL; i++ {
-		sb.WriteString("x")
+	// Shadowing de ctx est autorisé (redéfinition de context)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	// Bloc imbriqué
+	{
+		ctx := context.WithValue(ctx, "key", "value") // OK: 'ctx' est exemptée
+		_ = ctx
 	}
-
-	// Return the result
-	return sb.String()
-}
-
-// goodNoLoopTypeDecl uses type declaration without loop (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodNoLoopTypeDecl() string {
-	// Good: var declaration without composite literal
-	var sb strings.Builder
-	sb.WriteString("single")
-
-	// Return the result
-	return sb.String()
-}
-
-// goodShortFormNew uses new() to create Builder (allowed).
-//
-// Returns:
-//   - string: concatenated result
-func goodShortFormNew() string {
-	// Good: using new() instead of composite literal
-	sb := new(strings.Builder)
-	sb.Grow(GROW_SIZE_SMALL)
-
-	// Iteration over data to append
-	for i := 0; i < GROW_SIZE_SMALL; i++ {
-		sb.WriteString("x")
-	}
-
-	// Return the result
-	return sb.String()
 }

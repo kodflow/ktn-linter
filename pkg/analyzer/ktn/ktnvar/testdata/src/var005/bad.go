@@ -1,194 +1,167 @@
+// Package var005 tests make with length then append detection.
 package var005
 
-// Constants to avoid magic numbers
+// Bad: Using make with length > 0 when append is used
+
 const (
-	// TEST_AGE is the test age value
-	TEST_AGE int = 25
-	// TEST_X is the test x coordinate
-	TEST_X int = 10
-	// TEST_Y is the test y coordinate
-	TEST_Y int = 20
-	// TEST_ANSWER is the answer value
-	TEST_ANSWER int = 42
-	// TEST_ONE is the value one
-	TEST_ONE int = 1
-	// TEST_TWO is the value two
-	TEST_TWO int = 2
-	// TEST_THREE is the value three
-	TEST_THREE int = 3
-	// THRESHOLD_VALUE is the threshold for comparison
-	THRESHOLD_VALUE int = 5
-	// MULTIPLIER is the multiplication factor
-	MULTIPLIER int = 2
-	// ZERO_INDEX is the starting index
-	ZERO_INDEX int = 0
+	// SizeLimit defines the size limit
+	SizeLimit int = 50
+	// LoopIterations defines loop count
+	LoopIterations int = 10
+	// FiveItems defines five items
+	FiveItems int = 5
+	// SmallCount defines small count
+	SmallCount int = 3
+	// TwoValue defines two value
+	TwoValue int = 2
+	// BadBufferSize defines bad buffer size
+	BadBufferSize int = 100
+	// Capacity defines capacity
+	Capacity int = 200
 )
 
-// Package-level variables with explicit types (OK, not checked by VAR-005)
-var (
-	// PackageLevel is a package-level variable
-	PackageLevel string = "ok"
-	// AnotherGlobal is another package-level variable
-	AnotherGlobal int = TEST_ANSWER
-)
-
-// badSimpleVar shows incorrect use of var with initialization.
-// Should use := instead of var for local variables.
-func badSimpleVar() {
-	// Variable declarations with initialization (should use :=)
-	var name = "Bob"
-	// age variable with initialization
-	var age = TEST_AGE
-
-	// Using variables to avoid unused warnings
-	_ = name
-	_ = age
-}
-
-// badMultipleVars shows incorrect use of var with multiple variables.
-// Should use := instead of var for local variables.
-func badMultipleVars() {
-	// x variable with initialization
-	var x = TEST_X
-	// y variable with initialization
-	var y = TEST_Y
-
-	// Using variables to avoid unused warnings
-	_ = x
-	_ = y
-}
-
-// badBoolVar shows incorrect use of var with bool.
-// Should use := instead of var for local variables.
-func badBoolVar() {
-	// Boolean variable declaration (should use :=)
-	var isEnabled = true
-
-	// Using variable to avoid unused warning
-	_ = isEnabled
-}
-
-// badStringVar shows incorrect use of var with string.
-// Should use := instead of var for local variables.
-func badStringVar() {
-	// String variable declaration (should use :=)
-	var message = "Hello"
-
-	// Using variable to avoid unused warning
-	_ = message
-}
-
-// badSliceVar shows incorrect use of var with slice.
-// Should use := instead of var for local variables.
-func badSliceVar() {
-	// Slice variable declaration (should use :=)
-	var numbers = []int{TEST_ONE, TEST_TWO, TEST_THREE}
-
-	// Using variable to avoid unused warning
-	_ = numbers
-}
-
-// badMapVar shows incorrect use of var with map.
-// Should use := instead of var for local variables.
-func badMapVar() {
-	// Map variable declaration (should use :=)
-	var config = map[string]int{"key": TEST_ONE}
-
-	// Using variable to avoid unused warning
-	_ = config
-}
-
-// badVarInIf shows incorrect use of var in if block.
-// Local variables should use := even inside control structures.
-func badVarInIf() {
-	// Initialize test variable
-	x := TEST_X
-
-	// Check if x exceeds threshold
-	if x > THRESHOLD_VALUE {
-		// Variable in if block (should use :=)
-		var result = "big"
-
-		// Using variable to avoid unused warning
-		_ = result
+// badMakeWithLengthAndCapacity creates a slice with length then append.
+// Bad: has capacity but also has length > 0, which wastes zero values.
+//
+// Returns:
+//   - []string: slice with wasted zero values
+func badMakeWithLengthAndCapacity() []string {
+	// Bad: Length > 0 even with capacity creates zero values before append
+	result := make([]string, LoopIterations, Capacity)
+	// Itération sur les éléments
+	for range FiveItems {
+		result = append(result, "value")
 	}
+	// Retour de la fonction
+	return result
 }
 
-// badVarInFor shows incorrect use of var in for loop.
-// Local variables should use := even inside loops.
-func badVarInFor() {
-	// Loop through range
-	for i := ZERO_INDEX; i < TEST_THREE; i++ {
-		// Variable in for loop (should use :=)
-		var item = i * MULTIPLIER
-
-		// Using variable to avoid unused warning
-		_ = item
+// badMakeWithSmallLengthAndCapacity creates a slice with small length.
+// Bad: even small length > 0 with capacity is wasteful.
+//
+// Returns:
+//   - []int: slice with wasted zero values
+func badMakeWithSmallLengthAndCapacity() []int {
+	// Bad: Even small length > 0 wastes zero values
+	numbers := make([]int, FiveItems, Capacity)
+	// Itération sur les éléments
+	for i := range SmallCount {
+		numbers = append(numbers, i*TwoValue)
 	}
+	// Retour de la fonction
+	return numbers
 }
 
-// badVarInRange shows incorrect use of var in range loop.
-// Local variables should use := even inside range loops.
-func badVarInRange() {
-	// Initialize slice for iteration
-	nums := []int{TEST_ONE, TEST_TWO, TEST_THREE}
-
-	// Iterate over slice
-	for _, n := range nums {
-		// Variable in range loop (should use :=)
-		var doubled = n * MULTIPLIER
-
-		// Using variable to avoid unused warning
-		_ = doubled
+// badMakeWithConstLengthAndCapacity creates a slice with const length.
+// Bad: using const for length creates unused zero values.
+//
+// Returns:
+//   - []string: slice with wasted zero values
+func badMakeWithConstLengthAndCapacity() []string {
+	// Bad: Length from constant > 0 with capacity
+	items := make([]string, LoopIterations, Capacity)
+	// Itération sur les éléments
+	for range FiveItems {
+		items = append(items, "value")
 	}
+	// Retour de la fonction
+	return items
 }
 
-// badVarInSwitch shows incorrect use of var in switch.
-// Local variables should use := even in switch cases.
-func badVarInSwitch() {
-	// Initialize test value
-	x := THRESHOLD_VALUE
-
-	// Switch on value
-	switch x {
-	// Case when x equals threshold
-	case THRESHOLD_VALUE:
-		// Variable in case block (should use :=)
-		var msg = "five"
-
-		// Using variable to avoid unused warning
-		_ = msg
-	// Default case for other values
-	default:
-		// Variable in default block (should use :=)
-		var other = "other"
-
-		// Using variable to avoid unused warning
-		_ = other
-	}
+// badMakeByteSliceWithLengthAndCapacity creates a byte slice with length.
+// Bad: byte slice with length creates zero bytes before append.
+//
+// Returns:
+//   - []byte: byte slice with wasted zero values
+func badMakeByteSliceWithLengthAndCapacity() []byte {
+	// Bad: Byte slice with length > 0 and capacity
+	buffer := make([]byte, BadBufferSize, Capacity)
+	// Ajout de données
+	buffer = append(buffer, "test"...)
+	// Retour de la fonction
+	return buffer
 }
 
-// badVarInSelect shows incorrect use of var in select.
-// Local variables should use := even in select cases.
-func badVarInSelect() {
-	// Create channels for testing
-	ch := make(chan int)
-
-	// Select on channel operations
-	select {
-	// Case when receiving from channel
-	case val := <-ch:
-		// Variable in select case (should use :=)
-		var result = val * MULTIPLIER
-
-		// Using variable to avoid unused warning
-		_ = result
-	// Default case when no channel operation is ready
-	default:
-		// Variable in default block (should use :=)
-		var msg = "no data"
-
-		// Using variable to avoid unused warning
-		_ = msg
+// badMakeInterfaceSliceWithCapacity creates a slice of interfaces.
+// Bad: any slice with length creates nil values before append.
+//
+// Returns:
+//   - []any: slice with wasted zero values
+func badMakeInterfaceSliceWithCapacity() []any {
+	// Bad: any slice with length > 0 and capacity
+	items := make([]any, FiveItems, Capacity)
+	// Itération sur les éléments
+	for i := range SmallCount {
+		items = append(items, i)
 	}
+	// Retour de la fonction
+	return items
+}
+
+// badMakeWithVariableAndCapacity creates a slice with variable length.
+// Bad: using variable length with capacity still wastes space.
+//
+// Params:
+//   - n: size parameter
+//
+// Returns:
+//   - []int: slice with wasted zero values
+func badMakeWithVariableAndCapacity(n int) []int {
+	// Bad: Using variable length with capacity
+	data := make([]int, n, Capacity)
+	// Ajout de données
+	data = append(data, LoopIterations, TwoValue, SmallCount)
+	// Retour de la fonction
+	return data
+}
+
+// badMakeWithExpressionAndCapacity creates a slice with expression length.
+// Bad: using len() with capacity still creates unused zero values.
+//
+// Params:
+//   - items: input items
+//
+// Returns:
+//   - []string: slice with wasted zero values
+func badMakeWithExpressionAndCapacity(items []string) []string {
+	// Bad: Using len() expression with capacity
+	result := make([]string, len(items), Capacity)
+	// Ajout de données
+	result = append(result, "extra")
+	// Retour de la fonction
+	return result
+}
+
+// badMakeWithOperationAndCapacity creates a slice with arithmetic expression.
+// Bad: using arithmetic with capacity creates unused zero values.
+//
+// Returns:
+//   - []int: slice with wasted zero values
+func badMakeWithOperationAndCapacity() []int {
+	// Bad: Using arithmetic expression with capacity
+	nums := make([]int, SmallCount+TwoValue, Capacity)
+	// Ajout de données
+	nums = append(nums, SizeLimit)
+	// Retour de la fonction
+	return nums
+}
+
+// init utilise les fonctions privées
+func init() {
+	// Appel de badMakeWithLengthAndCapacity
+	badMakeWithLengthAndCapacity()
+	// Appel de badMakeWithSmallLengthAndCapacity
+	badMakeWithSmallLengthAndCapacity()
+	// Appel de badMakeWithConstLengthAndCapacity
+	badMakeWithConstLengthAndCapacity()
+	// Appel de badMakeByteSliceWithLengthAndCapacity
+	badMakeByteSliceWithLengthAndCapacity()
+	// Appel de badMakeInterfaceSliceWithCapacity
+	badMakeInterfaceSliceWithCapacity()
+	// Appel de badMakeWithVariableAndCapacity
+	_ = badMakeWithVariableAndCapacity(0)
+	// Appel de badMakeWithExpressionAndCapacity
+	_ = badMakeWithExpressionAndCapacity(nil)
+	// Appel de badMakeWithOperationAndCapacity
+	badMakeWithOperationAndCapacity()
 }

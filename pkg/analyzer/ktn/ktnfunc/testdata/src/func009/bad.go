@@ -1,90 +1,103 @@
+// Bad examples for the func011 test case.
 package func009
 
-const (
-	// CACHE_MULTIPLIER est le facteur de multiplication pour le cache
-	CACHE_MULTIPLIER int = 2
-	// DEFAULT_CACHE_VALUE est la valeur par défaut du cache
-	DEFAULT_CACHE_VALUE int = 100
-	// FIRST_ELEMENT_VALUE est la valeur du premier élément
-	FIRST_ELEMENT_VALUE int = 100
-	// ITEM_VALUE est la valeur de l'item
-	ITEM_VALUE int = 200
-)
-
-// Counter est un compteur avec cache
-type Counter struct {
-	count int
-	cache int
+// badProcessSixItems creates a slice with magic number 6 (violates KTN-FUNC-009).
+func badProcessSixItems() {
+	// Create slice with magic number 6 (should be a constant)
+	items := [6]int{}
+	_ = items
 }
 
-// GetCount retourne le compteur incrémenté (side effect: modification de count)
+// badValidateAge checks age validity using magic numbers 18 and 120 (violates KTN-FUNC-009).
+//
+// Params:
+//   - age: the age to validate
 //
 // Returns:
-//   - int: la valeur du compteur après incrémentation
-func (c *Counter) GetCount() int {
-	// Incrémentation du compteur (side effect volontaire pour bad.go)
-	c.count++
-	// Retourne le compteur incrémenté
-	return c.count
+//   - bool: true if age is between 18 and 120, false otherwise
+func badValidateAge(age int) bool {
+	// Check age range with magic numbers 18 and 120 (should be constants)
+	if age >= 18 && age <= 120 {
+		// Age is in valid range
+		return true
+	}
+	// Age is out of valid range
+	return false
 }
 
-// GetCachedValue retourne la valeur en cache calculée (side effect: modification de cache)
+// badCalculateDiscount applies discount using magic number 0.15 (violates KTN-FUNC-009).
+//
+// Params:
+//   - price: the original price
 //
 // Returns:
-//   - int: la valeur en cache calculée
-func (c *Counter) GetCachedValue() int {
-	// Calcul et assignation du cache (side effect volontaire pour bad.go)
-	c.cache = c.count * CACHE_MULTIPLIER
-	// Retourne la valeur en cache
-	return c.cache
+//   - float64: the discount amount
+func badCalculateDiscount(price float64) float64 {
+	// Calculate discount with magic number 0.15 (should be a constant)
+	return price * 0.15
 }
 
-// IsReady vérifie si le compteur est prêt (side effect: modification de cache)
+// badProcessRetries sets max retries using magic number 3 (violates KTN-FUNC-009).
+func badProcessRetries() {
+	// Set retries with magic number 3 (should be a constant)
+	maxRetries := 3
+	_ = maxRetries
+}
+
+// badSetBufferSize creates a buffer using magic number 1024 (violates KTN-FUNC-009).
+func badSetBufferSize() {
+	// Create buffer with magic number 1024 (should be a constant)
+	buffer := [1024]byte{}
+	_ = buffer
+}
+
+// badCheckThreshold verifies value against magic number 100 (violates KTN-FUNC-009).
+//
+// Params:
+//   - value: the value to check
 //
 // Returns:
-//   - bool: true si le compteur est positif
-func (c *Counter) IsReady() bool {
-	// Assignation du cache (side effect volontaire pour bad.go)
-	c.cache = DEFAULT_CACHE_VALUE
-	// Retourne vrai si le compteur est positif
-	return c.count > 0
+//   - bool: true if value exceeds 100, false otherwise
+func badCheckThreshold(value int) bool {
+	// Check threshold with magic number 100 (should be a constant)
+	if value > 100 {
+		// Value exceeds threshold
+		return true
+	}
+	// Value is below or equal to threshold
+	return false
 }
 
-// HasData vérifie si le compteur contient des données (side effect: modification de count)
-//
-// Returns:
-//   - bool: true si le compteur est positif après incrémentation
-func (c *Counter) HasData() bool {
-	// Incrémentation du compteur (side effect volontaire pour bad.go)
-	c.count++
-	// Retourne vrai si le compteur est positif
-	return c.count > 0
+// badWaitTimeout sets a timeout using magic number 30 (violates KTN-FUNC-009).
+func badWaitTimeout() {
+	// Set timeout with magic number 30 (should be a constant)
+	timeout := 30
+	_ = timeout
 }
 
-// DataStore stocke des données dans un slice et une map
-type DataStore struct {
-	data  []int
-	items map[string]int
+// badSetPort assigns a port using magic number 8080 (violates KTN-FUNC-009).
+func badSetPort() {
+	// Set port with magic number 8080 (should be a constant)
+	port := 8080
+	_ = port
 }
 
-// GetFirstElement retourne le premier élément (side effect: modification du slice)
-//
-// Returns:
-//   - int: la valeur du premier élément
-func (d *DataStore) GetFirstElement() int {
-	// Modification du premier élément (side effect volontaire pour bad.go)
-	d.data[0] = FIRST_ELEMENT_VALUE
-	// Retourne le premier élément
-	return d.data[0]
-}
-
-// GetItem retourne un item de la map (side effect: modification de la map)
-//
-// Returns:
-//   - int: la valeur de l'item
-func (d *DataStore) GetItem() int {
-	// Modification de l'item (side effect volontaire pour bad.go)
-	d.items["key"] = ITEM_VALUE
-	// Retourne l'item
-	return d.items["key"]
+// init utilise les fonctions privées
+func init() {
+	// Appel de badProcessSixItems
+	badProcessSixItems()
+	// Appel de badValidateAge
+	_ = badValidateAge(0)
+	// Appel de badCalculateDiscount
+	_ = badCalculateDiscount(0)
+	// Appel de badProcessRetries
+	badProcessRetries()
+	// Appel de badSetBufferSize
+	badSetBufferSize()
+	// Appel de badCheckThreshold
+	_ = badCheckThreshold(0)
+	// Appel de badWaitTimeout
+	badWaitTimeout()
+	// Appel de badSetPort
+	badSetPort()
 }

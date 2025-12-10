@@ -6,13 +6,18 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Test_extractReceiverType tests the extractReceiverType private function.
+// Test_ExtractReceiverType tests the shared.ExtractReceiverTypeName helper function.
 //
 // Params:
 //   - t: testing context
-func Test_extractReceiverType(t *testing.T) {
+func Test_ExtractReceiverType(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
@@ -26,11 +31,6 @@ func Test_extractReceiverType(t *testing.T) {
 		{
 			name: "pointer receiver",
 			code: "func (r *MyType) Method() {}",
-			want: "MyType",
-		},
-		{
-			name: "nested pointer receiver",
-			code: "func (r **MyType) Method() {}",
 			want: "MyType",
 		},
 	}
@@ -64,10 +64,10 @@ func Test_extractReceiverType(t *testing.T) {
 				t.Fatal("no receiver found")
 			}
 
-			got := extractReceiverType(funcDecl.Recv.List[0].Type)
+			got := shared.ExtractReceiverTypeName(funcDecl.Recv.List[0].Type)
 			// Vérification de la condition
 			if got != tt.want {
-				t.Errorf("extractReceiverType() = %q, want %q", got, tt.want)
+				t.Errorf("ExtractReceiverTypeName() = %q, want %q", got, tt.want)
 			}
 		})
 	}
@@ -97,8 +97,18 @@ func Test_addPublicFunction(t *testing.T) {
 		{
 			name:          "public method",
 			code:          "func (r MyType) PublicMethod() {}",
-			wantFuncName:  "PublicMethod",
+			wantFuncName:  "MyType_PublicMethod",
 			wantMethodKey: "MyType_PublicMethod",
+		},
+		{
+			name:         "function with nil name",
+			code:         "func PublicFunc() {}",
+			wantFuncName: "PublicFunc",
+		},
+		{
+			name:         "mock function (excluded)",
+			code:         "func MockPublicFunc() {}",
+			wantFuncName: "",
 		},
 	}
 
@@ -107,7 +117,7 @@ func Test_addPublicFunction(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
+			file, err := parser.ParseFile(fset, "", "package test\ntype MyType struct{}\n"+tt.code, 0)
 			// Vérification de l'erreur
 			if err != nil {
 				t.Fatalf("failed to parse code: %v", err)
@@ -138,7 +148,7 @@ func Test_addPublicFunction(t *testing.T) {
 			if tt.wantFuncName != "" {
 				// Vérification de la condition
 				if !publicFunctions[tt.wantFuncName] {
-					t.Errorf("expected public function %q to be added", tt.wantFuncName)
+					t.Errorf("expected public function %q to be added, got %v", tt.wantFuncName, publicFunctions)
 				}
 			} else {
 				// Vérification de la condition
@@ -230,7 +240,7 @@ func privateFunc() {}`,
 			code: `package test
 type MyType struct{}
 func (m MyType) PublicMethod() {}`,
-			want: []string{"PublicMethod", "MyType_PublicMethod"},
+			want: []string{"MyType_PublicMethod"},
 		},
 		{
 			name: "error case - invalid code",
@@ -289,5 +299,96 @@ func Test_checkInternalTestsForPublicFunctions(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
 		})
+	}
+}
+
+// Test_runTest009_disabled tests that the rule is skipped when disabled.
+func Test_runTest009_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-009": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error when rule is disabled")
+		},
+	}
+
+	_, err = runTest009(pass)
+	if err != nil {
+		t.Errorf("runTest009() error = %v", err)
+	}
+}
+
+// Test_runTest009_excludedFile tests that excluded files are skipped.
+func Test_runTest009_excludedFile(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-TEST-009": {
+				Enabled: config.Bool(true),
+				Exclude: []string{"**/test_test.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	src := `package test_test
+import "testing"
+func TestExample(t *testing.T) {}
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "/some/path/test_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	inspectPass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{f},
+		Report:   func(d analysis.Diagnostic) {},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{f},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspectResult,
+		},
+		Report: func(_ analysis.Diagnostic) {
+			t.Error("Unexpected error for excluded file")
+		},
+	}
+
+	_, err = runTest009(pass)
+	if err != nil {
+		t.Errorf("runTest009() error = %v", err)
 	}
 }

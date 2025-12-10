@@ -1,47 +1,50 @@
+// Bad examples for the struct005 test case.
 package struct002
 
-// BadUserService struct sans interface correspondante - VIOLATION
+// BadUserService est un service utilisateur sans constructeur.
+// Démontre la violation STRUCT-005: pas de NewBadUserService().
 type BadUserService struct { // want "KTN-STRUCT-002"
 	users map[int]string
 }
 
-// Create crée un utilisateur
+// BadUserServiceInterface définit les méthodes de BadUserService.
+type BadUserServiceInterface interface {
+	Create(name string) error
+	GetByID(id int) string
+	Users() map[int]string
+}
+
+// Create crée un utilisateur.
+//
+// Params:
+//   - name: nom de l'utilisateur
+//
+// Returns:
+//   - error: erreur éventuelle
 func (b *BadUserService) Create(name string) error {
-	// Implementation
+	// Utilisation du paramètre
+	b.users[len(b.users)] = name
+	// Retour sans erreur
 	return nil
 }
 
-// GetByID récupère un utilisateur par ID
-func (b *BadUserService) GetByID(id int) (string, error) {
-	// Implementation
-	return "", nil
+// GetByID récupère un utilisateur par ID.
+//
+// Params:
+//   - id: identifiant de l'utilisateur
+//
+// Returns:
+//   - string: nom de l'utilisateur
+func (b *BadUserService) GetByID(id int) string {
+	// Retour du résultat
+	return b.users[id]
 }
 
-// IncompleteService interface incomplète (manque Delete)
-type IncompleteService interface {
-	Save(data string) error
-	Load(id int) (string, error)
-}
-
-// incompleteServiceImpl a une méthode Delete non dans l'interface - VIOLATION
-type incompleteServiceImpl struct { // want "KTN-STRUCT-002"
-	data map[int]string
-}
-
-// Save est dans l'interface
-func (i *incompleteServiceImpl) Save(data string) error {
-	// Implementation
-	return nil
-}
-
-// Load est dans l'interface
-func (i *incompleteServiceImpl) Load(id int) (string, error) {
-	// Implementation
-	return "", nil
-}
-
-// Delete est une méthode publique MAIS pas dans l'interface - VIOLATION
-func (i *incompleteServiceImpl) Delete(id int) error {
-	// Implementation
-	return nil
+// Users retourne la map des utilisateurs.
+//
+// Returns:
+//   - map[int]string: map des utilisateurs
+func (b *BadUserService) Users() map[int]string {
+	// Retourne le champ users
+	return b.users
 }

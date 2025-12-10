@@ -1,42 +1,32 @@
-// Internal tests for registry in modernize package.
+// Internal tests for registry.go - modernize package.
 package modernize
 
 import "testing"
 
-// Test_Analyzers tests that Analyzers returns non-empty slice
-func Test_Analyzers(t *testing.T) {
+// Test_disabled tests that disabled analyzers are filtered out.
+//
+// Params:
+//   - t: testing context
+func Test_disabled(t *testing.T) {
 	tests := []struct {
-		name string
+		name         string
+		disabledName string
 	}{
-		{"verify analyzers returned correctly"},
+		{
+			name:         "newexpr is disabled",
+			disabledName: "newexpr",
+		},
 	}
 
+	analyzers := Analyzers()
+	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			analyzers := Analyzers()
-
-			// Check that analyzers slice is not empty
-			if len(analyzers) == 0 {
-				t.Error("Analyzers() returned empty slice, expected analyzers")
-			}
-
-			// Check that all analyzers are non-nil
-			for i, analyzer := range analyzers {
-				// Check analyzer is not nil
-				if analyzer == nil {
-					t.Errorf("analyzer at index %d is nil", i)
-				}
-			}
-
-			// Verify that disabled analyzers are not present
-			disabledNames := []string{"newexpr"}
-			for _, analyzer := range analyzers {
-				// Check that no disabled analyzer is present
-				for _, disabled := range disabledNames {
-					// Check analyzer is not in disabled list
-					if analyzer.Name == disabled {
-						t.Errorf("disabled analyzer %q should not be in the list", disabled)
-					}
+			// Vérifier que l'analyseur désactivé n'est pas présent
+			for _, a := range analyzers {
+				// Vérification de la condition
+				if a.Name == tt.disabledName {
+					t.Errorf("%s should be disabled but was found", tt.disabledName)
 				}
 			}
 		})

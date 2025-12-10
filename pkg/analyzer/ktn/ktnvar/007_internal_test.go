@@ -2,7 +2,14 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_runVar007 tests the private runVar007 function.
@@ -21,199 +28,8 @@ func Test_runVar007(t *testing.T) {
 	}
 }
 
-// Test_isAppendCall tests the private isAppendCall helper function.
-func Test_isAppendCall(t *testing.T) {
-	tests := []struct {
-		name     string
-		expr     ast.Expr
-		expected bool
-	}{
-		{
-			name: "append call",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "append"},
-			},
-			expected: true,
-		},
-		{
-			name: "other function call",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "len"},
-			},
-			expected: false,
-		},
-		{
-			name:     "not a call expr",
-			expr:     &ast.BasicLit{Value: "1"},
-			expected: false,
-		},
-		{
-			name: "method call",
-			expr: &ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "s"},
-					Sel: &ast.Ident{Name: "append"},
-				},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isAppendCall(tt.expr)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isAppendCall() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isSliceArrayOrMap tests the private isSliceArrayOrMap helper function.
-func Test_isSliceArrayOrMap(t *testing.T) {
-	tests := []struct {
-		name     string
-		typeExpr ast.Expr
-		expected bool
-	}{
-		{
-			name:     "nil type",
-			typeExpr: nil,
-			expected: false,
-		},
-		{
-			name:     "slice type",
-			typeExpr: &ast.ArrayType{Len: nil},
-			expected: true,
-		},
-		{
-			name:     "array type",
-			typeExpr: &ast.ArrayType{Len: &ast.BasicLit{Value: "10"}},
-			expected: true,
-		},
-		{
-			name:     "map type",
-			typeExpr: &ast.MapType{},
-			expected: true,
-		},
-		{
-			name:     "struct type",
-			typeExpr: &ast.StructType{},
-			expected: false,
-		},
-		{
-			name:     "ident type",
-			typeExpr: &ast.Ident{Name: "int"},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isSliceArrayOrMap(tt.typeExpr)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isSliceArrayOrMap() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isInReturnStatement tests the private isInReturnStatement helper function.
-func Test_isInReturnStatement(t *testing.T) {
-	tests := []struct {
-		name     string
-		stack    []ast.Node
-		expected bool
-	}{
-		{
-			name:     "empty stack",
-			stack:    []ast.Node{},
-			expected: false,
-		},
-		{
-			name: "has return in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.BlockStmt{},
-				&ast.ReturnStmt{},
-			},
-			expected: true,
-		},
-		{
-			name: "no return in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.BlockStmt{},
-				&ast.AssignStmt{},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isInReturnStatement(tt.stack)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isInReturnStatement() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isInStructLiteral tests the private isInStructLiteral helper function.
-func Test_isInStructLiteral(t *testing.T) {
-	tests := []struct {
-		name     string
-		stack    []ast.Node
-		expected bool
-	}{
-		{
-			name:     "empty stack",
-			stack:    []ast.Node{},
-			expected: false,
-		},
-		{
-			name: "has struct literal in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.CompositeLit{Type: &ast.Ident{Name: "MyStruct"}},
-			},
-			expected: true,
-		},
-		{
-			name: "has key-value expr in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.KeyValueExpr{},
-			},
-			expected: true,
-		},
-		{
-			name: "has slice literal in stack",
-			stack: []ast.Node{
-				&ast.FuncDecl{},
-				&ast.CompositeLit{Type: &ast.ArrayType{}},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isInStructLiteral(tt.stack)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isInStructLiteral() = %v, expected %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_collectAppendVariables tests the private collectAppendVariables function.
-func Test_collectAppendVariables(t *testing.T) {
+// Test_checkStringConcatInLoop tests the private checkStringConcatInLoop function.
+func Test_checkStringConcatInLoop(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -221,13 +37,13 @@ func Test_collectAppendVariables(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function collects append variables
+			// Test passthrough - function checks string concatenation in loops
 		})
 	}
 }
 
-// Test_checkMakeCalls tests the private checkMakeCalls function.
-func Test_checkMakeCalls(t *testing.T) {
+// Test_isStringConcatenation tests the private isStringConcatenation function.
+func Test_isStringConcatenation(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -235,49 +51,101 @@ func Test_checkMakeCalls(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks make calls
+			// Test passthrough - function checks if string concatenation
 		})
 	}
 }
 
-// Test_checkMakeCall tests the private checkMakeCall function.
-func Test_checkMakeCall(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+// Test_runVar007_disabled tests runVar007 with disabled rule.
+func Test_runVar007_disabled(t *testing.T) {
+	// Setup config with rule disabled
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-007": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks single make call
-		})
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar007(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar007() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar007() reported %d issues, expected 0 when disabled", reportCount)
 	}
 }
 
-// Test_checkEmptySliceLiterals tests the private checkEmptySliceLiterals function.
-func Test_checkEmptySliceLiterals(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks empty slice literals
-		})
-	}
-}
+// Test_runVar007_fileExcluded tests runVar007 with excluded file.
+func Test_runVar007_fileExcluded(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-007": {
+				Exclude: []string{"test.go"},
+			},
+		},
+	})
+	defer config.Reset()
 
-// Test_checkCompositeLit tests the private checkCompositeLit function.
-func Test_checkCompositeLit(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
+	// Parse simple code
+	code := `package test
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks composite literals
-		})
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar007(pass)
+	// Check no error
+	if err != nil {
+		t.Fatalf("runVar007() error = %v", err)
+	}
+
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar007() reported %d issues, expected 0 when file excluded", reportCount)
 	}
 }

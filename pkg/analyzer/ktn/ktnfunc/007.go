@@ -3,35 +3,31 @@ package ktnfunc
 
 import (
 	"go/ast"
-	"regexp"
 	"strings"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-var (
-	// Analyzer007 checks that all functions have proper documentation
-	Analyzer007 = &analysis.Analyzer{
-		Name:     "ktnfunc007",
-		Doc:      "KTN-FUNC-007: Toutes les fonctions doivent avoir une documentation au format strict (description, Params, Returns)",
-		Run:      runFunc007,
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
-	}
-
-	// Pattern for Params section header
-	paramsHeaderPattern = regexp.MustCompile(`^//\s*Params:\s*$`)
-	// Pattern for individual Params items
-	paramItemPattern = regexp.MustCompile(`^//\s*-\s*\w+:\s*.+`)
-
-	// Pattern for Returns section header
-	returnsHeaderPattern = regexp.MustCompile(`^//\s*Returns:\s*$`)
-	// Pattern for individual Returns items
-	returnItemPattern = regexp.MustCompile(`^//\s*-\s*.+:\s*.+`)
+const (
+	// ruleCodeFunc007 is the rule code for this analyzer
+	ruleCodeFunc007 string = "KTN-FUNC-007"
+	// lazyFieldsCap est la capacité initiale pour la map des champs lazy load
+	lazyFieldsCap int = 4
 )
 
-// runFunc007 description à compléter.
+// Analyzer007 checks that getter functions don't have side effects
+var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnfunc007",
+	Doc:      "KTN-FUNC-007: Les getters (Get*/Is*/Has*) ne doivent pas avoir de side effects (assignations, appels de fonctions modifiant l'état)",
+	Run:      runFunc007,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
+
+// runFunc007 exécute l'analyse KTN-FUNC-007.
 //
 // Params:
 //   - pass: contexte d'analyse
@@ -40,6 +36,15 @@ var (
 //   - any: résultat
 //   - error: erreur éventuelle
 func runFunc007(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeFunc007) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -49,239 +54,243 @@ func runFunc007(pass *analysis.Pass) (any, error) {
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 
-		// Get function documentation
-		doc := funcDecl.Doc
-
-		// Check if documentation exists
-		if doc == nil || len(doc.List) == 0 {
-			pass.Reportf(
-				funcDecl.Name.Pos(),
-				"KTN-FUNC-007: la fonction '%s' doit avoir une documentation",
-				funcDecl.Name.Name,
-			)
-			// Retour de la fonction
+		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeFunc007, filename) {
+			// Fichier exclu
 			return
 		}
 
-		// Extract comment lines
-		comments := extractCommentLines(doc)
-
-		// Validate documentation format
-		hasParams := funcDecl.Type.Params != nil && len(funcDecl.Type.Params.List) > 0
-		hasReturns := funcDecl.Type.Results != nil && len(funcDecl.Type.Results.List) > 0
-
-		err := validateDocFormat(comments, funcDecl.Name.Name, hasParams, hasReturns)
-		// Vérification de la condition
-		if err != "" {
-			pass.Reportf(
-				funcDecl.Name.Pos(),
-				"KTN-FUNC-007: %s",
-				err,
-			)
+		// Skip test functions
+		if shared.IsTestFunction(funcDecl) {
+			// Retour pour ignorer les fonctions de test
+			return
 		}
+		funcName := funcDecl.Name.Name
+		// Skip if not a getter (Get*, Is*, Has*)
+		if !isGetter(funcName) {
+			// Retour si pas un getter
+			return
+		}
+		// Skip if no body (external functions)
+		if funcDecl.Body == nil {
+			// Retour si pas de corps
+			return
+		}
+		// Check for side effects in getter
+		checkGetterSideEffects(pass, funcDecl, funcName)
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// extractCommentLines extracts individual comment lines from a CommentGroup
+// checkGetterSideEffects vérifie les side effects dans un getter.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - funcDecl: déclaration de fonction
+//   - funcName: nom de la fonction
+func checkGetterSideEffects(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string) {
+	lazyLoadFields := collectLazyLoadFields(funcDecl.Body)
+	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+		// Sélection selon la valeur
+		switch stmt := node.(type) {
+		// Traitement des assignations
+		case *ast.AssignStmt:
+			reportAssignSideEffect(pass, stmt, funcName, lazyLoadFields)
+		// Traitement des incréments/décréments
+		case *ast.IncDecStmt:
+			reportIncDecSideEffect(pass, stmt, funcName)
+		}
+		// Continuer l'inspection
+		return true
+	})
+}
+
+// reportAssignSideEffect reporte les side effects d'assignation.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: assignation
+//   - funcName: nom de la fonction
+//   - lazyLoadFields: champs de lazy loading
+func reportAssignSideEffect(pass *analysis.Pass, stmt *ast.AssignStmt, funcName string, lazyLoadFields map[string]bool) {
+	// Vérifier chaque côté gauche
+	for _, lhs := range stmt.Lhs {
+		// Vérification si side effect
+		if hasSideEffect(lhs) {
+			// Skip if it's a lazy load assignment
+			if isLazyLoadAssignment(lhs, lazyLoadFields) {
+				// Continuer si lazy load valide
+				continue
+			}
+			pass.Reportf(
+				stmt.Pos(),
+				"KTN-FUNC-007: le getter '%s' ne doit pas modifier l'état (assignation détectée)",
+				funcName,
+			)
+		}
+	}
+}
+
+// reportIncDecSideEffect reporte les side effects d'incrément/décrément.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement incr/decr
+//   - funcName: nom de la fonction
+func reportIncDecSideEffect(pass *analysis.Pass, stmt *ast.IncDecStmt, funcName string) {
+	// Vérifier si side effect sur champ
+	if hasSideEffect(stmt.X) {
+		pass.Reportf(
+			stmt.Pos(),
+			"KTN-FUNC-007: le getter '%s' ne doit pas modifier l'état (incrémentation/décrémentation détectée)",
+			funcName,
+		)
+	}
+}
+
+// isGetter checks if a function name suggests it's a getter
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - []string: lignes de commentaires
-func extractCommentLines(cg *ast.CommentGroup) []string {
-	var lines []string
-	// Itération sur les éléments
-	for _, comment := range cg.List {
-		text := comment.Text
-		// Remove // prefix
-		if strings.HasPrefix(text, "//") {
-			lines = append(lines, text)
+//   - bool: true si fonction getter
+func isGetter(name string) bool {
+	// Retour de la fonction
+	return strings.HasPrefix(name, "Get") ||
+		strings.HasPrefix(name, "Is") ||
+		strings.HasPrefix(name, "Has")
+}
+
+// hasSideEffect checks if an expression modifies external state.
+//
+// Params:
+//   - expr: expression à analyser
+//
+// Returns:
+//   - bool: true si effet de bord détecté
+func hasSideEffect(expr ast.Expr) bool {
+	// Sélection selon la valeur
+	switch e := expr.(type) {
+	// Traitement
+	case *ast.SelectorExpr:
+		// Modifying a field is a side effect
+		return true
+	// Traitement
+	case *ast.IndexExpr:
+		// Modifying an index (array/map/slice element) could be a side effect
+		// Check if the base is a selector
+		if _, ok := e.X.(*ast.SelectorExpr); ok {
+			// Retour de la fonction
+			return true
 		}
 	}
 	// Retour de la fonction
-	return lines
+	return false
 }
 
-// validateDescriptionLine vérifie que la première ligne de la doc est correcte.
+// collectLazyLoadFields collects field names that are checked for nil in if statements.
+// These fields are candidates for lazy loading patterns.
 //
 // Params:
-//   - comments: lignes de commentaires
-//   - funcName: nom de la fonction
+//   - body: function body to analyze
 //
 // Returns:
-//   - string: message d'erreur ou vide
-func validateDescriptionLine(comments []string, funcName string) string {
-	// Vérification de la présence de commentaires
-	if len(comments) == 0 {
-		// Retour si aucun commentaire
-		return "documentation vide"
-	}
+//   - map[string]bool: map of field names that could be lazy loaded
+func collectLazyLoadFields(body *ast.BlockStmt) map[string]bool {
+	lazyFields := make(map[string]bool, lazyFieldsCap)
+	// Inspect the body for nil checks
+	ast.Inspect(body, func(node ast.Node) bool {
+		ifStmt, ok := node.(*ast.IfStmt)
+		// Si pas un if statement, continuer
+		if !ok {
+			// Retour true pour continuer l'inspection
+			return true
+		}
+		// Check if condition is "field == nil"
+		binary, ok := ifStmt.Cond.(*ast.BinaryExpr)
+		// Si pas une expression binaire, continuer
+		if !ok {
+			// Retour true pour continuer l'inspection
+			return true
+		}
+		// Vérifier si c'est une comparaison avec nil
+		if isNilComparison(binary) {
+			fieldName := extractFieldName(binary)
+			// Ajouter à la map si trouvé
+			if fieldName != "" {
+				lazyFields[fieldName] = true
+			}
+		}
+		// Continuer l'inspection
+		return true
+	})
+	// Retour de la map des champs
+	return lazyFields
+}
 
-	// Vérification du format de la première ligne
-	if !strings.HasPrefix(comments[0], "// "+funcName) {
-		// Retour si format incorrect
-		return "la description doit commencer par '// " + funcName + " '"
+// isNilComparison checks if a binary expression is a nil comparison.
+//
+// Params:
+//   - binary: expression binaire à vérifier
+//
+// Returns:
+//   - bool: true si c'est une comparaison avec nil
+func isNilComparison(binary *ast.BinaryExpr) bool {
+	// Vérifier si l'un des côtés est nil
+	if ident, ok := binary.Y.(*ast.Ident); ok && ident.Name == "nil" {
+		// Retour true si Y est nil
+		return true
 	}
+	// Vérifier l'autre côté aussi
+	if ident, ok := binary.X.(*ast.Ident); ok && ident.Name == "nil" {
+		// Retour true si X est nil
+		return true
+	}
+	// Retour false si pas de nil
+	return false
+}
 
-	// Validation réussie
+// extractFieldName extracts the field name from a nil comparison.
+//
+// Params:
+//   - binary: expression de comparaison avec nil
+//
+// Returns:
+//   - string: nom du champ ou chaîne vide
+func extractFieldName(binary *ast.BinaryExpr) string {
+	// Vérifier le côté gauche
+	if sel, ok := binary.X.(*ast.SelectorExpr); ok {
+		// Retour du nom depuis X
+		return sel.Sel.Name
+	}
+	// Vérifier le côté droit
+	if sel, ok := binary.Y.(*ast.SelectorExpr); ok {
+		// Retour du nom depuis Y
+		return sel.Sel.Name
+	}
+	// Retour chaîne vide
 	return ""
 }
 
-// validateParamsSection vérifie la section Params: de la documentation.
+// isLazyLoadAssignment checks if an assignment is a lazy load pattern.
 //
 // Params:
-//   - comments: lignes de commentaires
-//   - startIdx: index de début dans comments
+//   - lhs: left-hand side of assignment
+//   - lazyFields: map of fields that could be lazy loaded
 //
 // Returns:
-//   - error: message d'erreur ou vide
-//   - newIdx: nouvel index après la section
-func validateParamsSection(comments []string, startIdx int) (string, int) {
-	idx := startIdx
-
-	// Vérification de la présence du header Params:
-	if idx >= len(comments) || !paramsHeaderPattern.MatchString(comments[idx]) {
-		// Retour si header manquant avec message explicite
-		return "section 'Params:' manquante. Ajouter après description: '// Params:' sur ligne seule, puis '//   - nomParam: description' (avec 2 espaces avant tiret)", idx
+//   - bool: true si c'est un lazy load
+func isLazyLoadAssignment(lhs ast.Expr, lazyFields map[string]bool) bool {
+	// Vérifier si c'est un selector (accès à un champ)
+	sel, ok := lhs.(*ast.SelectorExpr)
+	// Si pas un selector
+	if !ok {
+		// Retour false
+		return false
 	}
-	idx++
-
-	// Validation des items de paramètres
-	foundParam := false
-	// Itération sur les items
-	for idx < len(comments) {
-		line := comments[idx]
-		// Vérification si c'est un item de paramètre
-		if paramItemPattern.MatchString(line) {
-			foundParam = true
-			idx++
-		} else {
-			// Sortie de boucle
-			break
-		}
-	}
-
-	// Vérification qu'au moins un paramètre est documenté
-	if !foundParam {
-		// Retour si aucun paramètre documenté
-		return "au moins un paramètre doit être documenté dans 'Params:'", idx
-	}
-
-	// Skip blank line
-	if idx < len(comments) && strings.TrimSpace(comments[idx]) == "//" {
-		idx++
-	}
-
-	// Validation réussie
-	return "", idx
-}
-
-// validateReturnsSection vérifie la section Returns: de la documentation.
-//
-// Params:
-//   - comments: lignes de commentaires
-//   - startIdx: index de début dans comments
-//
-// Returns:
-//   - error: message d'erreur ou vide
-//   - newIdx: nouvel index après la section
-func validateReturnsSection(comments []string, startIdx int) (string, int) {
-	idx := startIdx
-
-	// Vérification de la présence du header Returns:
-	if idx >= len(comments) || !returnsHeaderPattern.MatchString(comments[idx]) {
-		// Retour si header manquant avec message explicite
-		return "section 'Returns:' manquante. Ajouter après Params: '// Returns:' sur ligne seule, puis '//   - type: description' (ex: '//   - error: erreur éventuelle')", idx
-	}
-	idx++
-
-	// Validation des items de retour
-	foundReturn := false
-	// Itération sur les items
-	for idx < len(comments) {
-		line := comments[idx]
-		// Vérification si c'est un item de retour
-		if returnItemPattern.MatchString(line) {
-			foundReturn = true
-			idx++
-		} else {
-			// Sortie de boucle
-			break
-		}
-	}
-
-	// Vérification qu'au moins un retour est documenté
-	if !foundReturn {
-		// Retour si aucun retour documenté
-		return "au moins une valeur de retour doit être documentée dans 'Returns:'", idx
-	}
-
-	// Validation réussie
-	return "", idx
-}
-
-// validateDocFormat vérifie le format de la documentation d'une fonction.
-//
-// Params:
-//   - comments: lignes de commentaires de la fonction
-//   - funcName: nom de la fonction
-//   - hasParams: true si la fonction a des paramètres
-//   - hasReturns: true si la fonction a des valeurs de retour
-//
-// Returns:
-//   - string: message d'erreur ou chaîne vide si valide
-func validateDocFormat(comments []string, funcName string, hasParams, hasReturns bool) string {
-	// Validation de la ligne de description
-	if err := validateDescriptionLine(comments, funcName); err != "" {
-		// Retour si erreur de description
-		return err
-	}
-
-	idx := 1
-
-	// Skip description lines until we find blank line before Params/Returns
-	for idx < len(comments) {
-		line := strings.TrimSpace(comments[idx])
-		// Stop at blank line separator
-		if line == "//" {
-			idx++
-			break
-		}
-		// Stop if we find Params: or Returns: header
-		if paramsHeaderPattern.MatchString(comments[idx]) || returnsHeaderPattern.MatchString(comments[idx]) {
-			break
-		}
-		// Continue skipping description lines
-		idx++
-	}
-
-	// Validation de la section Params si nécessaire
-	if hasParams {
-		var err string
-		// Validation de la section
-		err, idx = validateParamsSection(comments, idx)
-		// Vérification d'erreur
-		if err != "" {
-			// Retour si erreur
-			return err
-		}
-	}
-
-	// Validation de la section Returns si nécessaire
-	if hasReturns {
-		var err string
-		// Validation de la section (idx ignoré car dernière section)
-		err, _ = validateReturnsSection(comments, idx)
-		// Vérification d'erreur
-		if err != "" {
-			// Retour si erreur
-			return err
-		}
-	}
-
-	// Validation complète réussie
-	return ""
+	// Retour true si le champ est dans la liste des lazy load
+	return lazyFields[sel.Sel.Name]
 }

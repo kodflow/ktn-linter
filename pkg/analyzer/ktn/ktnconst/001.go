@@ -5,13 +5,19 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const (
+	// ruleCodeConst001 est le code de la règle KTN-CONST-001.
+	ruleCodeConst001 string = "KTN-CONST-001"
+)
+
 // Analyzer001 checks that constants have explicit types
-var Analyzer001 = &analysis.Analyzer{
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnconst001",
 	Doc:      "KTN-CONST-001: Vérifie que les constantes ont un type explicite",
 	Run:      runConst001,
@@ -27,6 +33,15 @@ var Analyzer001 = &analysis.Analyzer{
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runConst001(pass *analysis.Pass) (any, error) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	// Vérifier si la règle est activée
+	if !cfg.IsRuleEnabled(ruleCodeConst001) {
+		// Règle désactivée
+		return nil, nil
+	}
+
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -34,6 +49,12 @@ func runConst001(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		filename := pass.Fset.Position(n.Pos()).Filename
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeConst001, filename) {
+			// File is excluded
+			return
+		}
 		genDecl := n.(*ast.GenDecl)
 
 		// Only check const declarations
