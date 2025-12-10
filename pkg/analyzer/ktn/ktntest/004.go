@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	// ruleCode est le code de la règle.
 	ruleCodeTest004 string = "KTN-TEST-004"
 	// minPublicFuncs est le nombre minimum de fonctions publiques
 	minPublicFuncs int = 1

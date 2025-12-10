@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// ruleCode est le code de la règle.
 	ruleCodeTest008 string = "KTN-TEST-008"
 	// maxFuncsToDisplay nombre max de fonctions affichées.
 	maxFuncsToDisplay int = 3

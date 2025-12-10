@@ -14,8 +14,8 @@ const (
 	DefaultConfigFileName string = ".ktn-linter.yaml"
 	// AlternateConfigFileName is an alternate configuration file name.
 	AlternateConfigFileName string = ".ktn-linter.yml"
-	// FILE_PERM_RW_R_R is the default file permission for config files (0644 = rw-r--r--)
-	FILE_PERM_RW_R_R = 0644
+	// filePermReadWrite is the default file permission (0644 = rw-r--r--).
+	filePermReadWrite = 0644
 )
 
 // Load loads configuration from a file path.
@@ -247,7 +247,7 @@ func SaveToFile(cfg *Config, path string) error {
 	}
 
 	// Tentative d'écriture du fichier avec permissions rw-r--r--
-	if err := os.WriteFile(path, data, FILE_PERM_RW_R_R); err != nil {
+	if err := os.WriteFile(path, data, filePermReadWrite); err != nil {
 		// Retour d'erreur si impossible d'écrire le fichier
 		return fmt.Errorf("failed to write config file %s: %w", path, err)
 	}

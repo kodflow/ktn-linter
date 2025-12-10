@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// ruleCode est le code de la règle.
 	ruleCodeTest009 string = "KTN-TEST-009"
 	// initialPublicFuncsCap initial capacity for public funcs map
 	initialPublicFuncsCap int = 32

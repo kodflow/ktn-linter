@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	// ruleCode est le code de la règle.
 	ruleCodeTest013 string = "KTN-TEST-013"
 	// initialMapCapacity est la capacité initiale des maps de signatures.
 	initialMapCapacity int = 32

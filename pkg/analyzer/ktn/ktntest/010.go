@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// ruleCode est le code de la règle.
 	ruleCodeTest010 string = "KTN-TEST-010"
 	// initialPrivateFunctionsCap initial cap for private funcs map
 	initialPrivateFunctionsCap int = 32

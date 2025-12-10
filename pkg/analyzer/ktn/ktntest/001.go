@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	// ruleCode est le code de la règle.
 	ruleCodeTest001 string = "KTN-TEST-001"
 )
 
