@@ -46,6 +46,29 @@ func runTest011(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// Valider les fichiers de test
+	validateTestFiles011(pass, cfg)
+
+	// Définir le filtre de nœuds
+	nodeFilter := []ast.Node{
+		(*ast.File)(nil),
+	}
+
+	// Parcourir les nœuds
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Rien à faire dans preorder
+	})
+
+	// Retour de la fonction
+	return nil, nil
+}
+
+// validateTestFiles011 valide les conventions de package pour les fichiers de test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - cfg: configuration
+func validateTestFiles011(pass *analysis.Pass, cfg *config.Config) {
 	// Itération sur les fichiers
 	for _, file := range pass.Files {
 		// Obtenir le chemin du fichier
@@ -68,52 +91,51 @@ func runTest011(pass *analysis.Pass) (any, error) {
 		// Extraire le package actuel
 		actualPkg := file.Name.Name
 
-		// Vérification suffixe internal
-		if strings.HasSuffix(basename, "_internal_test.go") {
-			// Vérification package _test
-			if basePkg, ok := strings.CutSuffix(actualPkg, "_test"); ok {
+		// Valider le package selon le type de fichier
+		validatePackageConvention011(pass, file, basename, actualPkg)
+	}
+}
+
+// validatePackageConvention011 valide la convention de package selon le type de fichier test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - file: nœud AST du fichier
+//   - basename: nom de base du fichier
+//   - actualPkg: nom du package actuel
+func validatePackageConvention011(pass *analysis.Pass, file *ast.File, basename, actualPkg string) {
+	// Vérification suffixe internal
+	if strings.HasSuffix(basename, "_internal_test.go") {
+		// Vérification package _test
+		if basePkg, ok := strings.CutSuffix(actualPkg, "_test"); ok {
+			// Signaler erreur package
+			pass.Reportf(
+				file.Name.Pos(),
+				"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s' (white-box testing) au lieu de 'package %s'. Les fichiers _internal_test.go testent les fonctions privées et doivent partager le même package",
+				basename,
+				basePkg,
+				actualPkg,
+			)
+		}
+	} else {
+		// Vérification suffixe external
+		if strings.HasSuffix(basename, "_external_test.go") {
+			// Cas alternatif: external
+			// Vérification package sans _test
+			if !strings.HasSuffix(actualPkg, "_test") {
+				// Extraire package attendu
+				expectedPkg := extractExpectedPackageFromFilename(basename)
 				// Signaler erreur package
 				pass.Reportf(
 					file.Name.Pos(),
-					"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s' (white-box testing) au lieu de 'package %s'. Les fichiers _internal_test.go testent les fonctions privées et doivent partager le même package",
+					"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s_test' (black-box testing) au lieu de 'package %s'. Les fichiers _external_test.go testent l'API publique et doivent utiliser un package externe",
 					basename,
-					basePkg,
+					expectedPkg,
 					actualPkg,
 				)
 			}
-		} else {
-			// Vérification suffixe external
-			if strings.HasSuffix(basename, "_external_test.go") {
-				// Cas alternatif: external
-				// Vérification package sans _test
-				if !strings.HasSuffix(actualPkg, "_test") {
-					// Extraire package attendu
-					expectedPkg := extractExpectedPackageFromFilename(basename)
-					// Signaler erreur package
-					pass.Reportf(
-						file.Name.Pos(),
-						"KTN-TEST-011: le fichier '%s' doit utiliser 'package %s_test' (black-box testing) au lieu de 'package %s'. Les fichiers _external_test.go testent l'API publique et doivent utiliser un package externe",
-						basename,
-						expectedPkg,
-						actualPkg,
-					)
-				}
-			}
 		}
 	}
-
-	// Définir le filtre de nœuds
-	nodeFilter := []ast.Node{
-		(*ast.File)(nil),
-	}
-
-	// Parcourir les nœuds
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Rien à faire dans preorder
-	})
-
-	// Retour de la fonction
-	return nil, nil
 }
 
 // extractExpectedPackageFromFilename extrait le nom de package attendu depuis le nom de fichier.

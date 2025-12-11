@@ -15,73 +15,95 @@ import (
 
 // Test_runFunc004_disabled tests behavior when rule is disabled.
 func Test_runFunc004_disabled(t *testing.T) {
-	// Configuration avec règle désactivée
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-FUNC-004": {Enabled: config.Bool(false)},
-		},
-	})
-	// Reset config après le test
-	defer config.Reset()
-
-	// Créer un pass minimal
-	result, err := runFunc004(&analysis.Pass{})
-	// Vérification de l'erreur
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	// Vérification du résultat nil
-	if result != nil {
-		t.Errorf("Expected nil result when rule disabled, got %v", result)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Configuration avec règle désactivée
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-FUNC-004": {Enabled: config.Bool(false)},
+				},
+			})
+			// Reset config après le test
+			defer config.Reset()
+
+			// Créer un pass minimal
+			result, err := runFunc004(&analysis.Pass{})
+			// Vérification de l'erreur
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+			// Vérification du résultat nil
+			if result != nil {
+				t.Errorf("Expected nil result when rule disabled, got %v", result)
+			}
+
+		})
 	}
 }
 
 // Test_runFunc004_excludedFile tests behavior with excluded files.
 func Test_runFunc004_excludedFile(t *testing.T) {
-	// Configuration avec fichier exclu
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-FUNC-004": {
-				Enabled:       config.Bool(true),
-				Exclude: []string{"test.go"},
-			},
-		},
-	})
-	// Reset config après le test
-	defer config.Reset()
-
-	code := `package test
-func foo() { }
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Vérification erreur parsing
-	if err != nil {
-		t.Fatalf("Failed to parse: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Créer un inspector
-	files := []*ast.File{file}
-	inspectResult, _ := inspect.Analyzer.Run(&analysis.Pass{
-		Fset:  fset,
-		Files: files,
-	})
+			// Configuration avec fichier exclu
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-FUNC-004": {
+						Enabled:       config.Bool(true),
+						Exclude: []string{"test.go"},
+					},
+				},
+			})
+			// Reset config après le test
+			defer config.Reset()
 
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: inspectResult,
-		},
-		Report: func(d analysis.Diagnostic) {
-			t.Errorf("Expected no diagnostics for excluded file, got: %s", d.Message)
-		},
-	}
+			code := `package test
+			func foo() { }
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Vérification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
 
-	// Exécuter l'analyse
-	_, err = runFunc004(pass)
-	// Vérification erreur
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+			// Créer un inspector
+			files := []*ast.File{file}
+			inspectResult, _ := inspect.Analyzer.Run(&analysis.Pass{
+				Fset:  fset,
+				Files: files,
+			})
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) {
+					t.Errorf("Expected no diagnostics for excluded file, got: %s", d.Message)
+				},
+			}
+
+			// Exécuter l'analyse
+			_, err = runFunc004(pass)
+			// Vérification erreur
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+
+		})
 	}
 }
 

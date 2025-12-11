@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/constant"
 	"go/parser"
+	"go/token"
 	"go/types"
 	"testing"
 
@@ -493,6 +494,66 @@ func TestIsSmallConstantSizeWithConstants(t *testing.T) {
 			// Check result
 			if got != tt.want {
 				t.Errorf("IsSmallConstantSize(%d) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestIsSmallConstantSizeNonInt tests with non-integer constants
+func TestIsSmallConstantSizeNonInt(t *testing.T) {
+	tests := []struct {
+		name  string
+		value constant.Value
+	}{
+		{"unknown constant", constant.MakeUnknown()},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr := &ast.BasicLit{Value: "x"}
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						expr: {Value: tt.value},
+					},
+				},
+			}
+			got := utils.IsSmallConstantSize(pass, expr)
+			// Unknown constants should return false
+			if got {
+				t.Errorf("IsSmallConstantSize(%s) = true, want false", tt.name)
+			}
+		})
+	}
+}
+
+// TestIsSmallConstantSizeIntOverflow tests with integer overflow
+func TestIsSmallConstantSizeIntOverflow(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"integer overflow edge case"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a constant value that's larger than int64 max using big.Int
+			// MakeInt64 creates int64 values, but constant.Shift can create larger values
+			baseValue := constant.MakeInt64(1)
+			// Shift left by 100 bits to create a value larger than int64 max
+			largeValue := constant.Shift(baseValue, token.SHL, 100)
+
+			expr := &ast.BasicLit{Value: "x"}
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						expr: {Value: largeValue},
+					},
+				},
+			}
+			got := utils.IsSmallConstantSize(pass, expr)
+			// Large constants that overflow int64 should return false
+			if got {
+				t.Errorf("IsSmallConstantSize(large int) = true, want false")
 			}
 		})
 	}

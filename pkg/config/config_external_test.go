@@ -358,3 +358,151 @@ func TestBoolAndInt(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_IsFileExcludedGlobally(t *testing.T) {
+	tests := []struct {
+		name     string
+		cfg      *config.Config
+		filename string
+		want     bool
+	}{
+		{
+			name:     "nil config returns false",
+			cfg:      nil,
+			filename: "foo.go",
+			want:     false,
+		},
+		{
+			name: "global exclusion matches",
+			cfg: &config.Config{
+				Exclude: []string{"*_test.go"},
+			},
+			filename: "foo_test.go",
+			want:     true,
+		},
+		{
+			name: "global exclusion does not match",
+			cfg: &config.Config{
+				Exclude: []string{"*_test.go"},
+			},
+			filename: "foo.go",
+			want:     false,
+		},
+		{
+			name: "double star pattern",
+			cfg: &config.Config{
+				Exclude: []string{"vendor/**"},
+			},
+			filename: "vendor/github.com/foo/bar.go",
+			want:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.cfg.IsFileExcludedGlobally(tt.filename)
+			if got != tt.want {
+				t.Errorf("IsFileExcludedGlobally(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"returns global config"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := config.Get()
+			if cfg == nil {
+				t.Error("Get() returned nil")
+			}
+		})
+	}
+}
+
+func TestSet(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"sets global config"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			customCfg := &config.Config{Version: 1}
+			config.Set(customCfg)
+			cfg := config.Get()
+			if cfg.Version != 1 {
+				t.Errorf("Set() failed, expected version 1")
+			}
+			config.Reset()
+		})
+	}
+}
+
+func TestReset(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"resets to default"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			customCfg := &config.Config{Version: 99}
+			config.Set(customCfg)
+			config.Reset()
+			cfg := config.Get()
+			if cfg.Version != 1 {
+				t.Errorf("Reset() failed, expected version 1 after reset")
+			}
+		})
+	}
+}
+
+func TestBool(t *testing.T) {
+	tests := []struct {
+		name  string
+		value bool
+		want  bool
+	}{
+		{"true value", true, true},
+		{"false value", false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ptr := config.Bool(tt.value)
+			if ptr == nil {
+				t.Error("Bool() returned nil")
+			}
+			if *ptr != tt.want {
+				t.Errorf("Bool(%v) = %v, want %v", tt.value, *ptr, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt(t *testing.T) {
+	tests := []struct {
+		name  string
+		value int
+		want  int
+	}{
+		{"positive value", 42, 42},
+		{"negative value", -10, -10},
+		{"zero value", 0, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ptr := config.Int(tt.value)
+			if ptr == nil {
+				t.Error("Int() returned nil")
+			}
+			if *ptr != tt.want {
+				t.Errorf("Int(%v) = %v, want %v", tt.value, *ptr, tt.want)
+			}
+		})
+	}
+}

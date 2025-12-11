@@ -2,6 +2,7 @@
 package shared
 
 import (
+	"go/ast"
 	"testing"
 )
 
@@ -150,6 +151,60 @@ func Test_extractReceiverTypeName_IndexListExpr(t *testing.T) {
 			// This ensures the switch case is covered
 			if tt.want == "" {
 				t.Error("expected non-empty receiver name")
+			}
+		})
+	}
+}
+
+// Test_extractReceiverTypeName_UnknownExpr tests the default case in ExtractReceiverTypeName.
+//
+// Params:
+//   - t: testing context
+func Test_extractReceiverTypeName_UnknownExpr(t *testing.T) {
+	tests := []struct {
+		name string
+		expr ast.Expr
+		want string
+	}{
+		{
+			name: "array type should return empty",
+			expr: &ast.ArrayType{
+				Len: &ast.BasicLit{Value: "10"},
+				Elt: &ast.Ident{Name: "int"},
+			},
+			want: "",
+		},
+		{
+			name: "map type should return empty",
+			expr: &ast.MapType{
+				Key:   &ast.Ident{Name: "string"},
+				Value: &ast.Ident{Name: "int"},
+			},
+			want: "",
+		},
+		{
+			name: "chan type should return empty",
+			expr: &ast.ChanType{
+				Value: &ast.Ident{Name: "int"},
+			},
+			want: "",
+		},
+		{
+			name: "selector expr should return empty",
+			expr: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "pkg"},
+				Sel: &ast.Ident{Name: "Type"},
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ExtractReceiverTypeName(tt.expr)
+			// Check result
+			if got != tt.want {
+				t.Errorf("ExtractReceiverTypeName() = %q, want %q", got, tt.want)
 			}
 		})
 	}

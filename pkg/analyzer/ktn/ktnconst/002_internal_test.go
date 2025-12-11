@@ -421,88 +421,110 @@ func Test_fileDeclarations(t *testing.T) {
 
 // Test_runConst002_disabled tests that the rule is skipped when disabled.
 func Test_runConst002_disabled(t *testing.T) {
-	// Setup: disable the rule
-	cfg := &config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-CONST-002": {Enabled: config.Bool(false)},
-		},
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	config.Set(cfg)
-	defer config.Reset()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create minimal pass - should not report anything
-	reportCount := 0
-	pass := &analysis.Pass{
-		Fset: token.NewFileSet(),
-		Files: []*ast.File{
-			{
-				Decls: []ast.Decl{
-					&ast.GenDecl{Tok: token.VAR},
-					&ast.GenDecl{Tok: token.CONST},
+			// Setup: disable the rule
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-CONST-002": {Enabled: config.Bool(false)},
 				},
-			},
-		},
-		Report: func(_ analysis.Diagnostic) {
-			reportCount++
-			t.Error("Unexpected error reported when rule is disabled")
-		},
-	}
+			}
+			config.Set(cfg)
+			defer config.Reset()
 
-	// Run the analyzer - should not report anything
-	_, err := runConst002(pass)
-	if err != nil {
-		t.Errorf("runConst002() error = %v", err)
-	}
-	// Verify no reports
-	if reportCount != 0 {
-		t.Errorf("Expected 0 reports, got %d", reportCount)
+			// Create minimal pass - should not report anything
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Files: []*ast.File{
+					{
+						Decls: []ast.Decl{
+							&ast.GenDecl{Tok: token.VAR},
+							&ast.GenDecl{Tok: token.CONST},
+						},
+					},
+				},
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+					t.Error("Unexpected error reported when rule is disabled")
+				},
+			}
+
+			// Run the analyzer - should not report anything
+			_, err := runConst002(pass)
+			if err != nil {
+				t.Errorf("runConst002() error = %v", err)
+			}
+			// Verify no reports
+			if reportCount != 0 {
+				t.Errorf("Expected 0 reports, got %d", reportCount)
+			}
+
+		})
 	}
 }
 
 // Test_runConst002_excludedFile tests that excluded files are skipped.
 func Test_runConst002_excludedFile(t *testing.T) {
-	// Setup: exclude test.go
-	cfg := &config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-CONST-002": {
-				Enabled: config.Bool(true),
-				Exclude: []string{"test.go"},
-			},
-		},
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	config.Set(cfg)
-	defer config.Reset()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create fset and file with bad order (var before const)
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create pass with file that would trigger error if not excluded
-	reportCount := 0
-	pass := &analysis.Pass{
-		Fset: fset,
-		Files: []*ast.File{
-			{
-				Package: file.Pos(1),
-				Decls: []ast.Decl{
-					&ast.GenDecl{Tok: token.VAR, TokPos: file.Pos(10)},
-					&ast.GenDecl{Tok: token.CONST, TokPos: file.Pos(50)},
+			// Setup: exclude test.go
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-CONST-002": {
+						Enabled: config.Bool(true),
+						Exclude: []string{"test.go"},
+					},
 				},
-			},
-		},
-		Report: func(_ analysis.Diagnostic) {
-			reportCount++
-			t.Error("Unexpected error reported for excluded file")
-		},
-	}
+			}
+			config.Set(cfg)
+			defer config.Reset()
 
-	// Run the analyzer
-	_, err := runConst002(pass)
-	if err != nil {
-		t.Errorf("runConst002() error = %v", err)
-	}
-	// Verify no reports for excluded file
-	if reportCount != 0 {
-		t.Errorf("Expected 0 reports for excluded file, got %d", reportCount)
+			// Create fset and file with bad order (var before const)
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+
+			// Create pass with file that would trigger error if not excluded
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				Files: []*ast.File{
+					{
+						Package: file.Pos(1),
+						Decls: []ast.Decl{
+							&ast.GenDecl{Tok: token.VAR, TokPos: file.Pos(10)},
+							&ast.GenDecl{Tok: token.CONST, TokPos: file.Pos(50)},
+						},
+					},
+				},
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+					t.Error("Unexpected error reported for excluded file")
+				},
+			}
+
+			// Run the analyzer
+			_, err := runConst002(pass)
+			if err != nil {
+				t.Errorf("runConst002() error = %v", err)
+			}
+			// Verify no reports for excluded file
+			if reportCount != 0 {
+				t.Errorf("Expected 0 reports for excluded file, got %d", reportCount)
+			}
+
+		})
 	}
 }

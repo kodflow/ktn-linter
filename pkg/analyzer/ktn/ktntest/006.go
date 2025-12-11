@@ -50,6 +50,25 @@ func runTest006(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
+	// Collecter les fichiers et valider
+	sourceFiles, testFiles := collectFiles006(pass, cfg)
+	// Valider les fichiers de test
+	validateTestFiles006(pass, sourceFiles, testFiles)
+
+	// Retour de la fonction
+	return nil, nil
+}
+
+// collectFiles006 collecte les fichiers source et test.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - cfg: configuration
+//
+// Returns:
+//   - map[string]bool: fichiers source
+//   - map[string]*testFileInfo: fichiers de test
+func collectFiles006(pass *analysis.Pass, cfg *config.Config) (map[string]bool, map[string]*testFileInfo) {
 	// Collecter tous les fichiers du package
 	sourceFiles := make(map[string]bool, 0)
 	// Map baseName -> file AST node
@@ -69,25 +88,7 @@ func runTest006(pass *analysis.Pass) (any, error) {
 		// Vérification si test
 		if shared.IsTestFile(basename) {
 			// Extraire le nom de base
-			var baseName string
-			var base string
-			var ok bool
-			// Vérification suffixe internal
-			if base, ok = strings.CutSuffix(basename, "_internal_test.go"); ok {
-				// Définir le nom de base
-				baseName = base
-			} else {
-				// Vérification suffixe external
-				if base, ok = strings.CutSuffix(basename, "_external_test.go"); ok {
-					// Cas alternatif: external
-					// Définir le nom de base
-					baseName = base
-				} else {
-					// Cas alternatif: test standard
-					// Définir le nom de base
-					baseName = strings.TrimSuffix(basename, "_test.go")
-				}
-			}
+			baseName := extractBaseName006(basename)
 			// Ajouter le fichier de test
 			testFiles[baseName] = &testFileInfo{
 				basename: basename,
@@ -102,6 +103,49 @@ func runTest006(pass *analysis.Pass) (any, error) {
 		}
 	}
 
+	// Retour des collections
+	return sourceFiles, testFiles
+}
+
+// extractBaseName006 extrait le nom de base d'un fichier de test.
+//
+// Params:
+//   - basename: nom de base du fichier
+//
+// Returns:
+//   - string: nom de base extrait
+func extractBaseName006(basename string) string {
+	// Extraire le nom de base
+	var baseName string
+	var base string
+	var ok bool
+	// Vérification suffixe internal
+	if base, ok = strings.CutSuffix(basename, "_internal_test.go"); ok {
+		// Définir le nom de base
+		baseName = base
+	} else {
+		// Vérification suffixe external
+		if base, ok = strings.CutSuffix(basename, "_external_test.go"); ok {
+			// Cas alternatif: external
+			// Définir le nom de base
+			baseName = base
+		} else {
+			// Cas alternatif: test standard
+			// Définir le nom de base
+			baseName = strings.TrimSuffix(basename, "_test.go")
+		}
+	}
+	// Retour du nom de base
+	return baseName
+}
+
+// validateTestFiles006 valide la présence de fichiers source pour les tests.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - sourceFiles: fichiers source
+//   - testFiles: fichiers de test
+func validateTestFiles006(pass *analysis.Pass, sourceFiles map[string]bool, testFiles map[string]*testFileInfo) {
 	// Itération sur les tests
 	for baseName, info := range testFiles {
 		// Vérification si source existe
@@ -115,9 +159,6 @@ func runTest006(pass *analysis.Pass) (any, error) {
 			)
 		}
 	}
-
-	// Retour de la fonction
-	return nil, nil
 }
 
 // testFileInfo stores information about a test file
