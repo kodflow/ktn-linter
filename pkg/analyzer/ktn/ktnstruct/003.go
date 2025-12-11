@@ -60,55 +60,16 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 	// Parcourir les déclarations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
-
 		filename := pass.Fset.Position(n.Pos()).Filename
-		// Skip excluded files
-		if cfg.IsFileExcluded(ruleCodeStruct003, filename) {
-			// Fichier exclu
-			return
-		}
 
-		// Vérifier si c'est une méthode (a un receiver)
-		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
-			// Pas une méthode, continuer
-			return
-		}
-
-		// Vérifier si la méthode est exportée
-		if !ast.IsExported(funcDecl.Name.Name) {
-			// Méthode privée, continuer
-			return
-		}
-
-		// Vérifier si la struct receiver est exportée
-		receiverTypeName := getReceiverTypeName(funcDecl.Recv.List[0].Type)
-		// Ignorer les méthodes sur structs privées
-		if receiverTypeName != "" && !ast.IsExported(receiverTypeName) {
-			// Struct privée, continuer
-			return
-		}
-
-		// Vérifier si le nom commence par "Get"
-		methodName := funcDecl.Name.Name
-		// Vérifier préfixe Get
-		if !strings.HasPrefix(methodName, "Get") {
-			// Ne commence pas par Get, continuer
-			return
-		}
-
-		// Vérifier qu'il y a au moins un caractère après "Get"
-		if len(methodName) <= getPrefixLen {
-			// Juste "Get", pas un getter
-			return
-		}
-
-		// Vérifier si c'est un getter simple (retourne un champ de la struct)
-		if !isSimpleGetter(funcDecl, structTypes) {
-			// Pas un getter simple, continuer
+		// Vérifier si c'est un getter valide à reporter
+		if !isValidGetterToReport(cfg, funcDecl, filename, structTypes) {
+			// Pas un getter à reporter
 			return
 		}
 
 		// Construire le nom suggéré sans le préfixe "Get"
+		methodName := funcDecl.Name.Name
 		suggestedName := methodName[getPrefixLen:]
 
 		// Reporter la violation
@@ -122,6 +83,55 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// isValidGetterToReport checks if a function is a getter that should be reported.
+//
+// Params:
+//   - cfg: configuration
+//   - funcDecl: function declaration
+//   - filename: source file name
+//   - structTypes: map of struct types and their fields
+//
+// Returns:
+//   - bool: true if this is a getter to report
+func isValidGetterToReport(cfg *config.Config, funcDecl *ast.FuncDecl, filename string, structTypes map[string][]string) bool {
+	// Skip excluded files
+	if cfg.IsFileExcluded(ruleCodeStruct003, filename) {
+		// Fichier exclu
+		return false
+	}
+
+	// Vérifier si c'est une méthode (a un receiver)
+	if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
+		// Pas une méthode
+		return false
+	}
+
+	// Vérifier si la méthode est exportée
+	if !ast.IsExported(funcDecl.Name.Name) {
+		// Méthode privée
+		return false
+	}
+
+	// Vérifier si la struct receiver est exportée
+	receiverTypeName := getReceiverTypeName(funcDecl.Recv.List[0].Type)
+	// Ignorer les méthodes sur structs privées
+	if receiverTypeName != "" && !ast.IsExported(receiverTypeName) {
+		// Struct privée
+		return false
+	}
+
+	// Vérifier si le nom commence par "Get" avec suffixe
+	methodName := funcDecl.Name.Name
+	// Vérifier préfixe Get et longueur suffisante
+	if !strings.HasPrefix(methodName, "Get") || len(methodName) <= getPrefixLen {
+		// Pas un getter Get*
+		return false
+	}
+
+	// Vérifier si c'est un getter simple
+	return isSimpleGetter(funcDecl, structTypes)
 }
 
 // collectStructTypes collecte les types struct et leurs champs.

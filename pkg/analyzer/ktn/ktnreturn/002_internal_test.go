@@ -472,320 +472,386 @@ type MyStruct struct{}`,
 
 // Test_isSliceOrMapTypeWithNilTypeInfo tests isSliceOrMapType with nil type info.
 func Test_isSliceOrMapTypeWithNilTypeInfo(t *testing.T) {
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", `package test
-type MySlice []int`, parser.AllErrors)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create empty type info (no types recorded)
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
-
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		TypesInfo: info,
-	}
-
-	// Find type spec and test with missing type info
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Check for type spec
-		if ts, ok := n.(*ast.TypeSpec); ok {
-			got := isSliceOrMapType(pass, ts.Type)
-			// Should return false when type info is nil
-			if got != false {
-				t.Errorf("isSliceOrMapType with nil type info = %v, want false", got)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", `package test
+			type MySlice []int`, parser.AllErrors)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
 			}
-		}
-		// Continue traversal
-		return true
-	})
+
+			// Create empty type info (no types recorded)
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{file},
+				TypesInfo: info,
+			}
+
+			// Find type spec and test with missing type info
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check for type spec
+				if ts, ok := n.(*ast.TypeSpec); ok {
+					got := isSliceOrMapType(pass, ts.Type)
+					// Should return false when type info is nil
+					if got != false {
+						t.Errorf("isSliceOrMapType with nil type info = %v, want false", got)
+					}
+				}
+				// Continue traversal
+				return true
+			})
+
+		})
+	}
 }
 
 // Test_runReturn002WithDisabledRule tests runReturn002 when rule is disabled.
 func Test_runReturn002WithDisabledRule(t *testing.T) {
-	// Set configuration to disable rule
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			ruleCodeReturn002: {Enabled: config.Bool(false)},
-		},
-	})
-	// Reset config after test
-	defer config.Reset()
-
-	code := `package test
-func GetSlice() []int {
-	return nil
-}`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create type checker
-	conf := types.Config{Importer: importer.Default()}
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
-	_, err = conf.Check("test", fset, []*ast.File{file}, info)
-	// Check type checking
-	if err != nil {
-		t.Logf("type check error: %v", err)
-	}
+			// Set configuration to disable rule
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					ruleCodeReturn002: {Enabled: config.Bool(false)},
+				},
+			})
+			// Reset config after test
+			defer config.Reset()
 
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		TypesInfo: info,
-		ResultOf:  make(map[*analysis.Analyzer]any),
-	}
+			code := `package test
+			func GetSlice() []int {
+			return nil
+			}`
 
-	// Run inspect analyzer first
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	// Track reported errors
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			// Create type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, err = conf.Check("test", fset, []*ast.File{file}, info)
+			// Check type checking
+			if err != nil {
+				t.Logf("type check error: %v", err)
+			}
 
-	// Run analyzer
-	_, err = runReturn002(pass)
-	// Check for execution errors
-	if err != nil {
-		t.Fatalf("runReturn002 failed: %v", err)
-	}
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{file},
+				TypesInfo: info,
+				ResultOf:  make(map[*analysis.Analyzer]any),
+			}
 
-	// Should report 0 errors when rule is disabled
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+			// Run inspect analyzer first
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
+
+			// Track reported errors
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
+
+			// Run analyzer
+			_, err = runReturn002(pass)
+			// Check for execution errors
+			if err != nil {
+				t.Fatalf("runReturn002 failed: %v", err)
+			}
+
+			// Should report 0 errors when rule is disabled
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
 // Test_runReturn002WithFileExclusion tests runReturn002 with excluded files.
 func Test_runReturn002WithFileExclusion(t *testing.T) {
-	// Set configuration to exclude specific file
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			ruleCodeReturn002: {
-				Enabled: config.Bool(true),
-				Exclude: []string{"test.go"},
-			},
-		},
-	})
-	// Reset config after test
-	defer config.Reset()
-
-	code := `package test
-func GetSlice() []int {
-	return nil
-}`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create type checker
-	conf := types.Config{Importer: importer.Default()}
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
-	_, err = conf.Check("test", fset, []*ast.File{file}, info)
-	// Check type checking
-	if err != nil {
-		t.Logf("type check error: %v", err)
-	}
+			// Set configuration to exclude specific file
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					ruleCodeReturn002: {
+						Enabled: config.Bool(true),
+						Exclude: []string{"test.go"},
+					},
+				},
+			})
+			// Reset config after test
+			defer config.Reset()
 
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		TypesInfo: info,
-		ResultOf:  make(map[*analysis.Analyzer]any),
-	}
+			code := `package test
+			func GetSlice() []int {
+			return nil
+			}`
 
-	// Run inspect analyzer first
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	// Track reported errors
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			// Create type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, err = conf.Check("test", fset, []*ast.File{file}, info)
+			// Check type checking
+			if err != nil {
+				t.Logf("type check error: %v", err)
+			}
 
-	// Run analyzer
-	_, err = runReturn002(pass)
-	// Check for execution errors
-	if err != nil {
-		t.Fatalf("runReturn002 failed: %v", err)
-	}
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{file},
+				TypesInfo: info,
+				ResultOf:  make(map[*analysis.Analyzer]any),
+			}
 
-	// Should report 0 errors when file is excluded
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+			// Run inspect analyzer first
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
+
+			// Track reported errors
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
+
+			// Run analyzer
+			_, err = runReturn002(pass)
+			// Check for execution errors
+			if err != nil {
+				t.Fatalf("runReturn002 failed: %v", err)
+			}
+
+			// Should report 0 errors when file is excluded
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
 // Test_collectSliceMapReturnTypesWithNilTypeInfo tests edge cases.
 func Test_collectSliceMapReturnTypesWithNilTypeInfo(t *testing.T) {
-	code := `package test
-func GetData() []int {
-	return []int{}
-}`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create empty type info (simulates missing type information)
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
+			code := `package test
+			func GetData() []int {
+			return []int{}
+			}`
 
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		TypesInfo: info,
-	}
-
-	// Find function declaration and test
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Check if function declaration
-		if funcDecl, ok := n.(*ast.FuncDecl); ok {
-			result := collectSliceMapReturnTypes(pass, funcDecl)
-			// Should return empty string when type info is missing
-			if len(result) != 1 || result[0] != "" {
-				t.Errorf("expected [\"\"], got %v", result)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
 			}
-		}
-		// Continue traversal
-		return true
-	})
+
+			// Create empty type info (simulates missing type information)
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{file},
+				TypesInfo: info,
+			}
+
+			// Find function declaration and test
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check if function declaration
+				if funcDecl, ok := n.(*ast.FuncDecl); ok {
+					result := collectSliceMapReturnTypes(pass, funcDecl)
+					// Should return empty string when type info is missing
+					if len(result) != 1 || result[0] != "" {
+						t.Errorf("expected [\"\"], got %v", result)
+					}
+				}
+				// Continue traversal
+				return true
+			})
+
+		})
+	}
 }
 
 // Test_checkNilReturnsWithEmptyTypeInfo tests checkNilReturns with empty type info.
 func Test_checkNilReturnsWithEmptyTypeInfo(t *testing.T) {
-	code := `package test
-func GetData() []int {
-	return nil
-}`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create empty type info (simulates missing type information)
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
+			code := `package test
+			func GetData() []int {
+			return nil
+			}`
 
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		TypesInfo: info,
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	// Track reported errors
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			// Create empty type info (simulates missing type information)
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
 
-	// Find function declaration and test checkNilReturns
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Check for function declaration
-		if funcDecl, ok := n.(*ast.FuncDecl); ok {
-			checkNilReturns(pass, funcDecl)
-		}
-		// Continue traversal
-		return true
-	})
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{file},
+				TypesInfo: info,
+			}
 
-	// Should report 0 errors when type info is empty
-	// because typeInfo will be "" and won't trigger the report
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors when type info is empty, got %d", errorCount)
+			// Track reported errors
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
+
+			// Find function declaration and test checkNilReturns
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check for function declaration
+				if funcDecl, ok := n.(*ast.FuncDecl); ok {
+					checkNilReturns(pass, funcDecl)
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Should report 0 errors when type info is empty
+			// because typeInfo will be "" and won't trigger the report
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors when type info is empty, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
 // Test_checkNilReturnsNonReturnStatement tests that non-return statements are skipped.
 func Test_checkNilReturnsNonReturnStatement(t *testing.T) {
-	code := `package test
-func GetData() []int {
-	x := 1
-	if x > 0 {
-		x = 2
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	return []int{x}
-}`
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
-	}
+			code := `package test
+			func GetData() []int {
+			x := 1
+			if x > 0 {
+				x = 2
+			}
+			return []int{x}
+			}`
 
-	// Create type checker
-	conf := types.Config{Importer: importer.Default()}
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
-	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	pass := &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		TypesInfo: info,
-	}
+			// Create type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 
-	// Track reported errors
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{file},
+				TypesInfo: info,
+			}
 
-	// Find function declaration and test checkNilReturns
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Check for function declaration
-		if funcDecl, ok := n.(*ast.FuncDecl); ok {
-			checkNilReturns(pass, funcDecl)
-		}
-		// Continue traversal
-		return true
-	})
+			// Track reported errors
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
 
-	// Should report 0 errors for valid code
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors, got %d", errorCount)
+			// Find function declaration and test checkNilReturns
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check for function declaration
+				if funcDecl, ok := n.(*ast.FuncDecl); ok {
+					checkNilReturns(pass, funcDecl)
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Should report 0 errors for valid code
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors, got %d", errorCount)
+			}
+
+		})
 	}
 }

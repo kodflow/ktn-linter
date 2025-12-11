@@ -191,11 +191,16 @@ func IsSmallConstantSize(pass *analysis.Pass, expr ast.Expr) bool {
 		// Not a constant
 		return false
 	}
+	// Check if it's an integer constant (Int64Val panics on non-int)
+	if tv.Value.Kind() != constant.Int {
+		// Not an int constant (float, string, etc.)
+		return false
+	}
 	// Get constant value
 	val, ok := constant.Int64Val(tv.Value)
 	// Vérification de la condition
 	if !ok {
-		// Not an int constant
+		// Not an int constant (overflow)
 		return false
 	}
 	// Check if small positive constant

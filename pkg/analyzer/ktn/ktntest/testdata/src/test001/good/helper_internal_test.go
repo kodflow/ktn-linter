@@ -9,6 +9,17 @@ func testPrivateHelper() {
 }
 
 func TestInternalHelper(t *testing.T) {
-	testPrivateHelper()
-	t.Log("test internal helper")
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			testPrivateHelper()
+			t.Log("test internal helper")
+
+		})
+	}
 }

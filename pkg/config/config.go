@@ -8,6 +8,15 @@ import (
 	"sync"
 )
 
+const (
+	// defaultRulesMapCapacity is the default capacity for rules map.
+	defaultRulesMapCapacity int = 10
+	// doubleStarPartsThree is parts count for ** with 3 components.
+	doubleStarPartsThree int = 3
+	// doubleStarPartsTwo is parts count for ** with 2 components.
+	doubleStarPartsTwo int = 2
+)
+
 // Config represents the complete linter configuration.
 // It contains global settings and per-rule configurations.
 type Config struct {
@@ -41,32 +50,28 @@ type RuleConfig struct {
 
 // DefaultConfig returns the default configuration.
 //
-// Params: none
-//
 // Returns:
-//   - *Config: default configuration instance
+//   - *Config: default configuration instance with version 1
 func DefaultConfig() *Config {
 	// Return default config
 	return &Config{
 		Version: 1,
 		Exclude: []string{},
-		Rules:   make(map[string]*RuleConfig, 10),
+		Rules:   make(map[string]*RuleConfig, defaultRulesMapCapacity),
 	}
 }
 
 // globalConfig is the singleton configuration instance.
 var (
 	globalConfig     *Config
-	globalConfigOnce sync.Once
+	globalConfigOnce *sync.Once = &sync.Once{}
 	globalConfigMu   sync.RWMutex
 )
 
 // Get returns the global configuration instance.
 //
-// Params: none
-//
 // Returns:
-//   - *Config: global configuration instance
+//   - *Config: global configuration instance, never nil
 func Get() *Config {
 	globalConfigMu.RLock()
 	cfg := globalConfig
@@ -107,14 +112,13 @@ func Set(cfg *Config) {
 
 // Reset resets the global configuration to default.
 //
-// Params: none
-//
 // Returns: none
 func Reset() {
 	globalConfigMu.Lock()
 	defer globalConfigMu.Unlock()
 	globalConfig = DefaultConfig()
-	globalConfigOnce = sync.Once{}
+	// Reset the Once to allow re-initialization
+	globalConfigOnce = &sync.Once{}
 }
 
 // IsRuleEnabled checks if a rule is enabled.
@@ -296,24 +300,50 @@ func (c *Config) matchDoubleStarPattern(filename, pattern string) bool {
 	parts := strings.Split(pattern, "**")
 
 	// Handle patterns with multiple ** (e.g., **/testdata/**)
-	if len(parts) == 3 {
-		// Pattern like **/testdata/**
-		middle := strings.Trim(parts[1], "/")
-		// Check empty middle
-		if middle == "" {
-			// Return matched
-			return true
-		}
-		// Check if middle part appears in the path
-		return strings.Contains(filename, "/"+middle+"/") || strings.HasPrefix(filename, middle+"/")
+	if len(parts) == doubleStarPartsThree {
+		// Check triple pattern
+		return c.matchTriplePattern(parts, filename)
 	}
 
 	// Check invalid pattern
-	if len(parts) != 2 {
+	if len(parts) != doubleStarPartsTwo {
 		// Return no match
 		return false
 	}
 
+	// Check double pattern with prefix/suffix
+	return c.matchPrefixSuffix(parts, filename)
+}
+
+// matchTriplePattern handles **/middle/** patterns.
+//
+// Params:
+//   - parts: split pattern parts
+//   - filename: the file path to check
+//
+// Returns:
+//   - bool: true if pattern matches
+func (c *Config) matchTriplePattern(parts []string, filename string) bool {
+	// Pattern like **/testdata/**
+	middle := strings.Trim(parts[1], "/")
+	// Check empty middle
+	if middle == "" {
+		// Return matched
+		return true
+	}
+	// Check if middle part appears in the path
+	return strings.Contains(filename, "/"+middle+"/") || strings.HasPrefix(filename, middle+"/")
+}
+
+// matchPrefixSuffix handles prefix/**/suffix patterns.
+//
+// Params:
+//   - parts: split pattern parts
+//   - filename: the file path to check
+//
+// Returns:
+//   - bool: true if pattern matches
+func (c *Config) matchPrefixSuffix(parts []string, filename string) bool {
 	prefix := strings.TrimSuffix(parts[0], "/")
 	suffix := strings.TrimPrefix(parts[1], "/")
 
@@ -361,7 +391,7 @@ func (c *Config) Merge(other *Config) {
 	if other.Rules != nil {
 		// Initialize rules map if needed
 		if c.Rules == nil {
-			c.Rules = make(map[string]*RuleConfig)
+			c.Rules = make(map[string]*RuleConfig, len(other.Rules))
 		}
 		// Iterate over other rules
 		for code, ruleCfg := range other.Rules {

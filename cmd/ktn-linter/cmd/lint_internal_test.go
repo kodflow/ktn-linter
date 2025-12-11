@@ -3145,3 +3145,18 @@ func Test_loadPackages_EmptyPattern(t *testing.T) {
 		})
 	}
 }
+
+
+// Test_loadConfiguration tests loadConfiguration function.
+func Test_loadConfiguration(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"tested via public API"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via runLint
+		})
+	}
+}

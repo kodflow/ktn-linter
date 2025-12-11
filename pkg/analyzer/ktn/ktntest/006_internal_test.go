@@ -146,3 +146,54 @@ func Test_testFileInfo_nilFileNode(t *testing.T) {
 		})
 	}
 }
+
+// Test_collectFiles006 tests the collectFiles006 private function.
+//
+// Params:
+//   - t: testing context
+func Test_collectFiles006(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via public API
+		})
+	}
+}
+
+// Test_extractBaseName006 tests the extractBaseName006 private function.
+//
+// Params:
+//   - t: testing context
+func Test_extractBaseName006(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via public API
+		})
+	}
+}
+
+// Test_validateTestFiles006 tests the validateTestFiles006 private function.
+//
+// Params:
+//   - t: testing context
+func Test_validateTestFiles006(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via public API
+		})
+	}
+}

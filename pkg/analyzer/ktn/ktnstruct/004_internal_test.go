@@ -267,67 +267,89 @@ type Admin struct { Role string }`,
 
 // Test_runStruct004_disabled tests that the rule is skipped when disabled.
 func Test_runStruct004_disabled(t *testing.T) {
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-STRUCT-004": {Enabled: config.Bool(false)},
-		},
-	})
-	defer config.Reset()
-
-	src := `package test
-type User struct { Name string }
-`
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "test.go", src, 0)
-	if err != nil {
-		t.Fatalf("Failed to parse: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	pass := &analysis.Pass{
-		Fset:  fset,
-		Files: []*ast.File{f},
-		Report: func(_ analysis.Diagnostic) {
-			t.Error("Unexpected error when rule is disabled")
-		},
-	}
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-STRUCT-004": {Enabled: config.Bool(false)},
+				},
+			})
+			defer config.Reset()
 
-	_, err = runStruct004(pass)
-	if err != nil {
-		t.Errorf("runStruct004() error = %v", err)
+			src := `package test
+			type User struct { Name string }
+			`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", src, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				Report: func(_ analysis.Diagnostic) {
+					t.Error("Unexpected error when rule is disabled")
+				},
+			}
+
+			_, err = runStruct004(pass)
+			if err != nil {
+				t.Errorf("runStruct004() error = %v", err)
+			}
+
+		})
 	}
 }
 
 // Test_runStruct004_excludedFile tests that excluded files are skipped.
 func Test_runStruct004_excludedFile(t *testing.T) {
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-STRUCT-004": {
-				Enabled: config.Bool(true),
-				Exclude: []string{"**/test.go"},
-			},
-		},
-	})
-	defer config.Reset()
-
-	src := `package test
-type User struct { Name string }
-`
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "/some/path/test.go", src, 0)
-	if err != nil {
-		t.Fatalf("Failed to parse: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	pass := &analysis.Pass{
-		Fset:  fset,
-		Files: []*ast.File{f},
-		Report: func(_ analysis.Diagnostic) {
-			t.Error("Unexpected error for excluded file")
-		},
-	}
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-STRUCT-004": {
+						Enabled: config.Bool(true),
+						Exclude: []string{"**/test.go"},
+					},
+				},
+			})
+			defer config.Reset()
 
-	_, err = runStruct004(pass)
-	if err != nil {
-		t.Errorf("runStruct004() error = %v", err)
+			src := `package test
+			type User struct { Name string }
+			`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "/some/path/test.go", src, 0)
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				Report: func(_ analysis.Diagnostic) {
+					t.Error("Unexpected error for excluded file")
+				},
+			}
+
+			_, err = runStruct004(pass)
+			if err != nil {
+				t.Errorf("runStruct004() error = %v", err)
+			}
+
+		})
 	}
 }

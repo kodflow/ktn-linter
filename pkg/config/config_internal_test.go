@@ -395,85 +395,112 @@ func TestMerge(t *testing.T) {
 
 // TestGet_Concurrent tests concurrent access to global config.
 func TestGet_Concurrent(t *testing.T) {
-	// Reset global state to nil
-	globalConfigMu.Lock()
-	globalConfig = nil
-	globalConfigOnce = sync.Once{}
-	globalConfigMu.Unlock()
+	tests := []struct {
+		name string
+	}{
+		{"concurrent access safety"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset global state to nil
+			globalConfigMu.Lock()
+			globalConfig = nil
+			globalConfigOnce = &sync.Once{}
+			globalConfigMu.Unlock()
 
-	// Test concurrent Get calls
-	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+			// Test concurrent Get calls
+			var wg sync.WaitGroup
+			for i := 0; i < 10; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					cfg := Get()
+					if cfg == nil {
+						t.Error("Get() returned nil in concurrent access")
+					}
+				}()
+			}
+			wg.Wait()
+
+			// Verify all got the same instance
 			cfg := Get()
 			if cfg == nil {
-				t.Error("Get() returned nil in concurrent access")
+				t.Error("Get() returned nil after concurrent initialization")
 			}
-		}()
-	}
-	wg.Wait()
-
-	// Verify all got the same instance
-	cfg := Get()
-	if cfg == nil {
-		t.Error("Get() returned nil after concurrent initialization")
+		})
 	}
 }
 
 // TestGet_ExistingConfig tests Get with already initialized config.
 func TestGet_ExistingConfig(t *testing.T) {
-	// Set a custom config
-	customCfg := &Config{
-		Version: 1,
-		Rules: map[string]*RuleConfig{
-			"EXISTING-TEST": {Enabled: Bool(false)},
-		},
+	tests := []struct {
+		name string
+	}{
+		{"existing config not re-initialized"},
 	}
-	Set(customCfg)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set a custom config
+			customCfg := &Config{
+				Version: 1,
+				Rules: map[string]*RuleConfig{
+					"EXISTING-TEST": {Enabled: Bool(false)},
+				},
+			}
+			Set(customCfg)
 
-	// Get should return existing config without calling DefaultConfig
-	cfg := Get()
-	if cfg == nil {
-		t.Fatal("Get() returned nil")
+			// Get should return existing config without calling DefaultConfig
+			cfg := Get()
+			if cfg == nil {
+				t.Fatal("Get() returned nil")
+			}
+
+			if cfg.IsRuleEnabled("EXISTING-TEST") {
+				t.Error("Expected EXISTING-TEST to be disabled")
+			}
+
+			// Reset after test
+			Reset()
+		})
 	}
-
-	if cfg.IsRuleEnabled("EXISTING-TEST") {
-		t.Error("Expected EXISTING-TEST to be disabled")
-	}
-
-	// Reset after test
-	Reset()
 }
 
 // TestGet_DoubleCheckLocking tests the double-check locking in Get.
 func TestGet_DoubleCheckLocking(t *testing.T) {
-	// Force nil state
-	globalConfigMu.Lock()
-	globalConfig = nil
-	globalConfigOnce = sync.Once{}
-	globalConfigMu.Unlock()
-
-	// First call should initialize
-	cfg1 := Get()
-	if cfg1 == nil {
-		t.Fatal("First Get() returned nil")
+	tests := []struct {
+		name string
+	}{
+		{"double-check locking pattern"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Force nil state
+			globalConfigMu.Lock()
+			globalConfig = nil
+			globalConfigOnce = &sync.Once{}
+			globalConfigMu.Unlock()
 
-	// Second call should return same instance without re-initialization
-	cfg2 := Get()
-	if cfg2 == nil {
-		t.Fatal("Second Get() returned nil")
+			// First call should initialize
+			cfg1 := Get()
+			if cfg1 == nil {
+				t.Fatal("First Get() returned nil")
+			}
+
+			// Second call should return same instance without re-initialization
+			cfg2 := Get()
+			if cfg2 == nil {
+				t.Fatal("Second Get() returned nil")
+			}
+
+			// Verify they're the same instance
+			if &cfg1 != &cfg2 {
+				t.Log("Configs are different instances (expected, pointers differ)")
+			}
+
+			// Reset
+			Reset()
+		})
 	}
-
-	// Verify they're the same instance
-	if &cfg1 != &cfg2 {
-		t.Log("Configs are different instances (expected, pointers differ)")
-	}
-
-	// Reset
-	Reset()
 }
 
 // TestIsRuleEnabled_NilRules tests IsRuleEnabled with nil rules.
@@ -613,30 +640,218 @@ func TestIsFileExcluded_NilRules(t *testing.T) {
 
 // TestBoolAndIntHelpers tests Bool and Int helper functions.
 func TestBoolAndIntHelpers(t *testing.T) {
-	// Test Bool helper
-	b := Bool(false)
-	if b == nil {
-		t.Error("Bool(false) returned nil")
+	tests := []struct {
+		name string
+	}{
+		{"helper functions work correctly"},
 	}
-	if *b != false {
-		t.Errorf("Bool(false) = %v, want false", *b)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test Bool helper
+			b := Bool(false)
+			if b == nil {
+				t.Error("Bool(false) returned nil")
+			}
+			if *b != false {
+				t.Errorf("Bool(false) = %v, want false", *b)
+			}
+
+			// Test Int helper with negative
+			i := Int(-10)
+			if i == nil {
+				t.Error("Int(-10) returned nil")
+			}
+			if *i != -10 {
+				t.Errorf("Int(-10) = %d, want -10", *i)
+			}
+
+			// Test Int helper with zero
+			zero := Int(0)
+			if zero == nil {
+				t.Error("Int(0) returned nil")
+			}
+			if *zero != 0 {
+				t.Errorf("Int(0) = %d, want 0", *zero)
+			}
+		})
+	}
+}
+
+// TestConfig_matchesAnyPattern tests the private matchesAnyPattern function.
+func TestConfig_matchesAnyPattern(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		patterns []string
+		want     bool
+	}{
+		{
+			name:     "empty patterns",
+			filename: "foo.go",
+			patterns: []string{},
+			want:     false,
+		},
+		{
+			name:     "simple match",
+			filename: "foo_test.go",
+			patterns: []string{"*_test.go"},
+			want:     true,
+		},
+		{
+			name:     "no match",
+			filename: "foo.go",
+			patterns: []string{"*_test.go"},
+			want:     false,
+		},
+		{
+			name:     "basename match",
+			filename: "path/to/main.go",
+			patterns: []string{"main.go"},
+			want:     true,
+		},
+		{
+			name:     "double star pattern",
+			filename: "pkg/testdata/src/foo.go",
+			patterns: []string{"**/testdata/**"},
+			want:     true,
+		},
+		{
+			name:     "suffix match with star",
+			filename: "foo/bar_test.go",
+			patterns: []string{"*_test.go"},
+			want:     true,
+		},
 	}
 
-	// Test Int helper with negative
-	i := Int(-10)
-	if i == nil {
-		t.Error("Int(-10) returned nil")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{}
+			got := cfg.matchesAnyPattern(tt.filename, tt.patterns)
+			if got != tt.want {
+				t.Errorf("matchesAnyPattern(%q, %v) = %v, want %v", tt.filename, tt.patterns, got, tt.want)
+			}
+		})
 	}
-	if *i != -10 {
-		t.Errorf("Int(-10) = %d, want -10", *i)
+}
+
+// TestConfig_matchDoubleStarPattern tests the private matchDoubleStarPattern function.
+func TestConfig_matchDoubleStarPattern(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		pattern  string
+		want     bool
+	}{
+		{
+			name:     "pattern with 3 parts (middle match)",
+			filename: "pkg/testdata/src/foo.go",
+			pattern:  "**/testdata/**",
+			want:     true,
+		},
+		{
+			name:     "pattern with 3 parts (no middle)",
+			filename: "pkg/foo.go",
+			pattern:  "**/testdata/**",
+			want:     false,
+		},
+		{
+			name:     "pattern with 3 parts (empty middle)",
+			filename: "anything.go",
+			pattern:  "**/**",
+			want:     true,
+		},
+		{
+			name:     "prefix match",
+			filename: "vendor/github.com/foo/bar.go",
+			pattern:  "vendor/**",
+			want:     true,
+		},
+		{
+			name:     "prefix no match",
+			filename: "pkg/foo.go",
+			pattern:  "vendor/**",
+			want:     false,
+		},
+		{
+			name:     "suffix match",
+			filename: "pkg/testdata/foo.go",
+			pattern:  "**/testdata",
+			want:     true,
+		},
+		{
+			name:     "suffix no match",
+			filename: "pkg/foo.go",
+			pattern:  "**/testdata",
+			want:     false,
+		},
+		{
+			name:     "invalid pattern (not 2 or 3 parts)",
+			filename: "foo.go",
+			pattern:  "**/**/**/**",
+			want:     false,
+		},
 	}
 
-	// Test Int helper with zero
-	zero := Int(0)
-	if zero == nil {
-		t.Error("Int(0) returned nil")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{}
+			got := cfg.matchDoubleStarPattern(tt.filename, tt.pattern)
+			if got != tt.want {
+				t.Errorf("matchDoubleStarPattern(%q, %q) = %v, want %v", tt.filename, tt.pattern, got, tt.want)
+			}
+		})
 	}
-	if *zero != 0 {
-		t.Errorf("Int(0) = %d, want 0", *zero)
+}
+
+// TestConfig_matchTriplePattern tests the matchTriplePattern method.
+//
+// Params:
+//   - t: testing context
+func TestConfig_matchTriplePattern(t *testing.T) {
+	tests := []struct {
+		name     string
+		parts    []string
+		filename string
+		want     bool
+	}{
+		{"empty middle matches all", []string{"", "", ""}, "any/path", true},
+		{"middle matches", []string{"", "/testdata/", ""}, "foo/testdata/bar", true},
+		{"middle no match", []string{"", "/testdata/", ""}, "foo/other/bar", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Config{}
+			got := c.matchTriplePattern(tt.parts, tt.filename)
+			if got != tt.want {
+				t.Errorf("matchTriplePattern() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestConfig_matchPrefixSuffix tests the matchPrefixSuffix method.
+//
+// Params:
+//   - t: testing context
+func TestConfig_matchPrefixSuffix(t *testing.T) {
+	tests := []struct {
+		name     string
+		parts    []string
+		filename string
+		want     bool
+	}{
+		{"empty prefix and suffix", []string{"", ""}, "any/path", true},
+		{"prefix matches", []string{"src/", ""}, "src/foo/bar", true},
+		{"suffix matches", []string{"", ".go"}, "foo/.go", true},
+		{"no match", []string{"src/", ".go"}, "other/path", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Config{}
+			got := c.matchPrefixSuffix(tt.parts, tt.filename)
+			if got != tt.want {
+				t.Errorf("matchPrefixSuffix() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

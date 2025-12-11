@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"gopkg.in/yaml.v3"
 )
@@ -168,22 +169,18 @@ func validateConfig(cfg *Config) error {
 		}
 
 		// Validate exclusion patterns
-		for _, pattern := range ruleCfg.Exclude {
-			// Vérification si le pattern est vide
-			if pattern == "" {
-				// Retour d'erreur si pattern vide
-				return fmt.Errorf("rule %s: empty exclusion pattern", code)
-			}
+		// Vérification si le pattern est vide
+		if slices.Contains(ruleCfg.Exclude, "") {
+			// Retour d'erreur si pattern vide
+			return fmt.Errorf("rule %s: empty exclusion pattern", code)
 		}
 	}
 
 	// Validate global exclusions
-	for _, pattern := range cfg.Exclude {
-		// Vérification si le pattern global est vide
-		if pattern == "" {
-			// Retour d'erreur si pattern vide
-			return fmt.Errorf("empty global exclusion pattern")
-		}
+	// Vérification si le pattern global est vide
+	if slices.Contains(cfg.Exclude, "") {
+		// Retour d'erreur si pattern vide
+		return fmt.Errorf("empty global exclusion pattern")
 	}
 
 	// Retour sans erreur si toutes les validations passent

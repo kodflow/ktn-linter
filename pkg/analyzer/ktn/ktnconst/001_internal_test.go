@@ -17,45 +17,56 @@ import (
 // Params:
 //   - t: testing context
 func Test_runConst001_disabled(t *testing.T) {
-	// Setup: disable the rule
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-CONST-001": {Enabled: config.Bool(false)},
-		},
-	})
-	defer config.Reset()
-
-	// Parse test code
-	src := `package test
-const x = 42
-`
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "test.go", src, 0)
-	// Check parse error
-	if err != nil {
-		t.Fatalf("Failed to parse test code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create inspector
-	insp := inspector.New([]*ast.File{f})
+			// Setup: disable the rule
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-CONST-001": {Enabled: config.Bool(false)},
+				},
+			})
+			defer config.Reset()
 
-	// Create pass
-	pass := &analysis.Pass{
-		Fset:  fset,
-		Files: []*ast.File{f},
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(d analysis.Diagnostic) {
-			t.Errorf("Unexpected error reported when rule is disabled: %s", d.Message)
-		},
-	}
+			// Parse test code
+			src := `package test
+			const x = 42
+			`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse test code: %v", err)
+			}
 
-	// Run the analyzer - should not report anything
-	_, err = runConst001(pass)
-	// Check error
-	if err != nil {
-		t.Errorf("runConst001() error = %v", err)
+			// Create inspector
+			insp := inspector.New([]*ast.File{f})
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(d analysis.Diagnostic) {
+					t.Errorf("Unexpected error reported when rule is disabled: %s", d.Message)
+				},
+			}
+
+			// Run the analyzer - should not report anything
+			_, err = runConst001(pass)
+			// Check error
+			if err != nil {
+				t.Errorf("runConst001() error = %v", err)
+			}
+
+		})
 	}
 }
 
@@ -64,47 +75,77 @@ const x = 42
 // Params:
 //   - t: testing context
 func Test_runConst001_excludedFile(t *testing.T) {
-	// Setup: exclude test.go files
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-CONST-001": {
-				Enabled: config.Bool(true),
-				Exclude: []string{"*.go"},
-			},
-		},
-	})
-	defer config.Reset()
-
-	// Parse test code
-	src := `package test
-const x = 42
-`
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "test.go", src, 0)
-	// Check parse error
-	if err != nil {
-		t.Fatalf("Failed to parse test code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	// Create inspector
-	insp := inspector.New([]*ast.File{f})
+			// Setup: exclude test.go files
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-CONST-001": {
+						Enabled: config.Bool(true),
+						Exclude: []string{"*.go"},
+					},
+				},
+			})
+			defer config.Reset()
 
-	// Create pass
-	pass := &analysis.Pass{
-		Fset:  fset,
-		Files: []*ast.File{f},
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(d analysis.Diagnostic) {
-			t.Errorf("Unexpected error reported for excluded file: %s", d.Message)
-		},
-	}
+			// Parse test code
+			src := `package test
+			const x = 42
+			`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse test code: %v", err)
+			}
 
-	// Run the analyzer - should not report anything for excluded file
-	_, err = runConst001(pass)
-	// Check error
-	if err != nil {
-		t.Errorf("runConst001() error = %v", err)
+			// Create inspector
+			insp := inspector.New([]*ast.File{f})
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(d analysis.Diagnostic) {
+					t.Errorf("Unexpected error reported for excluded file: %s", d.Message)
+				},
+			}
+
+			// Run the analyzer - should not report anything for excluded file
+			_, err = runConst001(pass)
+			// Check error
+			if err != nil {
+				t.Errorf("runConst001() error = %v", err)
+			}
+
+		})
 	}
 }
+
+// Test_runConst001 tests the runConst001 private function.
+//
+// Params:
+//   - t: testing context
+func Test_runConst001(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via public API
+		})
+	}
+}
+

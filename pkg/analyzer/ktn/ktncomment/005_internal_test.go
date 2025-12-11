@@ -127,56 +127,67 @@ func Test_runComment005(t *testing.T) {
 // Params:
 //   - t: testing context
 func Test_runComment005_ruleDisabled(t *testing.T) {
-	// Import config package for test
-	cfg := &config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-COMMENT-005": {Enabled: config.Bool(false)},
-		},
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	config.Set(cfg)
-	defer config.Reset()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	code := `package test
-type MyStruct struct {}`
+			// Import config package for test
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-COMMENT-005": {Enabled: config.Bool(false)},
+				},
+			}
+			config.Set(cfg)
+			defer config.Reset()
 
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
-	}
+			code := `package test
+			type MyStruct struct {}`
 
-	pass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	// Run inspect analyzer
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
 
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			// Run inspect analyzer
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
 
-	// Run analyzer
-	_, err = runComment005(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runComment005 failed: %v", err)
-	}
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
 
-	// Should report no errors when rule disabled
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+			// Run analyzer
+			_, err = runComment005(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runComment005 failed: %v", err)
+			}
+
+			// Should report no errors when rule disabled
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors when rule disabled, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
@@ -185,59 +196,70 @@ type MyStruct struct {}`
 // Params:
 //   - t: testing context
 func Test_runComment005_fileExcluded(t *testing.T) {
-	// Import config package for test
-	cfg := &config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-COMMENT-005": {
-				Enabled: config.Bool(true),
-				Exclude: []string{"*.go"},
-			},
-		},
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	config.Set(cfg)
-	defer config.Reset()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	code := `package test
-type MyStruct struct {}`
+			// Import config package for test
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-COMMENT-005": {
+						Enabled: config.Bool(true),
+						Exclude: []string{"*.go"},
+					},
+				},
+			}
+			config.Set(cfg)
+			defer config.Reset()
 
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
-	}
+			code := `package test
+			type MyStruct struct {}`
 
-	pass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	// Run inspect analyzer
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
 
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			// Run inspect analyzer
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
 
-	// Run analyzer
-	_, err = runComment005(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runComment005 failed: %v", err)
-	}
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
 
-	// Should report no errors when file excluded
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+			// Run analyzer
+			_, err = runComment005(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runComment005 failed: %v", err)
+			}
+
+			// Should report no errors when file excluded
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors when file excluded, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
@@ -246,61 +268,72 @@ type MyStruct struct {}`
 // Params:
 //   - t: testing context
 func Test_runComment005_customThreshold(t *testing.T) {
-	// Configure custom threshold
-	cfg := &config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-COMMENT-005": {
-				Enabled:   config.Bool(true),
-				Threshold: config.Int(3),
-			},
-		},
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
-	config.Set(cfg)
-	defer config.Reset()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	code := `package test
-// MyStruct is a test.
-// Second line.
-type MyStruct struct {}`
+			// Configure custom threshold
+			cfg := &config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-COMMENT-005": {
+						Enabled:   config.Bool(true),
+						Threshold: config.Int(3),
+					},
+				},
+			}
+			config.Set(cfg)
+			defer config.Reset()
 
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
-	}
+			code := `package test
+			// MyStruct is a test.
+			// Second line.
+			type MyStruct struct {}`
 
-	pass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	// Run inspect analyzer
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
 
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			// Run inspect analyzer
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
 
-	// Run analyzer
-	_, err = runComment005(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runComment005 failed: %v", err)
-	}
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
 
-	// Should report error (only 2 lines but needs 3)
-	if errorCount != 1 {
-		t.Errorf("expected 1 error with custom threshold, got %d", errorCount)
+			// Run analyzer
+			_, err = runComment005(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runComment005 failed: %v", err)
+			}
+
+			// Should report error (only 2 lines but needs 3)
+			if errorCount != 1 {
+				t.Errorf("expected 1 error with custom threshold, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
@@ -356,47 +389,58 @@ func Test_hasValidDocumentation_blockComments(t *testing.T) {
 // Params:
 //   - t: testing context
 func Test_runComment005_privateStruct(t *testing.T) {
-	code := `package test
-type privateStruct struct {}`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	pass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
+			code := `package test
+			type privateStruct struct {}`
 
-	// Run inspect analyzer
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
 
-	// Run analyzer
-	_, err = runComment005(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runComment005 failed: %v", err)
-	}
+			// Run inspect analyzer
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
 
-	// Should not report error for private struct
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors for private struct, got %d", errorCount)
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
+
+			// Run analyzer
+			_, err = runComment005(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runComment005 failed: %v", err)
+			}
+
+			// Should not report error for private struct
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors for private struct, got %d", errorCount)
+			}
+
+		})
 	}
 }
 
@@ -405,46 +449,57 @@ type privateStruct struct {}`
 // Params:
 //   - t: testing context
 func Test_runComment005_nonStruct(t *testing.T) {
-	code := `package test
-type MyInt int`
-
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
-	// Check parsing success
-	if err != nil {
-		t.Fatalf("failed to parse code: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	pass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
+			code := `package test
+			type MyInt int`
 
-	// Run inspect analyzer
-	inspectPass := &analysis.Pass{
-		Fset:     fset,
-		Files:    []*ast.File{file},
-		Report:   func(d analysis.Diagnostic) {},
-		ResultOf: make(map[*analysis.Analyzer]any),
-	}
-	inspectResult, _ := inspect.Analyzer.Run(inspectPass)
-	pass.ResultOf[inspect.Analyzer] = inspectResult
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.ParseComments)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
 
-	errorCount := 0
-	pass.Report = func(d analysis.Diagnostic) {
-		errorCount++
-	}
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
 
-	// Run analyzer
-	_, err = runComment005(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runComment005 failed: %v", err)
-	}
+			// Run inspect analyzer
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) {},
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			pass.ResultOf[inspect.Analyzer] = inspectResult
 
-	// Should not report error for non-struct type
-	if errorCount != 0 {
-		t.Errorf("expected 0 errors for non-struct type, got %d", errorCount)
+			errorCount := 0
+			pass.Report = func(d analysis.Diagnostic) {
+				errorCount++
+			}
+
+			// Run analyzer
+			_, err = runComment005(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runComment005 failed: %v", err)
+			}
+
+			// Should not report error for non-struct type
+			if errorCount != 0 {
+				t.Errorf("expected 0 errors for non-struct type, got %d", errorCount)
+			}
+
+		})
 	}
 }

@@ -122,94 +122,116 @@ func example() {
 
 // Test_runVar007_disabled tests runVar007 with disabled rule.
 func Test_runVar007_disabled(t *testing.T) {
-	// Setup config with rule disabled
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-VAR-007": {Enabled: config.Bool(false)},
-		},
-	})
-	defer config.Reset()
-
-	// Parse simple code
-	code := `package test
-var x int = 42
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Check parsing error
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	insp := inspector.New([]*ast.File{file})
-	reportCount := 0
+			// Setup config with rule disabled
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-007": {Enabled: config.Bool(false)},
+				},
+			})
+			defer config.Reset()
 
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
+			// Parse simple code
+			code := `package test
+			var x int = 42
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
 
-	_, err = runVar007(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar007() error = %v", err)
-	}
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
 
-	// Should not report anything when disabled
-	if reportCount != 0 {
-		t.Errorf("runVar007() reported %d issues, expected 0 when disabled", reportCount)
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			_, err = runVar007(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar007() error = %v", err)
+			}
+
+			// Should not report anything when disabled
+			if reportCount != 0 {
+				t.Errorf("runVar007() reported %d issues, expected 0 when disabled", reportCount)
+			}
+
+		})
 	}
 }
 
 // Test_runVar007_fileExcluded tests runVar007 with excluded file.
 func Test_runVar007_fileExcluded(t *testing.T) {
-	// Setup config with file exclusion
-	config.Set(&config.Config{
-		Rules: map[string]*config.RuleConfig{
-			"KTN-VAR-007": {
-				Exclude: []string{"test.go"},
-			},
-		},
-	})
-	defer config.Reset()
-
-	// Parse simple code
-	code := `package test
-var x int = 42
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Check parsing error
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	insp := inspector.New([]*ast.File{file})
-	reportCount := 0
+			// Setup config with file exclusion
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-007": {
+						Exclude: []string{"test.go"},
+					},
+				},
+			})
+			defer config.Reset()
 
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
+			// Parse simple code
+			code := `package test
+			var x int = 42
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
 
-	_, err = runVar007(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar007() error = %v", err)
-	}
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
 
-	// Should not report anything when file is excluded
-	if reportCount != 0 {
-		t.Errorf("runVar007() reported %d issues, expected 0 when file excluded", reportCount)
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			_, err = runVar007(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar007() error = %v", err)
+			}
+
+			// Should not report anything when file is excluded
+			if reportCount != 0 {
+				t.Errorf("runVar007() reported %d issues, expected 0 when file excluded", reportCount)
+			}
+
+		})
 	}
 }
