@@ -80,6 +80,30 @@ type DataModel struct {
 	Tags []string
 }
 
+// ExternalInterface représente une interface externe (simulée pour le test).
+type ExternalInterface interface {
+	Process() error
+}
+
+// RepositoryImpl implémente une interface externe (DDD pattern).
+// L'interface est ici mais dans un vrai cas DDD elle serait dans domain/.
+type RepositoryImpl struct {
+	data map[string]string
+}
+
+// Process implémente ExternalInterface.
+//
+// Returns:
+//   - error: erreur éventuelle
+func (r *RepositoryImpl) Process() error {
+	// Implementation
+	return nil
+}
+
+// Compile-time interface check - prouve que RepositoryImpl implémente ExternalInterface
+// Dans un vrai cas DDD, ce serait: var _ domain.Repository = (*RepositoryImpl)(nil)
+var _ ExternalInterface = (*RepositoryImpl)(nil)
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de useUserService

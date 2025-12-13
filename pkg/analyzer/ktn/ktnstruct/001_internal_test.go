@@ -386,6 +386,200 @@ func Test_runStruct001_disabled(t *testing.T) {
 	}
 }
 
+// Test_collectInterfaceChecks tests the private collectInterfaceChecks function.
+func Test_collectInterfaceChecks(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      string
+		expected map[string]bool
+	}{
+		{
+			name: "no interface checks",
+			src: `package test
+type User struct{}`,
+			expected: map[string]bool{},
+		},
+		{
+			name: "one interface check",
+			src: `package test
+type User struct{}
+var _ UserInterface = (*User)(nil)`,
+			expected: map[string]bool{"User": true},
+		},
+		{
+			name: "multiple interface checks",
+			src: `package test
+type User struct{}
+type Admin struct{}
+var _ UserInterface = (*User)(nil)
+var _ AdminInterface = (*Admin)(nil)`,
+			expected: map[string]bool{"User": true, "Admin": true},
+		},
+		{
+			name: "regular var - not interface check",
+			src: `package test
+type User struct{}
+var x int = 10`,
+			expected: map[string]bool{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			// Vérifier erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse source: %v", err)
+			}
+
+			checks := collectInterfaceChecks(file)
+
+			// Vérifier le nombre de checks
+			if len(checks) != len(tt.expected) {
+				t.Errorf("expected %d checks, got %d", len(tt.expected), len(checks))
+			}
+
+			// Vérifier chaque check attendu
+			for k, v := range tt.expected {
+				// Vérifier présence
+				if checks[k] != v {
+					t.Errorf("expected checks[%s]=%v, got %v", k, v, checks[k])
+				}
+			}
+		})
+	}
+}
+
+// Test_extractStructFromInterfaceCheck tests the private extractStructFromInterfaceCheck function.
+func Test_extractStructFromInterfaceCheck(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      string
+		expected string
+	}{
+		{
+			name: "valid interface check",
+			src: `package test
+var _ MyInterface = (*MyStruct)(nil)`,
+			expected: "MyStruct",
+		},
+		{
+			name: "not underscore var",
+			src: `package test
+var x MyInterface = (*MyStruct)(nil)`,
+			expected: "",
+		},
+		{
+			name: "no value",
+			src: `package test
+var _ MyInterface`,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			// Vérifier erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse source: %v", err)
+			}
+
+			// Trouver la ValueSpec
+			var valueSpec *ast.ValueSpec
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérifier si c'est une GenDecl
+				if genDecl, ok := n.(*ast.GenDecl); ok && genDecl.Tok == token.VAR {
+					// Parcourir les specs
+					for _, spec := range genDecl.Specs {
+						// Vérifier si c'est une ValueSpec
+						if vs, ok := spec.(*ast.ValueSpec); ok {
+							valueSpec = vs
+							// Sortir de la boucle
+							return false
+						}
+					}
+				}
+				// Continuer l'itération
+				return true
+			})
+
+			// Vérifier si on a trouvé une ValueSpec
+			if valueSpec == nil {
+				t.Fatal("no ValueSpec found")
+			}
+
+			result := extractStructFromInterfaceCheck(valueSpec)
+
+			// Vérifier le résultat
+			if result != tt.expected {
+				t.Errorf("expected '%s', got '%s'", tt.expected, result)
+			}
+		})
+	}
+}
+
+// Test_extractStructNameFromConversion tests the private extractStructNameFromConversion function.
+func Test_extractStructNameFromConversion(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      string
+		expected string
+	}{
+		{
+			name: "valid conversion",
+			src: `package test
+var _ MyInterface = (*MyStruct)(nil)`,
+			expected: "MyStruct",
+		},
+		{
+			name: "not a pointer type",
+			src: `package test
+var _ int = MyStruct(nil)`,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
+			// Vérifier erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse source: %v", err)
+			}
+
+			// Trouver le CallExpr
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérifier si c'est un CallExpr
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					// Sortir de la boucle
+					return false
+				}
+				// Continuer l'itération
+				return true
+			})
+
+			// Vérifier si on a trouvé un CallExpr
+			if callExpr == nil {
+				// Pas de CallExpr dans ce test, on retourne
+				return
+			}
+
+			result := extractStructNameFromConversion(callExpr)
+
+			// Vérifier le résultat
+			if result != tt.expected {
+				t.Errorf("expected '%s', got '%s'", tt.expected, result)
+			}
+		})
+	}
+}
+
 // Test_runStruct001_excludedFile tests that excluded files are skipped.
 func Test_runStruct001_excludedFile(t *testing.T) {
 	tests := []struct {

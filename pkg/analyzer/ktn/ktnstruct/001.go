@@ -3,6 +3,7 @@ package ktnstruct
 
 import (
 	"go/ast"
+	"go/token"
 	"go/types"
 	"strings"
 
@@ -16,6 +17,8 @@ import (
 const (
 	// ruleCodeStruct001 code de la règle KTN-STRUCT-001
 	ruleCodeStruct001 string = "KTN-STRUCT-001"
+	// interfaceChecksCap capacité initiale pour la map des interface checks
+	interfaceChecksCap int = 8
 )
 
 // Analyzer001 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
@@ -72,6 +75,9 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 		// Collecter les interfaces et leurs méthodes
 		interfaces := collectInterfaces(file, pass)
 
+		// Collecter les compile-time interface checks (var _ Interface = (*Struct)(nil))
+		interfaceChecks := collectInterfaceChecks(file)
+
 		// Collecter les structs et leurs méthodes
 		structs := collectStructsWithMethods(file, pass, insp)
 
@@ -86,6 +92,12 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 			// Exception: les DTOs n'ont pas besoin d'interface
 			if shared.IsSerializableStruct(s.structType, s.name) {
 				// DTO - pas besoin d'interface
+				continue
+			}
+
+			// Exception: struct avec compile-time interface check (DDD pattern)
+			if interfaceChecks[s.name] {
+				// Interface existe dans un autre package
 				continue
 			}
 
@@ -162,6 +174,119 @@ func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]shared.
 
 	// Retour de la map
 	return interfaces
+}
+
+// collectInterfaceChecks collecte les compile-time interface checks.
+// Pattern: var _ InterfaceName = (*StructName)(nil)
+// Cela prouve que la struct implémente une interface (même cross-package).
+//
+// Params:
+//   - file: fichier AST
+//
+// Returns:
+//   - map[string]bool: noms des structs avec interface check
+func collectInterfaceChecks(file *ast.File) map[string]bool {
+	checks := make(map[string]bool, interfaceChecksCap)
+
+	// Parcourir les déclarations
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		// Vérifier si c'est une déclaration var
+		if !ok || genDecl.Tok != token.VAR {
+			// Continuer l'itération
+			continue
+		}
+
+		// Parcourir les specs
+		for _, spec := range genDecl.Specs {
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			// Vérifier si c'est une ValueSpec
+			if !ok {
+				// Continuer l'itération
+				continue
+			}
+
+			// Vérifier le pattern: var _ Interface = (*Struct)(nil)
+			structName := extractStructFromInterfaceCheck(valueSpec)
+			// Ajouter à la map si trouvé
+			if structName != "" {
+				checks[structName] = true
+			}
+		}
+	}
+
+	// Retour de la map
+	return checks
+}
+
+// extractStructFromInterfaceCheck extrait le nom de struct d'un interface check.
+// Pattern: var _ Interface = (*Struct)(nil)
+//
+// Params:
+//   - spec: ValueSpec à analyser
+//
+// Returns:
+//   - string: nom de la struct ou vide si pas trouvé
+func extractStructFromInterfaceCheck(spec *ast.ValueSpec) string {
+	// Vérifier que le nom est "_"
+	if len(spec.Names) != 1 || spec.Names[0].Name != "_" {
+		// Pas le pattern attendu
+		return ""
+	}
+
+	// Vérifier qu'il y a une valeur
+	if len(spec.Values) != 1 {
+		// Pas de valeur
+		return ""
+	}
+
+	// La valeur doit être une conversion: (*Struct)(nil)
+	callExpr, ok := spec.Values[0].(*ast.CallExpr)
+	// Vérifier si c'est un CallExpr
+	if !ok {
+		// Pas une conversion
+		return ""
+	}
+
+	// Extraire le type de la conversion
+	return extractStructNameFromConversion(callExpr)
+}
+
+// extractStructNameFromConversion extrait le nom de struct d'une conversion.
+// Pattern: (*Struct)(nil)
+//
+// Params:
+//   - callExpr: expression de conversion
+//
+// Returns:
+//   - string: nom de la struct ou vide si pas trouvé
+func extractStructNameFromConversion(callExpr *ast.CallExpr) string {
+	// Le Fun doit être un type pointeur
+	parenExpr, ok := callExpr.Fun.(*ast.ParenExpr)
+	// Vérifier si c'est une expression parenthésée
+	if !ok {
+		// Pas le pattern attendu
+		return ""
+	}
+
+	// Le type dans les parenthèses doit être *Struct
+	starExpr, ok := parenExpr.X.(*ast.StarExpr)
+	// Vérifier si c'est un pointeur
+	if !ok {
+		// Pas un pointeur
+		return ""
+	}
+
+	// Extraire le nom de la struct
+	ident, ok := starExpr.X.(*ast.Ident)
+	// Vérifier si c'est un identifiant
+	if ok {
+		// Retour du nom
+		return ident.Name
+	}
+
+	// Retour vide
+	return ""
 }
 
 // extractStructNameFromReceiver extrait le nom de la struct depuis le receiver.
