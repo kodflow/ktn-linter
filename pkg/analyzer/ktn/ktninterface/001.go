@@ -223,6 +223,12 @@ func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.Type
 			continue
 		}
 
+		// Skip exported (public) interfaces - they might be used by other packages
+		// Une interface publique est destinée à être utilisée par d'autres packages
+		if ast.IsExported(name) {
+			continue
+		}
+
 		// Skip if interface follows XXXInterface pattern for struct XXX
 		// Ces interfaces sont légitimes pour le mocking de la struct
 		if isStructInterfacePattern(name, structNames) {

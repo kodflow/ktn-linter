@@ -178,6 +178,110 @@ func (u *User) SetName(name string) {}`,
 	}
 }
 
+// Test_collectAllMethodsByStruct tests the private collectAllMethodsByStruct function.
+func Test_collectAllMethodsByStruct(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{name: "collect methods from all package files"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", `package test
+type User struct{}
+func (u *User) GetName() string { return "" }`, 0)
+			// Check parse result
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+			}
+
+			methods := collectAllMethodsByStruct(pass)
+			// Verify methods were collected
+			if len(methods) == 0 {
+				t.Error("expected at least one struct with methods")
+			}
+		})
+	}
+}
+
+// Test_collectMethodsFromFile tests the private collectMethodsFromFile function.
+func Test_collectMethodsFromFile(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{name: "collect methods from single file"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", `package test
+type User struct{}
+func (u *User) GetName() string { return "" }
+func (u *User) SetName(name string) {}`, 0)
+			// Check parse result
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			pass := &analysis.Pass{Fset: fset}
+			methodsByStruct := make(map[string][]shared.MethodSignature)
+
+			collectMethodsFromFile(file, pass, methodsByStruct)
+
+			// Verify methods were collected
+			if len(methodsByStruct["User"]) != 2 {
+				t.Errorf("expected 2 methods for User, got %d", len(methodsByStruct["User"]))
+			}
+		})
+	}
+}
+
+// Test_collectStructsFromFile tests the private collectStructsFromFile function.
+func Test_collectStructsFromFile(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{name: "collect structs from file"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", `package test
+type User struct {
+	Name string
+}`, 0)
+			// Check parse result
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			allMethods := map[string][]shared.MethodSignature{
+				"User": {{Name: "GetName", ParamsStr: "", ResultsStr: "string"}},
+			}
+
+			structs := collectStructsFromFile(file, allMethods)
+
+			// Verify structs were collected
+			if len(structs) != 1 {
+				t.Errorf("expected 1 struct, got %d", len(structs))
+			}
+			// Verify methods were assigned
+			if len(structs[0].methods) != 1 {
+				t.Errorf("expected 1 method assigned, got %d", len(structs[0].methods))
+			}
+		})
+	}
+}
+
 // Test_hasMatchingInterface tests the private hasMatchingInterface function.
 func Test_hasMatchingInterface(t *testing.T) {
 	tests := []struct {
@@ -313,21 +417,6 @@ func test(x int, y string) {}`,
 			if result != tt.expected {
 				t.Errorf("expected '%s', got '%s'", tt.expected, result)
 			}
-		})
-	}
-}
-
-// Test_collectStructsWithMethods tests the collectStructsWithMethods private function.
-func Test_collectStructsWithMethods(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - logique principale testée via API publique
 		})
 	}
 }

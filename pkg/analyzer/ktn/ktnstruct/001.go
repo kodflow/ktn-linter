@@ -11,7 +11,6 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 const (
@@ -60,10 +59,12 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
 	// Collecter tous les interface checks du package (pas juste fichier)
 	interfaceChecks := collectInterfaceChecksWithTypes(pass)
+
+	// Collecter toutes les méthodes du PACKAGE entier (pas juste par fichier)
+	// Car en Go, les méthodes peuvent être définies dans différents fichiers
+	allMethodsByStruct := collectAllMethodsByStruct(pass)
 
 	// Parcourir chaque fichier du package
 	for _, file := range pass.Files {
@@ -83,8 +84,8 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 		// Collecter les interfaces locales et leurs méthodes
 		localInterfaces := collectInterfaces(file, pass)
 
-		// Collecter les structs et leurs méthodes
-		structs := collectStructsWithMethods(file, pass, insp)
+		// Collecter les structs du fichier avec méthodes du package entier
+		structs := collectStructsFromFile(file, allMethodsByStruct)
 
 		// Vérifier chaque struct
 		checkStructs(pass, structs, localInterfaces, interfaceChecks)
@@ -620,17 +621,33 @@ func extractStructNameFromReceiver(recvType ast.Expr) string {
 	return structName
 }
 
-// collectMethodsByStruct collecte les méthodes publiques pour chaque struct.
+// collectAllMethodsByStruct collecte les méthodes publiques de TOUT le package.
+// En Go, les méthodes peuvent être définies dans différents fichiers du même package.
 //
 // Params:
-//   - file: fichier AST
 //   - pass: contexte d'analyse
 //
 // Returns:
 //   - map[string][]shared.MethodSignature: map des méthodes par struct
-func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]shared.MethodSignature {
+func collectAllMethodsByStruct(pass *analysis.Pass) map[string][]shared.MethodSignature {
 	methodsByStruct := make(map[string][]shared.MethodSignature, 0)
 
+	// Parcourir TOUS les fichiers du package
+	for _, file := range pass.Files {
+		collectMethodsFromFile(file, pass, methodsByStruct)
+	}
+
+	// Retour de la map
+	return methodsByStruct
+}
+
+// collectMethodsFromFile collecte les méthodes d'un fichier et les ajoute à la map.
+//
+// Params:
+//   - file: fichier AST
+//   - pass: contexte d'analyse
+//   - methodsByStruct: map à enrichir
+func collectMethodsFromFile(file *ast.File, pass *analysis.Pass, methodsByStruct map[string][]shared.MethodSignature) {
 	// Collecter les méthodes du fichier
 	ast.Inspect(file, func(n ast.Node) bool {
 		// Vérifier FuncDecl
@@ -669,53 +686,6 @@ func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]sh
 		// Continue traversal
 		return true
 	})
-
-	// Retour de la map
-	return methodsByStruct
-}
-
-// collectStructsWithMethods collecte les structs et leurs méthodes publiques.
-//
-// Params:
-//   - file: fichier AST
-//   - pass: contexte d'analyse
-//   - insp: inspector
-//
-// Returns:
-//   - []structWithMethods: liste des structs avec méthodes
-func collectStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
-	// Collecter les méthodes
-	methodsByStruct := collectMethodsByStruct(file, pass)
-
-	// Collecter les structs du fichier
-	var structs []structWithMethods
-	ast.Inspect(file, func(n ast.Node) bool {
-		// Vérifier si c'est une TypeSpec
-		typeSpec, ok := n.(*ast.TypeSpec)
-		// Si ce n'est pas une TypeSpec, continuer
-		if !ok {
-			// Continue traversal
-			return true
-		}
-
-		// Vérifier si c'est une struct
-		structType, isStruct := typeSpec.Type.(*ast.StructType)
-		// Si c'est une struct
-		if isStruct {
-			structs = append(structs, structWithMethods{
-				name:       typeSpec.Name.Name,
-				node:       typeSpec,
-				structType: structType,
-				methods:    methodsByStruct[typeSpec.Name.Name],
-			})
-		}
-
-		// Continue traversal
-		return true
-	})
-
-	// Retour de la liste
-	return structs
 }
 
 // hasMatchingInterface vérifie si une interface couvre toutes les méthodes.
@@ -771,6 +741,63 @@ func interfaceCoversAllMethods(structMethods []shared.MethodSignature, ifaceMeth
 
 	// Toutes les méthodes sont couvertes
 	return true
+}
+
+// collectStructsFromFile collecte les structs d'un fichier avec les méthodes pré-collectées.
+//
+// Params:
+//   - file: fichier AST
+//   - allMethodsByStruct: map des méthodes par struct (collectées de tout le package)
+//
+// Returns:
+//   - []structWithMethods: liste des structs avec méthodes
+func collectStructsFromFile(file *ast.File, allMethodsByStruct map[string][]shared.MethodSignature) []structWithMethods {
+	var structs []structWithMethods
+
+	// Parcourir le fichier pour trouver les structs
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Vérifier si c'est une TypeSpec
+		typeSpec, ok := n.(*ast.TypeSpec)
+		// Si ce n'est pas une TypeSpec, continuer
+		if !ok {
+			// Continue traversal
+			return true
+		}
+
+		// Vérifier si c'est une struct
+		structType, isStruct := typeSpec.Type.(*ast.StructType)
+		// Si c'est une struct
+		if isStruct {
+			structs = append(structs, structWithMethods{
+				name:       typeSpec.Name.Name,
+				node:       typeSpec,
+				structType: structType,
+				methods:    allMethodsByStruct[typeSpec.Name.Name],
+			})
+		}
+
+		// Continue traversal
+		return true
+	})
+
+	// Retour de la liste
+	return structs
+}
+
+// collectMethodsByStruct collecte les méthodes d'un seul fichier.
+// Note: utilisé par collectStructsWithMethods pour la compatibilité.
+//
+// Params:
+//   - file: fichier AST
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - map[string][]shared.MethodSignature: map des méthodes par struct
+func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]shared.MethodSignature {
+	methodsByStruct := make(map[string][]shared.MethodSignature, 0)
+	collectMethodsFromFile(file, pass, methodsByStruct)
+	// Retour de la map
+	return methodsByStruct
 }
 
 // formatFieldList formate une liste de champs en string.

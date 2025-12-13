@@ -22,7 +22,7 @@ func Test_runInterface001(t *testing.T) {
 		{
 			name: "unused interface",
 			code: `package test
-type UnusedInterface interface {
+type unusedInterface interface {
 	Method()
 }`,
 			wantErrs: 1,

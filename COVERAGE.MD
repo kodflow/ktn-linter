@@ -15,14 +15,14 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **94.3%** |
+| 🟢 | **TOTAL (Global)** | **94.2%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.7% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.5% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 99.2% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.3% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 93.3% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 91.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 93.9% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 88.3% |
@@ -55,11 +55,12 @@ Rapport de couverture généré automatiquement.
 | 🟢 `002.go:runComment002` | 92.9% |
 | 🟢 `005.go:runComment005` | 92.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 99.2%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 98.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `002.go:extractConstTypeName` | 87.5% |
+| 🟡 `002.go:checkScatteredConstBlocks` | 87.5% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.3%
 
@@ -89,13 +90,14 @@ Rapport de couverture généré automatiquement.
 | 🟢 `009.go:checkMagicNumbers` | 92.3% |
 | 🟢 `011.go:runFunc011` | 95.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` - 93.3%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` - 91.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `001.go:runInterface001` | 90.0% |
 | 🟡 `001.go:collectDeclarations` | 90.0% |
 | 🔴 `001.go:checkNodeForInterfaceUsage` | 75.0% |
+| 🟡 `001.go:reportUnusedInterfaces` | 80.0% |
 | 🔴 `001.go:checkTypeSwitch` | 75.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 98.4%
@@ -244,4 +246,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-13 22:31:23*
+*Généré le: 2025-12-13 22:59:39*
