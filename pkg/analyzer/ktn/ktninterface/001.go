@@ -357,24 +357,24 @@ func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.Type
 func reportUnusedInterface(pass *analysis.Pass, typeSpec *ast.TypeSpec, name string) {
 	// Message différent selon si l'interface est exportée ou non
 	if ast.IsExported(name) {
-		// Interface exportée - peut être utilisée par d'autres packages
+		// Interface exportée = INFO (design-first, non-bloquant)
+		// Permet de créer l'interface avant l'implémentation
 		pass.Reportf(
 			typeSpec.Pos(),
-			"KTN-INTERFACE-001: interface '%s' non utilisée dans ce package. "+
-				"Si elle est destinée à être utilisée par d'autres packages, ajoutez 'var _ %s = (*StructName)(nil)' "+
-				"pour vérifier l'implémentation à la compilation",
+			"KTN-INTERFACE-002: interface '%s' en phase de design. "+
+				"Quand l'implémentation sera prête, ajoutez "+
+				"'var _ %s = (*StructName)(nil)' pour valider",
 			name,
 			name,
 		)
 	} else {
-		// Interface privée - message standard
+		// Interface privée = WARNING (devrait être utilisée localement)
 		pass.Reportf(
 			typeSpec.Pos(),
 			"KTN-INTERFACE-001: interface '%s' non utilisée. "+
-				"Options: (1) créer une struct '%s' qui l'implémente pour permettre le mocking, "+
-				"(2) utiliser cette interface en paramètre/retour de fonction, "+
-				"(3) supprimer si vraiment inutile. "+
-				"Les interfaces permettent de créer des mocks et d'améliorer la couverture de tests",
+				"Options: (1) créer une struct '%s' qui l'implémente, "+
+				"(2) utiliser en paramètre/retour de fonction, "+
+				"(3) supprimer si inutile",
 			name,
 			name,
 		)

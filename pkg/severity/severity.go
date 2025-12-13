@@ -89,6 +89,10 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-FUNC-011": SeverityInfo,    // Complexité cyclomatique ≤10 (ex-013)
 	"KTN-FUNC-012": SeverityInfo,    // Named returns si >3 valeurs retour (ex-014)
 
+	// INTERFACE - Interfaces (2 règles)
+	"KTN-INTERFACE-001": SeverityWarning, // Interface privée non utilisée
+	"KTN-INTERFACE-002": SeverityInfo,    // Interface exportée design-first
+
 	// STRUCT - Structures (5 règles, ex-002 déplacé vers COMMENT-005)
 	"KTN-STRUCT-001": SeverityWarning, // Interface pour chaque struct
 	"KTN-STRUCT-002": SeverityWarning, // Constructeur NewX() requis (ex-003)
