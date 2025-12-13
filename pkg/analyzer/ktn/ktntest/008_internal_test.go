@@ -120,6 +120,8 @@ var privateVar int`,
 }
 
 // Test_checkVariables tests the checkVariables private function.
+// NOTE: Variables are no longer considered for test file requirements.
+// They are tested indirectly via the functions that use them.
 //
 // Params:
 //   - t: testing context
@@ -152,7 +154,7 @@ var _ int`,
 			wantPrivate: false,
 		},
 		{
-			name: "multiple variables",
+			name: "multiple variables with public and private",
 			code: `package test
 var PublicVar, privateVar int`,
 			wantPublic:  true,
@@ -188,6 +190,127 @@ var PublicVar, privateVar int`,
 			// Vérification private
 			if result.hasPrivate != tt.wantPrivate {
 				t.Errorf("checkVariables() hasPrivate = %v, want %v", result.hasPrivate, tt.wantPrivate)
+			}
+		})
+	}
+}
+
+// Test_checkTypes tests the checkTypes private function.
+//
+// Params:
+//   - t: testing context
+func Test_checkTypes(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		wantPublic bool
+	}{
+		{
+			name: "public type",
+			code: `package test
+type PublicType struct{}`,
+			wantPublic: true,
+		},
+		{
+			name: "private type",
+			code: `package test
+type privateType struct{}`,
+			wantPublic: false,
+		},
+		{
+			name: "public interface",
+			code: `package test
+type PublicInterface interface{}`,
+			wantPublic: true,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkTypes(genDecl, &result)
+				}
+				// Continuer la traversée
+				return true
+			})
+
+			// Vérification public
+			if result.hasPublic != tt.wantPublic {
+				t.Errorf("checkTypes() hasPublic = %v, want %v", result.hasPublic, tt.wantPublic)
+			}
+		})
+	}
+}
+
+// Test_checkConsts tests the checkConsts private function.
+//
+// Params:
+//   - t: testing context
+func Test_checkConsts(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		wantPublic bool
+	}{
+		{
+			name: "public constant",
+			code: `package test
+const PublicConst = 1`,
+			wantPublic: true,
+		},
+		{
+			name: "private constant",
+			code: `package test
+const privateConst = 1`,
+			wantPublic: false,
+		},
+		{
+			name: "multiple constants with public",
+			code: `package test
+const (
+	PublicConst = 1
+	privateConst = 2
+)`,
+			wantPublic: true,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkConsts(genDecl, &result)
+				}
+				// Continuer la traversée
+				return true
+			})
+
+			// Vérification public
+			if result.hasPublic != tt.wantPublic {
+				t.Errorf("checkConsts() hasPublic = %v, want %v", result.hasPublic, tt.wantPublic)
 			}
 		})
 	}

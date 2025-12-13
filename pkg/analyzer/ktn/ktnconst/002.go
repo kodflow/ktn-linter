@@ -10,6 +10,8 @@ import (
 )
 
 const (
+	// typeInfoCap initial capacity for type info maps
+	typeInfoCap int = 8
 	// ruleCodeConst002 est le code de la règle KTN-CONST-002.
 	ruleCodeConst002 string = "KTN-CONST-002"
 )
@@ -28,6 +30,10 @@ type fileDeclarations struct {
 	varDecls   []token.Pos
 	typeDecls  []token.Pos
 	funcDecls  []token.Pos
+	// typeNames maps type name to its position
+	typeNames map[string]token.Pos
+	// constTypes maps const position to the type it uses (for iota detection)
+	constTypes map[token.Pos]string
 }
 
 // runConst002 executes KTN-CONST-002 analysis.
@@ -73,7 +79,10 @@ func runConst002(pass *analysis.Pass) (any, error) {
 // Returns:
 //   - *fileDeclarations: collected declaration positions
 func collectDeclarations(file *ast.File) *fileDeclarations {
-	decls := &fileDeclarations{}
+	decls := &fileDeclarations{
+		typeNames:  make(map[string]token.Pos, typeInfoCap),
+		constTypes: make(map[token.Pos]string, typeInfoCap),
+	}
 
 	// Iterate over all declarations
 	for _, decl := range file.Decls {
@@ -84,12 +93,20 @@ func collectDeclarations(file *ast.File) *fileDeclarations {
 			// Const declaration
 			case token.CONST:
 				decls.constDecls = append(decls.constDecls, genDecl.Pos())
+				// Detect type used in const (for iota pattern)
+				typeName := extractConstTypeName(genDecl)
+				// Store type name if found
+				if typeName != "" {
+					decls.constTypes[genDecl.Pos()] = typeName
+				}
 			// Var declaration
 			case token.VAR:
 				decls.varDecls = append(decls.varDecls, genDecl.Pos())
 			// Type declaration
 			case token.TYPE:
 				decls.typeDecls = append(decls.typeDecls, genDecl.Pos())
+				// Store type name and position
+				collectTypeNames(genDecl, decls.typeNames)
 			}
 		}
 
@@ -101,6 +118,56 @@ func collectDeclarations(file *ast.File) *fileDeclarations {
 
 	// Return collected declarations
 	return decls
+}
+
+// extractConstTypeName extracts the type name from a const declaration.
+// Used to detect iota pattern: const ( X TypeName = iota ).
+//
+// Params:
+//   - genDecl: const declaration
+//
+// Returns:
+//   - string: type name or empty if not found
+func extractConstTypeName(genDecl *ast.GenDecl) string {
+	// Iterate over specs to find typed const
+	for _, spec := range genDecl.Specs {
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		// Skip if not value spec
+		if !ok {
+			continue
+		}
+
+		// Check if has explicit type
+		if valueSpec.Type != nil {
+			// Extract type name from ident
+			if ident, ok := valueSpec.Type.(*ast.Ident); ok {
+				// Return type name
+				return ident.Name
+			}
+		}
+	}
+
+	// No type found
+	return ""
+}
+
+// collectTypeNames stores type names and positions.
+//
+// Params:
+//   - genDecl: type declaration
+//   - typeNames: map to store names and positions
+func collectTypeNames(genDecl *ast.GenDecl, typeNames map[string]token.Pos) {
+	// Iterate over type specs
+	for _, spec := range genDecl.Specs {
+		typeSpec, ok := spec.(*ast.TypeSpec)
+		// Skip if not type spec
+		if !ok {
+			continue
+		}
+
+		// Store type name and position
+		typeNames[typeSpec.Name.Name] = genDecl.Pos()
+	}
 }
 
 // checkConstOrder verifies const declarations are properly ordered and grouped.
@@ -177,6 +244,7 @@ func checkConstBeforeVar(pass *analysis.Pass, decls *fileDeclarations) {
 }
 
 // checkConstBeforeType ensures const declarations come before type declarations.
+// Exception: const blocks using iota with a custom type are allowed after that type.
 //
 // Params:
 //   - pass: analysis context
@@ -193,8 +261,21 @@ func checkConstBeforeType(pass *analysis.Pass, decls *fileDeclarations) {
 
 	// Check each const declaration
 	for _, constPos := range decls.constDecls {
-		// Const after type is a violation
+		// Const after type is a violation, unless it uses iota with that type
 		if constPos > firstTypePos {
+			// Check if this const uses a type defined in this file (iota pattern)
+			if usedType, hasType := decls.constTypes[constPos]; hasType {
+				// Check if the type is defined in this file
+				if typePos, typeExists := decls.typeNames[usedType]; typeExists {
+					// If const comes after its type declaration, this is valid iota pattern
+					if constPos > typePos {
+						// Skip this const - it's a valid iota pattern
+						continue
+					}
+				}
+			}
+
+			// Report violation
 			pass.Reportf(
 				constPos,
 				"KTN-CONST-002: les constantes doivent être placées avant les déclarations type",

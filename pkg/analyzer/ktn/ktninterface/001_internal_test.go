@@ -659,3 +659,159 @@ func Test_hasCorrespondingStruct(t *testing.T) {
 		})
 	}
 }
+
+// Test_checkValueSpec tests the checkValueSpec private function.
+func Test_checkValueSpec(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want int
+	}{
+		{
+			name: "variable with interface type",
+			code: `package test
+var x MyInterface`,
+			want: 1,
+		},
+		{
+			name: "variable without explicit type",
+			code: `package test
+var x = 42`,
+			want: 0,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			used := make(map[string]bool)
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check for ValueSpec
+				if vs, ok := n.(*ast.ValueSpec); ok {
+					checkValueSpec(vs, used)
+				}
+				// Continue traversal
+				return true
+			})
+			// Verify count
+			if len(used) != tt.want {
+				t.Errorf("expected %d types, got %d", tt.want, len(used))
+			}
+		})
+	}
+}
+
+// Test_checkTypeAssert tests the checkTypeAssert private function.
+func Test_checkTypeAssert(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want int
+	}{
+		{
+			name: "type assertion with interface",
+			code: `package test
+func f(x interface{}) {
+	_ = x.(MyInterface)
+}`,
+			want: 1,
+		},
+		{
+			name: "type assertion with concrete type",
+			code: `package test
+func f(x interface{}) {
+	_ = x.(string)
+}`,
+			want: 1,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			used := make(map[string]bool)
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check for TypeAssertExpr
+				if ta, ok := n.(*ast.TypeAssertExpr); ok {
+					checkTypeAssert(ta, used)
+				}
+				// Continue traversal
+				return true
+			})
+			// Verify count
+			if len(used) != tt.want {
+				t.Errorf("expected %d types, got %d", tt.want, len(used))
+			}
+		})
+	}
+}
+
+// Test_checkTypeSwitch tests the checkTypeSwitch private function.
+func Test_checkTypeSwitch(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want int
+	}{
+		{
+			name: "type switch with multiple cases",
+			code: `package test
+func f(x interface{}) {
+	switch x.(type) {
+	case MyInterface:
+	case OtherInterface:
+	}
+}`,
+			want: 2,
+		},
+		{
+			name: "type switch with nil body",
+			code: `package test
+func f(x interface{}) {
+	switch x.(type) {
+	}
+}`,
+			want: 0,
+		},
+	}
+
+	// Iteration over table-driven tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Check parsing success
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			used := make(map[string]bool)
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Check for TypeSwitchStmt
+				if ts, ok := n.(*ast.TypeSwitchStmt); ok {
+					checkTypeSwitch(ts, used)
+				}
+				// Continue traversal
+				return true
+			})
+			// Verify count
+			if len(used) != tt.want {
+				t.Errorf("expected %d types, got %d", tt.want, len(used))
+			}
+		})
+	}
+}

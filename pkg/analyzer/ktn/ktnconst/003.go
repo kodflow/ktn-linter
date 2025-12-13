@@ -82,7 +82,7 @@ func runConst003(pass *analysis.Pass) (any, error) {
 				if !isValidGoConstantName(constName) {
 					pass.Reportf(
 						name.Pos(),
-						"KTN-CONST-003: la constante '%s' doit utiliser la convention CamelCase (ex: MaxSize, httpTimeout)",
+						"KTN-CONST-003: la constante '%s' doit utiliser CamelCase (PascalCase si exportée: MaxSize, camelCase si privée: maxSize)",
 						constName,
 					)
 				}

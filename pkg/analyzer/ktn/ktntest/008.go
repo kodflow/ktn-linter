@@ -3,6 +3,7 @@ package ktntest
 
 import (
 	"go/ast"
+	"go/token"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -130,6 +131,10 @@ func analyzeFileFunctions(file *ast.File) *fileAnalysisResult {
 		if genDecl, ok := n.(*ast.GenDecl); ok {
 			// Vérifier les variables
 			checkVariables(genDecl, result)
+			// Vérifier les types
+			checkTypes(genDecl, result)
+			// Vérifier les constantes
+			checkConsts(genDecl, result)
 		}
 
 		// Continuer la traversée
@@ -238,43 +243,128 @@ func extractReceiverTypeString(expr ast.Expr) string {
 	return ""
 }
 
-// checkVariables vérifie si une déclaration contient des variables publiques ou privées.
+// checkVariables checks for public variables that require external testing.
+// Public variables (exported, like Analyzer001) require external tests.
+// Private variables are tested indirectly via the functions that use them.
 //
 // Params:
 //   - genDecl: déclaration générique
-//   - result: résultat de l'analyse à mettre à jour
+//   - result: résultat de l'analyse
 func checkVariables(genDecl *ast.GenDecl, result *fileAnalysisResult) {
-	// Itération sur les spécifications
+	// Only process var declarations (not const or import)
+	if genDecl.Tok != token.VAR {
+		// Skip non-var declarations
+		return
+	}
+
+	// Iterate over specs
 	for _, spec := range genDecl.Specs {
-		// Conversion en ValueSpec
 		valueSpec, ok := spec.(*ast.ValueSpec)
-		// Vérification si ValueSpec
+		// Skip if not value spec
 		if !ok {
-			// Continuer l'itération
+			// Continue to next spec
 			continue
 		}
-		// Itération sur les noms
+
+		// Check each variable name
 		for _, name := range valueSpec.Names {
-			// Extraire le nom
-			varName := name.Name
-			// Vérification si blank
-			if varName == "_" {
-				// Ignorer blank
+			// Skip blank identifier
+			if name.Name == "_" {
+				// Continue to next name
 				continue
 			}
-			// Vérification si mock
-			if shared.IsMockName(varName) {
-				// Ignorer mock
+
+			// Skip mock variables
+			if shared.IsMockName(name.Name) {
+				// Continue to next name
 				continue
 			}
-			// Vérification si publique
-			if shared.IsExportedIdent(varName) {
-				// Marquer comme publique
+
+			// Check if exported (public)
+			if ast.IsExported(name.Name) {
+				// Mark as having public element
 				result.hasPublic = true
+				// Public variables don't need to be listed (tested via their usage)
 			} else {
-				// Cas alternatif: privée
-				// Marquer comme privée
+				// Private variables may need internal tests to access them
 				result.hasPrivate = true
+			}
+		}
+	}
+}
+
+// checkTypes checks for public types that require external testing.
+// Public types (exported, like MyStruct) require external tests.
+// Private types don't require specific tests.
+//
+// Params:
+//   - genDecl: déclaration générique
+//   - result: résultat de l'analyse
+func checkTypes(genDecl *ast.GenDecl, result *fileAnalysisResult) {
+	// Only process type declarations
+	if genDecl.Tok != token.TYPE {
+		// Skip non-type declarations
+		return
+	}
+
+	// Iterate over specs
+	for _, spec := range genDecl.Specs {
+		typeSpec, ok := spec.(*ast.TypeSpec)
+		// Skip if not type spec
+		if !ok {
+			// Continue to next spec
+			continue
+		}
+
+		// Skip mock types
+		if shared.IsMockName(typeSpec.Name.Name) {
+			// Continue to next spec
+			continue
+		}
+
+		// Check if exported (public)
+		if ast.IsExported(typeSpec.Name.Name) {
+			// Mark as having public element
+			result.hasPublic = true
+		}
+	}
+}
+
+// checkConsts checks for public constants that require external testing.
+// Public constants (exported) require external tests.
+// Private constants don't require specific tests.
+//
+// Params:
+//   - genDecl: déclaration générique
+//   - result: résultat de l'analyse
+func checkConsts(genDecl *ast.GenDecl, result *fileAnalysisResult) {
+	// Only process const declarations
+	if genDecl.Tok != token.CONST {
+		// Skip non-const declarations
+		return
+	}
+
+	// Iterate over specs
+	for _, spec := range genDecl.Specs {
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		// Skip if not value spec
+		if !ok {
+			// Continue to next spec
+			continue
+		}
+
+		// Check each constant name
+		for _, name := range valueSpec.Names {
+			// Skip mock constants
+			if shared.IsMockName(name.Name) {
+				// Continue to next name
+				continue
+			}
+
+			// Check if exported (public)
+			if ast.IsExported(name.Name) {
+				// Mark as having public element
+				result.hasPublic = true
 			}
 		}
 	}

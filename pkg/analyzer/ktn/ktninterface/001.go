@@ -148,15 +148,27 @@ func findInterfaceUsages(pass *analysis.Pass, usedInterfaces map[string]bool) {
 func checkNodeForInterfaceUsage(node ast.Node, usedInterfaces map[string]bool) {
 	// Verification de la condition
 	switch n := node.(type) {
-	// Cas FuncDecl
+	// Cas FuncDecl - paramètres et retours de fonction
 	case *ast.FuncDecl:
 		checkFuncDeclForInterfaces(n, usedInterfaces)
-	// Cas Field
+	// Cas Field - types de champs (struct, params, etc.)
 	case *ast.Field:
 		checkType(n.Type, usedInterfaces)
-	// Cas InterfaceType
+	// Cas InterfaceType - interfaces embarquées
 	case *ast.InterfaceType:
 		checkEmbeddedInterfaces(n, usedInterfaces)
+	// Cas ValueSpec - déclarations de variables (var x MyInterface)
+	case *ast.ValueSpec:
+		checkValueSpec(n, usedInterfaces)
+	// Cas TypeAssertExpr - type assertions (x.(MyInterface))
+	case *ast.TypeAssertExpr:
+		checkTypeAssert(n, usedInterfaces)
+	// Cas TypeSwitchStmt - type switch (switch v := x.(type))
+	case *ast.TypeSwitchStmt:
+		checkTypeSwitch(n, usedInterfaces)
+	// Cas CompositeLit - littéraux composites
+	case *ast.CompositeLit:
+		checkType(n.Type, usedInterfaces)
 	}
 }
 
@@ -289,32 +301,89 @@ func checkFieldList(fields *ast.FieldList, used map[string]bool) {
 //   - expr: Expression to check
 //   - used: Map to track used interfaces
 func checkType(expr ast.Expr, used map[string]bool) {
+	// Vérifier si l'expression est nil
+	if expr == nil {
+		// Retour si nil
+		return
+	}
+
 	// Verification de la condition
 	switch t := expr.(type) {
-	// Verification de la condition
+	// Cas Ident - identifiant simple
 	case *ast.Ident:
 		// Mark identifier as used
 		used[t.Name] = true
-	// Verification de la condition
+	// Cas StarExpr - type pointeur
 	case *ast.StarExpr:
 		// Check pointer type
 		checkType(t.X, used)
-	// Verification de la condition
+	// Cas ArrayType - type tableau/slice
 	case *ast.ArrayType:
 		// Check array element type
 		checkType(t.Elt, used)
-	// Verification de la condition
+	// Cas MapType - type map
 	case *ast.MapType:
 		// Check map key and value types
 		checkType(t.Key, used)
 		checkType(t.Value, used)
-	// Verification de la condition
+	// Cas ChanType - type channel
 	case *ast.ChanType:
 		// Check channel element type
 		checkType(t.Value, used)
-	// Verification de la condition
+	// Cas SelectorExpr - accès qualifié (pkg.Type)
 	case *ast.SelectorExpr:
-		// Check selector expression
-		checkType(t.X, used)
+		// Marquer le sélecteur comme utilisé (ex: pkg.MyInterface)
+		used[t.Sel.Name] = true
+	}
+}
+
+// checkValueSpec vérifie les déclarations de variables pour les usages d'interface.
+//
+// Params:
+//   - spec: spécification de variable
+//   - used: map pour marquer les interfaces utilisées
+func checkValueSpec(spec *ast.ValueSpec, used map[string]bool) {
+	// Vérifier le type déclaré
+	if spec.Type != nil {
+		checkType(spec.Type, used)
+	}
+}
+
+// checkTypeAssert vérifie les type assertions pour les usages d'interface.
+//
+// Params:
+//   - expr: expression de type assertion
+//   - used: map pour marquer les interfaces utilisées
+func checkTypeAssert(expr *ast.TypeAssertExpr, used map[string]bool) {
+	// Vérifier le type dans l'assertion (x.(Type))
+	if expr.Type != nil {
+		checkType(expr.Type, used)
+	}
+}
+
+// checkTypeSwitch vérifie les type switches pour les usages d'interface.
+//
+// Params:
+//   - stmt: statement type switch
+//   - used: map pour marquer les interfaces utilisées
+func checkTypeSwitch(stmt *ast.TypeSwitchStmt, used map[string]bool) {
+	// Vérifier le corps du switch
+	if stmt.Body == nil {
+		// Retour si pas de corps
+		return
+	}
+
+	// Parcourir les cases
+	for _, s := range stmt.Body.List {
+		caseClause, ok := s.(*ast.CaseClause)
+		// Vérifier si c'est un case clause
+		if !ok {
+			continue
+		}
+
+		// Vérifier chaque type dans le case
+		for _, typeExpr := range caseClause.List {
+			checkType(typeExpr, used)
+		}
 	}
 }
