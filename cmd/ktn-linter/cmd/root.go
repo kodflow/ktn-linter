@@ -20,6 +20,8 @@ var (
 	Verbose bool = false
 	// Category filters rules by specific category.
 	Category string = ""
+	// OnlyRule runs only a specific rule by code (e.g., KTN-FUNC-001).
+	OnlyRule string = ""
 	// Fix enables automatic fix application for modernize analyzers.
 	Fix bool = false
 	// ConfigPath is the path to the configuration file.
@@ -79,6 +81,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&Simple, "simple", false, "Simple one-line format for IDE integration")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.PersistentFlags().StringVar(&Category, "category", "", "Run only rules from specific category (func, var, error, etc.)")
+	rootCmd.PersistentFlags().StringVar(&OnlyRule, "only-rule", "", "Run only a specific rule by code (e.g., KTN-FUNC-001)")
 	rootCmd.PersistentFlags().BoolVar(&Fix, "fix", false, "Automatically apply suggested fixes from modernize analyzers")
 	rootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", "", "Path to configuration file (.ktn-linter.yaml)")
 }

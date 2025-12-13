@@ -1,0 +1,17 @@
+version: 1
+
+# Configuration pour valider les fichiers testdata
+# Usage: ktn-linter lint --config .ktn-linter.testdata.yaml <fichier>
+
+# Desactiver les regles qui ne s'appliquent pas aux testdata
+rules:
+  KTN-TEST-008:
+    enabled: false
+  KTN-STRUCT-004:
+    enabled: false
+  KTN-TEST-002:
+    enabled: false
+  KTN-TEST-003:
+    enabled: false
+  KTN-TEST-006:
+    enabled: false

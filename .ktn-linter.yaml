@@ -1,0 +1,11 @@
+version: 1
+
+# Configuration par defaut pour le linting normal
+# Usage: ktn-linter lint ./...
+
+# Exclusions globales
+exclude:
+  - "**/*_test.go"
+
+# Note: testdata est automatiquement exclu par go list ./...
+# Pour valider testdata, utiliser --only-rule ou --config .ktn-linter.testdata.yaml

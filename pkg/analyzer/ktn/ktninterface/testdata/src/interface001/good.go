@@ -84,6 +84,26 @@ type UserService struct {
 	db string
 }
 
+// goodCompileTimeCheck is used via compile-time interface check.
+type goodCompileTimeCheck interface {
+	Validate() error
+}
+
+// goodImpl implements goodCompileTimeCheck.
+type goodImpl struct{}
+
+// Validate implements goodCompileTimeCheck.
+//
+// Returns:
+//   - error: validation error if any
+func (g *goodImpl) Validate() error {
+	// Implementation
+	return nil
+}
+
+// Compile-time interface check - prouve que goodImpl implémente goodCompileTimeCheck
+var _ goodCompileTimeCheck = (*goodImpl)(nil)
+
 // init utilise les fonctions privées
 func init() {
 	// Appel de goodProcess

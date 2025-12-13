@@ -53,3 +53,36 @@ func (b *BadUserService) Users() map[int]string {
 	// Retourne le champ users
 	return b.users
 }
+
+// BadPartialInterface est une interface incomplète (ne couvre pas toutes les méthodes).
+type BadPartialInterface interface {
+	Process() error
+}
+
+// BadIncompleteImpl a un compile-time check mais l'interface ne couvre pas toutes les méthodes.
+// Cela doit TOUJOURS déclencher KTN-STRUCT-001 car l'interface est incomplète.
+type BadIncompleteImpl struct { // want "KTN-STRUCT-001"
+	data string
+}
+
+// Process implémente BadPartialInterface.
+//
+// Returns:
+//   - error: erreur éventuelle
+func (b *BadIncompleteImpl) Process() error {
+	// Implementation
+	return nil
+}
+
+// ExtraMethod est une méthode publique NON couverte par BadPartialInterface.
+// Cela prouve que le compile-time check ne suffit pas - l'interface doit être complète.
+//
+// Returns:
+//   - string: données
+func (b *BadIncompleteImpl) ExtraMethod() string {
+	// Retour des données
+	return b.data
+}
+
+// Compile-time check - MAIS l'interface ne couvre pas ExtraMethod()
+var _ BadPartialInterface = (*BadIncompleteImpl)(nil)

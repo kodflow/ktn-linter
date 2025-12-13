@@ -101,3 +101,48 @@ func TestGetRulesByCategory(t *testing.T) {
 		})
 	}
 }
+
+// TestGetRuleByCode tests the GetRuleByCode function.
+//
+// Params:
+//   - t: testing context
+func TestGetRuleByCode(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		expectNil  bool
+		expectName string
+	}{
+		{name: "valid KTN-FUNC-001", code: "KTN-FUNC-001", expectNil: false, expectName: "ktnfunc001"},
+		{name: "valid KTN-VAR-001", code: "KTN-VAR-001", expectNil: false, expectName: "ktnvar001"},
+		{name: "valid KTN-CONST-001", code: "KTN-CONST-001", expectNil: false, expectName: "ktnconst001"},
+		{name: "invalid code format", code: "INVALID", expectNil: true, expectName: ""},
+		{name: "unknown rule", code: "KTN-FUNC-999", expectNil: true, expectName: ""},
+		{name: "empty code", code: "", expectNil: true, expectName: ""},
+		{name: "wrong prefix", code: "XXX-FUNC-001", expectNil: true, expectName: ""},
+	}
+
+	// Iteration over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ktn.GetRuleByCode(tt.code)
+			// Check nil expectation
+			if tt.expectNil {
+				// Should be nil
+				if result != nil {
+					t.Errorf("GetRuleByCode(%q) = %v, want nil", tt.code, result)
+				}
+			} else {
+				// Should not be nil
+				if result == nil {
+					t.Errorf("GetRuleByCode(%q) = nil, want non-nil", tt.code)
+					return
+				}
+				// Check analyzer name
+				if result.Name != tt.expectName {
+					t.Errorf("GetRuleByCode(%q).Name = %q, want %q", tt.code, result.Name, tt.expectName)
+				}
+			}
+		})
+	}
+}
