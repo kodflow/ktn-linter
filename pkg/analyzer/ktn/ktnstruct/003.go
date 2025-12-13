@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
@@ -70,12 +71,12 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 
 		// Construire le nom suggéré sans le préfixe "Get"
 		methodName := funcDecl.Name.Name
-		suggestedName := methodName[getPrefixLen:]
+		suggestedName := capitalizeFirstLetter(methodName[getPrefixLen:])
 
 		// Reporter la violation
 		pass.Reportf(
 			funcDecl.Name.Pos(),
-			"KTN-STRUCT-003: la méthode '%s' devrait être renommée '%s' (convention Go idiomatique, voir https://go.dev/doc/effective_go#Getters)",
+			"KTN-STRUCT-003: la méthode '%s()' devrait être renommée '%s()' (convention Go idiomatique, voir https://go.dev/doc/effective_go#Getters)",
 			methodName,
 			suggestedName,
 		)
@@ -266,4 +267,29 @@ func getReceiverTypeName(expr ast.Expr) string {
 
 	// Type non reconnu
 	return ""
+}
+
+// capitalizeFirstLetter capitalise la première lettre d'une chaîne.
+// En Go idiomatique, un getter pour le champ 'x' doit être 'X()' (exporté).
+//
+// Params:
+//   - s: chaîne à capitaliser
+//
+// Returns:
+//   - string: chaîne avec première lettre en majuscule
+func capitalizeFirstLetter(s string) string {
+	// Vérifier si la chaîne est vide
+	if len(s) == 0 {
+		// Retour chaîne vide
+		return s
+	}
+
+	// Convertir en runes pour gérer l'UTF-8
+	runes := []rune(s)
+
+	// Capitaliser la première rune
+	runes[0] = unicode.ToUpper(runes[0])
+
+	// Retourner la chaîne capitalisée
+	return string(runes)
 }

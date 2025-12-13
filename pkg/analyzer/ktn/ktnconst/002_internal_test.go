@@ -246,6 +246,7 @@ func Test_checkConstBeforeType(t *testing.T) {
 		},
 	}
 
+	// Iterate over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
@@ -260,6 +261,8 @@ func Test_checkConstBeforeType(t *testing.T) {
 			decls := &fileDeclarations{
 				constDecls: tt.constDecls,
 				typeDecls:  tt.typeDecls,
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
 			}
 
 			checkConstBeforeType(pass, decls)
@@ -334,8 +337,11 @@ func Test_checkConstOrder(t *testing.T) {
 		wantReports int
 	}{
 		{
-			name:        "no const declarations",
-			decls:       &fileDeclarations{},
+			name: "no const declarations",
+			decls: &fileDeclarations{
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
+			},
 			wantReports: 0,
 		},
 		{
@@ -345,6 +351,8 @@ func Test_checkConstOrder(t *testing.T) {
 				varDecls:   []token.Pos{token.Pos(200)},
 				typeDecls:  []token.Pos{token.Pos(300)},
 				funcDecls:  []token.Pos{token.Pos(400)},
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
 			},
 			wantReports: 0,
 		},
@@ -355,6 +363,8 @@ func Test_checkConstOrder(t *testing.T) {
 				varDecls:   []token.Pos{token.Pos(100)},
 				typeDecls:  []token.Pos{token.Pos(200)},
 				funcDecls:  []token.Pos{token.Pos(300)},
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
 			},
 			wantReports: 3,
 		},
@@ -389,6 +399,7 @@ func Test_fileDeclarations(t *testing.T) {
 		{"type structure validation"},
 	}
 
+	// Iterate over test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create declarations
@@ -397,6 +408,8 @@ func Test_fileDeclarations(t *testing.T) {
 				varDecls:   []token.Pos{},
 				typeDecls:  []token.Pos{},
 				funcDecls:  []token.Pos{},
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
 			}
 
 			// Verify fields are initialized
@@ -414,6 +427,14 @@ func Test_fileDeclarations(t *testing.T) {
 			// Verify fields are initialized
 			if decls.funcDecls == nil {
 				t.Error("fileDeclarations.funcDecls should not be nil")
+			}
+			// Verify map fields are initialized
+			if decls.typeNames == nil {
+				t.Error("fileDeclarations.typeNames should not be nil")
+			}
+			// Verify map fields are initialized
+			if decls.constTypes == nil {
+				t.Error("fileDeclarations.constTypes should not be nil")
 			}
 		})
 	}
@@ -466,6 +487,222 @@ func Test_runConst002_disabled(t *testing.T) {
 				t.Errorf("Expected 0 reports, got %d", reportCount)
 			}
 
+		})
+	}
+}
+
+// Test_extractConstTypeName tests the private extractConstTypeName function.
+func Test_extractConstTypeName(t *testing.T) {
+	tests := []struct {
+		name     string
+		genDecl  *ast.GenDecl
+		expected string
+	}{
+		{
+			name: "const with explicit type",
+			genDecl: &ast.GenDecl{
+				Tok: token.CONST,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "StatusOK"}},
+						Type:  &ast.Ident{Name: "Status"},
+						Values: []ast.Expr{
+							&ast.Ident{Name: "iota"},
+						},
+					},
+				},
+			},
+			expected: "Status",
+		},
+		{
+			name: "const without explicit type",
+			genDecl: &ast.GenDecl{
+				Tok: token.CONST,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "maxSize"}},
+						Values: []ast.Expr{
+							&ast.BasicLit{Kind: token.INT, Value: "100"},
+						},
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "const with non-ident type",
+			genDecl: &ast.GenDecl{
+				Tok: token.CONST,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "ptr"}},
+						Type: &ast.StarExpr{
+							X: &ast.Ident{Name: "int"},
+						},
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name:     "empty specs",
+			genDecl:  &ast.GenDecl{Tok: token.CONST, Specs: []ast.Spec{}},
+			expected: "",
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractConstTypeName(tt.genDecl)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("extractConstTypeName() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_collectTypeNames tests the private collectTypeNames function.
+func Test_collectTypeNames(t *testing.T) {
+	tests := []struct {
+		name          string
+		genDecl       *ast.GenDecl
+		expectedNames []string
+	}{
+		{
+			name: "single type declaration",
+			genDecl: &ast.GenDecl{
+				Tok:    token.TYPE,
+				TokPos: token.Pos(100),
+				Specs: []ast.Spec{
+					&ast.TypeSpec{
+						Name: &ast.Ident{Name: "Status"},
+						Type: &ast.Ident{Name: "int"},
+					},
+				},
+			},
+			expectedNames: []string{"Status"},
+		},
+		{
+			name: "multiple type declarations",
+			genDecl: &ast.GenDecl{
+				Tok:    token.TYPE,
+				TokPos: token.Pos(100),
+				Specs: []ast.Spec{
+					&ast.TypeSpec{
+						Name: &ast.Ident{Name: "Status"},
+						Type: &ast.Ident{Name: "int"},
+					},
+					&ast.TypeSpec{
+						Name: &ast.Ident{Name: "Priority"},
+						Type: &ast.Ident{Name: "int"},
+					},
+				},
+			},
+			expectedNames: []string{"Status", "Priority"},
+		},
+		{
+			name: "empty specs",
+			genDecl: &ast.GenDecl{
+				Tok:   token.TYPE,
+				Specs: []ast.Spec{},
+			},
+			expectedNames: []string{},
+		},
+		{
+			name: "non-type spec ignored",
+			genDecl: &ast.GenDecl{
+				Tok: token.TYPE,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "x"}},
+					},
+				},
+			},
+			expectedNames: []string{},
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			typeNames := make(map[string]token.Pos)
+			collectTypeNames(tt.genDecl, typeNames)
+
+			// Verify count
+			if len(typeNames) != len(tt.expectedNames) {
+				t.Errorf("collectTypeNames() collected %d names, want %d", len(typeNames), len(tt.expectedNames))
+			}
+
+			// Verify each expected name exists
+			for _, name := range tt.expectedNames {
+				// Check if name exists in map
+				if _, exists := typeNames[name]; !exists {
+					t.Errorf("collectTypeNames() missing expected name %q", name)
+				}
+			}
+		})
+	}
+}
+
+// Test_checkConstBeforeType_iotaPattern tests the iota pattern exception.
+func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
+	tests := []struct {
+		name        string
+		decls       *fileDeclarations
+		wantReports int
+	}{
+		{
+			name: "const after type using same type (valid iota pattern)",
+			decls: &fileDeclarations{
+				constDecls: []token.Pos{token.Pos(200)},
+				typeDecls:  []token.Pos{token.Pos(100)},
+				typeNames:  map[string]token.Pos{"Status": token.Pos(100)},
+				constTypes: map[token.Pos]string{token.Pos(200): "Status"},
+			},
+			wantReports: 0,
+		},
+		{
+			name: "const after type not using that type",
+			decls: &fileDeclarations{
+				constDecls: []token.Pos{token.Pos(200)},
+				typeDecls:  []token.Pos{token.Pos(100)},
+				typeNames:  map[string]token.Pos{"Status": token.Pos(100)},
+				constTypes: map[token.Pos]string{},
+			},
+			wantReports: 1,
+		},
+		{
+			name: "const after type using different type",
+			decls: &fileDeclarations{
+				constDecls: []token.Pos{token.Pos(200)},
+				typeDecls:  []token.Pos{token.Pos(100)},
+				typeNames:  map[string]token.Pos{"Status": token.Pos(100)},
+				constTypes: map[token.Pos]string{token.Pos(200): "OtherType"},
+			},
+			wantReports: 1,
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create minimal mock pass
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkConstBeforeType(pass, tt.decls)
+
+			// Verify report count
+			if reportCount != tt.wantReports {
+				t.Errorf("checkConstBeforeType() reports = %d, want %d", reportCount, tt.wantReports)
+			}
 		})
 	}
 }

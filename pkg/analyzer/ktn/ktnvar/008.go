@@ -132,7 +132,7 @@ func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
 			// Allocation de slice/map détectée
 			pass.Reportf(
 				rhs.Pos(),
-				"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle",
+				"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle (préallouez avant la boucle et réutilisez avec slice[:0])",
 			)
 		}
 	}
@@ -168,7 +168,7 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 				// Allocation de slice/map détectée
 				pass.Reportf(
 					value.Pos(),
-					"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle",
+					"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle (préallouez avant la boucle et réutilisez avec slice[:0])",
 				)
 			}
 		}

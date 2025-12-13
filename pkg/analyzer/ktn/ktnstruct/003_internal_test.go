@@ -538,3 +538,59 @@ func Test_isValidGetterToReport(t *testing.T) {
 		})
 	}
 }
+
+// Test_capitalizeFirstLetter tests the capitalizeFirstLetter function.
+func Test_capitalizeFirstLetter(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "lowercase first letter",
+			input:    "name",
+			expected: "Name",
+		},
+		{
+			name:     "uppercase first letter",
+			input:    "Name",
+			expected: "Name",
+		},
+		{
+			name:     "single lowercase letter",
+			input:    "x",
+			expected: "X",
+		},
+		{
+			name:     "single uppercase letter",
+			input:    "X",
+			expected: "X",
+		},
+		{
+			name:     "camelCase input",
+			input:    "userName",
+			expected: "UserName",
+		},
+		{
+			name:     "ID abbreviation",
+			input:    "iD",
+			expected: "ID",
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := capitalizeFirstLetter(tt.input)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("capitalizeFirstLetter(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
