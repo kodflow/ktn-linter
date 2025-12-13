@@ -199,8 +199,23 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 
 	var analyzers []*analysis.Analyzer
 
-	// Sélectionner les analyseurs selon la catégorie
-	if Category != "" {
+	// Sélectionner les analyseurs selon le filtre
+	if OnlyRule != "" {
+		// Mode --only-rule: une seule règle spécifique
+		analyzer := ktn.GetRuleByCode(OnlyRule)
+		// Vérifier si la règle existe
+		if analyzer == nil {
+			fmt.Fprintf(os.Stderr, "Unknown rule code: %s\n", OnlyRule)
+			OsExit(1)
+		}
+		analyzers = []*analysis.Analyzer{analyzer}
+		// Log si verbose
+		if Verbose {
+			fmt.Fprintf(os.Stderr, "Running only rule '%s'\n", OnlyRule)
+		}
+		// Cas où une catégorie est spécifiée
+	} else if Category != "" {
+		// Mode --category: toutes les règles d'une catégorie
 		analyzers = ktn.GetRulesByCategory(Category)
 		// Vérification de la condition
 		if len(analyzers) == 0 {
@@ -211,8 +226,9 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 		if Verbose {
 			fmt.Fprintf(os.Stderr, "Running %d rules from category '%s'\n", len(analyzers), Category)
 		}
-		// Cas alternatif
+		// Sinon, mode par défaut
 	} else {
+		// Mode par défaut: toutes les règles
 		analyzers = ktn.GetAllRules()
 		// Vérification de la condition
 		if Verbose {

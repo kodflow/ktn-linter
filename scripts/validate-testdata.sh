@@ -39,7 +39,7 @@ LINTER="./builds/ktn-linter"
 
 echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║     VALIDATION TESTDATA - KTN LINTER                     ║${NC}"
-echo -e "${BLUE}║  Les fichiers sont analysés EN DIRECT (pas via ./...)    ║${NC}"
+echo -e "${BLUE}║  Utilise --only-rule pour isoler chaque règle            ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -88,31 +88,39 @@ get_expected_code() {
 check_good_file() {
     local file=$1
     local testname=$(basename $(dirname "$file"))
+    local expected_code=$(get_expected_code "$testname")
+
+    # Skip si code non trouvé
+    if [ -z "$expected_code" ]; then
+        echo -e "  ${YELLOW}⚠ Skipping ${testname}/good.go (catégorie inconnue)${NC}"
+        return 0
+    fi
+
+    # Skip les règles TEST (analysent des fichiers *_test.go, pas des .go normaux)
+    if [[ "$expected_code" == KTN-TEST-* ]]; then
+        echo -e "  ${GREEN}✅ ${testname}/good.go (TEST rules skip .go files)${NC}"
+        return 0
+    fi
 
     total_checks=$((total_checks + 1))
 
-    echo -n "  Checking ${testname}/good.go... "
+    echo -n "  Checking ${testname}/good.go (${expected_code})... "
 
-    # Exécuter le linter en direct sur le fichier
-    output=$($LINTER lint "$file" 2>&1 || true)
-
-    # EXCLUSIONS LÉGITIMES pour testdata:
-    # - TEST-003/008: vérifient la structure des tests, pas le code
-    # - Messages INFO (ℹ): suggestions non-bloquantes (STRUCT-001, FUNC-003, VAR-009)
-    filtered_output=$(echo "$output" | grep -v 'KTN-TEST-003' | grep -v 'KTN-TEST-008' | grep -v 'ℹ')
+    # Exécuter le linter avec --only-rule pour la règle spécifique
+    output=$($LINTER lint --only-rule "$expected_code" "$file" 2>&1 || true)
 
     if echo "$output" | grep -q "No issues found"; then
         echo -e "${GREEN}✅ OK${NC}"
         good_ok=$((good_ok + 1))
         return 0
-    elif ! echo "$filtered_output" | grep -qE "KTN-[A-Z]+-[0-9]+"; then
-        # Seulement TEST-*/INFO détectées (ignorées pour testdata)
-        echo -e "${GREEN}✅ OK (TEST-*/INFO ignorées)${NC}"
+    elif ! echo "$output" | grep -qE "KTN-[A-Z]+-[0-9]+"; then
+        # Aucune erreur KTN detectee
+        echo -e "${GREEN}✅ OK${NC}"
         good_ok=$((good_ok + 1))
         return 0
     else
         echo -e "${RED}❌ ERREURS DÉTECTÉES${NC}"
-        echo "$filtered_output" | grep -E "KTN-[A-Z]+-[0-9]+" | head -5
+        echo "$output" | grep -E "KTN-[A-Z]+-[0-9]+" | head -5
         good_fail=$((good_fail + 1))
         total_errors=$((total_errors + 1))
         return 1
@@ -141,19 +149,8 @@ check_bad_file() {
 
     total_checks=$((total_checks + 1))
 
-    # Exécuter le linter en direct sur le fichier
-    output=$($LINTER lint "$file" 2>&1 || true)
-
-    # EXCLUSIONS LÉGITIMES pour testdata:
-    # - TEST-003/008: vérifient la structure des tests, pas le code
-    # - Messages INFO (ℹ) sur d'autres règles (suggestions non-bloquantes)
-    # Note: On garde les INFO de la règle attendue
-    filtered_output=$(echo "$output" | grep -v 'KTN-TEST-003' | grep -v 'KTN-TEST-008')
-    # Filtrer les INFO sauf ceux de la règle attendue
-    filtered_no_info=$(echo "$filtered_output" | grep -v 'ℹ' || true)
-    # Ajouter les INFO de la règle attendue
-    expected_info=$(echo "$filtered_output" | grep 'ℹ' | grep "$expected_code" || true)
-    filtered_output=$(printf "%s\n%s" "$filtered_no_info" "$expected_info")
+    # Exécuter le linter avec --only-rule pour la règle spécifique
+    output=$($LINTER lint --only-rule "$expected_code" "$file" 2>&1 || true)
 
     if echo "$output" | grep -q "No issues found"; then
         echo -e "${RED}❌ AUCUNE ERREUR${NC}"
@@ -163,19 +160,15 @@ check_bad_file() {
         return 1
     fi
 
-    # Extraire tous les codes d'erreur uniques (après filtrage)
-    all_codes=$(echo "$filtered_output" | grep -oE 'KTN-[A-Z]+-[0-9]+' | sort -u | tr '\n' ' ' | sed 's/ $//')
-
-    # Vérifier si SEUL le code attendu est présent
-    if [ "$all_codes" == "$expected_code" ]; then
-        error_count=$(echo "$output" | grep -c "$expected_code" || echo "0")
+    # Avec --only-rule, on sait que les erreurs viennent de la règle attendue
+    # On vérifie juste qu'il y a au moins une erreur
+    error_count=$(echo "$output" | grep -c "$expected_code" || echo "0")
+    if [ "$error_count" -gt 0 ]; then
         echo -e "${GREEN}✅ OK (${error_count} erreurs)${NC}"
         bad_ok=$((bad_ok + 1))
         return 0
     else
-        echo -e "${RED}❌ CODES INCORRECTS${NC}"
-        echo "     Attendu:  $expected_code"
-        echo "     Trouvé:   $all_codes"
+        echo -e "${RED}❌ AUCUNE ERREUR ${expected_code}${NC}"
         bad_fail=$((bad_fail + 1))
         total_errors=$((total_errors + 1))
         return 1

@@ -2,6 +2,8 @@
 package ktn
 
 import (
+	"strings"
+
 	"golang.org/x/tools/go/analysis"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment"
@@ -13,6 +15,13 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/modernize"
+)
+
+const (
+	// ktnPrefixLen is the length of "KTN-" prefix.
+	ktnPrefixLen int = 4
+	// codePartsCount is the expected number of parts in rule code (CATEGORY-NNN).
+	codePartsCount int = 2
 )
 
 // GetAllRules retourne toutes les règles KTN disponibles.
@@ -83,4 +92,68 @@ func GetRulesByCategory(category string) []*analysis.Analyzer {
 
 	// Retour des analyseurs de la catégorie
 	return analyzerFunc()
+}
+
+// GetRuleByCode retourne un analyseur par son code (ex: KTN-FUNC-001).
+//
+// Params:
+//   - code: code de la règle (ex: "KTN-FUNC-001", "KTN-VAR-002")
+//
+// Returns:
+//   - *analysis.Analyzer: l'analyseur correspondant ou nil si non trouvé
+func GetRuleByCode(code string) *analysis.Analyzer {
+	// Convertir le code en nom d'analyseur
+	// KTN-FUNC-001 -> ktnfunc001
+	// KTN-VAR-002 -> ktnvar002
+	analyzerName := codeToAnalyzerName(code)
+	// Vérifier si le nom est vide
+	if analyzerName == "" {
+		// Code invalide
+		return nil
+	}
+
+	// Chercher l'analyseur dans toutes les règles
+	for _, a := range GetAllRules() {
+		// Comparer les noms
+		if a.Name == analyzerName {
+			// Retourne l'analyseur trouvé
+			return a
+		}
+	}
+
+	// Analyseur non trouvé
+	return nil
+}
+
+// codeToAnalyzerName convertit un code de règle en nom d'analyseur.
+//
+// Params:
+//   - code: code de la règle (ex: "KTN-FUNC-001")
+//
+// Returns:
+//   - string: nom de l'analyseur (ex: "ktnfunc001") ou vide si invalide
+func codeToAnalyzerName(code string) string {
+	// Format attendu: KTN-CATEGORY-NNN
+	// Vérifier le préfixe KTN-
+	if !strings.HasPrefix(code, "KTN-") {
+		// Format invalide
+		return ""
+	}
+
+	// Supprimer le préfixe KTN-
+	rest := code[ktnPrefixLen:]
+
+	// Séparer la catégorie et le numéro
+	parts := strings.Split(rest, "-")
+	// Vérifier le format
+	if len(parts) != codePartsCount {
+		// Format invalide
+		return ""
+	}
+
+	category := strings.ToLower(parts[0])
+	number := parts[1]
+
+	// Construire le nom de l'analyseur: ktn<category><number>
+	return "ktn" + category + number
 }
