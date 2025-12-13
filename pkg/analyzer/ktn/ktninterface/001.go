@@ -348,37 +348,25 @@ func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.Type
 	}
 }
 
-// reportUnusedInterface génère le message d'erreur approprié.
+// reportUnusedInterface génère le message d'erreur pour interface privée.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - typeSpec: spécification du type interface
 //   - name: nom de l'interface
 func reportUnusedInterface(pass *analysis.Pass, typeSpec *ast.TypeSpec, name string) {
-	// Message différent selon si l'interface est exportée ou non
+	// Interfaces exportées = skip (API publique, usage externe possible)
 	if ast.IsExported(name) {
-		// Interface exportée = INFO (design-first, non-bloquant)
-		// Permet de créer l'interface avant l'implémentation
-		pass.Reportf(
-			typeSpec.Pos(),
-			"KTN-INTERFACE-002: interface '%s' en phase de design. "+
-				"Quand l'implémentation sera prête, ajoutez "+
-				"'var _ %s = (*StructName)(nil)' pour valider",
-			name,
-			name,
-		)
-	} else {
-		// Interface privée = WARNING (devrait être utilisée localement)
-		pass.Reportf(
-			typeSpec.Pos(),
-			"KTN-INTERFACE-001: interface '%s' non utilisée. "+
-				"Options: (1) créer une struct '%s' qui l'implémente, "+
-				"(2) utiliser en paramètre/retour de fonction, "+
-				"(3) supprimer si inutile",
-			name,
-			name,
-		)
+		// Ne rien signaler
+		return
 	}
+
+	// Interface privée non utilisée = WARNING
+	pass.Reportf(
+		typeSpec.Pos(),
+		"KTN-INTERFACE-001: interface privée '%s' non utilisée, à supprimer",
+		name,
+	)
 }
 
 // hasCorrespondingStruct vérifie si une struct correspondante existe.

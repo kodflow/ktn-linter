@@ -643,10 +643,12 @@ func Test_extractInterfaceNameFromExpr(t *testing.T) {
 // Test_reportUnusedInterface tests the private reportUnusedInterface function.
 func Test_reportUnusedInterface(t *testing.T) {
 	tests := []struct {
-		name string
+		name          string
+		interfaceName string
+		expectReport  int
 	}{
-		{name: "report exported interface"},
-		{name: "report private interface"},
+		{name: "exported interface - no report", interfaceName: "MyInterface", expectReport: 0},
+		{name: "private interface - report", interfaceName: "myInterface", expectReport: 1},
 	}
 
 	for _, tt := range tests {
@@ -660,12 +662,12 @@ func Test_reportUnusedInterface(t *testing.T) {
 				},
 			}
 
-			typeSpec := &ast.TypeSpec{Name: &ast.Ident{Name: "TestInterface"}}
-			reportUnusedInterface(pass, typeSpec, "TestInterface")
+			typeSpec := &ast.TypeSpec{Name: &ast.Ident{Name: tt.interfaceName}}
+			reportUnusedInterface(pass, typeSpec, tt.interfaceName)
 
-			// Verify report was generated
-			if reportCount != 1 {
-				t.Errorf("expected 1 report, got %d", reportCount)
+			// Verify report count
+			if reportCount != tt.expectReport {
+				t.Errorf("expected %d report, got %d", tt.expectReport, reportCount)
 			}
 		})
 	}
