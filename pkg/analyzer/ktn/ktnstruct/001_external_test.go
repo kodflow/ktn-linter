@@ -12,7 +12,10 @@ import (
 // Params:
 //   - t: contexte de test
 func TestStruct001(t *testing.T) {
-	// good.go: 0 errors (interface complète), bad.go: 1 error (struct sans interface complète)
+	// good.go: 0 errors (interface complète)
+	// bad.go: 2 errors:
+	//   - BadUserService: struct sans interface
+	//   - BadIncompleteImpl: compile-time check présent mais interface incomplète
 	tests := []struct {
 		name     string
 		analyzer string
@@ -21,12 +24,12 @@ func TestStruct001(t *testing.T) {
 		{
 			name:     "struct001_good_interface_complete",
 			analyzer: "struct001",
-			expected: 1,
+			expected: 2,
 		},
 		{
 			name:     "struct001_verify_analyzer",
 			analyzer: "struct001",
-			expected: 1,
+			expected: 2,
 		},
 	}
 

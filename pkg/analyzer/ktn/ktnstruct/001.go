@@ -17,8 +17,6 @@ import (
 const (
 	// ruleCodeStruct001 code de la règle KTN-STRUCT-001
 	ruleCodeStruct001 string = "KTN-STRUCT-001"
-	// interfaceChecksCap capacité initiale pour la map des interface checks
-	interfaceChecksCap int = 8
 )
 
 // Analyzer001 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
@@ -35,6 +33,13 @@ type structWithMethods struct {
 	node       *ast.TypeSpec
 	structType *ast.StructType
 	methods    []shared.MethodSignature
+	namedType  *types.Named
+}
+
+// interfaceCheck représente un compile-time check var _ I = S
+type interfaceCheck struct {
+	structName    string
+	interfaceType *types.Interface
 }
 
 // runStruct001 exécute l'analyse KTN-STRUCT-001.
@@ -57,6 +62,9 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	// Collecter tous les interface checks du package (pas juste fichier)
+	interfaceChecks := collectInterfaceChecksWithTypes(pass)
+
 	// Parcourir chaque fichier du package
 	for _, file := range pass.Files {
 		filename := pass.Fset.Position(file.Pos()).Filename
@@ -72,49 +80,459 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 			continue
 		}
 
-		// Collecter les interfaces et leurs méthodes
-		interfaces := collectInterfaces(file, pass)
-
-		// Collecter les compile-time interface checks (var _ Interface = (*Struct)(nil))
-		interfaceChecks := collectInterfaceChecks(file)
+		// Collecter les interfaces locales et leurs méthodes
+		localInterfaces := collectInterfaces(file, pass)
 
 		// Collecter les structs et leurs méthodes
 		structs := collectStructsWithMethods(file, pass, insp)
 
 		// Vérifier chaque struct
-		for _, s := range structs {
-			// Si la struct n'a pas de méthodes publiques, skip
-			if len(s.methods) == 0 {
-				// Continuer avec la struct suivante
-				continue
-			}
-
-			// Exception: les DTOs n'ont pas besoin d'interface
-			if shared.IsSerializableStruct(s.structType, s.name) {
-				// DTO - pas besoin d'interface
-				continue
-			}
-
-			// Exception: struct avec compile-time interface check (DDD pattern)
-			if interfaceChecks[s.name] {
-				// Interface existe dans un autre package
-				continue
-			}
-
-			// Trouver une interface qui couvre toutes les méthodes
-			if !hasMatchingInterface(s, interfaces) {
-				pass.Reportf(
-					s.node.Pos(),
-					"KTN-STRUCT-001: la struct '%s' a %d méthode(s) publique(s) mais aucune interface ne les reprend toutes. Créer une interface complète dans le même fichier",
-					s.name,
-					len(s.methods),
-				)
-			}
-		}
+		checkStructs(pass, structs, localInterfaces, interfaceChecks)
 	}
 
 	// Retour de la fonction
 	return nil, nil
+}
+
+// checkStructs vérifie chaque struct et rapporte les violations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - structs: liste des structs avec méthodes
+//   - localInterfaces: interfaces locales du fichier
+//   - interfaceChecks: compile-time checks du package
+func checkStructs(pass *analysis.Pass, structs []structWithMethods, localInterfaces map[string][]shared.MethodSignature, interfaceChecks []interfaceCheck) {
+	// Vérifier chaque struct
+	for _, s := range structs {
+		// Si la struct n'a pas de méthodes publiques, skip
+		if len(s.methods) == 0 {
+			// Continuer avec la struct suivante
+			continue
+		}
+
+		// Exception: les DTOs n'ont pas besoin d'interface
+		if shared.IsSerializableStruct(s.structType, s.name) {
+			// DTO - pas besoin d'interface
+			continue
+		}
+
+		// Vérifier si une interface locale couvre toutes les méthodes
+		if hasMatchingInterface(s, localInterfaces) {
+			// Interface locale trouvée
+			continue
+		}
+
+		// Vérifier via compile-time checks avec go/types
+		if hasMatchingInterfaceCheck(s, interfaceChecks, pass) {
+			// Interface externe valide trouvée
+			continue
+		}
+
+		// Aucune interface ne couvre toutes les méthodes
+		pass.Reportf(
+			s.node.Pos(),
+			"KTN-STRUCT-001: la struct '%s' a %d méthode(s) publique(s) mais aucune interface ne les reprend toutes. Créer une interface complète dans le même fichier",
+			s.name,
+			len(s.methods),
+		)
+	}
+}
+
+// collectInterfaceChecksWithTypes collecte les compile-time interface checks avec types.
+// Patterns supportés: var _ I = (*S)(nil), var _ I = S{}, var _ I = new(S), var _ I = &S{}
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - []interfaceCheck: liste des checks trouvés
+func collectInterfaceChecksWithTypes(pass *analysis.Pass) []interfaceCheck {
+	var checks []interfaceCheck
+
+	// Parcourir tous les fichiers du package
+	for _, file := range pass.Files {
+		// Parcourir les déclarations
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Vérifier si c'est une déclaration var
+			if !ok || genDecl.Tok != token.VAR {
+				// Continuer l'itération
+				continue
+			}
+
+			// Parcourir les specs
+			for _, spec := range genDecl.Specs {
+				valueSpec, ok := spec.(*ast.ValueSpec)
+				// Vérifier si c'est une ValueSpec
+				if !ok {
+					// Continuer l'itération
+					continue
+				}
+
+				// Extraire le check avec types
+				check := extractInterfaceCheckWithTypes(valueSpec, pass)
+				// Ajouter si valide
+				if check != nil {
+					checks = append(checks, *check)
+				}
+			}
+		}
+	}
+
+	// Retour de la liste
+	return checks
+}
+
+// extractInterfaceCheckWithTypes extrait un interface check avec informations de type.
+//
+// Params:
+//   - spec: ValueSpec à analyser
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - *interfaceCheck: check trouvé ou nil
+func extractInterfaceCheckWithTypes(spec *ast.ValueSpec, pass *analysis.Pass) *interfaceCheck {
+	// Vérifier que le nom est "_"
+	if len(spec.Names) != 1 || spec.Names[0].Name != "_" {
+		// Pas le pattern attendu
+		return nil
+	}
+
+	// Vérifier qu'il y a un type explicite (l'interface)
+	if spec.Type == nil {
+		// Pas de type explicite
+		return nil
+	}
+
+	// Obtenir le type de l'interface via TypesInfo
+	ifaceTypeInfo := pass.TypesInfo.TypeOf(spec.Type)
+	// Vérifier si on a pu résoudre le type
+	if ifaceTypeInfo == nil {
+		// Type non résolu
+		return nil
+	}
+
+	// Extraire l'interface sous-jacente
+	ifaceType, ok := ifaceTypeInfo.Underlying().(*types.Interface)
+	// Vérifier si c'est une interface
+	if !ok {
+		// Pas une interface
+		return nil
+	}
+
+	// Vérifier qu'il y a une valeur
+	if len(spec.Values) != 1 {
+		// Pas de valeur
+		return nil
+	}
+
+	// Extraire le nom de la struct depuis la valeur
+	structName := extractStructNameFromValue(spec.Values[0], pass)
+	// Vérifier si on a trouvé un nom
+	if structName == "" {
+		// Nom non trouvé
+		return nil
+	}
+
+	// Retour du check
+	return &interfaceCheck{
+		structName:    structName,
+		interfaceType: ifaceType,
+	}
+}
+
+// extractStructNameFromValue extrait le nom de la struct depuis une expression.
+// Supporte: (*S)(nil), S{}, new(S), &S{}
+//
+// Params:
+//   - expr: expression à analyser
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - string: nom de la struct ou vide
+func extractStructNameFromValue(expr ast.Expr, pass *analysis.Pass) string {
+	// Obtenir le type de l'expression via TypesInfo
+	exprType := pass.TypesInfo.TypeOf(expr)
+	// Vérifier si on a un type
+	if exprType == nil {
+		// Fallback sur extraction AST
+		return extractStructNameFromAST(expr)
+	}
+
+	// Extraire le type sous-jacent (déréférencer les pointeurs)
+	return extractStructNameFromType(exprType)
+}
+
+// extractStructNameFromType extrait le nom de struct depuis un types.Type.
+//
+// Params:
+//   - t: type à analyser
+//
+// Returns:
+//   - string: nom de la struct ou vide
+func extractStructNameFromType(t types.Type) string {
+	// Déréférencer les pointeurs
+	for {
+		ptr, ok := t.(*types.Pointer)
+		// Sortir si ce n'est pas un pointeur
+		if !ok {
+			// Sortir de la boucle
+			break
+		}
+		t = ptr.Elem()
+	}
+
+	// Extraire le Named type
+	named, ok := t.(*types.Named)
+	// Vérifier si c'est un Named type
+	if !ok {
+		// Pas un Named type
+		return ""
+	}
+
+	// Retour du nom
+	return named.Obj().Name()
+}
+
+// extractStructNameFromAST extrait le nom de struct depuis l'AST (fallback).
+// Supporte: (*S)(nil), S{}, new(S), &S{}
+//
+// Params:
+//   - expr: expression à analyser
+//
+// Returns:
+//   - string: nom de la struct ou vide
+func extractStructNameFromAST(expr ast.Expr) string {
+	// Vérification selon le type d'expression
+	switch e := expr.(type) {
+	// Pattern: (*S)(nil) ou new(S)
+	case *ast.CallExpr:
+		// Extraction depuis CallExpr
+		return extractFromCallExpr(e)
+	// Pattern: &S{}
+	case *ast.UnaryExpr:
+		// Extraction depuis UnaryExpr
+		return extractFromUnaryExpr(e)
+	// Pattern: S{}
+	case *ast.CompositeLit:
+		// Extraction depuis CompositeLit
+		return extractFromCompositeLit(e)
+	}
+
+	// Type non supporté
+	return ""
+}
+
+// extractFromCallExpr extrait le nom depuis (*S)(nil) ou new(S).
+//
+// Params:
+//   - call: CallExpr à analyser
+//
+// Returns:
+//   - string: nom de la struct ou vide
+func extractFromCallExpr(call *ast.CallExpr) string {
+	// Vérifier si c'est new(S)
+	if funIdent, ok := call.Fun.(*ast.Ident); ok && funIdent.Name == "new" {
+		// Extraire l'argument
+		if len(call.Args) == 1 {
+			// Vérifier si l'argument est un identifiant
+			if argIdent, ok := call.Args[0].(*ast.Ident); ok {
+				// Retour du nom de la struct
+				return argIdent.Name
+			}
+		}
+		// Pas d'argument valide
+		return ""
+	}
+
+	// Pattern: (*S)(nil) - le Fun est (*S)
+	parenExpr, ok := call.Fun.(*ast.ParenExpr)
+	// Vérifier si c'est une ParenExpr
+	if !ok {
+		// Pas une ParenExpr
+		return ""
+	}
+
+	// Extraire *S depuis les parenthèses
+	starExpr, ok := parenExpr.X.(*ast.StarExpr)
+	// Vérifier si c'est une StarExpr
+	if !ok {
+		// Pas une StarExpr
+		return ""
+	}
+
+	// Extraire le nom de la struct
+	structIdent, ok := starExpr.X.(*ast.Ident)
+	// Vérifier si c'est un identifiant
+	if ok {
+		// Retour du nom de la struct
+		return structIdent.Name
+	}
+
+	// Pattern non reconnu
+	return ""
+}
+
+// extractFromUnaryExpr extrait le nom depuis &S{}.
+//
+// Params:
+//   - unary: UnaryExpr à analyser
+//
+// Returns:
+//   - string: nom de la struct ou vide
+func extractFromUnaryExpr(unary *ast.UnaryExpr) string {
+	// Vérifier si c'est &
+	if unary.Op.String() != "&" {
+		// Pas &
+		return ""
+	}
+
+	// L'opérande doit être un CompositeLit
+	compLit, ok := unary.X.(*ast.CompositeLit)
+	// Vérifier si c'est un CompositeLit
+	if !ok {
+		// Pas un CompositeLit
+		return ""
+	}
+
+	// Extraire depuis le CompositeLit
+	return extractFromCompositeLit(compLit)
+}
+
+// extractFromCompositeLit extrait le nom depuis S{}.
+//
+// Params:
+//   - comp: CompositeLit à analyser
+//
+// Returns:
+//   - string: nom de la struct ou vide
+func extractFromCompositeLit(comp *ast.CompositeLit) string {
+	// Le type doit être un identifiant
+	ident, ok := comp.Type.(*ast.Ident)
+	// Vérifier si c'est un identifiant
+	if ok {
+		// Retour du nom
+		return ident.Name
+	}
+
+	// Pas trouvé
+	return ""
+}
+
+// hasMatchingInterfaceCheck vérifie si un compile-time check couvre toutes les méthodes.
+//
+// Params:
+//   - s: struct avec méthodes
+//   - checks: liste des interface checks
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si une interface check couvre toutes les méthodes
+func hasMatchingInterfaceCheck(s structWithMethods, checks []interfaceCheck, pass *analysis.Pass) bool {
+	// Parcourir les checks
+	for _, check := range checks {
+		// Vérifier si c'est pour cette struct
+		if check.structName != s.name {
+			// Pas pour cette struct
+			continue
+		}
+
+		// Vérifier que l'interface couvre toutes les méthodes publiques
+		if interfaceCoversAllPublicMethods(check.interfaceType, s.methods, pass) {
+			// Interface valide
+			return true
+		}
+	}
+
+	// Aucun check valide trouvé
+	return false
+}
+
+// interfaceCoversAllPublicMethods vérifie si l'interface couvre toutes les méthodes.
+//
+// Params:
+//   - iface: type interface
+//   - methods: méthodes publiques de la struct
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si toutes les méthodes sont couvertes
+func interfaceCoversAllPublicMethods(iface *types.Interface, methods []shared.MethodSignature, _pass *analysis.Pass) bool {
+	// Chaque méthode publique de la struct doit être dans l'interface
+	for _, m := range methods {
+		found := false
+		// Parcourir les méthodes de l'interface
+		for ifaceMethod := range iface.Methods() {
+			// Comparer les noms
+			if ifaceMethod.Name() == m.Name {
+				// Comparer les signatures
+				if signaturesMatch(ifaceMethod, m) {
+					found = true
+					// Sortir de la boucle
+					break
+				}
+			}
+		}
+
+		// Si une méthode n'est pas trouvée, l'interface ne couvre pas tout
+		if !found {
+			// Retour false
+			return false
+		}
+	}
+
+	// Toutes les méthodes sont couvertes
+	return true
+}
+
+// signaturesMatch compare une méthode d'interface avec une signature de struct.
+//
+// Params:
+//   - ifaceMethod: méthode de l'interface
+//   - structMethod: signature de la méthode de struct
+//
+// Returns:
+//   - bool: true si les signatures correspondent
+func signaturesMatch(ifaceMethod *types.Func, structMethod shared.MethodSignature) bool {
+	// Obtenir la signature
+	sig, ok := ifaceMethod.Type().(*types.Signature)
+	// Vérifier si c'est une Signature
+	if !ok {
+		// Pas une signature
+		return false
+	}
+
+	// Comparer les paramètres
+	paramsStr := formatTypeTuple(sig.Params())
+	// Comparer les résultats
+	resultsStr := formatTypeTuple(sig.Results())
+
+	// Comparer avec la struct method
+	return paramsStr == structMethod.ParamsStr && resultsStr == structMethod.ResultsStr
+}
+
+// formatTypeTuple formate un tuple de types en string.
+//
+// Params:
+//   - tuple: tuple de types
+//
+// Returns:
+//   - string: représentation string
+func formatTypeTuple(tuple *types.Tuple) string {
+	// Si nil ou vide
+	if tuple == nil || tuple.Len() == 0 {
+		// Retour vide
+		return ""
+	}
+
+	var parts []string
+	// Parcourir les éléments
+	for v := range tuple.Variables() {
+		parts = append(parts, types.TypeString(v.Type(), nil))
+	}
+
+	// Retour de la string jointe
+	return strings.Join(parts, ",")
 }
 
 // collectInterfaces collecte toutes les interfaces et leurs méthodes.
@@ -174,119 +592,6 @@ func collectInterfaces(file *ast.File, pass *analysis.Pass) map[string][]shared.
 
 	// Retour de la map
 	return interfaces
-}
-
-// collectInterfaceChecks collecte les compile-time interface checks.
-// Pattern: var _ InterfaceName = (*StructName)(nil)
-// Cela prouve que la struct implémente une interface (même cross-package).
-//
-// Params:
-//   - file: fichier AST
-//
-// Returns:
-//   - map[string]bool: noms des structs avec interface check
-func collectInterfaceChecks(file *ast.File) map[string]bool {
-	checks := make(map[string]bool, interfaceChecksCap)
-
-	// Parcourir les déclarations
-	for _, decl := range file.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
-		// Vérifier si c'est une déclaration var
-		if !ok || genDecl.Tok != token.VAR {
-			// Continuer l'itération
-			continue
-		}
-
-		// Parcourir les specs
-		for _, spec := range genDecl.Specs {
-			valueSpec, ok := spec.(*ast.ValueSpec)
-			// Vérifier si c'est une ValueSpec
-			if !ok {
-				// Continuer l'itération
-				continue
-			}
-
-			// Vérifier le pattern: var _ Interface = (*Struct)(nil)
-			structName := extractStructFromInterfaceCheck(valueSpec)
-			// Ajouter à la map si trouvé
-			if structName != "" {
-				checks[structName] = true
-			}
-		}
-	}
-
-	// Retour de la map
-	return checks
-}
-
-// extractStructFromInterfaceCheck extrait le nom de struct d'un interface check.
-// Pattern: var _ Interface = (*Struct)(nil)
-//
-// Params:
-//   - spec: ValueSpec à analyser
-//
-// Returns:
-//   - string: nom de la struct ou vide si pas trouvé
-func extractStructFromInterfaceCheck(spec *ast.ValueSpec) string {
-	// Vérifier que le nom est "_"
-	if len(spec.Names) != 1 || spec.Names[0].Name != "_" {
-		// Pas le pattern attendu
-		return ""
-	}
-
-	// Vérifier qu'il y a une valeur
-	if len(spec.Values) != 1 {
-		// Pas de valeur
-		return ""
-	}
-
-	// La valeur doit être une conversion: (*Struct)(nil)
-	callExpr, ok := spec.Values[0].(*ast.CallExpr)
-	// Vérifier si c'est un CallExpr
-	if !ok {
-		// Pas une conversion
-		return ""
-	}
-
-	// Extraire le type de la conversion
-	return extractStructNameFromConversion(callExpr)
-}
-
-// extractStructNameFromConversion extrait le nom de struct d'une conversion.
-// Pattern: (*Struct)(nil)
-//
-// Params:
-//   - callExpr: expression de conversion
-//
-// Returns:
-//   - string: nom de la struct ou vide si pas trouvé
-func extractStructNameFromConversion(callExpr *ast.CallExpr) string {
-	// Le Fun doit être un type pointeur
-	parenExpr, ok := callExpr.Fun.(*ast.ParenExpr)
-	// Vérifier si c'est une expression parenthésée
-	if !ok {
-		// Pas le pattern attendu
-		return ""
-	}
-
-	// Le type dans les parenthèses doit être *Struct
-	starExpr, ok := parenExpr.X.(*ast.StarExpr)
-	// Vérifier si c'est un pointeur
-	if !ok {
-		// Pas un pointeur
-		return ""
-	}
-
-	// Extraire le nom de la struct
-	ident, ok := starExpr.X.(*ast.Ident)
-	// Vérifier si c'est un identifiant
-	if ok {
-		// Retour du nom
-		return ident.Name
-	}
-
-	// Retour vide
-	return ""
 }
 
 // extractStructNameFromReceiver extrait le nom de la struct depuis le receiver.
