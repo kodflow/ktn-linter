@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -125,10 +126,12 @@ func reportAssignSideEffect(pass *analysis.Pass, stmt *ast.AssignStmt, funcName 
 				// Continuer si lazy load valide
 				continue
 			}
+			msg, _ := messages.Get(ruleCodeFunc007)
 			pass.Reportf(
 				stmt.Pos(),
-				"KTN-FUNC-007: le getter '%s' ne doit pas modifier l'état (assignation détectée)",
-				funcName,
+				"%s: %s",
+				ruleCodeFunc007,
+				msg.Format(config.Get().Verbose, funcName, "assignation détectée"),
 			)
 		}
 	}
@@ -143,10 +146,12 @@ func reportAssignSideEffect(pass *analysis.Pass, stmt *ast.AssignStmt, funcName 
 func reportIncDecSideEffect(pass *analysis.Pass, stmt *ast.IncDecStmt, funcName string) {
 	// Vérifier si side effect sur champ
 	if hasSideEffect(stmt.X) {
+		msg, _ := messages.Get(ruleCodeFunc007)
 		pass.Reportf(
 			stmt.Pos(),
-			"KTN-FUNC-007: le getter '%s' ne doit pas modifier l'état (incrémentation/décrémentation détectée)",
-			funcName,
+			"%s: %s",
+			ruleCodeFunc007,
+			msg.Format(config.Get().Verbose, funcName, "incrémentation/décrémentation détectée"),
 		)
 	}
 }

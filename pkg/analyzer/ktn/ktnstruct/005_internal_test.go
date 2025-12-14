@@ -107,7 +107,7 @@ type User struct {
 			}
 
 			// Call checkFieldOrder
-			checkFieldOrder(pass, typeSpec, structType)
+			checkFieldOrder(pass, structType)
 
 			if errorReported != tt.expectError {
 				t.Errorf("expected error: %v, got error: %v", tt.expectError, errorReported)

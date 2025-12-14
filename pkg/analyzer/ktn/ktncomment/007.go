@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -150,14 +151,26 @@ func checkFunctionBody(pass *analysis.Pass, body *ast.BlockStmt) {
 func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
 	// Vérification que le if a un commentaire (règle stricte, pas d'exception)
 	if !hasCommentBefore(pass, stmt.Pos()) {
-		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le bloc 'if' doit avoir un commentaire explicatif")
+		msg, _ := messages.Get(ruleCodeComment007)
+		pass.Reportf(
+			stmt.Pos(),
+			"%s: %s",
+			ruleCodeComment007,
+			msg.Format(config.Get().Verbose, "if"),
+		)
 	}
 
 	// Check else clause
 	if stmt.Else != nil {
 		// For else, check if there's a comment before or at the start of the else block
 		if !hasCommentBeforeOrInside(pass, stmt.Else) {
-			pass.Reportf(stmt.Else.Pos(), "KTN-COMMENT-007: le bloc 'else' doit avoir un commentaire explicatif")
+			msg, _ := messages.Get(ruleCodeComment007)
+			pass.Reportf(
+				stmt.Else.Pos(),
+				"%s: %s",
+				ruleCodeComment007,
+				msg.Format(config.Get().Verbose, "else"),
+			)
 		}
 	}
 }
@@ -168,7 +181,13 @@ func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
 func checkSwitchStmt(pass *analysis.Pass, stmt *ast.SwitchStmt) {
 	// Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) {
-		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le bloc 'switch' doit avoir un commentaire explicatif")
+		msg, _ := messages.Get(ruleCodeComment007)
+		pass.Reportf(
+			stmt.Pos(),
+			"%s: %s",
+			ruleCodeComment007,
+			msg.Format(config.Get().Verbose, "switch"),
+		)
 	}
 
 	// Check each case
@@ -179,7 +198,13 @@ func checkSwitchStmt(pass *analysis.Pass, stmt *ast.SwitchStmt) {
 			if clause, ok := caseClause.(*ast.CaseClause); ok {
 				// Vérification de la condition
 				if !hasCommentBefore(pass, clause.Pos()) {
-					pass.Reportf(clause.Pos(), "KTN-COMMENT-007: chaque 'case' doit avoir un commentaire explicatif")
+					msg, _ := messages.Get(ruleCodeComment007)
+					pass.Reportf(
+						clause.Pos(),
+						"%s: %s",
+						ruleCodeComment007,
+						msg.Format(config.Get().Verbose, "case"),
+					)
 				}
 			}
 		}
@@ -192,7 +217,13 @@ func checkSwitchStmt(pass *analysis.Pass, stmt *ast.SwitchStmt) {
 func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
 	// Vérification de la condition
 	if !hasCommentBefore(pass, stmt.Pos()) {
-		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le bloc 'switch' (type) doit avoir un commentaire explicatif")
+		msg, _ := messages.Get(ruleCodeComment007)
+		pass.Reportf(
+			stmt.Pos(),
+			"%s: %s",
+			ruleCodeComment007,
+			msg.Format(config.Get().Verbose, "switch (type)"),
+		)
 	}
 
 	// Check each case
@@ -203,7 +234,13 @@ func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
 			if clause, ok := caseClause.(*ast.CaseClause); ok {
 				// Vérification de la condition
 				if !hasCommentBefore(pass, clause.Pos()) {
-					pass.Reportf(clause.Pos(), "KTN-COMMENT-007: chaque 'case' doit avoir un commentaire explicatif")
+					msg, _ := messages.Get(ruleCodeComment007)
+					pass.Reportf(
+						clause.Pos(),
+						"%s: %s",
+						ruleCodeComment007,
+						msg.Format(config.Get().Verbose, "case"),
+					)
 				}
 			}
 		}
@@ -218,7 +255,13 @@ func checkTypeSwitchStmt(pass *analysis.Pass, stmt *ast.TypeSwitchStmt) {
 func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
 	// Vérification que la boucle a un commentaire
 	if !hasCommentBefore(pass, stmt.Pos()) {
-		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le bloc de boucle doit avoir un commentaire explicatif")
+		msg, _ := messages.Get(ruleCodeComment007)
+		pass.Reportf(
+			stmt.Pos(),
+			"%s: %s",
+			ruleCodeComment007,
+			msg.Format(config.Get().Verbose, "for/range"),
+		)
 	}
 }
 
@@ -230,7 +273,13 @@ func checkLoopStmt(pass *analysis.Pass, stmt ast.Node) {
 func checkReturnStmt(pass *analysis.Pass, stmt *ast.ReturnStmt) {
 	// Vérification que le return a un commentaire (règle stricte, pas d'exception)
 	if !hasCommentBefore(pass, stmt.Pos()) && !hasInlineComment(pass, stmt.Pos()) {
-		pass.Reportf(stmt.Pos(), "KTN-COMMENT-007: le 'return' doit avoir un commentaire explicatif")
+		msg, _ := messages.Get(ruleCodeComment007)
+		pass.Reportf(
+			stmt.Pos(),
+			"%s: %s",
+			ruleCodeComment007,
+			msg.Format(config.Get().Verbose, "return"),
+		)
 	}
 }
 

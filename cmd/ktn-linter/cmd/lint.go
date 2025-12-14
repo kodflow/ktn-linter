@@ -98,6 +98,9 @@ func runLint(_cmd *cobra.Command, args []string) {
 	// Charger la configuration si spécifiée
 	loadConfiguration()
 
+	// Propager le flag verbose dans la config pour les règles
+	config.Get().Verbose = Verbose
+
 	pkgs := loadPackages(args)
 	diagnostics := runAnalyzers(pkgs)
 

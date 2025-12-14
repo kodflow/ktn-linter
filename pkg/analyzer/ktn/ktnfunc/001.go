@@ -6,6 +6,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -49,13 +50,15 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 		}
 	}
 
+	msg, _ := messages.Get(ruleCodeFunc001)
 	// Signaler si plus d'une erreur en retour
 	if len(errorPositions) > 1 {
 		// Rapport d'erreur pour erreurs multiples
 		pass.Reportf(
 			funcType.Results.Pos(),
-			"KTN-FUNC-001: la fonction a %d types error en retour, ce qui est inhabituel",
-			len(errorPositions),
+			"%s: %s",
+			ruleCodeFunc001,
+			msg.Format(config.Get().Verbose, len(errorPositions)),
 		)
 	}
 
@@ -69,9 +72,9 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 				// Rapport d'erreur pour position incorrecte
 				pass.Reportf(
 					funcType.Results.Pos(),
-					"KTN-FUNC-001: l'erreur doit être en dernière position dans les valeurs de retour (trouvée en position %d sur %d)",
-					pos+1,
-					len(results),
+					"%s: %s",
+					ruleCodeFunc001,
+					msg.Format(config.Get().Verbose, pos+1),
 				)
 				// Retour après premier rapport
 				return

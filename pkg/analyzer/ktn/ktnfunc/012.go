@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -99,12 +100,12 @@ func runFunc012(pass *analysis.Pass) (any, error) {
 		// If more than maxUnnamed returns and has unnamed returns, report error
 		if returnCount > maxUnnamed && hasUnnamedReturns {
 			// Rapport d'erreur pour named returns requis
+			msg, _ := messages.Get(ruleCodeFunc012)
 			pass.Reportf(
 				funcDecl.Type.Results.Pos(),
-				"KTN-FUNC-012: la fonction '%s' a %d valeurs de retour et doit utiliser des named returns (max %d sans noms)",
-				funcName,
-				returnCount,
-				maxUnnamed,
+				"%s: %s",
+				ruleCodeFunc012,
+				msg.Format(config.Get().Verbose, funcName, returnCount, maxUnnamed),
 			)
 		}
 	})

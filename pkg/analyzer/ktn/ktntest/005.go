@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -74,10 +75,12 @@ func runTest005(pass *analysis.Pass) (any, error) {
 		// Vérifier si le test utilise le pattern table-driven (obligatoire)
 		if !hasTableDrivenPattern(funcDecl) {
 			// Pas de table-driven test
+			msg, _ := messages.Get(ruleCodeTest005)
 			pass.Reportf(
 				funcDecl.Pos(),
-				"KTN-TEST-005: le test '%s' DOIT utiliser le pattern table-driven",
-				funcDecl.Name.Name,
+				"%s: %s",
+				ruleCodeTest005,
+				msg.Format(config.Get().Verbose, funcDecl.Name.Name),
 			)
 		}
 	})

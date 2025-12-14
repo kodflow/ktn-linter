@@ -6,11 +6,11 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -422,63 +422,23 @@ func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result *fileAnaly
 	}
 }
 
-// formatFuncList formate une liste de fonctions pour l'affichage.
-//
-// Params:
-//   - funcs: liste des noms de fonctions
-//
-// Returns:
-//   - string: liste formatée (ex: "Func1, Func2, Func3, ...")
-func formatFuncList(funcs []string) string {
-	// Vérification si vide
-	if len(funcs) == 0 {
-		// Retour chaîne vide
-		return ""
-	}
-
-	// Vérification si dans limite
-	if len(funcs) <= maxFuncsToDisplay {
-		// Retour liste complète
-		return strings.Join(funcs, ", ")
-	}
-
-	// Calculer restantes
-	displayed := funcs[:maxFuncsToDisplay]
-	remaining := len(funcs) - maxFuncsToDisplay
-	// Retour liste tronquée
-	return strings.Join(displayed, ", ") + ", ... (+" + formatCount(remaining) + ")"
-}
-
-// formatCount formate un nombre pour l'affichage.
-//
-// Params:
-//   - count: nombre à formater
-//
-// Returns:
-//   - string: nombre formaté
-func formatCount(count int) string {
-	// Retour du nombre sous forme de string
-	return strconv.Itoa(count)
-}
-
 // reportMixedFunctionsIssues reporte les problèmes pour fichiers avec fonctions publiques ET privées.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
-//   - result: pointeur vers le résultat de l'analyse
+//   - _result: pointeur vers le résultat de l'analyse (inutilisé avec messages package)
 //   - status: état des fichiers de test
-func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
-	// Formater les listes de fonctions
-	pubList := formatFuncList(result.publicFuncs)
-	privList := formatFuncList(result.privateFuncs)
-
+func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, _result *fileAnalysisResult, status testFilesStatus) {
+	msg, _ := messages.Get(ruleCodeTest008)
 	// Vérification absence totale fichiers
 	if !status.hasInternal && !status.hasExternal {
 		// Signaler manque des deux
+		bothFiles := status.fileBase + "_external_test.go et " + status.fileBase + "_internal_test.go"
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient %d fonction(s) publique(s) [%s] et %d fonction(s) privée(s) [%s]. Créez '%s_external_test.go' (black-box, package xxx_test) ET '%s_internal_test.go' (white-box, package xxx)",
-			status.baseName, len(result.publicFuncs), pubList, len(result.privateFuncs), privList, status.fileBase, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, bothFiles))
 		// Retour après signalement
 		return
 	}
@@ -487,15 +447,17 @@ func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, result *fil
 	if !status.hasInternal {
 		// Signaler manque internal
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient %d fonction(s) privée(s) [%s] → créez '%s_internal_test.go' (white-box, package xxx) pour les tester",
-			status.baseName, len(result.privateFuncs), privList, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, status.fileBase+"_internal_test.go"))
 	}
 	// Vérification fichier external manquant
 	if !status.hasExternal {
 		// Signaler manque external
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient %d fonction(s) publique(s) [%s] → créez '%s_external_test.go' (black-box, package xxx_test) pour les tester",
-			status.baseName, len(result.publicFuncs), pubList, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, status.fileBase+"_external_test.go"))
 	}
 }
 
@@ -504,18 +466,17 @@ func reportMixedFunctionsIssues(pass *analysis.Pass, file *ast.File, result *fil
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
-//   - result: pointeur vers le résultat de l'analyse
+//   - _result: pointeur vers le résultat de l'analyse (inutilisé avec messages package)
 //   - status: état des fichiers de test
-func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
-	// Formater la liste de fonctions
-	pubList := formatFuncList(result.publicFuncs)
-
+func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, _result *fileAnalysisResult, status testFilesStatus) {
 	// Vérification absence external
 	if !status.hasExternal {
 		// Signaler manque external
+		msg, _ := messages.Get(ruleCodeTest008)
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient UNIQUEMENT %d fonction(s) publique(s) [%s] → créez '%s_external_test.go' (black-box, package xxx_test)",
-			status.baseName, len(result.publicFuncs), pubList, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, status.fileBase+"_external_test.go"))
 		// Retour après signalement
 		return
 	}
@@ -523,9 +484,11 @@ func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAna
 	// Vérification internal superflu
 	if status.hasInternal {
 		// Signaler fichier superflu
+		msg, _ := messages.Get(ruleCodeTest008)
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient UNIQUEMENT des fonctions publiques [%s]. Supprimez '%s_internal_test.go' (inutile) et utilisez '%s_external_test.go'",
-			status.baseName, pubList, status.fileBase, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, status.fileBase+"_internal_test.go"))
 	}
 }
 
@@ -534,18 +497,17 @@ func reportPublicOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAna
 // Params:
 //   - pass: contexte d'analyse
 //   - file: fichier AST
-//   - result: pointeur vers le résultat de l'analyse
+//   - _result: pointeur vers le résultat de l'analyse (inutilisé avec messages package)
 //   - status: état des fichiers de test
-func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAnalysisResult, status testFilesStatus) {
-	// Formater la liste de fonctions
-	privList := formatFuncList(result.privateFuncs)
-
+func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, _result *fileAnalysisResult, status testFilesStatus) {
 	// Vérification absence internal
 	if !status.hasInternal {
 		// Signaler manque internal
+		msg, _ := messages.Get(ruleCodeTest008)
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient UNIQUEMENT %d fonction(s) privée(s) [%s] → créez '%s_internal_test.go' (white-box, package xxx)",
-			status.baseName, len(result.privateFuncs), privList, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, status.fileBase+"_internal_test.go"))
 		// Retour après signalement
 		return
 	}
@@ -553,9 +515,11 @@ func reportPrivateOnlyIssues(pass *analysis.Pass, file *ast.File, result *fileAn
 	// Vérification external superflu
 	if status.hasExternal {
 		// Signaler fichier superflu
+		msg, _ := messages.Get(ruleCodeTest008)
 		pass.Reportf(file.Name.Pos(),
-			"KTN-TEST-008: '%s' contient UNIQUEMENT des fonctions privées [%s]. Supprimez '%s_external_test.go' (inutile) et utilisez '%s_internal_test.go'",
-			status.baseName, privList, status.fileBase, status.fileBase)
+			"%s: %s",
+			ruleCodeTest008,
+			msg.Format(config.Get().Verbose, status.baseName, status.fileBase+"_external_test.go"))
 	}
 }
 

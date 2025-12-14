@@ -20,6 +20,7 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
@@ -523,10 +524,12 @@ func reportUnused(pass *analysis.Pass, interfaces map[string]*ast.TypeSpec, used
 		}
 
 		// Report interface privée non utilisée
+		msg, _ := messages.Get(ruleCode)
 		pass.Reportf(
 			typeSpec.Pos(),
-			"KTN-INTERFACE-001: interface privée '%s' non utilisée, à supprimer",
-			name,
+			"%s: %s",
+			ruleCode,
+			msg.Format(config.Get().Verbose, name),
 		)
 	}
 }

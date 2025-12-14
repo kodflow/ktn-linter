@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -330,12 +331,12 @@ func checkGetterFieldMismatch(pass *analysis.Pass, method methodInfo, structInfo
 
 	// Si le nom ne correspond pas, signaler
 	if method.name != expectedGetter && !strings.HasPrefix(method.name, "Get") {
+		msg, _ := messages.Get(ruleCodeStruct007)
 		pass.Reportf(
 			method.funcDecl.Pos(),
-			"KTN-STRUCT-007: getter '%s()' retourne le champ '%s', devrait être nommé '%s()'",
-			method.name,
-			fieldName,
-			expectedGetter,
+			"%s: %s",
+			ruleCodeStruct007,
+			msg.Format(config.Get().Verbose, method.name, expectedGetter, fieldName),
 		)
 	}
 }

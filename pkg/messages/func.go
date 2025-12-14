@@ -1,4 +1,5 @@
-// Func messages for KTN-FUNC rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains FUNC rule messages.
 package messages
 
 // registerFuncMessages enregistre les messages FUNC.
@@ -78,20 +79,21 @@ ACTIONS:
 
 	Register(Message{
 		Code:  "KTN-FUNC-005",
-		Short: "fonction '%s' trop longue (%d lignes > 35). Extraire en sous-fonctions",
-		Verbose: `PROBLÈME: La fonction '%s' fait %d lignes (max 35).
+		Short: "fonction '%s' trop complexe (%d statements > %d). Extraire en sous-fonctions",
+		Verbose: `PROBLÈME: La fonction '%s' contient %d statements (max %d).
 
 POURQUOI: Les fonctions courtes:
   - Sont plus faciles à tester
   - Ont un nom qui documente leur rôle
   - Sont réutilisables
 
-CALCUL: Seul le code compté (hors commentaires/blancs).
+CALCUL: Compte les instructions logiques (1 appel multi-ligne = 1 statement).
+Les blocs if/for/switch ajoutent leurs statements internes.
 
 SOLUTION: Extraire en sous-fonctions nommées.
 
 EXEMPLE:
-  // Avant: 50 lignes
+  // Avant: trop de statements
   func ProcessOrder(order Order) error { ... }
 
   // Après: fonctions courtes

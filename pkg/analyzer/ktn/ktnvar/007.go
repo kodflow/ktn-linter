@@ -7,6 +7,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -97,9 +98,12 @@ func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
 			if assign.Tok == token.ADD_ASSIGN {
 				// Check if string concatenation
 				if isStringConcatenation(pass, assign) {
+					msg, _ := messages.Get(ruleCodeVar007)
 					pass.Reportf(
 						assign.Pos(),
-						"KTN-VAR-007: utiliser strings.Builder au lieu de += pour concaténer des strings dans une boucle",
+						"%s: %s",
+						ruleCodeVar007,
+						msg.Format(config.Get().Verbose),
 					)
 				}
 			}

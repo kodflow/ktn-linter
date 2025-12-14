@@ -57,50 +57,6 @@ func TestIsSnakeCase(t *testing.T) {
 	}
 }
 
-// TestSnakeToCamel teste la fonction snakeToCamel.
-//
-// Params:
-//   - t: contexte de test
-func TestSnakeToCamel(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "conversion simple snake_case",
-			input:    "my_variable",
-			expected: "myVariable",
-		},
-		{
-			name:     "conversion multiple underscores",
-			input:    "my_long_variable_name",
-			expected: "myLongVariableName",
-		},
-		{
-			name:     "pas d'underscore retourne inchangé",
-			input:    "simple",
-			expected: "simple",
-		},
-		{
-			name:     "underscore en fin ignoré",
-			input:    "my_var_",
-			expected: "myVar",
-		},
-	}
-
-	// Itération sur les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := snakeToCamel(tt.input)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("snakeToCamel(%q) = %q, expected %q", tt.input, result, tt.expected)
-			}
-		})
-	}
-}
-
 // TestCheckVar018Names teste la fonction checkVar018Names.
 //
 // Params:

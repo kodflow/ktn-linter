@@ -6,6 +6,7 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -105,10 +106,12 @@ func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 				continue
 			}
 
+			msg, _ := messages.Get(ruleCodeVar002)
 			pass.Reportf(
 				name.Pos(),
-				"KTN-VAR-002: la variable '%s' doit avoir un type explicite (format: var name type ou var name type = value)",
-				name.Name,
+				"%s: %s",
+				ruleCodeVar002,
+				msg.Format(config.Get().Verbose, name.Name),
 			)
 		}
 	}

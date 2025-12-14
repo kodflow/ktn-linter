@@ -7,6 +7,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -111,10 +112,12 @@ func checkShortVarDecl(pass *analysis.Pass, n ast.Node) {
 		// Vérification du shadowing
 		if isShadowing(pass, ident) {
 			// Rapport d'erreur
+			msg, _ := messages.Get(ruleCodeVar011)
 			pass.Reportf(
 				assign.Pos(),
-				"KTN-VAR-011: shadowing de la variable '%s' avec ':=' au lieu de '='",
-				ident.Name,
+				"%s: %s",
+				ruleCodeVar011,
+				msg.Format(config.Get().Verbose, ident.Name),
 			)
 		}
 	}

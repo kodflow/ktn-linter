@@ -6,6 +6,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -169,11 +170,12 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 			// Vérification si le champ est un mutex
 			if mutexType := getMutexType(pass, field.Type); mutexType != "" {
 				// Rapport d'erreur seulement si le type a des receivers par valeur
+				msg, _ := messages.Get(ruleCodeVar017)
 				pass.Reportf(
 					field.Pos(),
-					"KTN-VAR-017: struct contient %s, utiliser *%s pour éviter les copies",
-					mutexType,
-					typeSpec.Name.Name,
+					"%s: %s",
+					ruleCodeVar017,
+					msg.Format(config.Get().Verbose, mutexType),
 				)
 			}
 		}
@@ -222,14 +224,14 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 		if !isPointerType(recv.Type) {
 			// Vérification si le type contient un mutex
 			if hasMutex(pass, recv.Type) {
-				typeName := getTypeName(recv.Type)
 				mutexType := getMutexTypeFromType(pass, recv.Type)
 
+				msg, _ := messages.Get(ruleCodeVar017)
 				pass.Reportf(
 					recv.Pos(),
-					"KTN-VAR-017: receiver par valeur copie %s, utiliser *%s",
-					mutexType,
-					typeName,
+					"%s: %s",
+					ruleCodeVar017,
+					msg.Format(config.Get().Verbose, mutexType),
 				)
 			}
 		}
@@ -272,11 +274,12 @@ func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
 			if mutexType := getMutexType(pass, param.Type); mutexType != "" {
 				// Vérification de la condition
 				if !isPointerType(param.Type) {
+					msg, _ := messages.Get(ruleCodeVar017)
 					pass.Reportf(
 						param.Pos(),
-						"KTN-VAR-017: passage de %s par valeur, utiliser *%s",
-						mutexType,
-						mutexType,
+						"%s: %s",
+						ruleCodeVar017,
+						msg.Format(config.Get().Verbose, mutexType),
 					)
 				}
 			}
@@ -320,9 +323,12 @@ func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
 			if i < len(assign.Lhs) {
 				// Vérification de la condition
 				if isMutexCopy(pass, assign.Lhs[i], rhs) {
+					msg, _ := messages.Get(ruleCodeVar017)
 					pass.Reportf(
 						assign.Pos(),
-						"KTN-VAR-017: copie de sync.Mutex détectée, utiliser un pointeur",
+						"%s: %s",
+						ruleCodeVar017,
+						msg.Format(config.Get().Verbose),
 					)
 				}
 			}

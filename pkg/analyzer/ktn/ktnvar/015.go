@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -76,9 +77,12 @@ func runVar015(pass *analysis.Pass) (any, error) {
 		}
 
 		// Signaler l'erreur
+		msg, _ := messages.Get(ruleCodeVar015)
 		pass.Reportf(
 			callExpr.Pos(),
-			"KTN-VAR-015: préallouer la map avec une capacité (make(map[K]V, capacity))",
+			"%s: %s",
+			ruleCodeVar015,
+			msg.Format(config.Get().Verbose),
 		)
 	})
 

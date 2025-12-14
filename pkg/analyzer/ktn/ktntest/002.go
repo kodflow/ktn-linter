@@ -8,6 +8,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -70,11 +71,12 @@ func runTest002(pass *analysis.Pass) (any, error) {
 		// Vérification de la condition
 		if actualPkg != expectedPkg && !isExemptPackage(actualPkg) {
 			// Signaler l'erreur
+			msg, _ := messages.Get(ruleCodeTest002)
 			pass.Reportf(
 				f.Name.Pos(),
-				"KTN-TEST-002: le fichier de test doit utiliser le package '%s' au lieu de '%s'",
-				expectedPkg,
-				actualPkg,
+				"%s: %s",
+				ruleCodeTest002,
+				msg.Format(config.Get().Verbose, actualPkg, expectedPkg),
 			)
 		}
 	}

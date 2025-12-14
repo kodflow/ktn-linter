@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -91,13 +92,12 @@ func runTest007(pass *analysis.Pass) (any, error) {
 		}
 
 		// Signaler l'erreur
+		msg, _ := messages.Get(ruleCodeTest007)
 		pass.Reportf(
 			callExpr.Pos(),
-			"KTN-TEST-007: utilisation de %s.%s() interdite. "+
-				"Les tests doivent être corrigés ou supprimés, jamais skippés. "+
-				"Un test skippé est une dette technique cachée",
-			ident.Name,
-			methodName,
+			"%s: %s",
+			ruleCodeTest007,
+			msg.Format(config.Get().Verbose, ident.Name+"."+methodName+"()"),
 		)
 	})
 

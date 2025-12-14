@@ -9,6 +9,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -111,11 +112,12 @@ func runTest012(pass *analysis.Pass) (any, error) {
 		// Vérification si passthrough
 		if isPassthroughTest(funcDecl) {
 			// Signaler test passthrough
+			msg, _ := messages.Get(ruleCodeTest012)
 			pass.Reportf(
 				funcDecl.Pos(),
-				"KTN-TEST-012: le test '%s' est un test passthrough - "+
-					"il ne contient pas d'assertions et ne teste rien de substantiel",
-				funcDecl.Name.Name,
+				"%s: %s",
+				ruleCodeTest012,
+				msg.Format(config.Get().Verbose, funcDecl.Name.Name),
 			)
 		}
 	})

@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -83,12 +84,12 @@ func runFunc011(pass *analysis.Pass) (any, error) {
 		// Vérification de la condition
 		if complexity > maxComplexity {
 			// Rapport d'erreur pour complexité excessive
+			msg, _ := messages.Get(ruleCodeFunc011)
 			pass.Reportf(
 				funcDecl.Name.Pos(),
-				"KTN-FUNC-011: la fonction '%s' a une complexité cyclomatique de %d (max: %d)",
-				funcName,
-				complexity,
-				maxComplexity,
+				"%s: %s",
+				ruleCodeFunc011,
+				msg.Format(config.Get().Verbose, funcName, complexity, maxComplexity),
 			)
 		}
 	})

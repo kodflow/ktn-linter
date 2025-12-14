@@ -12,6 +12,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -327,42 +328,14 @@ func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
 		meta.Visibility = shared.VisPrivate
 	}
 
-	// Use shared helper for suggested name
-	suggestedTestName := shared.BuildSuggestedTestName(meta)
-
-	// Extraire le nom de base du fichier
-	baseName := filepath.Base(fn.filename)
-	fileBase := strings.TrimSuffix(baseName, ".go")
-
-	// Déterminer le fichier et le type de test
-	suggestedTestFile, testType, funcType := getTestFileInfo(fn.isExported, fileBase)
-
 	// Reporter la fonction non testée
+	msg, _ := messages.Get(ruleCodeTest004)
 	pass.Reportf(
 		fn.pos,
-		"KTN-TEST-004: fonction %s '%s' n'a pas de test correspondant. Créer un test nommé '%s' dans le fichier '%s' (%s)",
-		funcType, fn.name, suggestedTestName, suggestedTestFile, testType,
+		"%s: %s",
+		ruleCodeTest004,
+		msg.Format(config.Get().Verbose, fn.name),
 	)
-}
-
-// getTestFileInfo retourne les informations sur le fichier de test.
-//
-// Params:
-//   - isExported: true si fonction publique
-//   - fileBase: nom de base du fichier
-//
-// Returns:
-//   - string: nom du fichier de test suggéré
-//   - string: type de test
-//   - string: type de fonction
-func getTestFileInfo(isExported bool, fileBase string) (string, string, string) {
-	// Vérification si publique
-	if isExported {
-		// Retour info test external
-		return fileBase + "_external_test.go", "black-box testing avec package xxx_test", "publique"
-	}
-	// Retour info test internal
-	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
 }
 
 // findPackageDir trouve le répertoire du package à partir des fichiers du pass.

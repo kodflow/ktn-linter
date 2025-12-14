@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -101,9 +102,12 @@ func checkVarGrouping(pass *analysis.Pass, varGroups []shared.DeclGroup) {
 
 	// Report all var groups except the first as scattered
 	for i := 1; i < len(varGroups); i++ {
+		msg, _ := messages.Get(ruleCodeVar013)
 		pass.Reportf(
 			varGroups[i].Pos,
-			"KTN-VAR-013: les variables doivent être groupées ensemble dans un seul bloc var ()",
+			"%s: %s",
+			ruleCodeVar013,
+			msg.Format(config.Get().Verbose),
 		)
 	}
 }

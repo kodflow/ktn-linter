@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -127,8 +128,11 @@ func checkMakeCallForByteSlice(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Report the issue
+	msg, _ := messages.Get(ruleCodeVar010)
 	pass.Reportf(
 		call.Pos(),
-		"KTN-VAR-010: buffer créé dans boucle, utiliser sync.Pool",
+		"%s: %s",
+		ruleCodeVar010,
+		msg.Format(config.Get().Verbose),
 	)
 }

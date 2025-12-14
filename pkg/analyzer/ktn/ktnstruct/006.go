@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -75,7 +76,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier les champs privés avec tags
-		checkPrivateFieldsWithTags(pass, structType, typeSpec.Name.Name)
+		checkPrivateFieldsWithTags(pass, structType)
 	})
 
 	// Retour de la fonction
@@ -87,8 +88,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - structType: type de la struct
-//   - structName: nom de la struct
-func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType, structName string) {
+func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType) {
 	// Vérifier si la struct a des champs
 	if structType.Fields == nil {
 		// Retour anticipé
@@ -106,11 +106,12 @@ func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType,
 		for _, name := range field.Names {
 			// Un champ est privé si son nom commence par une minuscule
 			if isPrivateField(name.Name) {
+				msg, _ := messages.Get(ruleCodeStruct006)
 				pass.Reportf(
 					field.Pos(),
-					"KTN-STRUCT-006: le champ privé '%s' du DTO '%s' ne devrait pas avoir de tag (tag ignoré lors de la sérialisation)",
-					name.Name,
-					structName,
+					"%s: %s",
+					ruleCodeStruct006,
+					msg.Format(config.Get().Verbose, name.Name),
 				)
 			}
 		}

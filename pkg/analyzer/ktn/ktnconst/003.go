@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -80,10 +81,12 @@ func runConst003(pass *analysis.Pass) (any, error) {
 
 				// Check if the constant name follows Go conventions
 				if !isValidGoConstantName(constName) {
+					msg, _ := messages.Get(ruleCodeConst003)
 					pass.Reportf(
 						name.Pos(),
-						"KTN-CONST-003: la constante '%s' doit utiliser CamelCase (PascalCase si exportée: MaxSize, camelCase si privée: maxSize)",
-						constName,
+						"%s: %s",
+						ruleCodeConst003,
+						msg.Format(cfg.Verbose, constName),
 					)
 				}
 			}

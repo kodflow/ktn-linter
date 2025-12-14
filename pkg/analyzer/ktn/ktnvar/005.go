@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -63,9 +64,12 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
+	msg, _ := messages.Get(ruleCodeVar005)
 	pass.Reportf(
 		call.Pos(),
-		"KTN-VAR-005: utiliser make([]T, 0, capacity) au lieu de make([]T, length) pour éviter les zéro-values inutiles avant append",
+		"%s: %s",
+		ruleCodeVar005,
+		msg.Format(config.Get().Verbose),
 	)
 }
 

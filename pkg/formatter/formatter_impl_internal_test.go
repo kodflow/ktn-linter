@@ -261,8 +261,8 @@ func TestExtractCode(t *testing.T) {
 	}
 }
 
-// TestExtractMessage tests the functionality of the corresponding implementation.
-func TestExtractMessage(t *testing.T) {
+// TestExtractMessageWithOptions tests the functionality of the corresponding implementation.
+func TestExtractMessageWithOptions(t *testing.T) {
 	tests := []struct {
 		name     string
 		message  string
@@ -337,9 +337,9 @@ func TestExtractMessage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractMessage(tt.message)
+			got := extractMessageWithOptions(tt.message, true)
 			if got != tt.expected {
-				t.Errorf("extractMessage(%q) = %q, want %q", tt.message, got, tt.expected)
+				t.Errorf("extractMessageWithOptions(%q, true) = %q, want %q", tt.message, got, tt.expected)
 			}
 		})
 	}
@@ -1100,6 +1100,63 @@ func TestFormatterImpl_getSymbol(t *testing.T) {
 			symbol := formatter.getSymbol(tt.code)
 			if symbol == "" {
 				t.Errorf("Expected non-empty symbol for %s", tt.code)
+			}
+		})
+	}
+}
+
+// TestPrintMessage tests the printMessage method.
+func TestPrintMessage(t *testing.T) {
+	tests := []struct {
+		name      string
+		message   string
+		withColor bool
+		wantLen   int
+	}{
+		{
+			name:      "single line with color",
+			message:   "test message",
+			withColor: true,
+			wantLen:   10,
+		},
+		{
+			name:      "single line without color",
+			message:   "test message",
+			withColor: false,
+			wantLen:   10,
+		},
+		{
+			name:      "multi line with color",
+			message:   "first line\nsecond line\nthird line",
+			withColor: true,
+			wantLen:   20,
+		},
+		{
+			name:      "multi line without color",
+			message:   "first line\nsecond line\nthird line",
+			withColor: false,
+			wantLen:   20,
+		},
+		{
+			name:      "empty message",
+			message:   "",
+			withColor: true,
+			wantLen:   0,
+		},
+	}
+
+	// Itération sur les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			f := &formatterImpl{
+				writer:  &buf,
+				noColor: !tt.withColor,
+			}
+			f.printMessage(tt.message, tt.withColor)
+			// Vérification longueur minimale
+			if buf.Len() < tt.wantLen {
+				t.Errorf("printMessage() output len = %d, want >= %d", buf.Len(), tt.wantLen)
 			}
 		})
 	}

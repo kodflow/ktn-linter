@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -117,9 +118,12 @@ func checkLoopsForStringConversion(pass *analysis.Pass, body *ast.BlockStmt) {
 		// Vérification des conversions dans la boucle
 		if hasStringConversion(loop) {
 			// Rapport d'erreur
+			msg, _ := messages.Get(ruleCodeVar012)
 			pass.Reportf(
 				loop.Pos(),
-				"KTN-VAR-012: conversion string() répétée dans la boucle, préallouer hors de la boucle",
+				"%s: %s",
+				ruleCodeVar012,
+				msg.Format(config.Get().Verbose),
 			)
 		}
 
@@ -261,11 +265,12 @@ func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt, maxConve
 		// Vérification de la condition
 		if count > maxConversions {
 			pos := firstPos[varName]
+			msg, _ := messages.Get(ruleCodeVar012)
 			pass.Reportf(
 				pos.Pos(),
-				"KTN-VAR-012: conversion string() de '%s' répétée %d fois, stocker dans une variable",
-				varName,
-				count,
+				"%s: %s",
+				ruleCodeVar012,
+				msg.Format(config.Get().Verbose, count),
 			)
 		}
 	}

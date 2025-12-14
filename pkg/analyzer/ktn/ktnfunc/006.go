@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -106,12 +107,12 @@ func analyzeFuncParams(pass *analysis.Pass, n ast.Node, maxParams int) {
 
 	// Vérification de la condition
 	if paramCount > maxParams {
+		msg, _ := messages.Get(ruleCodeFunc006)
 		pass.Reportf(
 			pos.Pos(),
-			"KTN-FUNC-006: la fonction '%s' a %d paramètres (max: %d)",
-			name,
-			paramCount,
-			maxParams,
+			"%s: %s",
+			ruleCodeFunc006,
+			msg.Format(config.Get().Verbose, name, paramCount, maxParams),
 		)
 	}
 }

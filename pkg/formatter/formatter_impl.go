@@ -341,16 +341,20 @@ func (f *formatterImpl) printMessage(message string, withColor bool) {
 	lines := strings.Split(message, "\n")
 	// Afficher la première ligne avec le préfixe
 	if withColor {
+		// Cas avec couleurs activées
 		fmt.Fprintf(f.writer, "  %s▶%s %s\n", Blue, Reset, lines[0])
 	} else {
+		// Cas sans couleurs
 		fmt.Fprintf(f.writer, "  Issue: %s\n", lines[0])
 	}
 	// Afficher les lignes suivantes en verbose avec indentation
 	for _, line := range lines[1:] {
 		// Indenter les lignes suivantes
 		if withColor {
+			// Cas avec couleurs
 			fmt.Fprintf(f.writer, "    %s%s%s\n", Gray, line, Reset)
 		} else {
+			// Cas sans couleurs
 			fmt.Fprintf(f.writer, "    %s\n", line)
 		}
 	}

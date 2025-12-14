@@ -6,6 +6,7 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -74,10 +75,12 @@ func runConst001(pass *analysis.Pass) (any, error) {
 				if len(valueSpec.Values) > 0 {
 					// Itération sur les éléments
 					for _, name := range valueSpec.Names {
+						msg, _ := messages.Get(ruleCodeConst001)
 						pass.Reportf(
 							name.Pos(),
-							"KTN-CONST-001: la constante '%s' doit avoir un type explicite",
-							name.Name,
+							"%s: %s",
+							ruleCodeConst001,
+							msg.Format(cfg.Verbose, name.Name),
 						)
 					}
 				}

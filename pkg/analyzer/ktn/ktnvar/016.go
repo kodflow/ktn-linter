@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -175,8 +176,11 @@ func isSmallConstant(size int64, maxArraySize int64) bool {
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
 func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
+	msg, _ := messages.Get(ruleCodeVar016)
 	pass.Reportf(
 		call.Pos(),
-		"KTN-VAR-016: préférer [N]T (array) au lieu de make([]T, N)",
+		"%s: %s",
+		ruleCodeVar016,
+		msg.Format(config.Get().Verbose),
 	)
 }

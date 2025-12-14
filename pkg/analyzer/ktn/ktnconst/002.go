@@ -6,6 +6,7 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -222,9 +223,12 @@ func checkScatteredConstBlocks(pass *analysis.Pass, decls *fileDeclarations) {
 		}
 
 		// Report violation
+		msg, _ := messages.Get(ruleCodeConst002)
 		pass.Reportf(
 			constPos,
-			"KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc",
+			"%s: %s",
+			ruleCodeConst002,
+			msg.Format(config.Get().Verbose),
 		)
 	}
 }
@@ -248,9 +252,12 @@ func checkConstBeforeVar(pass *analysis.Pass, decls *fileDeclarations) {
 	for _, constPos := range decls.constDecls {
 		// Const after var is a violation
 		if constPos > firstVarPos {
+			msg, _ := messages.Get(ruleCodeConst002)
 			pass.Reportf(
 				constPos,
-				"KTN-CONST-002: les constantes doivent être placées avant les déclarations var",
+				"%s: %s",
+				ruleCodeConst002,
+				msg.Format(config.Get().Verbose),
 			)
 		}
 	}
@@ -289,9 +296,12 @@ func checkConstBeforeType(pass *analysis.Pass, decls *fileDeclarations) {
 			}
 
 			// Report violation
+			msg, _ := messages.Get(ruleCodeConst002)
 			pass.Reportf(
 				constPos,
-				"KTN-CONST-002: les constantes doivent être placées avant les déclarations type",
+				"%s: %s",
+				ruleCodeConst002,
+				msg.Format(config.Get().Verbose),
 			)
 		}
 	}
@@ -316,9 +326,12 @@ func checkConstBeforeFunc(pass *analysis.Pass, decls *fileDeclarations) {
 	for _, constPos := range decls.constDecls {
 		// Const after func is a violation
 		if constPos > firstFuncPos {
+			msg, _ := messages.Get(ruleCodeConst002)
 			pass.Reportf(
 				constPos,
-				"KTN-CONST-002: les constantes doivent être placées avant les déclarations func",
+				"%s: %s",
+				ruleCodeConst002,
+				msg.Format(config.Get().Verbose),
 			)
 		}
 	}

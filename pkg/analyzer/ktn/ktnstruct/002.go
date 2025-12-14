@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -84,12 +85,12 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 			expectedName := "New" + s.name
 			// Vérification si constructeur trouvé
 			if !hasConstructor(constructors, expectedName, s.name) {
+				msg, _ := messages.Get(ruleCodeStruct002)
 				pass.Reportf(
 					s.node.Pos(),
-					"KTN-STRUCT-002: la struct exportée '%s' a %d méthode(s) publique(s) mais aucun constructeur '%s'. Créer une fonction constructeur dans le même fichier",
-					s.name,
-					len(s.methods),
-					expectedName,
+					"%s: %s",
+					ruleCodeStruct002,
+					msg.Format(config.Get().Verbose, s.name, expectedName),
 				)
 			}
 		}

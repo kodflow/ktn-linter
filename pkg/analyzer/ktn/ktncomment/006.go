@@ -8,6 +8,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -93,10 +94,12 @@ func runComment006(pass *analysis.Pass) (any, error) {
 
 		// Check if documentation exists
 		if doc == nil || len(doc.List) == 0 {
+			msg, _ := messages.Get(ruleCodeComment006)
 			pass.Reportf(
 				funcDecl.Name.Pos(),
-				"KTN-COMMENT-006: la fonction '%s' doit avoir une documentation",
-				funcDecl.Name.Name,
+				"%s: %s",
+				ruleCodeComment006,
+				msg.Format(config.Get().Verbose, "documentation", funcDecl.Name.Name),
 			)
 			// Retour de la fonction
 			return
@@ -114,7 +117,8 @@ func runComment006(pass *analysis.Pass) (any, error) {
 		if err != "" {
 			pass.Reportf(
 				funcDecl.Name.Pos(),
-				"KTN-COMMENT-006: %s",
+				"%s: %s",
+				ruleCodeComment006,
 				err,
 			)
 		}

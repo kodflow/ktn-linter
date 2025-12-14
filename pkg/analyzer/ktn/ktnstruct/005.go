@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -78,7 +79,7 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier l'ordre des champs
-		checkFieldOrder(pass, typeSpec, structType)
+		checkFieldOrder(pass, structType)
 	})
 
 	// Retour de la fonction
@@ -89,11 +90,8 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - typeSpec: spécification de type
 //   - structType: type struct
-//
-// Returns: aucun
-func checkFieldOrder(pass *analysis.Pass, typeSpec *ast.TypeSpec, structType *ast.StructType) {
+func checkFieldOrder(pass *analysis.Pass, structType *ast.StructType) {
 	// Si pas de champs
 	if structType.Fields == nil || len(structType.Fields.List) == 0 {
 		// Retour anticipé
@@ -115,15 +113,16 @@ func checkFieldOrder(pass *analysis.Pass, typeSpec *ast.TypeSpec, structType *as
 
 	// Vérifier l'ordre
 	foundPrivate := false
+	msg, _ := messages.Get(ruleCodeStruct005)
 	// Parcourir les champs
 	for _, f := range fields {
 		// Si on trouve un champ exporté après un privé
 		if f.exported && foundPrivate {
 			pass.Reportf(
 				f.pos,
-				"KTN-STRUCT-005: le champ exporté '%s' de la struct '%s' doit être placé avant les champs privés",
-				f.name,
-				typeSpec.Name.Name,
+				"%s: %s",
+				ruleCodeStruct005,
+				msg.Format(config.Get().Verbose),
 			)
 		}
 

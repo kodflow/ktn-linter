@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -93,11 +94,12 @@ func checkVar018Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 
 		// Check for snake_case (lowercase with underscores)
 		if isSnakeCase(varName) {
+			msg, _ := messages.Get(ruleCodeVar018)
 			pass.Reportf(
 				name.Pos(),
-				"KTN-VAR-018: la variable '%s' utilise snake_case. Utilisez camelCase (ex: '%s')",
-				varName,
-				snakeToCamel(varName),
+				"%s: %s",
+				ruleCodeVar018,
+				msg.Format(config.Get().Verbose, varName),
 			)
 		}
 	}
@@ -131,35 +133,3 @@ func isSnakeCase(name string) bool {
 	return false
 }
 
-// snakeToCamel convertit un nom snake_case en camelCase.
-//
-// Params:
-//   - name: nom en snake_case
-//
-// Returns:
-//   - string: nom en camelCase
-func snakeToCamel(name string) string {
-	parts := strings.Split(name, "_")
-	// Handle empty or single part
-	if len(parts) <= 1 {
-		// Retour de la fonction
-		return name
-	}
-
-	// Build camelCase name using strings.Builder
-	var builder strings.Builder
-	builder.WriteString(strings.ToLower(parts[0]))
-	// Iterate over remaining parts
-	for i := 1; i < len(parts); i++ {
-		part := parts[i]
-		// Skip empty parts
-		if len(part) == 0 {
-			continue
-		}
-		// Capitalize first letter
-		builder.WriteString(strings.ToUpper(part[:1]) + strings.ToLower(part[1:]))
-	}
-
-	// Return camelCase name
-	return builder.String()
-}

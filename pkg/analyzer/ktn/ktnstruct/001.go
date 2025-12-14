@@ -9,6 +9,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
@@ -131,12 +132,12 @@ func checkStructs(pass *analysis.Pass, structs []structWithMethods, localInterfa
 		}
 
 		// Aucune interface ne couvre toutes les méthodes
+		msg, _ := messages.Get(ruleCodeStruct001)
 		pass.Reportf(
 			s.node.Pos(),
-			"KTN-STRUCT-001: la struct '%s' a %d méthode(s) publique(s) mais aucune interface ne les reprend toutes. Solutions: (1) créer une interface locale, ou (2) ajouter 'var _ Interface = (*%s)(nil)' pour une interface cross-package",
-			s.name,
-			len(s.methods),
-			s.name,
+			"%s: %s",
+			ruleCodeStruct001,
+			msg.Format(config.Get().Verbose, s.name, len(s.methods), s.name),
 		)
 	}
 }

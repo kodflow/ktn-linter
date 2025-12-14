@@ -47,50 +47,6 @@ func Test_extractCode(t *testing.T) {
 	}
 }
 
-// Test_extractMessage tests the extractMessage function.
-//
-// Params:
-//   - t: testing context
-func Test_extractMessage(t *testing.T) {
-	tests := []struct {
-		name    string
-		message string
-		want    string
-	}{
-		{
-			name:    "message with brackets",
-			message: "[KTN-VAR-001] test message",
-			want:    "test message",
-		},
-		{
-			name:    "message with colon",
-			message: "KTN-VAR-001: test message",
-			want:    "test message",
-		},
-		{
-			name:    "message with newline",
-			message: "KTN-VAR-001: first line\nsecond line",
-			want:    "first line",
-		},
-		{
-			name:    "plain message",
-			message: "plain message",
-			want:    "plain message",
-		},
-	}
-
-	// Iteration over table-driven tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := extractMessage(tt.message)
-			// Check result matches expectation
-			if got != tt.want {
-				t.Errorf("extractMessage(%q) = %q, want %q", tt.message, got, tt.want)
-			}
-		})
-	}
-}
-
 // Test_groupByFile tests the groupByFile method.
 //
 // Params:

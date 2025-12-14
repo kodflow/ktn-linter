@@ -12,7 +12,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-
 // Test_runFunc005_disabled tests behavior when rule is disabled.
 func Test_runFunc005_disabled(t *testing.T) {
 	tests := []struct {
@@ -61,7 +60,7 @@ func Test_runFunc005_excludedFile(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
 					"KTN-FUNC-005": {
-						Enabled:       config.Bool(true),
+						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
 				},
@@ -128,81 +127,75 @@ func Test_runFunc005(t *testing.T) {
 	}
 }
 
-// Test_isLineToSkip tests the isLineToSkip private function.
-func Test_isLineToSkip(t *testing.T) {
-	tests := []struct {
-		name           string
-		trimmed        string
-		inBlockComment bool
-		want           bool
-	}{
-		{"empty line error case", "", false, true},
-		{"comment line error case", "// comment", false, true},
-		{"block comment start error case", "/* comment", false, true},
-		{"code line", "code", false, false},
-	}
-
-	// Exécution tests
-	for _, tt := range tests {
-		// Sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			inBlock := tt.inBlockComment
-			got := isLineToSkip(tt.trimmed, &inBlock)
-			// Vérification du résultat
-			if got != tt.want {
-				t.Errorf("isLineToSkip(%q) = %v, want %v", tt.trimmed, got, tt.want)
-			}
-		})
-	}
-}
-
-// Test_countPureCodeLines tests the countPureCodeLines private function.
-func Test_countPureCodeLines(t *testing.T) {
+// Test_countStatements tests the countStatements private function.
+func Test_countStatements(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
 		want int
 	}{
 		{
-			name: "simple code with comment",
+			name: "simple statements",
 			code: `package test
 func test() {
-	// This is a comment
-	x := 1
-}`,
-			want: 1,
-		},
-		{
-			name: "code with block comment",
-			code: `package test
-func test() {
-	/* This is
-	   a block comment */
 	x := 1
 	y := 2
+	z := 3
 }`,
-			want: 2,
+			want: 3,
 		},
 		{
-			name: "code with empty lines",
+			name: "multiline assignment counts as 1",
 			code: `package test
 func test() {
-	x := 1
-
-	y := 2
-
-}`,
-			want: 2,
-		},
-		{
-			name: "code with only braces",
-			code: `package test
-func test() {
-	{
-		x := 1
+	x := struct{
+		A int
+		B string
+		C float64
+	}{
+		A: 1,
+		B: "test",
+		C: 3.14,
 	}
 }`,
 			want: 1,
+		},
+		{
+			name: "if statement with body",
+			code: `package test
+func test() {
+	if true {
+		x := 1
+	}
+}`,
+			want: 2, // 1 for if + 1 for x := 1
+		},
+		{
+			name: "if-else statement",
+			code: `package test
+func test() {
+	if true {
+		x := 1
+	} else {
+		y := 2
+	}
+}`,
+			want: 3, // 1 for if + 1 for x + 1 for y
+		},
+		{
+			name: "for loop",
+			code: `package test
+func test() {
+	for i := 0; i < 10; i++ {
+		x := i
+	}
+}`,
+			want: 2, // 1 for for + 1 for x := i
+		},
+		{
+			name: "nil body returns 0",
+			code: "",
+			want: 0,
 		},
 	}
 
@@ -210,6 +203,17 @@ func test() {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
+			// Cas spécial pour nil body
+			if tt.code == "" {
+				result := countStatements(nil)
+				// Vérification du résultat
+				if result != tt.want {
+					t.Errorf("countStatements(nil) = %v, want %v", result, tt.want)
+				}
+				// Fin du test
+				return
+			}
+
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
 			// Vérification erreur parsing
@@ -236,20 +240,173 @@ func test() {
 				t.Fatal("Expected to find function with body")
 			}
 
-			// Créer un pass avec ReadFile
-			pass := &analysis.Pass{
-				Fset: fset,
-				ReadFile: func(filename string) ([]byte, error) {
-					// Retourner le code source
-					return []byte(tt.code), nil
-				},
-			}
-
-			// Appeler countPureCodeLines
-			result := countPureCodeLines(pass, funcDecl.Body)
+			// Appeler countStatements
+			result := countStatements(funcDecl.Body)
 			// Vérification du résultat
 			if result != tt.want {
-				t.Errorf("countPureCodeLines() = %v, want %v", result, tt.want)
+				t.Errorf("countStatements() = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+// Test_countStmtComplexity tests the countStmtComplexity private function.
+func Test_countStmtComplexity(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want int
+	}{
+		{
+			name: "switch with cases",
+			code: `package test
+func test() {
+	switch x {
+	case 1:
+		a := 1
+	case 2:
+		b := 2
+	default:
+		c := 3
+	}
+}`,
+			want: 7, // 1 switch + 3 cases + 3 statements
+		},
+		{
+			name: "range loop",
+			code: `package test
+func test() {
+	for _, v := range items {
+		process(v)
+	}
+}`,
+			want: 2, // 1 for range + 1 process call
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Trouver la fonction
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					// Assignation de la déclaration de fonction
+					funcDecl = fd
+					// Retour false pour arrêter
+					return false
+				}
+				// Retour true pour continuer
+				return true
+			})
+
+			// Vérifier que la fonction a été trouvée
+			if funcDecl == nil || funcDecl.Body == nil {
+				t.Fatal("Expected to find function with body")
+			}
+
+			// Appeler countStatements (qui utilise countStmtComplexity)
+			result := countStatements(funcDecl.Body)
+			// Vérification du résultat
+			if result != tt.want {
+				t.Errorf("countStatements() = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+// Test_countSwitchStmt tests the countSwitchStmt private function.
+func Test_countSwitchStmt(t *testing.T) {
+	tests := []struct {
+		name string
+		want int
+	}{
+		{
+			name: "nil body returns 1",
+			want: 1,
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			result := countSwitchStmt(nil)
+			// Vérification du résultat
+			if result != tt.want {
+				t.Errorf("countSwitchStmt(nil) = %v, want %v", result, tt.want)
+			}
+		})
+	}
+}
+
+// Test_countIfStmt tests the countIfStmt private function.
+func Test_countIfStmt(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want int
+	}{
+		{
+			name: "if-else-if chain",
+			code: `package test
+func test() {
+	if a {
+		x := 1
+	} else if b {
+		y := 2
+	} else {
+		z := 3
+	}
+}`,
+			want: 5, // 1 if + 1 x + 1 else if + 1 y + 1 z
+		},
+	}
+
+	// Exécution tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Trouver la fonction
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					// Assignation de la déclaration de fonction
+					funcDecl = fd
+					// Retour false pour arrêter
+					return false
+				}
+				// Retour true pour continuer
+				return true
+			})
+
+			// Vérifier que la fonction a été trouvée
+			if funcDecl == nil || funcDecl.Body == nil {
+				t.Fatal("Expected to find function with body")
+			}
+
+			// Appeler countStatements
+			result := countStatements(funcDecl.Body)
+			// Vérification du résultat
+			if result != tt.want {
+				t.Errorf("countStatements() = %v, want %v", result, tt.want)
 			}
 		})
 	}

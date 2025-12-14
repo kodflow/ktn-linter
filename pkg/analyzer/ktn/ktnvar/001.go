@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -84,10 +85,12 @@ func runVar001(pass *analysis.Pass) (any, error) {
 
 				// Check if the variable name uses SCREAMING_SNAKE_CASE (which is wrong for vars)
 				if isScreamingSnakeCase(varName) {
+					msg, _ := messages.Get(ruleCodeVar001)
 					pass.Reportf(
 						name.Pos(),
-						"KTN-VAR-001: la variable '%s' ne doit pas utiliser SCREAMING_SNAKE_CASE (réservé aux constantes). Utilisez camelCase pour les variables privées ou PascalCase pour les variables exportées",
-						varName,
+						"%s: %s",
+						ruleCodeVar001,
+						msg.Format(config.Get().Verbose, varName),
 					)
 				}
 			}

@@ -32,7 +32,7 @@ func main() {
 			name: "long inline comment",
 			code: `package test
 func main() {
-	x := 1 // ` + strings.Repeat("a", 81) + `
+	x := 1 // ` + strings.Repeat("a", 151) + `
 }`,
 			wantErrs: 1,
 		},
@@ -323,7 +323,7 @@ func Test_checkMultiLineComment(t *testing.T) {
 		},
 		{
 			name:     "multi-line with long line",
-			text:     "/* short line\n" + strings.Repeat("a", 85) + "\nshort line */",
+			text:     "/* short line\n" + strings.Repeat("a", 155) + "\nshort line */",
 			wantErrs: 1,
 		},
 		{
@@ -390,7 +390,7 @@ func Test_runComment001_ruleDisabled(t *testing.T) {
 
 			code := `package test
 			func main() {
-			x := 1 // ` + strings.Repeat("a", 100) + `
+			x := 1 // ` + strings.Repeat("a", 155) + `
 			}`
 
 			fset := token.NewFileSet()
@@ -464,7 +464,7 @@ func Test_runComment001_fileExcluded(t *testing.T) {
 
 			code := `package test
 			func main() {
-			x := 1 // ` + strings.Repeat("a", 100) + `
+			x := 1 // ` + strings.Repeat("a", 155) + `
 			}`
 
 			fset := token.NewFileSet()
@@ -658,7 +658,7 @@ func Test_runComment001_multiLineBlock(t *testing.T) {
 
 			code := `package test
 			func main() {
-			x := 1 /* ` + strings.Repeat("a", 85) + ` */
+			x := 1 /* ` + strings.Repeat("a", 155) + ` */
 			}`
 
 			fset := token.NewFileSet()
