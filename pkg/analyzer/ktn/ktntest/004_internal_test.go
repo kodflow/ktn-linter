@@ -233,57 +233,6 @@ func Test_BuildSuggestedTestName(t *testing.T) {
 	}
 }
 
-// Test_getTestFileInfo tests the getTestFileInfo private function.
-//
-// Params:
-//   - t: testing context
-func Test_getTestFileInfo(t *testing.T) {
-	tests := []struct {
-		name         string
-		isExported   bool
-		fileBase     string
-		wantFile     string
-		wantType     string
-		wantFuncType string
-	}{
-		{
-			name:         "public function",
-			isExported:   true,
-			fileBase:     "myfile",
-			wantFile:     "myfile_external_test.go",
-			wantType:     "black-box testing avec package xxx_test",
-			wantFuncType: "publique",
-		},
-		{
-			name:         "private function",
-			isExported:   false,
-			fileBase:     "myfile",
-			wantFile:     "myfile_internal_test.go",
-			wantType:     "white-box testing avec package xxx",
-			wantFuncType: "privée",
-		},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotFile, gotType, gotFuncType := getTestFileInfo(tt.isExported, tt.fileBase)
-			// Vérification du fichier
-			if gotFile != tt.wantFile {
-				t.Errorf("getTestFileInfo() file = %q, want %q", gotFile, tt.wantFile)
-			}
-			// Vérification du type
-			if gotType != tt.wantType {
-				t.Errorf("getTestFileInfo() type = %q, want %q", gotType, tt.wantType)
-			}
-			// Vérification du type de fonction
-			if gotFuncType != tt.wantFuncType {
-				t.Errorf("getTestFileInfo() funcType = %q, want %q", gotFuncType, tt.wantFuncType)
-			}
-		})
-	}
-}
-
 // Test_buildTestNames tests the buildTestNames private function.
 //
 // Params:

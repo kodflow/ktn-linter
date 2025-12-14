@@ -80,8 +80,6 @@ func runFunc002(pass *analysis.Pass) (any, error) {
 //   - pass: contexte d'analyse
 //   - funcDecl: fonction à analyser
 func analyzeContextParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
-	funcName := funcDecl.Name.Name
-
 	// Vérification de la condition
 	if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) == 0 {
 		// Retour de la fonction
@@ -113,10 +111,10 @@ func analyzeContextParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	}
 
 	// Report multiple contexts
-	reportMultipleContexts(pass, funcDecl, funcName, contextCount)
+	reportMultipleContexts(pass, funcDecl, contextCount)
 
 	// Report misplaced context
-	reportMisplacedContext(pass, funcDecl, funcName, contextParamIndex)
+	reportMisplacedContext(pass, funcDecl, contextParamIndex)
 }
 
 // reportMultipleContexts reports if function has multiple context.Context params.
@@ -124,9 +122,8 @@ func analyzeContextParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 // Params:
 //   - pass: contexte d'analyse
 //   - funcDecl: fonction à analyser
-//   - funcName: nom de la fonction
 //   - contextCount: nombre de contextes
-func reportMultipleContexts(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, contextCount int) {
+func reportMultipleContexts(pass *analysis.Pass, funcDecl *ast.FuncDecl, contextCount int) {
 	// Signaler si plus d'un context.Context
 	if contextCount > 1 {
 		// Rapport d'erreur pour contextes multiples
@@ -145,9 +142,8 @@ func reportMultipleContexts(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNam
 // Params:
 //   - pass: contexte d'analyse
 //   - funcDecl: fonction à analyser
-//   - funcName: nom de la fonction
 //   - contextParamIndex: position du contexte
-func reportMisplacedContext(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcName string, contextParamIndex int) {
+func reportMisplacedContext(pass *analysis.Pass, funcDecl *ast.FuncDecl, contextParamIndex int) {
 	// If there's a context parameter and it's not first, report error
 	if contextParamIndex > 0 {
 		// Rapport d'erreur pour position incorrecte

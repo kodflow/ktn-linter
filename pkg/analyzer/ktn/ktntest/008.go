@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -421,45 +420,6 @@ func reportTestFileIssues(pass *analysis.Pass, file *ast.File, result *fileAnaly
 		// Reporter problèmes privés
 		reportPrivateOnlyIssues(pass, file, result, status)
 	}
-}
-
-// formatFuncList formate une liste de fonctions pour l'affichage.
-//
-// Params:
-//   - funcs: liste des noms de fonctions
-//
-// Returns:
-//   - string: liste formatée (ex: "Func1, Func2, Func3, ...")
-func formatFuncList(funcs []string) string {
-	// Vérification si vide
-	if len(funcs) == 0 {
-		// Retour chaîne vide
-		return ""
-	}
-
-	// Vérification si dans limite
-	if len(funcs) <= maxFuncsToDisplay {
-		// Retour liste complète
-		return strings.Join(funcs, ", ")
-	}
-
-	// Calculer restantes
-	displayed := funcs[:maxFuncsToDisplay]
-	remaining := len(funcs) - maxFuncsToDisplay
-	// Retour liste tronquée
-	return strings.Join(displayed, ", ") + ", ... (+" + formatCount(remaining) + ")"
-}
-
-// formatCount formate un nombre pour l'affichage.
-//
-// Params:
-//   - count: nombre à formater
-//
-// Returns:
-//   - string: nombre formaté
-func formatCount(count int) string {
-	// Retour du nombre sous forme de string
-	return strconv.Itoa(count)
 }
 
 // reportMixedFunctionsIssues reporte les problèmes pour fichiers avec fonctions publiques ET privées.

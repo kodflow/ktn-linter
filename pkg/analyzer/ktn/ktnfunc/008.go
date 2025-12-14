@@ -141,13 +141,13 @@ func (ctx *paramCheckContext) checkParam008(paramName string, paramPos token.Pos
 	// Générer le message approprié selon le contexte
 	if ctx.ignoredVars[paramName] {
 		// Pattern _ = param détecté
-		reportUnusedWithBypass(ctx.pass, paramPos, paramName, ctx.ifaceName)
+		reportUnusedWithBypass(ctx.pass, paramPos, paramName)
 		// Retour après signalement
 		return
 	}
 
 	// Paramètre non utilisé et non ignoré
-	reportUnusedParam(ctx.pass, paramPos, paramName, ctx.ifaceName)
+	reportUnusedParam(ctx.pass, paramPos, paramName)
 }
 
 // reportUnusedWithBypass signale un paramètre avec contournement _ = param.
@@ -156,8 +156,7 @@ func (ctx *paramCheckContext) checkParam008(paramName string, paramPos token.Pos
 //   - pass: contexte d'analyse
 //   - pos: position du paramètre
 //   - name: nom du paramètre
-//   - ifaceName: nom de l'interface (vide si fonction native)
-func reportUnusedWithBypass(pass *analysis.Pass, pos token.Pos, name string, ifaceName string) {
+func reportUnusedWithBypass(pass *analysis.Pass, pos token.Pos, name string) {
 	msg, _ := messages.Get(ruleCodeFunc008)
 	// Rapport du paramètre contourné avec _ mais non utilisé
 	pass.Reportf(
@@ -174,8 +173,7 @@ func reportUnusedWithBypass(pass *analysis.Pass, pos token.Pos, name string, ifa
 //   - pass: contexte d'analyse
 //   - pos: position du paramètre
 //   - name: nom du paramètre
-//   - ifaceName: nom de l'interface (vide si fonction native)
-func reportUnusedParam(pass *analysis.Pass, pos token.Pos, name string, ifaceName string) {
+func reportUnusedParam(pass *analysis.Pass, pos token.Pos, name string) {
 	msg, _ := messages.Get(ruleCodeFunc008)
 	// Rapport du paramètre non utilisé
 	pass.Reportf(

@@ -343,7 +343,7 @@ func Test_reportMultipleContexts_withMultiple(t *testing.T) {
 			}
 
 			// Appeler reportMultipleContexts avec contextCount = 2
-			reportMultipleContexts(pass, funcDecl, "badFunc", 2)
+			reportMultipleContexts(pass, funcDecl, 2)
 
 			// Vérifier qu'une erreur a été rapportée
 			if !reported {
@@ -401,7 +401,7 @@ func Test_reportMultipleContexts_withSingle(t *testing.T) {
 			}
 
 			// Appeler reportMultipleContexts avec contextCount = 1
-			reportMultipleContexts(pass, funcDecl, "goodFunc", 1)
+			reportMultipleContexts(pass, funcDecl, 1)
 
 		})
 	}

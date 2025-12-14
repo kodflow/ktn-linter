@@ -79,7 +79,7 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier l'ordre des champs
-		checkFieldOrder(pass, typeSpec, structType)
+		checkFieldOrder(pass, structType)
 	})
 
 	// Retour de la fonction
@@ -90,11 +90,8 @@ func runStruct005(pass *analysis.Pass) (any, error) {
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - typeSpec: spécification de type
 //   - structType: type struct
-//
-// Returns: aucun
-func checkFieldOrder(pass *analysis.Pass, typeSpec *ast.TypeSpec, structType *ast.StructType) {
+func checkFieldOrder(pass *analysis.Pass, structType *ast.StructType) {
 	// Si pas de champs
 	if structType.Fields == nil || len(structType.Fields.List) == 0 {
 		// Retour anticipé

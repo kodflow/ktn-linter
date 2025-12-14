@@ -338,26 +338,6 @@ func reportMissingTest(pass *analysis.Pass, fn funcInfo) {
 	)
 }
 
-// getTestFileInfo retourne les informations sur le fichier de test.
-//
-// Params:
-//   - isExported: true si fonction publique
-//   - fileBase: nom de base du fichier
-//
-// Returns:
-//   - string: nom du fichier de test suggéré
-//   - string: type de test
-//   - string: type de fonction
-func getTestFileInfo(isExported bool, fileBase string) (string, string, string) {
-	// Vérification si publique
-	if isExported {
-		// Retour info test external
-		return fileBase + "_external_test.go", "black-box testing avec package xxx_test", "publique"
-	}
-	// Retour info test internal
-	return fileBase + "_internal_test.go", "white-box testing avec package xxx", "privée"
-}
-
 // findPackageDir trouve le répertoire du package à partir des fichiers du pass.
 //
 // Params:

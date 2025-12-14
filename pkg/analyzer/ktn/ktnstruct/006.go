@@ -76,7 +76,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 		}
 
 		// Vérifier les champs privés avec tags
-		checkPrivateFieldsWithTags(pass, structType, typeSpec.Name.Name)
+		checkPrivateFieldsWithTags(pass, structType)
 	})
 
 	// Retour de la fonction
@@ -88,8 +88,7 @@ func runStruct006(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - structType: type de la struct
-//   - structName: nom de la struct
-func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType, structName string) {
+func checkPrivateFieldsWithTags(pass *analysis.Pass, structType *ast.StructType) {
 	// Vérifier si la struct a des champs
 	if structType.Fields == nil {
 		// Retour anticipé

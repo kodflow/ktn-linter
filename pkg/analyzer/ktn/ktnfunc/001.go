@@ -50,8 +50,8 @@ func validateErrorInReturns(pass *analysis.Pass, funcType *ast.FuncType) {
 		}
 	}
 
-	// Signaler si plus d'une erreur en retour
 	msg, _ := messages.Get(ruleCodeFunc001)
+	// Signaler si plus d'une erreur en retour
 	if len(errorPositions) > 1 {
 		// Rapport d'erreur pour erreurs multiples
 		pass.Reportf(

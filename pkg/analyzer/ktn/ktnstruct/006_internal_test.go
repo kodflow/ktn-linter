@@ -113,7 +113,7 @@ type User struct {
 			ast.Inspect(f, func(n ast.Node) bool {
 				if ts, ok := n.(*ast.TypeSpec); ok {
 					if st, ok := ts.Type.(*ast.StructType); ok {
-						checkPrivateFieldsWithTags(pass, st, ts.Name.Name)
+						checkPrivateFieldsWithTags(pass, st)
 					}
 				}
 				return true
@@ -138,7 +138,7 @@ type User struct {
 		}
 		// Create a StructType with nil Fields
 		structType := &ast.StructType{Fields: nil}
-		checkPrivateFieldsWithTags(pass, structType, "TestStruct")
+		checkPrivateFieldsWithTags(pass, structType)
 	})
 }
 

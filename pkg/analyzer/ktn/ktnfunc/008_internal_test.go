@@ -167,7 +167,7 @@ func Test_reportUnusedWithBypass(t *testing.T) {
 			}
 
 			// Appeler reportUnusedWithBypass
-			reportUnusedWithBypass(pass, token.Pos(1), tt.paramName, tt.ifaceName)
+			reportUnusedWithBypass(pass, token.Pos(1), tt.paramName)
 		})
 	}
 }
@@ -203,7 +203,7 @@ func Test_reportUnusedParam(t *testing.T) {
 			}
 
 			// Appeler reportUnusedParam
-			reportUnusedParam(pass, token.Pos(1), tt.paramName, tt.ifaceName)
+			reportUnusedParam(pass, token.Pos(1), tt.paramName)
 		})
 	}
 }

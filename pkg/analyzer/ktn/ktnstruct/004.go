@@ -73,8 +73,8 @@ func runStruct004(pass *analysis.Pass) (any, error) {
 				continue
 			}
 
-			// Itération sur les structs (à partir de la 2ème)
 			msg, _ := messages.Get(ruleCodeStruct004)
+			// Itération sur les structs (à partir de la 2ème)
 			for i := 1; i < len(structs); i++ {
 				s := structs[i]
 				pass.Reportf(

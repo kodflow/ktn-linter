@@ -69,18 +69,6 @@ func extractCode(message string) string {
 	return "UNKNOWN"
 }
 
-// extractMessage extrait le message principal en supprimant le code et les exemples.
-//
-// Params:
-//   - message: message brut du diagnostic
-//
-// Returns:
-//   - string: message nettoyé sans le code KTN
-func extractMessage(message string) string {
-	// Extraction avec troncature (mode normal)
-	return extractMessageWithOptions(message, true)
-}
-
 // extractMessageWithOptions extrait le message avec options.
 //
 // Params:

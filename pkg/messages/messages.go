@@ -7,7 +7,11 @@ import (
 	"strings"
 )
 
+// initialRegistryCapacity capacité initiale du registre de messages.
+const initialRegistryCapacity int = 100
+
 // Message contient les messages court et verbose pour une règle.
+// Chaque règle KTN a un message short (affiché par défaut) et un message verbose (avec --verbose).
 type Message struct {
 	Code    string
 	Short   string
@@ -70,7 +74,7 @@ func (m Message) FormatVerbose(args ...any) string {
 }
 
 // registry stocke tous les messages par code de règle.
-var registry = make(map[string]Message)
+var registry map[string]Message = make(map[string]Message, initialRegistryCapacity)
 
 // Register enregistre un message pour une règle.
 //
