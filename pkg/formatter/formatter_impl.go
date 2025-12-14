@@ -187,9 +187,8 @@ func (f *formatterImpl) groupByFile(fset *token.FileSet, diagnostics []analysis.
 		pos := fset.Position(diag.Pos)
 		filename := pos.Filename
 
-		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		// Ignorer uniquement les fichiers du cache Go (pas les projets utilisateur dans /tmp)
 		if strings.Contains(filename, "/.cache/go-build/") ||
-			strings.Contains(filename, "/tmp/") ||
 			strings.Contains(filename, "\\cache\\go-build\\") {
 			continue
 		}
@@ -233,9 +232,8 @@ func (f *formatterImpl) filterAndSortDiagnostics(fset *token.FileSet, diagnostic
 	// Itération sur les éléments
 	for _, diag := range diagnostics {
 		pos := fset.Position(diag.Pos)
-		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		// Ignorer uniquement les fichiers du cache Go (pas les projets utilisateur dans /tmp)
 		if strings.Contains(pos.Filename, "/.cache/go-build/") ||
-			strings.Contains(pos.Filename, "/tmp/") ||
 			strings.Contains(pos.Filename, "\\cache\\go-build\\") {
 			continue
 		}

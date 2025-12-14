@@ -465,7 +465,7 @@ func TestGroupByFileFiltering(t *testing.T) {
 		expectedGroups   int
 		expectedFilename string
 	}{
-		{name: "filters temp and cache files", expectedGroups: 1, expectedFilename: "normal.go"},
+		{name: "filters only cache files, not tmp", expectedGroups: 2, expectedFilename: "/tmp/test.go"},
 	}
 
 	for _, tt := range tests {
@@ -635,7 +635,7 @@ func TestPrintFunctions(t *testing.T) {
 
 // TestFormatSimpleModeWithFiltering tests the functionality of the corresponding implementation.
 func TestFormatSimpleModeWithFiltering(t *testing.T) {
-	const EXPECTED_LINE_COUNT int = 3
+	const EXPECTED_LINE_COUNT int = 4
 
 	tests := []struct {
 		name  string
@@ -644,7 +644,7 @@ func TestFormatSimpleModeWithFiltering(t *testing.T) {
 		{
 			name: "correct line count after filtering",
 			check: func(t *testing.T, output string, lines []string) {
-				// Should have 3 lines (from normal.go on different lines)
+				// Should have 4 lines (3 from normal.go + 1 from /tmp/test.go)
 				if len(lines) != EXPECTED_LINE_COUNT {
 					t.Errorf("Expected %d lines after filtering, got %d", EXPECTED_LINE_COUNT, len(lines))
 				}
@@ -660,38 +660,42 @@ func TestFormatSimpleModeWithFiltering(t *testing.T) {
 			},
 		},
 		{
-			name: "filters out cache and tmp files",
+			name: "filters out only cache files, not tmp",
 			check: func(t *testing.T, output string, lines []string) {
-				// Vérification du filtrage
-				if strings.Contains(output, "temp.go") || strings.Contains(output, "/tmp/") {
-					t.Error("Expected cache/tmp files to be filtered out")
+				// Vérification du filtrage - seuls les fichiers cache doivent être filtrés
+				if strings.Contains(output, "temp.go") {
+					t.Error("Expected cache files to be filtered out")
+				}
+				// /tmp/ files should NOT be filtered
+				if !strings.Contains(output, "/tmp/") {
+					t.Error("Expected /tmp/ files to be included")
 				}
 			},
 		},
 		{
-			name: "sorts by line number - Issue 1 first",
+			name: "sorts by filename then line - Issue 5 first (from /tmp)",
 			check: func(t *testing.T, output string, lines []string) {
-				// Check sorting: line 2, then line 3, then line 4
-				if !strings.Contains(lines[0], "Issue 1") {
-					t.Error("First line should be Issue 1 (line 2)")
+				// /tmp/test.go comes before normal.go alphabetically
+				if !strings.Contains(lines[0], "Issue 5") {
+					t.Error("First line should be Issue 5 (from /tmp/test.go)")
 				}
 			},
 		},
 		{
-			name: "sorts by line number - Issue 4 second",
+			name: "sorts by filename then line - Issue 1 second",
 			check: func(t *testing.T, output string, lines []string) {
-				// Vérification de la deuxième ligne
-				if !strings.Contains(lines[1], "Issue 4") {
-					t.Error("Second line should be Issue 4 (line 3)")
+				// normal.go:10 - Issue 1
+				if !strings.Contains(lines[1], "Issue 1") {
+					t.Error("Second line should be Issue 1 (line 10)")
 				}
 			},
 		},
 		{
-			name: "sorts by line number - Issue 3 third",
+			name: "sorts by filename then line - Issue 4 third",
 			check: func(t *testing.T, output string, lines []string) {
-				// Vérification de la troisième ligne
-				if !strings.Contains(lines[2], "Issue 3") {
-					t.Error("Third line should be Issue 3 (line 4)")
+				// normal.go:50 - Issue 4
+				if !strings.Contains(lines[2], "Issue 4") {
+					t.Error("Third line should be Issue 4 (line 50)")
 				}
 			},
 		},

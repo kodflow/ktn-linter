@@ -473,10 +473,9 @@ func filterDiagnostics(diagnostics []diagWithFset) []diagWithFset {
 	// Itération sur les éléments
 	for _, d := range diagnostics {
 		pos := d.fset.Position(d.diag.Pos)
-		// Ignorer les fichiers du cache Go et les fichiers temporaires
+		// Ignorer uniquement les fichiers du cache Go (pas les projets utilisateur dans /tmp)
 		// Vérification de la condition
 		if strings.Contains(pos.Filename, "/.cache/go-build/") ||
-			strings.Contains(pos.Filename, "/tmp/") ||
 			strings.Contains(pos.Filename, "\\cache\\go-build\\") {
 			continue
 		}
