@@ -377,6 +377,13 @@ func selectFilesForAnalyzer(a *analysis.Analyzer, pkg *packages.Package, fset *t
 		// Return all files
 		return pkg.Syntax
 	}
+
+	// Check if force mode is enabled (run all rules on test files)
+	if config.Get().ForceAllRulesOnTests {
+		// Return all files in force mode
+		return pkg.Syntax
+	}
+
 	// Other analyzers get only non-test files
 	return filterTestFiles(pkg.Syntax, fset)
 }

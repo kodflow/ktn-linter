@@ -15,9 +15,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **94.9%** |
+| 🟢 | **TOTAL (Global)** | **94.8%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 97.4% |
+| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.5% |
@@ -40,13 +40,13 @@ Rapport de couverture généré automatiquement.
 
 ## Détail des packages incomplets
 
-### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 97.4%
+### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 95.9%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟢 `lint.go:runLint` | 93.8% |
 | 🔴 `lint.go:selectSingleRule` | 57.1% |
 | 🟡 `lint.go:analyzePackage` | 90.9% |
+| 🟡 `lint.go:selectFilesForAnalyzer` | 80.0% |
 | 🟡 `lint.go:createAnalysisPass` | 80.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` - 98.6%
@@ -246,4 +246,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-14 19:35:04*
+*Généré le: 2025-12-14 20:51:35*
