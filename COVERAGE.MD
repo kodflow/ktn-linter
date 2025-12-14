@@ -15,9 +15,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **94.5%** |
+| 🟢 | **TOTAL (Global)** | **94.9%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 97.2% |
+| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 97.4% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.5% |
@@ -25,7 +25,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 95.3% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 93.9% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 88.2% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 91.7% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
@@ -40,11 +40,11 @@ Rapport de couverture généré automatiquement.
 
 ## Détail des packages incomplets
 
-### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 97.2%
+### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 97.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟢 `lint.go:runLint` | 93.3% |
+| 🟢 `lint.go:runLint` | 93.8% |
 | 🔴 `lint.go:selectSingleRule` | 57.1% |
 | 🟡 `lint.go:analyzePackage` | 90.9% |
 | 🟡 `lint.go:createAnalysisPass` | 80.0% |
@@ -138,7 +138,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `007.go:collectMethodsDetailed` | 93.3% |
 | 🟢 `007.go:checkGetterFieldMismatch` | 93.8% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 88.2%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 90.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -154,14 +154,12 @@ Rapport de couverture généré automatiquement.
 | 🟡 `005.go:runTest005` | 83.3% |
 | 🔴 `006.go:runTest006` | 77.8% |
 | 🟢 `006.go:collectFiles006` | 92.3% |
-| 🔴 `006.go:extractBaseName006` | 77.8% |
 | 🟡 `007.go:runTest007` | 83.3% |
 | 🔴 `008.go:runTest008` | 73.7% |
-| 🟡 `008.go:classifyFunction` | 85.7% |
 | 🟡 `008.go:extractReceiverTypeString` | 85.7% |
-| 🔴 `008.go:checkVariables` | 78.6% |
-| 🟡 `008.go:checkTypes` | 80.0% |
-| 🟡 `008.go:checkConsts` | 81.8% |
+| 🟢 `008.go:checkVariables` | 92.9% |
+| 🟡 `008.go:checkTypes` | 90.0% |
+| 🟡 `008.go:checkConsts` | 90.9% |
 | 🟡 `009.go:runTest009` | 85.7% |
 | 🟡 `009.go:collectPublicFunctions` | 90.9% |
 | 🟡 `009.go:addPublicFunction` | 83.3% |
@@ -175,15 +173,12 @@ Rapport de couverture généré automatiquement.
 | 🟡 `011.go:runTest011` | 87.5% |
 | 🟡 `011.go:validateTestFiles011` | 88.9% |
 | 🔴 `012.go:runTest012` | 75.0% |
-| 🟡 `012.go:isAssertLibraryCall` | 87.5% |
 | 🔴 `013.go:runTest013` | 69.6% |
 | 🟡 `013.go:collectFuncSignatures` | 85.7% |
-| 🟡 `013.go:addFuncSignature` | 83.3% |
-| 🟡 `013.go:collectExternalSourceSignatures` | 81.8% |
-| 🟡 `013.go:scanSourceFile` | 84.2% |
+| 🟡 `013.go:collectExternalSourceSignatures` | 90.9% |
+| 🟢 `013.go:scanSourceFile` | 94.7% |
 | 🟡 `013.go:functionReturnsError` | 87.5% |
-| 🔴 `013.go:analyzeTestFunction` | 78.6% |
-| 🔴 `013.go:checkErrorInKeyValue` | 75.0% |
+| 🟢 `013.go:analyzeTestFunction` | 92.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 91.7%
 
@@ -251,4 +246,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-14 17:40:49*
+*Généré le: 2025-12-14 19:35:04*

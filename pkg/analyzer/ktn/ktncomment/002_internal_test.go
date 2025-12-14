@@ -12,9 +12,6 @@ import (
 )
 
 // Test_checkFileComment tests the checkFileComment function.
-//
-// Params:
-//   - t: testing context
 func Test_checkFileComment(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -73,9 +70,6 @@ package example`,
 
 // Test_runComment002 tests the runComment002 function indirectly via checkFileComment.
 // The actual analyzer is tested via analysistest in 002_external_test.go.
-//
-// Params:
-//   - t: testing context
 func Test_runComment002(t *testing.T) {
 	tests := []struct {
 		name string
@@ -100,13 +94,6 @@ func Test_runComment002(t *testing.T) {
 }
 
 // helperParseFile parses source code and returns AST file.
-//
-// Params:
-//   - t: testing context
-//   - source: source code to parse
-//
-// Returns:
-//   - *ast.File: parsed file
 func helperParseFile(t *testing.T, source string) *ast.File {
 	t.Helper()
 	fset := token.NewFileSet()
@@ -120,9 +107,6 @@ func helperParseFile(t *testing.T, source string) *ast.File {
 }
 
 // Test_runComment002_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment002_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -177,9 +161,6 @@ func Test_runComment002_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment002_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment002_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string

@@ -20,9 +20,6 @@ import (
 // - badPanicExample: else après panic
 // - badElseIfExample: else if après return + else après return (2 erreurs)
 // Total: 9 erreurs
-//
-// Params:
-//   - t: contexte de test
 func TestFunc003(t *testing.T) {
 	tests := []struct {
 		name           string

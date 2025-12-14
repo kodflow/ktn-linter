@@ -14,9 +14,6 @@ import (
 )
 
 // TestIsSnakeCase teste la fonction isSnakeCase.
-//
-// Params:
-//   - t: contexte de test
 func TestIsSnakeCase(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -58,9 +55,6 @@ func TestIsSnakeCase(t *testing.T) {
 }
 
 // TestCheckVar018Names teste la fonction checkVar018Names.
-//
-// Params:
-//   - t: contexte de test
 func TestCheckVar018Names(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -130,9 +124,6 @@ func TestCheckVar018Names(t *testing.T) {
 }
 
 // TestRunVar018 teste la fonction runVar018.
-//
-// Params:
-//   - t: contexte de test
 func TestRunVar018(t *testing.T) {
 	tests := []struct {
 		name        string

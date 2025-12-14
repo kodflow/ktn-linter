@@ -12,9 +12,6 @@ import (
 )
 
 // Test_isExemptFunction tests the isExemptFunction private function.
-//
-// Params:
-//   - t: testing context
 func Test_isExemptFunction(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -61,9 +58,6 @@ func Test_isExemptFunction(t *testing.T) {
 }
 
 // Test_ClassifyFunc tests the shared.ClassifyFunc helper function.
-//
-// Params:
-//   - t: testing context
 func Test_ClassifyFunc(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -122,9 +116,6 @@ func Test_ClassifyFunc(t *testing.T) {
 }
 
 // Test_ExtractReceiverTypeName tests the shared.ExtractReceiverTypeName helper.
-//
-// Params:
-//   - t: testing context
 func Test_ExtractReceiverTypeName(t *testing.T) {
 	tests := []struct {
 		name string
@@ -182,9 +173,6 @@ func Test_ExtractReceiverTypeName(t *testing.T) {
 }
 
 // Test_BuildSuggestedTestName tests the shared.BuildSuggestedTestName helper.
-//
-// Params:
-//   - t: testing context
 func Test_BuildSuggestedTestName(t *testing.T) {
 	tests := []struct {
 		name string
@@ -234,9 +222,6 @@ func Test_BuildSuggestedTestName(t *testing.T) {
 }
 
 // Test_buildTestNames tests the buildTestNames private function.
-//
-// Params:
-//   - t: testing context
 func Test_buildTestNames(t *testing.T) {
 	tests := []struct {
 		name string
@@ -273,9 +258,6 @@ func Test_buildTestNames(t *testing.T) {
 }
 
 // Test_buildFuncLookupKey tests the buildFuncLookupKey private function.
-//
-// Params:
-//   - t: testing context
 func Test_buildFuncLookupKey(t *testing.T) {
 	tests := []struct {
 		name string
@@ -307,9 +289,6 @@ func Test_buildFuncLookupKey(t *testing.T) {
 }
 
 // Test_hasMatchingTest tests the hasMatchingTest private function.
-//
-// Params:
-//   - t: testing context
 func Test_hasMatchingTest(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -356,9 +335,6 @@ func Test_hasMatchingTest(t *testing.T) {
 }
 
 // Test_collectExternalTestedFunctions tests the collectExternalTestedFunctions function.
-//
-// Params:
-//   - t: testing context
 func Test_collectExternalTestedFunctions(t *testing.T) {
 	tests := []struct {
 		name string
@@ -438,9 +414,6 @@ func Test_collectExternalTestedFunctions(t *testing.T) {
 }
 
 // Test_collectFunctions tests the collectFunctions private function.
-//
-// Params:
-//   - t: testing context
 func Test_collectFunctions(t *testing.T) {
 	tests := []struct {
 		name string
@@ -497,9 +470,6 @@ func Test_collectFunctions(t *testing.T) {
 }
 
 // Test_runTest004 tests the runTest004 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest004(t *testing.T) {
 	tests := []struct {
 		name string
@@ -539,9 +509,6 @@ func Test_runTest004(t *testing.T) {
 }
 
 // Test_countTestFiles tests the countTestFiles private function.
-//
-// Params:
-//   - t: testing context
 func Test_countTestFiles(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -586,9 +553,6 @@ func Test_countTestFiles(t *testing.T) {
 }
 
 // Test_collectAllFunctionsAndTests tests the collectAllFunctionsAndTests private function.
-//
-// Params:
-//   - t: testing context
 func Test_collectAllFunctionsAndTests(t *testing.T) {
 	tests := []struct {
 		name string
@@ -610,9 +574,6 @@ func Test_collectAllFunctionsAndTests(t *testing.T) {
 }
 
 // Test_checkFunctionsHaveTests tests the checkFunctionsHaveTests private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkFunctionsHaveTests(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -690,9 +651,6 @@ func Test_checkFunctionsHaveTests(t *testing.T) {
 }
 
 // Test_reportMissingTest tests the reportMissingTest private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportMissingTest(t *testing.T) {
 	tests := []struct {
 		name string
@@ -738,9 +696,6 @@ func Test_reportMissingTest(t *testing.T) {
 }
 
 // Test_collectExternalTestFunctions tests the collectExternalTestFunctions private function.
-//
-// Params:
-//   - t: testing context
 func Test_collectExternalTestFunctions(t *testing.T) {
 	tests := []struct {
 		name string
@@ -770,9 +725,6 @@ func Test_collectExternalTestFunctions(t *testing.T) {
 }
 
 // Test_findPackageDir tests the findPackageDir private function.
-//
-// Params:
-//   - t: testing context
 func Test_findPackageDir(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -804,9 +756,6 @@ func Test_findPackageDir(t *testing.T) {
 }
 
 // Test_isCacheOrTempFile tests the isCacheOrTempFile private function.
-//
-// Params:
-//   - t: testing context
 func Test_isCacheOrTempFile(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -848,9 +797,6 @@ func Test_isCacheOrTempFile(t *testing.T) {
 }
 
 // Test_parseTestFile tests the parseTestFile private function.
-//
-// Params:
-//   - t: testing context
 func Test_parseTestFile(t *testing.T) {
 	tests := []struct {
 		name string

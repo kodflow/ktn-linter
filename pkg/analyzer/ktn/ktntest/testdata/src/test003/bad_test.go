@@ -5,9 +5,6 @@ import "testing"
 // TestOrphanFunction teste une fonction sans fichier source (PAS BIEN).
 // Ce fichier bad_test.go n'a PAS de fichier bad.go correspondant.
 // Ceci viole KTN-TEST-003.
-//
-// Params:
-//   - t: contexte de test
 func TestOrphanFunction(t *testing.T) {
 	// Table de tests
 	tests := []struct {
@@ -36,9 +33,6 @@ func TestOrphanFunction(t *testing.T) {
 
 // TestAnotherOrphan teste sans source correspondante (PAS BIEN).
 // Manque le fichier bad.go.
-//
-// Params:
-//   - t: contexte de test
 func TestAnotherOrphan(t *testing.T) {
 	const EMPTY_STRING string = ""
 	// Table de tests

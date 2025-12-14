@@ -6,9 +6,6 @@ import (
 )
 
 // Test_runTest007 tests the runTest007 private function with table-driven tests.
-//
-// Params:
-//   - t: testing context
 func Test_runTest007(t *testing.T) {
 	tests := []struct {
 		name string
@@ -31,9 +28,6 @@ func Test_runTest007(t *testing.T) {
 }
 
 // Test_runTest007_integration tests the analyzer structure.
-//
-// Params:
-//   - t: testing context
 func Test_runTest007_integration(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -55,9 +49,6 @@ func Test_runTest007_integration(t *testing.T) {
 }
 
 // Test_isSkipMethod tests the isSkipMethod function.
-//
-// Params:
-//   - t: testing context
 func Test_isSkipMethod(t *testing.T) {
 	tests := []struct {
 		name       string

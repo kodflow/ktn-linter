@@ -10,9 +10,6 @@ import (
 )
 
 // TestVar014 vérifie que les variables de package sont déclarées après les constantes.
-//
-// Params:
-//   - t: instance de test
 func TestVar014(t *testing.T) {
 	tests := []struct {
 		name           string

@@ -9,9 +9,6 @@ import (
 )
 
 // Test_hasSerializableSuffix tests the hasSerializableSuffix function.
-//
-// Params:
-//   - t: testing context
 func Test_hasSerializableSuffix(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -39,9 +36,6 @@ func Test_hasSerializableSuffix(t *testing.T) {
 }
 
 // Test_hasSerializationTags tests the hasSerializationTags function.
-//
-// Params:
-//   - t: testing context
 func Test_hasSerializationTags(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -111,9 +105,6 @@ type User struct {}`,
 }
 
 // Test_hasSerializationTags_NilFields tests hasSerializationTags with nil fields.
-//
-// Params:
-//   - t: testing context
 func Test_hasSerializationTags_NilFields(t *testing.T) {
 	tests := []struct {
 		name     string

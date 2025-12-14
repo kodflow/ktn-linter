@@ -57,8 +57,8 @@ func TestGet(t *testing.T) {
 	}
 }
 
-// TestMessageFormat tests the Format method of Message.
-func TestMessageFormat(t *testing.T) {
+// TestMessage_Format tests the Format method of Message.
+func TestMessage_Format(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -106,58 +106,130 @@ func TestMessageFormat(t *testing.T) {
 	}
 }
 
-// TestMessageFormatShort tests the FormatShort method.
-func TestMessageFormatShort(t *testing.T) {
-	msg, found := messages.Get("KTN-FUNC-001")
-	// Vérification existence
-	if !found {
-		t.Fatal("Get(KTN-FUNC-001) not found")
+// TestMessage_FormatShort tests the FormatShort method.
+func TestMessage_FormatShort(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		args       []any
+		wantMinLen int
+	}{
+		{
+			name:       "FUNC-001 short message",
+			code:       "KTN-FUNC-001",
+			args:       []any{2},
+			wantMinLen: 1,
+		},
+		{
+			name:       "VAR-001 short message",
+			code:       "KTN-VAR-001",
+			args:       nil,
+			wantMinLen: 1,
+		},
 	}
 
-	result := msg.FormatShort(2)
-	// Vérification contenu
-	if len(result) == 0 {
-		t.Error("FormatShort() returned empty string")
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, found := messages.Get(tt.code)
+			// Verify message exists
+			if !found {
+				t.Fatalf("Get(%q) not found", tt.code)
+			}
+			result := msg.FormatShort(tt.args...)
+			// Verify result is not empty
+			if len(result) < tt.wantMinLen {
+				t.Errorf("FormatShort() len = %d, want >= %d", len(result), tt.wantMinLen)
+			}
+		})
 	}
 }
 
-// TestMessageFormatVerbose tests the FormatVerbose method.
-func TestMessageFormatVerbose(t *testing.T) {
-	msg, found := messages.Get("KTN-FUNC-001")
-	// Vérification existence
-	if !found {
-		t.Fatal("Get(KTN-FUNC-001) not found")
+// TestMessage_FormatVerbose tests the FormatVerbose method.
+func TestMessage_FormatVerbose(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		args       []any
+		wantMinLen int
+	}{
+		{
+			name:       "FUNC-001 verbose message",
+			code:       "KTN-FUNC-001",
+			args:       []any{2},
+			wantMinLen: 50,
+		},
+		{
+			name:       "VAR-001 verbose message",
+			code:       "KTN-VAR-001",
+			args:       nil,
+			wantMinLen: 10,
+		},
 	}
 
-	result := msg.FormatVerbose(2)
-	// Vérification contenu verbose
-	if len(result) < 50 {
-		t.Errorf("FormatVerbose() len = %d, want >= 50", len(result))
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, found := messages.Get(tt.code)
+			// Verify message exists
+			if !found {
+				t.Fatalf("Get(%q) not found", tt.code)
+			}
+			result := msg.FormatVerbose(tt.args...)
+			// Verify verbose result has minimum length
+			if len(result) < tt.wantMinLen {
+				t.Errorf("FormatVerbose() len = %d, want >= %d", len(result), tt.wantMinLen)
+			}
+		})
 	}
 }
 
 // TestRegister tests the Register function.
 func TestRegister(t *testing.T) {
-	// Enregistrer un message de test
-	testMsg := messages.Message{
-		Code:    "KTN-TEST-999",
-		Short:   "test message",
-		Verbose: "verbose test message",
+	tests := []struct {
+		name    string
+		msg     messages.Message
+		wantErr bool
+	}{
+		{
+			name: "register new message",
+			msg: messages.Message{
+				Code:    "KTN-TEST-999",
+				Short:   "test message",
+				Verbose: "verbose test message",
+			},
+			wantErr: false,
+		},
+		{
+			name: "register another message",
+			msg: messages.Message{
+				Code:    "KTN-TEST-998",
+				Short:   "another test",
+				Verbose: "another verbose",
+			},
+			wantErr: false,
+		},
 	}
-	messages.Register(testMsg)
 
-	// Vérifier qu'il est récupérable
-	got, found := messages.Get("KTN-TEST-999")
-	// Vérification existence
-	if !found {
-		t.Fatal("Register() message not found after registration")
-	}
-	// Vérification code
-	if got.Code != testMsg.Code {
-		t.Errorf("Register() Code = %q, want %q", got.Code, testMsg.Code)
-	}
-	// Vérification short
-	if got.Short != testMsg.Short {
-		t.Errorf("Register() Short = %q, want %q", got.Short, testMsg.Short)
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Register the message
+			messages.Register(tt.msg)
+			// Verify it can be retrieved
+			got, found := messages.Get(tt.msg.Code)
+			// Verify message exists after registration
+			if !found {
+				t.Fatal("Register() message not found after registration")
+			}
+			// Verify code matches
+			if got.Code != tt.msg.Code {
+				t.Errorf("Register() Code = %q, want %q", got.Code, tt.msg.Code)
+			}
+			// Verify short matches
+			if got.Short != tt.msg.Short {
+				t.Errorf("Register() Short = %q, want %q", got.Short, tt.msg.Short)
+			}
+		})
 	}
 }

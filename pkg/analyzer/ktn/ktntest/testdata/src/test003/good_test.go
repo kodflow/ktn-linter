@@ -8,9 +8,6 @@ import (
 
 // TestProcessItemComplete teste avec couverture complète (BIEN).
 // A un fichier source good.go correspondant.
-//
-// Params:
-//   - t: contexte de test
 func TestProcessItemComplete(t *testing.T) {
 	// Table de tests
 	tests := []struct {
@@ -43,9 +40,6 @@ func TestProcessItemComplete(t *testing.T) {
 
 // TestCountItemsComplete teste avec couverture complète (BIEN).
 // A un fichier source good.go correspondant.
-//
-// Params:
-//   - t: contexte de test
 func TestCountItemsComplete(t *testing.T) {
 	const MAX_ITEMS int = 1000
 	// Table de tests

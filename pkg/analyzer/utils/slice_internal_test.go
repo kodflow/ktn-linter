@@ -60,9 +60,6 @@ func Test_maxArraySize(t *testing.T) {
 }
 
 // Test_isSmallConstantSizeInternal tests IsSmallConstantSize internal behavior.
-//
-// Params:
-//   - t: testing context
 func Test_isSmallConstantSizeInternal(t *testing.T) {
 	tests := []struct {
 		name     string

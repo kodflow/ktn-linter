@@ -10,9 +10,6 @@ import (
 )
 
 // TestComment003 tests the Analyzer003 for constant comment requirement.
-//
-// Params:
-//   - t: testing context
 func TestComment003(t *testing.T) {
 	tests := []struct {
 		name           string

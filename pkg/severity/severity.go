@@ -74,6 +74,7 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-VAR-015": SeverityInfo,    // Préallocation maps (ex-016)
 	"KTN-VAR-016": SeverityInfo,    // Utiliser [N]T au lieu de make([]T, N) (ex-017)
 	"KTN-VAR-017": SeverityInfo,    // Copies de mutex (ex-018)
+	"KTN-VAR-018": SeverityWarning, // snake_case interdit, utiliser camelCase
 
 	// FUNC - Fonctions (12 règles, ex-007 et ex-009 déplacés vers COMMENT)
 	"KTN-FUNC-001": SeverityError,   // Erreur en dernière position retour
@@ -92,12 +93,14 @@ var rulesSeverity map[string]Level = map[string]Level{
 	// INTERFACE - Interfaces (1 règle)
 	"KTN-INTERFACE-001": SeverityWarning, // Interface privée non utilisée
 
-	// STRUCT - Structures (5 règles, ex-002 déplacé vers COMMENT-005)
+	// STRUCT - Structures (7 règles, ex-002 déplacé vers COMMENT-005)
 	"KTN-STRUCT-001": SeverityWarning, // Interface pour chaque struct
 	"KTN-STRUCT-002": SeverityWarning, // Constructeur NewX() requis (ex-003)
 	"KTN-STRUCT-003": SeverityWarning, // Pas de préfixe Get pour getters (ex-004)
 	"KTN-STRUCT-004": SeverityInfo,    // Une struct par fichier (ex-005)
 	"KTN-STRUCT-005": SeverityInfo,    // Champs exportés avant privés (ex-006)
+	"KTN-STRUCT-006": SeverityInfo,    // Pas de tags sur champs privés
+	"KTN-STRUCT-007": SeverityInfo,    // Convention getters/setters
 
 	// TEST - Tests (13 règles)
 	"KTN-TEST-001": SeverityError,   // Fichier doit finir par _internal/_external_test.go

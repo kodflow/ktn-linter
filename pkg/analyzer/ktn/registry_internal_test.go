@@ -6,9 +6,6 @@ import (
 )
 
 // Test_categoryAnalyzers tests that categoryAnalyzers returns valid map.
-//
-// Params:
-//   - t: testing context
 func Test_categoryAnalyzers(t *testing.T) {
 	tests := []struct {
 		name string
@@ -38,9 +35,6 @@ func Test_categoryAnalyzers(t *testing.T) {
 }
 
 // Test_codeToAnalyzerName tests the code to analyzer name conversion.
-//
-// Params:
-//   - t: testing context
 func Test_codeToAnalyzerName(t *testing.T) {
 	tests := []struct {
 		name     string

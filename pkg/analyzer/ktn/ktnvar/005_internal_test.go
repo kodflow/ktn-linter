@@ -196,9 +196,6 @@ func Test_runVar005_fileExcluded(t *testing.T) {
 }
 
 // Test_checkMakeCallVar008 tests the checkMakeCallVar008 private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkMakeCallVar008(t *testing.T) {
 	tests := []struct {
 		name string

@@ -197,9 +197,6 @@ type User struct {
 }
 
 // Test_allStructsAreSerializable tests the allStructsAreSerializable function.
-//
-// Params:
-//   - t: testing context
 func Test_allStructsAreSerializable(t *testing.T) {
 	tests := []struct {
 		name     string

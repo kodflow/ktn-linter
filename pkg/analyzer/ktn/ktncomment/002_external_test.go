@@ -10,9 +10,6 @@ import (
 )
 
 // TestComment002 tests the Analyzer002 for package comment requirement.
-//
-// Params:
-//   - t: testing context
 func TestComment002(t *testing.T) {
 	tests := []struct {
 		name           string

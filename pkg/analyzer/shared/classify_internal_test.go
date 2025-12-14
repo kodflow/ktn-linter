@@ -7,9 +7,6 @@ import (
 )
 
 // Test_getVisibility tests the getVisibility function.
-//
-// Params:
-//   - t: testing context
 func Test_getVisibility(t *testing.T) {
 	tests := []struct {
 		name string
@@ -56,9 +53,6 @@ func Test_getVisibility(t *testing.T) {
 }
 
 // Test_parsePrivateTestName tests the parsePrivateTestName function.
-//
-// Params:
-//   - t: testing context
 func Test_parsePrivateTestName(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -124,9 +118,6 @@ func Test_parsePrivateTestName(t *testing.T) {
 }
 
 // Test_extractReceiverTypeName_IndexListExpr tests ExtractReceiverTypeName with generic types.
-//
-// Params:
-//   - t: testing context
 func Test_extractReceiverTypeName_IndexListExpr(t *testing.T) {
 	tests := []struct {
 		name string
@@ -157,9 +148,6 @@ func Test_extractReceiverTypeName_IndexListExpr(t *testing.T) {
 }
 
 // Test_extractReceiverTypeName_UnknownExpr tests the default case in ExtractReceiverTypeName.
-//
-// Params:
-//   - t: testing context
 func Test_extractReceiverTypeName_UnknownExpr(t *testing.T) {
 	tests := []struct {
 		name string

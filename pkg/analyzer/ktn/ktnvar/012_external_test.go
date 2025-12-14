@@ -10,9 +10,6 @@ import (
 )
 
 // TestVar012 vérifie la détection des conversions string() répétées.
-//
-// Params:
-//   - t: contexte de test
 func TestVar012(t *testing.T) {
 	tests := []struct {
 		name           string

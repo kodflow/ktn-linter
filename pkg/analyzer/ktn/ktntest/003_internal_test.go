@@ -8,9 +8,6 @@ import (
 )
 
 // Test_runTest003 tests the runTest003 private function with table-driven tests.
-//
-// Params:
-//   - t: testing context
 func Test_runTest003(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -34,9 +31,6 @@ func Test_runTest003(t *testing.T) {
 }
 
 // Test_fileExists tests the fileExists private function.
-//
-// Params:
-//   - t: testing context
 func Test_fileExists(t *testing.T) {
 	// Créer un fichier temporaire
 	tmpFile, err := os.CreateTemp("", "test_*.go")
@@ -98,9 +92,6 @@ func Test_fileExists(t *testing.T) {
 }
 
 // Test_isExemptTestFile tests the isExemptTestFile private function.
-//
-// Params:
-//   - t: testing context
 func Test_isExemptTestFile(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -157,9 +148,6 @@ func Test_isExemptTestFile(t *testing.T) {
 }
 
 // Test_getSourceFileForTest tests the getSourceFileForTest private function.
-//
-// Params:
-//   - t: testing context
 func Test_getSourceFileForTest(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -206,9 +194,6 @@ func Test_getSourceFileForTest(t *testing.T) {
 }
 
 // Test_fileExists_edgeCases tests edge cases for fileExists.
-//
-// Params:
-//   - t: testing context
 func Test_fileExists_edgeCases(t *testing.T) {
 	tests := []struct {
 		name string

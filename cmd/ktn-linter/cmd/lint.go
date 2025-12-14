@@ -2,12 +2,10 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
 	"go/token"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn"
@@ -18,33 +16,21 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-const (
-	// initialFileEditsCap initial capacity for file edits map
-	initialFileEditsCap int = 16
-	// filePermissionRw read-write permission for file operations
-	filePermissionRw os.FileMode = 0644
-)
-
-// diagWithFset associe un diagnostic avec son FileSet et son analyseur
-type diagWithFset struct {
-	diag         analysis.Diagnostic
-	fset         *token.FileSet
-	analyzerName string
+// lintOptions holds all options for the lint command.
+type lintOptions struct {
+	verbose    bool
+	category   string
+	onlyRule   string
+	configPath string
 }
 
 // lintCmd represents the lint command.
 var lintCmd *cobra.Command = &cobra.Command{
 	Use:   "lint [packages...]",
 	Short: "Lint Go packages using KTN rules",
-	Long: `Lint analyzes Go packages and reports issues based on KTN conventions.
-
-Examples:
-  ktn-linter lint ./...
-  ktn-linter lint -category=error ./...
-  ktn-linter lint -ai ./path/to/file.go
-  ktn-linter lint --fix ./...`,
-	Args: cobra.MinimumNArgs(1),
-	Run:  runLint,
+	Long:  `Lint analyzes Go packages and reports issues based on KTN conventions.`,
+	Args:  cobra.MinimumNArgs(1),
+	Run:   runLint,
 }
 
 // init enregistre la commande lint auprès de la commande root.
@@ -58,20 +44,21 @@ func init() {
 
 // loadConfiguration charge la configuration du linter.
 //
-// Returns: aucun
+// Params:
+//   - opts: options de lint
 //
-// Params: aucun
-func loadConfiguration() {
+// Returns: aucun
+func loadConfiguration(opts lintOptions) {
 	// Vérification si un fichier de config est spécifié
-	if ConfigPath != "" {
+	if opts.configPath != "" {
 		// Charger depuis le fichier spécifié
-		if err := config.LoadAndSet(ConfigPath); err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading config file %s: %v\n", ConfigPath, err)
+		if err := config.LoadAndSet(opts.configPath); err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading config file %s: %v\n", opts.configPath, err)
 			OsExit(1)
 		}
 		// Log si verbose
-		if Verbose {
-			fmt.Fprintf(os.Stderr, "Loaded configuration from %s\n", ConfigPath)
+		if opts.verbose {
+			fmt.Fprintf(os.Stderr, "Loaded configuration from %s\n", opts.configPath)
 		}
 		// Retour de la fonction
 		return
@@ -80,7 +67,7 @@ func loadConfiguration() {
 	// Tenter de charger depuis les emplacements par défaut
 	if err := config.LoadAndSet(""); err == nil {
 		// Log si verbose et config trouvée
-		if Verbose {
+		if opts.verbose {
 			fmt.Fprintf(os.Stderr, "Loaded configuration from default location\n")
 		}
 	}
@@ -90,38 +77,27 @@ func loadConfiguration() {
 // runLint exécute l'analyse du linter.
 //
 // Params:
-//   - cmd: commande Cobra
+//   - cmd: commande Cobra (utilisé pour récupérer les flags)
 //   - args: arguments de la ligne de commande
 //
 // Returns: aucun
-func runLint(_cmd *cobra.Command, args []string) {
+func runLint(cmd *cobra.Command, args []string) {
+	// Récupérer les options depuis les flags Cobra
+	opts := parseLintOptions(cmd)
+
 	// Charger la configuration si spécifiée
-	loadConfiguration()
+	loadConfiguration(opts)
 
 	// Propager le flag verbose dans la config pour les règles
-	config.Get().Verbose = Verbose
+	config.Get().Verbose = opts.verbose
 
 	pkgs := loadPackages(args)
-	diagnostics := runAnalyzers(pkgs)
+	diagnostics := runAnalyzers(pkgs, opts)
 
 	// Filter out diagnostics from cache/tmp files (same logic as formatter)
 	filteredDiags := filterDiagnostics(diagnostics)
 
-	// Apply fixes if --fix flag is set
-	if Fix {
-		fixCount := applyFixes(filteredDiags)
-		// Vérification de la condition
-		if fixCount > 0 {
-			fmt.Fprintf(os.Stderr, "Applied fixes to %d file(s)\n", fixCount)
-			// Alternative path handling
-		} else {
-			fmt.Fprintf(os.Stderr, "No fixes to apply\n")
-		}
-		// Success - exit with 0
-		OsExit(0)
-	}
-
-	formatAndDisplay(filteredDiags)
+	formatAndDisplay(filteredDiags, opts)
 
 	// Vérification de la condition
 	if len(filteredDiags) > 0 {
@@ -130,6 +106,31 @@ func runLint(_cmd *cobra.Command, args []string) {
 
 	// Success - exit with 0
 	OsExit(0)
+}
+
+// parseLintOptions extrait les options depuis les flags Cobra.
+//
+// Params:
+//   - cmd: commande Cobra (unused, kept for API compatibility)
+//
+// Returns:
+//   - lintOptions: options extraites
+func parseLintOptions(_ *cobra.Command) lintOptions {
+	// Use rootCmd.PersistentFlags() directly since persistent flags are defined there
+	flags := rootCmd.PersistentFlags()
+
+	verbose, _ := flags.GetBool(flagVerbose)
+	category, _ := flags.GetString(flagCategory)
+	onlyRule, _ := flags.GetString(flagOnlyRule)
+	configPath, _ := flags.GetString(flagConfig)
+
+	// Retour des options parsées
+	return lintOptions{
+		verbose:    verbose,
+		category:   category,
+		onlyRule:   onlyRule,
+		configPath: configPath,
+	}
 }
 
 // loadPackages charge les packages Go à analyser.
@@ -192,26 +193,29 @@ func checkLoadErrors(pkgs []*packages.Package) {
 
 // selectAnalyzers sélectionne les analyseurs selon les filtres.
 //
+// Params:
+//   - opts: options de lint
+//
 // Returns:
 //   - []*analysis.Analyzer: analyseurs sélectionnés
-func selectAnalyzers() []*analysis.Analyzer {
+func selectAnalyzers(opts lintOptions) []*analysis.Analyzer {
 	// Sélection selon --only-rule
-	if OnlyRule != "" {
+	if opts.onlyRule != "" {
 		// Retourner l'analyseur unique
-		return selectSingleRule()
+		return selectSingleRule(opts)
 	}
 
 	// Sélection selon --category
-	if Category != "" {
+	if opts.category != "" {
 		// Retourner les analyseurs de la catégorie
-		return selectByCategory()
+		return selectByCategory(opts)
 	}
 
 	// Mode par défaut: toutes les règles
 	analyzers := ktn.GetAllRules()
 
 	// Log si verbose
-	if Verbose {
+	if opts.verbose {
 		fmt.Fprintf(os.Stderr, "Running all %d KTN rules\n", len(analyzers))
 	}
 
@@ -221,21 +225,24 @@ func selectAnalyzers() []*analysis.Analyzer {
 
 // selectSingleRule sélectionne une seule règle spécifique.
 //
+// Params:
+//   - opts: options de lint
+//
 // Returns:
 //   - []*analysis.Analyzer: analyseur unique
-func selectSingleRule() []*analysis.Analyzer {
+func selectSingleRule(opts lintOptions) []*analysis.Analyzer {
 	// Récupérer la règle
-	analyzer := ktn.GetRuleByCode(OnlyRule)
+	analyzer := ktn.GetRuleByCode(opts.onlyRule)
 
 	// Vérifier si la règle existe
 	if analyzer == nil {
-		fmt.Fprintf(os.Stderr, "Unknown rule code: %s\n", OnlyRule)
+		fmt.Fprintf(os.Stderr, "Unknown rule code: %s\n", opts.onlyRule)
 		OsExit(1)
 	}
 
 	// Log si verbose
-	if Verbose {
-		fmt.Fprintf(os.Stderr, "Running only rule '%s'\n", OnlyRule)
+	if opts.verbose {
+		fmt.Fprintf(os.Stderr, "Running only rule '%s'\n", opts.onlyRule)
 	}
 
 	// Retourner l'analyseur unique
@@ -244,21 +251,24 @@ func selectSingleRule() []*analysis.Analyzer {
 
 // selectByCategory sélectionne les règles d'une catégorie.
 //
+// Params:
+//   - opts: options de lint
+//
 // Returns:
 //   - []*analysis.Analyzer: analyseurs de la catégorie
-func selectByCategory() []*analysis.Analyzer {
+func selectByCategory(opts lintOptions) []*analysis.Analyzer {
 	// Récupérer les analyseurs de la catégorie
-	analyzers := ktn.GetRulesByCategory(Category)
+	analyzers := ktn.GetRulesByCategory(opts.category)
 
 	// Vérifier si la catégorie existe
 	if len(analyzers) == 0 {
-		fmt.Fprintf(os.Stderr, "Unknown category: %s\n", Category)
+		fmt.Fprintf(os.Stderr, "Unknown category: %s\n", opts.category)
 		OsExit(1)
 	}
 
 	// Log si verbose
-	if Verbose {
-		fmt.Fprintf(os.Stderr, "Running %d rules from category '%s'\n", len(analyzers), Category)
+	if opts.verbose {
+		fmt.Fprintf(os.Stderr, "Running %d rules from category '%s'\n", len(analyzers), opts.category)
 	}
 
 	// Retourner les analyseurs
@@ -269,12 +279,13 @@ func selectByCategory() []*analysis.Analyzer {
 //
 // Params:
 //   - pkgs: packages à analyser
+//   - opts: options de lint
 //
 // Returns:
 //   - []diagWithFset: diagnostics trouvés
-func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
+func runAnalyzers(pkgs []*packages.Package, opts lintOptions) []diagWithFset {
 	// Sélectionner les analyseurs
-	analyzers := selectAnalyzers()
+	analyzers := selectAnalyzers(opts)
 
 	// allDiagnostics collecte les diagnostics
 	var allDiagnostics []diagWithFset
@@ -285,7 +296,7 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 	// Analyser chaque package
 	for _, pkg := range pkgs {
 		// Analyser le package
-		analyzePackage(pkg, analyzers, results, &allDiagnostics)
+		analyzePackage(pkg, analyzers, results, &allDiagnostics, opts)
 	}
 
 	// Retourner les diagnostics
@@ -299,11 +310,12 @@ func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
 //   - analyzers: analyseurs à exécuter
 //   - results: résultats des analyseurs (modifié in-place)
 //   - allDiagnostics: diagnostics collectés (modifié in-place)
-func analyzePackage(pkg *packages.Package, analyzers []*analysis.Analyzer, results map[*analysis.Analyzer]any, allDiagnostics *[]diagWithFset) {
+//   - opts: options de lint
+func analyzePackage(pkg *packages.Package, analyzers []*analysis.Analyzer, results map[*analysis.Analyzer]any, allDiagnostics *[]diagWithFset, opts lintOptions) {
 	pkgFset := pkg.Fset
 
 	// Log si verbose
-	if Verbose {
+	if opts.verbose {
 		fmt.Fprintf(os.Stderr, "Analyzing package: %s\n", pkg.PkgPath)
 	}
 
@@ -439,16 +451,15 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 }
 
 // formatAndDisplay formate et affiche les diagnostics.
+//
 // Params:
-//   - pass: contexte d'analyse
+//   - diagnostics: diagnostics à afficher
+//   - opts: options de lint
 //
 // Returns: aucun
-//
-//   - diagnostics: diagnostics à afficher
-//
-// Params:
-func formatAndDisplay(diagnostics []diagWithFset) {
-	fmtr := formatter.NewFormatter(os.Stdout, AIMode, NoColor, Simple, Verbose)
+func formatAndDisplay(diagnostics []diagWithFset, opts lintOptions) {
+	// Simple format is now the default (no color, one-line per diagnostic)
+	fmtr := formatter.NewFormatter(os.Stdout, false, true, true, opts.verbose)
 
 	// Vérification de la condition
 	if len(diagnostics) == 0 {
@@ -572,232 +583,3 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	return diags
 }
 
-// applyFixes applique les fixes suggérés aux fichiers source.
-//
-// Params:
-//   - diagnostics: diagnostics avec fixes suggérés
-//
-// Returns:
-//   - int: nombre de fichiers modifiés
-func applyFixes(diagnostics []diagWithFset) int {
-	// Liste blanche des analyseurs dont les fixes sont sûrs
-	safeAnalyzers := map[string]bool{
-		"any": true, // interface{} → any
-	}
-
-	// Collecter les éditions par fichier
-	fileEdits, skippedCount := collectSafeEdits(diagnostics, safeAnalyzers)
-
-	// Afficher le nombre de fixes skippés
-	// Vérification de la condition
-	if skippedCount > 0 {
-		fmt.Fprintf(os.Stderr, "Skipped %d unsafe fixes (use modernize tool for complex transformations)\n", skippedCount)
-	}
-
-	// Appliquer les éditions collectées
-	// Early return from function.
-	return applyCollectedEdits(fileEdits)
-}
-
-// collectSafeEdits collecte les éditions de texte sûres depuis les diagnostics.
-//
-// Params:
-//   - diagnostics: diagnostics avec fixes suggérés
-//   - safeAnalyzers: map des analyseurs sûrs
-//
-// Returns:
-//   - map[string][]textEdit: éditions groupées par fichier
-//   - int: nombre de fixes skippés
-func collectSafeEdits(diagnostics []diagWithFset, safeAnalyzers map[string]bool) (map[string][]textEdit, int) {
-	fileEdits := make(map[string][]textEdit, initialFileEditsCap)
-	skippedCount := 0
-
-	// Parcourir tous les diagnostics
-	// Itération sur les éléments
-	for _, d := range diagnostics {
-		// Skip diagnostics without suggested fixes
-		if len(d.diag.SuggestedFixes) == 0 {
-			continue
-		}
-
-		// Skip analyzers not in safe list
-		// Vérification de la condition
-		if !safeAnalyzers[d.analyzerName] {
-			skippedCount++
-			// Log si verbose
-			// Vérification de la condition
-			if Verbose {
-				pos := d.fset.Position(d.diag.Pos)
-				fmt.Fprintf(os.Stderr, "Skipping unsafe fix at %s:%d (analyzer: %s)\n",
-					pos.Filename, pos.Line, d.analyzerName)
-			}
-			continue
-		}
-
-		// Extraire les éditions de texte
-		extractTextEdits(d, &fileEdits)
-	}
-
-	// Early return from function.
-	return fileEdits, skippedCount
-}
-
-// extractTextEdits extrait les éditions de texte depuis un diagnostic.
-//
-// Params:
-//   - d: diagnostic avec fixes
-//   - fileEdits: map pour stocker les éditions par fichier
-func extractTextEdits(d diagWithFset, fileEdits *map[string][]textEdit) {
-	// Process only the first suggested fix
-	if len(d.diag.SuggestedFixes) == 0 {
-		// Early return from function.
-		return
-	}
-
-	fix := d.diag.SuggestedFixes[0]
-
-	// Process all text edits in this fix
-	// Itération sur les éléments
-	for _, edit := range fix.TextEdits {
-		// Convert token positions to byte offsets
-		file := d.fset.File(edit.Pos)
-		// Vérification de la condition
-		if file == nil {
-			continue
-		}
-
-		startOffset := file.Offset(edit.Pos)
-		endOffset := file.Offset(edit.End)
-		pos := d.fset.Position(edit.Pos)
-
-		// Store edit for this file
-		(*fileEdits)[pos.Filename] = append((*fileEdits)[pos.Filename], textEdit{
-			start:   startOffset,
-			end:     endOffset,
-			newText: edit.NewText,
-		})
-	}
-}
-
-// applyCollectedEdits applique les éditions collectées à chaque fichier.
-//
-// Params:
-//   - fileEdits: éditions groupées par fichier
-//
-// Returns:
-//   - int: nombre de fichiers modifiés
-func applyCollectedEdits(fileEdits map[string][]textEdit) int {
-	fixCount := 0
-
-	// Itération sur les éléments
-	for filename, edits := range fileEdits {
-		// Vérification de la condition
-		if applyEditsToFile(filename, edits) {
-			fixCount++
-			// Log si verbose
-			// Vérification de la condition
-			if Verbose {
-				fmt.Fprintf(os.Stderr, "Applied %d edits to %s\n", len(edits), filename)
-			}
-		}
-	}
-
-	// Early return from function.
-	return fixCount
-}
-
-// applyEditsToFile applique les modifications à un fichier.
-//
-// Params:
-//   - filename: chemin du fichier
-//   - edits: modifications à appliquer
-//
-// Returns:
-//   - bool: true si succès, false sinon
-func applyEditsToFile(filename string, edits []textEdit) bool {
-	// Read file content
-	content, err := os.ReadFile(filename)
-	// Vérification de la condition
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading file %s: %v\n", filename, err)
-		// Early return from function.
-		return false
-	}
-
-	// Sort edits by start position (descending) to apply from end to start
-	sort.Slice(edits, func(i, j int) bool {
-		// Sort by start position in reverse order
-		return edits[i].start > edits[j].start
-	})
-
-	// Remove overlapping edits (keep only first in reverse order = last in file)
-	nonOverlapping := filterOverlappingEdits(edits)
-
-	// Apply each edit from end to start
-	result := content
-	// Itération sur les éléments
-	for _, edit := range nonOverlapping {
-		// Validate edit positions
-		if edit.start < 0 || edit.end > len(result) || edit.start > edit.end {
-			fmt.Fprintf(os.Stderr, "Invalid edit in %s: start=%d, end=%d, len=%d\n",
-				filename, edit.start, edit.end, len(result))
-			continue
-		}
-
-		// Apply the edit: before + newText + after
-		var buf bytes.Buffer
-		buf.Write(result[:edit.start])
-		buf.Write(edit.newText)
-		buf.Write(result[edit.end:])
-		result = buf.Bytes()
-	}
-
-	// Write back to file with same permissions
-	err = os.WriteFile(filename, result, filePermissionRw)
-	// Vérification de la condition
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", filename, err)
-		// Early return from function.
-		return false
-	}
-
-	// Early return from function.
-	return true
-}
-
-// filterOverlappingEdits supprime les éditions qui se chevauchent.
-//
-// Params:
-//   - edits: éditions triées par position décroissante
-//
-// Returns:
-//   - []textEdit: éditions non-chevauchantes
-func filterOverlappingEdits(edits []textEdit) []textEdit {
-	// Vérification de la condition
-	if len(edits) == 0 {
-		// Early return from function.
-		return edits
-	}
-
-	// Keep track of the last edit's start position
-	filtered := []textEdit{edits[0]}
-	lastStart := edits[0].start
-
-	// Check each subsequent edit
-	for i := 1; i < len(edits); i++ {
-		edit := edits[i]
-		// No overlap if this edit ends before the last edit starts
-		if edit.end <= lastStart {
-			filtered = append(filtered, edit)
-			lastStart = edit.start
-		} else {
-			// Skip overlapping edit
-			if Verbose {
-				fmt.Fprintf(os.Stderr, "Skipping overlapping edit at [%d:%d]\n", edit.start, edit.end)
-			}
-		}
-	}
-
-	// Early return from function.
-	return filtered
-}

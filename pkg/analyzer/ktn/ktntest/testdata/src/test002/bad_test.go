@@ -4,9 +4,6 @@ import "testing"
 
 // TestBadPackageName utilise le mauvais package (test001 au lieu de test001_test).
 // Ceci viole KTN-TEST-002.
-//
-// Params:
-//   - t: contexte de test
 func TestBadPackageName(t *testing.T) {
 	// Test avec package interne (PAS BIEN)
 	err := CheckValue(10)
@@ -25,9 +22,6 @@ func TestBadPackageName(t *testing.T) {
 
 // TestInternalPackage utilise le package interne (PAS BIEN).
 // Devrait utiliser test001_test.
-//
-// Params:
-//   - t: contexte de test
 func TestInternalPackage(t *testing.T) {
 	const EXPECTED string = ">hello<"
 	// Test avec package interne

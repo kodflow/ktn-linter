@@ -4,9 +4,6 @@ package modernize
 import "testing"
 
 // Test_disabled tests that disabled analyzers are filtered out.
-//
-// Params:
-//   - t: testing context
 func Test_disabled(t *testing.T) {
 	tests := []struct {
 		name         string

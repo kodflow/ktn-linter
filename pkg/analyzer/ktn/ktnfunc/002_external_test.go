@@ -10,9 +10,6 @@ import (
 )
 
 // TestFunc002 teste KTN-FUNC-002.
-//
-// Params:
-//   - t: contexte de test
 func TestFunc002(t *testing.T) {
 	tests := []struct {
 		name           string

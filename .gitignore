@@ -29,11 +29,12 @@ credentials.json
 *.test
 *.out
 *.o
-test_*
-*_test
 go.work
 go.work.sum
 vendor/
+
+# Test binaries (but not test source files)
+# Note: *_internal_test.go and *_external_test.go are legitimate test files
 
 # Coverage - fichiers temporaires uniquement (COVERAGE.MD est versionné)
 coverage*.out

@@ -9,9 +9,6 @@ import (
 )
 
 // Test_isPassthroughTest tests the isPassthroughTest function.
-//
-// Params:
-//   - t: testing context
 func Test_isPassthroughTest(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -267,9 +264,6 @@ func Test_isPassthroughTest(t *testing.T) {
 }
 
 // Test_isComparisonOperator tests the isComparisonOperator function.
-//
-// Params:
-//   - t: testing context
 func Test_isComparisonOperator(t *testing.T) {
 	tests := []struct {
 		name string
@@ -302,9 +296,6 @@ func Test_isComparisonOperator(t *testing.T) {
 }
 
 // Test_isTestingAssertionCall tests the isTestingAssertionCall function.
-//
-// Params:
-//   - t: testing context
 func Test_isTestingAssertionCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -364,9 +355,6 @@ func Test_isTestingAssertionCall(t *testing.T) {
 }
 
 // Test_isSubTestCall tests the isSubTestCall function.
-//
-// Params:
-//   - t: testing context
 func Test_isSubTestCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -417,9 +405,6 @@ func Test_isSubTestCall(t *testing.T) {
 }
 
 // Test_isAssertLibraryCall tests the isAssertLibraryCall function.
-//
-// Params:
-//   - t: testing context
 func Test_isAssertLibraryCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -476,9 +461,6 @@ func Test_isAssertLibraryCall(t *testing.T) {
 }
 
 // Test_isTestHelperCall tests the isTestHelperCall function.
-//
-// Params:
-//   - t: testing context
 func Test_isTestHelperCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -531,9 +513,6 @@ func Test_isTestHelperCall(t *testing.T) {
 }
 
 // Test_checkForValidationSignal tests the checkForValidationSignal function.
-//
-// Params:
-//   - t: testing context
 func Test_checkForValidationSignal(t *testing.T) {
 	tests := []struct {
 		name string
@@ -581,9 +560,6 @@ func Test_checkForValidationSignal(t *testing.T) {
 }
 
 // Test_checkCallForValidation tests the checkCallForValidation function.
-//
-// Params:
-//   - t: testing context
 func Test_checkCallForValidation(t *testing.T) {
 	tests := []struct {
 		name string
@@ -638,9 +614,6 @@ func Test_checkCallForValidation(t *testing.T) {
 }
 
 // Test_runTest012 tests the runTest012 function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest012(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -685,6 +658,202 @@ func Test_runTest012_excludedFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
+		})
+	}
+}
+
+// Test_isPassthroughTest_nilBody tests isPassthroughTest with nil body.
+func Test_isPassthroughTest_nilBody(t *testing.T) {
+	tests := []struct {
+		name     string
+		funcDecl *ast.FuncDecl
+		want     bool
+	}{
+		{
+			name: "nil body",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "TestFoo"},
+				Type: &ast.FuncType{},
+				Body: nil,
+			},
+			want: true,
+		},
+		{
+			name: "empty body",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "TestFoo"},
+				Type: &ast.FuncType{},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isPassthroughTest(tt.funcDecl)
+			if got != tt.want {
+				t.Errorf("isPassthroughTest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_checkForValidationSignal_nil tests checkForValidationSignal with nil node.
+func Test_checkForValidationSignal_nil(t *testing.T) {
+	tests := []struct {
+		name string
+		node ast.Node
+		want bool
+	}{
+		{
+			name: "nil node",
+			node: nil,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := checkForValidationSignal(tt.node)
+			if got != tt.want {
+				t.Errorf("checkForValidationSignal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isTestingAssertionCall_notSelector tests isTestingAssertionCall with non-selector.
+func Test_isTestingAssertionCall_notSelector(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "direct function call",
+			code: "package test\nfunc f() { Foo() }",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					return false
+				}
+				return true
+			})
+
+			if callExpr == nil {
+				t.Fatal("no call expression found")
+			}
+
+			got := isTestingAssertionCall(callExpr)
+			if got != tt.want {
+				t.Errorf("isTestingAssertionCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isSubTestCall_notReceiver tests isSubTestCall with non-identifier receiver.
+func Test_isSubTestCall_notReceiver(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "call expression as receiver",
+			code: "package test\nfunc f() { getT().Run(\"name\", func(x int){}) }",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Find the outer call (the one with Run)
+			var runCall *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ce, ok := n.(*ast.CallExpr); ok {
+					if sel, selOk := ce.Fun.(*ast.SelectorExpr); selOk && sel.Sel.Name == "Run" {
+						runCall = ce
+						return false
+					}
+				}
+				return true
+			})
+
+			if runCall == nil {
+				t.Fatal("no Run call expression found")
+			}
+
+			got := isSubTestCall(runCall)
+			if got != tt.want {
+				t.Errorf("isSubTestCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isAssertLibraryCall_notReceiver tests isAssertLibraryCall with non-identifier receiver.
+func Test_isAssertLibraryCall_notReceiver(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "call expression as receiver",
+			code: "package test\nfunc f() { getAssert().Equal(t, 1, 1) }",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Find the outer call (the one with Equal)
+			var equalCall *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ce, ok := n.(*ast.CallExpr); ok {
+					if sel, selOk := ce.Fun.(*ast.SelectorExpr); selOk && sel.Sel.Name == "Equal" {
+						equalCall = ce
+						return false
+					}
+				}
+				return true
+			})
+
+			if equalCall == nil {
+				t.Fatal("no Equal call expression found")
+			}
+
+			got := isAssertLibraryCall(equalCall)
+			if got != tt.want {
+				t.Errorf("isAssertLibraryCall() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

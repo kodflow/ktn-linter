@@ -10,9 +10,6 @@ import (
 )
 
 // TestVar011 vérifie la détection du shadowing de variables.
-//
-// Params:
-//   - t: contexte de test
 func TestVar011(t *testing.T) {
 	tests := []struct {
 		name           string

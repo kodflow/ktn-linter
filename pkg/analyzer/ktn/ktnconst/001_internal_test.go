@@ -13,9 +13,6 @@ import (
 )
 
 // Test_runConst001_disabled tests that the rule is skipped when disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runConst001_disabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -71,9 +68,6 @@ func Test_runConst001_disabled(t *testing.T) {
 }
 
 // Test_runConst001_excludedFile tests that excluded files are skipped.
-//
-// Params:
-//   - t: testing context
 func Test_runConst001_excludedFile(t *testing.T) {
 	tests := []struct {
 		name string
@@ -132,9 +126,6 @@ func Test_runConst001_excludedFile(t *testing.T) {
 }
 
 // Test_runConst001 tests the runConst001 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runConst001(t *testing.T) {
 	tests := []struct {
 		name string

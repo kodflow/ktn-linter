@@ -13,9 +13,6 @@ import (
 )
 
 // Test_runVar002 tests the private runVar002 function.
-//
-// Params:
-//   - t: testing context
 func Test_runVar002(t *testing.T) {
 	tests := []struct {
 		name string
@@ -34,9 +31,6 @@ func Test_runVar002(t *testing.T) {
 }
 
 // Test_checkVarSpec tests the checkVarSpec function.
-//
-// Params:
-//   - t: testing context
 func Test_checkVarSpec(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -118,9 +112,6 @@ func Test_checkVarSpec(t *testing.T) {
 }
 
 // Test_checkVarSpec_multipleVars tests checkVarSpec with multiple variables.
-//
-// Params:
-//   - t: testing context
 func Test_checkVarSpec_multipleVars(t *testing.T) {
 	tests := []struct {
 		name          string

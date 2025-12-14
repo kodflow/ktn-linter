@@ -13,9 +13,6 @@ import (
 )
 
 // Test_extractCommentLines tests the extractCommentLines function.
-//
-// Params:
-//   - t: testing context
 func Test_extractCommentLines(t *testing.T) {
 	tests := []struct {
 		name string
@@ -76,9 +73,6 @@ func Test_extractCommentLines(t *testing.T) {
 }
 
 // Test_validateDescriptionLine tests the validateDescriptionLine function.
-//
-// Params:
-//   - t: testing context
 func Test_validateDescriptionLine(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -119,9 +113,6 @@ func Test_validateDescriptionLine(t *testing.T) {
 }
 
 // Test_validateParamsSection tests the validateParamsSection function.
-//
-// Params:
-//   - t: testing context
 func Test_validateParamsSection(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -177,9 +168,6 @@ func Test_validateParamsSection(t *testing.T) {
 }
 
 // Test_validateReturnsSection tests the validateReturnsSection function.
-//
-// Params:
-//   - t: testing context
 func Test_validateReturnsSection(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -228,9 +216,6 @@ func Test_validateReturnsSection(t *testing.T) {
 }
 
 // Test_validateDocFormat tests the validateDocFormat function.
-//
-// Params:
-//   - t: testing context
 func Test_validateDocFormat(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -347,9 +332,6 @@ func Test_validateDocFormat(t *testing.T) {
 }
 
 // Test_runComment006 tests the runComment006 function configuration.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006(t *testing.T) {
 	tests := []struct {
 		name string
@@ -374,9 +356,6 @@ func Test_runComment006(t *testing.T) {
 }
 
 // Test_runComment006_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -443,9 +422,6 @@ func Test_runComment006_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment006_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string
@@ -515,9 +491,6 @@ func Test_runComment006_fileExcluded(t *testing.T) {
 }
 
 // Test_validateDocFormat_skipDescriptionLines tests skipping description lines.
-//
-// Params:
-//   - t: testing context
 func Test_validateDocFormat_skipDescriptionLines(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -566,9 +539,6 @@ func Test_validateDocFormat_skipDescriptionLines(t *testing.T) {
 }
 
 // Test_runComment006_testFile tests runComment006 with test files.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006_testFile(t *testing.T) {
 	tests := []struct {
 		name string
@@ -630,9 +600,6 @@ func Test_runComment006_testFile(t *testing.T) {
 }
 
 // Test_runComment006_testFunction tests runComment006 with test functions.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006_testFunction(t *testing.T) {
 	tests := []struct {
 		name string
@@ -696,9 +663,6 @@ func Test_runComment006_testFunction(t *testing.T) {
 }
 
 // Test_runComment006_missingDoc tests runComment006 with missing documentation.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006_missingDoc(t *testing.T) {
 	tests := []struct {
 		name string
@@ -760,9 +724,6 @@ func Test_runComment006_missingDoc(t *testing.T) {
 }
 
 // Test_runComment006_invalidDocFormat tests runComment006 with invalid doc format.
-//
-// Params:
-//   - t: testing context
 func Test_runComment006_invalidDocFormat(t *testing.T) {
 	tests := []struct {
 		name string

@@ -1,5 +1,8 @@
 # KTN-Linter
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
+
 Linter Go strict pour l'application des bonnes pratiques et règles de style.
 
 **Règle stricte** : 0 issues = 0 issues (même INFO). STOP et corriger immédiatement.
@@ -183,7 +186,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-CONST-002](docs/rules/KTN-CONST-002.md) | INFO | Groupement et placement avant var |
 | [KTN-CONST-003](docs/rules/KTN-CONST-003.md) | INFO | Nommage SCREAMING_SNAKE_CASE |
 
-### Variables (17 règles) - ERROR/WARNING/INFO
+### Variables (18 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-VAR-001](docs/rules/KTN-VAR-001.md) | ERROR | Variables package en camelCase (pas SCREAMING_SNAKE) |
@@ -203,6 +206,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-VAR-015](docs/rules/KTN-VAR-015.md) | INFO | Préallocation maps avec capacité connue |
 | [KTN-VAR-016](docs/rules/KTN-VAR-016.md) | INFO | Utiliser [N]T au lieu de make([]T, N) |
 | [KTN-VAR-017](docs/rules/KTN-VAR-017.md) | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
+| [KTN-VAR-018](docs/rules/KTN-VAR-018.md) | WARNING | Variables en snake_case (utiliser camelCase) |
 
 ### Fonctions (12 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
@@ -228,8 +232,8 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-STRUCT-003](docs/rules/KTN-STRUCT-003.md) | WARNING | Pas de préfixe Get pour getters |
 | [KTN-STRUCT-004](docs/rules/KTN-STRUCT-004.md) | INFO | Un fichier Go par struct (DTOs peuvent être groupés) |
 | [KTN-STRUCT-005](docs/rules/KTN-STRUCT-005.md) | INFO | Ordre des champs (exportés avant privés) |
-| [KTN-STRUCT-006](docs/rules/KTN-STRUCT-006.md) | INFO | Pas de tags sur champs privés de DTOs |
-| [KTN-STRUCT-007](docs/rules/KTN-STRUCT-007.md) | INFO | Nommage getters/setters: `Field()` et `SetField()` |
+| [KTN-STRUCT-006](docs/rules/KTN-STRUCT-006.md) | INFO | Pas de tags de sérialisation sur champs privés |
+| [KTN-STRUCT-007](docs/rules/KTN-STRUCT-007.md) | INFO | Convention getters/setters: `Field()` et `SetField()` |
 
 **Convention Getters/Setters (STRUCT-007)**:
 - Getters/setters sont **OPTIONNELS**
@@ -261,7 +265,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 ### Retours (1 règle) - WARNING
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| [KTN-RETURN-002](docs/rules/KTN-RETURN-002.md) | WARNING | Préférer slice/map vide à nil |
+| [KTN-RETURN-001](docs/rules/KTN-RETURN-001.md) | WARNING | Préférer slice/map vide à nil |
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
@@ -304,10 +308,10 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 
 ## Statistiques
 
-- **Couverture globale**: 91.6% 🟡
-- **Packages 100%**: utils, formatter 🟢
-- **Go version**: 1.25
-- **Total règles KTN**: 59 (7 comment + 3 const + 17 var + 12 func + 5 struct + 13 test + 1 interface + 1 return)
+- **Couverture globale**: 91.6%
+- **Packages 100%**: utils, formatter
+- **Go version**: 1.25+
+- **Total règles KTN**: 62 (7 comment + 3 const + 18 var + 12 func + 7 struct + 13 test + 1 interface + 1 return)
 - **Total modernize**: 17 analyseurs actifs / 18 totaux
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 

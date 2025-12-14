@@ -6,9 +6,6 @@ import (
 )
 
 // TestProcessData teste ProcessData avec des assertions.
-//
-// Params:
-//   - t: contexte de test
 func TestProcessData(t *testing.T) {
 	// Test avec assertion
 	result := ProcessData("hello")
@@ -19,9 +16,6 @@ func TestProcessData(t *testing.T) {
 }
 
 // TestGetCount teste GetCount avec des assertions.
-//
-// Params:
-//   - t: contexte de test
 func TestGetCount(t *testing.T) {
 	// Test avec assertion
 	got := GetCount()
@@ -32,9 +26,6 @@ func TestGetCount(t *testing.T) {
 }
 
 // TestWithComparison teste avec une comparaison.
-//
-// Params:
-//   - t: contexte de test
 func TestWithComparison(t *testing.T) {
 	// La comparaison == est un signal de validation
 	result := GetCount()
@@ -43,9 +34,6 @@ func TestWithComparison(t *testing.T) {
 }
 
 // TestWithSubtest teste avec t.Run.
-//
-// Params:
-//   - t: contexte de test
 func TestWithSubtest(t *testing.T) {
 	// t.Run est un signal de validation
 	t.Run("subtest", func(t *testing.T) {
@@ -55,9 +43,6 @@ func TestWithSubtest(t *testing.T) {
 }
 
 // TestWithError teste avec t.Error.
-//
-// Params:
-//   - t: contexte de test
 func TestWithError(t *testing.T) {
 	// t.Error est une assertion
 	if false {
@@ -66,9 +51,6 @@ func TestWithError(t *testing.T) {
 }
 
 // TestWithFatal teste avec t.Fatal.
-//
-// Params:
-//   - t: contexte de test
 func TestWithFatal(t *testing.T) {
 	// t.Fatal est une assertion
 	if false {
@@ -77,9 +59,6 @@ func TestWithFatal(t *testing.T) {
 }
 
 // TestWithFail teste avec t.Fail.
-//
-// Params:
-//   - t: contexte de test
 func TestWithFail(t *testing.T) {
 	// t.Fail est une assertion
 	if false {
@@ -88,9 +67,6 @@ func TestWithFail(t *testing.T) {
 }
 
 // TestWithFailNow teste avec t.FailNow.
-//
-// Params:
-//   - t: contexte de test
 func TestWithFailNow(t *testing.T) {
 	// t.FailNow est une assertion
 	if false {
@@ -99,9 +75,6 @@ func TestWithFailNow(t *testing.T) {
 }
 
 // TestWithErrCheck teste la vérification d'erreur.
-//
-// Params:
-//   - t: contexte de test
 func TestWithErrCheck(t *testing.T) {
 	// Vérification d'erreur
 	err := GetError(false)
@@ -112,27 +85,18 @@ func TestWithErrCheck(t *testing.T) {
 }
 
 // TestWithHelper teste avec un helper de test.
-//
-// Params:
-//   - t: contexte de test
 func TestWithHelper(t *testing.T) {
 	// Appeler un helper qui prend t comme premier argument
 	helperFunc(t)
 }
 
 // helperFunc est un helper de test.
-//
-// Params:
-//   - t: contexte de test
 func helperFunc(t *testing.T) {
 	// Helper
 	t.Helper()
 }
 
 // TestTableDriven est un test table-driven.
-//
-// Params:
-//   - t: contexte de test
 func TestTableDriven(t *testing.T) {
 	// Test table-driven
 	cases := []struct {

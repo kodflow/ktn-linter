@@ -804,9 +804,6 @@ func TestConfig_matchDoubleStarPattern(t *testing.T) {
 }
 
 // TestConfig_matchTriplePattern tests the matchTriplePattern method.
-//
-// Params:
-//   - t: testing context
 func TestConfig_matchTriplePattern(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -830,9 +827,6 @@ func TestConfig_matchTriplePattern(t *testing.T) {
 }
 
 // TestConfig_matchPrefixSuffix tests the matchPrefixSuffix method.
-//
-// Params:
-//   - t: testing context
 func TestConfig_matchPrefixSuffix(t *testing.T) {
 	tests := []struct {
 		name     string

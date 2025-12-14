@@ -6,9 +6,6 @@ import (
 )
 
 // Test_runTest002 tests the runTest002 private function with table-driven tests.
-//
-// Params:
-//   - t: testing context
 func Test_runTest002(t *testing.T) {
 	tests := []struct {
 		name string
@@ -31,9 +28,6 @@ func Test_runTest002(t *testing.T) {
 }
 
 // Test_isExemptPackage tests the isExemptPackage private function.
-//
-// Params:
-//   - t: testing context
 func Test_isExemptPackage(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -80,9 +74,6 @@ func Test_isExemptPackage(t *testing.T) {
 }
 
 // Test_runTest001_integration tests the analyzer structure.
-//
-// Params:
-//   - t: testing context
 func Test_runTest001_integration(t *testing.T) {
 	tests := []struct {
 		name         string

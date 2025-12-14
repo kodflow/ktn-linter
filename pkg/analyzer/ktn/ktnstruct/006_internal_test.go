@@ -13,9 +13,6 @@ import (
 )
 
 // Test_runStruct006 teste la fonction runStruct006.
-//
-// Params:
-//   - t: instance de testing
 func Test_runStruct006(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -43,9 +40,6 @@ func Test_runStruct006(t *testing.T) {
 }
 
 // Test_checkPrivateFieldsWithTags teste la fonction checkPrivateFieldsWithTags.
-//
-// Params:
-//   - t: instance de testing
 func Test_checkPrivateFieldsWithTags(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -143,9 +137,6 @@ type User struct {
 }
 
 // Test_isPrivateField teste la fonction isPrivateField.
-//
-// Params:
-//   - t: instance de testing
 func Test_isPrivateField(t *testing.T) {
 	tests := []struct {
 		name     string

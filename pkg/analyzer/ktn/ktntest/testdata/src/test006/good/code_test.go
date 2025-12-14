@@ -4,9 +4,6 @@ import "testing"
 
 // TestProcessDataWithErrors teste avec couverture complète (BIEN).
 // Fichier code.go existe dans le même package - pattern 1:1 respecté.
-//
-// Params:
-//   - t: contexte de test
 func TestProcessDataWithErrors(t *testing.T) {
 	const MAX_DATA_LENGTH int = 100
 	// Table de tests
@@ -41,9 +38,6 @@ func TestProcessDataWithErrors(t *testing.T) {
 
 // TestValidateNumberWithErrors teste avec couverture complète (BIEN).
 // Fichier code.go existe dans le même package - pattern 1:1 respecté.
-//
-// Params:
-//   - t: contexte de test
 func TestValidateNumberWithErrors(t *testing.T) {
 	// Table de tests
 	tests := []struct {

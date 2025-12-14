@@ -282,9 +282,6 @@ func Test_runVar009_fileExcluded(t *testing.T) {
 }
 
 // Test_isExternalType tests the isExternalType private function.
-//
-// Params:
-//   - t: testing context
 func Test_isExternalType(t *testing.T) {
 	tests := []struct {
 		name string

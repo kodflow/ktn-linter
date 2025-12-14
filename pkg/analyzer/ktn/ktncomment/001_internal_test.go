@@ -307,9 +307,6 @@ func Test_containsURL(t *testing.T) {
 }
 
 // Test_checkMultiLineComment tests the checkMultiLineComment function.
-//
-// Params:
-//   - t: testing context
 func Test_checkMultiLineComment(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -367,9 +364,6 @@ func Test_checkMultiLineComment(t *testing.T) {
 }
 
 // Test_runComment001_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment001_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -438,9 +432,6 @@ func Test_runComment001_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment001_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment001_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string
@@ -512,9 +503,6 @@ func Test_runComment001_fileExcluded(t *testing.T) {
 }
 
 // Test_runComment001_customThreshold tests behavior with custom threshold.
-//
-// Params:
-//   - t: testing context
 func Test_runComment001_customThreshold(t *testing.T) {
 	tests := []struct {
 		name string
@@ -586,9 +574,6 @@ func Test_runComment001_customThreshold(t *testing.T) {
 }
 
 // Test_isDocComment_edgeCases tests edge cases for isDocComment.
-//
-// Params:
-//   - t: testing context
 func Test_isDocComment_edgeCases(t *testing.T) {
 	tests := []struct {
 		name string
@@ -644,9 +629,6 @@ func main() {
 }
 
 // Test_runComment001_multiLineBlock tests multi-line block comments.
-//
-// Params:
-//   - t: testing context
 func Test_runComment001_multiLineBlock(t *testing.T) {
 	tests := []struct {
 		name string

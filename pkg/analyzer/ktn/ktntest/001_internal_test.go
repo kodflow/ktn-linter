@@ -11,9 +11,6 @@ import (
 )
 
 // Test_runTest001 tests the runTest001 private function with table-driven tests.
-//
-// Params:
-//   - t: testing context
 func Test_runTest001(t *testing.T) {
 	tests := []struct {
 		name string
@@ -36,9 +33,6 @@ func Test_runTest001(t *testing.T) {
 }
 
 // Test_runTest012_integration tests the analyzer structure.
-//
-// Params:
-//   - t: testing context
 func Test_runTest012_integration(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -58,9 +52,6 @@ func Test_runTest012_integration(t *testing.T) {
 }
 
 // Test_runTest012_fileNamingPatterns tests various file naming patterns.
-//
-// Params:
-//   - t: testing context
 func Test_runTest012_fileNamingPatterns(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -99,9 +90,6 @@ func Test_runTest012_fileNamingPatterns(t *testing.T) {
 }
 
 // Test_runTest012_edgeCases tests edge cases for file naming.
-//
-// Params:
-//   - t: testing context
 func Test_runTest012_edgeCases(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -140,9 +128,6 @@ func Test_runTest012_edgeCases(t *testing.T) {
 }
 
 // Test_hasValidTestSuffix tests the hasValidTestSuffix function.
-//
-// Params:
-//   - t: testing context
 func Test_hasValidTestSuffix(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -200,18 +185,12 @@ type mockReporter struct {
 }
 
 // Report adds a diagnostic to the list.
-//
-// Params:
-//   - d: diagnostic to report
 func (m *mockReporter) Report(d analysis.Diagnostic) {
 	// Add the diagnostic message
 	m.diagnostics = append(m.diagnostics, d.Message)
 }
 
 // Test_verifyBenchFile tests the verifyBenchFile private function.
-//
-// Params:
-//   - t: testing context
 func Test_verifyBenchFile(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -314,9 +293,6 @@ func BenchmarkWithHelper(b *testing.B) {
 }
 
 // Test_runTest001_disabled tests that the rule is skipped when disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runTest001_disabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -331,9 +307,6 @@ func Test_runTest001_disabled(t *testing.T) {
 }
 
 // Test_runTest001_excludedFile tests that excluded files are skipped.
-//
-// Params:
-//   - t: testing context
 func Test_runTest001_excludedFile(t *testing.T) {
 	tests := []struct {
 		name string

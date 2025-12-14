@@ -146,9 +146,6 @@ func Test_isContextType(t *testing.T) {
 }
 
 // Test_isContextTypeWithPass vérifie la détection de context.Context avec pass.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextTypeWithPass(t *testing.T) {
 	tests := []struct {
 		name string
@@ -169,9 +166,6 @@ func Test_isContextTypeWithPass(t *testing.T) {
 }
 
 // Test_isContextTypeByType vérifie la détection de context.Context par type.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextTypeByType(t *testing.T) {
 	tests := []struct {
 		name string
@@ -192,9 +186,6 @@ func Test_isContextTypeByType(t *testing.T) {
 }
 
 // Test_isContextObj teste la fonction isContextObj.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextObj(t *testing.T) {
 	tests := []struct {
 		name string
@@ -215,9 +206,6 @@ func Test_isContextObj(t *testing.T) {
 }
 
 // Test_isContextUnderlying teste la fonction isContextUnderlying.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying(t *testing.T) {
 	tests := []struct {
 		name string
@@ -238,9 +226,6 @@ func Test_isContextUnderlying(t *testing.T) {
 }
 
 // Test_isContextType_fallback tests the AST-based fallback for context detection.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextType_fallback(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -287,9 +272,6 @@ func Test_isContextType_fallback(t *testing.T) {
 }
 
 // Test_reportMultipleContexts_withMultiple tests reporting multiple context params.
-//
-// Params:
-//   - t: instance de testing
 func Test_reportMultipleContexts_withMultiple(t *testing.T) {
 	tests := []struct {
 		name string
@@ -355,9 +337,6 @@ func Test_reportMultipleContexts_withMultiple(t *testing.T) {
 }
 
 // Test_reportMultipleContexts_withSingle tests no reporting for single context.
-//
-// Params:
-//   - t: instance de testing
 func Test_reportMultipleContexts_withSingle(t *testing.T) {
 	tests := []struct {
 		name string
@@ -408,9 +387,6 @@ func Test_reportMultipleContexts_withSingle(t *testing.T) {
 }
 
 // Test_analyzeContextParams_multipleInSameField tests multiple contexts in one field.
-//
-// Params:
-//   - t: instance de testing
 func Test_analyzeContextParams_multipleInSameField(t *testing.T) {
 	tests := []struct {
 		name string
@@ -482,9 +458,6 @@ func Test_analyzeContextParams_multipleInSameField(t *testing.T) {
 }
 
 // Test_isContextTypeByType_notNamed tests when type is not a Named type.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextTypeByType_notNamed(t *testing.T) {
 	tests := []struct {
 		name string
@@ -510,9 +483,6 @@ func Test_isContextTypeByType_notNamed(t *testing.T) {
 }
 
 // Test_isContextTypeByType_realContext tests with real context.Context.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextTypeByType_realContext(t *testing.T) {
 	tests := []struct {
 		name string
@@ -577,9 +547,6 @@ func Test_isContextTypeByType_realContext(t *testing.T) {
 }
 
 // Test_isContextTypeByType_noObject tests when Named type has no object.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextTypeByType_noObject(t *testing.T) {
 	tests := []struct {
 		name string
@@ -604,9 +571,6 @@ func Test_isContextTypeByType_noObject(t *testing.T) {
 }
 
 // Test_isContextTypeWithPass_fallback tests fallback to AST when type info unavailable.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextTypeWithPass_fallback(t *testing.T) {
 	tests := []struct {
 		name string
@@ -668,9 +632,6 @@ func Test_isContextTypeWithPass_fallback(t *testing.T) {
 }
 
 // Test_isContextUnderlying_withAlias tests underlying type detection for aliases.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_withAlias(t *testing.T) {
 	tests := []struct {
 		name string
@@ -734,9 +695,6 @@ func Test_isContextUnderlying_withAlias(t *testing.T) {
 }
 
 // Test_isContextUnderlying_realContext tests with direct context.Context type.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_realContext(t *testing.T) {
 	tests := []struct {
 		name string
@@ -808,9 +766,6 @@ func Test_isContextUnderlying_realContext(t *testing.T) {
 }
 
 // Test_isContextUnderlying_underlyingNilObj tests when underlying has nil object.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_underlyingNilObj(t *testing.T) {
 	tests := []struct {
 		name string
@@ -867,9 +822,6 @@ func Test_isContextUnderlying_underlyingNilObj(t *testing.T) {
 }
 
 // Test_isContextUnderlying_contextTypedef tests with a typedef of context.Context.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_contextTypedef(t *testing.T) {
 	tests := []struct {
 		name string
@@ -933,9 +885,6 @@ func Test_isContextUnderlying_contextTypedef(t *testing.T) {
 }
 
 // Test_isContextUnderlying_notContext tests with a non-context named underlying.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_notContext(t *testing.T) {
 	tests := []struct {
 		name string
@@ -994,9 +943,6 @@ func Test_isContextUnderlying_notContext(t *testing.T) {
 }
 
 // Test_isContextUnderlying_noPackage tests behavior when package is nil.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_noPackage(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1056,9 +1002,6 @@ func Test_isContextUnderlying_noPackage(t *testing.T) {
 }
 
 // Test_isContextUnderlying_nonNamed tests behavior with non-named underlying type.
-//
-// Params:
-//   - t: instance de testing
 func Test_isContextUnderlying_nonNamed(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1115,9 +1058,6 @@ func Test_isContextUnderlying_nonNamed(t *testing.T) {
 }
 
 // Test_analyzeContextParams tests the analyzeContextParams private function.
-//
-// Params:
-//   - t: testing context
 func Test_analyzeContextParams(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1133,9 +1073,6 @@ func Test_analyzeContextParams(t *testing.T) {
 
 
 // Test_reportMultipleContexts tests the reportMultipleContexts private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportMultipleContexts(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1151,9 +1088,6 @@ func Test_reportMultipleContexts(t *testing.T) {
 
 
 // Test_reportMisplacedContext tests the reportMisplacedContext private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportMisplacedContext(t *testing.T) {
 	tests := []struct {
 		name string

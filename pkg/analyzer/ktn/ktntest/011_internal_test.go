@@ -5,9 +5,6 @@ import (
 )
 
 // Test_runTest011 tests the runTest011 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest011(t *testing.T) {
 	tests := []struct {
 		name string
@@ -27,9 +24,6 @@ func Test_runTest011(t *testing.T) {
 }
 
 // Test_extractExpectedPackageFromFilename tests extractExpectedPackageFromFilename.
-//
-// Params:
-//   - t: testing context
 func Test_extractExpectedPackageFromFilename(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -61,9 +55,6 @@ func Test_extractExpectedPackageFromFilename(t *testing.T) {
 }
 
 // Test_validateTestFiles011 tests the validateTestFiles011 private function.
-//
-// Params:
-//   - t: testing context
 func Test_validateTestFiles011(t *testing.T) {
 	tests := []struct {
 		name string
@@ -78,9 +69,6 @@ func Test_validateTestFiles011(t *testing.T) {
 }
 
 // Test_validatePackageConvention011 tests the validatePackageConvention011 private function.
-//
-// Params:
-//   - t: testing context
 func Test_validatePackageConvention011(t *testing.T) {
 	tests := []struct {
 		name string

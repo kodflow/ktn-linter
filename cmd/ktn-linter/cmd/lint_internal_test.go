@@ -266,49 +266,34 @@ func Test_checkLoadErrorsNoErrors(t *testing.T) {
 // TestRunAnalyzers teste runAnalyzers
 func Test_runAnalyzers(t *testing.T) {
 	tests := []struct {
-		name            string
-		packages        []string
-		setupCategory   func()
-		cleanupCategory func()
-		expectPanic     bool
+		name        string
+		packages    []string
+		opts        lintOptions
+		expectPanic bool
 	}{
 		{
-			name:     "success with valid packages",
-			packages: []string{"../../../pkg/formatter"},
-			setupCategory: func() {
-				// Pas de catégorie spécifique
-			},
-			cleanupCategory: func() {},
-			expectPanic:     false,
-		},
-		{
-			name:     "success with multiple packages",
-			packages: []string{"../../../pkg/formatter", "../../../pkg/analyzer/utils"},
-			setupCategory: func() {
-				// Pas de catégorie spécifique
-			},
-			cleanupCategory: func() {},
-			expectPanic:     false,
-		},
-		{
-			name:     "success with specific category",
-			packages: []string{"../../../pkg/formatter"},
-			setupCategory: func() {
-				Category = "func"
-			},
-			cleanupCategory: func() {
-				Category = ""
-			},
+			name:        "success with valid packages",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        lintOptions{},
 			expectPanic: false,
 		},
 		{
-			name:     "error handling with empty packages",
-			packages: []string{},
-			setupCategory: func() {
-				// Pas de catégorie spécifique
-			},
-			cleanupCategory: func() {},
-			expectPanic:     false,
+			name:        "success with multiple packages",
+			packages:    []string{"../../../pkg/formatter", "../../../pkg/analyzer/utils"},
+			opts:        lintOptions{},
+			expectPanic: false,
+		},
+		{
+			name:        "success with specific category",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        lintOptions{category: "func"},
+			expectPanic: false,
+		},
+		{
+			name:        "error handling with empty packages",
+			packages:    []string{},
+			opts:        lintOptions{},
+			expectPanic: false,
 		},
 	}
 
@@ -316,14 +301,11 @@ func Test_runAnalyzers(t *testing.T) {
 	for _, tt := range tests {
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setupCategory()
-			defer tt.cleanupCategory()
-
 			// Chargement des packages
 			pkgs := loadPackages(tt.packages)
 
-			// Exécution de runAnalyzers
-			diagnostics := runAnalyzers(pkgs)
+			// Exécution de runAnalyzers avec options
+			diagnostics := runAnalyzers(pkgs, tt.opts)
 
 			// Vérification que la fonction ne panique pas
 			_ = diagnostics
@@ -335,18 +317,18 @@ func Test_runAnalyzers(t *testing.T) {
 func Test_runAnalyzersWithCategory(t *testing.T) {
 	tests := []struct {
 		name         string
-		category     string
+		opts         lintOptions
 		expectExit   bool
 		expectedCode int
 	}{
 		{
 			name:       "valid func category",
-			category:   "func",
+			opts:       lintOptions{category: "func"},
 			expectExit: false,
 		},
 		{
 			name:         "invalid category should exit",
-			category:     "invalid",
+			opts:         lintOptions{category: "invalid"},
 			expectExit:   true,
 			expectedCode: 1,
 		},
@@ -356,9 +338,6 @@ func Test_runAnalyzersWithCategory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
-
-			Category = tt.category
-			defer func() { Category = "" }()
 
 			// Capturer stderr
 			oldStderr := os.Stderr
@@ -371,7 +350,7 @@ func Test_runAnalyzersWithCategory(t *testing.T) {
 			pkgs := loadPackages([]string{"../../../pkg/formatter"})
 
 			exitCode, didExit := catchExitInCmd(t, func() {
-				runAnalyzers(pkgs)
+				runAnalyzers(pkgs, tt.opts)
 			})
 
 			w.Close()
@@ -389,29 +368,28 @@ func Test_runAnalyzersWithCategory(t *testing.T) {
 // TestRunAnalyzersVerbose teste runAnalyzers en mode verbose
 func Test_runAnalyzersVerbose(t *testing.T) {
 	tests := []struct {
-		name            string
-		packages        []string
-		expectedInMsg   string
+		name          string
+		packages      []string
+		opts          lintOptions
+		expectedInMsg string
 	}{
 		{
 			name:          "verbose mode output",
 			packages:      []string{"../../../pkg/formatter"},
+			opts:          lintOptions{verbose: true},
 			expectedInMsg: "Running",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Verbose = true
-			defer func() { Verbose = false }()
-
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
 			pkgs := loadPackages(tt.packages)
-			diagnostics := runAnalyzers(pkgs)
+			diagnostics := runAnalyzers(pkgs, tt.opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -432,14 +410,14 @@ func Test_runAnalyzersVerbose(t *testing.T) {
 func Test_runAnalyzersVerboseWithCategory(t *testing.T) {
 	tests := []struct {
 		name         string
-		category     string
+		opts         lintOptions
 		packages     []string
 		expectedMsg1 string
 		expectedMsg2 string
 	}{
 		{
 			name:         "verbose with const category",
-			category:     "const",
+			opts:         lintOptions{verbose: true, category: "const"},
 			packages:     []string{"../../../pkg/formatter"},
 			expectedMsg1: "category",
 			expectedMsg2: "rules",
@@ -448,20 +426,13 @@ func Test_runAnalyzersVerboseWithCategory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Verbose = true
-			Category = tt.category
-			defer func() {
-				Verbose = false
-				Category = ""
-			}()
-
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
 			pkgs := loadPackages(tt.packages)
-			diagnostics := runAnalyzers(pkgs)
+			diagnostics := runAnalyzers(pkgs, tt.opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -483,20 +454,19 @@ func Test_runAnalyzersVerboseMultiplePackages(t *testing.T) {
 	tests := []struct {
 		name          string
 		packages      []string
+		opts          lintOptions
 		expectedInMsg string
 	}{
 		{
 			name:          "multiple packages verbose output",
 			packages:      []string{"../../../pkg/formatter", "../../../pkg/analyzer/utils"},
+			opts:          lintOptions{verbose: true},
 			expectedInMsg: "Analyzing",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Verbose = true
-			defer func() { Verbose = false }()
-
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
@@ -504,7 +474,7 @@ func Test_runAnalyzersVerboseMultiplePackages(t *testing.T) {
 
 			// Charger plusieurs packages pour couvrir la boucle verbose
 			pkgs := loadPackages(tt.packages)
-			diagnostics := runAnalyzers(pkgs)
+			diagnostics := runAnalyzers(pkgs, tt.opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -527,10 +497,12 @@ func Test_runAnalyzersWithError(t *testing.T) {
 	tests := []struct {
 		name     string
 		packages []string
+		opts     lintOptions
 	}{
 		{
 			name:     "formatter package should work",
 			packages: []string{"../../../pkg/formatter"},
+			opts:     lintOptions{},
 		},
 	}
 
@@ -542,7 +514,7 @@ func Test_runAnalyzersWithError(t *testing.T) {
 			os.Stderr = w
 
 			pkgs := loadPackages(tt.packages)
-			diagnostics := runAnalyzers(pkgs)
+			diagnostics := runAnalyzers(pkgs, tt.opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -670,7 +642,7 @@ func Test_formatAndDisplay(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			formatAndDisplay(tt.diagnostics)
+			formatAndDisplay(tt.diagnostics, lintOptions{})
 
 			w.Close()
 			var stdout bytes.Buffer
@@ -720,7 +692,7 @@ func Test_formatAndDisplayWithDiagnostics(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			formatAndDisplay(diagnostics)
+			formatAndDisplay(diagnostics, lintOptions{})
 
 			w.Close()
 			var stdout bytes.Buffer
@@ -953,237 +925,6 @@ func Test_formatModernizeCode(t *testing.T) {
 	}
 }
 
-// Test_filterOverlappingEdits teste le filtrage des éditions qui se chevauchent
-func Test_filterOverlappingEdits(t *testing.T) {
-	tests := []struct {
-		name          string
-		edits         []textEdit
-		expectedCount int
-	}{
-		{
-			name:          "empty edits",
-			edits:         []textEdit{},
-			expectedCount: 0,
-		},
-		{
-			name: "single edit",
-			edits: []textEdit{
-				{start: 10, end: 20, newText: []byte("replacement")},
-			},
-			expectedCount: 1,
-		},
-		{
-			name: "non-overlapping edits",
-			edits: []textEdit{
-				{start: 30, end: 40, newText: []byte("third")},
-				{start: 20, end: 25, newText: []byte("second")},
-				{start: 10, end: 15, newText: []byte("first")},
-			},
-			expectedCount: 3,
-		},
-		{
-			name: "overlapping edits",
-			edits: []textEdit{
-				{start: 20, end: 30, newText: []byte("second")},
-				{start: 15, end: 25, newText: []byte("overlap")},
-			},
-			expectedCount: 1,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := filterOverlappingEdits(tt.edits)
-			// Vérification du nombre
-			if len(result) != tt.expectedCount {
-				t.Errorf("Expected %d edits, got %d", tt.expectedCount, len(result))
-			}
-		})
-	}
-}
-
-// Test_applyFixes teste l'application de fixes
-func Test_applyFixes(t *testing.T) {
-	tests := []struct {
-		name        string
-		diagnostics []diagWithFset
-	}{
-		{
-			name:        "empty diagnostics",
-			diagnostics: []diagWithFset{},
-		},
-		{
-			name: "diagnostics without suggested fixes",
-			diagnostics: []diagWithFset{
-				{
-					diag: analysis.Diagnostic{
-						Message: "test",
-					},
-					analyzerName: "test",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			count := applyFixes(tt.diagnostics)
-			// Validation du compteur
-			if count < 0 {
-				t.Errorf("Expected non-negative count, got %d", count)
-			}
-		})
-	}
-}
-
-// Test_collectSafeEdits teste la collecte d'éditions sûres
-func Test_collectSafeEdits(t *testing.T) {
-	tests := []struct {
-		name           string
-		diagnostics    []diagWithFset
-		safeAnalyzers  map[string]bool
-		expectedSkip   int
-		expectedEdits  int
-	}{
-		{
-			name:          "empty diagnostics",
-			diagnostics:   []diagWithFset{},
-			safeAnalyzers: map[string]bool{"any": true},
-			expectedSkip:  0,
-			expectedEdits: 0,
-		},
-		{
-			name: "unsafe analyzer skipped",
-			diagnostics: []diagWithFset{
-				{
-					diag: analysis.Diagnostic{
-						SuggestedFixes: []analysis.SuggestedFix{
-							{Message: "fix"},
-						},
-					},
-					analyzerName: "unsafe",
-				},
-			},
-			safeAnalyzers: map[string]bool{"any": true},
-			expectedSkip:  1,
-			expectedEdits: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edits, skipped := collectSafeEdits(tt.diagnostics, tt.safeAnalyzers)
-			// Vérification skip count
-			if skipped != tt.expectedSkip {
-				t.Errorf("Expected %d skipped, got %d", tt.expectedSkip, skipped)
-			}
-			// Vérification edit count
-			if len(edits) != tt.expectedEdits {
-				t.Errorf("Expected %d edits, got %d", tt.expectedEdits, len(edits))
-			}
-		})
-	}
-}
-
-// Test_extractTextEdits teste l'extraction d'éditions de texte
-func Test_extractTextEdits(t *testing.T) {
-	tests := []struct {
-		name string
-		diag diagWithFset
-	}{
-		{
-			name: "diagnostic without fixes",
-			diag: diagWithFset{
-				diag: analysis.Diagnostic{
-					SuggestedFixes: []analysis.SuggestedFix{},
-				},
-			},
-		},
-		{
-			name: "error case validation",
-			diag: diagWithFset{
-				diag: analysis.Diagnostic{
-					SuggestedFixes: []analysis.SuggestedFix{},
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fileEdits := make(map[string][]textEdit)
-			extractTextEdits(tt.diag, &fileEdits)
-			// Validation - ne devrait pas paniquer
-			if len(fileEdits) > 0 {
-				t.Log("Edits extracted successfully")
-			}
-		})
-	}
-}
-
-// Test_applyCollectedEdits teste l'application des éditions collectées
-func Test_applyCollectedEdits(t *testing.T) {
-	tests := []struct {
-		name      string
-		fileEdits map[string][]textEdit
-	}{
-		{
-			name:      "empty edits",
-			fileEdits: map[string][]textEdit{},
-		},
-		{
-			name: "edits with nonexistent file",
-			fileEdits: map[string][]textEdit{
-				"/nonexistent/file.go": {
-					{start: 0, end: 1, newText: []byte("x")},
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			count := applyCollectedEdits(tt.fileEdits)
-			// Validation du compteur
-			if count < 0 {
-				t.Errorf("Expected non-negative count, got %d", count)
-			}
-		})
-	}
-}
-
-// Test_applyEditsToFile teste l'application d'éditions à un fichier
-func Test_applyEditsToFile(t *testing.T) {
-	tests := []struct {
-		name     string
-		filename string
-		edits    []textEdit
-		expected bool
-	}{
-		{
-			name:     "nonexistent file",
-			filename: "/nonexistent/file.go",
-			edits:    []textEdit{},
-			expected: false,
-		},
-		{
-			name:     "empty edits list",
-			filename: "/tmp/test.go",
-			edits:    []textEdit{},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := applyEditsToFile(tt.filename, tt.edits)
-			// Validation du résultat
-			if result && tt.expected == false {
-				t.Error("Expected false for invalid file/edits")
-			}
-		})
-	}
-}
 
 // Test_runRequiredAnalyzers teste l'exécution des analyseurs requis
 func Test_runRequiredAnalyzers(t *testing.T) {
@@ -1272,17 +1013,13 @@ func Test_loadConfiguration_EmptyPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset config
-			ConfigPath = ""
-			defer func() { ConfigPath = "" }()
-
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
-			// Pas de panic attendu
-			loadConfiguration()
+			// Pas de panic attendu - utiliser lintOptions vide
+			loadConfiguration(lintOptions{})
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -1323,15 +1060,14 @@ exclude:
 			}
 			tmpfile.Close()
 
-			ConfigPath = tmpfile.Name()
-			defer func() { ConfigPath = "" }()
+			opts := lintOptions{configPath: tmpfile.Name()}
 
 			// Capturer stderr pour verbose output
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
-			loadConfiguration()
+			loadConfiguration(opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -1347,12 +1083,12 @@ exclude:
 func Test_loadConfiguration_InvalidPath(t *testing.T) {
 	tests := []struct {
 		name         string
-		configPath   string
+		opts         lintOptions
 		expectedCode int
 	}{
 		{
 			name:         "nonexistent config file",
-			configPath:   "/nonexistent/config.yaml",
+			opts:         lintOptions{configPath: "/nonexistent/config.yaml"},
 			expectedCode: 1,
 		},
 	}
@@ -1362,16 +1098,13 @@ func Test_loadConfiguration_InvalidPath(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
 
-			ConfigPath = tt.configPath
-			defer func() { ConfigPath = "" }()
-
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
 			exitCode, didExit := catchExitInCmd(t, func() {
-				loadConfiguration()
+				loadConfiguration(tt.opts)
 			})
 
 			w.Close()
@@ -1421,19 +1154,14 @@ exclude:
 			}
 			tmpfile.Close()
 
-			ConfigPath = tmpfile.Name()
-			Verbose = true
-			defer func() {
-				ConfigPath = ""
-				Verbose = false
-			}()
+			opts := lintOptions{configPath: tmpfile.Name(), verbose: true}
 
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
-			loadConfiguration()
+			loadConfiguration(opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -1473,19 +1201,14 @@ exclude: []
 			defer os.Remove(tmpfile)
 
 			// Pas de ConfigPath, mais verbose activé
-			ConfigPath = ""
-			Verbose = true
-			defer func() {
-				ConfigPath = ""
-				Verbose = false
-			}()
+			opts := lintOptions{verbose: true}
 
 			// Capturer stderr
 			oldStderr := os.Stderr
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
-			loadConfiguration()
+			loadConfiguration(opts)
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -1498,378 +1221,6 @@ exclude: []
 	}
 }
 
-// Test_extractTextEdits_WithValidEdits teste extractTextEdits avec des éditions valides
-func Test_extractTextEdits_WithValidEdits(t *testing.T) {
-	tests := []struct {
-		name          string
-		expectedCount int
-	}{
-		{
-			name:          "extract text edits from diagnostic",
-			expectedCount: 1,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 100)
-
-			d := diagWithFset{
-				diag: analysis.Diagnostic{
-					Pos: file.Pos(10),
-					SuggestedFixes: []analysis.SuggestedFix{
-						{
-							Message: "fix",
-							TextEdits: []analysis.TextEdit{
-								{
-									Pos:     file.Pos(10),
-									End:     file.Pos(20),
-									NewText: []byte("replacement"),
-								},
-							},
-						},
-					},
-				},
-				fset: fset,
-			}
-
-			fileEdits := make(map[string][]textEdit)
-			extractTextEdits(d, &fileEdits)
-
-			// Vérification qu'au moins une édition a été extraite
-			if len(fileEdits) != tt.expectedCount {
-				t.Errorf("Expected %d file edits, got %d", tt.expectedCount, len(fileEdits))
-			}
-		})
-	}
-}
-
-// Test_extractTextEdits_WithMultipleEdits teste extractTextEdits avec plusieurs éditions
-func Test_extractTextEdits_WithMultipleEdits(t *testing.T) {
-	tests := []struct {
-		name              string
-		expectedFileCount int
-	}{
-		{
-			name:              "multiple text edits in one fix",
-			expectedFileCount: 1,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 200)
-
-			d := diagWithFset{
-				diag: analysis.Diagnostic{
-					Pos: file.Pos(10),
-					SuggestedFixes: []analysis.SuggestedFix{
-						{
-							Message: "multiple fixes",
-							TextEdits: []analysis.TextEdit{
-								{
-									Pos:     file.Pos(10),
-									End:     file.Pos(20),
-									NewText: []byte("first"),
-								},
-								{
-									Pos:     file.Pos(30),
-									End:     file.Pos(40),
-									NewText: []byte("second"),
-								},
-							},
-						},
-					},
-				},
-				fset: fset,
-			}
-
-			fileEdits := make(map[string][]textEdit)
-			extractTextEdits(d, &fileEdits)
-
-			// Vérification
-			if len(fileEdits) != tt.expectedFileCount {
-				t.Errorf("Expected %d files, got %d", tt.expectedFileCount, len(fileEdits))
-			}
-
-			// Vérification du nombre d'éditions
-			for _, edits := range fileEdits {
-				if len(edits) != 2 {
-					t.Errorf("Expected 2 edits, got %d", len(edits))
-				}
-			}
-		})
-	}
-}
-
-// Test_extractTextEdits_WithNilFile teste extractTextEdits quand file est nil
-func Test_extractTextEdits_WithNilFile(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "nil file case",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-
-			// Utiliser un token.Pos invalide (qui donnera file == nil)
-			d := diagWithFset{
-				diag: analysis.Diagnostic{
-					Pos: token.NoPos,
-					SuggestedFixes: []analysis.SuggestedFix{
-						{
-							Message: "fix",
-							TextEdits: []analysis.TextEdit{
-								{
-									Pos:     token.NoPos,
-									End:     token.NoPos,
-									NewText: []byte("test"),
-								},
-							},
-						},
-					},
-				},
-				fset: fset,
-			}
-
-			fileEdits := make(map[string][]textEdit)
-			extractTextEdits(d, &fileEdits)
-
-			// Devrait être vide car file == nil
-			if len(fileEdits) != 0 {
-				t.Errorf("Expected 0 file edits for nil file, got %d", len(fileEdits))
-			}
-		})
-	}
-}
-
-// Test_applyEditsToFile_Success teste applyEditsToFile avec succès
-func Test_applyEditsToFile_Success(t *testing.T) {
-	tests := []struct {
-		name     string
-		content  string
-		edits    []textEdit
-		expected string
-	}{
-		{
-			name:    "simple replacement",
-			content: "Hello World",
-			edits: []textEdit{
-				{start: 6, end: 11, newText: []byte("Go")},
-			},
-			expected: "Hello Go",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Créer un fichier temporaire
-			tmpfile, err := os.CreateTemp("", "edit-test-*.go")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name())
-
-			if _, err := tmpfile.Write([]byte(tt.content)); err != nil {
-				t.Fatal(err)
-			}
-			tmpfile.Close()
-
-			success := applyEditsToFile(tmpfile.Name(), tt.edits)
-
-			if !success {
-				t.Error("Expected applyEditsToFile to succeed")
-			}
-
-			// Vérifier le contenu modifié
-			result, err := os.ReadFile(tmpfile.Name())
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if string(result) != tt.expected {
-				t.Errorf("Expected content %q, got %q", tt.expected, string(result))
-			}
-		})
-	}
-}
-
-// Test_applyEditsToFile_InvalidEdits teste applyEditsToFile avec éditions invalides
-func Test_applyEditsToFile_InvalidEdits(t *testing.T) {
-	tests := []struct {
-		name    string
-		content string
-		edits   []textEdit
-	}{
-		{
-			name:    "negative start position",
-			content: "Hello World",
-			edits: []textEdit{
-				{start: -1, end: 5, newText: []byte("test")},
-			},
-		},
-		{
-			name:    "end beyond content",
-			content: "Hello",
-			edits: []textEdit{
-				{start: 0, end: 100, newText: []byte("test")},
-			},
-		},
-		{
-			name:    "start greater than end",
-			content: "Hello World",
-			edits: []textEdit{
-				{start: 10, end: 5, newText: []byte("test")},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Créer un fichier temporaire
-			tmpfile, err := os.CreateTemp("", "invalid-edit-*.go")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name())
-
-			if _, err := tmpfile.Write([]byte(tt.content)); err != nil {
-				t.Fatal(err)
-			}
-			tmpfile.Close()
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			applyEditsToFile(tmpfile.Name(), tt.edits)
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			// Devrait afficher un avertissement
-			output := stderr.String()
-			if !strings.Contains(output, "Invalid edit") {
-				t.Error("Expected invalid edit warning")
-			}
-		})
-	}
-}
-
-// Test_applyEditsToFile_WriteError teste applyEditsToFile quand l'écriture échoue
-func Test_applyEditsToFile_WriteError(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "write to read-only file",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Créer un fichier temporaire
-			tmpfile, err := os.CreateTemp("", "readonly-*.go")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name())
-
-			if _, err := tmpfile.Write([]byte("content")); err != nil {
-				t.Fatal(err)
-			}
-			tmpfile.Close()
-
-			// Le rendre read-only
-			if err := os.Chmod(tmpfile.Name(), 0444); err != nil {
-				t.Fatal(err)
-			}
-
-			edits := []textEdit{
-				{start: 0, end: 3, newText: []byte("new")},
-			}
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			success := applyEditsToFile(tmpfile.Name(), edits)
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			// Devrait échouer
-			if success {
-				t.Error("Expected applyEditsToFile to fail on read-only file")
-			}
-
-			// Devrait afficher une erreur
-			if !strings.Contains(stderr.String(), "Error writing file") {
-				t.Error("Expected write error message")
-			}
-		})
-	}
-}
-
-// Test_runLint_WithFix teste runLint avec le flag --fix
-func Test_runLint_WithFix(t *testing.T) {
-	tests := []struct {
-		name     string
-		packages []string
-	}{
-		{
-			name:     "fix mode with no fixes",
-			packages: []string{"../../../pkg/formatter"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			restore := mockExitInCmd(t)
-			defer restore()
-
-			Fix = true
-			defer func() { Fix = false }()
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			exitCode, didExit := catchExitInCmd(t, func() {
-				runLint(lintCmd, tt.packages)
-			})
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			// Vérification exit
-			if !didExit || exitCode != 0 {
-				t.Errorf("Expected exit 0 in fix mode, got didExit=%v code=%d", didExit, exitCode)
-			}
-
-			// Devrait afficher le nombre de fixes
-			output := stderr.String()
-			if !strings.Contains(output, "fix") {
-				t.Log("Fix message expected in output")
-			}
-		})
-	}
-}
 
 // Test_runLint_WithVerbose teste runLint en mode verbose
 func Test_runLint_WithVerbose(t *testing.T) {
@@ -1888,8 +1239,9 @@ func Test_runLint_WithVerbose(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
 
-			Verbose = true
-			defer func() { Verbose = false }()
+			// Configurer le flag verbose via Cobra
+			rootCmd.PersistentFlags().Set(flagVerbose, "true")
+			defer rootCmd.PersistentFlags().Set(flagVerbose, "false")
 
 			// Capturer stdout et stderr
 			oldStdout := os.Stdout
@@ -1919,168 +1271,6 @@ func Test_runLint_WithVerbose(t *testing.T) {
 	}
 }
 
-// Test_applyCollectedEdits_VerboseMode teste applyCollectedEdits en mode verbose
-func Test_applyCollectedEdits_VerboseMode(t *testing.T) {
-	tests := []struct {
-		name    string
-		content string
-	}{
-		{
-			name:    "verbose output on success",
-			content: "Hello World",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Créer un fichier temporaire
-			tmpfile, err := os.CreateTemp("", "verbose-edit-*.go")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name())
-
-			if _, err := tmpfile.Write([]byte(tt.content)); err != nil {
-				t.Fatal(err)
-			}
-			tmpfile.Close()
-
-			Verbose = true
-			defer func() { Verbose = false }()
-
-			fileEdits := map[string][]textEdit{
-				tmpfile.Name(): {
-					{start: 6, end: 11, newText: []byte("Go")},
-				},
-			}
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			count := applyCollectedEdits(fileEdits)
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			if count != 1 {
-				t.Errorf("Expected 1 file modified, got %d", count)
-			}
-
-			// Vérification verbose output
-			output := stderr.String()
-			if !strings.Contains(output, "Applied") {
-				t.Error("Expected verbose output about applied edits")
-			}
-		})
-	}
-}
-
-// Test_collectSafeEdits_VerboseMode teste collectSafeEdits en mode verbose
-func Test_collectSafeEdits_VerboseMode(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "verbose skip messages",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 100)
-
-			diagnostics := []diagWithFset{
-				{
-					diag: analysis.Diagnostic{
-						Pos: file.Pos(10),
-						SuggestedFixes: []analysis.SuggestedFix{
-							{Message: "unsafe fix"},
-						},
-					},
-					fset:         fset,
-					analyzerName: "unsafe",
-				},
-			}
-
-			safeAnalyzers := map[string]bool{"any": true}
-
-			Verbose = true
-			defer func() { Verbose = false }()
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			_, skipped := collectSafeEdits(diagnostics, safeAnalyzers)
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			if skipped != 1 {
-				t.Errorf("Expected 1 skipped, got %d", skipped)
-			}
-
-			// Vérification verbose output
-			output := stderr.String()
-			if !strings.Contains(output, "Skipping") {
-				t.Error("Expected verbose skip message")
-			}
-		})
-	}
-}
-
-// Test_filterOverlappingEdits_VerboseMode teste filterOverlappingEdits en mode verbose
-func Test_filterOverlappingEdits_VerboseMode(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "verbose overlap messages",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			edits := []textEdit{
-				{start: 20, end: 30, newText: []byte("second")},
-				{start: 15, end: 25, newText: []byte("overlap")},
-			}
-
-			Verbose = true
-			defer func() { Verbose = false }()
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			result := filterOverlappingEdits(edits)
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			if len(result) != 1 {
-				t.Errorf("Expected 1 edit after filtering, got %d", len(result))
-			}
-
-			// Vérification verbose output
-			output := stderr.String()
-			if !strings.Contains(output, "overlapping") {
-				t.Error("Expected verbose overlap message")
-			}
-		})
-	}
-}
 
 // Test_checkLoadErrors_VCSError teste checkLoadErrors avec erreur VCS
 func Test_checkLoadErrors_VCSError(t *testing.T) {
@@ -2209,158 +1399,6 @@ func Test_filterDiagnostics_WindowsPath(t *testing.T) {
 	}
 }
 
-// Test_runLint_WithFixAndAppliedChanges teste runLint avec --fix et changements appliqués
-func Test_runLint_WithFixAndAppliedChanges(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "fix mode with applied fixes",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			restore := mockExitInCmd(t)
-			defer restore()
-
-			Fix = true
-			defer func() { Fix = false }()
-
-			// Créer un fichier temporaire avec du code qui peut être fixé
-			tmpfile, err := os.CreateTemp("", "fixable-*.go")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name())
-
-			// Code simple pour test
-			code := `package test
-func example() {}
-`
-			if _, err := tmpfile.Write([]byte(code)); err != nil {
-				t.Fatal(err)
-			}
-			tmpfile.Close()
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			exitCode, didExit := catchExitInCmd(t, func() {
-				runLint(lintCmd, []string{tmpfile.Name()})
-			})
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			// Vérification exit
-			if !didExit || exitCode != 0 {
-				t.Errorf("Expected exit 0, got didExit=%v code=%d", didExit, exitCode)
-			}
-
-			_ = stderr.String()
-		})
-	}
-}
-
-// Test_applyFixes_WithSkippedFixes teste applyFixes avec des fixes skippés
-func Test_applyFixes_WithSkippedFixes(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "skip unsafe fixes",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 100)
-
-			diagnostics := []diagWithFset{
-				{
-					diag: analysis.Diagnostic{
-						Pos: file.Pos(10),
-						SuggestedFixes: []analysis.SuggestedFix{
-							{Message: "unsafe fix"},
-						},
-					},
-					fset:         fset,
-					analyzerName: "unsafe_analyzer",
-				},
-			}
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			count := applyFixes(diagnostics)
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			if count != 0 {
-				t.Errorf("Expected 0 fixes applied, got %d", count)
-			}
-
-			// Vérification message de skip
-			output := stderr.String()
-			if !strings.Contains(output, "Skipped") {
-				t.Error("Expected skipped message in output")
-			}
-		})
-	}
-}
-
-// Test_collectSafeEdits_WithoutSuggestedFixes teste collectSafeEdits sans fixes suggérés
-func Test_collectSafeEdits_WithoutSuggestedFixes(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "diagnostics without suggested fixes",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 100)
-
-			diagnostics := []diagWithFset{
-				{
-					diag: analysis.Diagnostic{
-						Pos:            file.Pos(10),
-						Message:        "no fixes",
-						SuggestedFixes: []analysis.SuggestedFix{},
-					},
-					fset:         fset,
-					analyzerName: "any",
-				},
-			}
-
-			safeAnalyzers := map[string]bool{"any": true}
-
-			edits, skipped := collectSafeEdits(diagnostics, safeAnalyzers)
-
-			if len(edits) != 0 {
-				t.Errorf("Expected 0 edits, got %d", len(edits))
-			}
-
-			if skipped != 0 {
-				t.Errorf("Expected 0 skipped, got %d", skipped)
-			}
-		})
-	}
-}
 
 // Test_runLint_WithDiagnostics teste runLint avec des diagnostics présents
 func Test_runLint_WithDiagnostics(t *testing.T) {
@@ -2463,7 +1501,7 @@ func Test_runAnalyzers_WithAnalyzerError(t *testing.T) {
 			os.Stderr = w
 
 			pkgs := loadPackages(tt.packages)
-			diagnostics := runAnalyzers(pkgs)
+			diagnostics := runAnalyzers(pkgs, lintOptions{})
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -2477,57 +1515,6 @@ func Test_runAnalyzers_WithAnalyzerError(t *testing.T) {
 	}
 }
 
-// Test_applyEditsToFile_MultipleEdits teste applyEditsToFile avec plusieurs éditions
-func Test_applyEditsToFile_MultipleEdits(t *testing.T) {
-	tests := []struct {
-		name     string
-		content  string
-		edits    []textEdit
-		expected string
-	}{
-		{
-			name:    "multiple non-overlapping edits",
-			content: "Hello World Test",
-			edits: []textEdit{
-				{start: 12, end: 16, newText: []byte("Case")},
-				{start: 6, end: 11, newText: []byte("Go")},
-			},
-			expected: "Hello Go Case",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Créer un fichier temporaire
-			tmpfile, err := os.CreateTemp("", "multi-edit-*.go")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name())
-
-			if _, err := tmpfile.Write([]byte(tt.content)); err != nil {
-				t.Fatal(err)
-			}
-			tmpfile.Close()
-
-			success := applyEditsToFile(tmpfile.Name(), tt.edits)
-
-			if !success {
-				t.Error("Expected applyEditsToFile to succeed")
-			}
-
-			// Vérifier le contenu modifié
-			result, err := os.ReadFile(tmpfile.Name())
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if string(result) != tt.expected {
-				t.Errorf("Expected content %q, got %q", tt.expected, string(result))
-			}
-		})
-	}
-}
 
 // Test_runLint_SuccessPath teste runLint sans erreurs
 func Test_runLint_SuccessPath(t *testing.T) {
@@ -2571,57 +1558,6 @@ func Test_runLint_SuccessPath(t *testing.T) {
 	}
 }
 
-// Test_collectSafeEdits_SafeAnalyzer teste collectSafeEdits avec analyseur sûr
-func Test_collectSafeEdits_SafeAnalyzer(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "safe analyzer with fixes",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 100)
-
-			diagnostics := []diagWithFset{
-				{
-					diag: analysis.Diagnostic{
-						Pos: file.Pos(10),
-						SuggestedFixes: []analysis.SuggestedFix{
-							{
-								Message: "safe fix",
-								TextEdits: []analysis.TextEdit{
-									{
-										Pos:     file.Pos(10),
-										End:     file.Pos(20),
-										NewText: []byte("fixed"),
-									},
-								},
-							},
-						},
-					},
-					fset:         fset,
-					analyzerName: "any",
-				},
-			}
-
-			safeAnalyzers := map[string]bool{"any": true}
-
-			edits, skipped := collectSafeEdits(diagnostics, safeAnalyzers)
-
-			if skipped != 0 {
-				t.Errorf("Expected 0 skipped, got %d", skipped)
-			}
-
-			if len(edits) == 0 {
-				t.Error("Expected edits to be collected")
-			}
-		})
-	}
-}
 
 // Test_runRequiredAnalyzers_WithRequires teste runRequiredAnalyzers avec dépendances
 func Test_runRequiredAnalyzers_WithRequires(t *testing.T) {
@@ -2753,7 +1689,7 @@ func Test_runAnalyzers_WithAnalyzerRunError(t *testing.T) {
 			// Remplacer temporairement les analyseurs
 			// Note: Comme on ne peut pas modifier directement GetAllRules,
 			// on va tester avec Category vide et regarder la sortie d'erreur
-			diagnostics := runAnalyzers(pkgs)
+			diagnostics := runAnalyzers(pkgs, lintOptions{})
 
 			w.Close()
 			var stderr bytes.Buffer
@@ -2809,83 +1745,6 @@ func Test_loadPackages_PackagesLoadError(t *testing.T) {
 	}
 }
 
-// Test_runLint_WithFixAndPositiveCount teste runLint avec --fix et fixCount > 0
-func Test_runLint_WithFixAndPositiveCount(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "fix mode shows appropriate message",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			restore := mockExitInCmd(t)
-			defer restore()
-
-			Fix = true
-			defer func() { Fix = false }()
-
-			// Créer un répertoire temporaire avec du code Go
-			tmpDir, err := os.MkdirTemp("", "lint-fix-test-")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.RemoveAll(tmpDir)
-
-			// Créer un fichier go.mod
-			gomodContent := []byte("module testmod\n\ngo 1.21\n")
-			if err := os.WriteFile(tmpDir+"/go.mod", gomodContent, 0644); err != nil {
-				t.Fatal(err)
-			}
-
-			// Créer un fichier avec du code simple
-			testFile := tmpDir + "/test.go"
-			code := `package test
-
-// Example function
-func Example() int {
-	// Return zero
-	return 0
-}
-`
-			if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-				t.Fatal(err)
-			}
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			exitCode, didExit := catchExitInCmd(t, func() {
-				runLint(lintCmd, []string{tmpDir})
-			})
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			// En mode fix, devrait toujours exit avec code 0
-			// (le code montre OsExit(0) après applyFixes)
-			if !didExit || exitCode != 0 {
-				// Le fix mode devrait exit avec 0
-				t.Logf("Fix mode exited with code %d (expected 0)", exitCode)
-			}
-
-			output := stderr.String()
-			// Devrait contenir un message de fix (soit "Applied" soit "No fixes")
-			hasFixMessage := strings.Contains(output, "fix") ||
-				strings.Contains(output, "Applied") ||
-				strings.Contains(output, "No")
-
-			// En mode fix, on devrait voir un message
-			_ = hasFixMessage
-		})
-	}
-}
 
 // Test_runLint_NoDiagnosticsSuccess teste runLint sans diagnostics (exit 0)
 func Test_runLint_NoDiagnosticsSuccess(t *testing.T) {
@@ -2968,80 +1827,6 @@ func Test_runLint_WithDiagnosticsExitOne(t *testing.T) {
 	}
 }
 
-// Test_runLint_FixWithAppliedFixes teste runLint --fix avec fixes appliqués
-func Test_runLint_FixWithAppliedFixes(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "fix mode with modernize fixes",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			restore := mockExitInCmd(t)
-			defer restore()
-
-			Fix = true
-			defer func() { Fix = false }()
-
-			// Créer un répertoire temporaire
-			tmpDir, err := os.MkdirTemp("", "lint-fix-apply-")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.RemoveAll(tmpDir)
-
-			// Créer go.mod
-			gomod := []byte("module testfix\n\ngo 1.21\n")
-			if err := os.WriteFile(tmpDir+"/go.mod", gomod, 0644); err != nil {
-				t.Fatal(err)
-			}
-
-			// Créer un fichier avec interface{} pour que modernize puisse le fixer
-			testFile := tmpDir + "/main.go"
-			code := `package main
-
-// ProcessAny processes interface{} values.
-func ProcessAny(v interface{}) interface{} {
-	// Return value
-	return v
-}
-`
-			if err := os.WriteFile(testFile, []byte(code), 0644); err != nil {
-				t.Fatal(err)
-			}
-
-			// Capturer stderr
-			oldStderr := os.Stderr
-			r, w, _ := os.Pipe()
-			os.Stderr = w
-
-			exitCode, didExit := catchExitInCmd(t, func() {
-				runLint(lintCmd, []string{tmpDir})
-			})
-
-			w.Close()
-			var stderr bytes.Buffer
-			stderr.ReadFrom(r)
-			os.Stderr = oldStderr
-
-			// En mode fix, exit toujours avec 0
-			if !didExit || exitCode != 0 {
-				t.Logf("Expected exit 0 in fix mode, got %d", exitCode)
-			}
-
-			output := stderr.String()
-			// Vérifier le message de fix
-			if strings.Contains(output, "Applied fixes") {
-				t.Log("Fixes were applied successfully")
-			} else if strings.Contains(output, "No fixes") {
-				t.Log("No fixes to apply (expected)")
-			}
-		})
-	}
-}
 
 // Test_loadPackages_DirectError teste loadPackages avec erreur directe de packages.Load
 func Test_loadPackages_DirectError(t *testing.T) {
@@ -3192,20 +1977,14 @@ func Test_selectAnalyzers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Save original values
-			origOnlyRule := OnlyRule
-			origCategory := Category
-			defer func() {
-				OnlyRule = origOnlyRule
-				Category = origCategory
-			}()
-
-			// Set test values
-			OnlyRule = tt.onlyRule
-			Category = tt.category
+			// Créer lintOptions avec les valeurs du test
+			opts := lintOptions{
+				onlyRule: tt.onlyRule,
+				category: tt.category,
+			}
 
 			// Run function
-			analyzers := selectAnalyzers()
+			analyzers := selectAnalyzers(opts)
 
 			// Verify
 			if len(analyzers) < tt.expectMin {
@@ -3219,29 +1998,20 @@ func Test_selectAnalyzers(t *testing.T) {
 func Test_selectSingleRule(t *testing.T) {
 	tests := []struct {
 		name       string
-		onlyRule   string
+		opts       lintOptions
 		expectExit bool
 	}{
 		{
 			name:       "valid rule",
-			onlyRule:   "KTN-FUNC-001",
+			opts:       lintOptions{onlyRule: "KTN-FUNC-001"},
 			expectExit: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Save original values
-			origOnlyRule := OnlyRule
-			defer func() {
-				OnlyRule = origOnlyRule
-			}()
-
-			// Set test values
-			OnlyRule = tt.onlyRule
-
 			// Run function
-			analyzers := selectSingleRule()
+			analyzers := selectSingleRule(tt.opts)
 
 			// Verify
 			if len(analyzers) != 1 {
@@ -3255,34 +2025,25 @@ func Test_selectSingleRule(t *testing.T) {
 func Test_selectByCategory(t *testing.T) {
 	tests := []struct {
 		name      string
-		category  string
+		opts      lintOptions
 		expectMin int
 	}{
 		{
 			name:      "func category",
-			category:  "func",
+			opts:      lintOptions{category: "func"},
 			expectMin: 1,
 		},
 		{
 			name:      "const category",
-			category:  "const",
+			opts:      lintOptions{category: "const"},
 			expectMin: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Save original values
-			origCategory := Category
-			defer func() {
-				Category = origCategory
-			}()
-
-			// Set test values
-			Category = tt.category
-
 			// Run function
-			analyzers := selectByCategory()
+			analyzers := selectByCategory(tt.opts)
 
 			// Verify
 			if len(analyzers) < tt.expectMin {
@@ -3306,6 +2067,8 @@ func Test_analyzePackage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			opts := lintOptions{}
+
 			// Load packages
 			pkgs := loadPackages(tt.packages)
 
@@ -3315,15 +2078,94 @@ func Test_analyzePackage(t *testing.T) {
 			}
 
 			// Get analyzers
-			analyzers := selectAnalyzers()
+			analyzers := selectAnalyzers(opts)
 			results := make(map[*analysis.Analyzer]any)
 			var diagnostics []diagWithFset
 
 			// Run function
-			analyzePackage(pkgs[0], analyzers, results, &diagnostics)
+			analyzePackage(pkgs[0], analyzers, results, &diagnostics, opts)
 
 			// Verify function ran without panic
 			_ = diagnostics
+		})
+	}
+}
+
+// Test_parseLintOptions tests the parseLintOptions function.
+func Test_parseLintOptions(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func()
+		wantOpts lintOptions
+	}{
+		{
+			name: "default options",
+			setup: func() {
+				// Reset all flags to defaults
+				flags := rootCmd.PersistentFlags()
+				flags.Set(flagVerbose, "false")
+				flags.Set(flagCategory, "")
+				flags.Set(flagOnlyRule, "")
+				flags.Set(flagConfig, "")
+			},
+			wantOpts: lintOptions{
+				verbose:    false,
+				category:   "",
+				onlyRule:   "",
+				configPath: "",
+			},
+		},
+		{
+			name: "with verbose enabled",
+			setup: func() {
+				flags := rootCmd.PersistentFlags()
+				flags.Set(flagVerbose, "true")
+				flags.Set(flagCategory, "")
+				flags.Set(flagOnlyRule, "")
+				flags.Set(flagConfig, "")
+			},
+			wantOpts: lintOptions{
+				verbose:    true,
+				category:   "",
+				onlyRule:   "",
+				configPath: "",
+			},
+		},
+		{
+			name: "with category filter",
+			setup: func() {
+				flags := rootCmd.PersistentFlags()
+				flags.Set(flagVerbose, "true")
+				flags.Set(flagCategory, "func")
+				flags.Set(flagOnlyRule, "")
+				flags.Set(flagConfig, "")
+			},
+			wantOpts: lintOptions{
+				verbose:    true,
+				category:   "func",
+				onlyRule:   "",
+				configPath: "",
+			},
+		},
+	}
+
+	// Itération sur les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup test
+			tt.setup()
+
+			// Call function
+			opts := parseLintOptions(lintCmd)
+
+			// Verify category
+			if opts.category != tt.wantOpts.category {
+				t.Errorf("parseLintOptions() category = %v, want %v", opts.category, tt.wantOpts.category)
+			}
+			// Verify verbose
+			if opts.verbose != tt.wantOpts.verbose {
+				t.Errorf("parseLintOptions() verbose = %v, want %v", opts.verbose, tt.wantOpts.verbose)
+			}
 		})
 	}
 }

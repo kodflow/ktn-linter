@@ -8,9 +8,6 @@ import (
 )
 
 // TestStruct002 vérifie la détection des constructeurs manquants.
-//
-// Params:
-//   - t: contexte de test
 func TestStruct002(t *testing.T) {
 	// good.go: 0 errors (constructeur NewX présent), bad.go: 1 error (constructeur manquant)
 	tests := []struct {

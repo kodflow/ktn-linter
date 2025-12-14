@@ -11,9 +11,6 @@ import (
 )
 
 // TestIsSerializableStruct tests the IsSerializableStruct function.
-//
-// Params:
-//   - t: testing context
 func TestIsSerializableStruct(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -89,9 +86,6 @@ type User struct {
 }
 
 // TestIsPureDataStruct tests the IsPureDataStruct function.
-//
-// Params:
-//   - t: testing context
 func TestIsPureDataStruct(t *testing.T) {
 	tests := []struct {
 		name     string

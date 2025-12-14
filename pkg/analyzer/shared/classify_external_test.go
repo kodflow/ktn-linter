@@ -11,9 +11,6 @@ import (
 )
 
 // TestIsExportedIdent tests the IsExportedIdent function.
-//
-// Params:
-//   - t: testing context
 func TestIsExportedIdent(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -49,9 +46,6 @@ func TestIsExportedIdent(t *testing.T) {
 }
 
 // TestClassifyFunc tests the ClassifyFunc function.
-//
-// Params:
-//   - t: testing context
 func TestClassifyFunc(t *testing.T) {
 	// Define expected results
 	tests := []struct {
@@ -105,9 +99,6 @@ func TestClassifyFunc(t *testing.T) {
 }
 
 // TestBuildSuggestedTestName tests the BuildSuggestedTestName function.
-//
-// Params:
-//   - t: testing context
 func TestBuildSuggestedTestName(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -142,9 +133,6 @@ func TestBuildSuggestedTestName(t *testing.T) {
 }
 
 // TestParseTestName tests the ParseTestName function.
-//
-// Params:
-//   - t: testing context
 func TestParseTestName(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -212,9 +200,6 @@ func TestParseTestName(t *testing.T) {
 }
 
 // TestBuildTestLookupKey tests the BuildTestLookupKey function.
-//
-// Params:
-//   - t: testing context
 func TestBuildTestLookupKey(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -243,9 +228,6 @@ func TestBuildTestLookupKey(t *testing.T) {
 }
 
 // TestBuildTestTargetKey tests the BuildTestTargetKey function.
-//
-// Params:
-//   - t: testing context
 func TestBuildTestTargetKey(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -274,9 +256,6 @@ func TestBuildTestTargetKey(t *testing.T) {
 }
 
 // TestIsMockFile tests the IsMockFile function.
-//
-// Params:
-//   - t: testing context
 func TestIsMockFile(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -310,9 +289,6 @@ func TestIsMockFile(t *testing.T) {
 }
 
 // TestIsMockName tests the IsMockName function.
-//
-// Params:
-//   - t: testing context
 func TestIsMockName(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -347,9 +323,6 @@ func TestIsMockName(t *testing.T) {
 }
 
 // TestIsExemptTestFile tests the IsExemptTestFile function.
-//
-// Params:
-//   - t: testing context
 func TestIsExemptTestFile(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -387,9 +360,6 @@ func TestIsExemptTestFile(t *testing.T) {
 }
 
 // TestIsExemptTestName tests the IsExemptTestName function.
-//
-// Params:
-//   - t: testing context
 func TestIsExemptTestName(t *testing.T) {
 	// Define test cases
 	tests := []struct {
@@ -422,9 +392,6 @@ func TestIsExemptTestName(t *testing.T) {
 }
 
 // TestExtractReceiverTypeName tests the ExtractReceiverTypeName function.
-//
-// Params:
-//   - t: testing context
 func TestExtractReceiverTypeName(t *testing.T) {
 	// Define test cases
 	tests := []struct {

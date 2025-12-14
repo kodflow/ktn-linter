@@ -14,9 +14,6 @@ import (
 )
 
 // Test_hasErrorCaseCoverage tests the hasErrorCaseCoverage private function.
-//
-// Params:
-//   - t: testing context
 func Test_hasErrorCaseCoverage(t *testing.T) {
 	tests := []struct {
 		name string
@@ -117,9 +114,6 @@ func Test_hasErrorCaseCoverage(t *testing.T) {
 }
 
 // Test_isErrorIndicatorName tests the isErrorIndicatorName private function.
-//
-// Params:
-//   - t: testing context
 func Test_isErrorIndicatorName(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -186,9 +180,6 @@ func Test_isErrorIndicatorName(t *testing.T) {
 }
 
 // Test_hasErrorTestCases tests the hasErrorTestCases private function.
-//
-// Params:
-//   - t: testing context
 func Test_hasErrorTestCases(t *testing.T) {
 	tests := []struct {
 		name string
@@ -298,9 +289,6 @@ func TestSomething(t *testing.T) {
 }
 
 // Test_runTest013 tests the runTest013 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest013(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -320,9 +308,6 @@ func Test_runTest013(t *testing.T) {
 }
 
 // Test_collectFuncSignatures tests the collectFuncSignatures function.
-//
-// Params:
-//   - t: testing context
 func Test_collectFuncSignatures(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -398,9 +383,6 @@ func Test_collectFuncSignatures(t *testing.T) {
 }
 
 // Test_addFuncSignature tests the addFuncSignature function.
-//
-// Params:
-//   - t: testing context
 func Test_addFuncSignature(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -466,9 +448,6 @@ func Test_addFuncSignature(t *testing.T) {
 }
 
 // Test_collectExternalSourceSignatures tests the collectExternalSourceSignatures function.
-//
-// Params:
-//   - t: testing context
 func Test_collectExternalSourceSignatures(t *testing.T) {
 	tests := []struct {
 		name string
@@ -495,9 +474,6 @@ func Test_collectExternalSourceSignatures(t *testing.T) {
 }
 
 // Test_scanSourceFile tests the scanSourceFile function.
-//
-// Params:
-//   - t: testing context
 func Test_scanSourceFile(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -532,9 +508,6 @@ func Test_scanSourceFile(t *testing.T) {
 }
 
 // Test_extractFuncInfo tests the extractFuncInfo function.
-//
-// Params:
-//   - t: testing context
 func Test_extractFuncInfo(t *testing.T) {
 	tests := []struct {
 		name string
@@ -563,9 +536,6 @@ func Test_extractFuncInfo(t *testing.T) {
 }
 
 // Test_functionReturnsError tests the functionReturnsError function.
-//
-// Params:
-//   - t: testing context
 func Test_functionReturnsError(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -601,9 +571,6 @@ func Test_functionReturnsError(t *testing.T) {
 }
 
 // Test_isErrorType tests the isErrorType function.
-//
-// Params:
-//   - t: testing context
 func Test_isErrorType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -659,9 +626,6 @@ func Test_isErrorType(t *testing.T) {
 }
 
 // Test_ExtractReceiverTypeName013 tests the shared.ExtractReceiverTypeName function (for 013).
-//
-// Params:
-//   - t: testing context
 func Test_ExtractReceiverTypeName013(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -699,9 +663,6 @@ func Test_ExtractReceiverTypeName013(t *testing.T) {
 }
 
 // Test_analyzeTestFunction tests the analyzeTestFunction function.
-//
-// Params:
-//   - t: testing context
 func Test_analyzeTestFunction(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -784,9 +745,6 @@ func Test_analyzeTestFunction(t *testing.T) {
 }
 
 // Test_ParseTestName013 tests the shared.ParseTestName function (for 013).
-//
-// Params:
-//   - t: testing context
 func Test_ParseTestName013(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -817,9 +775,6 @@ func Test_ParseTestName013(t *testing.T) {
 }
 
 // Test_checkErrorInNode tests the checkErrorInNode function.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInNode(t *testing.T) {
 	tests := []struct {
 		name string
@@ -854,9 +809,6 @@ func Test_checkErrorInNode(t *testing.T) {
 }
 
 // Test_checkErrorInBasicLit tests the checkErrorInBasicLit function.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInBasicLit(t *testing.T) {
 	tests := []struct {
 		name string
@@ -890,15 +842,42 @@ func Test_checkErrorInBasicLit(t *testing.T) {
 }
 
 // Test_checkErrorInKeyValue tests the checkErrorInKeyValue function.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInKeyValue(t *testing.T) {
 	tests := []struct {
-		name string
-		code string
+		name      string
+		code      string
+		wantFound bool
 	}{
-		{name: "checks error in key-value expression", code: "package test\nvar x = struct{name string}{name: \"error case\"}"},
+		{
+			name:      "checks error in key-value expression with name key",
+			code:      "package test\nvar x = struct{name string}{name: \"error case\"}",
+			wantFound: true,
+		},
+		{
+			name:      "key is not name",
+			code:      "package test\nvar x = struct{desc string}{desc: \"error case\"}",
+			wantFound: false,
+		},
+		{
+			name:      "value is not BasicLit",
+			code:      "package test\nvar y string\nvar x = struct{name string}{name: y}",
+			wantFound: false,
+		},
+		{
+			name:      "normal case without error",
+			code:      "package test\nvar x = struct{name string}{name: \"normal case\"}",
+			wantFound: false,
+		},
+		{
+			name:      "invalid in name value",
+			code:      "package test\nvar x = struct{name string}{name: \"invalid input\"}",
+			wantFound: true,
+		},
+		{
+			name:      "fail in name value",
+			code:      "package test\nvar x = struct{name string}{name: \"should fail\"}",
+			wantFound: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -918,8 +897,8 @@ func Test_checkErrorInKeyValue(t *testing.T) {
 				}
 				return true
 			})
-			if !found {
-				t.Error("expected to find error in key-value expression")
+			if found != tt.wantFound {
+				t.Errorf("checkErrorInKeyValue() found = %v, want %v", found, tt.wantFound)
 			}
 		})
 	}
@@ -949,6 +928,270 @@ func Test_runTest013_excludedFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
+		})
+	}
+}
+
+// Test_hasErrorTestCases_nonKeyValue tests hasErrorTestCases with non-KeyValueExpr elements.
+func Test_hasErrorTestCases_nonKeyValue(t *testing.T) {
+	tests := []struct {
+		name      string
+		code      string
+		wantFound bool
+	}{
+		{
+			name:      "array literal without KeyValueExpr",
+			code:      "package test\nvar x = []int{1, 2, 3}",
+			wantFound: false,
+		},
+		{
+			name:      "empty composite literal",
+			code:      "package test\nvar x = struct{}{}",
+			wantFound: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+			found := false
+			ast.Inspect(file, func(n ast.Node) bool {
+				if cl, ok := n.(*ast.CompositeLit); ok {
+					if hasErrorTestCases(cl) {
+						found = true
+						return false
+					}
+				}
+				return true
+			})
+			if found != tt.wantFound {
+				t.Errorf("hasErrorTestCases() found = %v, want %v", found, tt.wantFound)
+			}
+		})
+	}
+}
+
+// Test_scanSourceFile_various tests scanSourceFile with various file types.
+func Test_scanSourceFile_various(t *testing.T) {
+	tests := []struct {
+		name     string
+		dir      string
+		filename string
+	}{
+		{
+			name:     "non-go file",
+			dir:      "/tmp",
+			filename: "readme.txt",
+		},
+		{
+			name:     "test file",
+			dir:      "/tmp",
+			filename: "foo_test.go",
+		},
+		{
+			name:     "mock file",
+			dir:      "/tmp",
+			filename: "mock_foo.go",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := make(map[string]testedFuncInfo)
+			// These should all return early without adding signatures
+			scanSourceFile(tt.dir, tt.filename, result)
+			if len(result) != 0 {
+				t.Errorf("expected empty result, got %d entries", len(result))
+			}
+		})
+	}
+}
+
+// Test_checkErrorInBasicLit_nonString tests checkErrorInBasicLit with non-string literals.
+func Test_checkErrorInBasicLit_nonString(t *testing.T) {
+	tests := []struct {
+		name      string
+		code      string
+		wantFound bool
+	}{
+		{
+			name:      "integer literal",
+			code:      "package test\nvar x = 42",
+			wantFound: false,
+		},
+		{
+			name:      "float literal",
+			code:      "package test\nvar x = 3.14",
+			wantFound: false,
+		},
+		{
+			name:      "string with error keyword",
+			code:      "package test\nvar x = \"error occurred\"",
+			wantFound: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+			found := false
+			ast.Inspect(file, func(n ast.Node) bool {
+				if bl, ok := n.(*ast.BasicLit); ok {
+					if checkErrorInBasicLit(bl) {
+						found = true
+						return false
+					}
+				}
+				return true
+			})
+			if found != tt.wantFound {
+				t.Errorf("checkErrorInBasicLit() found = %v, want %v", found, tt.wantFound)
+			}
+		})
+	}
+}
+
+// Test_addFuncSignature_mockReceiver tests addFuncSignature with mock receiver.
+func Test_addFuncSignature_mockReceiver(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		expectCount int
+	}{
+		{
+			name:        "method with mock receiver is skipped",
+			code:        "package test\ntype MockService struct{}\nfunc (m *MockService) Method() {}",
+			expectCount: 0,
+		},
+		{
+			name:        "regular method is added",
+			code:        "package test\ntype Service struct{}\nfunc (s *Service) Method() error { return nil }",
+			expectCount: 2, // Method and Service_Method
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			signatures := make(map[string]testedFuncInfo)
+			for _, decl := range file.Decls {
+				if fd, ok := decl.(*ast.FuncDecl); ok {
+					addFuncSignature(signatures, fd)
+				}
+			}
+
+			if len(signatures) != tt.expectCount {
+				t.Errorf("expected %d signatures, got %d", tt.expectCount, len(signatures))
+			}
+		})
+	}
+}
+
+// Test_analyzeTestFunction_noMatch tests analyzeTestFunction with non-matching test name.
+func Test_analyzeTestFunction_noMatch(t *testing.T) {
+	tests := []struct {
+		name         string
+		testCode     string
+		shouldReport bool
+	}{
+		{
+			name:         "test name doesn't match any function",
+			testCode:     `func TestNonExistent(t *testing.T) { _ = t }`,
+			shouldReport: false,
+		},
+		{
+			name:         "invalid test name format",
+			testCode:     `func Test(t *testing.T) { _ = t }`,
+			shouldReport: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code := "package test\n" + tt.testCode
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			reportCount := 0
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) { reportCount++ },
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) { reportCount++ },
+			}
+
+			// Empty signatures - no matching function
+			signatures := make(map[string]testedFuncInfo)
+
+			// Find test function
+			var testFunc *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Name != nil && shared.IsUnitTestFunction(fd) {
+					testFunc = fd
+					return false
+				}
+				return true
+			})
+
+			if testFunc != nil {
+				analyzeTestFunction(pass, testFunc, signatures)
+			}
+
+			if tt.shouldReport && reportCount == 0 {
+				t.Error("expected error report, got none")
+			} else if !tt.shouldReport && reportCount > 0 {
+				t.Errorf("expected no error report, got %d", reportCount)
+			}
+		})
+	}
+}
+
+// Test_collectExternalSourceSignatures_emptyPass tests collectExternalSourceSignatures with empty pass.
+func Test_collectExternalSourceSignatures_emptyPass(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"empty files"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{},
+			}
+			signatures := make(map[string]testedFuncInfo)
+			collectExternalSourceSignatures(pass, signatures)
+			if len(signatures) != 0 {
+				t.Errorf("expected 0 signatures, got %d", len(signatures))
+			}
 		})
 	}
 }

@@ -31,12 +31,7 @@ func mockExit(t *testing.T) (restore func()) {
 	return func() {
 		cmd.OsExit = oldOsExit
 		os.Args = oldArgs
-		// Reset flags
-		cmd.AIMode = false
-		cmd.NoColor = false
-		cmd.Simple = false
-		cmd.Verbose = false
-		cmd.Category = ""
+		// Flags are managed by Cobra - no global variables to reset
 	}
 }
 

@@ -5,39 +5,41 @@ import (
 	"testing"
 )
 
-// TestFuncMessagesRegistered tests that func messages are registered.
-func TestFuncMessagesRegistered(t *testing.T) {
-	funcRules := []string{
-		"KTN-FUNC-001",
-		"KTN-FUNC-002",
-		"KTN-FUNC-003",
-		"KTN-FUNC-004",
-		"KTN-FUNC-005",
-		"KTN-FUNC-006",
-		"KTN-FUNC-007",
-		"KTN-FUNC-008",
-		"KTN-FUNC-009",
-		"KTN-FUNC-010",
-		"KTN-FUNC-011",
-		"KTN-FUNC-012",
+// Test_registerFuncMessages validates that all func rule messages are properly registered.
+func Test_registerFuncMessages(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{name: "func001", code: "KTN-FUNC-001"},
+		{name: "func002", code: "KTN-FUNC-002"},
+		{name: "func003", code: "KTN-FUNC-003"},
+		{name: "func004", code: "KTN-FUNC-004"},
+		{name: "func005", code: "KTN-FUNC-005"},
+		{name: "func006", code: "KTN-FUNC-006"},
+		{name: "func007", code: "KTN-FUNC-007"},
+		{name: "func008", code: "KTN-FUNC-008"},
+		{name: "func009", code: "KTN-FUNC-009"},
+		{name: "func010", code: "KTN-FUNC-010"},
+		{name: "func011", code: "KTN-FUNC-011"},
+		{name: "func012", code: "KTN-FUNC-012"},
 	}
 
-	// Itération sur les règles
-	for _, code := range funcRules {
-		t.Run(code, func(t *testing.T) {
-			msg, found := Get(code)
-			// Vérification existence
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Check if message is found
+			msg, found := Get(tt.code)
 			if !found {
-				t.Errorf("Get(%q) not found", code)
+				t.Errorf("Get(%q) not found", tt.code)
 				return
 			}
-			// Vérification code
-			if msg.Code != code {
-				t.Errorf("msg.Code = %q, want %q", msg.Code, code)
+			// Check code matches
+			if msg.Code != tt.code {
+				t.Errorf("msg.Code = %q, want %q", msg.Code, tt.code)
 			}
-			// Vérification short non vide
+			// Check short message is not empty
 			if msg.Short == "" {
-				t.Errorf("msg.Short is empty for %q", code)
+				t.Errorf("msg.Short is empty for %q", tt.code)
 			}
 		})
 	}

@@ -10,9 +10,6 @@ import (
 )
 
 // TestComment007 tests the Analyzer007 for control block comments.
-//
-// Params:
-//   - t: testing context
 func TestComment007(t *testing.T) {
 	tests := []struct {
 		name           string

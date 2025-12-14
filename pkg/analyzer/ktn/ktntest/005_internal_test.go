@@ -8,9 +8,6 @@ import (
 )
 
 // TestIsTestsVariableName teste la détection des noms de variables de tests.
-//
-// Params:
-//   - t: testing context
 func TestIsTestsVariableName(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -46,9 +43,6 @@ func TestIsTestsVariableName(t *testing.T) {
 }
 
 // TestHasTableDrivenPattern teste la détection du pattern table-driven.
-//
-// Params:
-//   - t: testing context
 func TestHasTableDrivenPattern(t *testing.T) {
 	tests := []struct {
 		name string
@@ -193,9 +187,6 @@ func TestExample(t *testing.T) {
 }
 
 // Test_checkAssignStmt tests the checkAssignStmt private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkAssignStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -257,9 +248,6 @@ func TestExample(t *testing.T) {
 }
 
 // Test_checkRangeStmt tests the checkRangeStmt private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkRangeStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -325,9 +313,6 @@ func TestExample(t *testing.T) {
 }
 
 // Test_runTest005 tests the runTest005 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest005(t *testing.T) {
 	tests := []struct {
 		name string

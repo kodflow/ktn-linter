@@ -8,9 +8,6 @@ import (
 )
 
 // TestTest010 teste l'analyseur KTN-TEST-010.
-//
-// Params:
-//   - t: instance de test
 func TestTest010(t *testing.T) {
 	tests := []struct {
 		name           string

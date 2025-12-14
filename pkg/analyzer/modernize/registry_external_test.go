@@ -8,9 +8,6 @@ import (
 )
 
 // TestAnalyzers tests the public Analyzers function.
-//
-// Params:
-//   - t: testing context
 func TestAnalyzers(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -39,9 +36,6 @@ func TestAnalyzers(t *testing.T) {
 }
 
 // TestAnalyzers_disabled tests that disabled analyzers are filtered out.
-//
-// Params:
-//   - t: testing context
 func TestAnalyzers_disabled(t *testing.T) {
 	tests := []struct {
 		name         string
