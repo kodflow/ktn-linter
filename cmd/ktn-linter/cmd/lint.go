@@ -445,7 +445,7 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 //
 // Params:
 func formatAndDisplay(diagnostics []diagWithFset) {
-	fmtr := formatter.NewFormatter(os.Stdout, AIMode, NoColor, Simple)
+	fmtr := formatter.NewFormatter(os.Stdout, AIMode, NoColor, Simple, Verbose)
 
 	// Vérification de la condition
 	if len(diagnostics) == 0 {

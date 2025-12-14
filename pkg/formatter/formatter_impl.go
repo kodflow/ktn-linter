@@ -24,10 +24,11 @@ type Formatter interface {
 
 // formatterImpl implémente l'interface Formatter
 type formatterImpl struct {
-	writer     io.Writer
-	aiMode     bool
-	noColor    bool
-	simpleMode bool
+	writer      io.Writer
+	aiMode      bool
+	noColor     bool
+	simpleMode  bool
+	verboseMode bool
 }
 
 // NewFormatter crée un nouveau formatter avec les options spécifiées.
@@ -37,16 +38,18 @@ type formatterImpl struct {
 //   - aiMode: true pour activer le mode optimisé pour l'IA
 //   - noColor: true pour désactiver les couleurs
 //   - simpleMode: true pour activer le format simple une-ligne
+//   - verboseMode: true pour afficher les messages détaillés
 //
 // Returns:
 //   - Formatter: un formatter prêt à utiliser
-func NewFormatter(w io.Writer, aiMode bool, noColor bool, simpleMode bool) Formatter {
+func NewFormatter(w io.Writer, aiMode, noColor, simpleMode, verboseMode bool) Formatter {
 	// Early return from function.
 	return &formatterImpl{
-		writer:     w,
-		aiMode:     aiMode,
-		noColor:    noColor,
-		simpleMode: simpleMode,
+		writer:      w,
+		aiMode:      aiMode,
+		noColor:     noColor,
+		simpleMode:  simpleMode,
+		verboseMode: verboseMode,
 	}
 }
 
@@ -164,7 +167,8 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 	for _, diag := range filtered {
 		pos := fset.Position(diag.Pos)
 		code := extractCode(diag.Message)
-		message := extractMessage(diag.Message)
+		// En mode verbose, ne pas tronquer le message
+		message := extractMessageWithOptions(diag.Message, !f.verboseMode)
 
 		// Format compatible avec golangci-lint et VSCode : code en premier
 		fmt.Fprintf(f.writer, "%s:%d:%d: [%s] %s\n",
@@ -302,14 +306,16 @@ func (f *formatterImpl) printFileHeader(filename string, count int) {
 //   - diag: diagnostic à afficher
 func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analysis.Diagnostic) {
 	code := extractCode(diag.Message)
-	message := extractMessage(diag.Message)
+	// En mode verbose, ne pas tronquer le message
+	message := extractMessageWithOptions(diag.Message, !f.verboseMode)
 	location := fmt.Sprintf("%s:%d:%d", pos.Filename, pos.Line, pos.Column)
 
 	// Vérification de la condition
 	if f.noColor {
 		fmt.Fprintf(f.writer, "\n[%d] %s\n", num, location)
 		fmt.Fprintf(f.writer, "  Code: %s\n", code)
-		fmt.Fprintf(f.writer, "  Issue: %s\n", message)
+		// Afficher le message (peut être multi-ligne en verbose)
+		f.printMessage(message, false)
 		// Cas alternatif
 	} else {
 		codeColor := f.getCodeColor(code)
@@ -321,8 +327,32 @@ func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analys
 			codeColor, symbol, Reset,
 			Gray, Reset,
 			Bold, code, Reset)
-		fmt.Fprintf(f.writer, "  %s▶%s %s\n",
-			Blue, Reset, message)
+		// Afficher le message (peut être multi-ligne en verbose)
+		f.printMessage(message, true)
+	}
+}
+
+// printMessage affiche un message, gérant les multi-lignes en verbose.
+//
+// Params:
+//   - message: message à afficher
+//   - withColor: true pour utiliser les couleurs
+func (f *formatterImpl) printMessage(message string, withColor bool) {
+	lines := strings.Split(message, "\n")
+	// Afficher la première ligne avec le préfixe
+	if withColor {
+		fmt.Fprintf(f.writer, "  %s▶%s %s\n", Blue, Reset, lines[0])
+	} else {
+		fmt.Fprintf(f.writer, "  Issue: %s\n", lines[0])
+	}
+	// Afficher les lignes suivantes en verbose avec indentation
+	for _, line := range lines[1:] {
+		// Indenter les lignes suivantes
+		if withColor {
+			fmt.Fprintf(f.writer, "    %s%s%s\n", Gray, line, Reset)
+		} else {
+			fmt.Fprintf(f.writer, "    %s\n", line)
+		}
 	}
 }
 

@@ -27,7 +27,7 @@ func TestNewFormatter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			f := formatter.NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode)
+			f := formatter.NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode, false)
 			if f == nil {
 				t.Error("NewFormatter returned nil")
 			}
@@ -52,7 +52,7 @@ func TestFormatterImpl_Format(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			f := formatter.NewFormatter(&buf, false, true, false)
+			f := formatter.NewFormatter(&buf, false, true, false, false)
 			fset := token.NewFileSet()
 
 			// Execute format

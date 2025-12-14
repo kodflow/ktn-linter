@@ -52,7 +52,7 @@ func TestFormatEmpty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode)
+			formatter := NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode, false)
 			fset := token.NewFileSet()
 
 			formatter.Format(fset, []analysis.Diagnostic{})
@@ -77,7 +77,7 @@ func TestFormatHumanMode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, false, false, false)
+			formatter := NewFormatter(buf, false, false, false, false)
 			fset := token.NewFileSet()
 
 			fset.AddFile("test.go", 1, 1000)
@@ -107,7 +107,7 @@ func TestFormatAIMode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, true, false, false)
+			formatter := NewFormatter(buf, true, false, false, false)
 			fset := token.NewFileSet()
 
 			fset.AddFile("test.go", 1, 1000)
@@ -164,7 +164,7 @@ func TestFormatSimpleMode(t *testing.T) {
 
 	// Préparation commune
 	buf := &bytes.Buffer{}
-	formatter := NewFormatter(buf, false, false, true)
+	formatter := NewFormatter(buf, false, false, true, false)
 	fset := token.NewFileSet()
 	fset.AddFile("test.go", 1, 1000)
 	diagnostics := createTestDiagnostics()
@@ -194,7 +194,7 @@ func TestFormatNoColor(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, false, true, false)
+			formatter := NewFormatter(buf, false, true, false, false)
 			fset := token.NewFileSet()
 
 			fset.AddFile("test.go", 1, 1000)
@@ -703,7 +703,7 @@ func TestFormatSimpleModeWithFiltering(t *testing.T) {
 
 	// Préparation commune
 	buf := &bytes.Buffer{}
-	formatter := NewFormatter(buf, false, false, true)
+	formatter := NewFormatter(buf, false, false, true, false)
 	fset := token.NewFileSet()
 	file1 := fset.AddFile("normal.go", 1, 1000)
 	file1.AddLine(10)
@@ -776,7 +776,7 @@ func TestFormatterImpl_formatForHuman(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, false, false, false).(*formatterImpl)
+			formatter := NewFormatter(buf, false, false, false, false).(*formatterImpl)
 			fset := token.NewFileSet()
 			fset.AddFile("test.go", 1, 100)
 
@@ -808,7 +808,7 @@ func TestFormatterImpl_formatForAI(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, true, false, false).(*formatterImpl)
+			formatter := NewFormatter(buf, true, false, false, false).(*formatterImpl)
 			fset := token.NewFileSet()
 			fset.AddFile(tt.filename, 1, 100)
 
@@ -840,7 +840,7 @@ func TestFormatterImpl_formatSimple(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			formatter := NewFormatter(buf, false, false, true).(*formatterImpl)
+			formatter := NewFormatter(buf, false, false, true, false).(*formatterImpl)
 			fset := token.NewFileSet()
 			fset.AddFile(tt.filename, 1, 100)
 

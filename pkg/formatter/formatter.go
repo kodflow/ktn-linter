@@ -77,6 +77,19 @@ func extractCode(message string) string {
 // Returns:
 //   - string: message nettoyé sans le code KTN
 func extractMessage(message string) string {
+	// Extraction avec troncature (mode normal)
+	return extractMessageWithOptions(message, true)
+}
+
+// extractMessageWithOptions extrait le message avec options.
+//
+// Params:
+//   - message: message brut du diagnostic
+//   - truncate: true pour tronquer au premier \n
+//
+// Returns:
+//   - string: message nettoyé sans le code KTN
+func extractMessageWithOptions(message string, truncate bool) string {
 	var idx int
 	// Supprimer le code [KTN-XXX-XXX] ou KTN-XXX-XXX:
 	// Traitement Format 1: [KTN-XXX-XXX] ...
@@ -93,9 +106,12 @@ func extractMessage(message string) string {
 		}
 	}
 
-	// Tronquer au premier \n pour avoir juste la première ligne
-	if idx = strings.Index(message, "\n"); idx != -1 {
-		message = message[:idx]
+	// Tronquer au premier \n si demandé (mode normal)
+	if truncate {
+		// Chercher le premier \n
+		if idx = strings.Index(message, "\n"); idx != -1 {
+			message = message[:idx]
+		}
 	}
 
 	// Retour du message nettoyé
