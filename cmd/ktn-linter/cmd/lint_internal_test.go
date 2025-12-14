@@ -3160,3 +3160,170 @@ func Test_loadConfiguration(t *testing.T) {
 		})
 	}
 }
+
+// Test_selectAnalyzers tests selectAnalyzers function.
+func Test_selectAnalyzers(t *testing.T) {
+	tests := []struct {
+		name       string
+		onlyRule   string
+		category   string
+		expectMin  int
+		expectExit bool
+	}{
+		{
+			name:      "all rules when no filter",
+			onlyRule:  "",
+			category:  "",
+			expectMin: 1,
+		},
+		{
+			name:      "filter by category",
+			onlyRule:  "",
+			category:  "func",
+			expectMin: 1,
+		},
+		{
+			name:      "filter by single rule",
+			onlyRule:  "KTN-FUNC-001",
+			category:  "",
+			expectMin: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original values
+			origOnlyRule := OnlyRule
+			origCategory := Category
+			defer func() {
+				OnlyRule = origOnlyRule
+				Category = origCategory
+			}()
+
+			// Set test values
+			OnlyRule = tt.onlyRule
+			Category = tt.category
+
+			// Run function
+			analyzers := selectAnalyzers()
+
+			// Verify
+			if len(analyzers) < tt.expectMin {
+				t.Errorf("got %d analyzers, want at least %d", len(analyzers), tt.expectMin)
+			}
+		})
+	}
+}
+
+// Test_selectSingleRule tests selectSingleRule function.
+func Test_selectSingleRule(t *testing.T) {
+	tests := []struct {
+		name       string
+		onlyRule   string
+		expectExit bool
+	}{
+		{
+			name:       "valid rule",
+			onlyRule:   "KTN-FUNC-001",
+			expectExit: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original values
+			origOnlyRule := OnlyRule
+			defer func() {
+				OnlyRule = origOnlyRule
+			}()
+
+			// Set test values
+			OnlyRule = tt.onlyRule
+
+			// Run function
+			analyzers := selectSingleRule()
+
+			// Verify
+			if len(analyzers) != 1 {
+				t.Errorf("got %d analyzers, want 1", len(analyzers))
+			}
+		})
+	}
+}
+
+// Test_selectByCategory tests selectByCategory function.
+func Test_selectByCategory(t *testing.T) {
+	tests := []struct {
+		name      string
+		category  string
+		expectMin int
+	}{
+		{
+			name:      "func category",
+			category:  "func",
+			expectMin: 1,
+		},
+		{
+			name:      "const category",
+			category:  "const",
+			expectMin: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original values
+			origCategory := Category
+			defer func() {
+				Category = origCategory
+			}()
+
+			// Set test values
+			Category = tt.category
+
+			// Run function
+			analyzers := selectByCategory()
+
+			// Verify
+			if len(analyzers) < tt.expectMin {
+				t.Errorf("got %d analyzers, want at least %d", len(analyzers), tt.expectMin)
+			}
+		})
+	}
+}
+
+// Test_analyzePackage tests analyzePackage function.
+func Test_analyzePackage(t *testing.T) {
+	tests := []struct {
+		name     string
+		packages []string
+	}{
+		{
+			name:     "valid package",
+			packages: []string{"../../../pkg/formatter"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Load packages
+			pkgs := loadPackages(tt.packages)
+
+			// Verify packages loaded
+			if len(pkgs) == 0 {
+				t.Fatal("no packages loaded")
+			}
+
+			// Get analyzers
+			analyzers := selectAnalyzers()
+			results := make(map[*analysis.Analyzer]any)
+			var diagnostics []diagWithFset
+
+			// Run function
+			analyzePackage(pkgs[0], analyzers, results, &diagnostics)
+
+			// Verify function ran without panic
+			_ = diagnostics
+		})
+	}
+}

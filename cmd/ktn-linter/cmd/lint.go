@@ -187,6 +187,81 @@ func checkLoadErrors(pkgs []*packages.Package) {
 	}
 }
 
+// selectAnalyzers sélectionne les analyseurs selon les filtres.
+//
+// Returns:
+//   - []*analysis.Analyzer: analyseurs sélectionnés
+func selectAnalyzers() []*analysis.Analyzer {
+	// Sélection selon --only-rule
+	if OnlyRule != "" {
+		// Retourner l'analyseur unique
+		return selectSingleRule()
+	}
+
+	// Sélection selon --category
+	if Category != "" {
+		// Retourner les analyseurs de la catégorie
+		return selectByCategory()
+	}
+
+	// Mode par défaut: toutes les règles
+	analyzers := ktn.GetAllRules()
+
+	// Log si verbose
+	if Verbose {
+		fmt.Fprintf(os.Stderr, "Running all %d KTN rules\n", len(analyzers))
+	}
+
+	// Retourner tous les analyseurs
+	return analyzers
+}
+
+// selectSingleRule sélectionne une seule règle spécifique.
+//
+// Returns:
+//   - []*analysis.Analyzer: analyseur unique
+func selectSingleRule() []*analysis.Analyzer {
+	// Récupérer la règle
+	analyzer := ktn.GetRuleByCode(OnlyRule)
+
+	// Vérifier si la règle existe
+	if analyzer == nil {
+		fmt.Fprintf(os.Stderr, "Unknown rule code: %s\n", OnlyRule)
+		OsExit(1)
+	}
+
+	// Log si verbose
+	if Verbose {
+		fmt.Fprintf(os.Stderr, "Running only rule '%s'\n", OnlyRule)
+	}
+
+	// Retourner l'analyseur unique
+	return []*analysis.Analyzer{analyzer}
+}
+
+// selectByCategory sélectionne les règles d'une catégorie.
+//
+// Returns:
+//   - []*analysis.Analyzer: analyseurs de la catégorie
+func selectByCategory() []*analysis.Analyzer {
+	// Récupérer les analyseurs de la catégorie
+	analyzers := ktn.GetRulesByCategory(Category)
+
+	// Vérifier si la catégorie existe
+	if len(analyzers) == 0 {
+		fmt.Fprintf(os.Stderr, "Unknown category: %s\n", Category)
+		OsExit(1)
+	}
+
+	// Log si verbose
+	if Verbose {
+		fmt.Fprintf(os.Stderr, "Running %d rules from category '%s'\n", len(analyzers), Category)
+	}
+
+	// Retourner les analyseurs
+	return analyzers
+}
+
 // runAnalyzers exécute tous les analyseurs sur les packages.
 //
 // Params:
@@ -195,83 +270,59 @@ func checkLoadErrors(pkgs []*packages.Package) {
 // Returns:
 //   - []diagWithFset: diagnostics trouvés
 func runAnalyzers(pkgs []*packages.Package) []diagWithFset {
-	// analyzers holds the configuration value.
+	// Sélectionner les analyseurs
+	analyzers := selectAnalyzers()
 
-	var analyzers []*analysis.Analyzer
-
-	// Sélectionner les analyseurs selon le filtre
-	if OnlyRule != "" {
-		// Mode --only-rule: une seule règle spécifique
-		analyzer := ktn.GetRuleByCode(OnlyRule)
-		// Vérifier si la règle existe
-		if analyzer == nil {
-			fmt.Fprintf(os.Stderr, "Unknown rule code: %s\n", OnlyRule)
-			OsExit(1)
-		}
-		analyzers = []*analysis.Analyzer{analyzer}
-		// Log si verbose
-		if Verbose {
-			fmt.Fprintf(os.Stderr, "Running only rule '%s'\n", OnlyRule)
-		}
-		// Cas où une catégorie est spécifiée
-	} else if Category != "" {
-		// Mode --category: toutes les règles d'une catégorie
-		analyzers = ktn.GetRulesByCategory(Category)
-		// Vérification de la condition
-		if len(analyzers) == 0 {
-			fmt.Fprintf(os.Stderr, "Unknown category: %s\n", Category)
-			OsExit(1)
-		}
-		// Vérification de la condition
-		if Verbose {
-			fmt.Fprintf(os.Stderr, "Running %d rules from category '%s'\n", len(analyzers), Category)
-		}
-		// Sinon, mode par défaut
-	} else {
-		// Mode par défaut: toutes les règles
-		analyzers = ktn.GetAllRules()
-		// Vérification de la condition
-		if Verbose {
-			fmt.Fprintf(os.Stderr, "Running all %d KTN rules\n", len(analyzers))
-		}
-	}
-
-	// allDiagnostics holds the configuration value.
-
+	// allDiagnostics collecte les diagnostics
 	var allDiagnostics []diagWithFset
 
 	// Store results of required analyzers (reused across packages)
 	results := make(map[*analysis.Analyzer]any, len(analyzers))
 
-	// Itération sur les éléments
+	// Analyser chaque package
 	for _, pkg := range pkgs {
-		pkgFset := pkg.Fset
-
-		// Vérification de la condition
-		if Verbose {
-			fmt.Fprintf(os.Stderr, "Analyzing package: %s\n", pkg.PkgPath)
-		}
-
-		// Clear results for this package
-		for k := range results {
-			delete(results, k)
-		}
-
-		// Itération sur les éléments
-		for _, a := range analyzers {
-			pass := createAnalysisPass(a, pkg, pkgFset, &allDiagnostics, results)
-
-			result, err := a.Run(pass)
-			// Vérification de la condition
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error running analyzer %s on %s: %v\n", a.Name, pkg.PkgPath, err)
-			}
-			results[a] = result
-		}
+		// Analyser le package
+		analyzePackage(pkg, analyzers, results, &allDiagnostics)
 	}
 
-	// Early return from function.
+	// Retourner les diagnostics
 	return allDiagnostics
+}
+
+// analyzePackage analyse un package avec les analyseurs donnés.
+//
+// Params:
+//   - pkg: package à analyser
+//   - analyzers: analyseurs à exécuter
+//   - results: résultats des analyseurs (modifié in-place)
+//   - allDiagnostics: diagnostics collectés (modifié in-place)
+func analyzePackage(pkg *packages.Package, analyzers []*analysis.Analyzer, results map[*analysis.Analyzer]any, allDiagnostics *[]diagWithFset) {
+	pkgFset := pkg.Fset
+
+	// Log si verbose
+	if Verbose {
+		fmt.Fprintf(os.Stderr, "Analyzing package: %s\n", pkg.PkgPath)
+	}
+
+	// Clear results for this package
+	for k := range results {
+		delete(results, k)
+	}
+
+	// Exécuter chaque analyseur
+	for _, a := range analyzers {
+		// Créer le pass et exécuter
+		pass := createAnalysisPass(a, pkg, pkgFset, allDiagnostics, results)
+		result, err := a.Run(pass)
+
+		// Gérer les erreurs
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error running analyzer %s on %s: %v\n", a.Name, pkg.PkgPath, err)
+		}
+
+		// Stocker le résultat
+		results[a] = result
+	}
 }
 
 // filterTestFiles filtre les fichiers de test.

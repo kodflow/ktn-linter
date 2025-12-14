@@ -15,13 +15,13 @@ const (
 	// ruleCodeFunc011 is the rule code for this analyzer
 	ruleCodeFunc011 string = "KTN-FUNC-011"
 	// defaultMaxCyclomaticComplexity is the default max cyclomatic complexity
-	defaultMaxCyclomaticComplexity int = 10
+	defaultMaxCyclomaticComplexity int = 15
 )
 
 // Analyzer011 checks that functions don't exceed maximum cyclomatic complexity
 var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnfunc011",
-	Doc:      "KTN-FUNC-011: La complexité cyclomatique ne doit pas dépasser 10",
+	Doc:      "KTN-FUNC-011: La complexité cyclomatique ne doit pas dépasser 15",
 	Run:      runFunc011,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
