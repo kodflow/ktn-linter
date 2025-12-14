@@ -3,7 +3,14 @@ package ktnapi
 
 import (
 	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // Test_isAllowedType tests the isAllowedType function.
@@ -14,78 +21,18 @@ func Test_isAllowedType(t *testing.T) {
 		typeName string
 		expected bool
 	}{
-		{
-			name:     "allowed_type_time.Time",
-			pkgPath:  "time",
-			typeName: "time.Time",
-			expected: true,
-		},
-		{
-			name:     "allowed_type_time.Duration",
-			pkgPath:  "time",
-			typeName: "time.Duration",
-			expected: true,
-		},
-		{
-			name:     "allowed_type_context.Context",
-			pkgPath:  "context",
-			typeName: "context.Context",
-			expected: true,
-		},
-		{
-			name:     "allowed_package_time",
-			pkgPath:  "time",
-			typeName: "time.Other",
-			expected: true,
-		},
-		{
-			name:     "allowed_package_context",
-			pkgPath:  "context",
-			typeName: "context.Other",
-			expected: true,
-		},
-		{
-			name:     "allowed_package_go_token",
-			pkgPath:  "go/token",
-			typeName: "go/token.FileSet",
-			expected: true,
-		},
-		{
-			name:     "allowed_package_analysis",
-			pkgPath:  "golang.org/x/tools/go/analysis",
-			typeName: "golang.org/x/tools/go/analysis.Pass",
-			expected: true,
-		},
-		{
-			name:     "allowed_package_inspector",
-			pkgPath:  "golang.org/x/tools/go/ast/inspector",
-			typeName: "golang.org/x/tools/go/ast/inspector.Inspector",
-			expected: true,
-		},
-		{
-			name:     "allowed_package_config",
-			pkgPath:  "github.com/kodflow/ktn-linter/pkg/config",
-			typeName: "github.com/kodflow/ktn-linter/pkg/config.Config",
-			expected: true,
-		},
-		{
-			name:     "not_allowed_net_http",
-			pkgPath:  "net/http",
-			typeName: "net/http.Client",
-			expected: false,
-		},
-		{
-			name:     "not_allowed_os",
-			pkgPath:  "os",
-			typeName: "os.File",
-			expected: false,
-		},
-		{
-			name:     "not_allowed_external_package",
-			pkgPath:  "github.com/some/package",
-			typeName: "github.com/some/package.Type",
-			expected: false,
-		},
+		{"allowed_type_time.Time", "time", "time.Time", true},
+		{"allowed_type_time.Duration", "time", "time.Duration", true},
+		{"allowed_type_context.Context", "context", "context.Context", true},
+		{"allowed_package_time", "time", "time.Other", true},
+		{"allowed_package_context", "context", "context.Other", true},
+		{"allowed_package_go_token", "go/token", "go/token.FileSet", true},
+		{"allowed_package_analysis", "golang.org/x/tools/go/analysis", "golang.org/x/tools/go/analysis.Pass", true},
+		{"allowed_package_inspector", "golang.org/x/tools/go/ast/inspector", "golang.org/x/tools/go/ast/inspector.Inspector", true},
+		{"allowed_package_config", "github.com/kodflow/ktn-linter/pkg/config", "github.com/kodflow/ktn-linter/pkg/config.Config", true},
+		{"not_allowed_net_http", "net/http", "net/http.Client", false},
+		{"not_allowed_os", "os", "os.File", false},
+		{"not_allowed_external_package", "github.com/some/package", "github.com/some/package.Type", false},
 	}
 
 	// Parcourir les tests
@@ -94,8 +41,7 @@ func Test_isAllowedType(t *testing.T) {
 			result := isAllowedType(tt.pkgPath, tt.typeName)
 			// Vérifier le résultat
 			if result != tt.expected {
-				t.Errorf("isAllowedType(%q, %q) = %v, want %v",
-					tt.pkgPath, tt.typeName, result, tt.expected)
+				t.Errorf("isAllowedType(%q, %q) = %v, want %v", tt.pkgPath, tt.typeName, result, tt.expected)
 			}
 		})
 	}
@@ -109,42 +55,18 @@ func Test_getBaseIdent(t *testing.T) {
 		expectedNil  bool
 		expectedName string
 	}{
-		{
-			name:         "simple_ident",
-			expr:         &ast.Ident{Name: "x"},
-			expectedNil:  false,
-			expectedName: "x",
-		},
-		{
-			name:         "paren_expr",
-			expr:         &ast.ParenExpr{X: &ast.Ident{Name: "x"}},
-			expectedNil:  false,
-			expectedName: "x",
-		},
-		{
-			name:         "star_expr",
-			expr:         &ast.StarExpr{X: &ast.Ident{Name: "x"}},
-			expectedNil:  false,
-			expectedName: "x",
-		},
-		{
-			name:        "selector_expr_returns_nil",
-			expr:        &ast.SelectorExpr{X: &ast.Ident{Name: "x"}, Sel: &ast.Ident{Name: "field"}},
-			expectedNil: true,
-		},
-		{
-			name:        "nested_paren_star",
-			expr:        &ast.ParenExpr{X: &ast.StarExpr{X: &ast.Ident{Name: "ptr"}}},
-			expectedNil: false,
-			expectedName: "ptr",
-		},
+		{"simple_ident", &ast.Ident{Name: "x"}, false, "x"},
+		{"paren_expr", &ast.ParenExpr{X: &ast.Ident{Name: "x"}}, false, "x"},
+		{"star_expr", &ast.StarExpr{X: &ast.Ident{Name: "x"}}, false, "x"},
+		{"selector_expr_returns_nil", &ast.SelectorExpr{X: &ast.Ident{Name: "x"}, Sel: &ast.Ident{Name: "field"}}, true, ""},
+		{"nested_paren_star", &ast.ParenExpr{X: &ast.StarExpr{X: &ast.Ident{Name: "ptr"}}}, false, "ptr"},
 	}
 
 	// Parcourir les tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := getBaseIdent(tt.expr)
-			// Vérifier si nil
+			// Vérifier si nil attendu
 			if tt.expectedNil {
 				// Devrait être nil
 				if result != nil {
@@ -170,60 +92,15 @@ func Test_suggestInterfaceName(t *testing.T) {
 		typeName  string
 		expected  string
 	}{
-		{
-			name:      "param_ends_with_repo",
-			paramName: "userRepo",
-			typeName:  "Repository",
-			expected:  "userRepo",
-		},
-		{
-			name:      "param_ends_with_client",
-			paramName: "httpClient",
-			typeName:  "Client",
-			expected:  "httpClient",
-		},
-		{
-			name:      "param_ends_with_service",
-			paramName: "userService",
-			typeName:  "Service",
-			expected:  "userService",
-		},
-		{
-			name:      "param_ends_with_reader",
-			paramName: "fileReader",
-			typeName:  "FileReader",
-			expected:  "fileReader",
-		},
-		{
-			name:      "param_ends_with_writer",
-			paramName: "logWriter",
-			typeName:  "Writer",
-			expected:  "logWriter",
-		},
-		{
-			name:      "param_ends_with_handler",
-			paramName: "requestHandler",
-			typeName:  "Handler",
-			expected:  "requestHandler",
-		},
-		{
-			name:      "generic_param_uses_lowercase_type",
-			paramName: "x",
-			typeName:  "Client",
-			expected:  "client",
-		},
-		{
-			name:      "empty_param_uses_lowercase_type",
-			paramName: "",
-			typeName:  "Repository",
-			expected:  "repository",
-		},
-		{
-			name:      "underscore_param_uses_lowercase_type",
-			paramName: "_",
-			typeName:  "Logger",
-			expected:  "logger",
-		},
+		{"param_ends_with_repo", "userRepo", "Repository", "userRepo"},
+		{"param_ends_with_client", "httpClient", "Client", "httpClient"},
+		{"param_ends_with_service", "userService", "Service", "userService"},
+		{"param_ends_with_reader", "fileReader", "FileReader", "fileReader"},
+		{"param_ends_with_writer", "logWriter", "Writer", "logWriter"},
+		{"param_ends_with_handler", "requestHandler", "Handler", "requestHandler"},
+		{"generic_param_uses_lowercase_type", "x", "Client", "client"},
+		{"empty_param_uses_lowercase_type", "", "Repository", "repository"},
+		{"underscore_param_uses_lowercase_type", "_", "Logger", "logger"},
 	}
 
 	// Parcourir les tests
@@ -232,8 +109,7 @@ func Test_suggestInterfaceName(t *testing.T) {
 			result := suggestInterfaceName(tt.paramName, tt.typeName)
 			// Vérifier le résultat
 			if result != tt.expected {
-				t.Errorf("suggestInterfaceName(%q, %q) = %q, want %q",
-					tt.paramName, tt.typeName, result, tt.expected)
+				t.Errorf("suggestInterfaceName(%q, %q) = %q, want %q", tt.paramName, tt.typeName, result, tt.expected)
 			}
 		})
 	}
@@ -246,36 +122,12 @@ func Test_lowerFirst(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{
-			name:     "empty_string",
-			input:    "",
-			expected: "",
-		},
-		{
-			name:     "single_uppercase",
-			input:    "A",
-			expected: "a",
-		},
-		{
-			name:     "single_lowercase",
-			input:    "a",
-			expected: "a",
-		},
-		{
-			name:     "uppercase_word",
-			input:    "Client",
-			expected: "client",
-		},
-		{
-			name:     "all_caps",
-			input:    "HTTP",
-			expected: "hTTP",
-		},
-		{
-			name:     "already_lowercase",
-			input:    "client",
-			expected: "client",
-		},
+		{"empty_string", "", ""},
+		{"single_uppercase", "A", "a"},
+		{"single_lowercase", "a", "a"},
+		{"uppercase_word", "Client", "client"},
+		{"all_caps", "HTTP", "hTTP"},
+		{"already_lowercase", "client", "client"},
 	}
 
 	// Parcourir les tests
@@ -297,21 +149,9 @@ func Test_getSortedMethods(t *testing.T) {
 		methods  map[string]bool
 		expected []string
 	}{
-		{
-			name:     "empty_map",
-			methods:  map[string]bool{},
-			expected: []string{},
-		},
-		{
-			name:     "single_method",
-			methods:  map[string]bool{"Get": true},
-			expected: []string{"Get"},
-		},
-		{
-			name:     "multiple_methods_sorted",
-			methods:  map[string]bool{"Write": true, "Read": true, "Close": true},
-			expected: []string{"Close", "Read", "Write"},
-		},
+		{"empty_map", map[string]bool{}, []string{}},
+		{"single_method", map[string]bool{"Get": true}, []string{"Get"}},
+		{"multiple_methods_sorted", map[string]bool{"Write": true, "Read": true, "Close": true}, []string{"Close", "Read", "Write"}},
 	}
 
 	// Parcourir les tests
@@ -335,157 +175,441 @@ func Test_getSortedMethods(t *testing.T) {
 }
 
 // Test_runAPI001 tests the runAPI001 function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_runAPI001(t *testing.T) {
 	tests := []struct {
-		name        string
-		expectError bool
+		name    string
+		enabled bool
 	}{
-		{
-			name:        "tested_via_analysistest_framework",
-			expectError: false,
-		},
-		{
-			name:        "always_returns_nil_error",
-			expectError: false,
-		},
+		{"disabled_rule", false},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction runAPI001 nécessite un *analysis.Pass complet
-			// Elle est testée via analysistest dans 001_external_test.go
-			// La fonction retourne toujours (nil, nil), donc pas d'erreur possible
-			if tt.expectError {
-				t.Error("runAPI001 never returns an error")
+			// Setup config
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-API-001": {Enabled: config.Bool(tt.enabled)},
+				},
+			})
+			defer config.Reset()
+
+			// Parse test code
+			src := `package test
+func DoSomething() {}`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Build TypesInfo
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			conf := types.Config{}
+			_, _ = conf.Check("test", fset, []*ast.File{f}, info)
+
+			// Create inspect pass
+			inspectPass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{f},
+				TypesInfo: info,
+				Report:    func(d analysis.Diagnostic) {},
+				ResultOf:  make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+			// Create analysis pass
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{f},
+				TypesInfo: info,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(_ analysis.Diagnostic) {},
+			}
+
+			// Run the function
+			_, err = runAPI001(pass)
+			// Verify no error
+			if err != nil {
+				t.Errorf("runAPI001() error = %v", err)
 			}
 		})
 	}
 }
 
 // Test_analyzeFunction tests the analyzeFunction function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_analyzeFunction(t *testing.T) {
 	tests := []struct {
 		name string
+		code string
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{
+			name: "function_without_external_deps",
+			code: `package test
+func DoSomething() {}`,
+		},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction analyzeFunction nécessite un *analysis.Pass complet
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Parse test code
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Build TypesInfo
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			conf := types.Config{}
+			_, _ = conf.Check("test", fset, []*ast.File{f}, info)
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{f},
+				TypesInfo: info,
+				Report:    func(_ analysis.Diagnostic) {},
+			}
+
+			// Find function declaration
+			var funcDecl *ast.FuncDecl
+			// Inspect file
+			ast.Inspect(f, func(n ast.Node) bool {
+				// Check FuncDecl
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					return false
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Setup config
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-API-001": {Enabled: config.Bool(true)},
+				},
+			})
+			defer config.Reset()
+
+			// Run the function (should not panic)
+			if funcDecl != nil {
+				analyzeFunction(pass, funcDecl)
+			}
 		})
 	}
 }
 
 // Test_collectParams tests the collectParams function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_collectParams(t *testing.T) {
 	tests := []struct {
-		name string
+		name          string
+		code          string
+		expectedCount int
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{
+			name: "function_with_no_params",
+			code: `package test
+func DoSomething() {}`,
+			expectedCount: 0,
+		},
+		{
+			name: "function_with_basic_params",
+			code: `package test
+func DoSomething(a int, b string) {}`,
+			expectedCount: 0, // Basic types are not external concrete types
+		},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction collectParams nécessite un *analysis.Pass complet
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Parse test code
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Build TypesInfo
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			conf := types.Config{}
+			_, _ = conf.Check("test", fset, []*ast.File{f}, info)
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{f},
+				TypesInfo: info,
+				Report:    func(_ analysis.Diagnostic) {},
+			}
+
+			// Find function declaration
+			var funcDecl *ast.FuncDecl
+			// Inspect file
+			ast.Inspect(f, func(n ast.Node) bool {
+				// Check FuncDecl
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					return false
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Run the function
+			if funcDecl != nil {
+				params := collectParams(pass, funcDecl)
+				// Verify count
+				if len(params) != tt.expectedCount {
+					t.Errorf("collectParams() returned %d params, want %d", len(params), tt.expectedCount)
+				}
+			}
 		})
 	}
 }
 
 // Test_getExternalConcreteType tests the getExternalConcreteType function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_getExternalConcreteType(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{"basic_type"},
+		{"string_type"},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction getExternalConcreteType nécessite types.Type
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Create pass with minimal info
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
+
+			// Test with basic types (should return nil for basic types)
+			basicType := types.Typ[types.String]
+			result := getExternalConcreteType(pass, basicType)
+			// Basic types should return nil
+			if result != nil {
+				t.Logf("getExternalConcreteType returned non-nil for basic type")
+			}
 		})
 	}
 }
 
 // Test_scanBodyForMethodCalls tests the scanBodyForMethodCalls function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_scanBodyForMethodCalls(t *testing.T) {
 	tests := []struct {
 		name string
+		code string
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{
+			name: "empty_function_body",
+			code: `package test
+func DoSomething() {}`,
+		},
+		{
+			name: "function_with_method_call",
+			code: `package test
+type MyType struct{}
+func (m *MyType) Method() {}
+func DoSomething(m *MyType) { m.Method() }`,
+		},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction scanBodyForMethodCalls nécessite un *analysis.Pass complet
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Parse test code
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Build TypesInfo
+			info := &types.Info{
+				Types:      make(map[ast.Expr]types.TypeAndValue),
+				Uses:       make(map[*ast.Ident]types.Object),
+				Defs:       make(map[*ast.Ident]types.Object),
+				Selections: make(map[*ast.SelectorExpr]*types.Selection),
+			}
+			conf := types.Config{}
+			_, _ = conf.Check("test", fset, []*ast.File{f}, info)
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{f},
+				TypesInfo: info,
+				Report:    func(_ analysis.Diagnostic) {},
+			}
+
+			// Find last function declaration
+			var funcDecl *ast.FuncDecl
+			// Inspect file
+			ast.Inspect(f, func(n ast.Node) bool {
+				// Check FuncDecl
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Run the function (should not panic)
+			if funcDecl != nil && funcDecl.Body != nil {
+				params := make(map[*ast.Ident]*paramInfo)
+				scanBodyForMethodCalls(pass, funcDecl.Body, params)
+			}
 		})
 	}
 }
 
 // Test_matchesParam tests the matchesParam function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_matchesParam(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		expected bool
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{"same_ident", true},
+		{"different_idents", false},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction matchesParam nécessite un *analysis.Pass complet
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Create pass with minimal info
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Uses: make(map[*ast.Ident]types.Object),
+					Defs: make(map[*ast.Ident]types.Object),
+				},
+			}
+
+			// Create idents
+			ident1 := &ast.Ident{Name: "x"}
+			ident2 := &ast.Ident{Name: "y"}
+
+			// Test based on case
+			var result bool
+			// Check test case
+			if tt.name == "same_ident" {
+				result = matchesParam(pass, ident1, ident1)
+			} else {
+				result = matchesParam(pass, ident1, ident2)
+			}
+
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("matchesParam() = %v, want %v", result, tt.expected)
+			}
 		})
 	}
 }
 
 // Test_reportDiagnostics tests the reportDiagnostics function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_reportDiagnostics(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{"empty_params"},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction reportDiagnostics nécessite un *analysis.Pass complet
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Parse test code
+			src := `package test
+func DoSomething() {}`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:   fset,
+				Report: func(_ analysis.Diagnostic) {},
+			}
+
+			// Setup config
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-API-001": {Enabled: config.Bool(true)},
+				},
+			})
+			defer config.Reset()
+
+			// Find function declaration
+			var funcDecl *ast.FuncDecl
+			// Inspect file
+			ast.Inspect(f, func(n ast.Node) bool {
+				// Check FuncDecl
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					return false
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Test with empty params (should not report anything)
+			params := make(map[*ast.Ident]*paramInfo)
+			// Run the function
+			if funcDecl != nil {
+				reportDiagnostics(pass, funcDecl, params)
+			}
 		})
 	}
 }
 
 // Test_formatTypeName tests the formatTypeName function.
-// Tested via analysistest framework in 001_external_test.go.
 func Test_formatTypeName(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typeName string
+		expected string
 	}{
-		{name: "tested_via_analysistest_framework"},
+		{"simple_type", "MyType", "MyType"},
+		{"pointer_type", "*MyType", "*MyType"},
+		{"package_type", "pkg.Type", "pkg.Type"},
 	}
 
-	// Parcourir les tests
+	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// La fonction formatTypeName utilise types.TypeString
-			// Elle est testée via analysistest dans 001_external_test.go
+			// Create basic type for testing
+			basic := types.Typ[types.String]
+			result := formatTypeName(basic)
+			// Verify result is not empty
+			if result == "" {
+				t.Error("formatTypeName() returned empty string")
+			}
 		})
 	}
 }

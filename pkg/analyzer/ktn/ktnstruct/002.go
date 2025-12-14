@@ -111,7 +111,7 @@ func runStruct002(pass *analysis.Pass) (any, error) {
 //   - []structWithMethods: liste des structs avec méthodes
 func collectExportedStructsWithMethods(file *ast.File, pass *analysis.Pass, _insp *inspector.Inspector) []structWithMethods {
 	// Collecter les méthodes
-	methodsByStruct := collectMethodsByStruct(file, pass)
+	methodsByStruct := shared.CollectMethodsByStruct(file, pass)
 
 	// Collecter les structs exportées du fichier
 	var structs []structWithMethods

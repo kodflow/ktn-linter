@@ -6,30 +6,20 @@ package messages
 func registerStructMessages() {
 	Register(Message{
 		Code:  "KTN-STRUCT-001",
-		Short: "struct '%s' a %d méthode(s) publique(s) sans interface",
-		Verbose: `PROBLÈME: La struct '%s' a %d méthode(s) sans interface.
+		Short: "getter '%s' devrait être '%s' pour champ '%s'",
+		Verbose: `PROBLÈME: Le getter '%s' ne suit pas la convention.
 
-POURQUOI: Une interface permet:
-  - Le mocking dans les tests
-  - L'injection de dépendances
-  - Le découplage
+CONVENTION GO:
+  - Champ: name
+  - Getter: Name() (pas GetName())
+  - Setter: SetName(v)
 
-SOLUTIONS:
-  1. Interface locale: créer dans le même fichier
-  2. Cross-package: var _ port.I = (*%s)(nil)
+EXEMPLE INCORRECT:
+  func (u *User) GetName() string
 
-EXCEPTIONS AUTOMATIQUES:
-  - DTOs (tags json/xml/yaml)
-  - Consumers (champs de type interface)
-
-EXEMPLE SOLUTION 1:
-  type UserRepository interface {
-      GetByID(id int) (*User, error)
-  }
-  type userRepositoryImpl struct { ... }
-
-EXEMPLE SOLUTION 2 (cross-package):
-  var _ port.UserRepository = (*UserRepositoryImpl)(nil)`,
+EXEMPLE CORRECT:
+  func (u *User) Name() string
+  func (u *User) SetName(name string)`,
 	})
 
 	Register(Message{
@@ -141,21 +131,4 @@ EXEMPLE CORRECT (garder privé):
   }`,
 	})
 
-	Register(Message{
-		Code:  "KTN-STRUCT-007",
-		Short: "getter '%s' devrait être '%s' pour champ '%s'",
-		Verbose: `PROBLÈME: Le getter '%s' ne suit pas la convention.
-
-CONVENTION GO:
-  - Champ: name
-  - Getter: Name() (pas GetName())
-  - Setter: SetName(v)
-
-EXEMPLE INCORRECT:
-  func (u *User) GetName() string
-
-EXEMPLE CORRECT:
-  func (u *User) Name() string
-  func (u *User) SetName(name string)`,
-	})
 }

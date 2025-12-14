@@ -26,8 +26,8 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "returns_expected_count",
 			check: func(t *testing.T) {
-				// Note: Analyzer001 (KTN-STRUCT-001) est déprécié et remplacé par KTN-API-001
-				const expectedCount int = 6 // 002-007 (001 déprécié)
+				// 6 analyseurs: 001-006
+				const expectedCount int = 6
 				// Vérification nombre d'analyseurs
 				if len(analyzers) != expectedCount {
 					t.Errorf("Expected %d analyzers, got %d", expectedCount, len(analyzers))
@@ -49,14 +49,13 @@ func TestGetAnalyzers(t *testing.T) {
 		{
 			name: "analyzers_have_expected_names",
 			check: func(t *testing.T) {
-				// Note: ktnstruct001 est déprécié et remplacé par KTN-API-001
 				expectedNames := []string{
+					"ktnstruct001",
 					"ktnstruct002",
 					"ktnstruct003",
 					"ktnstruct004",
 					"ktnstruct005",
 					"ktnstruct006",
-					"ktnstruct007",
 				}
 
 				// Vérification noms
