@@ -1,4 +1,8 @@
 {
+  // JSON Schema pour golangci-lint v2
+  "yaml.schemas": {
+    "https://golangci-lint.run/jsonschema/golangci.v2.jsonschema.json": ".golangci.yml"
+  },
   // Configuration KTN-Linter via wrapper
   "go.lintTool": "golangci-lint",
   "go.lintOnSave": "off",

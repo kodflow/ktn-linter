@@ -4,31 +4,9 @@ run:
   timeout: 5m
   tests: true
   go: "1.25.5"
-  # Inclure les fichiers testdata dans l'analyse
-  build-tags: []
-  skip-dirs: []
-  skip-files: []
 
 # Configuration minimale : uniquement KTN-Linter via make lint
 # Aucun linter golangci-lint activé
 linters:
+  default: none
   enable: []
-  disable-all: true
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  # Ne pas exclure testdata
-  exclude-dirs: []
-  # Exclure les fichiers _test.go du linting KTN
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - all
-  # Désactiver les diagnostics natifs de Go (redeclarations, unused vars, etc.)
-  exclude-use-default: false
-  exclude:
-    - ".*other declaration.*"
-    - ".*declared and not used.*"
-    - ".*imported and not used.*"
-    - ".*no new variables.*"
