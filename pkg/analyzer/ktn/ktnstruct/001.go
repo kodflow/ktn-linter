@@ -1,4 +1,4 @@
-// Analyzer 001 for the ktnstruct package.
+// Package ktnstruct provides analyzers for struct-related KTN rules.
 package ktnstruct
 
 import (
@@ -111,6 +111,13 @@ func checkStructs(pass *analysis.Pass, structs []structWithMethods, localInterfa
 			continue
 		}
 
+		// Exception: les consommateurs (structs avec injection de dépendances)
+		// Un consommateur utilise des interfaces injectées
+		if isConsumerStruct(s.structType, pass) {
+			// Consumer pattern - pas besoin d'interface
+			continue
+		}
+
 		// Vérifier si une interface locale couvre toutes les méthodes
 		if hasMatchingInterface(s, localInterfaces) {
 			// Interface locale trouvée
@@ -118,7 +125,7 @@ func checkStructs(pass *analysis.Pass, structs []structWithMethods, localInterfa
 		}
 
 		// Vérifier via compile-time checks avec go/types
-		if hasMatchingInterfaceCheck(s, interfaceChecks, pass) {
+		if hasMatchingInterfaceCheck(s, interfaceChecks) {
 			// Interface externe valide trouvée
 			continue
 		}
@@ -131,6 +138,46 @@ func checkStructs(pass *analysis.Pass, structs []structWithMethods, localInterfa
 			len(s.methods),
 		)
 	}
+}
+
+// isConsumerStruct détecte si une struct est un "consommateur" (Service, Controller, Handler).
+// Un consommateur utilise l'injection de dépendances via des champs de type interface.
+// Ces structs orchestrent les dépendances et n'ont pas besoin de leur propre interface car:
+// - Elles ne sont jamais mockées (c'est elles qu'on teste)
+// - Elles n'ont qu'une seule implémentation
+// - Elles sont des points d'entrée de la logique métier
+//
+// Params:
+//   - structType: type de la struct à analyser
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - bool: true si la struct est un consommateur
+func isConsumerStruct(structType *ast.StructType, pass *analysis.Pass) bool {
+	// Vérifier si la struct a des champs de type interface
+	if structType.Fields == nil {
+		// Pas de champs
+		return false
+	}
+
+	// Parcourir les champs
+	for _, field := range structType.Fields.List {
+		// Obtenir le type du champ via TypesInfo
+		if pass.TypesInfo != nil {
+			fieldType := pass.TypesInfo.TypeOf(field.Type)
+			// Vérifier si c'est une interface
+			if fieldType != nil {
+				// Vérifier le type sous-jacent (pour les types nommés)
+				if _, isInterface := fieldType.Underlying().(*types.Interface); isInterface {
+					// Champ de type interface trouvé → c'est un consommateur
+					return true
+				}
+			}
+		}
+	}
+
+	// Pas de champ interface → pas un consommateur
+	return false
 }
 
 // collectInterfaceChecksWithTypes collecte les compile-time interface checks avec types.
@@ -419,11 +466,10 @@ func extractFromCompositeLit(comp *ast.CompositeLit) string {
 // Params:
 //   - s: struct avec méthodes
 //   - checks: liste des interface checks
-//   - pass: contexte d'analyse
 //
 // Returns:
 //   - bool: true si une interface check couvre toutes les méthodes
-func hasMatchingInterfaceCheck(s structWithMethods, checks []interfaceCheck, pass *analysis.Pass) bool {
+func hasMatchingInterfaceCheck(s structWithMethods, checks []interfaceCheck) bool {
 	// Parcourir les checks
 	for _, check := range checks {
 		// Vérifier si c'est pour cette struct
@@ -433,7 +479,7 @@ func hasMatchingInterfaceCheck(s structWithMethods, checks []interfaceCheck, pas
 		}
 
 		// Vérifier que l'interface couvre toutes les méthodes publiques
-		if interfaceCoversAllPublicMethods(check.interfaceType, s.methods, pass) {
+		if interfaceCoversAllPublicMethods(check.interfaceType, s.methods) {
 			// Interface valide
 			return true
 		}
@@ -448,11 +494,10 @@ func hasMatchingInterfaceCheck(s structWithMethods, checks []interfaceCheck, pas
 // Params:
 //   - iface: type interface
 //   - methods: méthodes publiques de la struct
-//   - pass: contexte d'analyse
 //
 // Returns:
 //   - bool: true si toutes les méthodes sont couvertes
-func interfaceCoversAllPublicMethods(iface *types.Interface, methods []shared.MethodSignature, _pass *analysis.Pass) bool {
+func interfaceCoversAllPublicMethods(iface *types.Interface, methods []shared.MethodSignature) bool {
 	// Chaque méthode publique de la struct doit être dans l'interface
 	for _, m := range methods {
 		found := false
@@ -814,15 +859,20 @@ func formatFieldList(fields *ast.FieldList, pass *analysis.Pass) string {
 	var parts []string
 	// Parcourir les champs
 	for _, field := range fields.List {
-		// Utiliser TypesInfo pour obtenir le type résolu (avec chemin complet)
+		// Utiliser TypesInfo pour obtenir le type résolu
 		var typeStr string
+		// Vérifier que pass et TypesInfo sont disponibles
 		if pass != nil && pass.TypesInfo != nil {
+			// Obtenir le type résolu via TypesInfo
 			if t := pass.TypesInfo.TypeOf(field.Type); t != nil {
+				// Type résolu avec chemin complet
 				typeStr = types.TypeString(t, nil)
 			} else {
+				// Fallback sur ExprString si type non résolu
 				typeStr = types.ExprString(field.Type)
 			}
 		} else {
+			// Fallback sans TypesInfo
 			typeStr = types.ExprString(field.Type)
 		}
 		// Compter combien de noms partagent ce type
