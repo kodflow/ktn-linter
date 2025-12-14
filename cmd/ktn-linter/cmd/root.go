@@ -8,24 +8,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Global flags and commands.
+// Flag names as constants for type safety.
+const (
+	// flagAI is the flag name for AI mode.
+	flagAI string = "ai"
+	// flagNoColor is the flag name for no-color mode.
+	flagNoColor string = "no-color"
+	// flagSimple is the flag name for simple mode.
+	flagSimple string = "simple"
+	// flagVerbose is the flag name for verbose mode.
+	flagVerbose string = "verbose"
+	// flagCategory is the flag name for category filter.
+	flagCategory string = "category"
+	// flagOnlyRule is the flag name for single rule filter.
+	flagOnlyRule string = "only-rule"
+	// flagFix is the flag name for auto-fix mode.
+	flagFix string = "fix"
+	// flagConfig is the flag name for config path.
+	flagConfig string = "config"
+)
+
+// Global state for testing and version.
 var (
-	// AIMode enables AI-friendly output format.
-	AIMode bool = false
-	// NoColor disables colored output.
-	NoColor bool = false
-	// Simple enables simple one-line format for IDE integration.
-	Simple bool = false
-	// Verbose enables verbose output.
-	Verbose bool = false
-	// Category filters rules by specific category.
-	Category string = ""
-	// OnlyRule runs only a specific rule by code (e.g., KTN-FUNC-001).
-	OnlyRule string = ""
-	// Fix enables automatic fix application for modernize analyzers.
-	Fix bool = false
-	// ConfigPath is the path to the configuration file.
-	ConfigPath string = ""
 	// version stocke la version du linter.
 	version string = "dev"
 
@@ -75,13 +79,14 @@ func Execute() {
 //
 // Params: aucun
 func init() {
-	// Global flags
-	rootCmd.PersistentFlags().BoolVar(&AIMode, "ai", false, "Enable AI-friendly output format")
-	rootCmd.PersistentFlags().BoolVar(&NoColor, "no-color", false, "Disable colored output")
-	rootCmd.PersistentFlags().BoolVar(&Simple, "simple", false, "Simple one-line format for IDE integration")
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose output")
-	rootCmd.PersistentFlags().StringVar(&Category, "category", "", "Run only rules from specific category (func, var, error, etc.)")
-	rootCmd.PersistentFlags().StringVar(&OnlyRule, "only-rule", "", "Run only a specific rule by code (e.g., KTN-FUNC-001)")
-	rootCmd.PersistentFlags().BoolVar(&Fix, "fix", false, "Automatically apply suggested fixes from modernize analyzers")
-	rootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", "", "Path to configuration file (.ktn-linter.yaml)")
+	// Define persistent flags (available to all subcommands)
+	pf := rootCmd.PersistentFlags()
+	pf.Bool(flagAI, false, "Enable AI-friendly output format")
+	pf.Bool(flagNoColor, false, "Disable colored output")
+	pf.Bool(flagSimple, false, "Simple one-line format for IDE integration")
+	pf.BoolP(flagVerbose, "v", false, "Verbose output")
+	pf.String(flagCategory, "", "Run only rules from specific category (func, var, error, etc.)")
+	pf.String(flagOnlyRule, "", "Run only a specific rule by code (e.g., KTN-FUNC-001)")
+	pf.Bool(flagFix, false, "Automatically apply suggested fixes from modernize analyzers")
+	pf.StringP(flagConfig, "c", "", "Path to configuration file (.ktn-linter.yaml)")
 }

@@ -5,34 +5,40 @@ import (
 	"testing"
 )
 
-// TestCommentMessagesRegistered tests that comment messages are registered.
-func TestCommentMessagesRegistered(t *testing.T) {
-	commentRules := []string{
-		"KTN-COMMENT-001",
-		"KTN-COMMENT-002",
-		"KTN-COMMENT-003",
-		"KTN-COMMENT-004",
-		"KTN-COMMENT-005",
-		"KTN-COMMENT-006",
-		"KTN-COMMENT-007",
+// Test_registerCommentMessages tests the registerCommentMessages function.
+//
+// Params:
+//   - t: testing context
+func Test_registerCommentMessages(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{name: "KTN-COMMENT-001 registered", code: "KTN-COMMENT-001"},
+		{name: "KTN-COMMENT-002 registered", code: "KTN-COMMENT-002"},
+		{name: "KTN-COMMENT-003 registered", code: "KTN-COMMENT-003"},
+		{name: "KTN-COMMENT-004 registered", code: "KTN-COMMENT-004"},
+		{name: "KTN-COMMENT-005 registered", code: "KTN-COMMENT-005"},
+		{name: "KTN-COMMENT-006 registered", code: "KTN-COMMENT-006"},
+		{name: "KTN-COMMENT-007 registered", code: "KTN-COMMENT-007"},
 	}
 
 	// Itération sur les règles
-	for _, code := range commentRules {
-		t.Run(code, func(t *testing.T) {
-			msg, found := Get(code)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, found := Get(tt.code)
 			// Vérification existence
 			if !found {
-				t.Errorf("Get(%q) not found", code)
+				t.Errorf("Get(%q) not found", tt.code)
 				return
 			}
 			// Vérification code
-			if msg.Code != code {
-				t.Errorf("msg.Code = %q, want %q", msg.Code, code)
+			if msg.Code != tt.code {
+				t.Errorf("msg.Code = %q, want %q", msg.Code, tt.code)
 			}
 			// Vérification short non vide
 			if msg.Short == "" {
-				t.Errorf("msg.Short is empty for %q", code)
+				t.Errorf("msg.Short is empty for %q", tt.code)
 			}
 		})
 	}

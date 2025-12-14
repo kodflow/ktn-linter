@@ -5,45 +5,54 @@ import (
 	"testing"
 )
 
-// TestVarMessagesRegistered tests that var messages are registered.
-func TestVarMessagesRegistered(t *testing.T) {
-	varRules := []string{
-		"KTN-VAR-001",
-		"KTN-VAR-002",
-		"KTN-VAR-003",
-		"KTN-VAR-004",
-		"KTN-VAR-005",
-		"KTN-VAR-006",
-		"KTN-VAR-007",
-		"KTN-VAR-008",
-		"KTN-VAR-009",
-		"KTN-VAR-010",
-		"KTN-VAR-011",
-		"KTN-VAR-012",
-		"KTN-VAR-013",
-		"KTN-VAR-014",
-		"KTN-VAR-015",
-		"KTN-VAR-016",
-		"KTN-VAR-017",
-		"KTN-VAR-018",
+// Test_registerVarMessages verifies that all var category messages are properly registered.
+//
+// Params:
+//   - t: Testing instance for reporting results
+//
+// This test uses table-driven pattern to validate that each var rule code
+// (KTN-VAR-XXX) is registered and contains valid data (code and short description).
+func Test_registerVarMessages(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{name: "KTN-VAR-001", code: "KTN-VAR-001"},
+		{name: "KTN-VAR-002", code: "KTN-VAR-002"},
+		{name: "KTN-VAR-003", code: "KTN-VAR-003"},
+		{name: "KTN-VAR-004", code: "KTN-VAR-004"},
+		{name: "KTN-VAR-005", code: "KTN-VAR-005"},
+		{name: "KTN-VAR-006", code: "KTN-VAR-006"},
+		{name: "KTN-VAR-007", code: "KTN-VAR-007"},
+		{name: "KTN-VAR-008", code: "KTN-VAR-008"},
+		{name: "KTN-VAR-009", code: "KTN-VAR-009"},
+		{name: "KTN-VAR-010", code: "KTN-VAR-010"},
+		{name: "KTN-VAR-011", code: "KTN-VAR-011"},
+		{name: "KTN-VAR-012", code: "KTN-VAR-012"},
+		{name: "KTN-VAR-013", code: "KTN-VAR-013"},
+		{name: "KTN-VAR-014", code: "KTN-VAR-014"},
+		{name: "KTN-VAR-015", code: "KTN-VAR-015"},
+		{name: "KTN-VAR-016", code: "KTN-VAR-016"},
+		{name: "KTN-VAR-017", code: "KTN-VAR-017"},
+		{name: "KTN-VAR-018", code: "KTN-VAR-018"},
 	}
 
-	// Itération sur les règles
-	for _, code := range varRules {
-		t.Run(code, func(t *testing.T) {
-			msg, found := Get(code)
-			// Vérification existence
+	// Test each rule code in the table.
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, found := Get(tt.code)
+			// Verify message exists
 			if !found {
-				t.Errorf("Get(%q) not found", code)
+				t.Errorf("Get(%q) not found", tt.code)
 				return
 			}
-			// Vérification code
-			if msg.Code != code {
-				t.Errorf("msg.Code = %q, want %q", msg.Code, code)
+			// Verify code matches
+			if msg.Code != tt.code {
+				t.Errorf("msg.Code = %q, want %q", msg.Code, tt.code)
 			}
-			// Vérification short non vide
+			// Verify short description is not empty
 			if msg.Short == "" {
-				t.Errorf("msg.Short is empty for %q", code)
+				t.Errorf("msg.Short is empty for %q", tt.code)
 			}
 		})
 	}

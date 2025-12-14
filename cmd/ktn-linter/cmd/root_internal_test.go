@@ -27,12 +27,12 @@ func mockExitInCmd(t *testing.T) (restore func()) {
 
 	return func() {
 		OsExit = oldOsExit
-		// Reset flags
-		AIMode = false
-		NoColor = false
-		Simple = false
-		Verbose = false
-		Category = ""
+		// Reset Cobra flags to defaults
+		rootCmd.PersistentFlags().Set(flagAI, "false")
+		rootCmd.PersistentFlags().Set(flagNoColor, "false")
+		rootCmd.PersistentFlags().Set(flagSimple, "false")
+		rootCmd.PersistentFlags().Set(flagVerbose, "false")
+		rootCmd.PersistentFlags().Set(flagCategory, "")
 	}
 }
 

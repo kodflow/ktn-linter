@@ -1016,3 +1016,245 @@ func Test_runTest008_excludedFile(t *testing.T) {
 		})
 	}
 }
+
+// Test_checkVariables_mockVariable tests checkVariables with mock variable.
+//
+// Params:
+//   - t: testing context
+func Test_checkVariables_mockVariable(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		wantPublic  bool
+		wantPrivate bool
+	}{
+		{
+			name: "mock variable is skipped",
+			code: `package test
+var MockService int`,
+			wantPublic:  false,
+			wantPrivate: false,
+		},
+		{
+			name: "mock_variable is skipped",
+			code: `package test
+var mock_service int`,
+			wantPublic:  false,
+			wantPrivate: false,
+		},
+		{
+			name: "import declaration is skipped",
+			code: `package test
+import "fmt"`,
+			wantPublic:  false,
+			wantPrivate: false,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkVariables(genDecl, &result)
+				}
+				// Continuer la traversée
+				return true
+			})
+
+			// Vérification public
+			if result.hasPublic != tt.wantPublic {
+				t.Errorf("checkVariables() hasPublic = %v, want %v", result.hasPublic, tt.wantPublic)
+			}
+			// Vérification private
+			if result.hasPrivate != tt.wantPrivate {
+				t.Errorf("checkVariables() hasPrivate = %v, want %v", result.hasPrivate, tt.wantPrivate)
+			}
+		})
+	}
+}
+
+// Test_checkTypes_mockType tests checkTypes with mock type.
+//
+// Params:
+//   - t: testing context
+func Test_checkTypes_mockType(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		wantPublic bool
+	}{
+		{
+			name: "mock type is skipped",
+			code: `package test
+type MockService struct{}`,
+			wantPublic: false,
+		},
+		{
+			name: "mock_type is skipped",
+			code: `package test
+type mock_service struct{}`,
+			wantPublic: false,
+		},
+		{
+			name: "non-type declaration is skipped",
+			code: `package test
+import "fmt"`,
+			wantPublic: false,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkTypes(genDecl, &result)
+				}
+				// Continuer la traversée
+				return true
+			})
+
+			// Vérification public
+			if result.hasPublic != tt.wantPublic {
+				t.Errorf("checkTypes() hasPublic = %v, want %v", result.hasPublic, tt.wantPublic)
+			}
+		})
+	}
+}
+
+// Test_checkConsts_mockConst tests checkConsts with mock const.
+//
+// Params:
+//   - t: testing context
+func Test_checkConsts_mockConst(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		wantPublic bool
+	}{
+		{
+			name: "mock const is skipped",
+			code: `package test
+const MockValue = 1`,
+			wantPublic: false,
+		},
+		{
+			name: "non-const declaration is skipped",
+			code: `package test
+import "fmt"`,
+			wantPublic: false,
+		},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			// Vérification de l'erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkConsts(genDecl, &result)
+				}
+				// Continuer la traversée
+				return true
+			})
+
+			// Vérification public
+			if result.hasPublic != tt.wantPublic {
+				t.Errorf("checkConsts() hasPublic = %v, want %v", result.hasPublic, tt.wantPublic)
+			}
+		})
+	}
+}
+
+// Test_classifyFunction_mockReceiver tests classifyFunction with mock receiver.
+//
+// Params:
+//   - t: testing context
+func Test_classifyFunction_mockReceiver(t *testing.T) {
+	tests := []struct {
+		name          string
+		code          string
+		expectPublic  bool
+		expectPrivate bool
+	}{
+		{
+			name: "mock function name is skipped",
+			code: `package test
+func MockFunc() {}`,
+			expectPublic:  false,
+			expectPrivate: false,
+		},
+		{
+			name: "method on mock receiver is skipped",
+			code: `package test
+type MockService struct{}
+func (m *MockService) Method() {}`,
+			expectPublic:  false,
+			expectPrivate: false,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			result := fileAnalysisResult{
+				publicFuncs:  []string{},
+				privateFuncs: []string{},
+			}
+
+			// Parcourir les déclarations
+			for _, decl := range file.Decls {
+				// Vérifier FuncDecl
+				if funcDecl, ok := decl.(*ast.FuncDecl); ok {
+					classifyFunction(funcDecl, &result)
+				}
+			}
+
+			// Vérification du résultat
+			if result.hasPublic != tt.expectPublic {
+				t.Errorf("hasPublic = %v, want %v", result.hasPublic, tt.expectPublic)
+			}
+			// Vérification du résultat privé
+			if result.hasPrivate != tt.expectPrivate {
+				t.Errorf("hasPrivate = %v, want %v", result.hasPrivate, tt.expectPrivate)
+			}
+		})
+	}
+}

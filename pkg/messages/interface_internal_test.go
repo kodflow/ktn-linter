@@ -5,28 +5,40 @@ import (
 	"testing"
 )
 
-// TestInterfaceMessagesRegistered tests that interface messages are registered.
-func TestInterfaceMessagesRegistered(t *testing.T) {
-	interfaceRules := []string{
-		"KTN-INTERFACE-001",
+// Test_registerInterfaceMessages verifies that all interface rule messages are properly registered.
+//
+// Params:
+//   - t: *testing.T - the test context for reporting test failures
+//
+// Returns:
+//   - none
+func Test_registerInterfaceMessages(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "KTN-INTERFACE-001 registered",
+			code: "KTN-INTERFACE-001",
+		},
 	}
 
-	// Itération sur les règles
-	for _, code := range interfaceRules {
-		t.Run(code, func(t *testing.T) {
-			msg, found := Get(code)
-			// Vérification existence
+	// Iterate through test cases
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			msg, found := Get(test.code)
+			// Verify message is found
 			if !found {
-				t.Errorf("Get(%q) not found", code)
+				t.Errorf("Get(%q) not found", test.code)
 				return
 			}
-			// Vérification code
-			if msg.Code != code {
-				t.Errorf("msg.Code = %q, want %q", msg.Code, code)
+			// Verify code matches
+			if msg.Code != test.code {
+				t.Errorf("msg.Code = %q, want %q", msg.Code, test.code)
 			}
-			// Vérification short non vide
+			// Verify short description is not empty
 			if msg.Short == "" {
-				t.Errorf("msg.Short is empty for %q", code)
+				t.Errorf("msg.Short is empty for %q", test.code)
 			}
 		})
 	}

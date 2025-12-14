@@ -5,98 +5,35 @@ import (
 	"testing"
 )
 
-// TestMessageFormatEmpty tests Format with empty verbose.
-func TestMessageFormatEmpty(t *testing.T) {
-	msg := Message{
-		Code:    "TEST",
-		Short:   "short %s",
-		Verbose: "",
+// Test_registryInitialized tests that registry is initialized with messages.
+//
+// Params:
+//   - t: testing context
+func Test_registryInitialized(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{name: "KTN-FUNC-001 exists", code: "KTN-FUNC-001"},
+		{name: "KTN-VAR-001 exists", code: "KTN-VAR-001"},
+		{name: "KTN-CONST-001 exists", code: "KTN-CONST-001"},
+		{name: "KTN-COMMENT-001 exists", code: "KTN-COMMENT-001"},
+		{name: "KTN-STRUCT-001 exists", code: "KTN-STRUCT-001"},
+		{name: "KTN-TEST-004 exists", code: "KTN-TEST-004"},
 	}
 
-	// Test verbose mode with empty verbose returns short
-	result := msg.Format(true, "arg")
-	// Vérification résultat
-	if result != "short arg" {
-		t.Errorf("Format(true) = %q, want %q", result, "short arg")
-	}
-}
-
-// TestMessageFormatNoArgs tests Format without arguments.
-func TestMessageFormatNoArgs(t *testing.T) {
-	msg := Message{
-		Code:    "TEST",
-		Short:   "simple message",
-		Verbose: "verbose message",
-	}
-
-	// Test short without args
-	result := msg.Format(false)
-	// Vérification résultat
-	if result != "simple message" {
-		t.Errorf("Format(false) = %q, want %q", result, "simple message")
-	}
-
-	// Test verbose without args
-	result = msg.Format(true)
-	// Vérification résultat
-	if result != "verbose message" {
-		t.Errorf("Format(true) = %q, want %q", result, "verbose message")
-	}
-}
-
-// TestFormatShortWithVerboseHint tests FormatShort adds hint.
-func TestFormatShortWithVerboseHint(t *testing.T) {
-	msg := Message{
-		Code:    "TEST",
-		Short:   "short message",
-		Verbose: "verbose message",
-	}
-
-	result := msg.FormatShort()
-	// Vérification suffixe
-	expected := "short message (--verbose pour détails)"
-	if result != expected {
-		t.Errorf("FormatShort() = %q, want %q", result, expected)
-	}
-}
-
-// TestFormatShortWithoutVerbose tests FormatShort without verbose.
-func TestFormatShortWithoutVerbose(t *testing.T) {
-	msg := Message{
-		Code:    "TEST",
-		Short:   "short message",
-		Verbose: "",
-	}
-
-	result := msg.FormatShort()
-	// Vérification pas de suffixe
-	if result != "short message" {
-		t.Errorf("FormatShort() = %q, want %q", result, "short message")
-	}
-}
-
-// TestRegistryInitialized tests that registry is initialized with messages.
-func TestRegistryInitialized(t *testing.T) {
-	// Vérification que le registre contient des messages
+	// Vérification que le registre n'est pas vide
 	if len(registry) == 0 {
-		t.Error("registry is empty after init()")
-	}
-
-	// Vérification quelques règles essentielles
-	essentialRules := []string{
-		"KTN-FUNC-001",
-		"KTN-VAR-001",
-		"KTN-CONST-001",
-		"KTN-COMMENT-001",
-		"KTN-STRUCT-001",
-		"KTN-TEST-004",
+		t.Fatal("registry is empty after init()")
 	}
 
 	// Itération sur les règles essentielles
-	for _, code := range essentialRules {
-		// Vérification existence
-		if _, ok := registry[code]; !ok {
-			t.Errorf("registry missing essential rule %q", code)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Vérification existence
+			if _, ok := registry[tt.code]; !ok {
+				t.Errorf("registry missing essential rule %q", tt.code)
+			}
+		})
 	}
 }

@@ -5,34 +5,39 @@ import (
 	"testing"
 )
 
-// TestStructMessagesRegistered tests that struct messages are registered.
-func TestStructMessagesRegistered(t *testing.T) {
-	structRules := []string{
-		"KTN-STRUCT-001",
-		"KTN-STRUCT-002",
-		"KTN-STRUCT-003",
-		"KTN-STRUCT-004",
-		"KTN-STRUCT-005",
-		"KTN-STRUCT-006",
-		"KTN-STRUCT-007",
+// Test_registerStructMessages validates that struct rule messages are properly registered in the message registry.
+// Params:
+//   - t: *testing.T - Test context for reporting failures
+func Test_registerStructMessages(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{name: "KTN-STRUCT-001 registered", code: "KTN-STRUCT-001"},
+		{name: "KTN-STRUCT-002 registered", code: "KTN-STRUCT-002"},
+		{name: "KTN-STRUCT-003 registered", code: "KTN-STRUCT-003"},
+		{name: "KTN-STRUCT-004 registered", code: "KTN-STRUCT-004"},
+		{name: "KTN-STRUCT-005 registered", code: "KTN-STRUCT-005"},
+		{name: "KTN-STRUCT-006 registered", code: "KTN-STRUCT-006"},
+		{name: "KTN-STRUCT-007 registered", code: "KTN-STRUCT-007"},
 	}
 
-	// Itération sur les règles
-	for _, code := range structRules {
-		t.Run(code, func(t *testing.T) {
-			msg, found := Get(code)
-			// Vérification existence
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, found := Get(tt.code)
+			// Verify message exists in registry
 			if !found {
-				t.Errorf("Get(%q) not found", code)
+				t.Errorf("Get(%q) not found", tt.code)
 				return
 			}
-			// Vérification code
-			if msg.Code != code {
-				t.Errorf("msg.Code = %q, want %q", msg.Code, code)
+			// Verify message code matches
+			if msg.Code != tt.code {
+				t.Errorf("msg.Code = %q, want %q", msg.Code, tt.code)
 			}
-			// Vérification short non vide
+			// Verify short description is not empty
 			if msg.Short == "" {
-				t.Errorf("msg.Short is empty for %q", code)
+				t.Errorf("msg.Short is empty for %q", tt.code)
 			}
 		})
 	}

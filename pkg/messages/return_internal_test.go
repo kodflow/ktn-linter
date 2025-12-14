@@ -5,28 +5,38 @@ import (
 	"testing"
 )
 
-// TestReturnMessagesRegistered tests that return messages are registered.
-func TestReturnMessagesRegistered(t *testing.T) {
-	returnRules := []string{
-		"KTN-RETURN-001",
+// Test_registerReturnMessages tests that return messages are properly registered.
+//
+// Params:
+//   - t *testing.T: Test instance for reporting results
+func Test_registerReturnMessages(t *testing.T) {
+	// Define test cases for return rule codes
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "KTN-RETURN-001 registered",
+			code: "KTN-RETURN-001",
+		},
 	}
 
-	// Itération sur les règles
-	for _, code := range returnRules {
-		t.Run(code, func(t *testing.T) {
-			msg, found := Get(code)
-			// Vérification existence
+	// Iterate over test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Verify message exists
+			msg, found := Get(tt.code)
 			if !found {
-				t.Errorf("Get(%q) not found", code)
+				t.Errorf("Get(%q) not found", tt.code)
 				return
 			}
-			// Vérification code
-			if msg.Code != code {
-				t.Errorf("msg.Code = %q, want %q", msg.Code, code)
+			// Verify code matches
+			if msg.Code != tt.code {
+				t.Errorf("msg.Code = %q, want %q", msg.Code, tt.code)
 			}
-			// Vérification short non vide
+			// Verify short description is not empty
 			if msg.Short == "" {
-				t.Errorf("msg.Short is empty for %q", code)
+				t.Errorf("msg.Short is empty for %q", tt.code)
 			}
 		})
 	}
