@@ -133,9 +133,10 @@ func checkStructs(pass *analysis.Pass, structs []structWithMethods, localInterfa
 		// Aucune interface ne couvre toutes les méthodes
 		pass.Reportf(
 			s.node.Pos(),
-			"KTN-STRUCT-001: la struct '%s' a %d méthode(s) publique(s) mais aucune interface ne les reprend toutes. Créer une interface complète dans le même fichier",
+			"KTN-STRUCT-001: la struct '%s' a %d méthode(s) publique(s) mais aucune interface ne les reprend toutes. Solutions: (1) créer une interface locale, ou (2) ajouter 'var _ Interface = (*%s)(nil)' pour une interface cross-package",
 			s.name,
 			len(s.methods),
+			s.name,
 		)
 	}
 }
