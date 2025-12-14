@@ -265,7 +265,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 ### Retours (1 règle) - WARNING
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| [KTN-RETURN-002](docs/rules/KTN-RETURN-002.md) | WARNING | Préférer slice/map vide à nil |
+| [KTN-RETURN-001](docs/rules/KTN-RETURN-001.md) | WARNING | Préférer slice/map vide à nil |
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
