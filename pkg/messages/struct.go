@@ -1,4 +1,5 @@
-// Struct messages for KTN-STRUCT rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains STRUCT rule messages.
 package messages
 
 // registerStructMessages enregistre les messages STRUCT.

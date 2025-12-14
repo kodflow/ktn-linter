@@ -5,6 +5,7 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -80,11 +81,12 @@ func runFunc003(pass *analysis.Pass) (any, error) {
 			// Détermination du type de else
 			elseType := getElseType(ifStmt.Else)
 			// Rapport d'erreur pour else inutile
+			msg, _ := messages.Get(ruleCodeFunc003)
 			pass.Reportf(
 				ifStmt.Else.Pos(),
-				"KTN-FUNC-003: %s inutile après %s, utiliser early return",
-				elseType,
-				exitType,
+				"%s: %s",
+				ruleCodeFunc003,
+				msg.Format(config.Get().Verbose, elseType, exitType),
 			)
 		}
 	})

@@ -1,12 +1,13 @@
-// Comment messages for KTN-COMMENT rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains COMMENT rule messages.
 package messages
 
 // registerCommentMessages enregistre les messages COMMENT.
 func registerCommentMessages() {
 	Register(Message{
 		Code:  "KTN-COMMENT-001",
-		Short: "commentaire trop long (%d > 80 chars)",
-		Verbose: `PROBLÈME: Le commentaire fait %d caractères (max 80).
+		Short: "commentaire trop long (%d > %d chars)",
+		Verbose: `PROBLÈME: Le commentaire fait %d caractères (max %d).
 
 POURQUOI: Les commentaires longs réduisent la lisibilité et cassent
 le formatage dans les terminaux et éditeurs standards.

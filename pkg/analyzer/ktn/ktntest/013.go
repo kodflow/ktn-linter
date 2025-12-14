@@ -11,6 +11,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -400,11 +401,12 @@ func analyzeTestFunction(
 	// Vérifier couverture erreur
 	if !hasErrorCaseCoverage(testFunc) {
 		// Signaler manque couverture
+		msg, _ := messages.Get(ruleCodeTest013)
 		pass.Reportf(
 			testFunc.Pos(),
-			"KTN-TEST-013: le test '%s' teste une fonction qui retourne error, "+
-				"il devrait couvrir les cas d'erreur",
-			testFunc.Name.Name,
+			"%s: %s",
+			ruleCodeTest013,
+			msg.Format(config.Get().Verbose, testFunc.Name.Name),
 		)
 	}
 }

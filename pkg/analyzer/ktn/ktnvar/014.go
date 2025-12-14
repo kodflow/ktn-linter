@@ -6,6 +6,7 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -74,9 +75,12 @@ func runVar014(pass *analysis.Pass) (any, error) {
 
 			// Error: const after var
 			if genDecl.Tok == token.CONST && varSeen {
+				msg, _ := messages.Get(ruleCodeVar014)
 				pass.Reportf(
 					genDecl.Pos(),
-					"KTN-VAR-014: les constantes doivent être déclarées avant les variables",
+					"%s: %s",
+					ruleCodeVar014,
+					msg.Format(config.Get().Verbose),
 				)
 			}
 		}

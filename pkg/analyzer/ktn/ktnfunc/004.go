@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -324,18 +325,21 @@ func reportUnusedPrivateFuncs(pass *analysis.Pass, privateFuncs map[string][]*pr
 //   - pass: contexte d'analyse
 //   - info: infos de la fonction
 func reportUnusedFunc(pass *analysis.Pass, info *privateFuncInfo) {
+	msg, _ := messages.Get(ruleCodeFunc004)
 	// Vérifier si c'est une méthode
 	if info.receiverType != "" {
 		pass.Reportf(info.pos,
-			"KTN-FUNC-004: la méthode privée '%s.%s' n'est jamais appelée dans le code de production. Si elle n'est utilisée que dans les tests, c'est du code mort créé pour contourner les règles - supprimez-la",
-			info.receiverType, info.name)
+			"%s: %s",
+			ruleCodeFunc004,
+			msg.Format(config.Get().Verbose, info.receiverType+"."+info.name))
 		// Fin du traitement pour les méthodes
 		return
 	}
 
 	pass.Reportf(info.pos,
-		"KTN-FUNC-004: la fonction privée '%s' n'est jamais appelée dans le code de production. Si elle n'est utilisée que dans les tests, c'est du code mort créé pour contourner les règles - supprimez-la",
-		info.name)
+		"%s: %s",
+		ruleCodeFunc004,
+		msg.Format(config.Get().Verbose, info.name))
 }
 
 // extractReceiverType extrait le nom du type du receiver.

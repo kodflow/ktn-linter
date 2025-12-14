@@ -5,6 +5,7 @@ import (
 	"go/ast"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -189,10 +190,12 @@ func reportMissingGrow(pass *analysis.Pass, node ast.Node) {
 
 	// Check if type string is valid
 	if typeStr != "" {
+		msg, _ := messages.Get(ruleCodeVar006)
 		pass.Reportf(
 			node.Pos(),
-			"KTN-VAR-006: préallouer %s avec Grow() avant boucle pour optimiser les allocations",
-			typeStr,
+			"%s: %s",
+			ruleCodeVar006,
+			msg.Format(config.Get().Verbose),
 		)
 	}
 }

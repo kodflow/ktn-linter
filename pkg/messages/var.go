@@ -1,4 +1,5 @@
-// Var messages for KTN-VAR rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains VAR rule messages.
 package messages
 
 // registerVarMessages enregistre les messages VAR.

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -93,11 +94,12 @@ func checkVar018Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 
 		// Check for snake_case (lowercase with underscores)
 		if isSnakeCase(varName) {
+			msg, _ := messages.Get(ruleCodeVar018)
 			pass.Reportf(
 				name.Pos(),
-				"KTN-VAR-018: la variable '%s' utilise snake_case. Utilisez camelCase (ex: '%s')",
-				varName,
-				snakeToCamel(varName),
+				"%s: %s",
+				ruleCodeVar018,
+				msg.Format(config.Get().Verbose, varName),
 			)
 		}
 	}

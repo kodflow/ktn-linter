@@ -29,6 +29,9 @@ type Config struct {
 	// Rules contains per-rule configuration
 	Rules map[string]*RuleConfig `yaml:"rules,omitempty"`
 
+	// Verbose enables verbose message output with examples
+	Verbose bool `yaml:"-"`
+
 	// compiledExcludes caches compiled glob patterns
 	compiledExcludes []string
 	// mu protects compiledExcludes

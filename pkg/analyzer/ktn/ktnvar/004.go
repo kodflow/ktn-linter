@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -194,9 +195,12 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
+	msg, _ := messages.Get(ruleCodeVar004)
 	pass.Reportf(
 		call.Pos(),
-		"KTN-VAR-004: spécifier une capacité avec make([]T, 0, capacity) au lieu de make([]T, 0)",
+		"%s: %s",
+		ruleCodeVar004,
+		msg.Format(config.Get().Verbose),
 	)
 }
 
@@ -329,10 +333,12 @@ func checkCompositeLit(
 	}
 
 	// Signalement de l'erreur
+	msg, _ := messages.Get(ruleCodeVar004)
 	ctx.pass.Reportf(
 		lit.Pos(),
-		"KTN-VAR-004: préallouer le slice '%s' avec make([]T, 0, capacity) au lieu de []T{}",
-		ident.Name,
+		"%s: %s",
+		ruleCodeVar004,
+		msg.Format(config.Get().Verbose),
 	)
 }
 

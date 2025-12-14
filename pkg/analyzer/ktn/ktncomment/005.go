@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -100,11 +101,12 @@ func runComment005(pass *analysis.Pass) (any, error) {
 
 			// Vérifier la documentation
 			if !hasValidDocumentation(genDecl.Doc, typeSpec.Name.Name, minDocLines) {
+				msg, _ := messages.Get(ruleCodeComment005)
 				pass.Reportf(
 					typeSpec.Pos(),
-					"KTN-COMMENT-005: la struct exportée '%s' doit avoir une documentation complète (au moins %d lignes décrivant son rôle)",
-					typeSpec.Name.Name,
-					minDocLines,
+					"%s: %s",
+					ruleCodeComment005,
+					msg.Format(cfg.Verbose, typeSpec.Name.Name),
 				)
 			}
 		}

@@ -6,6 +6,7 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -152,10 +153,12 @@ func checkMagicNumbers(insp *inspector.Inspector, pass *analysis.Pass, allowedVa
 		}
 
 		// Reporter l'erreur
+		msg, _ := messages.Get(ruleCodeFunc009)
 		pass.Reportf(
 			lit.Pos(),
-			"KTN-FUNC-009: le nombre '%s' devrait être une constante nommée (magic number)",
-			lit.Value,
+			"%s: %s",
+			ruleCodeFunc009,
+			msg.Format(config.Get().Verbose, lit.Value),
 		)
 	})
 }

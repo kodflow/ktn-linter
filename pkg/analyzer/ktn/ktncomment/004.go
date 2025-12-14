@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -126,12 +127,14 @@ func checkVarDeclaration(pass *analysis.Pass, genDecl *ast.GenDecl) {
 //   - pass: analysis pass
 //   - valueSpec: variable spec with missing documentation
 func reportMissingVarDoc(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
+	msg, _ := messages.Get(ruleCodeComment004)
 	// Report for each variable name
 	for _, name := range valueSpec.Names {
 		pass.Reportf(
 			name.Pos(),
-			"KTN-COMMENT-004: la variable '%s' doit avoir un commentaire associé",
-			name.Name,
+			"%s: %s",
+			ruleCodeComment004,
+			msg.Format(config.Get().Verbose, name.Name),
 		)
 	}
 }

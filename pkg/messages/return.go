@@ -1,4 +1,5 @@
-// Return messages for KTN-RETURN rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains RETURN rule messages.
 package messages
 
 // registerReturnMessages enregistre les messages RETURN.

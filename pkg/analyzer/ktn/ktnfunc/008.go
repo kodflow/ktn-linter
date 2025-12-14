@@ -7,6 +7,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -157,28 +158,13 @@ func (ctx *paramCheckContext) checkParam008(paramName string, paramPos token.Pos
 //   - name: nom du paramètre
 //   - ifaceName: nom de l'interface (vide si fonction native)
 func reportUnusedWithBypass(pass *analysis.Pass, pos token.Pos, name string, ifaceName string) {
-	// Vérifier si implémentation d'interface
-	if ifaceName != "" {
-		// Implémentation d'interface - toléré avec préfixe _
-		pass.Reportf(
-			pos,
-			"KTN-FUNC-008: le paramètre '%s' utilise '_ = %s' pour contourner le compilateur. "+
-				"Cette méthode implémente l'interface '%s'. "+
-				"Utilisez le préfixe _ (ex: _%s) pour indiquer explicitement que ce paramètre est imposé par l'interface",
-			name, name, ifaceName, name,
-		)
-		// Fin du traitement
-		return
-	}
-
-	// Fonction native - doit supprimer le paramètre
+	msg, _ := messages.Get(ruleCodeFunc008)
+	// Rapport du paramètre contourné avec _ mais non utilisé
 	pass.Reportf(
 		pos,
-		"KTN-FUNC-008: le paramètre '%s' utilise '_ = %s' pour contourner le compilateur. "+
-			"SUPPRIMEZ ce paramètre inutilisé. "+
-			"Si ce paramètre est requis par une interface, vérifiez que le type implémente bien cette interface. "+
-			"Sinon, ce paramètre indique peut-être une fonctionnalité non implémentée",
-		name, name,
+		"%s: %s",
+		ruleCodeFunc008,
+		msg.Format(config.Get().Verbose, name),
 	)
 }
 
@@ -190,28 +176,13 @@ func reportUnusedWithBypass(pass *analysis.Pass, pos token.Pos, name string, ifa
 //   - name: nom du paramètre
 //   - ifaceName: nom de l'interface (vide si fonction native)
 func reportUnusedParam(pass *analysis.Pass, pos token.Pos, name string, ifaceName string) {
-	// Vérifier si implémentation d'interface
-	if ifaceName != "" {
-		// Implémentation d'interface - toléré avec préfixe _
-		pass.Reportf(
-			pos,
-			"KTN-FUNC-008: le paramètre '%s' n'est pas utilisé. "+
-				"Cette méthode implémente l'interface '%s'. "+
-				"Utilisez le préfixe _ (ex: _%s) pour indiquer explicitement que ce paramètre est imposé par l'interface",
-			name, ifaceName, name,
-		)
-		// Fin du traitement
-		return
-	}
-
-	// Fonction native - doit supprimer le paramètre
+	msg, _ := messages.Get(ruleCodeFunc008)
+	// Rapport du paramètre non utilisé
 	pass.Reportf(
 		pos,
-		"KTN-FUNC-008: le paramètre '%s' n'est pas utilisé. "+
-			"SUPPRIMEZ ce paramètre inutilisé. "+
-			"Si ce paramètre est requis par une interface, vérifiez que le type implémente bien cette interface. "+
-			"Sinon, ce paramètre indique peut-être une fonctionnalité non implémentée",
-		name,
+		"%s: %s",
+		ruleCodeFunc008,
+		msg.Format(config.Get().Verbose, name),
 	)
 }
 

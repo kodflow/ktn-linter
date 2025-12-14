@@ -7,6 +7,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -218,10 +219,12 @@ func checkTypeForLargeStruct(pass *analysis.Pass, typ ast.Expr, pos token.Pos, m
 	// Vérification du nombre de champs
 	if numFields > maxFields {
 		// Grande struct détectée
+		msg, _ := messages.Get(ruleCodeVar009)
 		pass.Reportf(
 			pos,
-			"KTN-VAR-009: utilisez un pointeur pour les structs >64 bytes (%d champs détectés)",
-			numFields,
+			"%s: %s",
+			ruleCodeVar009,
+			msg.Format(config.Get().Verbose, numFields),
 		)
 	}
 }

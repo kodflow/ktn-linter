@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -18,17 +19,17 @@ const (
 	// ruleCodeComment001 is the rule code for this analyzer
 	ruleCodeComment001 string = "KTN-COMMENT-001"
 	// defaultMaxCommentLength max chars for inline comments
-	defaultMaxCommentLength int = 80
+	defaultMaxCommentLength int = 150
 )
 
 var (
 	// urlPattern matches URLs in comments (http://, https://, file://)
 	urlPattern *regexp.Regexp = regexp.MustCompile(`https?://\S+|file://\S+`)
 
-	// Analyzer001 detects inline comments exceeding 80 characters.
+	// Analyzer001 detects inline comments exceeding 150 characters.
 	Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 		Name:     "ktncomment001",
-		Doc:      "KTN-COMMENT-001: commentaire inline trop long (>80 chars)",
+		Doc:      "KTN-COMMENT-001: commentaire inline trop long (>150 chars)",
 		Run:      runComment001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 	}
@@ -104,10 +105,12 @@ func runComment001(pass *analysis.Pass) (any, error) {
 
 				// Check length exceeds limit
 				if len(text) > maxLength {
+					msg, _ := messages.Get(ruleCodeComment001)
 					pass.Reportf(
 						comment.Pos(),
-						"KTN-COMMENT-001: commentaire inline trop long (>%d chars)",
-						maxLength,
+						"%s: %s",
+						ruleCodeComment001,
+						msg.Format(config.Get().Verbose, len(text), maxLength),
 					)
 				}
 			}
@@ -149,10 +152,12 @@ func checkMultiLineComment(pass *analysis.Pass, comment *ast.Comment, text strin
 
 		// Check length exceeds limit
 		if len(trimmed) > maxLength {
+			msg, _ := messages.Get(ruleCodeComment001)
 			pass.Reportf(
 				comment.Pos(),
-				"KTN-COMMENT-001: ligne de commentaire trop longue (>%d chars)",
-				maxLength,
+				"%s: %s",
+				ruleCodeComment001,
+				msg.Format(config.Get().Verbose, len(trimmed), maxLength),
 			)
 			// Only report once per block comment
 			return

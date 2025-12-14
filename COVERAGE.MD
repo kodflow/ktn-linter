@@ -111,7 +111,8 @@ Rapport de couverture généré automatiquement.
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟢 `001.go:runStruct001` | 93.3% |
-| 🟡 `001.go:checkStructs` | 80.0% |
+| 🟡 `001.go:checkStructs` | 83.3% |
+| 🟡 `001.go:isConsumerStruct` | 88.9% |
 | 🟢 `001.go:collectInterfaceChecksWithTypes` | 92.9% |
 | 🔴 `001.go:extractInterfaceCheckWithTypes` | 62.5% |
 | 🔴 `001.go:extractStructNameFromValue` | 75.0% |
@@ -247,4 +248,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-14 12:29:27*
+*Généré le: 2025-12-14 15:34:50*

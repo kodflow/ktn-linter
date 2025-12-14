@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -129,11 +130,12 @@ func reportMultipleContexts(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNam
 	// Signaler si plus d'un context.Context
 	if contextCount > 1 {
 		// Rapport d'erreur pour contextes multiples
+		msg, _ := messages.Get(ruleCodeFunc002)
 		pass.Reportf(
 			funcDecl.Type.Params.Pos(),
-			"KTN-FUNC-002: la fonction '%s' a %d paramètres context.Context, ce qui est inhabituel",
-			funcName,
-			contextCount,
+			"%s: %s",
+			ruleCodeFunc002,
+			msg.Format(config.Get().Verbose, contextCount),
 		)
 	}
 }
@@ -149,10 +151,12 @@ func reportMisplacedContext(pass *analysis.Pass, funcDecl *ast.FuncDecl, funcNam
 	// If there's a context parameter and it's not first, report error
 	if contextParamIndex > 0 {
 		// Rapport d'erreur pour position incorrecte
+		msg, _ := messages.Get(ruleCodeFunc002)
 		pass.Reportf(
 			funcDecl.Type.Params.List[contextParamIndex].Pos(),
-			"KTN-FUNC-002: context.Context doit être le premier paramètre de la fonction '%s'",
-			funcName,
+			"%s: %s",
+			ruleCodeFunc002,
+			msg.Format(config.Get().Verbose, contextParamIndex+1),
 		)
 	}
 }

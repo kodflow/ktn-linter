@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -130,9 +131,12 @@ func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
 		// Vérification si allocation de slice ou map
 		if isSliceOrMapAlloc(rhs) {
 			// Allocation de slice/map détectée
+			msg, _ := messages.Get(ruleCodeVar008)
 			pass.Reportf(
 				rhs.Pos(),
-				"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle (préallouez avant la boucle et réutilisez avec slice[:0])",
+				"%s: %s",
+				ruleCodeVar008,
+				msg.Format(config.Get().Verbose),
 			)
 		}
 	}
@@ -166,9 +170,12 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 			// Vérification si allocation de slice ou map
 			if isSliceOrMapAlloc(value) {
 				// Allocation de slice/map détectée
+				msg, _ := messages.Get(ruleCodeVar008)
 				pass.Reportf(
 					value.Pos(),
-					"KTN-VAR-008: évitez d'allouer des slices/maps dans une boucle (préallouez avant la boucle et réutilisez avec slice[:0])",
+					"%s: %s",
+					ruleCodeVar008,
+					msg.Format(config.Get().Verbose),
 				)
 			}
 		}

@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -74,11 +75,12 @@ func runStruct003(pass *analysis.Pass) (any, error) {
 		suggestedName := capitalizeFirstLetter(methodName[getPrefixLen:])
 
 		// Reporter la violation
+		msg, _ := messages.Get(ruleCodeStruct003)
 		pass.Reportf(
 			funcDecl.Name.Pos(),
-			"KTN-STRUCT-003: la méthode '%s()' devrait être renommée '%s()' (convention Go idiomatique, voir https://go.dev/doc/effective_go#Getters)",
-			methodName,
-			suggestedName,
+			"%s: %s",
+			ruleCodeStruct003,
+			msg.Format(config.Get().Verbose, methodName, suggestedName, suggestedName),
 		)
 	})
 

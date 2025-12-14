@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -87,12 +88,14 @@ func runComment003(pass *analysis.Pass) (any, error) {
 
 			// Vérification de la condition
 			if !hasComment {
+				msg, _ := messages.Get(ruleCodeComment003)
 				// Itération sur les éléments
 				for _, name := range valueSpec.Names {
 					pass.Reportf(
 						name.Pos(),
-						"KTN-COMMENT-003: la constante '%s' doit avoir un commentaire associé",
-						name.Name,
+						"%s: %s",
+						ruleCodeComment003,
+						msg.Format(cfg.Verbose, name.Name),
 					)
 				}
 			}

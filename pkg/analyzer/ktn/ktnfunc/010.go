@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -98,8 +99,8 @@ func analyzeNakedReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl, maxLinesNa
 		return
 	}
 
-	// Count the lines of the function
-	pureLines := countPureCodeLines(pass, funcDecl.Body)
+	// Count the statements of the function
+	stmtCount := countStatements(funcDecl.Body)
 
 	// Check for naked returns
 	ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
@@ -113,14 +114,14 @@ func analyzeNakedReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl, maxLinesNa
 		// Naked return has no results specified
 		if len(ret.Results) == 0 {
 			// Allow naked returns in very short functions
-			if pureLines >= maxLinesNaked {
+			if stmtCount >= maxLinesNaked {
 				// Rapport d'erreur pour naked return interdit
+				msg, _ := messages.Get(ruleCodeFunc010)
 				pass.Reportf(
 					ret.Pos(),
-					"KTN-FUNC-010: naked return interdit dans la fonction '%s' (%d lignes, max: %d pour naked return)",
-					funcName,
-					pureLines,
-					maxLinesNaked-1,
+					"%s: %s",
+					ruleCodeFunc010,
+					msg.Format(config.Get().Verbose, funcName, stmtCount, maxLinesNaked-1),
 				)
 			}
 		}

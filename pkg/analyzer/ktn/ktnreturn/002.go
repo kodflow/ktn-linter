@@ -6,6 +6,7 @@ import (
 	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -135,10 +136,12 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 				typeInfo := returnTypes[i]
 				// Report avec message adapté au type
 				if typeInfo != "" {
+					msg, _ := messages.Get(ruleCodeReturn002)
 					pass.Reportf(
 						retStmt.Pos(),
-						"KTN-RETURN-002: préférer %s à nil",
-						typeInfo,
+						"%s: %s",
+						ruleCodeReturn002,
+						msg.Format(config.Get().Verbose, typeInfo, typeInfo),
 					)
 				}
 			}

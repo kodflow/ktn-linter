@@ -1,4 +1,5 @@
-// Interface messages for KTN-INTERFACE rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains INTERFACE rule messages.
 package messages
 
 // registerInterfaceMessages enregistre les messages INTERFACE.

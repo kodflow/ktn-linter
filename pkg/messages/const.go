@@ -1,4 +1,5 @@
-// Const messages for KTN-CONST rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains CONST rule messages.
 package messages
 
 // registerConstMessages enregistre les messages CONST.

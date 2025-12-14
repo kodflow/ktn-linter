@@ -7,6 +7,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -67,11 +68,13 @@ func runComment002(pass *analysis.Pass) (any, error) {
 
 		// Si pas de commentaire, reporter l'erreur
 		if !hasFileComment {
+			msg, _ := messages.Get(ruleCodeComment002)
 			// Reporter à la position de la déclaration package
 			pass.Reportf(
 				file.Name.Pos(),
-				"KTN-COMMENT-002: le fichier doit avoir un commentaire descriptif avant 'package %s'. Ajouter une description légère du contenu/rôle du fichier",
-				file.Name.Name,
+				"%s: %s",
+				ruleCodeComment002,
+				msg.Format(cfg.Verbose, file.Name.Name),
 			)
 		}
 	}

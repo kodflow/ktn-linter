@@ -6,6 +6,7 @@ import (
 	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -248,10 +249,12 @@ func hasInitWithoutType(spec *ast.ValueSpec) bool {
 func reportVarErrors(pass *analysis.Pass, spec *ast.ValueSpec) {
 	// Iterate through variable names
 	for _, name := range spec.Names {
+		msg, _ := messages.Get(ruleCodeVar003)
 		pass.Reportf(
 			name.Pos(),
-			"KTN-VAR-003: préférer ':=' au lieu de 'var' pour la variable '%s'",
-			name.Name,
+			"%s: %s",
+			ruleCodeVar003,
+			msg.Format(config.Get().Verbose),
 		)
 	}
 }

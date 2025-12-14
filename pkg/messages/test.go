@@ -1,4 +1,5 @@
-// Test messages for KTN-TEST rules.
+// Package messages provides structured error messages for KTN rules.
+// This file contains TEST rule messages.
 package messages
 
 // registerTestMessages enregistre les messages TEST.
@@ -83,17 +84,15 @@ ALTERNATIVES:
 	Register(Message{
 		Code:  "KTN-TEST-008",
 		Short: "fichier '%s' sans tests. Créer %s",
-		Verbose: `PROBLÈME: Le fichier '%s' n'a pas de fichier test.
+		Verbose: `PROBLÈME: Le fichier '%s' n'a pas de fichier test approprié.
 
 POURQUOI: Chaque fichier .go doit avoir ses tests.
 
-FICHIERS À CRÉER:
-  - %s_external_test.go (package xxx_test, black-box)
-  - %s_internal_test.go (package xxx, white-box) si privés
+FICHIER(S) À CRÉER: %s
 
 CONVENTION:
-  - Fonctions publiques → external_test.go
-  - Fonctions privées → internal_test.go`,
+  - Fonctions publiques → xxx_external_test.go (package xxx_test, black-box)
+  - Fonctions privées → xxx_internal_test.go (package xxx, white-box)`,
 	})
 
 	Register(Message{

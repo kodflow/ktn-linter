@@ -6,6 +6,7 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -73,13 +74,14 @@ func runStruct004(pass *analysis.Pass) (any, error) {
 			}
 
 			// Itération sur les structs (à partir de la 2ème)
+			msg, _ := messages.Get(ruleCodeStruct004)
 			for i := 1; i < len(structs); i++ {
 				s := structs[i]
 				pass.Reportf(
 					s.node.Pos(),
-					"KTN-STRUCT-004: le fichier contient plusieurs structs (%d au total). Déplacer '%s' dans un fichier séparé pour respecter le principe 'une struct par fichier'",
-					len(structs),
-					s.name,
+					"%s: %s",
+					ruleCodeStruct004,
+					msg.Format(config.Get().Verbose, len(structs), len(structs)),
 				)
 			}
 		}
