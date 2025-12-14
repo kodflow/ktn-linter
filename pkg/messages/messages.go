@@ -101,6 +101,7 @@ func Get(code string) (Message, bool) {
 // init enregistre tous les messages.
 func init() {
 	// Enregistrer tous les messages
+	registerAPIMessages()
 	registerCommentMessages()
 	registerConstMessages()
 	registerFuncMessages()

@@ -1,4 +1,16 @@
 // Package ktnstruct provides analyzers for struct-related KTN rules.
+//
+// DEPRECATED: KTN-STRUCT-001 (Analyzer001)
+// Cette règle est dépréciée et remplacée par KTN-API-001.
+// KTN-STRUCT-001 imposait des "mirror interfaces" (interfaces reprenant 100% des méthodes d'une struct),
+// ce qui est un anti-pattern car cela crée un couplage fort au lieu du découplage souhaité.
+//
+// Le bon pattern est l'Interface Segregation Principle (ISP):
+// - Définir des interfaces MINIMALES côté CONSUMER
+// - Chaque consumer définit l'interface dont IL a besoin
+// - Une struct peut satisfaire plusieurs interfaces différentes
+//
+// Voir KTN-API-001 pour la règle de remplacement.
 package ktnstruct
 
 import (
@@ -19,10 +31,12 @@ const (
 	ruleCodeStruct001 string = "KTN-STRUCT-001"
 )
 
-// Analyzer001 vérifie qu'une interface existe pour chaque struct avec méthodes publiques
+// Analyzer001 vérifie qu'une interface existe pour chaque struct avec méthodes publiques.
+// DEPRECATED: Cette règle est dépréciée et remplacée par KTN-API-001.
+// Les "mirror interfaces" sont un anti-pattern - utilisez KTN-API-001 pour les interfaces minimales côté consumer.
 var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnstruct001",
-	Doc:      "KTN-STRUCT-001: Chaque struct doit avoir une interface reprenant 100% de ses méthodes publiques",
+	Doc:      "KTN-STRUCT-001: [DEPRECATED] Remplacé par KTN-API-001 - mirror interfaces sont un anti-pattern",
 	Run:      runStruct001,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
