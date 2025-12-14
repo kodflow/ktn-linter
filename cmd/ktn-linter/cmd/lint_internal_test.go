@@ -566,9 +566,9 @@ func Test_filterDiagnostics(t *testing.T) {
 		expectedMessage string
 	}{
 		{
-			name:            "filters cache and tmp files",
+			name:            "filters only cache files, not tmp",
 			files:           []string{"test.go", "/.cache/go-build/test.go", "/tmp/test.go"},
-			expectedCount:   1,
+			expectedCount:   2,
 			expectedMessage: "msg-0",
 		},
 	}

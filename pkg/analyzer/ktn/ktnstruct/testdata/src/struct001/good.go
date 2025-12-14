@@ -106,6 +106,6 @@ var _ ExternalInterface = (*RepositoryImpl)(nil)
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de useUserService
-	_ = useUserService(UserService{})
+	// Appel de useUserService avec une implémentation concrète
+	useUserService(&userServiceImpl{users: map[int]string{}})
 }
