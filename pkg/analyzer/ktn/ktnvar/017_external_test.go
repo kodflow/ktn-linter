@@ -30,9 +30,6 @@ import (
 // - badWaitGroupAssignment: copie sync.WaitGroup (1)
 // - badOnceAssignment: copie sync.Once (1)
 // Total: 30 erreurs (inclut structs avec value receivers + receivers + params + assignments)
-//
-// Params:
-//   - t: contexte de test
 func TestVar017(t *testing.T) {
 	tests := []struct {
 		name           string

@@ -8,9 +8,6 @@ import (
 
 // TestProcessData teste ProcessData AVEC cas d'erreur.
 // ProcessData retourne error → test avec cas d'erreur = OK.
-//
-// Params:
-//   - t: contexte de test
 func TestProcessData(t *testing.T) {
 	// Test cas valide
 	result, err := test004.ProcessData("hello")
@@ -33,9 +30,6 @@ func TestProcessData(t *testing.T) {
 
 // TestGetName teste GetName.
 // GetName NE retourne PAS error → test simple = OK.
-//
-// Params:
-//   - t: contexte de test
 func TestGetName(t *testing.T) {
 	// Test simple
 	name := test004.GetName()
@@ -47,9 +41,6 @@ func TestGetName(t *testing.T) {
 
 // TestGetCount teste GetCount.
 // GetCount NE retourne PAS error → pas de cas d'erreur = OK.
-//
-// Params:
-//   - t: contexte de test
 func TestGetCount(t *testing.T) {
 	// Test simple
 	got := test004.GetCount()

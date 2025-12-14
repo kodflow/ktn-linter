@@ -12,9 +12,6 @@ import (
 )
 
 // Test_ExtractReceiverType tests the shared.ExtractReceiverTypeName helper function.
-//
-// Params:
-//   - t: testing context
 func Test_ExtractReceiverType(t *testing.T) {
 	tests := []struct {
 		name string
@@ -72,9 +69,6 @@ func Test_ExtractReceiverType(t *testing.T) {
 }
 
 // Test_addPublicFunction tests the addPublicFunction private function.
-//
-// Params:
-//   - t: testing context
 func Test_addPublicFunction(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -167,9 +161,6 @@ func Test_addPublicFunction(t *testing.T) {
 }
 
 // Test_checkAndReportPublicFunctionTest tests checkAndReportPublicFunctionTest logic.
-//
-// Params:
-//   - t: testing context
 func Test_checkAndReportPublicFunctionTest(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -257,9 +248,6 @@ func Test_checkAndReportPublicFunctionTest(t *testing.T) {
 }
 
 // Test_collectPublicFunctions tests the collectPublicFunctions function logic.
-//
-// Params:
-//   - t: testing context
 func Test_collectPublicFunctions(t *testing.T) {
 	tests := []struct {
 		name string
@@ -303,9 +291,6 @@ func (m MyType) PublicMethod() {}`,
 }
 
 // Test_runTest009 tests the runTest009 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest009(t *testing.T) {
 	tests := []struct {
 		name string
@@ -325,9 +310,6 @@ func Test_runTest009(t *testing.T) {
 }
 
 // Test_checkInternalTestsForPublicFunctions tests checkInternalTestsForPublicFunctions.
-//
-// Params:
-//   - t: testing context
 func Test_checkInternalTestsForPublicFunctions(t *testing.T) {
 	tests := []struct {
 		name string

@@ -12,9 +12,6 @@ import (
 )
 
 // Test_ParseTestNameForPrivate tests the shared.ParseTestName helper for private functions.
-//
-// Params:
-//   - t: testing context
 func Test_ParseTestNameForPrivate(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -63,9 +60,6 @@ func Test_ParseTestNameForPrivate(t *testing.T) {
 }
 
 // Test_addPrivateFunction tests the addPrivateFunction function.
-//
-// Params:
-//   - t: testing context
 func Test_addPrivateFunction(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -143,9 +137,6 @@ func Test_addPrivateFunction(t *testing.T) {
 }
 
 // Test_collectPrivateFunctions tests the collectPrivateFunctions function logic.
-//
-// Params:
-//   - t: testing context
 func Test_collectPrivateFunctions(t *testing.T) {
 	tests := []struct {
 		name string
@@ -227,9 +218,6 @@ func PublicFunc() {}`,
 }
 
 // Test_checkAndReportPrivateFunctionTest tests checkAndReportPrivateFunctionTest logic.
-//
-// Params:
-//   - t: testing context
 func Test_checkAndReportPrivateFunctionTest(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -317,9 +305,6 @@ func Test_checkAndReportPrivateFunctionTest(t *testing.T) {
 }
 
 // Test_runTest010 tests the runTest010 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest010(t *testing.T) {
 	tests := []struct {
 		name string
@@ -339,9 +324,6 @@ func Test_runTest010(t *testing.T) {
 }
 
 // Test_checkExternalTestsForPrivateFunctions tests checkExternalTestsForPrivateFunctions.
-//
-// Params:
-//   - t: testing context
 func Test_checkExternalTestsForPrivateFunctions(t *testing.T) {
 	tests := []struct {
 		name string

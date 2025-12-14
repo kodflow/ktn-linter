@@ -6,9 +6,6 @@ import (
 )
 
 // Test_registerReturnMessages tests that return messages are properly registered.
-//
-// Params:
-//   - t *testing.T: Test instance for reporting results
 func Test_registerReturnMessages(t *testing.T) {
 	// Define test cases for return rule codes
 	tests := []struct {

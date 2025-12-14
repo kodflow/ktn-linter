@@ -13,9 +13,6 @@ import (
 )
 
 // Test_runComment007 tests the runComment007 function configuration.
-//
-// Params:
-//   - t: testing context
 func Test_runComment007(t *testing.T) {
 	tests := []struct {
 		name string
@@ -42,9 +39,6 @@ func Test_runComment007(t *testing.T) {
 
 // Test_checkIfStmt tests that checkIfStmt analyzer configuration exists.
 // Actual behavior is tested via analysistest.
-//
-// Params:
-//   - t: testing context
 func Test_checkIfStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -64,9 +58,6 @@ func Test_checkIfStmt(t *testing.T) {
 }
 
 // Test_checkSwitchStmt tests that checkSwitchStmt analyzer configuration exists.
-//
-// Params:
-//   - t: testing context
 func Test_checkSwitchStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -86,9 +77,6 @@ func Test_checkSwitchStmt(t *testing.T) {
 }
 
 // Test_checkTypeSwitchStmt tests that checkTypeSwitchStmt analyzer configuration exists.
-//
-// Params:
-//   - t: testing context
 func Test_checkTypeSwitchStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -108,9 +96,6 @@ func Test_checkTypeSwitchStmt(t *testing.T) {
 }
 
 // Test_checkLoopStmt tests that checkLoopStmt analyzer configuration exists.
-//
-// Params:
-//   - t: testing context
 func Test_checkLoopStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -130,9 +115,6 @@ func Test_checkLoopStmt(t *testing.T) {
 }
 
 // Test_checkReturnStmt tests that checkReturnStmt analyzer configuration exists.
-//
-// Params:
-//   - t: testing context
 func Test_checkReturnStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -152,9 +134,6 @@ func Test_checkReturnStmt(t *testing.T) {
 }
 
 // Test_hasCommentBefore tests that hasCommentBefore function configuration exists.
-//
-// Params:
-//   - t: testing context
 func Test_hasCommentBefore(t *testing.T) {
 	tests := []struct {
 		name string
@@ -174,9 +153,6 @@ func Test_hasCommentBefore(t *testing.T) {
 }
 
 // Test_hasInlineComment tests that hasInlineComment function configuration exists.
-//
-// Params:
-//   - t: testing context
 func Test_hasInlineComment(t *testing.T) {
 	tests := []struct {
 		name string
@@ -196,9 +172,6 @@ func Test_hasInlineComment(t *testing.T) {
 }
 
 // Test_hasCommentBeforeOrInside tests that hasCommentBeforeOrInside function exists.
-//
-// Params:
-//   - t: testing context
 func Test_hasCommentBeforeOrInside(t *testing.T) {
 	tests := []struct {
 		name string
@@ -218,9 +191,6 @@ func Test_hasCommentBeforeOrInside(t *testing.T) {
 }
 
 // Test_runComment007_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment007_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -292,9 +262,6 @@ func Test_runComment007_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment007_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment007_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string
@@ -369,9 +336,6 @@ func Test_runComment007_fileExcluded(t *testing.T) {
 }
 
 // Test_shouldSkipFunction tests the shouldSkipFunction function branches.
-//
-// Params:
-//   - t: testing context
 func Test_shouldSkipFunction(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -445,9 +409,6 @@ func myFunc() {}`,
 }
 
 // Test_hasCommentBeforeOrInsideBlockStmt tests hasCommentBeforeOrInside with block statements.
-//
-// Params:
-//   - t: testing context
 func Test_hasCommentBeforeOrInsideBlockStmt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -543,9 +504,6 @@ func myFunc() {
 }
 
 // Test_checkFunctionBody tests checkFunctionBody coverage.
-//
-// Params:
-//   - t: testing context
 func Test_checkFunctionBody(t *testing.T) {
 	tests := []struct {
 		name string
@@ -635,9 +593,6 @@ func Test_checkFunctionBody(t *testing.T) {
 }
 
 // Test_hasCommentBeforeOrInside_nonBlockStmt tests non-block statements.
-//
-// Params:
-//   - t: testing context
 func Test_hasCommentBeforeOrInside_nonBlockStmt(t *testing.T) {
 	tests := []struct {
 		name string

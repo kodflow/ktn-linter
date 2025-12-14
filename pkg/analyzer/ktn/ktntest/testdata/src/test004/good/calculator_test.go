@@ -7,9 +7,6 @@ import (
 )
 
 // TestAdd teste la fonction Add.
-//
-// Params:
-//   - t: contexte de test
 func TestAdd(t *testing.T) {
 	result := test003.Add(2, 3)
 	// Vérification du résultat
@@ -19,9 +16,6 @@ func TestAdd(t *testing.T) {
 }
 
 // TestSubtract teste la fonction Subtract.
-//
-// Params:
-//   - t: contexte de test
 func TestSubtract(t *testing.T) {
 	result := test003.Subtract(10, 3)
 	// Vérification du résultat
@@ -31,9 +25,6 @@ func TestSubtract(t *testing.T) {
 }
 
 // TestMultiply teste la fonction Multiply.
-//
-// Params:
-//   - t: contexte de test
 func TestMultiply(t *testing.T) {
 	result := test003.Multiply(4, 5)
 	// Vérification du résultat
@@ -43,9 +34,6 @@ func TestMultiply(t *testing.T) {
 }
 
 // TestDivide teste la fonction Divide.
-//
-// Params:
-//   - t: contexte de test
 func TestDivide(t *testing.T) {
 	result, ok := test003.Divide(20, 4)
 	// Vérification pas d'erreur

@@ -17,28 +17,16 @@ type mockTestingT struct {
 }
 
 // Fatalf implements TestingT.
-//
-// Params:
-//   - format: format du message
-//   - args: arguments du message
 func (m *mockTestingT) Fatalf(format string, args ...any) {
 	m.fatalfCalled = true
 }
 
 // Errorf implements TestingT.
-//
-// Params:
-//   - format: format du message
-//   - args: arguments du message
 func (m *mockTestingT) Errorf(format string, args ...any) {
 	m.errorfCalled = true
 }
 
 // Logf implements TestingT.
-//
-// Params:
-//   - format: format du message
-//   - args: arguments du message
 func (m *mockTestingT) Logf(format string, args ...any) {
 	m.logfCalled = true
 }

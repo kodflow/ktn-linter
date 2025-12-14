@@ -4,9 +4,6 @@ import "testing"
 
 // TestOrphanFunction teste sans fichier source (PAS BIEN).
 // Pas de fichier orphan.go - viole KTN-TEST-006.
-//
-// Params:
-//   - t: contexte de test
 func TestOrphanFunction(t *testing.T) {
 	// Table de tests
 	tests := []struct {
@@ -35,9 +32,6 @@ func TestOrphanFunction(t *testing.T) {
 
 // TestAnotherOrphan teste sans source (PAS BIEN).
 // Manque fichier orphan.go correspondant.
-//
-// Params:
-//   - t: contexte de test
 func TestAnotherOrphan(t *testing.T) {
 	const EMPTY_INPUT string = ""
 	// Table de tests

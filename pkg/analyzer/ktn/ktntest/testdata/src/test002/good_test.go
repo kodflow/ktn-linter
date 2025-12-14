@@ -8,9 +8,6 @@ import (
 
 // TestValidateWithErrors teste avec couverture complète (BIEN).
 // Utilise le package externe test001_test et table-driven tests.
-//
-// Params:
-//   - t: contexte de test
 func TestValidateWithErrors(t *testing.T) {
 	// Table de tests
 	tests := []struct {
@@ -39,9 +36,6 @@ func TestValidateWithErrors(t *testing.T) {
 
 // TestTransformWithErrors teste avec couverture complète (BIEN).
 // Utilise le package externe test001_test et table-driven tests.
-//
-// Params:
-//   - t: contexte de test
 func TestTransformWithErrors(t *testing.T) {
 	// Table de tests
 	tests := []struct {

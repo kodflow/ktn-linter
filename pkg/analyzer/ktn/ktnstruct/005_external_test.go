@@ -8,9 +8,6 @@ import (
 )
 
 // TestStruct005 vérifie l'ordre des champs exportés/privés.
-//
-// Params:
-//   - t: contexte de test
 func TestStruct005(t *testing.T) {
 	// good.go: 0 errors (champs exportés avant privés), bad.go: 5 errors (champs mélangés)
 	tests := []struct {

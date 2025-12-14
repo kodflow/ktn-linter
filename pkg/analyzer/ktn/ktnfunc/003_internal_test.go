@@ -108,9 +108,6 @@ func Test_runFunc003_excludedFile(t *testing.T) {
 }
 
 // Test_isPanicCall_edge_cases tests edge cases for isPanicCall.
-//
-// Params:
-//   - t: instance de testing
 func Test_isPanicCall_edge_cases(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -205,9 +202,6 @@ func Test_checkEarlyExit(t *testing.T) {
 }
 
 // Test_isPanicCall vérifie la détection des appels à panic.
-//
-// Params:
-//   - t: instance de testing
 func Test_isPanicCall(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -238,9 +232,6 @@ func Test_isPanicCall(t *testing.T) {
 }
 
 // Test_getElseType tests the getElseType private function.
-//
-// Params:
-//   - t: testing instance
 func Test_getElseType(t *testing.T) {
 	tests := []struct {
 		name     string

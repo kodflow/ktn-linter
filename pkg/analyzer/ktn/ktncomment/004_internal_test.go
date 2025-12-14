@@ -14,9 +14,6 @@ import (
 
 // Test_runComment004 tests the runComment004 function configuration.
 // The actual analyzer is tested via analysistest in 004_external_test.go.
-//
-// Params:
-//   - t: testing context
 func Test_runComment004(t *testing.T) {
 	tests := []struct {
 		name string
@@ -45,9 +42,6 @@ func Test_runComment004(t *testing.T) {
 }
 
 // Test_runComment004_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment004_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -114,9 +108,6 @@ func Test_runComment004_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment004_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment004_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string
@@ -186,9 +177,6 @@ func Test_runComment004_fileExcluded(t *testing.T) {
 }
 
 // Test_checkFileDeclarations tests checkFileDeclarations function.
-//
-// Params:
-//   - t: testing context
 func Test_checkFileDeclarations(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -253,9 +241,6 @@ func myFunc() {}`,
 }
 
 // Test_checkVarDeclaration tests the checkVarDeclaration private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkVarDeclaration(t *testing.T) {
 	tests := []struct {
 		name string
@@ -271,9 +256,6 @@ func Test_checkVarDeclaration(t *testing.T) {
 
 
 // Test_reportMissingVarDoc tests the reportMissingVarDoc private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportMissingVarDoc(t *testing.T) {
 	tests := []struct {
 		name string

@@ -5,9 +5,7 @@ import (
 	"testing"
 )
 
-// Test_registerStructMessages validates that struct rule messages are properly registered in the message registry.
-// Params:
-//   - t: *testing.T - Test context for reporting failures
+// Test_registerStructMessages validates that struct rule messages are properly registered.
 func Test_registerStructMessages(t *testing.T) {
 	tests := []struct {
 		name string

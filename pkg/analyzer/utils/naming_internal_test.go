@@ -4,9 +4,6 @@ package utils
 import "testing"
 
 // Test_getKnownInitialisms tests the getKnownInitialisms function.
-//
-// Params:
-//   - t: testing context
 func Test_getKnownInitialisms(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -39,9 +36,6 @@ func Test_getKnownInitialisms(t *testing.T) {
 }
 
 // Test_tryMatchInitialismPrefix tests the tryMatchInitialismPrefix function.
-//
-// Params:
-//   - t: testing context
 func Test_tryMatchInitialismPrefix(t *testing.T) {
 	initialisms := getKnownInitialisms()
 

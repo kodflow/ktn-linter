@@ -6,12 +6,6 @@ import (
 )
 
 // Test_registerInterfaceMessages verifies that all interface rule messages are properly registered.
-//
-// Params:
-//   - t: *testing.T - the test context for reporting test failures
-//
-// Returns:
-//   - none
 func Test_registerInterfaceMessages(t *testing.T) {
 	tests := []struct {
 		name string

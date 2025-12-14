@@ -14,9 +14,6 @@ import (
 // Erreurs attendues dans bad.go:
 // - Value() retourne le champ 'data', devrait être nommé Data() (1)
 // Total: 1 erreur
-//
-// Params:
-//   - t: contexte de test
 func TestStruct007(t *testing.T) {
 	// 1 violation: mismatch getter/champ
 	tests := []struct {

@@ -13,9 +13,6 @@ import (
 )
 
 // Test_hasValidDocumentation tests the hasValidDocumentation function.
-//
-// Params:
-//   - t: testing context
 func Test_hasValidDocumentation(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -96,9 +93,6 @@ func Test_hasValidDocumentation(t *testing.T) {
 }
 
 // Test_runComment005 tests the runComment005 function configuration.
-//
-// Params:
-//   - t: testing context
 func Test_runComment005(t *testing.T) {
 	tests := []struct {
 		name string
@@ -123,9 +117,6 @@ func Test_runComment005(t *testing.T) {
 }
 
 // Test_runComment005_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment005_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -192,9 +183,6 @@ func Test_runComment005_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment005_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment005_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string
@@ -264,9 +252,6 @@ func Test_runComment005_fileExcluded(t *testing.T) {
 }
 
 // Test_runComment005_customThreshold tests behavior with custom threshold.
-//
-// Params:
-//   - t: testing context
 func Test_runComment005_customThreshold(t *testing.T) {
 	tests := []struct {
 		name string
@@ -338,9 +323,6 @@ func Test_runComment005_customThreshold(t *testing.T) {
 }
 
 // Test_hasValidDocumentation_blockComments tests block-style comments.
-//
-// Params:
-//   - t: testing context
 func Test_hasValidDocumentation_blockComments(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -385,9 +367,6 @@ func Test_hasValidDocumentation_blockComments(t *testing.T) {
 }
 
 // Test_runComment005_privateStruct tests that private structs are skipped.
-//
-// Params:
-//   - t: testing context
 func Test_runComment005_privateStruct(t *testing.T) {
 	tests := []struct {
 		name string
@@ -445,9 +424,6 @@ func Test_runComment005_privateStruct(t *testing.T) {
 }
 
 // Test_runComment005_nonStruct tests that non-struct types are skipped.
-//
-// Params:
-//   - t: testing context
 func Test_runComment005_nonStruct(t *testing.T) {
 	tests := []struct {
 		name string

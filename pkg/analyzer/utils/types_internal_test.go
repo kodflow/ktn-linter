@@ -51,9 +51,6 @@ func Test_makeConstants(t *testing.T) {
 
 // Test_hasPositiveLength tests HasPositiveLength function with various cases.
 //
-// Params:
-//   - t: testing instance
-//
 // Returns: none
 func Test_hasPositiveLength(t *testing.T) {
 	tests := []struct {
@@ -144,9 +141,6 @@ func Test_hasPositiveLength(t *testing.T) {
 }
 
 // Test_hasPositiveLengthWithConstant tests with constant values.
-//
-// Params:
-//   - t: testing instance
 //
 // Returns: none
 func Test_hasPositiveLengthWithConstant(t *testing.T) {

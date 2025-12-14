@@ -914,9 +914,6 @@ func Test_runFunc008_excludedFile(t *testing.T) {
 }
 
 // Test_runFunc008 tests the main runFunc008 entry point function.
-//
-// Params:
-//   - t: testing context
 func Test_runFunc008(t *testing.T) {
 	tests := []struct {
 		name         string

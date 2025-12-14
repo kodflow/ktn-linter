@@ -8,9 +8,6 @@ import (
 )
 
 // TestStruct004 vérifie la limite de structs par fichier.
-//
-// Params:
-//   - t: contexte de test
 func TestStruct004(t *testing.T) {
 	// good.go: 0 errors (1 struct), bad.go: 2 errors (3 structs - les 2 dernières sont en violation)
 	tests := []struct {

@@ -10,9 +10,6 @@ import (
 )
 
 // TestComment001 tests the Analyzer001 for inline comments exceeding 80 characters.
-//
-// Params:
-//   - t: testing context
 func TestComment001(t *testing.T) {
 	tests := []struct {
 		name           string

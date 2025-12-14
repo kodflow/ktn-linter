@@ -239,9 +239,6 @@ func qux() CustomError { return nil }`,
 }
 
 // Test_isBuiltinError vérifie la détection du type error builtin.
-//
-// Params:
-//   - t: instance de testing
 func Test_isBuiltinError(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -336,9 +333,6 @@ func bad() BadError { return nil }`,
 }
 
 // Test_implementsError vérifie si un type implémente error.
-//
-// Params:
-//   - t: instance de testing
 func Test_implementsError(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -423,9 +417,6 @@ func foo() *PtrError { return nil }`,
 }
 
 // Test_isErrorType_nilType tests isErrorType with nil type.
-//
-// Params:
-//   - t: instance de testing
 func Test_isErrorType_nilType(t *testing.T) {
 	tests := []struct {
 		name string
@@ -461,9 +452,6 @@ func Test_isErrorType_nilType(t *testing.T) {
 }
 
 // Test_isErrorType_namedBuiltinError tests the named error with nil package path.
-//
-// Params:
-//   - t: instance de testing
 func Test_isErrorType_namedBuiltinError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -533,9 +521,6 @@ func Test_isErrorType_namedBuiltinError(t *testing.T) {
 }
 
 // Test_isErrorType_aliasedError tests isErrorType with error type alias.
-//
-// Params:
-//   - t: instance de testing
 func Test_isErrorType_aliasedError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -605,9 +590,6 @@ func Test_isErrorType_aliasedError(t *testing.T) {
 }
 
 // Test_isErrorType_namedNonError tests isErrorType with non-error named type.
-//
-// Params:
-//   - t: instance de testing
 func Test_isErrorType_namedNonError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -677,9 +659,6 @@ func Test_isErrorType_namedNonError(t *testing.T) {
 }
 
 // Test_isErrorType_underlyingError tests isErrorType with named type having error underlying.
-//
-// Params:
-//   - t: instance de testing
 func Test_isErrorType_underlyingError(t *testing.T) {
 	tests := []struct {
 		name string

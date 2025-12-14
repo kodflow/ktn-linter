@@ -608,9 +608,6 @@ func Test_runVar004_fileExcluded(t *testing.T) {
 }
 
 // Test_checkMakeCall tests the checkMakeCall private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkMakeCall(t *testing.T) {
 	tests := []struct {
 		name string
@@ -626,9 +623,6 @@ func Test_checkMakeCall(t *testing.T) {
 
 
 // Test_checkCompositeLit tests the checkCompositeLit private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkCompositeLit(t *testing.T) {
 	tests := []struct {
 		name string

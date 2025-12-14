@@ -669,28 +669,16 @@ type MockTestingT struct {
 }
 
 // Fatalf enregistre l'appel.
-//
-// Params:
-//   - format: format du message
-//   - args: arguments du message
 func (m *MockTestingT) Fatalf(format string, args ...any) {
 	m.FatalfCalled = true
 }
 
 // Errorf enregistre l'appel.
-//
-// Params:
-//   - format: format du message
-//   - args: arguments du message
 func (m *MockTestingT) Errorf(format string, args ...any) {
 	m.ErrorfCalled = true
 }
 
 // Logf enregistre l'appel.
-//
-// Params:
-//   - format: format du message
-//   - args: arguments du message
 func (m *MockTestingT) Logf(format string, args ...any) {
 	m.LogfCalled = true
 }
@@ -1231,9 +1219,6 @@ func Test_testGoodBadPackageInternal(t *testing.T) {
 }
 
 // Test_createTypeInfo tests the createTypeInfo private function.
-//
-// Params:
-//   - t: testing context
 func Test_createTypeInfo(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1269,9 +1254,6 @@ func Test_createTypeInfo(t *testing.T) {
 }
 
 // Test_createPass tests the createPass private function.
-//
-// Params:
-//   - t: testing context
 func Test_createPass(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1313,9 +1295,6 @@ func Test_createPass(t *testing.T) {
 }
 
 // Test_createPassForPackage tests the createPassForPackage private function.
-//
-// Params:
-//   - t: testing context
 func Test_createPassForPackage(t *testing.T) {
 	tests := []struct {
 		name string

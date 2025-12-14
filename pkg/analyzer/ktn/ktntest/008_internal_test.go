@@ -13,9 +13,6 @@ import (
 )
 
 // Test_runTest008 tests the runTest008 private function with table-driven tests.
-//
-// Params:
-//   - t: testing context
 func Test_runTest008(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -39,9 +36,6 @@ func Test_runTest008(t *testing.T) {
 }
 
 // Test_analyzeFileFunctions tests the analyzeFileFunctions private function.
-//
-// Params:
-//   - t: testing context
 func Test_analyzeFileFunctions(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -122,9 +116,6 @@ var privateVar int`,
 // Test_checkVariables tests the checkVariables private function.
 // NOTE: Variables are no longer considered for test file requirements.
 // They are tested indirectly via the functions that use them.
-//
-// Params:
-//   - t: testing context
 func Test_checkVariables(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -196,9 +187,6 @@ var PublicVar, privateVar int`,
 }
 
 // Test_checkTypes tests the checkTypes private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkTypes(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -255,9 +243,6 @@ type PublicInterface interface{}`,
 }
 
 // Test_checkConsts tests the checkConsts private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkConsts(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -317,9 +302,6 @@ const (
 }
 
 // Test_checkTestFilesExist tests the checkTestFilesExist private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkTestFilesExist(t *testing.T) {
 	// Créer un fichier temporaire
 	tmpFile, err := os.CreateTemp("", "test_*.go")
@@ -418,9 +400,6 @@ func Test_checkTestFilesExist(t *testing.T) {
 }
 
 // Test_fileExistsOnDisk tests the fileExistsOnDisk private function.
-//
-// Params:
-//   - t: testing context
 func Test_fileExistsOnDisk(t *testing.T) {
 	// Créer un fichier temporaire
 	tmpFile, err := os.CreateTemp("", "test_*.go")
@@ -482,9 +461,6 @@ func Test_fileExistsOnDisk(t *testing.T) {
 }
 
 // Test_reportTestFileIssues tests the logic of reportTestFileIssues.
-//
-// Params:
-//   - t: testing context
 func Test_reportTestFileIssues(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -622,9 +598,6 @@ func Test_reportTestFileIssues(t *testing.T) {
 }
 
 // Test_reportMixedFunctionsIssues tests the reportMixedFunctionsIssues private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportMixedFunctionsIssues(t *testing.T) {
 	tests := []struct {
 		name string
@@ -678,9 +651,6 @@ func Test_reportMixedFunctionsIssues(t *testing.T) {
 }
 
 // Test_reportPublicOnlyIssues tests the reportPublicOnlyIssues private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportPublicOnlyIssues(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -752,9 +722,6 @@ func Test_reportPublicOnlyIssues(t *testing.T) {
 }
 
 // Test_reportPrivateOnlyIssues tests the reportPrivateOnlyIssues private function.
-//
-// Params:
-//   - t: testing context
 func Test_reportPrivateOnlyIssues(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1018,9 +985,6 @@ func Test_runTest008_excludedFile(t *testing.T) {
 }
 
 // Test_checkVariables_mockVariable tests checkVariables with mock variable.
-//
-// Params:
-//   - t: testing context
 func Test_checkVariables_mockVariable(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1085,9 +1049,6 @@ import "fmt"`,
 }
 
 // Test_checkTypes_mockType tests checkTypes with mock type.
-//
-// Params:
-//   - t: testing context
 func Test_checkTypes_mockType(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -1144,9 +1105,6 @@ import "fmt"`,
 }
 
 // Test_checkConsts_mockConst tests checkConsts with mock const.
-//
-// Params:
-//   - t: testing context
 func Test_checkConsts_mockConst(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -1197,9 +1155,6 @@ import "fmt"`,
 }
 
 // Test_classifyFunction_mockReceiver tests classifyFunction with mock receiver.
-//
-// Params:
-//   - t: testing context
 func Test_classifyFunction_mockReceiver(t *testing.T) {
 	tests := []struct {
 		name          string

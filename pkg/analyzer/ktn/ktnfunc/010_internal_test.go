@@ -142,9 +142,6 @@ func Test_hasNamedReturns(t *testing.T) {
 }
 
 // Test_analyzeNakedReturns tests analyzeNakedReturns private function.
-//
-// Params:
-//   - t: instance de testing
 func Test_analyzeNakedReturns(t *testing.T) {
 	tests := []struct {
 		name string

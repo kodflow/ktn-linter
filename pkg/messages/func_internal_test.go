@@ -6,8 +6,6 @@ import (
 )
 
 // Test_registerFuncMessages validates that all func rule messages are properly registered.
-// Params:
-//   - t *testing.T: the test instance for reporting failures
 func Test_registerFuncMessages(t *testing.T) {
 	tests := []struct {
 		name string

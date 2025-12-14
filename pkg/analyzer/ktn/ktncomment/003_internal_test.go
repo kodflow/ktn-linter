@@ -14,9 +14,6 @@ import (
 
 // Test_runComment003 tests the runComment003 function configuration.
 // The actual analyzer is tested via analysistest in 003_external_test.go.
-//
-// Params:
-//   - t: testing context
 func Test_runComment003(t *testing.T) {
 	tests := []struct {
 		name string
@@ -45,9 +42,6 @@ func Test_runComment003(t *testing.T) {
 }
 
 // Test_runComment003_ruleDisabled tests behavior when rule is disabled.
-//
-// Params:
-//   - t: testing context
 func Test_runComment003_ruleDisabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -114,9 +108,6 @@ func Test_runComment003_ruleDisabled(t *testing.T) {
 }
 
 // Test_runComment003_fileExcluded tests behavior when file is excluded.
-//
-// Params:
-//   - t: testing context
 func Test_runComment003_fileExcluded(t *testing.T) {
 	tests := []struct {
 		name string

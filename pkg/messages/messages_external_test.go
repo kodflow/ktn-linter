@@ -58,9 +58,6 @@ func TestGet(t *testing.T) {
 }
 
 // TestMessage_Format tests the Format method of Message.
-//
-// Params:
-//   - t: testing context
 func TestMessage_Format(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -110,9 +107,6 @@ func TestMessage_Format(t *testing.T) {
 }
 
 // TestMessage_FormatShort tests the FormatShort method.
-//
-// Params:
-//   - t: testing context
 func TestMessage_FormatShort(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -152,9 +146,6 @@ func TestMessage_FormatShort(t *testing.T) {
 }
 
 // TestMessage_FormatVerbose tests the FormatVerbose method.
-//
-// Params:
-//   - t: testing context
 func TestMessage_FormatVerbose(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -194,9 +185,6 @@ func TestMessage_FormatVerbose(t *testing.T) {
 }
 
 // TestRegister tests the Register function.
-//
-// Params:
-//   - t: testing context
 func TestRegister(t *testing.T) {
 	tests := []struct {
 		name    string

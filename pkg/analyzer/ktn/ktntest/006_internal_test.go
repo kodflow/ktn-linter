@@ -10,9 +10,6 @@ import (
 )
 
 // Test_runTest006 tests the runTest006 private function with table-driven tests.
-//
-// Params:
-//   - t: testing context
 func Test_runTest006(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -46,9 +43,6 @@ func Test_runTest006(t *testing.T) {
 }
 
 // Test_testFileInfo_structure tests the testFileInfo structure.
-//
-// Params:
-//   - t: testing context
 func Test_testFileInfo_structure(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -102,9 +96,6 @@ func Test_testFileInfo_structure(t *testing.T) {
 }
 
 // Test_testFileInfo_nilFileNode tests testFileInfo with nil file node.
-//
-// Params:
-//   - t: testing context
 func Test_testFileInfo_nilFileNode(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -151,9 +142,6 @@ func Test_testFileInfo_nilFileNode(t *testing.T) {
 }
 
 // Test_collectFiles006 tests the collectFiles006 private function.
-//
-// Params:
-//   - t: testing context
 func Test_collectFiles006(t *testing.T) {
 	tests := []struct {
 		name string
@@ -168,9 +156,6 @@ func Test_collectFiles006(t *testing.T) {
 }
 
 // Test_extractBaseName006 tests the extractBaseName006 private function.
-//
-// Params:
-//   - t: testing context
 func Test_extractBaseName006(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -221,9 +206,6 @@ func Test_extractBaseName006(t *testing.T) {
 }
 
 // Test_validateTestFiles006 tests the validateTestFiles006 private function.
-//
-// Params:
-//   - t: testing context
 func Test_validateTestFiles006(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -283,9 +265,6 @@ func Test_validateTestFiles006(t *testing.T) {
 }
 
 // Test_collectFiles006_empty tests collectFiles006 with empty pass.
-//
-// Params:
-//   - t: testing context
 func Test_collectFiles006_empty(t *testing.T) {
 	tests := []struct {
 		name string

@@ -9,9 +9,6 @@ import (
 )
 
 // TestTest012 tests the passthrough test detection.
-//
-// Params:
-//   - t: testing context
 func TestTest012(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -8,9 +8,6 @@ import (
 )
 
 // TestStruct003 vérifie la détection des getters avec préfixe Get.
-//
-// Params:
-//   - t: contexte de test
 func TestStruct003(t *testing.T) {
 	// good.go: 0 errors (getters idiomatiques sans Get), bad.go: 3 errors (getters avec préfixe Get)
 	tests := []struct {

@@ -380,9 +380,6 @@ func Test_runVar008_fileExcluded(t *testing.T) {
 }
 
 // Test_checkLoopBodyForAlloc tests the checkLoopBodyForAlloc private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkLoopBodyForAlloc(t *testing.T) {
 	tests := []struct {
 		name string
@@ -398,9 +395,6 @@ func Test_checkLoopBodyForAlloc(t *testing.T) {
 
 
 // Test_checkStmtForAlloc tests the checkStmtForAlloc private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkStmtForAlloc(t *testing.T) {
 	tests := []struct {
 		name string

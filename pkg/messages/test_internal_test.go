@@ -6,9 +6,6 @@ import (
 )
 
 // Test_registerTestMessages tests that all test messages are properly registered.
-//
-// Params:
-//   - t *testing.T: Test instance for reporting test results.
 func Test_registerTestMessages(t *testing.T) {
 	tests := []struct {
 		name string

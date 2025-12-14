@@ -3263,9 +3263,6 @@ func Test_analyzePackage(t *testing.T) {
 }
 
 // Test_parseLintOptions tests the parseLintOptions function.
-//
-// Params:
-//   - t: testing context
 func Test_parseLintOptions(t *testing.T) {
 	tests := []struct {
 		name     string

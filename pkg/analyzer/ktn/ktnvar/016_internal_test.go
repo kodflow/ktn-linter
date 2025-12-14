@@ -372,9 +372,6 @@ func Test_runVar016_fileExcluded(t *testing.T) {
 }
 
 // Test_shouldUseArray tests the shouldUseArray private function.
-//
-// Params:
-//   - t: testing context
 func Test_shouldUseArray(t *testing.T) {
 	tests := []struct {
 		name string
@@ -390,9 +387,6 @@ func Test_shouldUseArray(t *testing.T) {
 
 
 // Test_getConstantSize tests the getConstantSize private function.
-//
-// Params:
-//   - t: testing context
 func Test_getConstantSize(t *testing.T) {
 	tests := []struct {
 		name string

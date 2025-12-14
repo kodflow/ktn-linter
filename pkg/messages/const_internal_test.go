@@ -6,9 +6,6 @@ import (
 )
 
 // Test_registerConstMessages tests the registerConstMessages function.
-//
-// Params:
-//   - t: testing context
 func Test_registerConstMessages(t *testing.T) {
 	tests := []struct {
 		name string

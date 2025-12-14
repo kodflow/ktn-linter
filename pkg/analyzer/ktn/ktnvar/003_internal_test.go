@@ -481,9 +481,6 @@ func Test_runVar003_fileExcluded(t *testing.T) {
 }
 
 // Test_checkStatement tests the checkStatement private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkStatement(t *testing.T) {
 	tests := []struct {
 		name string
@@ -499,9 +496,6 @@ func Test_checkStatement(t *testing.T) {
 
 
 // Test_checkNestedBlocks tests the checkNestedBlocks private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkNestedBlocks(t *testing.T) {
 	tests := []struct {
 		name string
@@ -517,9 +511,6 @@ func Test_checkNestedBlocks(t *testing.T) {
 
 
 // Test_checkIfStmt tests the checkIfStmt private function.
-//
-// Params:
-//   - t: testing context
 func Test_checkIfStmt(t *testing.T) {
 	tests := []struct {
 		name string

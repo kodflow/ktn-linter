@@ -8,9 +8,6 @@ import (
 )
 
 // TestStruct001 vérifie la détection des structs sans interface.
-//
-// Params:
-//   - t: contexte de test
 func TestStruct001(t *testing.T) {
 	// good.go: 0 errors (interface complète)
 	// bad.go: 2 errors:

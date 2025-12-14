@@ -7,9 +7,6 @@ import (
 )
 
 // TestGetAnalyzers teste le registre des analyseurs de structures.
-//
-// Params:
-//   - t: instance de testing
 func TestGetAnalyzers(t *testing.T) {
 	analyzers := ktnstruct.GetAnalyzers()
 

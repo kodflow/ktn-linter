@@ -459,9 +459,6 @@ func Test_runVar017_fileExcluded(t *testing.T) {
 }
 
 // Test_getMutexType tests the getMutexType private function.
-//
-// Params:
-//   - t: testing context
 func Test_getMutexType(t *testing.T) {
 	tests := []struct {
 		name string
@@ -477,9 +474,6 @@ func Test_getMutexType(t *testing.T) {
 
 
 // Test_hasMutex tests the hasMutex private function.
-//
-// Params:
-//   - t: testing context
 func Test_hasMutex(t *testing.T) {
 	tests := []struct {
 		name string
@@ -495,9 +489,6 @@ func Test_hasMutex(t *testing.T) {
 
 
 // Test_getMutexTypeFromType tests the getMutexTypeFromType private function.
-//
-// Params:
-//   - t: testing context
 func Test_getMutexTypeFromType(t *testing.T) {
 	tests := []struct {
 		name string

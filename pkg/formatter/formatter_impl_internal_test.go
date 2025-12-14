@@ -1106,9 +1106,6 @@ func TestFormatterImpl_getSymbol(t *testing.T) {
 }
 
 // Test_formatterImpl_printMessage tests the printMessage method.
-//
-// Params:
-//   - t: testing context
 func Test_formatterImpl_printMessage(t *testing.T) {
 	tests := []struct {
 		name      string

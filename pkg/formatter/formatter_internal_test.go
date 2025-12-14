@@ -9,9 +9,6 @@ import (
 )
 
 // Test_extractCode tests the extractCode function.
-//
-// Params:
-//   - t: testing context
 func Test_extractCode(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -48,9 +45,6 @@ func Test_extractCode(t *testing.T) {
 }
 
 // Test_groupByFile tests the groupByFile method.
-//
-// Params:
-//   - t: testing context
 func Test_groupByFile(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -92,9 +86,6 @@ func Test_groupByFile(t *testing.T) {
 }
 
 // Test_filterAndSortDiagnostics tests the filterAndSortDiagnostics method.
-//
-// Params:
-//   - t: testing context
 func Test_filterAndSortDiagnostics(t *testing.T) {
 	tests := []struct {
 		name          string

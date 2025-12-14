@@ -14,9 +14,6 @@ import (
 )
 
 // Test_hasErrorCaseCoverage tests the hasErrorCaseCoverage private function.
-//
-// Params:
-//   - t: testing context
 func Test_hasErrorCaseCoverage(t *testing.T) {
 	tests := []struct {
 		name string
@@ -117,9 +114,6 @@ func Test_hasErrorCaseCoverage(t *testing.T) {
 }
 
 // Test_isErrorIndicatorName tests the isErrorIndicatorName private function.
-//
-// Params:
-//   - t: testing context
 func Test_isErrorIndicatorName(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -186,9 +180,6 @@ func Test_isErrorIndicatorName(t *testing.T) {
 }
 
 // Test_hasErrorTestCases tests the hasErrorTestCases private function.
-//
-// Params:
-//   - t: testing context
 func Test_hasErrorTestCases(t *testing.T) {
 	tests := []struct {
 		name string
@@ -298,9 +289,6 @@ func TestSomething(t *testing.T) {
 }
 
 // Test_runTest013 tests the runTest013 private function.
-//
-// Params:
-//   - t: testing context
 func Test_runTest013(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -320,9 +308,6 @@ func Test_runTest013(t *testing.T) {
 }
 
 // Test_collectFuncSignatures tests the collectFuncSignatures function.
-//
-// Params:
-//   - t: testing context
 func Test_collectFuncSignatures(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -398,9 +383,6 @@ func Test_collectFuncSignatures(t *testing.T) {
 }
 
 // Test_addFuncSignature tests the addFuncSignature function.
-//
-// Params:
-//   - t: testing context
 func Test_addFuncSignature(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -466,9 +448,6 @@ func Test_addFuncSignature(t *testing.T) {
 }
 
 // Test_collectExternalSourceSignatures tests the collectExternalSourceSignatures function.
-//
-// Params:
-//   - t: testing context
 func Test_collectExternalSourceSignatures(t *testing.T) {
 	tests := []struct {
 		name string
@@ -495,9 +474,6 @@ func Test_collectExternalSourceSignatures(t *testing.T) {
 }
 
 // Test_scanSourceFile tests the scanSourceFile function.
-//
-// Params:
-//   - t: testing context
 func Test_scanSourceFile(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -532,9 +508,6 @@ func Test_scanSourceFile(t *testing.T) {
 }
 
 // Test_extractFuncInfo tests the extractFuncInfo function.
-//
-// Params:
-//   - t: testing context
 func Test_extractFuncInfo(t *testing.T) {
 	tests := []struct {
 		name string
@@ -563,9 +536,6 @@ func Test_extractFuncInfo(t *testing.T) {
 }
 
 // Test_functionReturnsError tests the functionReturnsError function.
-//
-// Params:
-//   - t: testing context
 func Test_functionReturnsError(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -601,9 +571,6 @@ func Test_functionReturnsError(t *testing.T) {
 }
 
 // Test_isErrorType tests the isErrorType function.
-//
-// Params:
-//   - t: testing context
 func Test_isErrorType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -659,9 +626,6 @@ func Test_isErrorType(t *testing.T) {
 }
 
 // Test_ExtractReceiverTypeName013 tests the shared.ExtractReceiverTypeName function (for 013).
-//
-// Params:
-//   - t: testing context
 func Test_ExtractReceiverTypeName013(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -699,9 +663,6 @@ func Test_ExtractReceiverTypeName013(t *testing.T) {
 }
 
 // Test_analyzeTestFunction tests the analyzeTestFunction function.
-//
-// Params:
-//   - t: testing context
 func Test_analyzeTestFunction(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -784,9 +745,6 @@ func Test_analyzeTestFunction(t *testing.T) {
 }
 
 // Test_ParseTestName013 tests the shared.ParseTestName function (for 013).
-//
-// Params:
-//   - t: testing context
 func Test_ParseTestName013(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -817,9 +775,6 @@ func Test_ParseTestName013(t *testing.T) {
 }
 
 // Test_checkErrorInNode tests the checkErrorInNode function.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInNode(t *testing.T) {
 	tests := []struct {
 		name string
@@ -854,9 +809,6 @@ func Test_checkErrorInNode(t *testing.T) {
 }
 
 // Test_checkErrorInBasicLit tests the checkErrorInBasicLit function.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInBasicLit(t *testing.T) {
 	tests := []struct {
 		name string
@@ -890,9 +842,6 @@ func Test_checkErrorInBasicLit(t *testing.T) {
 }
 
 // Test_checkErrorInKeyValue tests the checkErrorInKeyValue function.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInKeyValue(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -984,9 +933,6 @@ func Test_runTest013_excludedFile(t *testing.T) {
 }
 
 // Test_hasErrorTestCases_nonKeyValue tests hasErrorTestCases with non-KeyValueExpr elements.
-//
-// Params:
-//   - t: testing context
 func Test_hasErrorTestCases_nonKeyValue(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -1030,9 +976,6 @@ func Test_hasErrorTestCases_nonKeyValue(t *testing.T) {
 }
 
 // Test_scanSourceFile_various tests scanSourceFile with various file types.
-//
-// Params:
-//   - t: testing context
 func Test_scanSourceFile_various(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1069,9 +1012,6 @@ func Test_scanSourceFile_various(t *testing.T) {
 }
 
 // Test_checkErrorInBasicLit_nonString tests checkErrorInBasicLit with non-string literals.
-//
-// Params:
-//   - t: testing context
 func Test_checkErrorInBasicLit_nonString(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -1120,9 +1060,6 @@ func Test_checkErrorInBasicLit_nonString(t *testing.T) {
 }
 
 // Test_addFuncSignature_mockReceiver tests addFuncSignature with mock receiver.
-//
-// Params:
-//   - t: testing context
 func Test_addFuncSignature_mockReceiver(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1164,9 +1101,6 @@ func Test_addFuncSignature_mockReceiver(t *testing.T) {
 }
 
 // Test_analyzeTestFunction_noMatch tests analyzeTestFunction with non-matching test name.
-//
-// Params:
-//   - t: testing context
 func Test_analyzeTestFunction_noMatch(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1239,9 +1173,6 @@ func Test_analyzeTestFunction_noMatch(t *testing.T) {
 }
 
 // Test_collectExternalSourceSignatures_emptyPass tests collectExternalSourceSignatures with empty pass.
-//
-// Params:
-//   - t: testing context
 func Test_collectExternalSourceSignatures_emptyPass(t *testing.T) {
 	tests := []struct {
 		name string

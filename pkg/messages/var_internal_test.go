@@ -6,12 +6,6 @@ import (
 )
 
 // Test_registerVarMessages verifies that all var category messages are properly registered.
-//
-// Params:
-//   - t: Testing instance for reporting results
-//
-// This test uses table-driven pattern to validate that each var rule code
-// (KTN-VAR-XXX) is registered and contains valid data (code and short description).
 func Test_registerVarMessages(t *testing.T) {
 	tests := []struct {
 		name string

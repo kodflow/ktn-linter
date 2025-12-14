@@ -103,9 +103,6 @@ func TestGetRulesByCategory(t *testing.T) {
 }
 
 // TestGetRuleByCode tests the GetRuleByCode function.
-//
-// Params:
-//   - t: testing context
 func TestGetRuleByCode(t *testing.T) {
 	tests := []struct {
 		name       string

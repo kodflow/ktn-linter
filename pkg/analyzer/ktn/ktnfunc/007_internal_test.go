@@ -216,9 +216,6 @@ func Test_hasSideEffect(t *testing.T) {
 }
 
 // Test_checkGetterSideEffects vérifie la détection des side effects dans les getters.
-//
-// Params:
-//   - t: instance de testing
 func Test_checkGetterSideEffects(t *testing.T) {
 	tests := []struct {
 		name string
@@ -239,9 +236,6 @@ func Test_checkGetterSideEffects(t *testing.T) {
 }
 
 // Test_reportAssignSideEffect vérifie le rapport des assignations.
-//
-// Params:
-//   - t: instance de testing
 func Test_reportAssignSideEffect(t *testing.T) {
 	tests := []struct {
 		name string
@@ -262,9 +256,6 @@ func Test_reportAssignSideEffect(t *testing.T) {
 }
 
 // Test_reportIncDecSideEffect vérifie le rapport des incréments/décréments.
-//
-// Params:
-//   - t: instance de testing
 func Test_reportIncDecSideEffect(t *testing.T) {
 	tests := []struct {
 		name string
@@ -285,9 +276,6 @@ func Test_reportIncDecSideEffect(t *testing.T) {
 }
 
 // Test_collectLazyLoadFields vérifie la collecte des champs lazy load.
-//
-// Params:
-//   - t: instance de testing
 func Test_collectLazyLoadFields(t *testing.T) {
 	tests := []struct {
 		name string
@@ -313,9 +301,6 @@ func Test_collectLazyLoadFields(t *testing.T) {
 }
 
 // Test_isNilComparison vérifie la détection de comparaisons avec nil.
-//
-// Params:
-//   - t: instance de testing
 func Test_isNilComparison(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -365,9 +350,6 @@ func Test_isNilComparison(t *testing.T) {
 }
 
 // Test_extractFieldName vérifie l'extraction du nom de champ.
-//
-// Params:
-//   - t: instance de testing
 func Test_extractFieldName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -428,9 +410,6 @@ func Test_extractFieldName(t *testing.T) {
 }
 
 // Test_isLazyLoadAssignment vérifie la détection des assignations lazy load.
-//
-// Params:
-//   - t: instance de testing
 func Test_isLazyLoadAssignment(t *testing.T) {
 	tests := []struct {
 		name       string

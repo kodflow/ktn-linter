@@ -16,9 +16,6 @@ import (
 )
 
 // Test_runStruct007 teste la fonction runStruct007.
-//
-// Params:
-//   - t: instance de testing
 func Test_runStruct007(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -46,9 +43,6 @@ func Test_runStruct007(t *testing.T) {
 }
 
 // Test_collectStructPrivateFields teste la fonction collectStructPrivateFields.
-//
-// Params:
-//   - t: instance de testing
 func Test_collectStructPrivateFields(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -170,9 +164,6 @@ type Empty struct{}`,
 }
 
 // Test_collectMethodsDetailed teste la fonction collectMethodsDetailed.
-//
-// Params:
-//   - t: instance de testing
 func Test_collectMethodsDetailed(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -313,9 +304,6 @@ func (u *User) GetName() (string, error) {
 }
 
 // Test_extractReceiverType teste la fonction extractReceiverType.
-//
-// Params:
-//   - t: instance de testing
 func Test_extractReceiverType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -372,9 +360,6 @@ func Test_extractReceiverType(t *testing.T) {
 }
 
 // Test_extractReturnedField teste la fonction extractReturnedField.
-//
-// Params:
-//   - t: instance de testing
 func Test_extractReturnedField(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -411,9 +396,6 @@ func Test_extractReturnedField(t *testing.T) {
 }
 
 // Test_checkNamingConventions teste la fonction checkNamingConventions.
-//
-// Params:
-//   - t: instance de testing
 func Test_checkNamingConventions(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -533,9 +515,6 @@ func Test_checkNamingConventions(t *testing.T) {
 }
 
 // Test_extractSimpleReturnType tests the extractSimpleReturnType private function.
-//
-// Params:
-//   - t: testing instance
 func Test_extractSimpleReturnType(t *testing.T) {
 	tests := []struct {
 		name string
@@ -643,9 +622,6 @@ func GetAge() int {
 }
 
 // Test_checkGetterFieldMismatch tests the checkGetterFieldMismatch private function.
-//
-// Params:
-//   - t: testing instance
 func Test_checkGetterFieldMismatch(t *testing.T) {
 	tests := []struct {
 		name        string

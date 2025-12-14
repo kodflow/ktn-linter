@@ -6,9 +6,6 @@ import (
 )
 
 // Test_registryInitialized tests that registry is initialized with messages.
-//
-// Params:
-//   - t: testing context
 func Test_registryInitialized(t *testing.T) {
 	tests := []struct {
 		name string

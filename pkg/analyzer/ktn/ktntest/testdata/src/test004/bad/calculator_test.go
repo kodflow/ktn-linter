@@ -7,9 +7,6 @@ import (
 )
 
 // TestAdd teste la fonction Add.
-//
-// Params:
-//   - t: contexte de test
 func TestAdd(t *testing.T) {
 	result := test003.Add(2, 3)
 	// Vérification du résultat
@@ -19,9 +16,6 @@ func TestAdd(t *testing.T) {
 }
 
 // TestSubtract teste la fonction Subtract.
-//
-// Params:
-//   - t: contexte de test
 func TestSubtract(t *testing.T) {
 	result := test003.Subtract(10, 3)
 	// Vérification du résultat

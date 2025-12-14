@@ -129,9 +129,6 @@ func Test_runFunc006(t *testing.T) {
 }
 
 // Test_countEffectiveParams vérifie le comptage des paramètres effectifs.
-//
-// Params:
-//   - t: instance de testing
 func Test_countEffectiveParams(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -164,9 +161,6 @@ func Test_countEffectiveParams(t *testing.T) {
 }
 
 // Test_analyzeFuncParams tests the analyzeFuncParams private function.
-//
-// Params:
-//   - t: testing context
 func Test_analyzeFuncParams(t *testing.T) {
 	tests := []struct {
 		name string

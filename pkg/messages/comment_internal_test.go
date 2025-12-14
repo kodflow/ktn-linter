@@ -6,9 +6,6 @@ import (
 )
 
 // Test_registerCommentMessages tests the registerCommentMessages function.
-//
-// Params:
-//   - t: testing context
 func Test_registerCommentMessages(t *testing.T) {
 	tests := []struct {
 		name string

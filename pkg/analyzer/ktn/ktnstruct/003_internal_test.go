@@ -522,9 +522,6 @@ func Test_runStruct003_excludedFile(t *testing.T) {
 }
 
 // Test_isValidGetterToReport tests the isValidGetterToReport function.
-//
-// Params:
-//   - t: testing context
 func Test_isValidGetterToReport(t *testing.T) {
 	tests := []struct {
 		name string
