@@ -44,18 +44,10 @@ for arg in "$@"; do
     fi
 done
 
-# Run KTN-Linter
+# Run KTN-Linter (skip testdata - use 'make validate' for testdata validation)
 if [ ${#TARGETS[@]} -eq 0 ]; then
-    # Scanner le projet principal
+    # Scanner le projet principal (testdata exclu automatiquement par go list ./...)
     "$LINTER_BIN" lint ./... 2>&1 >> "$TEMP_OUTPUT" || true
-
-    # Scanner tous les packages testdata (qui ne sont pas inclus dans ./...)
-    find ./pkg/analyzer/ktn/*/testdata/src/* -maxdepth 1 -type d 2>/dev/null | while IFS= read -r dir; do
-        # Vérifier si le répertoire contient des fichiers .go
-        if compgen -G "$dir/*.go" > /dev/null 2>&1; then
-            "$LINTER_BIN" lint "$dir" 2>&1 >> "$TEMP_OUTPUT" || true
-        fi
-    done
 else
     # Exécuter le linter sur les cibles spécifiées
     "$LINTER_BIN" lint "${TARGETS[@]}" 2>&1 >> "$TEMP_OUTPUT" || true

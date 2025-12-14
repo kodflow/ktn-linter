@@ -29,6 +29,11 @@ type Config struct {
 	// Rules contains per-rule configuration
 	Rules map[string]*RuleConfig `yaml:"rules,omitempty"`
 
+	// ForceAllRulesOnTests runs all rules on test files (default: false)
+	// By default, only KTN-TEST-* rules analyze *_test.go files.
+	// Set to true to run all rules on test files (useful for debugging).
+	ForceAllRulesOnTests bool `yaml:"force_all_rules_on_tests,omitempty"`
+
 	// Verbose enables verbose message output with examples
 	Verbose bool `yaml:"-"`
 
