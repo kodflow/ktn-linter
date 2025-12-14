@@ -182,8 +182,8 @@ func checkConstOrder(pass *analysis.Pass, decls *fileDeclarations) {
 		return
 	}
 
-	// Check scattered const blocks (all except first)
-	checkScatteredConstBlocks(pass, decls.constDecls)
+	// Check scattered const blocks (all except first, unless iota with custom type)
+	checkScatteredConstBlocks(pass, decls)
 
 	// Check const vs var order
 	checkConstBeforeVar(pass, decls)
@@ -196,21 +196,34 @@ func checkConstOrder(pass *analysis.Pass, decls *fileDeclarations) {
 }
 
 // checkScatteredConstBlocks reports if const declarations are scattered.
+// Exception: const blocks using iota with custom types are allowed separate.
 //
 // Params:
 //   - pass: analysis context
-//   - constDecls: positions of const declarations
-func checkScatteredConstBlocks(pass *analysis.Pass, constDecls []token.Pos) {
+//   - decls: collected declarations (includes constTypes for iota detection)
+func checkScatteredConstBlocks(pass *analysis.Pass, decls *fileDeclarations) {
 	// If 0 or 1 const block, they're not scattered
-	if len(constDecls) <= 1 {
+	if len(decls.constDecls) <= 1 {
 		// Return early
 		return
 	}
 
-	// Report all const groups except the first as scattered
-	for i := 1; i < len(constDecls); i++ {
+	// Report const groups except the first, unless they use iota with custom type
+	for i := 1; i < len(decls.constDecls); i++ {
+		constPos := decls.constDecls[i]
+
+		// Skip if this const uses a custom type (iota pattern)
+		if usedType, hasType := decls.constTypes[constPos]; hasType {
+			// Check if the type is defined in this file
+			if _, typeExists := decls.typeNames[usedType]; typeExists {
+				// Valid iota pattern - skip
+				continue
+			}
+		}
+
+		// Report violation
 		pass.Reportf(
-			constDecls[i],
+			constPos,
 			"KTN-CONST-002: les constantes doivent être groupées ensemble dans un seul bloc",
 		)
 	}

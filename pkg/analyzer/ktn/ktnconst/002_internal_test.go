@@ -148,7 +148,14 @@ func Test_checkScatteredConstBlocks(t *testing.T) {
 				},
 			}
 
-			checkScatteredConstBlocks(pass, tt.constDecls)
+			// Create fileDeclarations with const positions
+			decls := &fileDeclarations{
+				constDecls: tt.constDecls,
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
+			}
+
+			checkScatteredConstBlocks(pass, decls)
 
 			// Verify report count
 			if reportCount != tt.wantReports {

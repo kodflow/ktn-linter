@@ -3,6 +3,7 @@ package ktninterface
 
 import (
 	"go/ast"
+	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
@@ -54,8 +55,11 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 	// Second pass: find interface usages
 	findInterfaceUsages(pass, usedInterfaces)
 
+	// Third pass: collect compile-time checks (var _ I = (*S)(nil))
+	compileTimeChecks := collectCompileTimeChecks(pass)
+
 	// Report unused interfaces
-	reportUnusedInterfaces(pass, interfaces, usedInterfaces, structNames)
+	reportUnusedInterfaces(pass, interfaces, usedInterfaces, structNames, compileTimeChecks)
 
 	// Retour de la fonction
 	return nil, nil
@@ -140,6 +144,100 @@ func findInterfaceUsages(pass *analysis.Pass, usedInterfaces map[string]bool) {
 	}
 }
 
+// collectCompileTimeChecks collecte les compile-time interface checks.
+// Pattern: var _ InterfaceName = (*StructName)(nil)
+//
+// Params:
+//   - pass: contexte d'analyse
+//
+// Returns:
+//   - map[string]bool: map des interfaces qui ont un compile-time check
+func collectCompileTimeChecks(pass *analysis.Pass) map[string]bool {
+	checks := make(map[string]bool, initialInterfacesCap)
+
+	// Parcourir tous les fichiers du package
+	for _, file := range pass.Files {
+		// Parcourir les déclarations
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Vérifier si c'est une déclaration var
+			if !ok || genDecl.Tok != token.VAR {
+				// Continuer l'itération
+				continue
+			}
+
+			// Parcourir les specs
+			for _, spec := range genDecl.Specs {
+				valueSpec, ok := spec.(*ast.ValueSpec)
+				// Vérifier si c'est une ValueSpec
+				if !ok {
+					// Continuer l'itération
+					continue
+				}
+
+				// Extraire le nom de l'interface
+				ifaceName := extractInterfaceFromCheck(valueSpec)
+				// Ajouter si trouvé
+				if ifaceName != "" {
+					checks[ifaceName] = true
+				}
+			}
+		}
+	}
+
+	// Retour de la map
+	return checks
+}
+
+// extractInterfaceFromCheck extrait le nom de l'interface d'un compile-time check.
+// Pattern: var _ InterfaceName = (*StructName)(nil)
+//
+// Params:
+//   - spec: ValueSpec à analyser
+//
+// Returns:
+//   - string: nom de l'interface ou vide
+func extractInterfaceFromCheck(spec *ast.ValueSpec) string {
+	// Vérifier que le nom est "_"
+	if len(spec.Names) != 1 || spec.Names[0].Name != "_" {
+		// Pas le pattern attendu
+		return ""
+	}
+
+	// Vérifier qu'il y a un type explicite (l'interface)
+	if spec.Type == nil {
+		// Pas de type explicite
+		return ""
+	}
+
+	// Extraire le nom de l'interface
+	return extractInterfaceNameFromExpr(spec.Type)
+}
+
+// extractInterfaceNameFromExpr extrait le nom d'interface d'une expression.
+//
+// Params:
+//   - expr: expression à analyser
+//
+// Returns:
+//   - string: nom de l'interface ou vide
+func extractInterfaceNameFromExpr(expr ast.Expr) string {
+	// Vérifier le type de l'expression
+	switch t := expr.(type) {
+	// Identifiant simple (InterfaceName)
+	case *ast.Ident:
+		// Retour du nom
+		return t.Name
+	// Sélecteur (pkg.InterfaceName)
+	case *ast.SelectorExpr:
+		// Retour du sélecteur
+		return t.Sel.Name
+	}
+
+	// Type non reconnu
+	return ""
+}
+
 // checkNodeForInterfaceUsage vérifie un nœud AST pour les usages d'interface.
 //
 // Params:
@@ -215,38 +313,60 @@ func checkEmbeddedInterfaces(interfaceType *ast.InterfaceType, usedInterfaces ma
 //   - interfaces: map des interfaces trouvées
 //   - usedInterfaces: map des interfaces utilisées
 //   - structNames: map des noms de structs
-func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.TypeSpec, usedInterfaces map[string]bool, structNames map[string]bool) {
+//   - compileTimeChecks: map des interfaces vérifiées via var _ I = (*S)(nil)
+func reportUnusedInterfaces(pass *analysis.Pass, interfaces map[string]*ast.TypeSpec, usedInterfaces map[string]bool, structNames map[string]bool, compileTimeChecks map[string]bool) {
 	// Itération sur les interfaces
 	for name, typeSpec := range interfaces {
-		// Skip if interface is used
+		// Skip if interface is used directly in code
 		if usedInterfaces[name] {
+			// Interface utilisée
+			continue
+		}
+
+		// Skip if interface has a compile-time check (var _ Interface = (*Struct)(nil))
+		if compileTimeChecks[name] {
+			// Interface vérifiée via compile-time check
 			continue
 		}
 
 		// Skip if interface follows XXXInterface pattern for struct XXX
 		// Ces interfaces sont légitimes pour le mocking de la struct
 		if isStructInterfacePattern(name, structNames) {
+			// Pattern XXXInterface détecté
 			continue
 		}
 
 		// Skip if a struct with same name exists (interface for struct)
 		// L'interface est légitime car elle permet de mocker la struct
 		if hasCorrespondingStruct(name, structNames) {
+			// Struct correspondante trouvée
 			continue
 		}
 
-		// Report unused interface with helpful message for developers/AI
-		pass.Reportf(
-			typeSpec.Pos(),
-			"KTN-INTERFACE-001: interface '%s' non utilisée. "+
-				"Options: (1) créer une struct '%s' qui l'implémente pour permettre le mocking, "+
-				"(2) utiliser cette interface en paramètre/retour de fonction, "+
-				"(3) supprimer si vraiment inutile. "+
-				"Les interfaces permettent de créer des mocks et d'améliorer la couverture de tests",
-			name,
-			name,
-		)
+		// Report based on export status
+		reportUnusedInterface(pass, typeSpec, name)
 	}
+}
+
+// reportUnusedInterface génère le message d'erreur pour interface privée.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - typeSpec: spécification du type interface
+//   - name: nom de l'interface
+func reportUnusedInterface(pass *analysis.Pass, typeSpec *ast.TypeSpec, name string) {
+	// Interfaces exportées = skip (API publique, usage externe possible)
+	if ast.IsExported(name) {
+		// Ne rien signaler
+		return
+	}
+
+	// Interface privée non utilisée = WARNING
+	pass.Reportf(
+		typeSpec.Pos(),
+		"KTN-INTERFACE-001: interface privée '%s' non utilisée, à supprimer",
+		name,
+	)
 }
 
 // hasCorrespondingStruct vérifie si une struct correspondante existe.

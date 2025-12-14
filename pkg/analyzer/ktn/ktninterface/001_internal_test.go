@@ -22,7 +22,7 @@ func Test_runInterface001(t *testing.T) {
 		{
 			name: "unused interface",
 			code: `package test
-type UnusedInterface interface {
+type unusedInterface interface {
 	Method()
 }`,
 			wantErrs: 1,
@@ -505,12 +505,169 @@ func Test_reportUnusedInterfaces(t *testing.T) {
 			interfaces := make(map[string]*ast.TypeSpec)
 			usedInterfaces := make(map[string]bool)
 			structNames := make(map[string]bool)
+			compileTimeChecks := make(map[string]bool)
 
-			reportUnusedInterfaces(pass, interfaces, usedInterfaces, structNames)
+			reportUnusedInterfaces(pass, interfaces, usedInterfaces, structNames, compileTimeChecks)
 
 			// Verify no reports for empty interfaces
 			if reportCount != 0 {
 				t.Errorf("expected 0 reports, got %d", reportCount)
+			}
+		})
+	}
+}
+
+// Test_collectCompileTimeChecks tests the private collectCompileTimeChecks function.
+func Test_collectCompileTimeChecks(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
+		expected int
+	}{
+		{
+			name: "compile time check found",
+			code: `package test
+type MyInterface interface { Method() }
+var _ MyInterface = (*MyStruct)(nil)
+type MyStruct struct{}`,
+			expected: 1,
+		},
+		{
+			name:     "no compile time check",
+			code:     `package test; type MyInterface interface { Method() }`,
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
+			// Check parse result
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+			}
+
+			checks := collectCompileTimeChecks(pass)
+			// Verify check count
+			if len(checks) != tt.expected {
+				t.Errorf("expected %d checks, got %d", tt.expected, len(checks))
+			}
+		})
+	}
+}
+
+// Test_extractInterfaceFromCheck tests the private extractInterfaceFromCheck function.
+func Test_extractInterfaceFromCheck(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
+		expected string
+	}{
+		{
+			name:     "extract interface from check",
+			code:     `package test; var _ MyInterface = (*S)(nil)`,
+			expected: "MyInterface",
+		},
+		{
+			name:     "no interface in check",
+			code:     `package test; var x int = 5`,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
+			// Check parse result
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Find first var spec
+			for _, decl := range file.Decls {
+				genDecl, ok := decl.(*ast.GenDecl)
+				// Check if GenDecl
+				if !ok || genDecl.Tok != token.VAR {
+					continue
+				}
+				// Check first spec
+				if len(genDecl.Specs) > 0 {
+					spec := genDecl.Specs[0].(*ast.ValueSpec)
+					result := extractInterfaceFromCheck(spec)
+					// Verify result
+					if result != tt.expected {
+						t.Errorf("expected %q, got %q", tt.expected, result)
+					}
+				}
+			}
+		})
+	}
+}
+
+// Test_extractInterfaceNameFromExpr tests the private extractInterfaceNameFromExpr function.
+func Test_extractInterfaceNameFromExpr(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected string
+	}{
+		{name: "identifier extraction"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test with identifier
+			ident := &ast.Ident{Name: "MyInterface"}
+			result := extractInterfaceNameFromExpr(ident)
+			// Verify result
+			if result != "MyInterface" {
+				t.Errorf("expected MyInterface, got %q", result)
+			}
+
+			// Test with nil
+			result = extractInterfaceNameFromExpr(nil)
+			// Verify nil result
+			if result != "" {
+				t.Errorf("expected empty, got %q", result)
+			}
+		})
+	}
+}
+
+// Test_reportUnusedInterface tests the private reportUnusedInterface function.
+func Test_reportUnusedInterface(t *testing.T) {
+	tests := []struct {
+		name          string
+		interfaceName string
+		expectReport  int
+	}{
+		{name: "exported interface - no report", interfaceName: "MyInterface", expectReport: 0},
+		{name: "private interface - report", interfaceName: "myInterface", expectReport: 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			typeSpec := &ast.TypeSpec{Name: &ast.Ident{Name: tt.interfaceName}}
+			reportUnusedInterface(pass, typeSpec, tt.interfaceName)
+
+			// Verify report count
+			if reportCount != tt.expectReport {
+				t.Errorf("expected %d report, got %d", tt.expectReport, reportCount)
 			}
 		})
 	}
