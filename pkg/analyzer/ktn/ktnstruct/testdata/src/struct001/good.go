@@ -109,3 +109,74 @@ func init() {
 	// Appel de useUserService avec une implémentation concrète
 	useUserService(&userServiceImpl{users: map[int]string{}})
 }
+
+// --- CONSUMER PATTERN ---
+// Un consommateur est une struct qui utilise l'injection de dépendances.
+// Ces structs orchestrent les dépendances injectées et n'ont pas besoin de leur propre interface.
+
+// UserRepository est une interface pour la persistance.
+type UserRepository interface {
+	Save(name string) (int, error)
+	FindByID(id int) (string, error)
+}
+
+// EmailSender est une interface pour l'envoi d'emails.
+type EmailSender interface {
+	Send(to, subject, body string) error
+}
+
+// ConsumerService est un consommateur - il utilise des interfaces injectées.
+// PAS BESOIN D'INTERFACE car c'est un consommateur (orchestrateur).
+type ConsumerService struct {
+	repo   UserRepository
+	mailer EmailSender
+}
+
+// NewConsumerService crée un nouveau ConsumerService.
+//
+// Params:
+//   - repo: repository utilisateur
+//   - mailer: service d'envoi d'emails
+//
+// Returns:
+//   - *ConsumerService: nouvelle instance
+func NewConsumerService(repo UserRepository, mailer EmailSender) *ConsumerService {
+	// Retour de la nouvelle instance
+	return &ConsumerService{repo: repo, mailer: mailer}
+}
+
+// CreateUser crée un utilisateur et envoie un email de bienvenue.
+//
+// Params:
+//   - name: nom de l'utilisateur
+//   - email: adresse email
+//
+// Returns:
+//   - int: identifiant créé
+//   - error: erreur éventuelle
+func (s *ConsumerService) CreateUser(name, email string) (int, error) {
+	// Sauvegarde via le repository injecté
+	id, err := s.repo.Save(name)
+	// Vérifier l'erreur
+	if err != nil {
+		// Retour avec erreur
+		return 0, err
+	}
+	// Envoi email via le mailer injecté (ignore l'erreur)
+	_ = s.mailer.Send(email, "Welcome", "Hello "+name)
+	// Retour de l'ID
+	return id, nil
+}
+
+// GetUser récupère un utilisateur par ID.
+//
+// Params:
+//   - id: identifiant utilisateur
+//
+// Returns:
+//   - string: nom de l'utilisateur
+//   - error: erreur éventuelle
+func (s *ConsumerService) GetUser(id int) (string, error) {
+	// Récupération via le repository injecté
+	return s.repo.FindByID(id)
+}
