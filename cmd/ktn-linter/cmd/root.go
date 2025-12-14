@@ -10,20 +10,12 @@ import (
 
 // Flag names as constants for type safety.
 const (
-	// flagAI is the flag name for AI mode.
-	flagAI string = "ai"
-	// flagNoColor is the flag name for no-color mode.
-	flagNoColor string = "no-color"
-	// flagSimple is the flag name for simple mode.
-	flagSimple string = "simple"
 	// flagVerbose is the flag name for verbose mode.
 	flagVerbose string = "verbose"
 	// flagCategory is the flag name for category filter.
 	flagCategory string = "category"
 	// flagOnlyRule is the flag name for single rule filter.
 	flagOnlyRule string = "only-rule"
-	// flagFix is the flag name for auto-fix mode.
-	flagFix string = "fix"
 	// flagConfig is the flag name for config path.
 	flagConfig string = "config"
 )
@@ -39,12 +31,15 @@ var (
 
 	// rootCmd represents the base command when called without any subcommands.
 	rootCmd *cobra.Command = &cobra.Command{
-		Use:   "ktn-linter",
+		Use:   "ktn-linter lint [packages...]",
 		Short: "KTN-Linter - Linter for Go code following KTN conventions",
-		Long: `KTN-Linter is a specialized linter that enforces naming conventions and code quality standards for Go projects.
+		Long: `KTN-Linter ` + version + ` - Linter for Go code following KTN (Kodflow Typing Notation) conventions.
 
-It analyzes Go code to ensure compliance with KTN (Kodflow Typing Notation) standards.`,
-		Version: version,
+Examples:
+  ktn-linter lint ./...                           Lint all packages
+  ktn-linter lint --category=func ./...           Lint only function rules
+  ktn-linter lint --only-rule=KTN-FUNC-001 .      Lint only a specific rule
+  ktn-linter lint -v ./pkg/...                    Lint with verbose output`,
 	}
 )
 
@@ -56,7 +51,13 @@ It analyzes Go code to ensure compliance with KTN (Kodflow Typing Notation) stan
 // Returns: aucun
 func SetVersion(v string) {
 	version = v
-	rootCmd.Version = v
+	rootCmd.Long = `KTN-Linter ` + v + ` - Linter for Go code following KTN (Kodflow Typing Notation) conventions.
+
+Examples:
+  ktn-linter lint ./...                           Lint all packages
+  ktn-linter lint --category=func ./...           Lint only function rules
+  ktn-linter lint --only-rule=KTN-FUNC-001 .      Lint only a specific rule
+  ktn-linter lint -v ./pkg/...                    Lint with verbose output`
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -79,14 +80,14 @@ func Execute() {
 //
 // Params: aucun
 func init() {
+	// Disable default completion and help commands
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
+
 	// Define persistent flags (available to all subcommands)
 	pf := rootCmd.PersistentFlags()
-	pf.Bool(flagAI, false, "Enable AI-friendly output format")
-	pf.Bool(flagNoColor, false, "Disable colored output")
-	pf.Bool(flagSimple, false, "Simple one-line format for IDE integration")
 	pf.BoolP(flagVerbose, "v", false, "Verbose output")
 	pf.String(flagCategory, "", "Run only rules from specific category (func, var, error, etc.)")
 	pf.String(flagOnlyRule, "", "Run only a specific rule by code (e.g., KTN-FUNC-001)")
-	pf.Bool(flagFix, false, "Automatically apply suggested fixes from modernize analyzers")
 	pf.StringP(flagConfig, "c", "", "Path to configuration file (.ktn-linter.yaml)")
 }

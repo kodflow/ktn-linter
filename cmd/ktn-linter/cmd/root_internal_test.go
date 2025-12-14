@@ -28,9 +28,6 @@ func mockExitInCmd(t *testing.T) (restore func()) {
 	return func() {
 		OsExit = oldOsExit
 		// Reset Cobra flags to defaults
-		rootCmd.PersistentFlags().Set(flagAI, "false")
-		rootCmd.PersistentFlags().Set(flagNoColor, "false")
-		rootCmd.PersistentFlags().Set(flagSimple, "false")
 		rootCmd.PersistentFlags().Set(flagVerbose, "false")
 		rootCmd.PersistentFlags().Set(flagCategory, "")
 	}
@@ -173,11 +170,10 @@ func TestInitFlags(t *testing.T) {
 		name     string
 		flagName string
 	}{
-		{"ai flag exists", "ai"},
-		{"no-color flag exists", "no-color"},
-		{"simple flag exists", "simple"},
 		{"verbose flag exists", "verbose"},
 		{"category flag exists", "category"},
+		{"only-rule flag exists", "only-rule"},
+		{"config flag exists", "config"},
 	}
 
 	// Exécution tests
@@ -199,12 +195,11 @@ func TestRootCmdStructure(t *testing.T) {
 		check func(t *testing.T)
 	}{
 		{
-			name: "Use field is correct",
+			name: "Use field contains ktn-linter",
 			check: func(t *testing.T) {
-				const EXPECTED_USE string = "ktn-linter"
 				// Vérification Use
-				if rootCmd.Use != EXPECTED_USE {
-					t.Errorf("Expected Use='%s', got '%s'", EXPECTED_USE, rootCmd.Use)
+				if !strings.Contains(rootCmd.Use, "ktn-linter") {
+					t.Errorf("Expected Use to contain 'ktn-linter', got '%s'", rootCmd.Use)
 				}
 			},
 		},
@@ -285,11 +280,6 @@ func Test_setVersion(t *testing.T) {
 			version: "dev",
 			want:    "dev",
 		},
-		{
-			name:    "set empty version",
-			version: "",
-			want:    "",
-		},
 	}
 
 	// Exécution tests
@@ -299,9 +289,9 @@ func Test_setVersion(t *testing.T) {
 			// Configuration de la version
 			SetVersion(tt.version)
 
-			// Vérification de la version (accès interne à rootCmd)
-			if rootCmd.Version != tt.want {
-				t.Errorf("Expected version='%s', got '%s'", tt.want, rootCmd.Version)
+			// Vérification de la version (via Long description)
+			if !strings.Contains(rootCmd.Long, tt.want) {
+				t.Errorf("Expected Long to contain '%s', got '%s'", tt.want, rootCmd.Long)
 			}
 		})
 	}

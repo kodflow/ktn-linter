@@ -2,12 +2,10 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
 	"go/token"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn"
@@ -18,22 +16,11 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-const (
-	// initialFileEditsCap initial capacity for file edits map
-	initialFileEditsCap int = 16
-	// filePermissionRw read-write permission for file operations
-	filePermissionRw os.FileMode = 0644
-)
-
 // lintOptions holds all options for the lint command.
 type lintOptions struct {
-	aiMode     bool
-	noColor    bool
-	simple     bool
 	verbose    bool
 	category   string
 	onlyRule   string
-	fix        bool
 	configPath string
 }
 
@@ -41,15 +28,9 @@ type lintOptions struct {
 var lintCmd *cobra.Command = &cobra.Command{
 	Use:   "lint [packages...]",
 	Short: "Lint Go packages using KTN rules",
-	Long: `Lint analyzes Go packages and reports issues based on KTN conventions.
-
-Examples:
-  ktn-linter lint ./...
-  ktn-linter lint -category=error ./...
-  ktn-linter lint -ai ./path/to/file.go
-  ktn-linter lint --fix ./...`,
-	Args: cobra.MinimumNArgs(1),
-	Run:  runLint,
+	Long:  `Lint analyzes Go packages and reports issues based on KTN conventions.`,
+	Args:  cobra.MinimumNArgs(1),
+	Run:   runLint,
 }
 
 // init enregistre la commande lint auprès de la commande root.
@@ -116,20 +97,6 @@ func runLint(cmd *cobra.Command, args []string) {
 	// Filter out diagnostics from cache/tmp files (same logic as formatter)
 	filteredDiags := filterDiagnostics(diagnostics)
 
-	// Apply fixes if --fix flag is set
-	if opts.fix {
-		fixCount := applyFixes(filteredDiags, opts)
-		// Vérification de la condition
-		if fixCount > 0 {
-			fmt.Fprintf(os.Stderr, "Applied fixes to %d file(s)\n", fixCount)
-			// Alternative path handling
-		} else {
-			fmt.Fprintf(os.Stderr, "No fixes to apply\n")
-		}
-		// Success - exit with 0
-		OsExit(0)
-	}
-
 	formatAndDisplay(filteredDiags, opts)
 
 	// Vérification de la condition
@@ -152,24 +119,16 @@ func parseLintOptions(_ *cobra.Command) lintOptions {
 	// Use rootCmd.PersistentFlags() directly since persistent flags are defined there
 	flags := rootCmd.PersistentFlags()
 
-	aiMode, _ := flags.GetBool(flagAI)
-	noColor, _ := flags.GetBool(flagNoColor)
-	simple, _ := flags.GetBool(flagSimple)
 	verbose, _ := flags.GetBool(flagVerbose)
 	category, _ := flags.GetString(flagCategory)
 	onlyRule, _ := flags.GetString(flagOnlyRule)
-	fix, _ := flags.GetBool(flagFix)
 	configPath, _ := flags.GetString(flagConfig)
 
 	// Retour des options parsées
 	return lintOptions{
-		aiMode:     aiMode,
-		noColor:    noColor,
-		simple:     simple,
 		verbose:    verbose,
 		category:   category,
 		onlyRule:   onlyRule,
-		fix:        fix,
 		configPath: configPath,
 	}
 }
@@ -499,7 +458,8 @@ func createAnalysisPass(a *analysis.Analyzer, pkg *packages.Package, fset *token
 //
 // Returns: aucun
 func formatAndDisplay(diagnostics []diagWithFset, opts lintOptions) {
-	fmtr := formatter.NewFormatter(os.Stdout, opts.aiMode, opts.noColor, opts.simple, opts.verbose)
+	// Simple format is now the default (no color, one-line per diagnostic)
+	fmtr := formatter.NewFormatter(os.Stdout, false, true, true, opts.verbose)
 
 	// Vérification de la condition
 	if len(diagnostics) == 0 {
@@ -623,237 +583,3 @@ func extractDiagnostics(diagnostics []diagWithFset) []analysis.Diagnostic {
 	return diags
 }
 
-// applyFixes applique les fixes suggérés aux fichiers source.
-//
-// Params:
-//   - diagnostics: diagnostics avec fixes suggérés
-//   - opts: options de lint
-//
-// Returns:
-//   - int: nombre de fichiers modifiés
-func applyFixes(diagnostics []diagWithFset, opts lintOptions) int {
-	// Liste blanche des analyseurs dont les fixes sont sûrs
-	safeAnalyzers := map[string]bool{
-		"any": true, // interface{} → any
-	}
-
-	// Collecter les éditions par fichier
-	fileEdits, skippedCount := collectSafeEdits(diagnostics, safeAnalyzers, opts)
-
-	// Afficher le nombre de fixes skippés
-	// Vérification de la condition
-	if skippedCount > 0 {
-		fmt.Fprintf(os.Stderr, "Skipped %d unsafe fixes (use modernize tool for complex transformations)\n", skippedCount)
-	}
-
-	// Appliquer les éditions collectées
-	// Early return from function.
-	return applyCollectedEdits(fileEdits, opts)
-}
-
-// collectSafeEdits collecte les éditions de texte sûres depuis les diagnostics.
-//
-// Params:
-//   - diagnostics: diagnostics avec fixes suggérés
-//   - safeAnalyzers: map des analyseurs sûrs
-//   - opts: options de lint
-//
-// Returns:
-//   - map[string][]textEdit: éditions groupées par fichier
-//   - int: nombre de fixes skippés
-func collectSafeEdits(diagnostics []diagWithFset, safeAnalyzers map[string]bool, opts lintOptions) (map[string][]textEdit, int) {
-	fileEdits := make(map[string][]textEdit, initialFileEditsCap)
-	skippedCount := 0
-
-	// Parcourir tous les diagnostics
-	// Itération sur les éléments
-	for _, d := range diagnostics {
-		// Skip diagnostics without suggested fixes
-		if len(d.diag.SuggestedFixes) == 0 {
-			continue
-		}
-
-		// Skip analyzers not in safe list
-		// Vérification de la condition
-		if !safeAnalyzers[d.analyzerName] {
-			skippedCount++
-			// Log si verbose
-			// Vérification de la condition
-			if opts.verbose {
-				pos := d.fset.Position(d.diag.Pos)
-				fmt.Fprintf(os.Stderr, "Skipping unsafe fix at %s:%d (analyzer: %s)\n",
-					pos.Filename, pos.Line, d.analyzerName)
-			}
-			continue
-		}
-
-		// Extraire les éditions de texte
-		extractTextEdits(d, &fileEdits)
-	}
-
-	// Early return from function.
-	return fileEdits, skippedCount
-}
-
-// extractTextEdits extrait les éditions de texte depuis un diagnostic.
-//
-// Params:
-//   - d: diagnostic avec fixes
-//   - fileEdits: map pour stocker les éditions par fichier
-func extractTextEdits(d diagWithFset, fileEdits *map[string][]textEdit) {
-	// Process only the first suggested fix
-	if len(d.diag.SuggestedFixes) == 0 {
-		// Early return from function.
-		return
-	}
-
-	fix := d.diag.SuggestedFixes[0]
-
-	// Process all text edits in this fix
-	// Itération sur les éléments
-	for _, edit := range fix.TextEdits {
-		// Convert token positions to byte offsets
-		file := d.fset.File(edit.Pos)
-		// Vérification de la condition
-		if file == nil {
-			continue
-		}
-
-		startOffset := file.Offset(edit.Pos)
-		endOffset := file.Offset(edit.End)
-		pos := d.fset.Position(edit.Pos)
-
-		// Store edit for this file
-		(*fileEdits)[pos.Filename] = append((*fileEdits)[pos.Filename], textEdit{
-			start:   startOffset,
-			end:     endOffset,
-			newText: edit.NewText,
-		})
-	}
-}
-
-// applyCollectedEdits applique les éditions collectées à chaque fichier.
-//
-// Params:
-//   - fileEdits: éditions groupées par fichier
-//   - opts: options de lint
-//
-// Returns:
-//   - int: nombre de fichiers modifiés
-func applyCollectedEdits(fileEdits map[string][]textEdit, opts lintOptions) int {
-	fixCount := 0
-
-	// Itération sur les éléments
-	for filename, edits := range fileEdits {
-		// Vérification de la condition
-		if applyEditsToFile(filename, edits, opts) {
-			fixCount++
-			// Log si verbose
-			// Vérification de la condition
-			if opts.verbose {
-				fmt.Fprintf(os.Stderr, "Applied %d edits to %s\n", len(edits), filename)
-			}
-		}
-	}
-
-	// Early return from function.
-	return fixCount
-}
-
-// applyEditsToFile applique les modifications à un fichier.
-//
-// Params:
-//   - filename: chemin du fichier
-//   - edits: modifications à appliquer
-//   - opts: options de lint
-//
-// Returns:
-//   - bool: true si succès, false sinon
-func applyEditsToFile(filename string, edits []textEdit, opts lintOptions) bool {
-	// Read file content
-	content, err := os.ReadFile(filename)
-	// Vérification de la condition
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading file %s: %v\n", filename, err)
-		// Early return from function.
-		return false
-	}
-
-	// Sort edits by start position (descending) to apply from end to start
-	sort.Slice(edits, func(i, j int) bool {
-		// Sort by start position in reverse order
-		return edits[i].start > edits[j].start
-	})
-
-	// Remove overlapping edits (keep only first in reverse order = last in file)
-	nonOverlapping := filterOverlappingEdits(edits, opts)
-
-	// Apply each edit from end to start
-	result := content
-	// Itération sur les éléments
-	for _, edit := range nonOverlapping {
-		// Validate edit positions
-		if edit.start < 0 || edit.end > len(result) || edit.start > edit.end {
-			fmt.Fprintf(os.Stderr, "Invalid edit in %s: start=%d, end=%d, len=%d\n",
-				filename, edit.start, edit.end, len(result))
-			continue
-		}
-
-		// Apply the edit: before + newText + after
-		var buf bytes.Buffer
-		buf.Write(result[:edit.start])
-		buf.Write(edit.newText)
-		buf.Write(result[edit.end:])
-		result = buf.Bytes()
-	}
-
-	// Write back to file with same permissions
-	err = os.WriteFile(filename, result, filePermissionRw)
-	// Vérification de la condition
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", filename, err)
-		// Early return from function.
-		return false
-	}
-
-	// Early return from function.
-	return true
-}
-
-// filterOverlappingEdits supprime les éditions qui se chevauchent.
-//
-// Params:
-//   - edits: éditions triées par position décroissante
-//   - opts: options de lint
-//
-// Returns:
-//   - []textEdit: éditions non-chevauchantes
-func filterOverlappingEdits(edits []textEdit, opts lintOptions) []textEdit {
-	// Vérification de la condition
-	if len(edits) == 0 {
-		// Early return from function.
-		return edits
-	}
-
-	// Keep track of the last edit's start position
-	filtered := []textEdit{edits[0]}
-	lastStart := edits[0].start
-
-	// Check each subsequent edit
-	for i := 1; i < len(edits); i++ {
-		edit := edits[i]
-		// No overlap if this edit ends before the last edit starts
-		if edit.end <= lastStart {
-			filtered = append(filtered, edit)
-			lastStart = edit.start
-		} else {
-			// Skip overlapping edit
-			if opts.verbose {
-				fmt.Fprintf(os.Stderr, "Skipping overlapping edit at [%d:%d]\n", edit.start, edit.end)
-			}
-		}
-	}
-
-	// Early return from function.
-	return filtered
-}
