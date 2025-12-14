@@ -1,4 +1,4 @@
-// Analyzer 002 for the ktnreturn package.
+// Analyzer 001 for the ktnreturn package.
 package ktnreturn
 
 import (
@@ -13,31 +13,31 @@ import (
 )
 
 const (
-	// ruleCodeReturn002 rule code for RETURN-002
-	ruleCodeReturn002 string = "KTN-RETURN-002"
+	// ruleCodeReturn001 rule code for RETURN-001
+	ruleCodeReturn001 string = "KTN-RETURN-001"
 )
 
-// Analyzer002 detects nil returns for slice and map types.
-var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktnreturn002",
-	Doc:      "KTN-RETURN-002: préférer slice/map vide à nil",
-	Run:      runReturn002,
+// Analyzer001 detects nil returns for slice and map types.
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnreturn001",
+	Doc:      "KTN-RETURN-001: préférer slice/map vide à nil",
+	Run:      runReturn001,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runReturn002 analyzes return statements for nil slice/map returns.
+// runReturn001 analyzes return statements for nil slice/map returns.
 // Params:
 //   - pass: Analysis pass containing type information
 //
 // Returns:
 //   - any: always nil
 //   - error: analysis error if any
-func runReturn002(pass *analysis.Pass) (any, error) {
+func runReturn001(pass *analysis.Pass) (any, error) {
 	// Récupération de la configuration
 	cfg := config.Get()
 
 	// Vérifier si la règle est activée
-	if !cfg.IsRuleEnabled(ruleCodeReturn002) {
+	if !cfg.IsRuleEnabled(ruleCodeReturn001) {
 		// Règle désactivée
 		return nil, nil
 	}
@@ -52,7 +52,7 @@ func runReturn002(pass *analysis.Pass) (any, error) {
 		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
 		// Vérification si le fichier courant est exclu par la configuration de la règle
-		if cfg.IsFileExcluded(ruleCodeReturn002, filename) {
+		if cfg.IsFileExcluded(ruleCodeReturn001, filename) {
 			// Fichier exclu
 			return
 		}
@@ -136,11 +136,11 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 				typeInfo := returnTypes[i]
 				// Report avec message adapté au type
 				if typeInfo != "" {
-					msg, _ := messages.Get(ruleCodeReturn002)
+					msg, _ := messages.Get(ruleCodeReturn001)
 					pass.Reportf(
 						retStmt.Pos(),
 						"%s: %s",
-						ruleCodeReturn002,
+						ruleCodeReturn001,
 						msg.Format(config.Get().Verbose, typeInfo, typeInfo),
 					)
 				}

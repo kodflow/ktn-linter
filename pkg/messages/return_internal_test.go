@@ -8,7 +8,7 @@ import (
 // TestReturnMessagesRegistered tests that return messages are registered.
 func TestReturnMessagesRegistered(t *testing.T) {
 	returnRules := []string{
-		"KTN-RETURN-002",
+		"KTN-RETURN-001",
 	}
 
 	// Itération sur les règles

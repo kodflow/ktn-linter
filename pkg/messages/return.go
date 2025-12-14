@@ -5,7 +5,7 @@ package messages
 // registerReturnMessages enregistre les messages RETURN.
 func registerReturnMessages() {
 	Register(Message{
-		Code:  "KTN-RETURN-002",
+		Code:  "KTN-RETURN-001",
 		Short: "retourne nil au lieu de %s vide. Préférer %s{}",
 		Verbose: `PROBLÈME: La fonction retourne nil au lieu de %s vide.
 

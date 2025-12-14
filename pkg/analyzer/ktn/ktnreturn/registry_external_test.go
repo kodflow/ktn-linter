@@ -32,9 +32,9 @@ func TestAnalyzers(t *testing.T) {
 				}
 			}
 
-			// Vérifier que Analyzer002 est présent
+			// Vérifier que Analyzer001 est présent
 			expectedNames := map[string]bool{
-				"ktnreturn002": true,
+				"ktnreturn001": true,
 			}
 
 			// Vérification noms attendus
