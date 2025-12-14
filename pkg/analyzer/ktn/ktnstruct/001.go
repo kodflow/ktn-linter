@@ -796,6 +796,7 @@ func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]sh
 
 // formatFieldList formate une liste de champs en string.
 // Gère correctement les champs avec plusieurs noms (ex: a, b int).
+// Utilise pass.TypesInfo pour obtenir le type complet (avec package path).
 //
 // Params:
 //   - fields: liste de champs
@@ -803,7 +804,7 @@ func collectMethodsByStruct(file *ast.File, pass *analysis.Pass) map[string][]sh
 //
 // Returns:
 //   - string: représentation string
-func formatFieldList(fields *ast.FieldList, _pass *analysis.Pass) string {
+func formatFieldList(fields *ast.FieldList, pass *analysis.Pass) string {
 	// Si pas de champs
 	if fields == nil {
 		// Retour vide
@@ -813,7 +814,17 @@ func formatFieldList(fields *ast.FieldList, _pass *analysis.Pass) string {
 	var parts []string
 	// Parcourir les champs
 	for _, field := range fields.List {
-		typeStr := types.ExprString(field.Type)
+		// Utiliser TypesInfo pour obtenir le type résolu (avec chemin complet)
+		var typeStr string
+		if pass != nil && pass.TypesInfo != nil {
+			if t := pass.TypesInfo.TypeOf(field.Type); t != nil {
+				typeStr = types.TypeString(t, nil)
+			} else {
+				typeStr = types.ExprString(field.Type)
+			}
+		} else {
+			typeStr = types.ExprString(field.Type)
+		}
 		// Compter combien de noms partagent ce type
 		count := len(field.Names)
 		// Si pas de noms explicites (type anonyme), count = 1
