@@ -1,4 +1,4 @@
-// External tests for ktnreturn Analyzer002.
+// External tests for ktnreturn Analyzer001.
 package ktnreturn_test
 
 import (
@@ -10,24 +10,24 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestReturn002 tests the Analyzer002 for nil returns in slice/map types.
-func TestReturn002(t *testing.T) {
+// TestReturn001 tests the Analyzer001 for nil returns in slice/map types.
+func TestReturn001(t *testing.T) {
 	tests := []struct {
-		name          string
-		analyzer      *analysis.Analyzer
-		testDataDir   string
+		name             string
+		analyzer         *analysis.Analyzer
+		testDataDir      string
 		expectedBadCount int
 	}{
 		{
-			name:          "nil slice returns detection",
-			analyzer:      ktnreturn.Analyzer002,
-			testDataDir:   "return002",
+			name:             "nil slice returns detection",
+			analyzer:         ktnreturn.Analyzer001,
+			testDataDir:      "return001",
 			expectedBadCount: 6,
 		},
 		{
-			name:          "nil map returns validation",
-			analyzer:      ktnreturn.Analyzer002,
-			testDataDir:   "return002",
+			name:             "nil map returns validation",
+			analyzer:         ktnreturn.Analyzer001,
+			testDataDir:      "return001",
 			expectedBadCount: 6,
 		},
 	}

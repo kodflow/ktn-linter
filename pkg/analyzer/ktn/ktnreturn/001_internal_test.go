@@ -1,4 +1,4 @@
-// Internal tests for analyzer 002 in ktnreturn package.
+// Internal tests for analyzer 001 in ktnreturn package.
 package ktnreturn
 
 import (
@@ -14,8 +14,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Test_runReturn002 tests the private runReturn002 function
-func Test_runReturn002(t *testing.T) {
+// Test_runReturn001 tests the private runReturn001 function
+func Test_runReturn001(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -108,10 +108,10 @@ func GetError() error {
 			}
 
 			// Run analyzer
-			_, err = runReturn002(pass)
+			_, err = runReturn001(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runReturn002 failed: %v", err)
+				t.Fatalf("runReturn001 failed: %v", err)
 			}
 
 			// Check error count matches expectation
@@ -517,8 +517,8 @@ func Test_isSliceOrMapTypeWithNilTypeInfo(t *testing.T) {
 	}
 }
 
-// Test_runReturn002WithDisabledRule tests runReturn002 when rule is disabled.
-func Test_runReturn002WithDisabledRule(t *testing.T) {
+// Test_runReturn001WithDisabledRule tests runReturn001 when rule is disabled.
+func Test_runReturn001WithDisabledRule(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -530,7 +530,7 @@ func Test_runReturn002WithDisabledRule(t *testing.T) {
 			// Set configuration to disable rule
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
-					ruleCodeReturn002: {Enabled: config.Bool(false)},
+					ruleCodeReturn001: {Enabled: config.Bool(false)},
 				},
 			})
 			// Reset config after test
@@ -583,10 +583,10 @@ func Test_runReturn002WithDisabledRule(t *testing.T) {
 			}
 
 			// Run analyzer
-			_, err = runReturn002(pass)
+			_, err = runReturn001(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runReturn002 failed: %v", err)
+				t.Fatalf("runReturn001 failed: %v", err)
 			}
 
 			// Should report 0 errors when rule is disabled
@@ -598,8 +598,8 @@ func Test_runReturn002WithDisabledRule(t *testing.T) {
 	}
 }
 
-// Test_runReturn002WithFileExclusion tests runReturn002 with excluded files.
-func Test_runReturn002WithFileExclusion(t *testing.T) {
+// Test_runReturn001WithFileExclusion tests runReturn001 with excluded files.
+func Test_runReturn001WithFileExclusion(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -611,7 +611,7 @@ func Test_runReturn002WithFileExclusion(t *testing.T) {
 			// Set configuration to exclude specific file
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
-					ruleCodeReturn002: {
+					ruleCodeReturn001: {
 						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
@@ -667,10 +667,10 @@ func Test_runReturn002WithFileExclusion(t *testing.T) {
 			}
 
 			// Run analyzer
-			_, err = runReturn002(pass)
+			_, err = runReturn001(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runReturn002 failed: %v", err)
+				t.Fatalf("runReturn001 failed: %v", err)
 			}
 
 			// Should report 0 errors when file is excluded

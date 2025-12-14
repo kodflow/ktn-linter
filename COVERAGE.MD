@@ -107,7 +107,7 @@ Rapport de couverture généré automatiquement.
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟢 `002.go:checkNilReturns` | 92.9% |
+| 🟢 `001.go:checkNilReturns` | 92.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 93.9%
 
@@ -251,4 +251,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-14 17:27:23*
+*Généré le: 2025-12-14 17:40:49*
