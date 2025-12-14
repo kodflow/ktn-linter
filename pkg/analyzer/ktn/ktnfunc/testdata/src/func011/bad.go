@@ -1,4 +1,4 @@
-// Bad examples for the func013 test case.
+// Bad examples for the func011 test case.
 package func011
 
 // Constants used in complexity tests
@@ -21,13 +21,17 @@ const (
 	BAD_CASE_EIGHT        int = 8
 	BAD_CASE_NINE         int = 9
 	BAD_CASE_TEN          int = 10
+	BAD_CASE_ELEVEN       int = 11
+	BAD_CASE_TWELVE       int = 12
+	BAD_CASE_THIRTEEN     int = 13
+	BAD_CASE_FOURTEEN     int = 14
 )
 
-// ComplexityEleven demonstrates a function with cyclomatic complexity = 11 (exceeds limit of 10). This function intentionally violates KTN-FUNC-011 to test the complexity analyzer.
+// ComplexitySixteen demonstrates a function with cyclomatic complexity = 16 (exceeds limit of 15). This function intentionally violates KTN-FUNC-011 to test the complexity analyzer.
 //
 // Params:
 //   - x: input value to process
-func ComplexityEleven(x int) {
+func ComplexitySixteen(x int) { // want "KTN-FUNC-011: la fonction 'ComplexitySixteen' a une complexité cyclomatique de 16 \\(max: 15\\)"
 	// Check if x is positive
 	if x > 0 {
 		x++
@@ -40,6 +44,10 @@ func ComplexityEleven(x int) {
 	if x > BAD_THRESHOLD_TEN {
 		x++
 	}
+	// Check if x exceeds threshold twenty
+	if x > BAD_THRESHOLD_TWENTY {
+		x++
+	}
 	// First loop iteration
 	for i := 0; i < BAD_THRESHOLD_THREE; i++ {
 		x++
@@ -49,6 +57,14 @@ func ComplexityEleven(x int) {
 		x++
 	}
 	// Third loop iteration
+	for i := 0; i < BAD_THRESHOLD_THREE; i++ {
+		x++
+	}
+	// Fourth loop iteration
+	for i := 0; i < BAD_THRESHOLD_THREE; i++ {
+		x++
+	}
+	// Fifth loop iteration
 	for i := 0; i < BAD_THRESHOLD_THREE; i++ {
 		x++
 	}
@@ -66,6 +82,12 @@ func ComplexityEleven(x int) {
 	// Case for value 4
 	case BAD_CASE_FOUR:
 		x++
+	// Case for value 5
+	case BAD_CASE_FIVE:
+		x++
+	// Case for value 6
+	case BAD_CASE_SIX:
+		x++
 	}
 }
 
@@ -76,7 +98,7 @@ func ComplexityEleven(x int) {
 //
 // Returns:
 //   - int: processed result based on input
-func VeryComplex(x int) int {
+func VeryComplex(x int) int { // want "KTN-FUNC-011: la fonction 'VeryComplex' a une complexité cyclomatique de 18 \\(max: 15\\)"
 	// Check positive range
 	if x > 0 {
 		// Check threshold ten
@@ -112,6 +134,22 @@ func VeryComplex(x int) int {
 		}
 	}
 
+	// Second loop
+	for j := 0; j < BAD_THRESHOLD_FIVE; j++ {
+		// Check for positive values
+		if x > 0 {
+			x++
+		}
+	}
+
+	// Third loop
+	for k := 0; k < BAD_THRESHOLD_THREE; k++ {
+		// Check for threshold
+		if x > BAD_THRESHOLD_TEN {
+			x--
+		}
+	}
+
 	// Return result based on final value
 	switch x {
 	// Case for value 1
@@ -140,10 +178,11 @@ func VeryComplex(x int) int {
 //   - b: second boolean condition
 //   - c: third boolean condition
 //   - d: fourth boolean condition
+//   - e: fifth boolean condition
 //
 // Returns:
 //   - bool: result of complex logical evaluation
-func ManyLogicalOps(a, b, c, d bool) bool {
+func ManyLogicalOps(a, b, c, d, e bool) bool { // want "KTN-FUNC-011: la fonction 'ManyLogicalOps' a une complexité cyclomatique de 26 \\(max: 15\\)"
 	// Check a and b combination
 	if a && b {
 		// Return true when both a and b are true
@@ -179,82 +218,38 @@ func ManyLogicalOps(a, b, c, d bool) bool {
 		// Return true for this complex condition
 		return true
 	}
+	// Check e and a combination
+	if e && a {
+		// Return true for e and a
+		return true
+	}
+	// Check e or b combination
+	if e || b {
+		// Return true for e or b
+		return true
+	}
+	// Check all five conditions
+	if a && b && c && d && e {
+		// Return true for all five
+		return true
+	}
+	// Check any of five conditions
+	if a || b || c || d || e {
+		// Return true for any
+		return true
+	}
 	// Return false if no conditions matched
 	return false
 }
 
-// ComplexSelectRange demonstrates high complexity with select and range operations. This function intentionally violates KTN-FUNC-011 through multiple control structures.
-//
-// Params:
-//   - ch: channel to receive or send integers
-//   - items: slice of items to process
-//
-// Returns:
-//   - int: computed result from channel and range operations
-func ComplexSelectRange(ch chan int, items []int) int {
-	result := 0
-
-	// Process each item in the slice
-	for _, item := range items {
-		// Add positive items to result
-		if item > 0 {
-			result += item
-		}
-	}
-
-	// Handle channel communication
-	select {
-	// Case for receiving from channel
-	case x := <-ch:
-		// Process received value if above threshold
-		if x > BAD_THRESHOLD_TEN {
-			result += x
-		}
-	// Case for sending to channel
-	case ch <- result:
-		// Increment result if above threshold before sending
-		if result > BAD_THRESHOLD_FIVE {
-			result++
-		}
-	// Default case
-	default:
-		// Reset result for default case
-		result = 0
-	}
-
-	// Cap result at maximum
-	if result > BAD_THRESHOLD_HUNDRED {
-		// Limit to hundred
-		result = BAD_THRESHOLD_HUNDRED
-	}
-	// Ensure non-negative result
-	if result < 0 {
-		// Reset to zero for negative values
-		result = 0
-	}
-	// Adjust even results
-	if result%BAD_THRESHOLD_TWO == 0 {
-		// Increment even results
-		result++
-	}
-	// Cap result at fifty
-	if result > BAD_THRESHOLD_FIFTY {
-		// Limit to fifty
-		result = BAD_THRESHOLD_FIFTY
-	}
-
-	// Return final computed result
-	return result
-}
-
-// SwitchManyWithDefault has a switch with many cases causing high complexity. Complexity = 12 (1 base + 10 cases + 1 if). This intentionally violates KTN-FUNC-011.
+// SwitchManyWithDefault has a switch with many cases causing high complexity. Complexity = 17 (1 base + 15 cases + 1 if). This intentionally violates KTN-FUNC-011.
 //
 // Params:
 //   - x: input value to match against cases
 //
 // Returns:
 //   - int: result based on switch case matching
-func SwitchManyWithDefault(x int) int {
+func SwitchManyWithDefault(x int) int { // want "KTN-FUNC-011: la fonction 'SwitchManyWithDefault' a une complexité cyclomatique de 16 \\(max: 15\\)"
 	result := 0
 	// Switch on input value
 	switch x {
@@ -288,6 +283,18 @@ func SwitchManyWithDefault(x int) int {
 	// Case for 10
 	case BAD_CASE_TEN:
 		result = BAD_CASE_TEN
+	// Case for 11
+	case BAD_CASE_ELEVEN:
+		result = BAD_CASE_ELEVEN
+	// Case for 12
+	case BAD_CASE_TWELVE:
+		result = BAD_CASE_TWELVE
+	// Case for 13
+	case BAD_CASE_THIRTEEN:
+		result = BAD_CASE_THIRTEEN
+	// Case for 14
+	case BAD_CASE_FOURTEEN:
+		result = BAD_CASE_FOURTEEN
 	// Default case
 	default:
 		result = 0
@@ -300,7 +307,7 @@ func SwitchManyWithDefault(x int) int {
 	return result
 }
 
-// SelectManyWithDefault has a select with many communication cases causing high complexity. Complexity = 11 (1 base + 5 comm cases + 5 ifs). This intentionally violates KTN-FUNC-011.
+// SelectManyWithDefault has a select with many communication cases causing high complexity. Complexity = 16 (1 base + 5 comm cases + 10 ifs). This intentionally violates KTN-FUNC-011.
 //
 // Params:
 //   - ch1: first channel for receiving
@@ -311,7 +318,7 @@ func SwitchManyWithDefault(x int) int {
 //
 // Returns:
 //   - int: result from channel operations
-func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int {
+func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int { // want "KTN-FUNC-011: la fonction 'SelectManyWithDefault' a une complexité cyclomatique de 17 \\(max: 15\\)"
 	result := 0
 	// Select from multiple channels
 	select {
@@ -321,11 +328,19 @@ func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int {
 		if x > 0 {
 			result = x
 		}
+		// Check threshold
+		if x > BAD_THRESHOLD_TEN {
+			result += x
+		}
 	// Case from channel two
 	case y := <-ch2:
 		// Process value from channel two
 		if y > 0 {
 			result = y
+		}
+		// Check threshold
+		if y > BAD_THRESHOLD_TEN {
+			result += y
 		}
 	// Case from channel three
 	case z := <-ch3:
@@ -333,17 +348,29 @@ func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int {
 		if z > 0 {
 			result = z
 		}
+		// Check threshold
+		if z > BAD_THRESHOLD_TEN {
+			result += z
+		}
 	// Case from channel four
 	case a := <-ch4:
 		// Process value from channel four
 		if a > 0 {
 			result = a
 		}
+		// Check threshold
+		if a > BAD_THRESHOLD_TEN {
+			result += a
+		}
 	// Case from channel five
 	case b := <-ch5:
 		// Process value from channel five
 		if b > 0 {
 			result = b
+		}
+		// Check threshold
+		if b > BAD_THRESHOLD_TEN {
+			result += b
 		}
 	// Default case
 	default:
@@ -356,5 +383,88 @@ func SelectManyWithDefault(ch1, ch2, ch3, ch4, ch5 chan int) int {
 		result = BAD_THRESHOLD_TEN
 	}
 	// Return final result
+	return result
+}
+
+// ComplexSelectRange demonstrates high complexity with select and range operations. This function intentionally violates KTN-FUNC-011 through multiple control structures.
+//
+// Params:
+//   - ch: channel to receive or send integers
+//   - items: slice of items to process
+//
+// Returns:
+//   - int: computed result from channel and range operations
+func ComplexSelectRange(ch chan int, items []int) int { // want "KTN-FUNC-011: la fonction 'ComplexSelectRange' a une complexité cyclomatique de 17 \\(max: 15\\)"
+	result := 0
+
+	// Process each item in the slice
+	for _, item := range items {
+		// Add positive items to result
+		if item > 0 {
+			result += item
+		}
+		// Check for threshold
+		if item > BAD_THRESHOLD_FIVE {
+			result++
+		}
+	}
+
+	// Second range loop
+	for i, item := range items {
+		// Process based on index
+		if i%BAD_THRESHOLD_TWO == 0 {
+			result += item
+		}
+		// Check negative
+		if item < 0 {
+			result--
+		}
+	}
+
+	// Handle channel communication
+	select {
+	// Case for receiving from channel
+	case x := <-ch:
+		// Process received value if above threshold
+		if x > BAD_THRESHOLD_TEN {
+			result += x
+		}
+		// Check additional condition
+		if x > BAD_THRESHOLD_TWENTY {
+			result += x * BAD_THRESHOLD_TWO
+		}
+	// Case for sending to channel
+	case ch <- result:
+		// Increment result if above threshold before sending
+		if result > BAD_THRESHOLD_FIVE {
+			result++
+		}
+		// Check additional condition
+		if result > BAD_THRESHOLD_TEN {
+			result += BAD_THRESHOLD_TWO
+		}
+	// Default case
+	default:
+		// Reset result for default case
+		result = 0
+	}
+
+	// Cap result at maximum
+	if result > BAD_THRESHOLD_HUNDRED {
+		// Limit to hundred
+		result = BAD_THRESHOLD_HUNDRED
+	}
+	// Ensure non-negative result
+	if result < 0 {
+		// Reset to zero for negative values
+		result = 0
+	}
+	// Adjust even results
+	if result%BAD_THRESHOLD_TWO == 0 {
+		// Increment even results
+		result++
+	}
+
+	// Return final computed result
 	return result
 }
