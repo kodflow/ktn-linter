@@ -7,16 +7,19 @@ import (
 	"os"
 )
 
+// HTTPClient is an alias to test alias handling.
+type HTTPClient = http.Client
+
 // badHTTPClientWithOneMethod uses external concrete type with one method call.
 // This should trigger KTN-API-001.
-func badHTTPClientWithOneMethod(client *http.Client) (*http.Response, error) { // want "KTN-API-001"
+func badHTTPClientWithOneMethod(client *http.Client) (*http.Response, error) { // want `KTN-API-001:.*client.*http\.Client.*Do\(`
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
 	return client.Do(req)
 }
 
 // badHTTPClientWithMultipleMethods uses external concrete type with multiple method calls.
 // This should trigger KTN-API-001.
-func badHTTPClientWithMultipleMethods(client *http.Client) (*http.Response, error) { // want "KTN-API-001"
+func badHTTPClientWithMultipleMethods(client *http.Client) (*http.Response, error) { // want `KTN-API-001:.*client.*http\.Client.*Get.*Head`
 	_, err := client.Get("http://example.com")
 	// Vérification de la condition
 	if err != nil {
@@ -27,7 +30,7 @@ func badHTTPClientWithMultipleMethods(client *http.Client) (*http.Response, erro
 
 // badFileWithMethods uses os.File with method calls.
 // This should trigger KTN-API-001.
-func badFileWithMethods(f *os.File) ([]byte, error) { // want "KTN-API-001"
+func badFileWithMethods(f *os.File) ([]byte, error) { // want `KTN-API-001:.*f.*os\.File.*Read\(`
 	buf := make([]byte, 100)
 	_, err := f.Read(buf)
 	// Vérification de la condition
@@ -39,17 +42,24 @@ func badFileWithMethods(f *os.File) ([]byte, error) { // want "KTN-API-001"
 
 // badBufferWithMethods uses bytes.Buffer with method calls.
 // This should trigger KTN-API-001.
-func badBufferWithMethods(buf *bytes.Buffer) string { // want "KTN-API-001"
+func badBufferWithMethods(buf *bytes.Buffer) string { // want `KTN-API-001:.*buf.*bytes\.Buffer.*String\(`
 	return buf.String()
 }
 
 // badMultipleParams tests multiple external concrete params with method calls.
 // Both should trigger KTN-API-001.
-func badMultipleParams(client *http.Client, f *os.File) error { // want "KTN-API-001" "KTN-API-001"
+func badMultipleParams(client *http.Client, f *os.File) error { // want `KTN-API-001:.*client.*http\.Client.*Get\(` `KTN-API-001:.*f.*os\.File.*Close\(`
 	_, err := client.Get("http://example.com")
 	// Vérification de la condition
 	if err != nil {
 		return err
 	}
 	return f.Close()
+}
+
+// badAliasExternalType uses a type alias to external type.
+// Should still trigger KTN-API-001 because alias resolves to http.Client.
+func badAliasExternalType(c *HTTPClient) (*http.Response, error) { // want `KTN-API-001:.*c.*http\.Client.*Do\(`
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	return c.Do(req)
 }

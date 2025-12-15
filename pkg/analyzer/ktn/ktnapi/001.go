@@ -25,16 +25,19 @@ const (
 
 var (
 	// defaultAllowedPackages contains packages that are allowed by default.
-	// These packages contain fundamental types that don't need interfaces.
+	// - time/context: fundamental types that don't need interfaces
+	// - go/ast, go/token, go/types: essential for AST analysis tools
+	// - analysis/inspector: essential for Go static analysis tools
+	// - ktn-linter/pkg/config: our own config package for linter configuration
 	defaultAllowedPackages map[string]bool = map[string]bool{
-		"time":                                  true,
-		"context":                               true,
-		"go/token":                              true,
-		"go/ast":                                true,
-		"go/types":                              true,
-		"golang.org/x/tools/go/analysis":        true,
-		"golang.org/x/tools/go/ast/inspector":   true,
-		"github.com/kodflow/ktn-linter/pkg/config": true,
+		"time":                                      true,
+		"context":                                   true,
+		"go/ast":                                    true,
+		"go/token":                                  true,
+		"go/types":                                  true,
+		"golang.org/x/tools/go/analysis":            true,
+		"golang.org/x/tools/go/ast/inspector":       true,
+		"github.com/kodflow/ktn-linter/pkg/config":  true,
 	}
 
 	// defaultAllowedTypes contains fully qualified types that are allowed by default.
@@ -60,6 +63,7 @@ type paramInfo struct {
 	paramType     types.Type
 	namedType     *types.Named
 	methodsCalled map[string]bool
+	methodSigs    map[string]string // method name -> signature
 }
 
 // runAPI001 exécute l'analyse KTN-API-001.
@@ -178,6 +182,7 @@ func collectParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) map[*ast.Ident]*
 				paramType:     paramType,
 				namedType:     namedType,
 				methodsCalled: make(map[string]bool, defaultMapCapacity),
+				methodSigs:    make(map[string]string, defaultMapCapacity),
 			}
 		}
 	}
@@ -188,6 +193,7 @@ func collectParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) map[*ast.Ident]*
 
 // getExternalConcreteType checks if a type is an external concrete type.
 // Returns the named type if it is, nil otherwise.
+// Handles type aliases via types.Unalias.
 //
 // Params:
 //   - pass: analysis pass
@@ -196,9 +202,12 @@ func collectParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) map[*ast.Ident]*
 // Returns:
 //   - *types.Named: the named type if external concrete, nil otherwise
 func getExternalConcreteType(pass *analysis.Pass, t types.Type) *types.Named {
+	// Unwrap alias first
+	t = types.Unalias(t)
+
 	// Unwrap pointer
 	if ptr, ok := t.(*types.Pointer); ok {
-		t = ptr.Elem()
+		t = types.Unalias(ptr.Elem())
 	}
 
 	// Must be a named type
@@ -322,6 +331,116 @@ func scanBodyForMethodCalls(pass *analysis.Pass, body *ast.BlockStmt, params map
 	})
 }
 
+// getMethodSignature retrieves the signature of a method on a named type.
+//
+// Params:
+//   - namedType: the named type
+//   - methodName: name of the method
+//
+// Returns:
+//   - string: the method signature or empty string if not found
+func getMethodSignature(namedType *types.Named, methodName string) string {
+	// Lookup method on the type
+	obj, _, _ := types.LookupFieldOrMethod(namedType, true, nil, methodName)
+	// Vérifier si la méthode existe
+	if obj == nil {
+		// Méthode non trouvée
+		return ""
+	}
+
+	// Cast to func
+	fn, ok := obj.(*types.Func)
+	// Vérifier si c'est une fonction
+	if !ok {
+		// Pas une fonction
+		return ""
+	}
+
+	// Get signature
+	sig := fn.Type().(*types.Signature)
+	// Retour de la signature formatée
+	return formatMethodSignature(methodName, sig)
+}
+
+// formatMethodSignature formats a method signature for display.
+//
+// Params:
+//   - name: method name
+//   - sig: the signature
+//
+// Returns:
+//   - string: formatted signature line
+func formatMethodSignature(name string, sig *types.Signature) string {
+	// Build params
+	params := formatTupleTypes(sig.Params())
+	// Build results
+	results := formatTupleTypes(sig.Results())
+
+	// Format the signature
+	if results == "" {
+		// Pas de retour
+		return name + "(" + params + ")"
+	}
+
+	// Vérifier si plusieurs résultats
+	if sig.Results().Len() > 1 {
+		// Multiple results
+		return name + "(" + params + ") (" + results + ")"
+	}
+
+	// Single result
+	return name + "(" + params + ") " + results
+}
+
+// formatTupleTypes formats a tuple of types for display.
+//
+// Params:
+//   - tuple: the tuple
+//
+// Returns:
+//   - string: formatted types
+func formatTupleTypes(tuple *types.Tuple) string {
+	// Vérifier si tuple nil ou vide
+	if tuple == nil || tuple.Len() == 0 {
+		// Retour vide
+		return ""
+	}
+
+	tupleLen := tuple.Len()
+	parts := make([]string, 0, tupleLen)
+	// Parcourir les éléments
+	for i := range tupleLen {
+		v := tuple.At(i)
+		typeName := types.TypeString(v.Type(), shortQualifier)
+		// Vérifier si le paramètre a un nom
+		if v.Name() != "" {
+			parts = append(parts, v.Name()+" "+typeName)
+		} else {
+			// Paramètre anonyme
+			parts = append(parts, typeName)
+		}
+	}
+	// Retour des parties jointes
+	return strings.Join(parts, ", ")
+}
+
+// shortQualifier returns package name for qualification.
+//
+// Params:
+//   - pkg: the package
+//
+// Returns:
+//   - string: package name or empty
+func shortQualifier(pkg *types.Package) string {
+	// Vérifier si le package est nil
+	if pkg == nil {
+		// Retour vide
+		return ""
+	}
+	// Retour du nom du package
+	return pkg.Name()
+}
+
 // getBaseIdent extracts the base identifier from an expression.
 // Handles parentheses and dereferencing.
 //
@@ -399,9 +518,9 @@ func reportDiagnostics(pass *analysis.Pass, funcDecl *ast.FuncDecl, params map[*
 		// Generate interface name suggestion
 		ifaceName := suggestInterfaceName(info.ident.Name, info.namedType.Obj().Name())
 
-		// Get sorted method names
+		// Get sorted method names and signatures
 		methods := getSortedMethods(info.methodsCalled)
-		methodsStr := strings.Join(methods, ", ")
+		sigLines := buildInterfaceSignatures(info.namedType, methods)
 
 		// Format the message
 		msg, _ := messages.Get(ruleCodeAPI001)
@@ -415,15 +534,39 @@ func reportDiagnostics(pass *analysis.Pass, funcDecl *ast.FuncDecl, params map[*
 				config.Get().Verbose,
 				info.ident.Name,    // param name
 				typeName,           // type name
-				methodsStr,         // methods
 				ifaceName,          // suggested interface name
-				methodsStr,         // methods for interface
-				funcDecl.Name.Name, // function name
-				info.ident.Name,    // param name
-				ifaceName,          // interface name
+				sigLines,           // signatures for interface
+				funcDecl.Name.Name, // function name (verbose only)
+				info.ident.Name,    // param name (verbose only)
+				ifaceName,          // interface name (verbose only)
 			),
 		)
 	}
+}
+
+// buildInterfaceSignatures builds the interface method signatures.
+//
+// Params:
+//   - namedType: the named type
+//   - methods: sorted method names
+//
+// Returns:
+//   - string: formatted interface body with signatures
+func buildInterfaceSignatures(namedType *types.Named, methods []string) string {
+	lines := make([]string, 0, len(methods))
+	// Parcourir les méthodes
+	for _, method := range methods {
+		sig := getMethodSignature(namedType, method)
+		// Vérifier si la signature existe
+		if sig != "" {
+			lines = append(lines, sig)
+		} else {
+			// Fallback sans signature
+			lines = append(lines, method+"(...)")
+		}
+	}
+	// Retour des signatures jointes
+	return strings.Join(lines, "; ")
 }
 
 // suggestInterfaceName suggests an interface name based on param and type names.
@@ -492,6 +635,7 @@ func getSortedMethods(methods map[string]bool) []string {
 }
 
 // formatTypeName formats a type for display.
+// Handles aliases by showing the underlying type.
 //
 // Params:
 //   - t: type to format
@@ -499,14 +643,22 @@ func getSortedMethods(methods map[string]bool) []string {
 // Returns:
 //   - string: formatted type name
 func formatTypeName(t types.Type) string {
+	// Handle pointer to alias
+	isPtr := false
+	// Vérifier si c'est un pointeur
+	if ptr, ok := t.(*types.Pointer); ok {
+		isPtr = true
+		t = ptr.Elem()
+	}
+
+	// Unwrap alias
+	t = types.Unalias(t)
+
+	// Rebuild pointer if needed
+	if isPtr {
+		t = types.NewPointer(t)
+	}
+
 	// Retour du type formaté
-	return types.TypeString(t, func(pkg *types.Package) string {
-		// Vérifier si le package est nil
-		if pkg == nil {
-			// Retour vide
-			return ""
-		}
-		// Retour du nom du package
-		return pkg.Name()
-	})
+	return types.TypeString(t, shortQualifier)
 }

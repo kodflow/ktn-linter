@@ -118,3 +118,24 @@ func goodBuiltinTypes(s string, i int, b bool) string {
 	}
 	return string(rune(i))
 }
+
+// =============================================================================
+// V1 LIMITATIONS - Documented unsupported cases (no warning expected)
+// =============================================================================
+
+// goodIntermediateAssignment demonstrates v1 limitation.
+// y := x; y.Method() is NOT detected (intermediate variable).
+// This is a known limitation of v1, documented behavior.
+func goodIntermediateAssignment(client *http.Client) (*http.Response, error) {
+	c := client
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	return c.Do(req)
+}
+
+// goodMethodExpression demonstrates v1 limitation.
+// T.Method(x, ...) is NOT detected (method expression).
+// This is a known limitation of v1, documented behavior.
+func goodMethodExpression(client *http.Client) error {
+	_ = (*http.Client).CloseIdleConnections
+	return nil
+}

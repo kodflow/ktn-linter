@@ -26,7 +26,9 @@ func Test_isAllowedType(t *testing.T) {
 		{"allowed_type_context.Context", "context", "context.Context", true},
 		{"allowed_package_time", "time", "time.Other", true},
 		{"allowed_package_context", "context", "context.Other", true},
+		{"allowed_package_go_ast", "go/ast", "go/ast.File", true},
 		{"allowed_package_go_token", "go/token", "go/token.FileSet", true},
+		{"allowed_package_go_types", "go/types", "go/types.Named", true},
 		{"allowed_package_analysis", "golang.org/x/tools/go/analysis", "golang.org/x/tools/go/analysis.Pass", true},
 		{"allowed_package_inspector", "golang.org/x/tools/go/ast/inspector", "golang.org/x/tools/go/ast/inspector.Inspector", true},
 		{"allowed_package_config", "github.com/kodflow/ktn-linter/pkg/config", "github.com/kodflow/ktn-linter/pkg/config.Config", true},
@@ -609,6 +611,140 @@ func Test_formatTypeName(t *testing.T) {
 			// Verify result is not empty
 			if result == "" {
 				t.Error("formatTypeName() returned empty string")
+			}
+		})
+	}
+}
+
+// Test_shortQualifier tests the shortQualifier function.
+func Test_shortQualifier(t *testing.T) {
+	tests := []struct {
+		name     string
+		pkg      *types.Package
+		expected string
+	}{
+		{"nil_package", nil, ""},
+		{"named_package", types.NewPackage("net/http", "http"), "http"},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := shortQualifier(tt.pkg)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("shortQualifier() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_formatTupleTypes tests the formatTupleTypes function.
+func Test_formatTupleTypes(t *testing.T) {
+	tests := []struct {
+		name     string
+		tuple    *types.Tuple
+		expected string
+	}{
+		{"nil_tuple", nil, ""},
+		{"empty_tuple", types.NewTuple(), ""},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatTupleTypes(tt.tuple)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("formatTupleTypes() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_formatMethodSignature tests the formatMethodSignature function.
+func Test_formatMethodSignature(t *testing.T) {
+	tests := []struct {
+		name       string
+		methodName string
+		sig        *types.Signature
+		contains   string
+	}{
+		{
+			"no_params_no_results",
+			"Close",
+			types.NewSignatureType(nil, nil, nil, types.NewTuple(), types.NewTuple(), false),
+			"Close()",
+		},
+		{
+			"with_results",
+			"Read",
+			types.NewSignatureType(nil, nil, nil, types.NewTuple(), types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.Int])), false),
+			"Read()",
+		},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatMethodSignature(tt.methodName, tt.sig)
+			// Verify result contains expected
+			if result == "" {
+				t.Error("formatMethodSignature() returned empty string")
+			}
+		})
+	}
+}
+
+// Test_buildInterfaceSignatures tests the buildInterfaceSignatures function.
+func Test_buildInterfaceSignatures(t *testing.T) {
+	tests := []struct {
+		name     string
+		methods  []string
+		expected string
+	}{
+		{"empty_methods", []string{}, ""},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a minimal named type for testing
+			pkg := types.NewPackage("test", "test")
+			typeName := types.NewTypeName(0, pkg, "MyType", nil)
+			named := types.NewNamed(typeName, types.NewStruct(nil, nil), nil)
+
+			result := buildInterfaceSignatures(named, tt.methods)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("buildInterfaceSignatures() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_getMethodSignature tests the getMethodSignature function.
+func Test_getMethodSignature(t *testing.T) {
+	tests := []struct {
+		name       string
+		methodName string
+		expected   string
+	}{
+		{"nonexistent_method", "NonExistent", ""},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a minimal named type without methods
+			pkg := types.NewPackage("test", "test")
+			typeName := types.NewTypeName(0, pkg, "MyType", nil)
+			named := types.NewNamed(typeName, types.NewStruct(nil, nil), nil)
+
+			result := getMethodSignature(named, tt.methodName)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("getMethodSignature() = %q, want %q", result, tt.expected)
 			}
 		})
 	}

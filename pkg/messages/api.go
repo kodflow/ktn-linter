@@ -6,7 +6,7 @@ package messages
 func registerAPIMessages() {
 	Register(Message{
 		Code:  "KTN-API-001",
-		Short: "paramètre '%s' dépend du type concret externe '%s'; utiliser une interface minimale avec {%s}",
+		Short: "paramètre '%s' utilise type concret '%s'; suggérer interface '%s' avec: %s",
 		Verbose: `PROBLÈME: Le paramètre '%s' est typé par '%s' (type concret externe).
 
 POURQUOI C'EST UN PROBLÈME:
@@ -16,12 +16,10 @@ POURQUOI C'EST UN PROBLÈME:
 
 SOLUTION: Définir une interface minimale côté consumer:
 
-  // Interface minimale contenant uniquement les méthodes utilisées
   type %s interface {
       %s
   }
 
-  // Modifier la signature pour accepter l'interface
   func %s(%s %s) { ... }
 
 AVANTAGES:
@@ -29,10 +27,8 @@ AVANTAGES:
   - Découplage (ne dépend que du comportement nécessaire)
   - Principe ISP (Interface Segregation Principle)
 
-EXCEPTIONS AUTOMATIQUES:
-  - Paramètres déjà typés par interface
-  - Types du même package
-  - Types allowlist (time.Time, etc.)
-  - Paramètres utilisés uniquement comme données (sans appel de méthodes)`,
+LIMITES V1:
+  - y := x; y.Method() non détecté (variable intermédiaire)
+  - T.Method(x) non détecté (expression de méthode)`,
 	})
 }
