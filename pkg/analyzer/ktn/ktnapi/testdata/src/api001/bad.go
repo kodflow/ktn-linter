@@ -2,7 +2,6 @@
 package api001
 
 import (
-	"bytes"
 	"net/http"
 	"os"
 )
@@ -38,12 +37,6 @@ func badFileWithMethods(f *os.File) ([]byte, error) { // want `KTN-API-001:.*f.*
 		return nil, err
 	}
 	return buf, nil
-}
-
-// badBufferWithMethods uses bytes.Buffer with method calls.
-// This should trigger KTN-API-001.
-func badBufferWithMethods(buf *bytes.Buffer) string { // want `KTN-API-001:.*buf.*bytes\.Buffer.*buffer.*String`
-	return buf.String()
 }
 
 // badMultipleParams tests multiple external concrete params with method calls.

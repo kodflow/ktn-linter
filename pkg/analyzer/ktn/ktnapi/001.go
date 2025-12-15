@@ -28,6 +28,7 @@ var (
 	//
 	// RATIONALE:
 	// - time, context: Standard library types universally used as values (time.Time, context.Context)
+	// - strings, bytes: Standard library builder types (strings.Builder, bytes.Buffer) - common utilities
 	// - go/ast, go/token, go/types: Go toolchain AST packages - fundamental for any Go analyzer
 	// - golang.org/x/tools/go/analysis: Official Go analysis framework - all analyzers depend on *analysis.Pass
 	// - golang.org/x/tools/go/ast/inspector: Official AST traversal - performance-critical for linters
@@ -42,6 +43,8 @@ var (
 	defaultAllowedPackages map[string]bool = map[string]bool{
 		"time":                                     true,
 		"context":                                  true,
+		"strings":                                  true,
+		"bytes":                                    true,
 		"go/ast":                                   true,
 		"go/token":                                 true,
 		"go/types":                                 true,
@@ -69,10 +72,11 @@ var (
 
 // paramInfo holds information about a parameter being analyzed.
 type paramInfo struct {
-	ident         *ast.Ident
-	paramType     types.Type
-	namedType     *types.Named
-	methodsCalled map[string]bool
+	ident          *ast.Ident
+	paramType      types.Type
+	namedType      *types.Named
+	methodsCalled  map[string]bool
+	hasFieldAccess bool // true if any field is accessed (interface wouldn't help)
 }
 
 // runAPI001 exécute l'analyse KTN-API-001.
@@ -145,6 +149,9 @@ func analyzeFunction(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 
 	// Scan body for method calls on parameters
 	scanBodyForMethodCalls(pass, funcDecl.Body, params)
+
+	// Scan body for field accesses on parameters
+	scanBodyForFieldAccess(pass, funcDecl.Body, params)
 
 	// Report diagnostics for external concrete types with method calls
 	reportDiagnostics(pass, funcDecl, params)
@@ -339,6 +346,69 @@ func scanBodyForMethodCalls(pass *analysis.Pass, body *ast.BlockStmt, params map
 	})
 }
 
+// scanBodyForFieldAccess scans a function body for field accesses on parameters.
+// This detects param.Field patterns that are NOT method calls.
+// If any field access is found, interface suggestion would be inapplicable.
+//
+// Params:
+//   - pass: analysis pass
+//   - body: function body
+//   - params: parameter info map
+func scanBodyForFieldAccess(pass *analysis.Pass, body *ast.BlockStmt, params map[*ast.Ident]*paramInfo) {
+	// First, collect all selector expressions that are method calls
+	methodCallSelectors := make(map[*ast.SelectorExpr]bool, defaultMapCapacity)
+	// Collecter les sélecteurs d'appels de méthode
+	ast.Inspect(body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		// Vérifier si c'est un appel
+		if !ok {
+			// Continuer
+			return true
+		}
+		// Vérifier si c'est un sélecteur
+		if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
+			methodCallSelectors[sel] = true
+		}
+		// Continuer
+		return true
+	})
+
+	// Now find selector expressions that are NOT method calls (field accesses)
+	ast.Inspect(body, func(n ast.Node) bool {
+		sel, ok := n.(*ast.SelectorExpr)
+		// Vérifier si c'est un sélecteur
+		if !ok {
+			// Continuer
+			return true
+		}
+
+		// Skip if this is a method call
+		if methodCallSelectors[sel] {
+			// C'est un appel de méthode
+			return true
+		}
+
+		// Get the base identifier
+		baseIdent := getBaseIdent(sel.X)
+		// Vérifier si on a trouvé un identifiant
+		if baseIdent == nil {
+			// Continuer
+			return true
+		}
+
+		// Check if this matches any parameter
+		for paramIdent, info := range params {
+			// Vérifier si le récepteur correspond au paramètre
+			if matchesParam(pass, baseIdent, paramIdent) {
+				info.hasFieldAccess = true
+			}
+		}
+
+		// Continuer
+		return true
+	})
+}
+
 // getMethodSignature retrieves the signature of a method on a named type.
 //
 // Params:
@@ -520,6 +590,12 @@ func reportDiagnostics(pass *analysis.Pass, funcDecl *ast.FuncDecl, params map[*
 		// Vérifier si des méthodes ont été appelées
 		if len(info.methodsCalled) == 0 {
 			// Pas de méthodes appelées
+			continue
+		}
+
+		// Skip if there's field access - interface wouldn't help
+		if info.hasFieldAccess {
+			// Accès aux champs - suggestion inapplicable
 			continue
 		}
 

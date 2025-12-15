@@ -3,6 +3,7 @@ package ktnapi
 
 import (
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -32,6 +33,8 @@ func Test_isAllowedType(t *testing.T) {
 		{"allowed_package_analysis", "golang.org/x/tools/go/analysis", "golang.org/x/tools/go/analysis.Pass", true},
 		{"allowed_package_inspector", "golang.org/x/tools/go/ast/inspector", "golang.org/x/tools/go/ast/inspector.Inspector", true},
 		{"allowed_package_config", "github.com/kodflow/ktn-linter/pkg/config", "github.com/kodflow/ktn-linter/pkg/config.Config", true},
+		{"allowed_package_strings", "strings", "strings.Builder", true},
+		{"allowed_package_bytes", "bytes", "bytes.Buffer", true},
 		{"not_allowed_net_http", "net/http", "net/http.Client", false},
 		{"not_allowed_os", "os", "os.File", false},
 		{"not_allowed_external_package", "github.com/some/package", "github.com/some/package.Type", false},
@@ -906,6 +909,124 @@ func Test_getMethodSignature(t *testing.T) {
 			// Verify result
 			if result != tt.expected {
 				t.Errorf("getMethodSignature() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_scanBodyForFieldAccess tests the scanBodyForFieldAccess function.
+func Test_scanBodyForFieldAccess(t *testing.T) {
+	tests := []struct {
+		name               string
+		code               string
+		expectedFieldAccess bool
+	}{
+		{
+			name: "no_field_access",
+			code: `package test
+import "bytes"
+func DoSomething(buf *bytes.Buffer) string {
+	return buf.String()
+}`,
+			expectedFieldAccess: false,
+		},
+		{
+			name: "with_field_access",
+			code: `package test
+import "net/http"
+func DoSomething(req *http.Request) string {
+	return req.Method
+}`,
+			expectedFieldAccess: true,
+		},
+		{
+			name: "mixed_field_and_method",
+			code: `package test
+import "net/http"
+func DoSomething(req *http.Request) string {
+	_ = req.Context()
+	return req.Method
+}`,
+			expectedFieldAccess: true,
+		},
+	}
+
+	// Iterate over tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse test code
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Build TypesInfo
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			conf := types.Config{Importer: importer.Default()}
+			_, _ = conf.Check("test", fset, []*ast.File{f}, info)
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:      fset,
+				Files:     []*ast.File{f},
+				TypesInfo: info,
+				Report:    func(_ analysis.Diagnostic) {},
+			}
+
+			// Find function declaration
+			var funcDecl *ast.FuncDecl
+			// Inspect file
+			ast.Inspect(f, func(n ast.Node) bool {
+				// Check FuncDecl
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Name.Name == "DoSomething" {
+					funcDecl = fd
+					return false
+				}
+				// Continue traversal
+				return true
+			})
+
+			// Skip if no function found
+			if funcDecl == nil {
+				t.Fatal("Function not found")
+			}
+
+			// Create paramInfo map
+			params := make(map[*ast.Ident]*paramInfo)
+			// Get param ident
+			if len(funcDecl.Type.Params.List) > 0 {
+				// Get first param
+				for _, name := range funcDecl.Type.Params.List[0].Names {
+					params[name] = &paramInfo{
+						ident:         name,
+						methodsCalled: make(map[string]bool),
+					}
+				}
+			}
+
+			// Run scanBodyForFieldAccess
+			scanBodyForFieldAccess(pass, funcDecl.Body, params)
+
+			// Check result
+			hasFieldAccess := false
+			// Check all params
+			for _, info := range params {
+				// Check field access flag
+				if info.hasFieldAccess {
+					hasFieldAccess = true
+					break
+				}
+			}
+
+			// Verify result
+			if hasFieldAccess != tt.expectedFieldAccess {
+				t.Errorf("scanBodyForFieldAccess() hasFieldAccess = %v, want %v", hasFieldAccess, tt.expectedFieldAccess)
 			}
 		})
 	}

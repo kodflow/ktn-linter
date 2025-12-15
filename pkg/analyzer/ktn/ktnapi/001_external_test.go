@@ -22,19 +22,19 @@ func TestAPI001(t *testing.T) {
 			name:             "external concrete type with method calls",
 			analyzer:         ktnapi.Analyzer001,
 			testDataDir:      "api001",
-			expectedBadCount: 7,
+			expectedBadCount: 6,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// good.go: 0 errors, bad.go: 7 errors for external concrete types
+			// good.go: 0 errors, bad.go: 6 errors for external concrete types
 			// - badHTTPClientWithOneMethod: 1 error
 			// - badHTTPClientWithMultipleMethods: 1 error
 			// - badFileWithMethods: 1 error
-			// - badBufferWithMethods: 1 error
 			// - badMultipleParams: 2 errors (client + file)
 			// - badAliasExternalType: 1 error (alias to http.Client)
+			// Note: bytes.Buffer and strings.Builder are now in allowed list
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testDataDir, tt.expectedBadCount)
 		})
 	}
