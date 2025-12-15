@@ -1,4 +1,4 @@
-// Good examples for the var002 test case.
+// Package var002 provides good test cases.
 package var002
 
 // Good: Variables with explicit type AND value (format: var name type = value)

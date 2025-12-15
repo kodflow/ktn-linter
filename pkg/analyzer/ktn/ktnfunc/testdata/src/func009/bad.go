@@ -1,4 +1,4 @@
-// Bad examples for the func011 test case.
+// Package func009 contains test cases for KTN rules.
 package func009
 
 // badProcessSixItems creates a slice with magic number 6 (violates KTN-FUNC-009).

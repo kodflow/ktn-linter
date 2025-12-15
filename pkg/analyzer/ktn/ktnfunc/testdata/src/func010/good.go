@@ -1,4 +1,4 @@
-// Good examples for the func012 test case.
+// Package func010 provides good test cases.
 package func010
 
 import "unsafe"

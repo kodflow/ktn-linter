@@ -1,4 +1,4 @@
-// Good examples for the func008 test case.
+// Package func008 provides good test cases.
 package func008
 
 import "context"

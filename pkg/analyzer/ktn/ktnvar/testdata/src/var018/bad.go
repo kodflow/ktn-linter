@@ -1,4 +1,4 @@
-// Bad examples for the var018 test case.
+// Package var018 contains test cases for KTN rules.
 package var018
 
 // Constants to avoid magic numbers

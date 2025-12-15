@@ -1,4 +1,4 @@
-// Good examples for the interface001 test case.
+// Package interface001 provides good test cases.
 package interface001
 
 // goodUsedInterface is used in function parameter.

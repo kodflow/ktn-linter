@@ -1,4 +1,4 @@
-// Good examples for the var011 test case.
+// Package var011 provides good test cases.
 package var011
 
 import (

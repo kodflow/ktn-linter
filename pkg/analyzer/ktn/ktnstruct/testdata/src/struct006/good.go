@@ -1,4 +1,4 @@
-// Good examples for the struct006 test case.
+// Package struct006 provides good test cases.
 package struct006
 
 // GoodUserDTO est un DTO avec seulement des champs publics tagués.

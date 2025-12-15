@@ -1,4 +1,4 @@
-// Good examples for the const002 test case.
+// Package const002 provides good test cases.
 package const002
 
 // Good: All constants grouped in a single block at the very top

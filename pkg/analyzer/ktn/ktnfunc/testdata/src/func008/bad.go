@@ -1,4 +1,4 @@
-// Bad examples for the func008 test case.
+// Package func008 contains test cases for KTN rules.
 package func008
 
 import "context"

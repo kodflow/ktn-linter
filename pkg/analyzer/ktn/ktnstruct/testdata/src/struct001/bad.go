@@ -1,4 +1,4 @@
-// Bad examples for the struct001 test case.
+// Package struct001 contains test cases for KTN-STRUCT-001.
 package struct001
 
 // BadGetterMismatch est une struct avec un getter mal nommé.

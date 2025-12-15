@@ -1,4 +1,4 @@
-// Good examples for the func011 test case.
+// Package func009 provides good test cases.
 package func009
 
 // Constantes bien définies

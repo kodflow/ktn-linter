@@ -1,4 +1,4 @@
-// Bad examples for the var015 test case.
+// Package var014 contains test cases for KTN rules.
 package var014
 
 // Vars come first (good placement)

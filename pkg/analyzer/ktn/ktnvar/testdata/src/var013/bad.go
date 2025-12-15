@@ -1,4 +1,4 @@
-// Bad examples for the var014 test case.
+// Package var013 contains test cases for KTN rules.
 package var013
 
 // Bad: Multiple separate var declarations (violates KTN-VAR-013)

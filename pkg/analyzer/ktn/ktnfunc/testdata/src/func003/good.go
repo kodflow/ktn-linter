@@ -1,4 +1,4 @@
-// Good examples for the func003 test case.
+// Package func003 provides good test cases.
 package func003
 
 const (

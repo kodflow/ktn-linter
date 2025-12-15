@@ -1,4 +1,4 @@
-// Bad examples for the func008 test case.
+// Package func007 contains test cases for KTN rules.
 package func007
 
 const (

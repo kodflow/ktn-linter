@@ -1,4 +1,4 @@
-// Bad examples for the func011 test case.
+// Package func011 contains test cases for KTN rules.
 package func011
 
 // Constants used in complexity tests

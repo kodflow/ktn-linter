@@ -1,4 +1,4 @@
-// Bad examples for the const001 test case.
+// Package const001 contains test cases for KTN rules.
 package const001
 
 // Bad: All constants WITHOUT explicit types (violates KTN-CONST-001)

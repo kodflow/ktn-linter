@@ -1,4 +1,4 @@
-// Bad examples for the var010 test case.
+// Package var009 contains test cases for KTN rules.
 package var009
 
 // Constantes pour les valeurs de test

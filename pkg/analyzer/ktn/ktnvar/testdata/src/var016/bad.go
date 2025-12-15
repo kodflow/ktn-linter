@@ -1,4 +1,4 @@
-// Bad examples for the var017 test case.
+// Package var016 contains test cases for KTN rules.
 package var016
 
 // Bad: Using make([]T, N) where N is small constant

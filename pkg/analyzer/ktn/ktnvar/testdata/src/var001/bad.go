@@ -1,4 +1,4 @@
-// Bad examples for the var001 test case.
+// Package var001 contains test cases for KTN rules.
 package var001
 
 // Bad: Package-level variables using SCREAMING_SNAKE_CASE (violates KTN-VAR-001)

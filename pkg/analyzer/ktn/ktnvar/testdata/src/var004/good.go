@@ -1,4 +1,4 @@
-// Good examples for the var005 test case.
+// Package var004 provides good test cases.
 package var004
 
 // Good: Slices preallocated with capacity when known

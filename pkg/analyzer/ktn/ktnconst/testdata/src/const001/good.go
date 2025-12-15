@@ -1,4 +1,4 @@
-// Good examples for the const001 test case.
+// Package const001 provides good test cases.
 package const001
 
 // Good: All constants in a single grouped block with explicit types

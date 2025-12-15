@@ -1,4 +1,4 @@
-// Good examples for the func005 test case.
+// Package func005 provides good test cases.
 package func005
 
 // Constantes pour éviter les magic numbers

@@ -1,4 +1,4 @@
-// Good examples for the struct003 test case.
+// Package struct005 provides good test cases.
 package struct005
 
 // UserModel champs exportés avant privés - CONFORME.

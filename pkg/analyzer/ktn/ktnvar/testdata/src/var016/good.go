@@ -1,4 +1,4 @@
-// Good examples for the var017 test case.
+// Package var016 provides good test cases.
 package var016
 
 // Good: Using arrays for small fixed sizes or slices when appropriate

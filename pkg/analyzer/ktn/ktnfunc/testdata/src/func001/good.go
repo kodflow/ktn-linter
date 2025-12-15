@@ -1,4 +1,4 @@
-// Good examples for the func001 test case.
+// Package func001 provides good test cases.
 package func001
 
 // Good examples: error is always last

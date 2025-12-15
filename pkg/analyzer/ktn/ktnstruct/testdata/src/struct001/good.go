@@ -1,4 +1,3 @@
-// Good examples for the struct001 test case.
 package struct001
 
 // GoodService est une struct avec getter correctement nommé.

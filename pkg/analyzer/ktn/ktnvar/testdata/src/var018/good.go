@@ -1,4 +1,4 @@
-// Good examples for the var018 test case.
+// Package var018 provides good test cases.
 package var018
 
 // Constants to avoid magic numbers

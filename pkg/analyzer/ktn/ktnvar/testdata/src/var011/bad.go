@@ -1,4 +1,4 @@
-// Bad examples for the var011 test case.
+// Package var011 contains test cases for KTN rules.
 package var011
 
 const (

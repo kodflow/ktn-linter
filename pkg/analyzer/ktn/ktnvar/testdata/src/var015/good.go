@@ -1,4 +1,4 @@
-// Good examples for the var016 test case.
+// Package var015 provides good test cases.
 package var015
 
 // Good examples: maps with capacity hints (compliant with KTN-VAR-015)

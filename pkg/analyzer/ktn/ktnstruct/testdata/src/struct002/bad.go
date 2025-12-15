@@ -1,4 +1,4 @@
-// Bad examples for the struct005 test case.
+// Package struct002 contains test cases for KTN rules.
 package struct002
 
 // BadUserService est un service utilisateur sans constructeur.

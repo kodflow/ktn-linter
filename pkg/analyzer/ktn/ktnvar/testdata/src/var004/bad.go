@@ -1,4 +1,4 @@
-// Bad examples for the var005 test case.
+// Package var004 contains test cases for KTN rules.
 package var004
 
 // Bad: Slices created without capacity when it could be known

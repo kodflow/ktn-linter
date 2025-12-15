@@ -1,4 +1,4 @@
-// Bad examples for the var017 test case.
+// Package var017 contains test cases for KTN rules.
 package var017
 
 import (

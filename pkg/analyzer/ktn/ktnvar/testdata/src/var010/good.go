@@ -1,4 +1,4 @@
-// Good examples for the var010 test case.
+// Package var010 provides good test cases.
 package var010
 
 import "sync"
