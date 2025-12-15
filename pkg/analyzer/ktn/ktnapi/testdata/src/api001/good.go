@@ -69,6 +69,20 @@ func goodExternalConcreteFieldAccess(req *http.Request) string {
 	return req.Method + " " + req.URL.String()
 }
 
+// goodMixedFieldAndMethodAccess uses both field access and method calls.
+// No warning because interface can't expose fields - suggestion inapplicable.
+// See: https://github.com/kodflow/ktn-linter/issues/mixed-access-bug
+func goodMixedFieldAndMethodAccess(req *http.Request) string {
+	// Mixed access: field + method on same parameter
+	ctx := req.Context() // Method call
+	// Vérification de la condition
+	if ctx.Err() != nil {
+		return ""
+	}
+	// Field access - interface can't expose this
+	return req.Method + ": " + req.Host
+}
+
 // goodWithUnusedParam has external concrete type but parameter is unused.
 // No warning because no methods are called.
 func goodWithUnusedParam(_ *http.Client) string {
