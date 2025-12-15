@@ -1,4 +1,4 @@
-// Good examples for the var006 test case.
+// Package var005 provides good test cases.
 package var005
 
 // Good: Proper use of make with capacity or without length

@@ -1,4 +1,4 @@
-// Good examples for the var013 test case.
+// Package var013 provides good test cases.
 package var013
 
 const (

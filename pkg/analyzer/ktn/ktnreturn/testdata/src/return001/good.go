@@ -1,4 +1,4 @@
-// Good examples for the return002 test case.
+// Package return001 provides good test cases.
 package return002
 
 const (

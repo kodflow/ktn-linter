@@ -1,4 +1,4 @@
-// Bad examples for the var012 test case.
+// Package var012 contains test cases for KTN rules.
 package var012
 
 // dataHolder contient des données en bytes.

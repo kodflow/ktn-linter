@@ -1,4 +1,4 @@
-// Bad examples for the const002 test case.
+// Package const002 contains test cases for KTN rules.
 package const002
 
 // First const block (OK - at the top)

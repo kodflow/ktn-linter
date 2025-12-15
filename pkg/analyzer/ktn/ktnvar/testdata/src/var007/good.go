@@ -1,4 +1,4 @@
-// Good examples for the var008 test case.
+// Package var007 provides good test cases.
 package var007
 
 import "strings"

@@ -1,4 +1,4 @@
-// Good examples for the func014 test case.
+// Package func012 provides good test cases.
 package func012
 
 const (

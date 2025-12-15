@@ -1,4 +1,4 @@
-// Bad examples for the return002 test case.
+// Package return001 contains test cases for KTN rules.
 package return002
 
 // badReturnNilSlice returns nil for a slice type.

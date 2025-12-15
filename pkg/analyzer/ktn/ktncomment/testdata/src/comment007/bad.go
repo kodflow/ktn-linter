@@ -1,4 +1,4 @@
-// Bad examples for the func009 test case.
+// Package comment007 contains test cases for KTN rules.
 package comment007
 
 // Bad: Missing comments on branches and returns

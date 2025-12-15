@@ -1,4 +1,4 @@
-// Good examples for the func009 test case.
+// Package comment007 provides good test cases.
 package comment007
 
 // Good: All branches and returns have comments

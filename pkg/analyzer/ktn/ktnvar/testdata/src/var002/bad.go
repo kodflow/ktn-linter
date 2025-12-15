@@ -1,4 +1,4 @@
-// Bad examples for the var002 test case.
+// Package var002 contains test cases for KTN rules.
 package var002
 
 // Bad: Variables without explicit type (violates KTN-VAR-002)

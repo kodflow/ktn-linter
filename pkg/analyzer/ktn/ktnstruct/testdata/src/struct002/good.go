@@ -1,4 +1,4 @@
-// Good examples for the struct005 test case.
+// Package struct002 provides good test cases.
 package struct002
 
 const (

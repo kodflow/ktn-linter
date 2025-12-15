@@ -1,4 +1,4 @@
-// Bad examples for the struct003 test case.
+// Package struct005 contains test cases for KTN rules.
 package struct005
 
 // BadMixedFields représente une struct avec mauvais ordre des champs.

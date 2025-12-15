@@ -1,4 +1,4 @@
-// Good examples for the const002 test case.
+// Package comment003 provides good test cases.
 package comment003
 
 // Good: All constants have comments, explicit types, proper naming, single-block grouping

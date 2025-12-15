@@ -1,4 +1,4 @@
-// Bad examples for the const002 test case.
+// Package comment003 contains test cases for KTN rules.
 package comment003
 
 const (

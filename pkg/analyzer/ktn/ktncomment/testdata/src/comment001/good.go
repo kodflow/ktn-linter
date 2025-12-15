@@ -1,4 +1,4 @@
-// Good examples for the comment001 test case.
+// Package comment001 provides good test cases.
 package comment001
 
 const (

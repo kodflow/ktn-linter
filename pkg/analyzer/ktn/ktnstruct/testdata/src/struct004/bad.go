@@ -1,4 +1,4 @@
-// Bad examples for the struct001 test case.
+// Package struct004 contains test cases for KTN rules.
 package struct004
 
 // BadProduct représente un produit de test.

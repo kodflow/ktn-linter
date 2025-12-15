@@ -1,4 +1,4 @@
-// Bad examples for the struct004 test case.
+// Package comment005 contains test cases for KTN rules.
 package comment005
 
 // BadUser documentation insuffisante (1 seule ligne) - VIOLATION

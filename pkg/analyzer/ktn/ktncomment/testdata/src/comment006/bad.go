@@ -1,4 +1,4 @@
-// Bad examples for the comment006 test case.
+// Package comment006 contains test cases for KTN rules.
 package comment006
 
 // badNoDoc n'a aucune documentation.

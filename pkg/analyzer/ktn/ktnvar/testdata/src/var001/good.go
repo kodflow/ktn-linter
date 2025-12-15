@@ -1,4 +1,4 @@
-// Good examples for the var001 test case.
+// Package var001 provides good test cases.
 package var001
 
 // Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)

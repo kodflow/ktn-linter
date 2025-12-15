@@ -1,4 +1,4 @@
-// Good examples for the comment006 test case.
+// Package comment006 provides good test cases.
 package comment006
 
 // GoodNoParams effectue une action simple sans paramètres.

@@ -1,4 +1,4 @@
-// Bad examples for the interface001 test case.
+// Package interface001 contains test cases for KTN rules.
 package interface001
 
 // badUnusedInterface is never used anywhere.

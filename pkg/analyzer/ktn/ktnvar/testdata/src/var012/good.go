@@ -1,4 +1,4 @@
-// Good examples for the var012 test case.
+// Package var012 provides good test cases.
 package var012
 
 import "bytes"

@@ -1,4 +1,4 @@
-// Good examples for the struct004 test case.
+// Package comment005 provides good test cases.
 package comment005
 
 // User représente un utilisateur du système.

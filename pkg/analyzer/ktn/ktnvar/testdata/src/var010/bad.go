@@ -1,4 +1,4 @@
-// Bad examples for the var011 test case.
+// Package var010 contains test cases for KTN rules.
 package var010
 
 // Bad: Creating []byte buffers repeatedly in loops without sync.Pool

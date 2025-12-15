@@ -1,4 +1,4 @@
-// Bad examples for the struct006 test case.
+// Package struct006 contains test cases for KTN rules.
 package struct006
 
 // BadUserDTO est un DTO avec un champ privé tagué.

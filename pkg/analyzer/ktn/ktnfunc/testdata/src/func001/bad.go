@@ -1,4 +1,4 @@
-// Bad examples for the func001 test case.
+// Package func001 contains test cases for KTN rules.
 package func001
 
 // Bad examples: error is not last

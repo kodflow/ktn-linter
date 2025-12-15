@@ -1,4 +1,4 @@
-// Good examples for the const003 test case.
+// Package const003 provides good test cases.
 package const003
 
 // Good: All constants use CamelCase naming (Go standard)

@@ -1,4 +1,4 @@
-// Bad examples for the var008 test case.
+// Package var007 contains test cases for KTN rules.
 package var007
 
 // badStringConcatInForLoop concatenates strings in a for loop.
