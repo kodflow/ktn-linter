@@ -3,7 +3,6 @@ version: "2"
 run:
   timeout: 5m
   tests: true
-  go: "1.25.5"
 
 # Configuration minimale : uniquement KTN-Linter via make lint
 # Aucun linter golangci-lint activé
