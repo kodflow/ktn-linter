@@ -19,7 +19,7 @@ Rapport de couverture généré automatiquement.
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 94.9% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 95.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.1% |
@@ -50,7 +50,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `lint.go:selectFilesForAnalyzer` | 80.0% |
 | 🟡 `lint.go:createAnalysisPass` | 80.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` - 94.9%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` - 95.5%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -61,7 +61,6 @@ Rapport de couverture généré automatiquement.
 | 🟡 `001.go:isAllowedType` | 87.5% |
 | 🟡 `001.go:getMethodSignature` | 87.5% |
 | 🟡 `001.go:getBaseIdent` | 85.7% |
-| 🟡 `001.go:buildInterfaceSignatures` | 85.7% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` - 98.6%
 
@@ -250,4 +249,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-15 00:43:02*
+*Généré le: 2025-12-15 09:50:45*

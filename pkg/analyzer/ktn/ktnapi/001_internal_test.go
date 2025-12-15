@@ -392,29 +392,63 @@ func DoSomething(a int, b string) {}`,
 
 // Test_getExternalConcreteType tests the getExternalConcreteType function.
 func Test_getExternalConcreteType(t *testing.T) {
+	// Create test packages
+	httpPkg := types.NewPackage("net/http", "http")
+	timePkg := types.NewPackage("time", "time")
+	localPkg := types.NewPackage("myapp/internal", "internal")
+
+	// Create named types
+	clientTypeName := types.NewTypeName(0, httpPkg, "Client", nil)
+	clientNamed := types.NewNamed(clientTypeName, types.NewStruct(nil, nil), nil)
+
+	timeTypeName := types.NewTypeName(0, timePkg, "Time", nil)
+	timeNamed := types.NewNamed(timeTypeName, types.NewStruct(nil, nil), nil)
+
+	localTypeName := types.NewTypeName(0, localPkg, "MyService", nil)
+	localNamed := types.NewNamed(localTypeName, types.NewStruct(nil, nil), nil)
+
 	tests := []struct {
-		name string
+		name        string
+		typ         types.Type
+		expectNil   bool
+		expectPkg   string
 	}{
-		{"basic_type"},
-		{"string_type"},
+		{"basic_string_returns_nil", types.Typ[types.String], true, ""},
+		{"basic_int_returns_nil", types.Typ[types.Int], true, ""},
+		{"external_http_client", clientNamed, false, "net/http"},
+		{"pointer_to_external", types.NewPointer(clientNamed), false, "net/http"},
+		{"allowed_time_returns_nil", timeNamed, true, ""},
+		{"internal_package_returns_nil", localNamed, true, ""},
+		{"slice_returns_nil", types.NewSlice(types.Typ[types.Int]), true, ""},
+		{"interface_returns_nil", types.NewInterfaceType(nil, nil), true, ""},
+	}
+
+	// Create pass with minimal info
+	pass := &analysis.Pass{
+		Pkg: localPkg,
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
 	}
 
 	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create pass with minimal info
-			pass := &analysis.Pass{
-				TypesInfo: &types.Info{
-					Types: make(map[ast.Expr]types.TypeAndValue),
-				},
-			}
-
-			// Test with basic types (should return nil for basic types)
-			basicType := types.Typ[types.String]
-			result := getExternalConcreteType(pass, basicType)
-			// Basic types should return nil
-			if result != nil {
-				t.Logf("getExternalConcreteType returned non-nil for basic type")
+			result := getExternalConcreteType(pass, tt.typ)
+			// Verify nil expectation
+			if tt.expectNil {
+				// Should be nil
+				if result != nil {
+					t.Errorf("getExternalConcreteType() = %v, want nil", result)
+				}
+			} else {
+				// Should not be nil
+				if result == nil {
+					t.Error("getExternalConcreteType() = nil, want non-nil")
+				} else if result.Obj().Pkg().Path() != tt.expectPkg {
+					t.Errorf("getExternalConcreteType().Pkg().Path() = %q, want %q",
+						result.Obj().Pkg().Path(), tt.expectPkg)
+				}
 			}
 		})
 	}
@@ -592,25 +626,43 @@ func DoSomething() {}`
 
 // Test_formatTypeName tests the formatTypeName function.
 func Test_formatTypeName(t *testing.T) {
+	// Create test packages
+	httpPkg := types.NewPackage("net/http", "http")
+	osPkg := types.NewPackage("os", "os")
+	testPkg := types.NewPackage("test", "test")
+
+	// Create named types for testing
+	clientTypeName := types.NewTypeName(0, httpPkg, "Client", nil)
+	clientNamed := types.NewNamed(clientTypeName, types.NewStruct(nil, nil), nil)
+
+	fileTypeName := types.NewTypeName(0, osPkg, "File", nil)
+	fileNamed := types.NewNamed(fileTypeName, types.NewStruct(nil, nil), nil)
+
+	localTypeName := types.NewTypeName(0, testPkg, "MyType", nil)
+	localNamed := types.NewNamed(localTypeName, types.NewStruct(nil, nil), nil)
+
 	tests := []struct {
 		name     string
-		typeName string
+		typ      types.Type
 		expected string
 	}{
-		{"simple_type", "MyType", "MyType"},
-		{"pointer_type", "*MyType", "*MyType"},
-		{"package_type", "pkg.Type", "pkg.Type"},
+		{"basic_string", types.Typ[types.String], "string"},
+		{"basic_int", types.Typ[types.Int], "int"},
+		{"basic_bool", types.Typ[types.Bool], "bool"},
+		{"named_http_client", clientNamed, "http.Client"},
+		{"named_os_file", fileNamed, "os.File"},
+		{"named_local_type", localNamed, "test.MyType"},
+		{"pointer_to_named", types.NewPointer(clientNamed), "*http.Client"},
+		{"slice_of_int", types.NewSlice(types.Typ[types.Int]), "[]int"},
 	}
 
 	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create basic type for testing
-			basic := types.Typ[types.String]
-			result := formatTypeName(basic)
-			// Verify result is not empty
-			if result == "" {
-				t.Error("formatTypeName() returned empty string")
+			result := formatTypeName(tt.typ)
+			// Verify result matches expected
+			if result != tt.expected {
+				t.Errorf("formatTypeName() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
@@ -648,6 +700,20 @@ func Test_formatTupleTypes(t *testing.T) {
 	}{
 		{"nil_tuple", nil, ""},
 		{"empty_tuple", types.NewTuple(), ""},
+		{"single_int", types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.Int])), "int"},
+		{"single_string", types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.String])), "string"},
+		{"two_types", types.NewTuple(
+			types.NewVar(0, nil, "", types.Typ[types.Int]),
+			types.NewVar(0, nil, "", types.Universe.Lookup("error").Type()),
+		), "int, error"},
+		{"three_types", types.NewTuple(
+			types.NewVar(0, nil, "", types.Typ[types.String]),
+			types.NewVar(0, nil, "", types.Typ[types.Int]),
+			types.NewVar(0, nil, "", types.Typ[types.Bool]),
+		), "string, int, bool"},
+		{"slice_type", types.NewTuple(
+			types.NewVar(0, nil, "", types.NewSlice(types.Typ[types.Byte])),
+		), "[]uint8"}, // Note: byte is an alias for uint8 in Go type system
 	}
 
 	// Iterate over tests
@@ -668,7 +734,7 @@ func Test_formatMethodSignature(t *testing.T) {
 		name       string
 		methodName string
 		sig        *types.Signature
-		contains   string
+		expected   string
 	}{
 		{
 			"no_params_no_results",
@@ -677,10 +743,40 @@ func Test_formatMethodSignature(t *testing.T) {
 			"Close()",
 		},
 		{
-			"with_results",
+			"with_params_and_results",
 			"Read",
-			types.NewSignatureType(nil, nil, nil, types.NewTuple(), types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.Int])), false),
-			"Read()",
+			types.NewSignatureType(nil, nil, nil,
+				types.NewTuple(types.NewVar(0, nil, "p", types.NewSlice(types.Typ[types.Byte]))),
+				types.NewTuple(types.NewVar(0, nil, "n", types.Typ[types.Int]), types.NewVar(0, nil, "err", types.Universe.Lookup("error").Type())),
+				false),
+			"Read(p []uint8) (n int, err error)",
+		},
+		{
+			"with_named_param_and_result",
+			"Get",
+			types.NewSignatureType(nil, nil, nil,
+				types.NewTuple(types.NewVar(0, nil, "url", types.Typ[types.String])),
+				types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.String])),
+				false),
+			"Get(url string) string",
+		},
+		{
+			"single_result_no_parens",
+			"String",
+			types.NewSignatureType(nil, nil, nil,
+				types.NewTuple(),
+				types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.String])),
+				false),
+			"String() string",
+		},
+		{
+			"only_error_result",
+			"Validate",
+			types.NewSignatureType(nil, nil, nil,
+				types.NewTuple(),
+				types.NewTuple(types.NewVar(0, nil, "", types.Universe.Lookup("error").Type())),
+				false),
+			"Validate() error",
 		},
 	}
 
@@ -688,9 +784,9 @@ func Test_formatMethodSignature(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := formatMethodSignature(tt.methodName, tt.sig)
-			// Verify result contains expected
-			if result == "" {
-				t.Error("formatMethodSignature() returned empty string")
+			// Verify result matches expected
+			if result != tt.expected {
+				t.Errorf("formatMethodSignature() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
@@ -698,22 +794,55 @@ func Test_formatMethodSignature(t *testing.T) {
 
 // Test_buildInterfaceSignatures tests the buildInterfaceSignatures function.
 func Test_buildInterfaceSignatures(t *testing.T) {
+	// Create test package and type with methods
+	pkg := types.NewPackage("test", "test")
+	typeName := types.NewTypeName(0, pkg, "MyService", nil)
+	named := types.NewNamed(typeName, types.NewStruct(nil, nil), nil)
+
+	// Add methods to the named type
+	closeSig := types.NewSignatureType(
+		types.NewVar(0, pkg, "s", types.NewPointer(named)), nil, nil,
+		types.NewTuple(),
+		types.NewTuple(types.NewVar(0, nil, "", types.Universe.Lookup("error").Type())),
+		false)
+	closeFunc := types.NewFunc(0, pkg, "Close", closeSig)
+	named.AddMethod(closeFunc)
+
+	readSig := types.NewSignatureType(
+		types.NewVar(0, pkg, "s", types.NewPointer(named)), nil, nil,
+		types.NewTuple(types.NewVar(0, nil, "p", types.NewSlice(types.Typ[types.Byte]))),
+		types.NewTuple(
+			types.NewVar(0, nil, "n", types.Typ[types.Int]),
+			types.NewVar(0, nil, "err", types.Universe.Lookup("error").Type())),
+		false)
+	readFunc := types.NewFunc(0, pkg, "Read", readSig)
+	named.AddMethod(readFunc)
+
+	stringSig := types.NewSignatureType(
+		types.NewVar(0, pkg, "s", types.NewPointer(named)), nil, nil,
+		types.NewTuple(),
+		types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.String])),
+		false)
+	stringFunc := types.NewFunc(0, pkg, "String", stringSig)
+	named.AddMethod(stringFunc)
+
 	tests := []struct {
 		name     string
 		methods  []string
 		expected string
 	}{
 		{"empty_methods", []string{}, ""},
+		{"single_method_close", []string{"Close"}, "\tClose() error"},
+		{"single_method_string", []string{"String"}, "\tString() string"},
+		{"single_method_read", []string{"Read"}, "\tRead(p []uint8) (n int, err error)"},
+		{"multiple_methods_read_close", []string{"Read", "Close"}, "\tRead(p []uint8) (n int, err error)\n\tClose() error"},
+		{"nonexistent_method_placeholder", []string{"NonExistent"}, "\tNonExistent(...)"},
+		{"mixed_existent_nonexistent", []string{"Close", "NonExistent"}, "\tClose() error\n\tNonExistent(...)"},
 	}
 
 	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a minimal named type for testing
-			pkg := types.NewPackage("test", "test")
-			typeName := types.NewTypeName(0, pkg, "MyType", nil)
-			named := types.NewNamed(typeName, types.NewStruct(nil, nil), nil)
-
 			result := buildInterfaceSignatures(named, tt.methods)
 			// Verify result
 			if result != tt.expected {
@@ -725,22 +854,54 @@ func Test_buildInterfaceSignatures(t *testing.T) {
 
 // Test_getMethodSignature tests the getMethodSignature function.
 func Test_getMethodSignature(t *testing.T) {
+	// Create test package and type with methods
+	pkg := types.NewPackage("test", "test")
+	typeName := types.NewTypeName(0, pkg, "MyService", nil)
+	named := types.NewNamed(typeName, types.NewStruct(nil, nil), nil)
+
+	// Add Close method
+	closeSig := types.NewSignatureType(
+		types.NewVar(0, pkg, "s", types.NewPointer(named)), nil, nil,
+		types.NewTuple(),
+		types.NewTuple(types.NewVar(0, nil, "", types.Universe.Lookup("error").Type())),
+		false)
+	closeFunc := types.NewFunc(0, pkg, "Close", closeSig)
+	named.AddMethod(closeFunc)
+
+	// Add Read method with params and multiple returns
+	readSig := types.NewSignatureType(
+		types.NewVar(0, pkg, "s", types.NewPointer(named)), nil, nil,
+		types.NewTuple(types.NewVar(0, nil, "p", types.NewSlice(types.Typ[types.Byte]))),
+		types.NewTuple(
+			types.NewVar(0, nil, "n", types.Typ[types.Int]),
+			types.NewVar(0, nil, "err", types.Universe.Lookup("error").Type())),
+		false)
+	readFunc := types.NewFunc(0, pkg, "Read", readSig)
+	named.AddMethod(readFunc)
+
+	// Add String method with single return
+	stringSig := types.NewSignatureType(
+		types.NewVar(0, pkg, "s", types.NewPointer(named)), nil, nil,
+		types.NewTuple(),
+		types.NewTuple(types.NewVar(0, nil, "", types.Typ[types.String])),
+		false)
+	stringFunc := types.NewFunc(0, pkg, "String", stringSig)
+	named.AddMethod(stringFunc)
+
 	tests := []struct {
 		name       string
 		methodName string
 		expected   string
 	}{
 		{"nonexistent_method", "NonExistent", ""},
+		{"close_method", "Close", "Close() error"},
+		{"read_method", "Read", "Read(p []uint8) (n int, err error)"},
+		{"string_method", "String", "String() string"},
 	}
 
 	// Iterate over tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a minimal named type without methods
-			pkg := types.NewPackage("test", "test")
-			typeName := types.NewTypeName(0, pkg, "MyType", nil)
-			named := types.NewNamed(typeName, types.NewStruct(nil, nil), nil)
-
 			result := getMethodSignature(named, tt.methodName)
 			// Verify result
 			if result != tt.expected {

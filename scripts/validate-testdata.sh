@@ -45,6 +45,7 @@ echo ""
 
 # Mapping des préfixes de dossier vers les codes de règle
 declare -A CATEGORY_MAP
+CATEGORY_MAP["api"]="API"
 CATEGORY_MAP["comment"]="COMMENT"
 CATEGORY_MAP["const"]="CONST"
 CATEGORY_MAP["func"]="FUNC"
