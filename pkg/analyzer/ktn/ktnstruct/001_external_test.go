@@ -3,30 +3,33 @@ package ktnstruct_test
 import (
 	"testing"
 
-	ktnstruct "github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestStruct001 vérifie la détection des structs sans interface.
+// TestStruct001 vérifie la convention de nommage des getters/setters.
+// Les getters sont OPTIONNELS, mais s'ils existent, ils doivent suivre la convention.
+// Note: La détection du préfixe Get est gérée par STRUCT-003.
+// STRUCT-001 vérifie uniquement le mismatch nom getter vs champ retourné.
+// Erreurs attendues dans bad.go:
+// - Value() retourne le champ 'data', devrait être nommé Data() (1)
+// Total: 1 erreur
 func TestStruct001(t *testing.T) {
-	// good.go: 0 errors (interface complète)
-	// bad.go: 2 errors:
-	//   - BadUserService: struct sans interface
-	//   - BadIncompleteImpl: compile-time check présent mais interface incomplète
+	// 1 violation: mismatch getter/champ
 	tests := []struct {
 		name     string
 		analyzer string
 		expected int
 	}{
 		{
-			name:     "struct001_good_interface_complete",
+			name:     "struct001_good_getter_naming",
 			analyzer: "struct001",
-			expected: 2,
+			expected: 1,
 		},
 		{
 			name:     "struct001_verify_analyzer",
 			analyzer: "struct001",
-			expected: 2,
+			expected: 1,
 		},
 	}
 

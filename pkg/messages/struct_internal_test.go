@@ -17,7 +17,6 @@ func Test_registerStructMessages(t *testing.T) {
 		{name: "KTN-STRUCT-004 registered", code: "KTN-STRUCT-004"},
 		{name: "KTN-STRUCT-005 registered", code: "KTN-STRUCT-005"},
 		{name: "KTN-STRUCT-006 registered", code: "KTN-STRUCT-006"},
-		{name: "KTN-STRUCT-007 registered", code: "KTN-STRUCT-007"},
 	}
 
 	// Iterate over test cases

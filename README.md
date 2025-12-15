@@ -224,18 +224,17 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-FUNC-011](docs/rules/KTN-FUNC-011.md) | INFO | Complexité cyclomatique max 10 |
 | [KTN-FUNC-012](docs/rules/KTN-FUNC-012.md) | INFO | Named returns pour >3 valeurs de retour |
 
-### Structures (7 règles) - WARNING/INFO
+### Structures (6 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| [KTN-STRUCT-001](docs/rules/KTN-STRUCT-001.md) | WARNING | Interface obligatoire pour mockabilité (sauf DTOs) |
+| [KTN-STRUCT-001](docs/rules/KTN-STRUCT-001.md) | INFO | Convention getters/setters: `Field()` et `SetField()` |
 | [KTN-STRUCT-002](docs/rules/KTN-STRUCT-002.md) | WARNING | Constructeur NewX() requis (suffixes autorisés: NewXxxWithOption) |
 | [KTN-STRUCT-003](docs/rules/KTN-STRUCT-003.md) | WARNING | Pas de préfixe Get pour getters |
 | [KTN-STRUCT-004](docs/rules/KTN-STRUCT-004.md) | INFO | Un fichier Go par struct (DTOs peuvent être groupés) |
 | [KTN-STRUCT-005](docs/rules/KTN-STRUCT-005.md) | INFO | Ordre des champs (exportés avant privés) |
 | [KTN-STRUCT-006](docs/rules/KTN-STRUCT-006.md) | INFO | Pas de tags de sérialisation sur champs privés |
-| [KTN-STRUCT-007](docs/rules/KTN-STRUCT-007.md) | INFO | Convention getters/setters: `Field()` et `SetField()` |
 
-**Convention Getters/Setters (STRUCT-007)**:
+**Convention Getters/Setters (STRUCT-001)**:
 - Getters/setters sont **OPTIONNELS**
 - Si présents: `x.Value()` pour get, `x.SetValue(v)` pour set
 - Si getter existe mais nom ≠ champ (ex: `Value()` retourne `foo`), suggérer renommage vers `Foo()`
@@ -266,6 +265,11 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-RETURN-001](docs/rules/KTN-RETURN-001.md) | WARNING | Préférer slice/map vide à nil |
+
+### API (1 règle) - WARNING
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| [KTN-API-001](docs/rules/KTN-API-001.md) | WARNING | Interfaces minimales côté consumer pour dépendances externes |
 
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
@@ -308,10 +312,10 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 
 ## Statistiques
 
-- **Couverture globale**: 91.6%
+- **Couverture globale**: 95.0%
 - **Packages 100%**: utils, formatter
 - **Go version**: 1.25+
-- **Total règles KTN**: 62 (7 comment + 3 const + 18 var + 12 func + 7 struct + 13 test + 1 interface + 1 return)
+- **Total règles KTN**: 62 (7 comment + 3 const + 18 var + 12 func + 6 struct + 13 test + 1 interface + 1 return + 1 api)
 - **Total modernize**: 17 analyseurs actifs / 18 totaux
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 

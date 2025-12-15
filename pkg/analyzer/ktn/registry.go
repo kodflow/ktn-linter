@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/tools/go/analysis"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc"
@@ -27,9 +28,11 @@ const (
 // GetAllRules retourne toutes les règles KTN disponibles.
 //
 // Returns:
-//   - []*analysis.Analyzer: liste de tous les analyseurs (const + func + struct + var + test + package + modernize)
+//   - []*analysis.Analyzer: liste de tous les analyseurs (api + const + func + struct + var + test + package + modernize)
 func GetAllRules() []*analysis.Analyzer {
 	var all []*analysis.Analyzer
+	// Ajoute les analyseurs d'API/dépendances
+	all = append(all, ktnapi.Analyzers()...)
 	// Ajoute les analyseurs de constantes
 	all = append(all, ktnconst.GetAnalyzers()...)
 	// Ajoute les analyseurs de fonctions
@@ -59,6 +62,7 @@ func GetAllRules() []*analysis.Analyzer {
 func categoryAnalyzers() map[string]func() []*analysis.Analyzer {
 	// Retour de la map des catégories
 	return map[string]func() []*analysis.Analyzer{
+		"api":       ktnapi.Analyzers,
 		"const":     ktnconst.GetAnalyzers,
 		"func":      ktnfunc.GetAnalyzers,
 		"struct":    ktnstruct.GetAnalyzers,
