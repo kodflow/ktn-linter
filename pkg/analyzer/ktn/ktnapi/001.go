@@ -24,20 +24,30 @@ const (
 )
 
 var (
-	// defaultAllowedPackages contains packages that are allowed by default.
-	// - time/context: fundamental types that don't need interfaces
-	// - go/ast, go/token, go/types: essential for AST analysis tools
-	// - analysis/inspector: essential for Go static analysis tools
-	// - ktn-linter/pkg/config: our own config package for linter configuration
+	// defaultAllowedPackages contains packages exempt from KTN-API-001.
+	//
+	// RATIONALE:
+	// - time, context: Standard library types universally used as values (time.Time, context.Context)
+	// - go/ast, go/token, go/types: Go toolchain AST packages - fundamental for any Go analyzer
+	// - golang.org/x/tools/go/analysis: Official Go analysis framework - all analyzers depend on *analysis.Pass
+	// - golang.org/x/tools/go/ast/inspector: Official AST traversal - performance-critical for linters
+	// - ktn-linter/pkg/config: Internal config - self-reference would be circular
+	//
+	// These packages are exempt because:
+	// 1. They are part of Go's official toolchain for building analyzers
+	// 2. Creating interfaces for them would add complexity without benefit
+	// 3. They are not "external dependencies" in the typical sense
+	//
+	// TODO: Make configurable via .ktn-linter.yaml if needed
 	defaultAllowedPackages map[string]bool = map[string]bool{
-		"time":                                      true,
-		"context":                                   true,
-		"go/ast":                                    true,
-		"go/token":                                  true,
-		"go/types":                                  true,
-		"golang.org/x/tools/go/analysis":            true,
-		"golang.org/x/tools/go/ast/inspector":       true,
-		"github.com/kodflow/ktn-linter/pkg/config":  true,
+		"time":                                     true,
+		"context":                                  true,
+		"go/ast":                                   true,
+		"go/token":                                 true,
+		"go/types":                                 true,
+		"golang.org/x/tools/go/analysis":           true,
+		"golang.org/x/tools/go/ast/inspector":      true,
+		"github.com/kodflow/ktn-linter/pkg/config": true,
 	}
 
 	// defaultAllowedTypes contains fully qualified types that are allowed by default.
@@ -63,7 +73,6 @@ type paramInfo struct {
 	paramType     types.Type
 	namedType     *types.Named
 	methodsCalled map[string]bool
-	methodSigs    map[string]string // method name -> signature
 }
 
 // runAPI001 exécute l'analyse KTN-API-001.
@@ -182,7 +191,6 @@ func collectParams(pass *analysis.Pass, funcDecl *ast.FuncDecl) map[*ast.Ident]*
 				paramType:     paramType,
 				namedType:     namedType,
 				methodsCalled: make(map[string]bool, defaultMapCapacity),
-				methodSigs:    make(map[string]string, defaultMapCapacity),
 			}
 		}
 	}
@@ -408,7 +416,7 @@ func formatTupleTypes(tuple *types.Tuple) string {
 
 	tupleLen := tuple.Len()
 	parts := make([]string, 0, tupleLen)
-	// Parcourir les éléments
+	// Parcourir les éléments (range over int - Go 1.22+)
 	for i := range tupleLen {
 		v := tuple.At(i)
 		typeName := types.TypeString(v.Type(), shortQualifier)
@@ -545,13 +553,14 @@ func reportDiagnostics(pass *analysis.Pass, funcDecl *ast.FuncDecl, params map[*
 }
 
 // buildInterfaceSignatures builds the interface method signatures.
+// Returns a multi-line format suitable for copy/paste into code.
 //
 // Params:
 //   - namedType: the named type
 //   - methods: sorted method names
 //
 // Returns:
-//   - string: formatted interface body with signatures
+//   - string: formatted interface body with signatures (multi-line)
 func buildInterfaceSignatures(namedType *types.Named, methods []string) string {
 	lines := make([]string, 0, len(methods))
 	// Parcourir les méthodes
@@ -559,14 +568,14 @@ func buildInterfaceSignatures(namedType *types.Named, methods []string) string {
 		sig := getMethodSignature(namedType, method)
 		// Vérifier si la signature existe
 		if sig != "" {
-			lines = append(lines, sig)
+			lines = append(lines, "\t"+sig)
 		} else {
 			// Fallback sans signature
-			lines = append(lines, method+"(...)")
+			lines = append(lines, "\t"+method+"(...)")
 		}
 	}
-	// Retour des signatures jointes
-	return strings.Join(lines, "; ")
+	// Retour des signatures jointes (multi-ligne)
+	return strings.Join(lines, "\n")
 }
 
 // suggestInterfaceName suggests an interface name based on param and type names.
