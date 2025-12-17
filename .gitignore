@@ -73,6 +73,9 @@ logs/
 # Keep empty directories
 !.gitkeep
 
+# Claude Code configuration (local)
+.claude/
+
 # Claude Flow generated files
 .claude/settings.local.json
 .mcp.json
@@ -100,3 +103,7 @@ claude-flow
 # Removed Windows wrapper files per user request
 hive-mind-prompt-*.txt
 CONTEXT.md
+
+# Claude contextual files (auto-generated, not the root CLAUDE.md)
+**/CLAUDE.md
+!/CLAUDE.md
