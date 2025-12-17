@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktncomment package.
+// Package ktncomment provides analyzers for comment formatting rules.
 package ktncomment
 
 import "golang.org/x/tools/go/analysis"

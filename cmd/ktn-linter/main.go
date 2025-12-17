@@ -1,4 +1,4 @@
-// Entry point for the ktn-linter CLI tool.
+// Package main provides the entry point for the ktn-linter CLI tool.
 package main
 
 import (

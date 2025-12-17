@@ -1,4 +1,4 @@
-// Analyzer 003 for the ktnstruct package.
+// Package ktnstruct provides analyzers for struct-related lint rules.
 package ktnstruct
 
 import (

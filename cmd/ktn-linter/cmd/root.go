@@ -1,4 +1,4 @@
-// Root command configuration for the ktn-linter CLI.
+// Package cmd implements the CLI commands for ktn-linter.
 package cmd
 
 import (
@@ -18,6 +18,10 @@ const (
 	flagOnlyRule string = "only-rule"
 	// flagConfig is the flag name for config path.
 	flagConfig string = "config"
+	// flagFormat is the flag name for output format.
+	flagFormat string = "format"
+	// flagOutput is the flag name for output file path.
+	flagOutput string = "output"
 )
 
 // Global state for testing and version.
@@ -90,4 +94,6 @@ func init() {
 	pf.String(flagCategory, "", "Run only rules from specific category (func, var, error, etc.)")
 	pf.String(flagOnlyRule, "", "Run only a specific rule by code (e.g., KTN-FUNC-001)")
 	pf.StringP(flagConfig, "c", "", "Path to configuration file (.ktn-linter.yaml)")
+	pf.String(flagFormat, "text", "Output format: text, json, or sarif")
+	pf.StringP(flagOutput, "o", "", "Output file path (default: stdout)")
 }

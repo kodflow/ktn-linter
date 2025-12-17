@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktnstruct package.
+// Package ktnstruct provides analyzers for struct-related lint rules.
 package ktnstruct
 
 import "golang.org/x/tools/go/analysis"

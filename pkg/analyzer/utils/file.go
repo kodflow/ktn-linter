@@ -1,4 +1,4 @@
-// Utility functions for file detection.
+// Package utils provides AST utility functions for analyzers.
 package utils
 
 import (

@@ -15,9 +15,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **95.1%** |
+| 🟢 | **TOTAL (Global)** | **93.6%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.9% |
+| 🔴 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 48.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.6% |
@@ -33,22 +33,35 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 98.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
-| 🔵 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 91.6% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 91.8% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
 
 ---
 
 ## Détail des packages incomplets
 
-### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 95.9%
+### 🔴 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 48.5%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🔴 `lint.go:selectSingleRule` | 57.1% |
-| 🟡 `lint.go:analyzePackage` | 90.9% |
-| 🟡 `lint.go:selectFilesForAnalyzer` | 80.0% |
-| 🟡 `lint.go:createAnalysisPass` | 80.0% |
+| 🔴 `lint.go:runLint` | 75.0% |
+| 🟡 `lint.go:loadConfiguration` | 90.0% |
+| 🟢 `lint.go:runPipeline` | 92.3% |
+| 🟡 `lint.go:formatAndDisplay` | 88.9% |
+| 🔴 `lint.go:getOutputWriter` | 25.0% |
+| ⚫ `rules.go:runRules` | 0.0% |
+| ⚫ `rules.go:parseRulesOptions` | 0.0% |
+| ⚫ `rules.go:getRulesWithFilters` | 0.0% |
+| ⚫ `rules.go:buildRulesOutput` | 0.0% |
+| ⚫ `rules.go:formatRulesOutput` | 0.0% |
+| ⚫ `rules.go:formatRulesMarkdown` | 0.0% |
+| ⚫ `rules.go:writeRuleMarkdown` | 0.0% |
+| ⚫ `rules.go:formatRulesJSON` | 0.0% |
+| ⚫ `rules.go:formatRulesText` | 0.0% |
+| ⚫ `rules.go:writeRuleText` | 0.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` - 96.1%
 
@@ -246,7 +259,37 @@ Rapport de couverture généré automatiquement.
 | 🟢 `loader.go:loadFromDefaultLocations` | 93.8% |
 | 🟡 `loader.go:SaveToFile` | 83.3% |
 
+### 🟢 `github.com/kodflow/ktn-linter/pkg/formatter` - 99.5%
+
+| Fichier:Fonction | Couverture |
+|------------------|------------|
+| 🟡 `json.go:severityToLevel` | 80.0% |
+
+### 🟢 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 91.6%
+
+| Fichier:Fonction | Couverture |
+|------------------|------------|
+| 🟡 `loader.go:Load` | 85.7% |
+| 🟡 `orchestrator.go:Run` | 90.0% |
+| 🔴 `orchestrator.go:GetFirstFset` | 66.7% |
+| 🟢 `runner.go:Run` | 94.1% |
+| 🟡 `runner.go:analyzePackageParallel` | 90.9% |
+| 🔴 `runner.go:createPassParallel` | 60.0% |
+| 🟡 `runner.go:selectFiles` | 80.0% |
+| 🔴 `runner.go:runRequired` | 71.4% |
+| 🟡 `selector.go:selectSingleRule` | 83.3% |
+| 🟡 `selector.go:selectByCategory` | 83.3% |
+
+### 🟢 `github.com/kodflow/ktn-linter/pkg/rules` - 91.8%
+
+| Fichier:Fonction | Couverture |
+|------------------|------------|
+| 🔴 `examples.go:findProjectRoot` | 60.0% |
+| 🔴 `info.go:extractCodeWithoutColon` | 71.4% |
+| 🟡 `info.go:isValidRuleCode` | 80.0% |
+| 🟡 `info.go:ExtractCategory` | 85.7% |
+
 
 ---
 
-*Généré le: 2025-12-15 13:27:13*
+*Généré le: 2025-12-17 22:41:49*

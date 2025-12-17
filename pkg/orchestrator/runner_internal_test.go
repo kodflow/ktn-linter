@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"go/ast"
 	"go/token"
+	"sync"
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/packages"
 )
 
-// TestAnalysisRunner_analyzePackage tests the analyzePackage method.
-func TestAnalysisRunner_analyzePackage(t *testing.T) {
+// TestAnalysisRunner_analyzePackageParallel tests the analyzePackageParallel method.
+func TestAnalysisRunner_analyzePackageParallel(t *testing.T) {
 	tests := []struct {
 		name    string
 		verbose bool
@@ -40,10 +41,11 @@ func TestAnalysisRunner_analyzePackage(t *testing.T) {
 			}
 
 			results := make(map[*analysis.Analyzer]any)
-			var diagnostics []DiagnosticResult
+			diagChan := make(chan DiagnosticResult, 10)
 
 			// Should not panic
-			runner.analyzePackage(pkg, []*analysis.Analyzer{}, results, &diagnostics)
+			runner.analyzePackageParallel(pkg, []*analysis.Analyzer{}, results, diagChan)
+			close(diagChan)
 
 			// Verify verbose output
 			if tt.verbose && !bytes.Contains(buf.Bytes(), []byte("Analyzing package")) {
@@ -53,8 +55,8 @@ func TestAnalysisRunner_analyzePackage(t *testing.T) {
 	}
 }
 
-// TestAnalysisRunner_createPass tests the createPass method.
-func TestAnalysisRunner_createPass(t *testing.T) {
+// TestAnalysisRunner_createPassParallel tests the createPassParallel method.
+func TestAnalysisRunner_createPassParallel(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -81,9 +83,10 @@ func TestAnalysisRunner_createPass(t *testing.T) {
 			}
 
 			results := make(map[*analysis.Analyzer]any)
-			var diagnostics []DiagnosticResult
+			diagChan := make(chan DiagnosticResult, 10)
 
-			pass := runner.createPass(analyzer, pkg, fset, &diagnostics, results)
+			pass := runner.createPassParallel(analyzer, pkg, fset, diagChan, results)
+			close(diagChan)
 
 			// Verify pass created
 			if pass == nil {
@@ -97,6 +100,45 @@ func TestAnalysisRunner_createPass(t *testing.T) {
 			if pass.Fset != fset {
 				t.Error("expected fset to be set")
 			}
+		})
+	}
+}
+
+// TestAnalysisRunner_worker tests the worker method.
+func TestAnalysisRunner_worker(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "worker processes packages from channel",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, false)
+
+			fset := token.NewFileSet()
+			pkg := &packages.Package{
+				PkgPath: "test/pkg",
+				Fset:    fset,
+				Syntax:  []*ast.File{},
+			}
+
+			pkgChan := make(chan *packages.Package, 1)
+			diagChan := make(chan DiagnosticResult, 10)
+			var wg sync.WaitGroup
+
+			pkgChan <- pkg
+			close(pkgChan)
+
+			wg.Add(1)
+			// Worker will call wg.Done() via defer
+			runner.worker([]*analysis.Analyzer{}, pkgChan, diagChan, &wg)
+			close(diagChan)
+			// Wait for worker to complete
+			wg.Wait()
 		})
 	}
 }

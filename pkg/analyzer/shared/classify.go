@@ -1,4 +1,4 @@
-// Shared utilities for function classification and test name parsing.
+// Package shared provides common utilities for static analysis.
 package shared
 
 import (

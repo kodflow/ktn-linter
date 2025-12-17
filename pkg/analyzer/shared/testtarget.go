@@ -1,4 +1,4 @@
-// TestTarget type for test function target information.
+// Package shared provides common utilities for static analysis.
 package shared
 
 // TestTarget represents the target of a test function.

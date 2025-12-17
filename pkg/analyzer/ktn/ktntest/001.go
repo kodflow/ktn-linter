@@ -1,4 +1,4 @@
-// Analyzer 001 for the ktntest package.
+// Package ktntest provides analyzers for test file lint rules.
 package ktntest
 
 import (

@@ -1,4 +1,4 @@
-// Analysis runner for executing analyzers on packages.
+// Package orchestrator coordinates the linting pipeline.
 package orchestrator
 
 import (
@@ -7,12 +7,22 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/packages"
 )
+
+// diagChannelBufferMultiplier is the buffer multiplier for diagnostic channels.
+const diagChannelBufferMultiplier int = 10
+
+// waitGroup defines the interface for wait group operations.
+type waitGroup interface {
+	Done()
+}
 
 // AnalysisRunner handles running analyzers on packages.
 // Manages file selection, required analyzer execution, and pass creation.
@@ -37,7 +47,8 @@ func NewAnalysisRunner(stderr io.Writer, verbose bool) *AnalysisRunner {
 	}
 }
 
-// Run executes all analyzers on the given packages.
+// Run executes all analyzers on the given packages in parallel.
+// Uses worker pool limited by GOMAXPROCS for concurrency control.
 //
 // Params:
 //   - pkgs: packages to analyze
@@ -46,30 +57,78 @@ func NewAnalysisRunner(stderr io.Writer, verbose bool) *AnalysisRunner {
 // Returns:
 //   - []DiagnosticResult: collected diagnostics
 func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Analyzer) []DiagnosticResult {
-	var allDiagnostics []DiagnosticResult
-	results := make(map[*analysis.Analyzer]any, len(analyzers))
+	// Use channel for concurrent-safe diagnostic collection
+	diagChan := make(chan DiagnosticResult, len(pkgs)*diagChannelBufferMultiplier)
+	var wg sync.WaitGroup
 
-	// Analyze each package
+	// Limit concurrent workers to GOMAXPROCS
+	workerCount := runtime.GOMAXPROCS(0)
+	pkgChan := make(chan *packages.Package, len(pkgs))
+
+	// Start workers (one goroutine per available CPU)
+	for range workerCount {
+		wg.Add(1)
+		go r.worker(analyzers, pkgChan, diagChan, &wg)
+	}
+
+	// Send packages to workers
 	for _, pkg := range pkgs {
-		r.analyzePackage(pkg, analyzers, results, &allDiagnostics)
+		pkgChan <- pkg
+	}
+	close(pkgChan)
+
+	// Wait for workers and close results channel
+	go func() {
+		wg.Wait()
+		close(diagChan)
+	}()
+
+	// Collect all diagnostics in result slice
+	var allDiagnostics []DiagnosticResult
+	// Range over channel until closed by background goroutine
+	for diag := range diagChan {
+		allDiagnostics = append(allDiagnostics, diag)
 	}
 
 	// Return collected diagnostics
 	return allDiagnostics
 }
 
-// analyzePackage analyzes a single package with the given analyzers.
+// worker processes packages from pkgChan and sends diagnostics to diagChan.
+//
+// Params:
+//   - analyzers: analyzers to run
+//   - pkgChan: channel receiving packages to analyze
+//   - diagChan: channel for sending diagnostics
+//   - wg: wait group to signal completion
+func (r *AnalysisRunner) worker(
+	analyzers []*analysis.Analyzer,
+	pkgChan <-chan *packages.Package,
+	diagChan chan<- DiagnosticResult,
+	wg waitGroup,
+) {
+	defer wg.Done()
+	// Each worker has its own results map
+	results := make(map[*analysis.Analyzer]any, len(analyzers))
+
+	// Process packages from channel
+	for pkg := range pkgChan {
+		r.analyzePackageParallel(pkg, analyzers, results, diagChan)
+	}
+}
+
+// analyzePackageParallel analyzes a package and sends diagnostics to a channel.
 //
 // Params:
 //   - pkg: package to analyze
 //   - analyzers: analyzers to run
 //   - results: analyzer results map (modified in-place)
-//   - diagnostics: diagnostics slice (modified in-place)
-func (r *AnalysisRunner) analyzePackage(
+//   - diagChan: channel for sending diagnostics
+func (r *AnalysisRunner) analyzePackageParallel(
 	pkg *packages.Package,
 	analyzers []*analysis.Analyzer,
 	results map[*analysis.Analyzer]any,
-	diagnostics *[]DiagnosticResult,
+	diagChan chan<- DiagnosticResult,
 ) {
 	pkgFset := pkg.Fset
 
@@ -85,7 +144,7 @@ func (r *AnalysisRunner) analyzePackage(
 
 	// Run each analyzer
 	for _, a := range analyzers {
-		pass := r.createPass(a, pkg, pkgFset, diagnostics, results)
+		pass := r.createPassParallel(a, pkg, pkgFset, diagChan, results)
 		result, err := a.Run(pass)
 
 		// Handle errors
@@ -98,22 +157,23 @@ func (r *AnalysisRunner) analyzePackage(
 	}
 }
 
-// createPass creates an analysis pass for a package.
+// createPassParallel creates an analysis pass for parallel execution.
+// Sends diagnostics to a channel instead of appending to a slice.
 //
 // Params:
 //   - a: analyzer to run
 //   - pkg: package to analyze
 //   - fset: fileset for positions
-//   - diagnostics: diagnostics slice for collecting results
+//   - diagChan: channel for sending diagnostics
 //   - results: required analyzer results
 //
 // Returns:
 //   - *analysis.Pass: created pass
-func (r *AnalysisRunner) createPass(
+func (r *AnalysisRunner) createPassParallel(
 	a *analysis.Analyzer,
 	pkg *packages.Package,
 	fset *token.FileSet,
-	diagnostics *[]DiagnosticResult,
+	diagChan chan<- DiagnosticResult,
 	results map[*analysis.Analyzer]any,
 ) *analysis.Pass {
 	files := r.selectFiles(a, pkg, fset)
@@ -128,11 +188,11 @@ func (r *AnalysisRunner) createPass(
 		TypesInfo: pkg.TypesInfo,
 		ResultOf:  results,
 		Report: func(diag analysis.Diagnostic) {
-			*diagnostics = append(*diagnostics, DiagnosticResult{
+			diagChan <- DiagnosticResult{
 				Diag:         diag,
 				Fset:         fset,
 				AnalyzerName: a.Name,
-			})
+			}
 		},
 		ReadFile: func(filename string) ([]byte, error) {
 			// Return file content
@@ -190,6 +250,7 @@ func (r *AnalysisRunner) filterTestFiles(files []*ast.File, fset *token.FileSet)
 }
 
 // runRequired runs required analyzers first.
+// Caches results to avoid re-running the same analyzer multiple times per package.
 //
 // Params:
 //   - a: analyzer with requirements
@@ -206,6 +267,11 @@ func (r *AnalysisRunner) runRequired(
 ) {
 	// Run required analyzers
 	for _, req := range a.Requires {
+		// Skip if already computed for this package
+		if _, exists := results[req]; exists {
+			continue
+		}
+
 		reqPass := &analysis.Pass{
 			Analyzer:  req,
 			Fset:      fset,

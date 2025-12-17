@@ -1,9 +1,10 @@
-// Lint command implementation for analyzing Go code.
+// Package cmd implements the CLI commands for ktn-linter.
 package cmd
 
 import (
 	"fmt"
 	"go/token"
+	"io"
 	"os"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -53,7 +54,7 @@ func runLint(_ *cobra.Command, args []string) {
 	opts := parseOptions()
 
 	// Load configuration
-	loadConfiguration(opts)
+	loadConfiguration(opts.Options)
 
 	// Propagate verbose flag to config
 	config.Get().Verbose = opts.Verbose
@@ -62,7 +63,7 @@ func runLint(_ *cobra.Command, args []string) {
 	orch := orchestrator.NewOrchestrator(os.Stderr, opts.Verbose)
 
 	// Run the linting pipeline
-	diags, fset, err := runPipeline(orch, args, opts)
+	diags, fset, err := runPipeline(orch, args, opts.Options)
 	// Check for error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -70,7 +71,7 @@ func runLint(_ *cobra.Command, args []string) {
 	}
 
 	// Format and display results
-	formatAndDisplay(diags, fset, opts.Verbose)
+	formatAndDisplay(diags, fset, opts)
 
 	// Exit with appropriate code
 	if len(diags) > 0 {
@@ -79,24 +80,37 @@ func runLint(_ *cobra.Command, args []string) {
 	OsExit(0)
 }
 
+// lintOptions extends orchestrator options with CLI-specific settings.
+type lintOptions struct {
+	orchestrator.Options
+	Format     formatter.OutputFormat
+	OutputPath string
+}
+
 // parseOptions extracts options from Cobra flags.
 //
 // Returns:
-//   - orchestrator.Options: extracted options
-func parseOptions() orchestrator.Options {
+//   - lintOptions: extracted options including format and output
+func parseOptions() lintOptions {
 	flags := rootCmd.PersistentFlags()
 
 	verbose, _ := flags.GetBool(flagVerbose)
 	category, _ := flags.GetString(flagCategory)
 	onlyRule, _ := flags.GetString(flagOnlyRule)
 	configPath, _ := flags.GetString(flagConfig)
+	formatStr, _ := flags.GetString(flagFormat)
+	outputPath, _ := flags.GetString(flagOutput)
 
 	// Return parsed options
-	return orchestrator.Options{
-		Verbose:    verbose,
-		Category:   category,
-		OnlyRule:   onlyRule,
-		ConfigPath: configPath,
+	return lintOptions{
+		Options: orchestrator.Options{
+			Verbose:    verbose,
+			Category:   category,
+			OnlyRule:   onlyRule,
+			ConfigPath: configPath,
+		},
+		Format:     formatter.ParseOutputFormat(formatStr),
+		OutputPath: outputPath,
 	}
 }
 
@@ -184,11 +198,27 @@ func runPipeline(orch lintOrchestrator, args []string, opts orchestrator.Options
 // Params:
 //   - diagnostics: diagnostics to display
 //   - fset: fileset for positions
-//   - verbose: enable verbose output
+//   - opts: lint options including format and output path
 //
 // Returns: none
-func formatAndDisplay(diagnostics []analysis.Diagnostic, fset *token.FileSet, verbose bool) {
-	fmtr := formatter.NewFormatter(os.Stdout, false, true, true, verbose)
+func formatAndDisplay(diagnostics []analysis.Diagnostic, fset *token.FileSet, opts lintOptions) {
+	// Get output writer
+	writer, cleanup := getOutputWriter(opts.OutputPath)
+	// Defer cleanup
+	if cleanup != nil {
+		defer cleanup()
+	}
+
+	// Create formatter options
+	fmtOpts := formatter.FormatterOptions{
+		AIMode:      false,
+		NoColor:     opts.OutputPath != "",
+		SimpleMode:  opts.Format == formatter.FormatText,
+		VerboseMode: opts.Verbose,
+	}
+
+	// Create formatter based on format
+	fmtr := formatter.NewFormatterByFormat(opts.Format, writer, fmtOpts)
 
 	// Check if empty
 	if len(diagnostics) == 0 {
@@ -198,4 +228,30 @@ func formatAndDisplay(diagnostics []analysis.Diagnostic, fset *token.FileSet, ve
 	}
 
 	fmtr.Format(fset, diagnostics)
+}
+
+// getOutputWriter returns the writer for output and optional cleanup function.
+//
+// Params:
+//   - outputPath: path to output file (empty for stdout)
+//
+// Returns:
+//   - io.Writer: output writer
+//   - func(): cleanup function (may be nil)
+func getOutputWriter(outputPath string) (io.Writer, func()) {
+	// Check if output to file
+	if outputPath != "" {
+		// Open file for writing
+		file, err := os.Create(outputPath)
+		// Check for error
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating output file: %v\n", err)
+			OsExit(1)
+		}
+		// Return file and cleanup
+		return file, func() { file.Close() }
+	}
+
+	// Default to stdout
+	return os.Stdout, nil
 }

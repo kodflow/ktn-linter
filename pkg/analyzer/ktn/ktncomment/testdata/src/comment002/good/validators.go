@@ -1,4 +1,4 @@
-// Validators pour les entrées utilisateur et les configurations système.
+// Package good provides validators for user input and system configuration.
 package good
 
 // ValidateInput valide les données d'entrée.

@@ -1,4 +1,4 @@
-// Shared utilities for methodsignature handling.
+// Package shared provides common utilities for static analysis.
 package shared
 
 // MethodSignature représente la signature d'une méthode.

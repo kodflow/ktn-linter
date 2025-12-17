@@ -345,14 +345,14 @@ func Test_formatAndDisplay(t *testing.T) {
 		name          string
 		diagnostics   []analysis.Diagnostic
 		fset          *token.FileSet
-		verbose       bool
+		opts          lintOptions
 		expectedInMsg string
 	}{
 		{
 			name:          "empty diagnostics shows success",
 			diagnostics:   []analysis.Diagnostic{},
 			fset:          nil,
-			verbose:       false,
+			opts:          lintOptions{},
 			expectedInMsg: "No issues found",
 		},
 		{
@@ -372,7 +372,7 @@ func Test_formatAndDisplay(t *testing.T) {
 				fset.AddFile("test.go", -1, 100)
 				return fset
 			}(),
-			verbose:       false,
+			opts:          lintOptions{},
 			expectedInMsg: "test issue",
 		},
 	}
@@ -384,7 +384,7 @@ func Test_formatAndDisplay(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			formatAndDisplay(tt.diagnostics, tt.fset, tt.verbose)
+			formatAndDisplay(tt.diagnostics, tt.fset, tt.opts)
 
 			w.Close()
 			var stdout bytes.Buffer
@@ -456,6 +456,37 @@ func TestLintCmdStructure(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
+		})
+	}
+}
+
+// Test_getOutputWriter tests the getOutputWriter function.
+func Test_getOutputWriter(t *testing.T) {
+	tests := []struct {
+		name       string
+		outputPath string
+		wantFile   bool
+	}{
+		{
+			name:       "empty path returns stdout",
+			outputPath: "",
+			wantFile:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			writer, cleanup := getOutputWriter(tt.outputPath)
+
+			// Verify writer is not nil
+			if writer == nil {
+				t.Error("getOutputWriter returned nil writer")
+			}
+
+			// Cleanup if present
+			if cleanup != nil {
+				cleanup()
+			}
 		})
 	}
 }

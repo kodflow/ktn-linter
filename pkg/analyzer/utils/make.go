@@ -1,4 +1,4 @@
-// Utility functions for make operations.
+// Package utils provides AST utility functions for analyzers.
 package utils
 
 import (

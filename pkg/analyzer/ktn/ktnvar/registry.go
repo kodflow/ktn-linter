@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktnvar package.
+// Package ktnvar provides analyzers for variable-related lint rules.
 package ktnvar
 
 import "golang.org/x/tools/go/analysis"

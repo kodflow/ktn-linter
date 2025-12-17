@@ -1,4 +1,4 @@
-// Analyzer 002 for the ktnconst package.
+// Package ktnconst provides analyzers for constant-related lint rules.
 package ktnconst
 
 import (

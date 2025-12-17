@@ -1,4 +1,4 @@
-// Analyzer 002 for the ktnfunc package.
+// Package ktnfunc provides analyzers for function-related lint rules.
 package ktnfunc
 
 import (

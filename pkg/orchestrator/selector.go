@@ -1,4 +1,4 @@
-// Analyzer selector for choosing which analyzers to run.
+// Package orchestrator coordinates the linting pipeline.
 package orchestrator
 
 import (

@@ -1,4 +1,4 @@
-// Diagnostic types for the cmd package.
+// Package cmd implements the CLI commands for ktn-linter.
 package cmd
 
 import (

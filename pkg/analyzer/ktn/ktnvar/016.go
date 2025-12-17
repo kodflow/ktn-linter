@@ -1,4 +1,4 @@
-// Analyzer 016 for the ktnvar package.
+// Package ktnvar provides analyzers for variable-related lint rules.
 package ktnvar
 
 import (

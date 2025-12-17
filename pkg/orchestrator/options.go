@@ -1,4 +1,4 @@
-// Options for the orchestrator package.
+// Package orchestrator coordinates the linting pipeline.
 package orchestrator
 
 // Options holds all options for the linting orchestration.

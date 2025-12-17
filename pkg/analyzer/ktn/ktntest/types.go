@@ -1,4 +1,4 @@
-// Types for the ktntest package.
+// Package ktntest provides analyzers for test file lint rules.
 package ktntest
 
 // testFilesStatus contient l'état des fichiers de test.

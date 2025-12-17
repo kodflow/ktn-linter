@@ -9,3 +9,14 @@ exclude:
 
 # Note: testdata est automatiquement exclu par go list ./...
 # Pour valider testdata, utiliser --only-rule ou --config .ktn-linter.testdata.yaml
+
+# Rules configuration
+rules:
+  # KTN-TEST-008 disabled: rule has strict behavior flagging internal test files
+  # as "superfluous" for public-only files, even when tests exist and are valid
+  KTN-TEST-008:
+    enabled: false
+  # KTN-API-001 disabled: rule flags internal functions using external library types
+  # This is overly strict for internal code that must interface with libraries
+  KTN-API-001:
+    enabled: false

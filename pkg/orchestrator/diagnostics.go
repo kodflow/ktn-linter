@@ -1,4 +1,4 @@
-// Diagnostics processing for filtering and formatting results.
+// Package orchestrator coordinates the linting pipeline.
 package orchestrator
 
 import (
@@ -31,14 +31,14 @@ func NewDiagnosticsProcessor() *DiagnosticsProcessor {
 func (p *DiagnosticsProcessor) Filter(diagnostics []DiagnosticResult) []DiagnosticResult {
 	var filtered []DiagnosticResult
 	// Iterate over diagnostics
-	for _, d := range diagnostics {
-		pos := d.Fset.Position(d.Diag.Pos)
+	for i := range diagnostics {
+		pos := diagnostics[i].Position()
 		// Skip Go build cache files
 		if strings.Contains(pos.Filename, "/.cache/go-build/") ||
 			strings.Contains(pos.Filename, "\\cache\\go-build\\") {
 			continue
 		}
-		filtered = append(filtered, d)
+		filtered = append(filtered, diagnostics[i])
 	}
 	// Return filtered diagnostics
 	return filtered
@@ -57,13 +57,13 @@ func (p *DiagnosticsProcessor) Extract(diagnostics []DiagnosticResult) []analysi
 	var deduped []DiagnosticResult
 
 	// Iterate over diagnostics
-	for _, d := range diagnostics {
-		pos := d.Fset.Position(d.Diag.Pos)
-		key := fmt.Sprintf("%s:%d:%d:%s", pos.Filename, pos.Line, pos.Column, d.Diag.Message)
+	for i := range diagnostics {
+		pos := diagnostics[i].Position()
+		key := fmt.Sprintf("%s:%d:%d:%s", pos.Filename, pos.Line, pos.Column, diagnostics[i].Diag.Message)
 		// Skip duplicates
 		if !seen[key] {
 			seen[key] = true
-			deduped = append(deduped, d)
+			deduped = append(deduped, diagnostics[i])
 		}
 	}
 

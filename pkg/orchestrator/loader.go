@@ -1,4 +1,4 @@
-// Package loader for loading Go packages.
+// Package orchestrator coordinates the linting pipeline.
 package orchestrator
 
 import (

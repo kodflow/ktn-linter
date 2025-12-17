@@ -1,4 +1,4 @@
-// Shared utilities for file handling in ktn-linter.
+// Package shared provides common utilities for static analysis.
 package shared
 
 import (
