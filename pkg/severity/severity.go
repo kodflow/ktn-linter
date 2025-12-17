@@ -1,4 +1,4 @@
-// Severity levels for linter diagnostics.
+// Package severity defines severity levels for lint rules.
 package severity
 
 const (

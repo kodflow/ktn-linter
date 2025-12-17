@@ -1,4 +1,4 @@
-// Analyzer 001 for the ktnreturn package.
+// Package ktnreturn provides analyzers for return statement lint rules.
 package ktnreturn
 
 import (

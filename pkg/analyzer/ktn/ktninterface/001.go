@@ -1,4 +1,4 @@
-// Analyzer 001 for the ktninterface package.
+// Package ktninterface provides analyzers for interface-related lint rules.
 //
 // KTN-INTERFACE-001: Détecte les interfaces privées non utilisées.
 //

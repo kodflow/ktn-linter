@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktninterface package.
+// Package ktninterface provides analyzers for interface-related lint rules.
 package ktninterface
 
 import "golang.org/x/tools/go/analysis"

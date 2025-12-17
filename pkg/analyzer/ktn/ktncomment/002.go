@@ -1,4 +1,4 @@
-// Analyzer 002 for the ktncomment package.
+// Package ktncomment provides analyzers for comment formatting rules.
 package ktncomment
 
 import (
@@ -84,13 +84,14 @@ func runComment002(pass *analysis.Pass) (any, error) {
 }
 
 // checkFileComment vérifie si le fichier a un commentaire avant la déclaration package.
+// Le commentaire doit respecter le format Go: "Package <name> ..."
 //
 // Params:
 //   - file: fichier AST à analyser
 //   - minLength: longueur minimale requise
 //
 // Returns:
-//   - bool: true si le fichier a un commentaire valide
+//   - bool: true si le fichier a un commentaire valide au format "Package <name> ..."
 func checkFileComment(file *ast.File, minLength int) bool {
 	// Vérifier s'il y a des commentaires dans le fichier
 	if file.Doc == nil || len(file.Doc.List) == 0 {
@@ -98,7 +99,11 @@ func checkFileComment(file *ast.File, minLength int) bool {
 		return false
 	}
 
-	// Vérifier que le commentaire n'est pas vide et contient du texte utile
+	// Obtenir le nom du package pour validation
+	pkgName := file.Name.Name
+	expectedPrefix := "Package " + pkgName
+
+	// Vérifier que le commentaire respecte le format Go standard
 	for _, comment := range file.Doc.List {
 		text := strings.TrimSpace(comment.Text)
 
@@ -110,11 +115,14 @@ func checkFileComment(file *ast.File, minLength int) bool {
 
 		// Si le commentaire contient du texte (au moins minLength chars)
 		if len(text) >= minLength {
-			// Commentaire valide trouvé
-			return true
+			// Vérifier le format "Package <name> ..." (Go standard)
+			if strings.HasPrefix(text, expectedPrefix) {
+				// Format Go standard respecté
+				return true
+			}
 		}
 	}
 
-	// Aucun commentaire valide
+	// Aucun commentaire valide au format Go standard
 	return false
 }

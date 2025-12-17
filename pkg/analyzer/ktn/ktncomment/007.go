@@ -1,4 +1,4 @@
-// Analyzer 007 for the ktncomment package.
+// Package ktncomment provides analyzers for comment formatting rules.
 package ktncomment
 
 import (

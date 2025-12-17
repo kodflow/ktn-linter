@@ -1,4 +1,4 @@
-// Registry of analyzers for the modernize package.
+// Package modernize wraps golang.org/x/tools modernize analyzers.
 package modernize
 
 import (

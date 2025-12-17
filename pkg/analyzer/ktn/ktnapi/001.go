@@ -1,4 +1,5 @@
-// Analyzer 001 for the ktnapi package.
+// Package ktnapi provides analyzers for API design lint rules.
+//
 // KTN-API-001: Consumer-side minimal interfaces for external dependencies.
 package ktnapi
 

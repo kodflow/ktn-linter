@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktnconst package.
+// Package ktnconst provides analyzers for constant-related lint rules.
 package ktnconst
 
 import "golang.org/x/tools/go/analysis"

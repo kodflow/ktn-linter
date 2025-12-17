@@ -1,4 +1,4 @@
-// Test helper interfaces for the ktn-linter.
+// Package testhelper provides testing utilities for KTN analyzers.
 package testhelper
 
 // TestingT est l'interface pour les méthodes de testing.T utilisées par testhelper.

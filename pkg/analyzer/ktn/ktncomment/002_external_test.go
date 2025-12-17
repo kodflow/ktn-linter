@@ -21,7 +21,7 @@ func TestComment002(t *testing.T) {
 			name:           "package comment requirement",
 			analyzer:       ktncomment.Analyzer002,
 			testdataPath:   "comment002",
-			expectedErrors: 2,
+			expectedErrors: 3,
 		},
 	}
 

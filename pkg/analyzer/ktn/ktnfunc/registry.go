@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktnfunc package.
+// Package ktnfunc provides analyzers for function-related lint rules.
 package ktnfunc
 
 import "golang.org/x/tools/go/analysis"

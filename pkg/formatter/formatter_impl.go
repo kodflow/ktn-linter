@@ -1,4 +1,4 @@
-// Implementation of the formatter interface.
+// Package formatter provides output formatting for lint diagnostics.
 package formatter
 
 import (
@@ -420,3 +420,4 @@ func (f *formatterImpl) getSymbol(code string) string {
 	// Retour du symbole selon le niveau
 	return level.Symbol()
 }
+

@@ -1,4 +1,4 @@
-// Utility functions for slice operations.
+// Package utils provides AST utility functions for analyzers.
 package utils
 
 import (

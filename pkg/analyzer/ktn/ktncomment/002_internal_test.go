@@ -36,14 +36,20 @@ package example`,
 			want: false,
 		},
 		{
-			name: "file with short comment",
+			name: "file with short comment not following Go format",
 			source: `// ab
 package example`,
 			want: false,
 		},
 		{
-			name: "file with minimum valid comment",
-			source: `// abc
+			name: "file with comment not starting with Package name",
+			source: `// This is a description without the Package prefix.
+package example`,
+			want: false,
+		},
+		{
+			name: "file with minimum valid Package comment",
+			source: `// Package example is minimal.
 package example`,
 			want: true,
 		},

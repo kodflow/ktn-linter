@@ -1,4 +1,4 @@
-// Registry of analyzers for the ktn package.
+// Package ktn provides the master registry for all KTN lint rules.
 package ktn
 
 import (

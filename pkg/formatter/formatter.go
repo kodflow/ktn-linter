@@ -1,4 +1,4 @@
-// Formatter interface for linter output formatting.
+// Package formatter provides output formatting for lint diagnostics.
 package formatter
 
 import (

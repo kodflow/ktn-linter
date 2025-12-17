@@ -1,4 +1,4 @@
-// Shared utilities for methods handling.
+// Package shared provides common utilities for static analysis.
 package shared
 
 import (

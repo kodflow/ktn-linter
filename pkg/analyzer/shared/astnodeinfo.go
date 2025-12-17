@@ -1,4 +1,4 @@
-// Shared utilities for astnodeinfo handling.
+// Package shared provides common utilities for static analysis.
 package shared
 
 import "go/ast"
