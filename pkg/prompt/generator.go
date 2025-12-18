@@ -122,9 +122,13 @@ func (g *Generator) collectViolations(diagnostics []orchestrator.DiagnosticResul
 	// Process each diagnostic
 	for i := range diagnostics {
 		diag := &diagnostics[i]
-		// Extract rule code
+		// Extract rule code from message
 		code := extractRuleCode(diag.Diag.Message)
-		// Skip if not a KTN rule
+		// If no KTN code, use analyzer name for modernize suggestions
+		if code == "" {
+			code = buildModernizeCode(diag.AnalyzerName)
+		}
+		// Skip if still no code
 		if code == "" {
 			continue
 		}
@@ -208,6 +212,48 @@ func (g *Generator) buildOutput(rulesList []RuleViolations, phases []PhaseGroup)
 	}
 }
 
+// buildModernizeCode converts an analyzer name to a KTN-MODERNIZE code.
+//
+// Params:
+//   - analyzerName: name of the analyzer
+//
+// Returns:
+//   - string: KTN-MODERNIZE-XXX code or empty if not a modernize analyzer
+func buildModernizeCode(analyzerName string) string {
+	// Map of known modernize analyzer names to codes
+	modernizeCodes := map[string]string{
+		"stringscut":        "KTN-MODERNIZE-001", // strings.Cut
+		"stringscutprefix":  "KTN-MODERNIZE-002", // CutPrefix/CutSuffix
+		"any":               "KTN-MODERNIZE-003", // interface{} → any
+		"minmax":            "KTN-MODERNIZE-004", // min/max builtins
+		"slicescontains":    "KTN-MODERNIZE-005", // slices.Contains
+		"slicessort":        "KTN-MODERNIZE-006", // slices.Sort
+		"fmtappendf":        "KTN-MODERNIZE-007", // fmt.Appendf
+		"rangeint":          "KTN-MODERNIZE-008", // range over int
+		"bloop":             "KTN-MODERNIZE-009", // b.Loop
+		"waitgroup":         "KTN-MODERNIZE-010", // wg.Go
+		"omitzero":          "KTN-MODERNIZE-011", // omitzero tag
+		"testingcontext":    "KTN-MODERNIZE-012", // t.Context
+		"stringsbuilder":    "KTN-MODERNIZE-013", // strings.Builder
+		"mapsloop":          "KTN-MODERNIZE-014", // maps package
+		"stditerators":      "KTN-MODERNIZE-015", // iterators
+		"stringsseq":        "KTN-MODERNIZE-016", // SplitSeq/FieldsSeq
+		"unsafefuncs":       "KTN-MODERNIZE-017", // unsafe functions
+		"reflecttypefor":    "KTN-MODERNIZE-018", // TypeFor
+		"plusbuild":         "KTN-MODERNIZE-019", // obsolete build comments
+		"forvar":            "KTN-MODERNIZE-020", // loop variables
+	}
+
+	// Check if it's a known modernize analyzer
+	if code, ok := modernizeCodes[analyzerName]; ok {
+		// Return the modernize code
+		return code
+	}
+
+	// Return empty for unknown analyzers
+	return ""
+}
+
 // extractRuleCode extracts KTN-XXX-YYY from a diagnostic message.
 //
 // Params:
@@ -228,19 +274,16 @@ func extractRuleCode(message string) string {
 
 	// Check for colon format KTN-XXX-YYY:
 	if strings.HasPrefix(message, ktnPrefix) {
-		colonIdx := strings.Index(message, ":")
-		// Check if colon found
-		if colonIdx > 0 {
+		// Try colon separator first
+		if code, _, found := strings.Cut(message, ":"); found {
 			// Return rule code before colon
-			return message[:colonIdx]
+			return code
 		}
 
-		// Check for space format KTN-XXX-YYY message
-		spaceIdx := strings.Index(message, " ")
-		// Check if space found
-		if spaceIdx > 0 {
+		// Try space separator
+		if code, _, found := strings.Cut(message, " "); found {
 			// Return rule code before space
-			return message[:spaceIdx]
+			return code
 		}
 	}
 

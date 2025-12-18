@@ -1,7 +1,10 @@
 // Package prompt provides AI-optimized prompt generation for KTN linter violations.
 package prompt
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
 
 const (
 	// phaseCount is the number of defined phases for map preallocation.
@@ -61,6 +64,12 @@ func ClassifyRule(code string) RulePhase {
 	if commentRules[code] {
 		// Return comment phase for documentation rules
 		return PhaseComment
+	}
+
+	// Check modernize rules (applied as local fixes)
+	if strings.HasPrefix(code, "KTN-MODERNIZE-") {
+		// Return local phase for modernize suggestions
+		return PhaseLocal
 	}
 
 	// Return local phase as default
