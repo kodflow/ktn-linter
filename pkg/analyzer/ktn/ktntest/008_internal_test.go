@@ -942,6 +942,11 @@ func Test_extractReceiverTypeString(t *testing.T) {
 			expr:     &ast.BasicLit{},
 			expected: "",
 		},
+		{
+			name:     "pointer to non-identifier",
+			expr:     &ast.StarExpr{X: &ast.BasicLit{}},
+			expected: "",
+		},
 	}
 
 	// Itération sur les tests
@@ -1043,6 +1048,114 @@ import "fmt"`,
 			// Vérification private
 			if result.hasPrivate != tt.wantPrivate {
 				t.Errorf("checkVariables() hasPrivate = %v, want %v", result.hasPrivate, tt.wantPrivate)
+			}
+		})
+	}
+}
+
+// Test_checkVariables_nonValueSpec tests checkVariables with non-ValueSpec.
+func Test_checkVariables_nonValueSpec(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "type declaration not ValueSpec",
+			code: `package test
+type MyType struct{}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkVariables(genDecl, &result)
+				}
+				return true
+			})
+
+			if result.hasPublic || result.hasPrivate {
+				t.Error("expected no variables marked")
+			}
+		})
+	}
+}
+
+// Test_checkTypes_nonTypeSpec tests checkTypes with non-TypeSpec.
+func Test_checkTypes_nonTypeSpec(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "var declaration not TypeSpec",
+			code: `package test
+var x int`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkTypes(genDecl, &result)
+				}
+				return true
+			})
+
+			if result.hasPublic {
+				t.Error("expected no types marked")
+			}
+		})
+	}
+}
+
+// Test_checkConsts_nonValueSpec tests checkConsts with non-ValueSpec.
+func Test_checkConsts_nonValueSpec(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "type declaration not ValueSpec",
+			code: `package test
+type MyType struct{}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			result := fileAnalysisResult{}
+			ast.Inspect(file, func(n ast.Node) bool {
+				if genDecl, ok := n.(*ast.GenDecl); ok {
+					checkConsts(genDecl, &result)
+				}
+				return true
+			})
+
+			if result.hasPublic {
+				t.Error("expected no consts marked")
 			}
 		})
 	}

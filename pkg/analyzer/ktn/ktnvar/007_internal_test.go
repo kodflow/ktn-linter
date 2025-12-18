@@ -120,6 +120,91 @@ func example() {
 	}
 }
 
+// Test_isStringConcatenation_noTypeInfo tests with no TypesInfo.
+func Test_isStringConcatenation_noTypeInfo(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Create assignment with lhs that won't have type info
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			}
+
+			result := isStringConcatenation(pass, assign)
+			// Vérification du résultat
+			if result {
+				t.Errorf("isStringConcatenation() = true, expected false when no type info")
+			}
+
+		})
+	}
+}
+
+// Test_isStringConcatenation_notBasicType tests with non-basic type.
+func Test_isStringConcatenation_notBasicType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			type MyString string
+			func example() {
+			var s MyString
+			s += "world"
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// Find assignment statement
+			ast.Inspect(file, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok && assign.Tok == token.ADD_ASSIGN {
+					result := isStringConcatenation(pass, assign)
+					// Should return true because underlying type is string
+					if !result {
+						t.Errorf("isStringConcatenation() = false, expected true for named string type")
+					}
+					return false
+				}
+				return true
+			})
+
+		})
+	}
+}
+
 // Test_runVar007_disabled tests runVar007 with disabled rule.
 func Test_runVar007_disabled(t *testing.T) {
 	tests := []struct {

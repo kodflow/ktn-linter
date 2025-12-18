@@ -90,6 +90,16 @@ func TestLoadGoodExample(t *testing.T) {
 			code:      "INVALID",
 			wantEmpty: true,
 		},
+		{
+			name:      "empty code",
+			code:      "",
+			wantEmpty: true,
+		},
+		{
+			name:      "code with wrong format",
+			code:      "KTN-FUNC",
+			wantEmpty: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -112,6 +122,7 @@ func TestLoadGoodExamples(t *testing.T) {
 		{Code: "KTN-FUNC-001", Category: "func"},
 		{Code: "KTN-FUNC-002", Category: "func"},
 		{Code: "KTN-FAKE-999", Category: "fake"},
+		{Code: "", Category: ""},
 	}
 
 	// Load examples
@@ -130,6 +141,11 @@ func TestLoadGoodExamples(t *testing.T) {
 	// Last one (fake) should be empty
 	if enriched[2].GoodExample != "" {
 		t.Error("LoadGoodExamples() should leave KTN-FAKE-999 example empty")
+	}
+
+	// Empty code should also be empty
+	if enriched[3].GoodExample != "" {
+		t.Error("LoadGoodExamples() should leave empty code example empty")
 	}
 }
 

@@ -531,6 +531,28 @@ func Test_collectIdentCallbacks(t *testing.T) {
 			},
 			expected: []string{"callback"},
 		},
+		{
+			name: "ident in assign stmt",
+			privateFuncs: map[string][]*privateFuncInfo{
+				"handler": {{name: "handler"}},
+			},
+			node: &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "fn"}},
+				Rhs: []ast.Expr{&ast.Ident{Name: "handler"}},
+			},
+			expected: []string{"handler"},
+		},
+		{
+			name: "ident in value spec",
+			privateFuncs: map[string][]*privateFuncInfo{
+				"myFunc": {{name: "myFunc"}},
+			},
+			node: &ast.ValueSpec{
+				Names:  []*ast.Ident{{Name: "x"}},
+				Values: []ast.Expr{&ast.Ident{Name: "myFunc"}},
+			},
+			expected: []string{"myFunc"},
+		},
 	}
 
 	// Itération sur les tests
@@ -546,6 +568,87 @@ func Test_collectIdentCallbacks(t *testing.T) {
 				if !calledInProduction[expectedFunc] {
 					t.Errorf("expected %s to be marked as called", expectedFunc)
 				}
+			}
+		})
+	}
+}
+
+// Test_extractPrivateFuncInfo_withReceiver tests extracting method info.
+func Test_extractPrivateFuncInfo_withReceiver(t *testing.T) {
+	tests := []struct {
+		name         string
+		funcDecl     *ast.FuncDecl
+		wantNil      bool
+		wantReceiver string
+	}{
+		{
+			name: "method with value receiver",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "process"},
+				Type: &ast.FuncType{},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "s"}},
+							Type:  &ast.Ident{Name: "Service"},
+						},
+					},
+				},
+			},
+			wantNil:      false,
+			wantReceiver: "Service",
+		},
+		{
+			name: "method with pointer receiver",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "update"},
+				Type: &ast.FuncType{},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "s"}},
+							Type: &ast.StarExpr{
+								X: &ast.Ident{Name: "Service"},
+							},
+						},
+					},
+				},
+			},
+			wantNil:      false,
+			wantReceiver: "Service",
+		},
+		{
+			name: "function with nil name",
+			funcDecl: &ast.FuncDecl{
+				Name: nil,
+				Type: &ast.FuncType{},
+			},
+			wantNil: true,
+		},
+		{
+			name: "function with empty name",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: ""},
+				Type: &ast.FuncType{},
+			},
+			wantNil: true,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractPrivateFuncInfo(tt.funcDecl)
+			// Vérification du résultat nil
+			if (result == nil) != tt.wantNil {
+				t.Errorf("extractPrivateFuncInfo() nil = %v, want %v", result == nil, tt.wantNil)
+				// Retour si erreur
+				return
+			}
+			// Vérification du receiver si attendu
+			if !tt.wantNil && result != nil && result.receiverType != tt.wantReceiver {
+				t.Errorf("extractPrivateFuncInfo() receiverType = %v, want %v", result.receiverType, tt.wantReceiver)
 			}
 		})
 	}

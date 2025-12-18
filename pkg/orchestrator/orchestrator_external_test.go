@@ -3,6 +3,7 @@ package orchestrator_test
 
 import (
 	"bytes"
+	"go/token"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/orchestrator"
@@ -328,6 +329,15 @@ func TestGetFirstFset(t *testing.T) {
 			name:        "empty diagnostics returns nil",
 			diagnostics: []orchestrator.DiagnosticResult{},
 			wantNil:     true,
+		},
+		{
+			name: "non-empty diagnostics returns fset",
+			diagnostics: []orchestrator.DiagnosticResult{
+				{
+					Fset: token.NewFileSet(),
+				},
+			},
+			wantNil: false,
 		},
 	}
 

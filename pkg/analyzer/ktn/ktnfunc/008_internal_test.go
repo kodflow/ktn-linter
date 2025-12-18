@@ -367,6 +367,250 @@ func (t *T) bar() {}`,
 	}
 }
 
+// Test_getReceiverType_nilType tests when type info is not available.
+func Test_getReceiverType_nilType(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantNil bool
+	}{
+		{
+			name:    "nil type info",
+			wantNil: true,
+		},
+	}
+
+	// Itération sur les tests
+	for _, tt := range tests {
+		// Sous-test
+		t.Run(tt.name, func(t *testing.T) {
+			// Créer un pass avec TypesInfo vide
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
+
+			// Créer une expression simple
+			expr := &ast.Ident{Name: "T"}
+
+			result := getReceiverType(pass, expr)
+			// Vérifier le résultat
+			if (result == nil) != tt.wantNil {
+				t.Errorf("getReceiverType() nil = %v, want %v", result == nil, tt.wantNil)
+			}
+		})
+	}
+}
+
+// Test_analyzeFunc008_noBody tests function without body.
+func Test_analyzeFunc008_noBody(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Créer une fonction sans body
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "externalFunc"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{},
+				},
+				Body: nil,
+			}
+
+			reported := false
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(d analysis.Diagnostic) {
+					// Ne devrait pas être appelé
+					reported = true
+				},
+			}
+
+			// Appeler analyzeFunc008
+			analyzeFunc008(pass, funcDecl)
+
+			// Vérifier qu'aucune erreur n'a été rapportée
+			if reported {
+				t.Error("Expected no report for function without body")
+			}
+
+		})
+	}
+}
+
+// Test_collectFunctionParams008_noParams tests function with nil params.
+func Test_collectFunctionParams008_noParams(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Créer une fonction sans paramètres
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "noParams"},
+				Type: &ast.FuncType{
+					Params: nil,
+				},
+			}
+
+			result := collectFunctionParams008(funcDecl)
+
+			// Vérifier que le résultat est vide
+			if len(result) != 0 {
+				t.Errorf("Expected empty params, got %d", len(result))
+			}
+
+		})
+	}
+}
+
+// Test_checkParam008_underscore tests parameter already prefixed with underscore.
+func Test_checkParam008_underscore(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			ctx := &paramCheckContext{
+				pass: &analysis.Pass{
+					Fset: token.NewFileSet(),
+					Report: func(d analysis.Diagnostic) {
+						t.Error("Should not report for underscore-prefixed param")
+					},
+				},
+				usedVars:    map[string]bool{},
+				ignoredVars: map[string]bool{},
+				ifaceName:   "",
+			}
+
+			// Appeler checkParam008 avec un paramètre préfixé _
+			ctx.checkParam008("_unused", token.Pos(1))
+
+		})
+	}
+}
+
+// Test_findImplementedInterface_noReceiver tests regular function.
+func Test_findImplementedInterface_noReceiver(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+func regularFunc() {}`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Vérifier erreur de parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+			// Vérifier erreur de type checking
+			if err != nil {
+				t.Fatalf("Type check failed: %v", err)
+			}
+
+			// Trouver la fonction
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérifier si c'est une fonction
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					// Arrêter la recherche
+					return false
+				}
+				// Continuer la recherche
+				return true
+			})
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Pkg:       pkg,
+			}
+
+			result := findImplementedInterface(pass, funcDecl)
+			// Vérifier le résultat vide
+			if result != "" {
+				t.Errorf("Expected empty string for regular function, got %q", result)
+			}
+
+		})
+	}
+}
+
+// Test_findImplementedInterface_nilRecvType tests when receiver type is nil.
+func Test_findImplementedInterface_nilRecvType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+type T struct{}
+func (t T) method() {}`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Vérifier erreur de parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Créer un pass avec TypesInfo vide
+			pkg := types.NewPackage("test", "test")
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Pkg: pkg,
+			}
+
+			// Trouver la méthode
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérifier si c'est une fonction
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					funcDecl = fd
+					// Arrêter la recherche
+					return false
+				}
+				// Continuer la recherche
+				return true
+			})
+
+			result := findImplementedInterface(pass, funcDecl)
+			// Vérifier le résultat vide car type non résolu
+			if result != "" {
+				t.Errorf("Expected empty string when receiver type is nil, got %q", result)
+			}
+
+		})
+	}
+}
+
 // Test_interfaceHasMethod tests the interfaceHasMethod function.
 func Test_interfaceHasMethod(t *testing.T) {
 	tests := []struct {

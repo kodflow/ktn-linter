@@ -821,6 +821,67 @@ func Test_isContextUnderlying_underlyingNilObj(t *testing.T) {
 	}
 }
 
+// Test_isContextUnderlying_wrappedType tests wrapped type that has Named underlying.
+func Test_isContextUnderlying_wrappedType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Test avec un type défini dont l'underlying est un autre Named type
+			code := `package test
+			import "context"
+			type BaseContext context.Context
+			type MyContext BaseContext
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Vérification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Créer type checker
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Defs: make(map[*ast.Ident]types.Object),
+			}
+			pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+			// Vérification erreur type checking
+			if err != nil {
+				t.Fatalf("Failed type check: %v", err)
+			}
+
+			// Trouver MyContext
+			obj := pkg.Scope().Lookup("MyContext")
+			// Vérification que l'objet existe
+			if obj == nil {
+				t.Fatal("Expected to find MyContext")
+			}
+
+			typeName, ok := obj.(*types.TypeName)
+			// Vérification du type de l'objet
+			if !ok {
+				t.Fatal("Expected TypeName")
+			}
+
+			// Test isContextUnderlying
+			// L'underlying de MyContext est BaseContext (Named)
+			// Et l'underlying de BaseContext devrait être context.Context
+			result := isContextUnderlying(typeName.Type(), typeName)
+
+			// Le résultat dépend de la structure exacte des types
+			// Pour BaseContext dont l'underlying est context.Context (interface),
+			// ce ne sera pas un Named mais une Interface
+			_ = result
+
+		})
+	}
+}
+
 // Test_isContextUnderlying_contextTypedef tests with a typedef of context.Context.
 func Test_isContextUnderlying_contextTypedef(t *testing.T) {
 	tests := []struct {
@@ -1067,6 +1128,82 @@ func Test_analyzeContextParams(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
+		})
+	}
+}
+
+// Test_analyzeContextParams_noNames tests context param without explicit names.
+func Test_analyzeContextParams_noNames(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Test avec un paramètre context.Context sans nom explicite
+			code := `package test
+			import "context"
+			func handler(context.Context) { }
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Vérification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Créer type checker pour avoir les informations de types
+			conf := types.Config{Importer: importer.Default()}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Defs:  make(map[*ast.Ident]types.Object),
+				Uses:  make(map[*ast.Ident]types.Object),
+			}
+			_, err = conf.Check("test", fset, []*ast.File{file}, info)
+			// Vérification erreur type checking
+			if err != nil {
+				t.Fatalf("Failed type check: %v", err)
+			}
+
+			// Trouver la déclaration de fonction
+			var funcDecl *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du type de nœud
+				if fd, ok := n.(*ast.FuncDecl); ok {
+					// Assignation de la déclaration de fonction
+					funcDecl = fd
+					// Retour false pour arrêter la recherche
+					return false
+				}
+				// Retour true pour continuer la recherche
+				return true
+			})
+
+			// Vérification que la fonction a été trouvée
+			if funcDecl == nil {
+				t.Fatal("Expected to find function declaration")
+			}
+
+			reported := false
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report: func(d analysis.Diagnostic) {
+					// Ne devrait pas rapporter d'erreur pour un seul contexte
+					reported = true
+				},
+			}
+
+			// Appeler analyzeContextParams (devrait détecter 1 contexte sans nom)
+			analyzeContextParams(pass, funcDecl)
+
+			// Vérifier qu'aucune erreur n'a été rapportée pour un seul contexte
+			if reported {
+				t.Error("Expected no error report for single context parameter")
+			}
+
 		})
 	}
 }

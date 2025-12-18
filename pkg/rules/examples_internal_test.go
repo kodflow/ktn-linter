@@ -92,10 +92,29 @@ func Test_fileExists(t *testing.T) {
 }
 
 func Test_findProjectRoot(t *testing.T) {
+	// Test basic functionality
 	root := findProjectRoot()
+
 	// Should return a non-empty path
 	if root == "" {
 		t.Error("findProjectRoot() returned empty string")
+	}
+
+	// In normal testing, this should find the project root via runtime.Caller
+	// The fallback path (os.Getwd) is only triggered when:
+	// 1. runtime.Caller succeeds BUT
+	// 2. go.mod doesn't exist at the computed project root
+	// This is difficult to test without mocking or breaking the project structure
+
+	// Verify that calling it multiple times returns consistent results
+	root2 := findProjectRoot()
+	if root != root2 {
+		t.Errorf("findProjectRoot() inconsistent: %q vs %q", root, root2)
+	}
+
+	// The returned path should be usable
+	if !fileExists(root) {
+		t.Errorf("findProjectRoot() returned non-existent path: %q", root)
 	}
 }
 

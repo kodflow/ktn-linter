@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -311,6 +312,8 @@ func Test_getPromptOutputWriter(t *testing.T) {
 		setup        func() (string, func())
 		expectStdout bool
 		expectFile   bool
+		expectExit   bool
+		exitCode     int
 	}{
 		{
 			name: "empty path returns stdout",
@@ -319,6 +322,8 @@ func Test_getPromptOutputWriter(t *testing.T) {
 			},
 			expectStdout: true,
 			expectFile:   false,
+			expectExit:   false,
+			exitCode:     0,
 		},
 		{
 			name: "valid path returns file writer",
@@ -331,35 +336,88 @@ func Test_getPromptOutputWriter(t *testing.T) {
 			},
 			expectStdout: false,
 			expectFile:   true,
+			expectExit:   false,
+			exitCode:     0,
+		},
+		{
+			name: "invalid path exits with error",
+			setup: func() (string, func()) {
+				return "/invalid/nonexistent/path/output.md", func() {}
+			},
+			expectStdout: false,
+			expectFile:   false,
+			expectExit:   true,
+			exitCode:     1,
 		},
 	}
 
 	// Run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
+
 			outputPath, cleanup := tt.setup()
 			defer cleanup()
 
-			writer, writerCleanup := getPromptOutputWriter(outputPath)
+			// Capture stderr for error messages
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
 
-			// Verify writer is not nil
-			if writer == nil {
-				t.Error("getPromptOutputWriter returned nil writer")
+			var writer io.Writer
+			var writerCleanup func()
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				writer, writerCleanup = getPromptOutputWriter(outputPath)
+			})
+
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
+
+			// Verify exit expectation
+			if tt.expectExit && !didExit {
+				t.Error("expected exit but did not exit")
 			}
 
-			// Verify stdout expectation
-			if tt.expectStdout && writer != os.Stdout {
-				t.Error("expected stdout writer")
+			// Verify no exit expectation
+			if !tt.expectExit && didExit {
+				t.Errorf("unexpected exit with code %d", exitCode)
 			}
 
-			// Verify file expectation
-			if tt.expectFile && writer == os.Stdout {
-				t.Error("expected file writer, got stdout")
+			// Verify exit code
+			if tt.expectExit && exitCode != tt.exitCode {
+				t.Errorf("expected exit code %d, got %d", tt.exitCode, exitCode)
 			}
 
-			// Cleanup if present
-			if writerCleanup != nil {
-				writerCleanup()
+			// Check for error message on exit
+			if tt.expectExit && !strings.Contains(stderr.String(), "Error creating output file") {
+				t.Errorf("expected error message in stderr, got: %s", stderr.String())
+			}
+
+			// Only verify writer if not expecting exit
+			if !tt.expectExit {
+				// Verify writer is not nil
+				if writer == nil {
+					t.Error("getPromptOutputWriter returned nil writer")
+				}
+
+				// Verify stdout expectation
+				if tt.expectStdout && writer != os.Stdout {
+					t.Error("expected stdout writer")
+				}
+
+				// Verify file expectation
+				if tt.expectFile && writer == os.Stdout {
+					t.Error("expected file writer, got stdout")
+				}
+
+				// Cleanup if present
+				if writerCleanup != nil {
+					writerCleanup()
+				}
 			}
 		})
 	}

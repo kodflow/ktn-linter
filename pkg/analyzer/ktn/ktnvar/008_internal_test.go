@@ -408,3 +408,69 @@ func Test_checkStmtForAlloc(t *testing.T) {
 	}
 }
 
+// Test_checkStmtForAlloc_assignStmt tests with AssignStmt.
+func Test_checkStmtForAlloc_assignStmt(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with AssignStmt containing slice allocation
+			stmt := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+					},
+				},
+			}
+			checkStmtForAlloc(pass, stmt)
+			// No panic expected
+
+		})
+	}
+}
+
+// Test_checkStmtForAlloc_declStmt tests with DeclStmt.
+func Test_checkStmtForAlloc_declStmt(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with DeclStmt containing slice allocation
+			stmt := &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names: []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{
+								&ast.CompositeLit{
+									Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+								},
+							},
+						},
+					},
+				},
+			}
+			checkStmtForAlloc(pass, stmt)
+			// No panic expected
+
+		})
+	}
+}
+

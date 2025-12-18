@@ -282,6 +282,32 @@ func test() {
 }`,
 			want: 2, // 1 for range + 1 process call
 		},
+		{
+			name: "type switch statement",
+			code: `package test
+func test() {
+	switch v := x.(type) {
+	case int:
+		a := v
+	case string:
+		b := v
+	}
+}`,
+			want: 5, // 1 type switch + 2 cases + 2 statements
+		},
+		{
+			name: "select statement",
+			code: `package test
+func test() {
+	select {
+	case <-ch1:
+		x := 1
+	case ch2 <- val:
+		y := 2
+	}
+}`,
+			want: 5, // 1 select + 2 cases + 2 statements
+		},
 	}
 
 	// Exécution tests

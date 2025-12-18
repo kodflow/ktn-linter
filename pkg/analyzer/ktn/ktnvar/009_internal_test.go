@@ -85,6 +85,114 @@ func Test_checkDeclForLargeStruct(t *testing.T) {
 	}
 }
 
+// Test_checkDeclForLargeStruct_withType tests with explicit type.
+func Test_checkDeclForLargeStruct_withType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			type BigStruct struct {
+			a, b, c, d int
+			}
+			func example() {
+			var s BigStruct
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Pkg:       types.NewPackage("test", "test"),
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// Find decl statement
+			ast.Inspect(file, func(n ast.Node) bool {
+				if decl, ok := n.(*ast.DeclStmt); ok {
+					checkDeclForLargeStruct(pass, decl, 3)
+					return false
+				}
+				return true
+			})
+			// No panic expected
+
+		})
+	}
+}
+
+// Test_checkDeclForLargeStruct_nonGenDecl tests with non-GenDecl.
+func Test_checkDeclForLargeStruct_nonGenDecl(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with non-GenDecl
+			decl := &ast.DeclStmt{
+				Decl: &ast.BadDecl{},
+			}
+			checkDeclForLargeStruct(pass, decl, 3)
+			// No panic expected
+
+		})
+	}
+}
+
+// Test_checkDeclForLargeStruct_nonValueSpec tests with non-ValueSpec.
+func Test_checkDeclForLargeStruct_nonValueSpec(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with non-ValueSpec
+			decl := &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.TypeSpec{
+							Name: &ast.Ident{Name: "T"},
+						},
+					},
+				},
+			}
+			checkDeclForLargeStruct(pass, decl, 3)
+			// No panic expected
+
+		})
+	}
+}
+
 // Test_checkExprForLargeStruct tests the private checkExprForLargeStruct function.
 func Test_checkExprForLargeStruct(t *testing.T) {
 	tests := []struct {
@@ -109,6 +217,131 @@ func Test_checkTypeForLargeStruct(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks types for large structs
+		})
+	}
+}
+
+// Test_checkTypeForLargeStruct_pointer tests with pointer type.
+func Test_checkTypeForLargeStruct_pointer(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with pointer type (should return early)
+			typ := &ast.StarExpr{
+				X: &ast.Ident{Name: "BigStruct"},
+			}
+			checkTypeForLargeStruct(pass, typ, token.NoPos, 3)
+			// No error expected for pointer
+
+		})
+	}
+}
+
+// Test_checkTypeForLargeStruct_nilTypeInfo tests with nil type info.
+func Test_checkTypeForLargeStruct_nilTypeInfo(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with type that won't have TypeOf info
+			typ := &ast.Ident{Name: "UnknownType"}
+			checkTypeForLargeStruct(pass, typ, token.NoPos, 3)
+			// No error expected when type info is nil
+
+		})
+	}
+}
+
+// Test_checkTypeForLargeStruct_externalType tests with external type.
+func Test_checkTypeForLargeStruct_externalType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Create external package
+			externalPkg := types.NewPackage("external/pkg", "pkg")
+			currentPkg := types.NewPackage("test/pkg", "pkg")
+
+			// Create named type in external package
+			obj := types.NewTypeName(0, externalPkg, "BigStruct", types.NewStruct(
+				[]*types.Var{
+					types.NewVar(0, externalPkg, "a", types.Typ[types.Int]),
+					types.NewVar(0, externalPkg, "b", types.Typ[types.Int]),
+					types.NewVar(0, externalPkg, "c", types.Typ[types.Int]),
+					types.NewVar(0, externalPkg, "d", types.Typ[types.Int]),
+				},
+				nil,
+			))
+			namedType := types.NewNamed(obj, obj.Type().Underlying(), nil)
+
+			typeIdent := &ast.Ident{Name: "BigStruct"}
+			pass := &analysis.Pass{
+				Pkg: currentPkg,
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						typeIdent: {Type: namedType},
+					},
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			checkTypeForLargeStruct(pass, typeIdent, token.NoPos, 3)
+			// No error expected for external type
+
+		})
+	}
+}
+
+// Test_checkTypeForLargeStruct_notStruct tests with non-struct type.
+func Test_checkTypeForLargeStruct_notStruct(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			typeIdent := &ast.Ident{Name: "int"}
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						typeIdent: {Type: types.Typ[types.Int]},
+					},
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			checkTypeForLargeStruct(pass, typeIdent, token.NoPos, 3)
+			// No error expected for non-struct type
+
 		})
 	}
 }
