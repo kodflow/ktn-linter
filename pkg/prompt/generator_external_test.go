@@ -26,52 +26,87 @@ func TestNewGenerator(t *testing.T) {
 	}
 }
 
-// TestGenerator_Generate_EmptyPatterns tests generation with empty patterns.
+// TestGenerator_Generate tests the Generate public method.
 //
 // Params:
 //   - t: testing object
-func TestGenerator_Generate_EmptyPatterns(t *testing.T) {
-	// Create generator
-	var stderr bytes.Buffer
-	gen := prompt.NewGenerator(&stderr, false)
+func TestGenerator_Generate(t *testing.T) {
+	// Test with empty patterns
+	t.Run("empty patterns", func(t *testing.T) {
+		// Create generator
+		var stderr bytes.Buffer
+		gen := prompt.NewGenerator(&stderr, false)
 
-	// Generate with empty patterns (loads current dir)
-	output, err := gen.Generate([]string{}, orchestrator.Options{})
+		// Generate with empty patterns (loads current dir)
+		output, err := gen.Generate([]string{}, orchestrator.Options{})
 
-	// Should not return error
-	if err != nil {
-		t.Errorf("Generate() error = %v, want nil", err)
-		return
-	}
+		// Should not return error
+		if err != nil {
+			t.Errorf("Generate() error = %v, want nil", err)
+			return
+		}
 
-	// Verify output exists
-	if output == nil {
-		t.Error("Generate() returned nil output")
-	}
-}
+		// Verify output exists
+		if output == nil {
+			t.Error("Generate() returned nil output")
+		}
+	})
 
-// TestGenerator_Generate_ValidPattern tests generation with valid pattern.
-//
-// Params:
-//   - t: testing object
-func TestGenerator_Generate_ValidPattern(t *testing.T) {
-	// Create generator
-	var stderr bytes.Buffer
-	gen := prompt.NewGenerator(&stderr, false)
+	// Test with valid pattern
+	t.Run("valid pattern", func(t *testing.T) {
+		// Create generator
+		var stderr bytes.Buffer
+		gen := prompt.NewGenerator(&stderr, false)
 
-	// Generate with valid pattern (this package)
-	output, err := gen.Generate([]string{"github.com/kodflow/ktn-linter/pkg/prompt"}, orchestrator.Options{})
+		// Generate with valid pattern (this package)
+		output, err := gen.Generate([]string{"github.com/kodflow/ktn-linter/pkg/prompt"}, orchestrator.Options{})
 
-	// Should not return error
-	if err != nil {
-		t.Errorf("Generate() error = %v", err)
-		return
-	}
+		// Should not return error
+		if err != nil {
+			t.Errorf("Generate() error = %v", err)
+			return
+		}
 
-	// Verify output
-	if output == nil {
-		t.Error("Generate() returned nil output")
-	}
+		// Verify output
+		if output == nil {
+			t.Error("Generate() returned nil output")
+		}
+	})
+
+	// Test with invalid pattern
+	t.Run("invalid pattern", func(t *testing.T) {
+		// Create generator
+		var stderr bytes.Buffer
+		gen := prompt.NewGenerator(&stderr, false)
+
+		// Generate with invalid pattern
+		_, err := gen.Generate([]string{"invalid/package/path/does/not/exist"}, orchestrator.Options{})
+
+		// Should return error from LoadPackages
+		if err == nil {
+			t.Error("Generate() with invalid pattern should return error")
+		}
+	})
+
+	// Test with invalid analyzer
+	t.Run("invalid analyzer", func(t *testing.T) {
+		// Create generator
+		var stderr bytes.Buffer
+		gen := prompt.NewGenerator(&stderr, false)
+
+		// Generate with invalid analyzer option
+		_, err := gen.Generate(
+			[]string{"github.com/kodflow/ktn-linter/pkg/prompt"},
+			orchestrator.Options{
+				OnlyRule: "INVALID-RULE-999",
+			},
+		)
+
+		// Should return error from SelectAnalyzers
+		if err == nil {
+			t.Error("Generate() with invalid analyzer should return error")
+		}
+	})
 }
 
 // TestPromptOutput_Structure tests PromptOutput structure.
@@ -109,3 +144,4 @@ func TestPromptOutput_Structure(t *testing.T) {
 		t.Errorf("len(Phases[0].Rules) = %d, want 1", len(output.Phases[0].Rules))
 	}
 }
+

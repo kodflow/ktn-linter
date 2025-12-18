@@ -1195,3 +1195,125 @@ func Test_collectExternalSourceSignatures_emptyPass(t *testing.T) {
 		})
 	}
 }
+
+// Test_functionReturnsError_nilType tests functionReturnsError with nil function type.
+func Test_functionReturnsError_nilType(t *testing.T) {
+	tests := []struct {
+		name     string
+		funcDecl *ast.FuncDecl
+		want     bool
+	}{
+		{
+			name: "nil type",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Foo"},
+				Type: nil,
+			},
+			want: false,
+		},
+		{
+			name: "nil results",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Bar"},
+				Type: &ast.FuncType{Results: nil},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := functionReturnsError(tt.funcDecl)
+			if got != tt.want {
+				t.Errorf("functionReturnsError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_scanSourceFile_parseError tests scanSourceFile with unparseable file.
+func Test_scanSourceFile_parseError(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"parse error handled gracefully"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := make(map[string]testedFuncInfo)
+			// Invalid Go file that will fail parsing
+			scanSourceFile("/nonexistent", "invalid.go", result)
+			if len(result) != 0 {
+				t.Errorf("expected empty result after parse error, got %d entries", len(result))
+			}
+		})
+	}
+}
+
+// Test_analyzeTestFunction_emptyKey tests analyzeTestFunction with empty key.
+func Test_analyzeTestFunction_emptyKey(t *testing.T) {
+	tests := []struct {
+		name         string
+		testCode     string
+		shouldReport bool
+	}{
+		{
+			name:         "test with name that results in empty key",
+			testCode:     `func TestUnparseable(t *testing.T) { _ = t }`,
+			shouldReport: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code := "package test\n" + tt.testCode
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			reportCount := 0
+			inspectPass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				Report:   func(d analysis.Diagnostic) { reportCount++ },
+				ResultOf: make(map[*analysis.Analyzer]any),
+			}
+			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) { reportCount++ },
+			}
+
+			// Empty signatures - test will have empty key after parsing
+			signatures := make(map[string]testedFuncInfo)
+
+			// Find test function
+			var testFunc *ast.FuncDecl
+			ast.Inspect(file, func(n ast.Node) bool {
+				if fd, ok := n.(*ast.FuncDecl); ok && fd.Name != nil && shared.IsUnitTestFunction(fd) {
+					testFunc = fd
+					return false
+				}
+				return true
+			})
+
+			if testFunc != nil {
+				analyzeTestFunction(pass, testFunc, signatures)
+			}
+
+			if tt.shouldReport && reportCount == 0 {
+				t.Error("expected error report, got none")
+			} else if !tt.shouldReport && reportCount > 0 {
+				t.Errorf("expected no error report, got %d", reportCount)
+			}
+		})
+	}
+}

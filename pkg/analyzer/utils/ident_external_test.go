@@ -260,3 +260,67 @@ func TestExtractVarNameExtended(t *testing.T) {
 		})
 	}
 }
+
+// TestExtractVarNameEdgeCases tests edge cases for ExtractVarName coverage
+func TestExtractVarNameEdgeCases(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want string
+	}{
+		{
+			name: "index of function call",
+			code: `fn()[0]`,
+			want: "",
+		},
+		{
+			name: "index of literal",
+			code: `"string"[0]`,
+			want: "",
+		},
+		{
+			name: "selector on function call",
+			code: `fn().Field`,
+			want: "Field",
+		},
+		{
+			name: "star of function call",
+			code: `*fn()`,
+			want: "",
+		},
+		{
+			name: "nested selector without base",
+			code: `fn().A.B`,
+			want: "A.B",
+		},
+		{
+			name: "index of index",
+			code: `arr[i][j]`,
+			want: "arr[...][...]",
+		},
+		{
+			name: "star of selector",
+			code: `*obj.ptr`,
+			want: "*obj.ptr",
+		},
+		{
+			name: "selector of star",
+			code: `(*obj).Field`,
+			want: "*obj.Field",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parser.ParseExpr(tt.code)
+			if err != nil {
+				t.Fatalf("Failed to parse expression: %v", err)
+			}
+
+			got := utils.ExtractVarName(expr)
+			if got != tt.want {
+				t.Errorf("utils.ExtractVarName() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

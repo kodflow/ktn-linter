@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/packages"
 )
@@ -63,6 +64,12 @@ func TestAnalysisRunner_createPassParallel(t *testing.T) {
 		{
 			name: "create pass with empty files",
 		},
+		{
+			name: "create pass and test Report function",
+		},
+		{
+			name: "create pass and test ReadFile function",
+		},
 	}
 
 	for _, tt := range tests {
@@ -86,7 +93,6 @@ func TestAnalysisRunner_createPassParallel(t *testing.T) {
 			diagChan := make(chan DiagnosticResult, 10)
 
 			pass := runner.createPassParallel(analyzer, pkg, fset, diagChan, results)
-			close(diagChan)
 
 			// Verify pass created
 			if pass == nil {
@@ -100,6 +106,37 @@ func TestAnalysisRunner_createPassParallel(t *testing.T) {
 			if pass.Fset != fset {
 				t.Error("expected fset to be set")
 			}
+
+			// Test Report function
+			if tt.name == "create pass and test Report function" {
+				pos := fset.AddFile("test.go", -1, 100).Pos(0)
+				pass.Report(analysis.Diagnostic{
+					Pos:     pos,
+					Message: "test diagnostic",
+				})
+				// Verify diagnostic sent to channel
+				select {
+				case diag := <-diagChan:
+					// Verify diagnostic received
+					if diag.AnalyzerName != analyzer.Name {
+						t.Errorf("expected analyzer name %s, got %s", analyzer.Name, diag.AnalyzerName)
+					}
+				default:
+					t.Error("expected diagnostic in channel")
+				}
+			}
+
+			// Test ReadFile function
+			if tt.name == "create pass and test ReadFile function" {
+				// Try to read a non-existent file
+				_, err := pass.ReadFile("/nonexistent/file.go")
+				// Verify error returned
+				if err == nil {
+					t.Error("expected error reading non-existent file")
+				}
+			}
+
+			close(diagChan)
 		})
 	}
 }
@@ -188,6 +225,81 @@ func TestAnalysisRunner_selectFiles(t *testing.T) {
 	}
 }
 
+// TestAnalysisRunner_selectFilesWithConfig tests selectFiles with config.
+func TestAnalysisRunner_selectFilesWithConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		analyzerName string
+		forceAll     bool
+		wantAll      bool
+	}{
+		{
+			name:         "force all rules on tests enabled",
+			analyzerName: "ktnfunc001",
+			forceAll:     true,
+			wantAll:      true,
+		},
+		{
+			name:         "force all rules on tests disabled",
+			analyzerName: "ktnfunc001",
+			forceAll:     false,
+			wantAll:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save and restore config
+			oldCfg := config.Get()
+			defer config.Set(oldCfg)
+
+			// Set test config
+			cfg := config.DefaultConfig()
+			cfg.ForceAllRulesOnTests = tt.forceAll
+			config.Set(cfg)
+
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, false)
+
+			fset := token.NewFileSet()
+			// Create test file
+			testFile := fset.AddFile("test_test.go", -1, 100)
+			normalFile := fset.AddFile("normal.go", -1, 100)
+
+			files := []*ast.File{
+				{
+					Package: testFile.Pos(0),
+				},
+				{
+					Package: normalFile.Pos(0),
+				},
+			}
+
+			pkg := &packages.Package{
+				PkgPath: "test/pkg",
+				Fset:    fset,
+				Syntax:  files,
+			}
+
+			analyzer := &analysis.Analyzer{
+				Name: tt.analyzerName,
+			}
+
+			selected := runner.selectFiles(analyzer, pkg, fset)
+
+			// Verify files returned
+			if selected == nil {
+				t.Error("expected non-nil files slice")
+			}
+
+			// Verify all files returned when force is enabled
+			if tt.wantAll && len(selected) != len(files) {
+				t.Errorf("expected all %d files with ForceAllRulesOnTests, got %d", len(files), len(selected))
+			}
+		})
+	}
+}
+
 // TestAnalysisRunner_filterTestFiles tests the filterTestFiles method.
 func TestAnalysisRunner_filterTestFiles(t *testing.T) {
 	tests := []struct {
@@ -223,19 +335,107 @@ func TestAnalysisRunner_filterTestFiles(t *testing.T) {
 	}
 }
 
+// TestAnalysisRunner_filterTestFilesWithActualFiles tests filtering with actual test files.
+func TestAnalysisRunner_filterTestFilesWithActualFiles(t *testing.T) {
+	tests := []struct {
+		name      string
+		filenames []string
+		wantLen   int
+	}{
+		{
+			name:      "mix of test and non-test files",
+			filenames: []string{"main.go", "main_test.go", "util.go"},
+			wantLen:   2, // Only main.go and util.go
+		},
+		{
+			name:      "only test files",
+			filenames: []string{"main_test.go", "util_test.go"},
+			wantLen:   0,
+		},
+		{
+			name:      "only non-test files",
+			filenames: []string{"main.go", "util.go"},
+			wantLen:   2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, false)
+
+			fset := token.NewFileSet()
+			files := make([]*ast.File, len(tt.filenames))
+			for i, filename := range tt.filenames {
+				f := fset.AddFile(filename, -1, 100)
+				files[i] = &ast.File{
+					Package: f.Pos(0),
+				}
+			}
+
+			filtered := runner.filterTestFiles(files, fset)
+
+			// Verify result length
+			if len(filtered) != tt.wantLen {
+				t.Errorf("expected %d files, got %d", tt.wantLen, len(filtered))
+			}
+		})
+	}
+}
+
 // TestAnalysisRunner_runRequired tests the runRequired method.
 func TestAnalysisRunner_runRequired(t *testing.T) {
 	tests := []struct {
 		name     string
 		requires []*analysis.Analyzer
+		wantRun  bool
 	}{
 		{
 			name:     "no requirements",
 			requires: nil,
+			wantRun:  false,
 		},
 		{
 			name:     "empty requirements",
 			requires: []*analysis.Analyzer{},
+			wantRun:  false,
+		},
+		{
+			name: "with required analyzer",
+			requires: []*analysis.Analyzer{
+				{
+					Name: "required",
+					Run: func(pass *analysis.Pass) (any, error) {
+						return "required result", nil
+					},
+				},
+			},
+			wantRun: true,
+		},
+		{
+			name: "with already cached required analyzer",
+			requires: []*analysis.Analyzer{
+				{
+					Name: "cached",
+					Run:  func(pass *analysis.Pass) (any, error) { return nil, nil },
+				},
+			},
+			wantRun: false,
+		},
+		{
+			name: "with required analyzer that uses ReadFile",
+			requires: []*analysis.Analyzer{
+				{
+					Name: "readfile",
+					Run: func(pass *analysis.Pass) (any, error) {
+						// Test ReadFile function
+						_, err := pass.ReadFile("/nonexistent/file.go")
+						// Return result even if ReadFile fails
+						return "readfile result", err
+					},
+				},
+			},
+			wantRun: true,
 		},
 	}
 
@@ -258,8 +458,20 @@ func TestAnalysisRunner_runRequired(t *testing.T) {
 
 			results := make(map[*analysis.Analyzer]any)
 
+			// Pre-cache if needed
+			if tt.name == "with already cached required analyzer" && len(tt.requires) > 0 {
+				results[tt.requires[0]] = "cached result"
+			}
+
 			// Should not panic
 			runner.runRequired(analyzer, []*ast.File{}, pkg, fset, results)
+
+			// Verify required analyzer was run
+			if tt.wantRun && len(tt.requires) > 0 {
+				if _, exists := results[tt.requires[0]]; !exists {
+					t.Error("expected required analyzer to be run")
+				}
+			}
 		})
 	}
 }

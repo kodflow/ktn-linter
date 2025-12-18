@@ -366,41 +366,64 @@ func Test_extractTypeIdents_nil(t *testing.T) {
 // Test_collectInterfaces tests interface collection.
 func Test_collectInterfaces(t *testing.T) {
 	tests := []struct {
-		name     string
-		code     string
-		expected int
+		name        string
+		code        string
+		expected    int
+		excludeFile bool
 	}{
 		{
 			name: "single interface",
 			code: `package test
 type MyInterface interface { Method() }`,
-			expected: 1,
+			expected:    1,
+			excludeFile: false,
 		},
 		{
 			name: "multiple interfaces",
 			code: `package test
 type A interface { Method() }
 type B interface { Other() }`,
-			expected: 2,
+			expected:    2,
+			excludeFile: false,
 		},
 		{
 			name: "no interfaces",
 			code: `package test
 type S struct { x int }`,
-			expected: 0,
+			expected:    0,
+			excludeFile: false,
 		},
 		{
 			name: "mixed types",
 			code: `package test
 type MyInterface interface { Method() }
 type S struct { x int }`,
-			expected: 1,
+			expected:    1,
+			excludeFile: false,
+		},
+		{
+			name: "file excluded - no interfaces collected",
+			code: `package test
+type MyInterface interface { Method() }`,
+			expected:    0,
+			excludeFile: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config.Reset()
+			cfg := &config.Config{
+				Rules: make(map[string]*config.RuleConfig),
+			}
+
+			// Configure file exclusion
+			if tt.excludeFile {
+				cfg.Rules["KTN-INTERFACE-001"] = &config.RuleConfig{
+					Exclude: []string{"test.go"},
+				}
+			}
+			config.Set(cfg)
+			defer config.Reset()
 
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -413,7 +436,7 @@ type S struct { x int }`,
 				Files: []*ast.File{file},
 			}
 
-			interfaces := collectInterfaces(pass, config.Get())
+			interfaces := collectInterfaces(pass, cfg)
 
 			if len(interfaces) != tt.expected {
 				t.Errorf("got %d interfaces, want %d", len(interfaces), tt.expected)
@@ -610,18 +633,33 @@ func Test_extractTypesFromNode(t *testing.T) {
 			expected: 1,
 		},
 		{
-			name:     "valuespec node",
+			name:     "valuespec node with type",
 			code:     `package test; var x MyType`,
 			expected: 1,
 		},
 		{
-			name:     "type assertion",
+			name:     "valuespec node without type",
+			code:     `package test; var x = 42`,
+			expected: 0,
+		},
+		{
+			name:     "type assertion with type",
 			code:     `package test; func f(x interface{}) { _ = x.(MyType) }`,
 			expected: 1,
 		},
 		{
+			name:     "type assertion type switch",
+			code:     `package test; func f(x interface{}) { switch x.(type) {} }`,
+			expected: 0,
+		},
+		{
 			name:     "interface embedding",
 			code:     `package test; type I interface { MyEmbed }`,
+			expected: 1,
+		},
+		{
+			name:     "type switch case clause",
+			code:     `package test; func f(x interface{}) { switch x.(type) { case MyType: } }`,
 			expected: 1,
 		},
 	}
@@ -746,6 +784,18 @@ func Test_extractEmbeddedTypes(t *testing.T) {
 				t.Errorf("got %d types, want %d", count, tt.expected)
 			}
 		})
+	}
+}
+
+// Test_extractEmbeddedTypes_nil tests nil handling in extractEmbeddedTypes.
+func Test_extractEmbeddedTypes_nil(t *testing.T) {
+	// Test with nil Methods
+	nilMethodsIface := &ast.InterfaceType{
+		Methods: nil,
+	}
+	result := extractEmbeddedTypes(nilMethodsIface)
+	if len(result) != 0 {
+		t.Errorf("expected empty result for nil Methods, got %v", result)
 	}
 }
 
@@ -1104,6 +1154,21 @@ func Test_extractCompositeType(t *testing.T) {
 			name:     "func type",
 			code:     `package test; type S struct { x func(A) B }`,
 			expected: 2,
+		},
+		{
+			name:     "generic single param",
+			code:     `package test; type S struct { x Container[T] }`,
+			expected: 2,
+		},
+		{
+			name:     "generic multiple params",
+			code:     `package test; type S struct { x Container[T, U] }`,
+			expected: 3,
+		},
+		{
+			name:     "unknown type returns empty",
+			code:     `package test; type S struct { x int }`,
+			expected: 0,
 		},
 	}
 

@@ -15,47 +15,44 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **94.7%** |
+| 🟢 | **TOTAL (Global)** | **95.9%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 89.6% |
+| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.4% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.5% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 95.1% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 95.3% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.4% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 91.7% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.7% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 93.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 98.5% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 91.6% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/prompt` | 90.4% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 94.9% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 97.2% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 95.2% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
 
 ---
 
 ## Détail des packages incomplets
 
-### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 89.6%
+### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 95.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `lint.go:loadConfiguration` | 90.0% |
 | 🟡 `lint.go:formatAndDisplay` | 88.9% |
-| 🔴 `lint.go:getOutputWriter` | 25.0% |
 | 🟡 `prompt.go:runPrompt` | 81.2% |
-| 🔴 `prompt.go:getPromptOutputWriter` | 75.0% |
 | 🟡 `rules.go:runRules` | 83.3% |
 | 🟡 `rules.go:getRulesWithFilters` | 83.3% |
-| 🔴 `rules.go:formatRulesJSON` | 60.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` - 96.1%
 
@@ -85,43 +82,27 @@ Rapport de couverture généré automatiquement.
 | 🟡 `002.go:extractConstTypeName` | 87.5% |
 | 🟡 `002.go:checkScatteredConstBlocks` | 88.9% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 95.1%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 96.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `001.go:isErrorType` | 84.6% |
 | 🟢 `001.go:isBuiltinError` | 93.3% |
-| 🟢 `002.go:analyzeContextParams` | 92.9% |
 | 🟡 `002.go:isContextTypeByType` | 88.9% |
 | 🔴 `002.go:isContextUnderlying` | 60.0% |
 | 🟢 `003.go:runFunc003` | 95.2% |
 | 🟢 `004.go:collectPrivateFunctions` | 92.3% |
-| 🟢 `004.go:extractPrivateFuncInfo` | 91.7% |
 | 🟡 `004.go:collectCalledFunctions` | 83.3% |
 | 🟡 `004.go:collectCallbackUsages` | 81.8% |
 | 🟢 `005.go:runFunc005` | 91.3% |
-| 🔴 `005.go:countStmtComplexity` | 66.7% |
-| 🟡 `005.go:countSwitchStmt` | 88.9% |
+| 🟡 `005.go:countStmtComplexity` | 88.9% |
 | 🟢 `007.go:runFunc007` | 94.7% |
 | 🟢 `007.go:collectLazyLoadFields` | 92.9% |
-| 🟡 `008.go:analyzeFunc008` | 88.9% |
-| 🟡 `008.go:findImplementedInterface` | 85.7% |
-| 🟡 `008.go:getReceiverType` | 83.3% |
 | 🟡 `008.go:findInterfaceForMethod` | 88.9% |
-| 🟡 `008.go:collectFunctionParams008` | 87.5% |
 | 🟢 `008.go:collectIgnoredVariables008` | 93.3% |
 | 🟢 `008.go:findParentAssignToBlank008` | 95.0% |
 | 🟢 `009.go:checkMagicNumbers` | 92.9% |
 | 🟢 `011.go:runFunc011` | 95.2% |
-
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` - 95.3%
-
-| Fichier:Fonction | Couverture |
-|------------------|------------|
-| 🟡 `001.go:collectInterfaces` | 85.7% |
-| 🟡 `001.go:extractTypesFromNode` | 88.9% |
-| 🟡 `001.go:extractEmbeddedTypes` | 85.7% |
-| 🔴 `001.go:extractCompositeType` | 66.7% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 98.4%
 
@@ -142,7 +123,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `005.go:runStruct005` | 94.4% |
 | 🟢 `006.go:runStruct006` | 94.1% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 90.4%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 90.7%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -160,7 +141,6 @@ Rapport de couverture généré automatiquement.
 | 🟢 `006.go:collectFiles006` | 92.3% |
 | 🟡 `007.go:runTest007` | 83.3% |
 | 🔴 `008.go:runTest008` | 73.7% |
-| 🟡 `008.go:extractReceiverTypeString` | 85.7% |
 | 🟢 `008.go:checkVariables` | 92.9% |
 | 🟡 `008.go:checkTypes` | 90.0% |
 | 🟡 `008.go:checkConsts` | 90.9% |
@@ -181,10 +161,9 @@ Rapport de couverture généré automatiquement.
 | 🟡 `013.go:collectFuncSignatures` | 85.7% |
 | 🟡 `013.go:collectExternalSourceSignatures` | 90.9% |
 | 🟢 `013.go:scanSourceFile` | 94.7% |
-| 🟡 `013.go:functionReturnsError` | 87.5% |
 | 🟢 `013.go:analyzeTestFunction` | 92.9% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 91.7%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 93.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -192,23 +171,20 @@ Rapport de couverture généré automatiquement.
 | 🟡 `002.go:checkVarSpec` | 85.7% |
 | 🟡 `003.go:runVar003` | 84.6% |
 | 🟢 `004.go:collectAppendVariables` | 91.7% |
-| 🔴 `004.go:checkMakeCalls` | 77.8% |
+| 🟡 `004.go:checkMakeCalls` | 88.9% |
 | 🟡 `004.go:checkMakeCall` | 90.0% |
 | 🟡 `004.go:checkEmptySliceLiterals` | 88.2% |
-| 🔴 `004.go:checkCompositeLit` | 70.6% |
+| 🟡 `004.go:checkCompositeLit` | 88.2% |
 | 🟡 `005.go:checkMakeCallVar008` | 83.3% |
 | 🟡 `005.go:runVar005` | 90.9% |
 | 🟡 `006.go:reportMissingGrow` | 85.7% |
 | 🟡 `006.go:extractAssignTypeString` | 87.5% |
 | 🟡 `007.go:runVar007` | 90.0% |
 | 🟢 `007.go:checkStringConcatInLoop` | 92.3% |
-| 🔴 `007.go:isStringConcatenation` | 75.0% |
+| 🟡 `007.go:isStringConcatenation` | 87.5% |
 | 🟡 `008.go:runVar008` | 86.7% |
-| 🔴 `008.go:checkStmtForAlloc` | 66.7% |
-| 🟡 `008.go:checkDeclForAlloc` | 83.3% |
 | 🟡 `009.go:runVar009` | 85.7% |
-| 🔴 `009.go:checkDeclForLargeStruct` | 75.0% |
-| 🔴 `009.go:checkTypeForLargeStruct` | 78.6% |
+| 🟢 `009.go:checkDeclForLargeStruct` | 91.7% |
 | 🟡 `009.go:isExternalType` | 85.7% |
 | 🟢 `010.go:runVar010` | 91.7% |
 | 🟡 `010.go:checkLoopBodyVar015` | 83.3% |
@@ -239,12 +215,6 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `methods.go:ExtractReceiverName` | 87.5% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/utils` - 98.5%
-
-| Fichier:Fonction | Couverture |
-|------------------|------------|
-| 🔴 `ident.go:ExtractVarName` | 76.9% |
-
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/config` - 98.1%
 
 | Fichier:Fonction | Couverture |
@@ -259,39 +229,28 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `json.go:severityToLevel` | 80.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 91.6%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 97.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `loader.go:Load` | 85.7% |
 | 🟡 `orchestrator.go:Run` | 90.0% |
-| 🔴 `orchestrator.go:GetFirstFset` | 66.7% |
 | 🟢 `runner.go:Run` | 94.1% |
 | 🟡 `runner.go:analyzePackageParallel` | 90.9% |
-| 🔴 `runner.go:createPassParallel` | 60.0% |
-| 🟡 `runner.go:selectFiles` | 80.0% |
-| 🔴 `runner.go:runRequired` | 71.4% |
-| 🟡 `selector.go:selectSingleRule` | 83.3% |
-| 🟡 `selector.go:selectByCategory` | 83.3% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/prompt` - 90.4%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/prompt` - 95.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟡 `generator.go:Generate` | 87.5% |
-| 🔴 `generator.go:runLinter` | 77.8% |
-| 🔴 `generator.go:extractRuleCode` | 50.0% |
-| 🔴 `generator.go:extractMessage` | 55.6% |
-| 🟡 `phases.go:GetPhaseInfo` | 83.3% |
+| 🔴 `generator.go:collectViolations` | 50.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/rules` - 94.9%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/rules` - 96.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🔴 `examples.go:findProjectRoot` | 60.0% |
-| 🟡 `info.go:ExtractCategory` | 85.7% |
 
 
 ---
 
-*Généré le: 2025-12-18 19:45:04*
+*Généré le: 2025-12-18 22:33:05*

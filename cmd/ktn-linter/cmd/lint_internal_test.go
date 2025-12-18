@@ -4,6 +4,7 @@ package cmd
 import (
 	"bytes"
 	"go/token"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -463,29 +464,115 @@ func TestLintCmdStructure(t *testing.T) {
 // Test_getOutputWriter tests the getOutputWriter function.
 func Test_getOutputWriter(t *testing.T) {
 	tests := []struct {
-		name       string
-		outputPath string
-		wantFile   bool
+		name         string
+		setup        func() (string, func())
+		expectStdout bool
+		expectFile   bool
+		expectExit   bool
+		exitCode     int
 	}{
 		{
-			name:       "empty path returns stdout",
-			outputPath: "",
-			wantFile:   false,
+			name: "empty path returns stdout",
+			setup: func() (string, func()) {
+				return "", func() {}
+			},
+			expectStdout: true,
+			expectFile:   false,
+			expectExit:   false,
+			exitCode:     0,
+		},
+		{
+			name: "valid path returns file writer",
+			setup: func() (string, func()) {
+				tmpfile, _ := os.CreateTemp("", "test-lint-output-*.txt")
+				tmpfile.Close()
+				return tmpfile.Name(), func() {
+					os.Remove(tmpfile.Name())
+				}
+			},
+			expectStdout: false,
+			expectFile:   true,
+			expectExit:   false,
+			exitCode:     0,
+		},
+		{
+			name: "invalid path exits with error",
+			setup: func() (string, func()) {
+				return "/invalid/nonexistent/directory/output.txt", func() {}
+			},
+			expectStdout: false,
+			expectFile:   false,
+			expectExit:   true,
+			exitCode:     1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			writer, cleanup := getOutputWriter(tt.outputPath)
+			restore := mockExitInCmd(t)
+			defer restore()
 
-			// Verify writer is not nil
-			if writer == nil {
-				t.Error("getOutputWriter returned nil writer")
+			outputPath, cleanup := tt.setup()
+			defer cleanup()
+
+			// Capture stderr for error messages
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
+			var writer io.Writer
+			var writerCleanup func()
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				writer, writerCleanup = getOutputWriter(outputPath)
+			})
+
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
+
+			// Verify exit expectation
+			if tt.expectExit && !didExit {
+				t.Error("expected exit but did not exit")
 			}
 
-			// Cleanup if present
-			if cleanup != nil {
-				cleanup()
+			// Verify no exit expectation
+			if !tt.expectExit && didExit {
+				t.Errorf("unexpected exit with code %d", exitCode)
+			}
+
+			// Verify exit code
+			if tt.expectExit && exitCode != tt.exitCode {
+				t.Errorf("expected exit code %d, got %d", tt.exitCode, exitCode)
+			}
+
+			// Check for error message on exit
+			if tt.expectExit && !strings.Contains(stderr.String(), "Error creating output file") {
+				t.Errorf("expected error message in stderr, got: %s", stderr.String())
+			}
+
+			// Only verify writer if not expecting exit
+			if !tt.expectExit {
+				// Verify writer is not nil
+				if writer == nil {
+					t.Error("getOutputWriter returned nil writer")
+				}
+
+				// Verify stdout expectation
+				if tt.expectStdout && writer != os.Stdout {
+					t.Error("expected stdout writer")
+				}
+
+				// Verify file expectation
+				if tt.expectFile && writer == os.Stdout {
+					t.Error("expected file writer, got stdout")
+				}
+
+				// Cleanup if present
+				if writerCleanup != nil {
+					writerCleanup()
+				}
 			}
 		})
 	}

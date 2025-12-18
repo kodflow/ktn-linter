@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -77,24 +79,129 @@ func Test_formatRulesMarkdown(t *testing.T) {
 }
 
 func Test_formatRulesJSON(t *testing.T) {
-	output := rules.RulesOutput{
-		TotalCount: 1,
-		Categories: []string{"func"},
-		Rules: []rules.RuleInfo{
-			{Code: "KTN-FUNC-001", Category: "func"},
+	tests := []struct {
+		name       string
+		output     rules.RulesOutput
+		useWriter  func() io.Writer
+		expectExit bool
+		exitCode   int
+	}{
+		{
+			name: "successful JSON encoding",
+			output: rules.RulesOutput{
+				TotalCount: 1,
+				Categories: []string{"func"},
+				Rules: []rules.RuleInfo{
+					{Code: "KTN-FUNC-001", Category: "func"},
+				},
+			},
+			useWriter: func() io.Writer {
+				return &bytes.Buffer{}
+			},
+			expectExit: false,
+			exitCode:   0,
+		},
+		{
+			name: "JSON encoding with multiple rules",
+			output: rules.RulesOutput{
+				TotalCount: 2,
+				Categories: []string{"func", "var"},
+				Rules: []rules.RuleInfo{
+					{Code: "KTN-FUNC-001", Category: "func", Description: "Test func"},
+					{Code: "KTN-VAR-001", Category: "var", Description: "Test var"},
+				},
+			},
+			useWriter: func() io.Writer {
+				return &bytes.Buffer{}
+			},
+			expectExit: false,
+			exitCode:   0,
+		},
+		{
+			name: "encoding error exits with code 1",
+			output: rules.RulesOutput{
+				TotalCount: 1,
+				Categories: []string{"test"},
+				Rules:      []rules.RuleInfo{{Code: "KTN-TEST-001"}},
+			},
+			useWriter: func() io.Writer {
+				return &failingWriter{}
+			},
+			expectExit: true,
+			exitCode:   1,
 		},
 	}
 
-	var buf bytes.Buffer
-	formatRulesJSON(&buf, output)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
 
-	result := buf.String()
-	if !strings.Contains(result, "TotalCount") {
-		t.Error("JSON output should contain TotalCount")
+			writer := tt.useWriter()
+
+			// Capture stderr for error messages
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				formatRulesJSON(writer, tt.output)
+			})
+
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
+
+			// Verify exit expectation
+			if tt.expectExit && !didExit {
+				t.Error("expected exit but did not exit")
+			}
+
+			// Verify no exit expectation
+			if !tt.expectExit && didExit {
+				t.Errorf("unexpected exit with code %d", exitCode)
+			}
+
+			// Verify exit code
+			if tt.expectExit && exitCode != tt.exitCode {
+				t.Errorf("expected exit code %d, got %d", tt.exitCode, exitCode)
+			}
+
+			// Check for error message on exit
+			if tt.expectExit && !strings.Contains(stderr.String(), "Error encoding JSON") {
+				t.Errorf("expected error message in stderr, got: %s", stderr.String())
+			}
+
+			// Verify successful output
+			if !tt.expectExit {
+				if buf, ok := writer.(*bytes.Buffer); ok {
+					result := buf.String()
+					if !strings.Contains(result, "TotalCount") {
+						t.Error("JSON output should contain TotalCount")
+					}
+					if len(tt.output.Rules) > 0 && !strings.Contains(result, tt.output.Rules[0].Code) {
+						t.Errorf("JSON output should contain rule code %s", tt.output.Rules[0].Code)
+					}
+				}
+			}
+		})
 	}
-	if !strings.Contains(result, "KTN-FUNC-001") {
-		t.Error("JSON output should contain rule code")
-	}
+}
+
+// failingWriter is a writer that always returns an error.
+type failingWriter struct{}
+
+// Write implements io.Writer but always returns an error.
+//
+// Params:
+//   - p: bytes to write
+//
+// Returns:
+//   - int: 0 (no bytes written)
+//   - error: always returns an error
+func (fw *failingWriter) Write(p []byte) (int, error) {
+	return 0, os.ErrInvalid
 }
 
 func Test_formatRulesText(t *testing.T) {

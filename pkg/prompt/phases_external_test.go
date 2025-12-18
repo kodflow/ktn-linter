@@ -7,129 +7,119 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/prompt"
 )
 
-// TestClassifyRule_Structural tests structural rule classification.
+// TestClassifyRule tests the ClassifyRule public function.
 //
 // Params:
 //   - t: testing object
-func TestClassifyRule_Structural(t *testing.T) {
+func TestClassifyRule(t *testing.T) {
 	// Test structural rules
-	tests := []struct {
-		name string
-		code string
-		want prompt.RulePhase
-	}{
-		{
-			name: "struct-004 is structural",
-			code: "KTN-STRUCT-004",
-			want: prompt.PhaseStructural,
-		},
-	}
+	t.Run("structural", func(t *testing.T) {
+		tests := []struct {
+			name string
+			code string
+			want prompt.RulePhase
+		}{
+			{
+				name: "struct-004 is structural",
+				code: "KTN-STRUCT-004",
+				want: prompt.PhaseStructural,
+			},
+		}
 
-	// Run test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := prompt.ClassifyRule(tt.code)
-			// Verify classification
-			if got != tt.want {
-				t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
-			}
-		})
-	}
-}
+		// Run test cases
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := prompt.ClassifyRule(tt.code)
+				// Verify classification
+				if got != tt.want {
+					t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
+				}
+			})
+		}
+	})
 
-// TestClassifyRule_TestOrg tests test organization rule classification.
-//
-// Params:
-//   - t: testing object
-func TestClassifyRule_TestOrg(t *testing.T) {
 	// Test organization rules
-	tests := []struct {
-		name string
-		code string
-		want prompt.RulePhase
-	}{
-		{name: "test-001", code: "KTN-TEST-001", want: prompt.PhaseTestOrg},
-		{name: "test-003", code: "KTN-TEST-003", want: prompt.PhaseTestOrg},
-		{name: "test-006", code: "KTN-TEST-006", want: prompt.PhaseTestOrg},
-		{name: "test-008", code: "KTN-TEST-008", want: prompt.PhaseTestOrg},
-		{name: "test-009", code: "KTN-TEST-009", want: prompt.PhaseTestOrg},
-		{name: "test-010", code: "KTN-TEST-010", want: prompt.PhaseTestOrg},
-		{name: "test-011", code: "KTN-TEST-011", want: prompt.PhaseTestOrg},
-	}
+	t.Run("test org", func(t *testing.T) {
+		tests := []struct {
+			name string
+			code string
+			want prompt.RulePhase
+		}{
+			{name: "test-001", code: "KTN-TEST-001", want: prompt.PhaseTestOrg},
+			{name: "test-003", code: "KTN-TEST-003", want: prompt.PhaseTestOrg},
+			{name: "test-006", code: "KTN-TEST-006", want: prompt.PhaseTestOrg},
+			{name: "test-008", code: "KTN-TEST-008", want: prompt.PhaseTestOrg},
+			{name: "test-009", code: "KTN-TEST-009", want: prompt.PhaseTestOrg},
+			{name: "test-010", code: "KTN-TEST-010", want: prompt.PhaseTestOrg},
+			{name: "test-011", code: "KTN-TEST-011", want: prompt.PhaseTestOrg},
+		}
 
-	// Run test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := prompt.ClassifyRule(tt.code)
-			// Verify classification
-			if got != tt.want {
-				t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
-			}
-		})
-	}
-}
+		// Run test cases
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := prompt.ClassifyRule(tt.code)
+				// Verify classification
+				if got != tt.want {
+					t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
+				}
+			})
+		}
+	})
 
-// TestClassifyRule_Comment tests comment rule classification.
-//
-// Params:
-//   - t: testing object
-func TestClassifyRule_Comment(t *testing.T) {
 	// Comment rules
-	tests := []struct {
-		name string
-		code string
-		want prompt.RulePhase
-	}{
-		{name: "comment-001", code: "KTN-COMMENT-001", want: prompt.PhaseComment},
-		{name: "comment-002", code: "KTN-COMMENT-002", want: prompt.PhaseComment},
-		{name: "comment-003", code: "KTN-COMMENT-003", want: prompt.PhaseComment},
-		{name: "comment-004", code: "KTN-COMMENT-004", want: prompt.PhaseComment},
-		{name: "comment-005", code: "KTN-COMMENT-005", want: prompt.PhaseComment},
-		{name: "comment-006", code: "KTN-COMMENT-006", want: prompt.PhaseComment},
-		{name: "comment-007", code: "KTN-COMMENT-007", want: prompt.PhaseComment},
-	}
+	t.Run("comment", func(t *testing.T) {
+		tests := []struct {
+			name string
+			code string
+			want prompt.RulePhase
+		}{
+			{name: "comment-001", code: "KTN-COMMENT-001", want: prompt.PhaseComment},
+			{name: "comment-002", code: "KTN-COMMENT-002", want: prompt.PhaseComment},
+			{name: "comment-003", code: "KTN-COMMENT-003", want: prompt.PhaseComment},
+			{name: "comment-004", code: "KTN-COMMENT-004", want: prompt.PhaseComment},
+			{name: "comment-005", code: "KTN-COMMENT-005", want: prompt.PhaseComment},
+			{name: "comment-006", code: "KTN-COMMENT-006", want: prompt.PhaseComment},
+			{name: "comment-007", code: "KTN-COMMENT-007", want: prompt.PhaseComment},
+		}
 
-	// Run test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := prompt.ClassifyRule(tt.code)
-			// Verify classification
-			if got != tt.want {
-				t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
-			}
-		})
-	}
-}
+		// Run test cases
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := prompt.ClassifyRule(tt.code)
+				// Verify classification
+				if got != tt.want {
+					t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
+				}
+			})
+		}
+	})
 
-// TestClassifyRule_Local tests local fix rule classification.
-//
-// Params:
-//   - t: testing object
-func TestClassifyRule_Local(t *testing.T) {
 	// Local fix rules (default)
-	tests := []struct {
-		name string
-		code string
-		want prompt.RulePhase
-	}{
-		{name: "func-001", code: "KTN-FUNC-001", want: prompt.PhaseLocal},
-		{name: "var-002", code: "KTN-VAR-002", want: prompt.PhaseLocal},
-		{name: "struct-001", code: "KTN-STRUCT-001", want: prompt.PhaseLocal},
-		{name: "const-001", code: "KTN-CONST-001", want: prompt.PhaseLocal},
-		{name: "return-001", code: "KTN-RETURN-001", want: prompt.PhaseLocal},
-		{name: "interface-001", code: "KTN-INTERFACE-001", want: prompt.PhaseLocal},
-	}
+	t.Run("local", func(t *testing.T) {
+		tests := []struct {
+			name string
+			code string
+			want prompt.RulePhase
+		}{
+			{name: "func-001", code: "KTN-FUNC-001", want: prompt.PhaseLocal},
+			{name: "var-002", code: "KTN-VAR-002", want: prompt.PhaseLocal},
+			{name: "struct-001", code: "KTN-STRUCT-001", want: prompt.PhaseLocal},
+			{name: "const-001", code: "KTN-CONST-001", want: prompt.PhaseLocal},
+			{name: "return-001", code: "KTN-RETURN-001", want: prompt.PhaseLocal},
+			{name: "interface-001", code: "KTN-INTERFACE-001", want: prompt.PhaseLocal},
+		}
 
-	// Run test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := prompt.ClassifyRule(tt.code)
-			// Verify classification
-			if got != tt.want {
-				t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
-			}
-		})
-	}
+		// Run test cases
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				got := prompt.ClassifyRule(tt.code)
+				// Verify classification
+				if got != tt.want {
+					t.Errorf("ClassifyRule(%q) = %v, want %v", tt.code, got, tt.want)
+				}
+			})
+		}
+	})
 }
 
 // TestGetPhaseInfo tests phase metadata retrieval.
@@ -195,6 +185,31 @@ func TestGetPhaseInfo(t *testing.T) {
 				t.Errorf("GetPhaseInfo(%v) description is empty", tt.phase)
 			}
 		})
+	}
+}
+
+// TestGetPhaseInfo_UnknownPhase tests handling of unknown phase values.
+//
+// Params:
+//   - t: testing object
+func TestGetPhaseInfo_UnknownPhase(t *testing.T) {
+	// Test with invalid phase value
+	invalidPhase := prompt.RulePhase(999)
+	name, desc, needsRerun := prompt.GetPhaseInfo(invalidPhase)
+
+	// Verify default case returns "Unknown"
+	if name != "Unknown" {
+		t.Errorf("GetPhaseInfo(999) name = %q, want \"Unknown\"", name)
+	}
+
+	// Verify empty description
+	if desc != "" {
+		t.Errorf("GetPhaseInfo(999) description = %q, want empty", desc)
+	}
+
+	// Verify needsRerun is false
+	if needsRerun {
+		t.Errorf("GetPhaseInfo(999) needsRerun = true, want false")
 	}
 }
 

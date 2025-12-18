@@ -11,24 +11,35 @@ func TestAnalyzerSelector_selectSingleRule(t *testing.T) {
 	tests := []struct {
 		name        string
 		code        string
+		verbose     bool
 		expectError bool
 		wantCount   int
 	}{
 		{
 			name:        "valid rule code",
 			code:        "KTN-FUNC-001",
+			verbose:     false,
+			expectError: false,
+			wantCount:   1,
+		},
+		{
+			name:        "valid rule code with verbose",
+			code:        "KTN-FUNC-001",
+			verbose:     true,
 			expectError: false,
 			wantCount:   1,
 		},
 		{
 			name:        "invalid rule code",
 			code:        "KTN-INVALID-999",
+			verbose:     false,
 			expectError: true,
 			wantCount:   0,
 		},
 		{
 			name:        "empty rule code",
 			code:        "",
+			verbose:     false,
 			expectError: true,
 			wantCount:   0,
 		},
@@ -37,7 +48,7 @@ func TestAnalyzerSelector_selectSingleRule(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			selector := NewAnalyzerSelector(&buf, false)
+			selector := NewAnalyzerSelector(&buf, tt.verbose)
 
 			analyzers, err := selector.selectSingleRule(tt.code)
 
@@ -53,6 +64,10 @@ func TestAnalyzerSelector_selectSingleRule(t *testing.T) {
 			if len(analyzers) != tt.wantCount {
 				t.Errorf("expected %d analyzers, got %d", tt.wantCount, len(analyzers))
 			}
+			// Verify verbose output
+			if tt.verbose && !tt.expectError && !bytes.Contains(buf.Bytes(), []byte("Running only rule")) {
+				t.Error("expected verbose output")
+			}
 		})
 	}
 }
@@ -62,24 +77,28 @@ func TestAnalyzerSelector_selectByCategory(t *testing.T) {
 	tests := []struct {
 		name        string
 		category    string
+		verbose     bool
 		expectError bool
 		minCount    int
 	}{
 		{
 			name:        "valid category func",
 			category:    "func",
+			verbose:     false,
 			expectError: false,
 			minCount:    1,
 		},
 		{
-			name:        "valid category const",
+			name:        "valid category const with verbose",
 			category:    "const",
+			verbose:     true,
 			expectError: false,
 			minCount:    1,
 		},
 		{
 			name:        "invalid category",
 			category:    "nonexistent",
+			verbose:     false,
 			expectError: true,
 			minCount:    0,
 		},
@@ -88,7 +107,7 @@ func TestAnalyzerSelector_selectByCategory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			selector := NewAnalyzerSelector(&buf, false)
+			selector := NewAnalyzerSelector(&buf, tt.verbose)
 
 			analyzers, err := selector.selectByCategory(tt.category)
 
@@ -103,6 +122,10 @@ func TestAnalyzerSelector_selectByCategory(t *testing.T) {
 			// Verify count
 			if !tt.expectError && len(analyzers) < tt.minCount {
 				t.Errorf("expected at least %d analyzers, got %d", tt.minCount, len(analyzers))
+			}
+			// Verify verbose output
+			if tt.verbose && !tt.expectError && !bytes.Contains(buf.Bytes(), []byte("Running")) {
+				t.Error("expected verbose output")
 			}
 		})
 	}

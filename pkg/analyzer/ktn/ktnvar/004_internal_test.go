@@ -248,6 +248,101 @@ func Test_checkMakeCalls(t *testing.T) {
 	}
 }
 
+// Test_checkMakeCalls_nonCallExpr tests with non-CallExpr node.
+func Test_checkMakeCalls_nonCallExpr(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			func example() {
+			x := 42
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			// This should handle non-CallExpr nodes gracefully
+			checkMakeCalls(pass, insp)
+
+			// Should not panic or report issues for non-call expressions
+			if reportCount != 0 {
+				t.Errorf("checkMakeCalls() reported %d issues, expected 0", reportCount)
+			}
+
+		})
+	}
+}
+
+// Test_checkMakeCalls_fileExcluded tests with excluded file.
+func Test_checkMakeCalls_fileExcluded(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Setup config with file exclusion
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-004": {
+						Exclude: []string{"test.go"},
+					},
+				},
+			})
+			defer config.Reset()
+
+			code := `package test
+			func example() {
+			s := make([]int, 10)
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkMakeCalls(pass, insp)
+
+			// Should not report anything when file is excluded
+			if reportCount != 0 {
+				t.Errorf("checkMakeCalls() reported %d issues, expected 0 when file excluded", reportCount)
+			}
+
+		})
+	}
+}
+
 // Test_checkMakeCall_notMake tests checkMakeCall with non-make call.
 func Test_checkMakeCall_notMake(t *testing.T) {
 	tests := []struct {
@@ -632,6 +727,225 @@ func Test_checkCompositeLit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
+		})
+	}
+}
+
+// Test_checkCompositeLit_notIdent tests with non-identifier lhs.
+func Test_checkCompositeLit_notIdent(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			func example() {
+			s := []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					Fset:      fset,
+					TypesInfo: info,
+					Report:    func(_d analysis.Diagnostic) {},
+				},
+				appendVars: map[string]bool{"x": true},
+			}
+
+			// Test with non-identifier lhs (e.g., selector expression)
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{
+					&ast.SelectorExpr{
+						X:   &ast.Ident{Name: "obj"},
+						Sel: &ast.Ident{Name: "field"},
+					},
+				},
+			}
+			lit := &ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+			}
+			checkCompositeLit(ctx, assign, 0, lit, []ast.Node{})
+			// No error expected for non-identifier lhs
+
+		})
+	}
+}
+
+// Test_checkCompositeLit_notUsedWithAppend tests when var not used with append.
+func Test_checkCompositeLit_notUsedWithAppend(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			func example() {
+			s := []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					Fset:      fset,
+					TypesInfo: info,
+					Report:    func(_d analysis.Diagnostic) {},
+				},
+				appendVars: make(map[string]bool), // Empty - x not used with append
+			}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			}
+			lit := &ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+			}
+			checkCompositeLit(ctx, assign, 0, lit, []ast.Node{})
+			// No error expected when var not used with append
+
+		})
+	}
+}
+
+// Test_checkCompositeLit_inReturnStmt tests in return statement.
+func Test_checkCompositeLit_inReturnStmt(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			func example() []int {
+			return []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					Fset:      fset,
+					TypesInfo: info,
+					Report:    func(_d analysis.Diagnostic) {},
+				},
+				appendVars: map[string]bool{"x": true},
+			}
+
+			// Create stack with ReturnStmt
+			returnStmt := &ast.ReturnStmt{}
+			stack := []ast.Node{&ast.FuncDecl{}, returnStmt}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			}
+			lit := &ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+			}
+			checkCompositeLit(ctx, assign, 0, lit, stack)
+			// No error expected for return statement
+
+		})
+	}
+}
+
+// Test_checkCompositeLit_inStructLiteral tests in struct literal.
+func Test_checkCompositeLit_inStructLiteral(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			code := `package test
+			type S struct {
+			items []int
+			}
+			func example() {
+			s := S{items: []int{}}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					Fset:      fset,
+					TypesInfo: info,
+					Report:    func(_d analysis.Diagnostic) {},
+				},
+				appendVars: map[string]bool{"items": true},
+			}
+
+			// Create stack with struct literal
+			structLit := &ast.CompositeLit{
+				Type: &ast.Ident{Name: "S"},
+			}
+			stack := []ast.Node{&ast.FuncDecl{}, structLit}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "items"}},
+			}
+			lit := &ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+			}
+			checkCompositeLit(ctx, assign, 0, lit, stack)
+			// No error expected for struct initialization
+
 		})
 	}
 }

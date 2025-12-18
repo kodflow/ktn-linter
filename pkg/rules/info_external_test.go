@@ -118,6 +118,16 @@ func TestExtractCategory(t *testing.T) {
 			code: "",
 			want: "",
 		},
+		{
+			name: "KTN prefix but missing number",
+			code: "KTN-FUNC",
+			want: "",
+		},
+		{
+			name: "KTN prefix but too many parts",
+			code: "KTN-FUNC-001-EXTRA",
+			want: "",
+		},
 	}
 
 	for _, tt := range tests {
