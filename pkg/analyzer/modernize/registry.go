@@ -11,9 +11,11 @@ import (
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs modernize
 func Analyzers() []*analysis.Analyzer {
-	// Liste des analyseurs à désactiver (bugs connus ou instables)
+	// Liste des analyseurs à désactiver (bugs connus ou instables avec Go 1.25.5)
 	disabled := map[string]bool{
-		"newexpr": true, // Désactivé: panic dans certains cas (nil pointer dereference)
+		"newexpr":        true, // Désactivé: panic dans certains cas (nil pointer dereference)
+		"omitzero":       true, // Désactivé: panic avec Go 1.25.5 (nil pointer dans checkOmitEmptyField)
+		"slicescontains": true, // Désactivé: panic avec Go 1.25.5 (nil pointer dans CoreType)
 	}
 
 	// Filtrer les analyseurs désactivés

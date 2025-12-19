@@ -304,6 +304,12 @@ func hasCommentBefore(pass *analysis.Pass, pos token.Pos) bool {
 		}
 	}
 
+	// Check if file was found
+	if file == nil {
+		// Retour si fichier non trouvé
+		return false
+	}
+
 	// Check all comments in the file
 	for _, commentGroup := range file.Comments {
 		commentPos := pass.Fset.Position(commentGroup.End())
@@ -337,6 +343,12 @@ func hasInlineComment(pass *analysis.Pass, pos token.Pos) bool {
 			file = f
 			break
 		}
+	}
+
+	// Check if file was found
+	if file == nil {
+		// Retour si fichier non trouvé
+		return false
 	}
 
 	// Check all comments in the file
