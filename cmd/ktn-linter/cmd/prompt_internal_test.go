@@ -24,10 +24,10 @@ func Test_runPrompt(t *testing.T) {
 		checkStderr string
 	}{
 		{
-			name:       "valid formatter package",
+			name:       "valid formatter package with test issues",
 			packages:   []string{"github.com/kodflow/ktn-linter/pkg/formatter"},
 			expectExit: true,
-			exitCode:   0,
+			exitCode:   1, // Exit 1 because KTN-TEST-005/009 now correctly detect test issues
 		},
 		{
 			name:        "testdata with potential issues",

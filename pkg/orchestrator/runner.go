@@ -118,6 +118,7 @@ func (r *AnalysisRunner) worker(
 }
 
 // analyzePackageParallel analyzes a package and sends diagnostics to a channel.
+// Uses separate results maps for test vs non-test analyzers to avoid inspect cache issues.
 //
 // Params:
 //   - pkg: package to analyze
@@ -137,14 +138,51 @@ func (r *AnalysisRunner) analyzePackageParallel(
 		fmt.Fprintf(r.stderr, "Analyzing package: %s\n", pkg.PkgPath)
 	}
 
-	// Clear results for this package
+	// Separate analyzers into test and non-test groups
+	// This ensures inspect.Analyzer runs with correct file sets
+	var testAnalyzers, nonTestAnalyzers []*analysis.Analyzer
+	// Iterate over analyzers
+	for _, a := range analyzers {
+		// Check if test analyzer
+		if strings.HasPrefix(a.Name, "ktntest") {
+			// Add to test analyzers
+			testAnalyzers = append(testAnalyzers, a)
+		} else {
+			// Add to non-test analyzers
+			nonTestAnalyzers = append(nonTestAnalyzers, a)
+		}
+	}
+
+	// Run non-test analyzers first (filtered files)
+	r.runAnalyzerGroup(pkg, pkgFset, nonTestAnalyzers, results, diagChan)
+
+	// Clear results before running test analyzers (different file set)
 	for k := range results {
 		delete(results, k)
 	}
 
+	// Run test analyzers (all files including *_test.go)
+	r.runAnalyzerGroup(pkg, pkgFset, testAnalyzers, results, diagChan)
+}
+
+// runAnalyzerGroup runs a group of analyzers on a package.
+//
+// Params:
+//   - pkg: package to analyze
+//   - fset: fileset
+//   - analyzers: analyzers to run
+//   - results: results map
+//   - diagChan: diagnostics channel
+func (r *AnalysisRunner) runAnalyzerGroup(
+	pkg *packages.Package,
+	fset *token.FileSet,
+	analyzers []*analysis.Analyzer,
+	results map[*analysis.Analyzer]any,
+	diagChan chan<- DiagnosticResult,
+) {
 	// Run each analyzer
 	for _, a := range analyzers {
-		pass := r.createPassParallel(a, pkg, pkgFset, diagChan, results)
+		pass := r.createPassParallel(a, pkg, fset, diagChan, results)
 		result, err := a.Run(pass)
 
 		// Handle errors

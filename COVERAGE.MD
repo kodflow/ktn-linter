@@ -15,13 +15,12 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **95.7%** |
+| 🟢 | **TOTAL (Global)** | **95.9%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 95.4% |
-| 🟡 | `github.com/kodflow/ktn-linter/isolation` | 90.6% |
+| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.6% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
@@ -36,8 +35,8 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 97.2% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/prompt` | 90.8% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 96.7% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 98.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
 
@@ -45,22 +44,16 @@ Rapport de couverture généré automatiquement.
 
 ## Détail des packages incomplets
 
-### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 95.4%
+### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 94.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
+| 🟢 `lint.go:runLint` | 91.7% |
 | 🟡 `lint.go:loadConfiguration` | 90.0% |
 | 🟡 `lint.go:formatAndDisplay` | 88.9% |
-| 🟡 `prompt.go:runPrompt` | 81.2% |
+| 🔴 `prompt.go:runPrompt` | 75.0% |
 | 🟡 `rules.go:runRules` | 83.3% |
 | 🟡 `rules.go:getRulesWithFilters` | 83.3% |
-
-### 🟡 `github.com/kodflow/ktn-linter/isolation` - 90.6%
-
-| Fichier:Fonction | Couverture |
-|------------------|------------|
-| 🟡 `linux.go:Create` | 88.9% |
-| 🟡 `linux.go:enableControllers` | 83.3% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` - 96.1%
 
@@ -74,7 +67,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `001.go:getMethodSignature` | 87.5% |
 | 🟡 `001.go:getBaseIdent` | 85.7% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` - 98.6%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` - 98.1%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -82,6 +75,8 @@ Rapport de couverture généré automatiquement.
 | 🟢 `001.go:isDocComment` | 91.7% |
 | 🟢 `002.go:runComment002` | 93.3% |
 | 🟢 `005.go:runComment005` | 92.3% |
+| 🟢 `007.go:hasCommentBefore` | 92.9% |
+| 🟢 `007.go:hasInlineComment` | 93.3% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 98.5%
 
@@ -237,20 +232,21 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `json.go:severityToLevel` | 80.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 97.2%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 96.7%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `loader.go:Load` | 85.7% |
 | 🟡 `orchestrator.go:Run` | 90.0% |
 | 🟢 `runner.go:Run` | 94.1% |
-| 🟡 `runner.go:analyzePackageParallel` | 90.9% |
+| 🟢 `runner.go:analyzePackageParallel` | 91.7% |
+| 🟡 `runner.go:runAnalyzerGroup` | 83.3% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/prompt` - 90.8%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/prompt` - 98.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🔴 `generator.go:collectViolations` | 18.8% |
+| 🟡 `generator.go:collectViolations` | 87.5% |
 | 🟡 `phases.go:ClassifyRule` | 88.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/rules` - 96.0%
@@ -262,4 +258,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-19 16:02:49*
+*Généré le: 2025-12-19 21:10:21*
