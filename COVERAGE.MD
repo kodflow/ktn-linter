@@ -15,9 +15,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **95.9%** |
+| 🟢 | **TOTAL (Global)** | **94.6%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 94.2% |
+| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 88.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
@@ -39,12 +39,13 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 98.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/updater` | 32.1% |
 
 ---
 
 ## Détail des packages incomplets
 
-### 🟢 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 94.2%
+### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 88.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -54,6 +55,9 @@ Rapport de couverture généré automatiquement.
 | 🔴 `prompt.go:runPrompt` | 75.0% |
 | 🟡 `rules.go:runRules` | 83.3% |
 | 🟡 `rules.go:getRulesWithFilters` | 83.3% |
+| 🟡 `upgrade.go:runUpgrade` | 83.3% |
+| 🔴 `upgrade.go:handleCheckOnly` | 60.0% |
+| ⚫ `upgrade.go:handleUpgrade` | 0.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` - 96.1%
 
@@ -255,7 +259,17 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🔴 `examples.go:findProjectRoot` | 60.0% |
 
+### 🔴 `github.com/kodflow/ktn-linter/pkg/updater` - 32.1%
+
+| Fichier:Fonction | Couverture |
+|------------------|------------|
+| 🔴 `updater.go:CheckForUpdate` | 28.6% |
+| 🔴 `updater.go:Upgrade` | 33.3% |
+| ⚫ `updater.go:getLatestVersion` | 0.0% |
+| ⚫ `updater.go:downloadAndReplace` | 0.0% |
+| 🔴 `updater.go:getBinaryName` | 75.0% |
+
 
 ---
 
-*Généré le: 2025-12-19 21:10:21*
+*Généré le: 2025-12-19 22:49:11*

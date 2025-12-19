@@ -16,6 +16,7 @@ func Analyzers() []*analysis.Analyzer {
 		"newexpr":        true, // Désactivé: panic dans certains cas (nil pointer dereference)
 		"omitzero":       true, // Désactivé: panic avec Go 1.25.5 (nil pointer dans checkOmitEmptyField)
 		"slicescontains": true, // Désactivé: panic avec Go 1.25.5 (nil pointer dans CoreType)
+		"any":            true, // Désactivé: panic avec Go 1.25.5 (no Scope for *ast.File)
 	}
 
 	// Filtrer les analyseurs désactivés
