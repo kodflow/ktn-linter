@@ -226,6 +226,54 @@ func TestConfig_IsFileExcluded(t *testing.T) {
 			filename: "pkg/analyzer/ktn/ktnfunc/testdata/good.go",
 			want:     true,
 		},
+		{
+			name: "KTN-TEST rules ignore global test exclusion",
+			cfg: &config.Config{
+				Exclude: []string{"*_test.go"},
+			},
+			ruleCode: "KTN-TEST-001",
+			filename: "foo_test.go",
+			want:     false,
+		},
+		{
+			name: "KTN-TEST rules ignore global test exclusion with path",
+			cfg: &config.Config{
+				Exclude: []string{"**/*_test.go"},
+			},
+			ruleCode: "KTN-TEST-005",
+			filename: "pkg/service/handler_test.go",
+			want:     false,
+		},
+		{
+			name: "KTN-TEST rules still respect rule-specific exclusions",
+			cfg: &config.Config{
+				Exclude: []string{"*_test.go"},
+				Rules: map[string]*config.RuleConfig{
+					"KTN-TEST-001": {Exclude: []string{"vendor/**"}},
+				},
+			},
+			ruleCode: "KTN-TEST-001",
+			filename: "vendor/lib_test.go",
+			want:     true,
+		},
+		{
+			name: "non-KTN-TEST rules still excluded by global pattern",
+			cfg: &config.Config{
+				Exclude: []string{"*_test.go"},
+			},
+			ruleCode: "KTN-FUNC-001",
+			filename: "foo_test.go",
+			want:     true,
+		},
+		{
+			name: "KTN-TEST rules ignore global exclusion for non-test files too",
+			cfg: &config.Config{
+				Exclude: []string{"vendor/**"},
+			},
+			ruleCode: "KTN-TEST-001",
+			filename: "vendor/lib.go",
+			want:     false,
+		},
 	}
 
 	for _, tt := range tests {

@@ -181,6 +181,7 @@ func (c *Config) GetThreshold(ruleCode string, defaultValue int) int {
 }
 
 // IsFileExcluded checks if a file should be excluded for a specific rule.
+// KTN-TEST rules ignore ALL global exclusions (they only respect rule-specific exclusions).
 //
 // Params:
 //   - ruleCode: the rule code to check
@@ -195,9 +196,8 @@ func (c *Config) IsFileExcluded(ruleCode, filename string) bool {
 		return false
 	}
 
-	// Check global exclusions first
-	if c.matchesAnyPattern(filename, c.Exclude) {
-		// Return excluded by global pattern
+	// Check global exclusions (KTN-TEST rules ignore them)
+	if !strings.HasPrefix(ruleCode, "KTN-TEST-") && c.matchesAnyPattern(filename, c.Exclude) {
 		return true
 	}
 
