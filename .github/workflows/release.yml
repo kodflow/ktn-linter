@@ -122,6 +122,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout code
@@ -243,3 +245,22 @@ jobs:
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
           files: release/*
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  # =============================================================================
+  # Trigger devcontainer-template rebuild
+  # =============================================================================
+  trigger-devcontainer:
+    name: Trigger devcontainer rebuild
+    needs: release
+    runs-on: ubuntu-latest
+    # Only trigger on non-prerelease versions
+    if: ${{ !contains(needs.release.outputs.version, '-') }}
+
+    steps:
+      - name: Trigger devcontainer-template build
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.DEVCONTAINER_TRIGGER_PAT }}
+          repository: kodflow/devcontainer-template
+          event-type: ktn-linter-release
+          client-payload: '{"version": "${{ needs.release.outputs.version }}", "sha": "${{ github.sha }}"}'
