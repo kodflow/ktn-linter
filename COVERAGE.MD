@@ -17,7 +17,7 @@ Rapport de couverture généré automatiquement.
 |:----:|---------|----------|
 | 🟢 | **TOTAL (Global)** | **94.6%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 88.0% |
+| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 88.1% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
@@ -45,7 +45,7 @@ Rapport de couverture généré automatiquement.
 
 ## Détail des packages incomplets
 
-### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 88.0%
+### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 88.1%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -272,4 +272,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-19 22:49:11*
+*Généré le: 2025-12-20 09:47:27*

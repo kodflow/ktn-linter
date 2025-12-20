@@ -55,6 +55,7 @@ Examples:
 // Returns: aucun
 func SetVersion(v string) {
 	version = v
+	rootCmd.Version = v
 	rootCmd.Long = `KTN-Linter ` + v + ` - Linter for Go code following KTN (Kodflow Typing Notation) conventions.
 
 Examples:
