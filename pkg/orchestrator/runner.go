@@ -108,11 +108,12 @@ func (r *AnalysisRunner) worker(
 	wg waitGroup,
 ) {
 	defer wg.Done()
-	// Each worker has its own results map
-	results := make(map[*analysis.Analyzer]any, len(analyzers))
 
 	// Process packages from channel
 	for pkg := range pkgChan {
+		// Create fresh results map for each package to avoid cache corruption
+		// between packages (inspect.Analyzer caches AST data that is package-specific)
+		results := make(map[*analysis.Analyzer]any, len(analyzers))
 		r.analyzePackageParallel(pkg, analyzers, results, diagChan)
 	}
 }
