@@ -23,6 +23,8 @@ type lintOrchestrator interface {
 	RunAnalyzers(pkgs []*packages.Package, analyzers []*analysis.Analyzer) []orchestrator.DiagnosticResult
 	FilterDiagnostics(diagnostics []orchestrator.DiagnosticResult) []orchestrator.DiagnosticResult
 	ExtractDiagnostics(diagnostics []orchestrator.DiagnosticResult) []analysis.Diagnostic
+	DiscoverModules(paths []string) ([]string, error)
+	RunMultiModule(paths []string, opts orchestrator.Options) ([]orchestrator.DiagnosticResult, error)
 }
 
 // lintCmd represents the lint command.
@@ -149,7 +151,7 @@ func loadConfiguration(opts orchestrator.Options) {
 //
 // Params:
 //   - orch: linting orchestrator interface
-//   - args: package patterns
+//   - args: package patterns or paths
 //   - opts: linting options
 //
 // Returns:
@@ -157,6 +159,92 @@ func loadConfiguration(opts orchestrator.Options) {
 //   - *token.FileSet: first fileset for formatting
 //   - error: pipeline error if any
 func runPipeline(orch lintOrchestrator, args []string, opts orchestrator.Options) ([]analysis.Diagnostic, *token.FileSet, error) {
+	// Check if we need multi-module discovery
+	if needsModuleDiscovery(args) {
+		// Use multi-module approach
+		return runMultiModulePipeline(orch, args, opts)
+	}
+
+	// Use standard single-module approach
+	return runSingleModulePipeline(orch, args, opts)
+}
+
+// needsModuleDiscovery checks if args require module discovery.
+//
+// Params:
+//   - args: command line arguments
+//
+// Returns:
+//   - bool: true if discovery needed
+func needsModuleDiscovery(args []string) bool {
+	// Check each arg
+	for _, arg := range args {
+		// Skip standard Go patterns
+		if arg == "./..." || arg == "." {
+			continue
+		}
+		// Check if path exists as directory
+		info, err := os.Stat(arg)
+		// Skip if not accessible
+		if err != nil {
+			continue
+		}
+		// Check if directory
+		if info.IsDir() {
+			return true
+		}
+	}
+	return false
+}
+
+// runMultiModulePipeline runs analysis across multiple modules.
+//
+// Params:
+//   - orch: linting orchestrator interface
+//   - args: paths to analyze
+//   - opts: linting options
+//
+// Returns:
+//   - []analysis.Diagnostic: found issues
+//   - *token.FileSet: first fileset for formatting
+//   - error: pipeline error if any
+func runMultiModulePipeline(orch lintOrchestrator, args []string, opts orchestrator.Options) ([]analysis.Diagnostic, *token.FileSet, error) {
+	// Run multi-module analysis
+	rawDiags, err := orch.RunMultiModule(args, opts)
+	// Check for error
+	if err != nil {
+		return []analysis.Diagnostic{}, nil, err
+	}
+
+	// Filter diagnostics
+	filtered := orch.FilterDiagnostics(rawDiags)
+
+	// Get first fset for formatting
+	var fset *token.FileSet
+	// Check if diagnostics exist
+	if len(filtered) > 0 {
+		fset = filtered[0].Fset
+	}
+
+	// Extract and deduplicate
+	diags := orch.ExtractDiagnostics(filtered)
+
+	// Return results
+	return diags, fset, nil
+}
+
+// runSingleModulePipeline runs analysis for a single module.
+//
+// Params:
+//   - orch: linting orchestrator interface
+//   - args: package patterns
+//   - opts: linting options
+//
+// Returns:
+//   - []analysis.Diagnostic: found issues
+//   - *token.FileSet: first fileset for formatting
+//   - error: pipeline error if any
+func runSingleModulePipeline(orch lintOrchestrator, args []string, opts orchestrator.Options) ([]analysis.Diagnostic, *token.FileSet, error) {
 	// Load packages
 	pkgs, err := orch.LoadPackages(args)
 	// Check for error

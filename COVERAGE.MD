@@ -15,9 +15,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **94.6%** |
+| 🟢 | **TOTAL (Global)** | **93.0%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 88.1% |
+| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 84.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
@@ -35,7 +35,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 96.7% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 64.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 98.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
@@ -45,12 +45,14 @@ Rapport de couverture généré automatiquement.
 
 ## Détail des packages incomplets
 
-### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 88.1%
+### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 84.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟢 `lint.go:runLint` | 91.7% |
 | 🟡 `lint.go:loadConfiguration` | 90.0% |
+| 🟡 `lint.go:needsModuleDiscovery` | 88.9% |
+| 🔴 `lint.go:runSingleModulePipeline` | 23.1% |
 | 🟡 `lint.go:formatAndDisplay` | 88.9% |
 | 🔴 `prompt.go:runPrompt` | 75.0% |
 | 🟡 `rules.go:runRules` | 83.3% |
@@ -236,12 +238,21 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `json.go:severityToLevel` | 80.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 96.7%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 64.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟡 `loader.go:Load` | 85.7% |
+| ⚫ `discovery.go:FindModules` | 0.0% |
+| ⚫ `discovery.go:findInPath` | 0.0% |
+| ⚫ `discovery.go:findModuleForFile` | 0.0% |
+| ⚫ `discovery.go:searchDirectory` | 0.0% |
+| ⚫ `discovery.go:ResolvePatterns` | 0.0% |
+| 🟡 `loader.go:LoadFromDir` | 85.7% |
 | 🟡 `orchestrator.go:Run` | 90.0% |
+| ⚫ `orchestrator.go:DiscoverModules` | 0.0% |
+| ⚫ `orchestrator.go:LoadPackagesFromDir` | 0.0% |
+| ⚫ `orchestrator.go:RunMultiModule` | 0.0% |
+| ⚫ `orchestrator.go:runSingleModule` | 0.0% |
 | 🟢 `runner.go:Run` | 94.1% |
 | 🟢 `runner.go:analyzePackageParallel` | 91.7% |
 | 🟡 `runner.go:runAnalyzerGroup` | 83.3% |
@@ -272,4 +283,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-20 09:47:27*
+*Généré le: 2025-12-22 17:48:38*

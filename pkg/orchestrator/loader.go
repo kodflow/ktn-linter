@@ -36,10 +36,25 @@ func NewPackageLoader(stderr io.Writer) *PackageLoader {
 //   - []*packages.Package: loaded packages
 //   - error: loading error if any
 func (l *PackageLoader) Load(patterns []string) ([]*packages.Package, error) {
+	// Load from current directory
+	return l.LoadFromDir("", patterns)
+}
+
+// LoadFromDir loads Go packages from a specific directory.
+//
+// Params:
+//   - dir: directory containing go.mod (empty for current)
+//   - patterns: package patterns to load
+//
+// Returns:
+//   - []*packages.Package: loaded packages
+//   - error: loading error if any
+func (l *PackageLoader) LoadFromDir(dir string, patterns []string) ([]*packages.Package, error) {
 	cfg := &packages.Config{
 		Mode:       packages.NeedName | packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
 		Tests:      true,
 		BuildFlags: []string{"-buildvcs=false"},
+		Dir:        dir,
 	}
 
 	pkgs, err := packages.Load(cfg, patterns...)
