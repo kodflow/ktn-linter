@@ -3,6 +3,19 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
   "workspaceFolder": "/workspace",
+  // Features - additional languages (tools are already in base image)
+  "features": {
+    // ========== LANGUAGES ==========
+    // Go is enabled for this project
+    "./features/languages/go": {},
+    // ========== EXTERNAL ==========
+    // Docker support
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false,
+      "installDockerBuildx": true,
+      "dockerDashComposeVersion": "v2"
+    }
+  },
   // Configure tool-specific properties
   "customizations": {
     "vscode": {
@@ -17,47 +30,44 @@
         "files.eol": "\n",
         "files.insertFinalNewline": true,
         "files.trimTrailingWhitespace": true,
-        // Prettier config
-        "[javascript]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
-        },
-        "[typescript]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
-        },
-        "[python]": {
-          "editor.defaultFormatter": "charliermarsh.ruff"
+        // Go settings
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "go.lintFlags": ["--fast"],
+        "go.formatTool": "goimports",
+        "go.testFlags": ["-v", "-race"],
+        "[go]": {
+          "editor.defaultFormatter": "golang.go",
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
         }
       },
       "extensions": [
-        // AI Autocomplete et IntelliSense
-        "visualstudioexptteam.vscodeintellicode", // IntelliCode gratuit de Microsoft
-        // Linters et formatters universels
-        "dbaeumer.vscode-eslint", // ESLint (JavaScript/TypeScript)
-        "esbenp.prettier-vscode", // Prettier (formatter multi-langages)
-        // Linters spécifiques par langage
-        "ms-python.python", // Python avec Pylance (linting intégré)
-        "ms-python.vscode-pylance", // Meilleur IntelliSense pour Python
-        "charliermarsh.ruff", // Ruff - linter Python ultra-rapide
-        "golang.go", // Go avec linting intégré
-        "rust-lang.rust-analyzer", // Rust avec linting intégré
-        // Utilitaires
-        "usernamehw.errorlens", // Affichage inline des erreurs et warnings
-        "vscode-icons-team.vscode-icons", // Icônes pour les fichiers et dossiers
-        "redhat.vscode-yaml", // Support YAML
-        "tamasfe.even-better-toml", // Support TOML
-        "editorconfig.editorconfig", // EditorConfig
-        "Gruntfuggly.triggertaskonsave", // Trigger Task on Save - pour exécuter ktn-linter automatiquement
+        // Base extensions
+        "usernamehw.errorlens",
+        "vscode-icons-team.vscode-icons",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "editorconfig.editorconfig",
+        // Go extensions
+        "golang.go",
         // Code Quality
-        "codacy-app.codacy" // Codacy - analyse de qualité de code
+        "codacy-app.codacy",
+        // Trigger Task on Save - for running ktn-linter automatically
+        "Gruntfuggly.triggertaskonsave"
       ]
     }
   },
-  // Post-start command
-  "postStartCommand": "/workspace/.devcontainer/setup-mcp.sh && echo '🚀 DevContainer ready!'",
-  // Forward ports
+  // ========== LIFECYCLE COMMANDS ==========
+  // All commands check for script existence to avoid failures if scripts are missing
+  "initializeCommand": "[ -f \"${localWorkspaceFolder}/.devcontainer/hooks/lifecycle/initialize.sh\" ] && bash \"${localWorkspaceFolder}/.devcontainer/hooks/lifecycle/initialize.sh\" || true",
+  "onCreateCommand": "chmod +x /workspace/.devcontainer/hooks/lifecycle/*.sh 2>/dev/null; [ -f /workspace/.devcontainer/hooks/lifecycle/onCreate.sh ] && /workspace/.devcontainer/hooks/lifecycle/onCreate.sh || true",
+  "updateContentCommand": "[ -f /workspace/.devcontainer/hooks/lifecycle/updateContent.sh ] && /workspace/.devcontainer/hooks/lifecycle/updateContent.sh || true",
+  "postCreateCommand": "[ -f /workspace/.devcontainer/hooks/lifecycle/postCreate.sh ] && /workspace/.devcontainer/hooks/lifecycle/postCreate.sh || true",
+  "postStartCommand": "[ -f /workspace/.devcontainer/hooks/lifecycle/postStart.sh ] && /workspace/.devcontainer/hooks/lifecycle/postStart.sh || true",
+  "postAttachCommand": "[ -f /workspace/.devcontainer/hooks/lifecycle/postAttach.sh ] && /workspace/.devcontainer/hooks/lifecycle/postAttach.sh || true",
   "forwardPorts": [],
-  // Run as user
   "remoteUser": "vscode",
-  // Shutdown action
   "shutdownAction": "none"
 }

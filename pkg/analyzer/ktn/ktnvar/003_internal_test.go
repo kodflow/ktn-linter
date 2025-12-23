@@ -494,7 +494,6 @@ func Test_checkStatement(t *testing.T) {
 	}
 }
 
-
 // Test_checkNestedBlocks tests the checkNestedBlocks private function.
 func Test_checkNestedBlocks(t *testing.T) {
 	tests := []struct {
@@ -509,7 +508,6 @@ func Test_checkNestedBlocks(t *testing.T) {
 	}
 }
 
-
 // Test_checkIfStmt tests the checkIfStmt private function.
 func Test_checkIfStmt(t *testing.T) {
 	tests := []struct {
@@ -523,4 +521,3 @@ func Test_checkIfStmt(t *testing.T) {
 		})
 	}
 }
-

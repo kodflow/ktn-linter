@@ -15,7 +15,7 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **93.0%** |
+| 🟢 | **TOTAL (Global)** | **93.8%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 84.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
@@ -35,7 +35,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 64.2% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 81.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 98.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
@@ -238,15 +238,14 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `json.go:severityToLevel` | 80.0% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 64.2%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 81.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| ⚫ `discovery.go:FindModules` | 0.0% |
-| ⚫ `discovery.go:findInPath` | 0.0% |
-| ⚫ `discovery.go:findModuleForFile` | 0.0% |
-| ⚫ `discovery.go:searchDirectory` | 0.0% |
-| ⚫ `discovery.go:ResolvePatterns` | 0.0% |
+| 🟡 `discovery.go:FindModules` | 90.9% |
+| 🟡 `discovery.go:findInPath` | 88.9% |
+| 🔴 `discovery.go:findModuleForFile` | 71.4% |
+| 🟡 `discovery.go:searchDirectory` | 85.7% |
 | 🟡 `loader.go:LoadFromDir` | 85.7% |
 | 🟡 `orchestrator.go:Run` | 90.0% |
 | ⚫ `orchestrator.go:DiscoverModules` | 0.0% |
@@ -283,4 +282,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-22 17:48:38*
+*Généré le: 2025-12-23 00:06:05*

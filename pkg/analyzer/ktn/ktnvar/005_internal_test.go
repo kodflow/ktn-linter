@@ -208,4 +208,3 @@ func Test_checkMakeCallVar008(t *testing.T) {
 		})
 	}
 }
-

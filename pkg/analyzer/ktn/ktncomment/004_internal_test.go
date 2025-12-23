@@ -254,7 +254,6 @@ func Test_checkVarDeclaration(t *testing.T) {
 	}
 }
 
-
 // Test_reportMissingVarDoc tests the reportMissingVarDoc private function.
 func Test_reportMissingVarDoc(t *testing.T) {
 	tests := []struct {
@@ -268,4 +267,3 @@ func Test_reportMissingVarDoc(t *testing.T) {
 		})
 	}
 }
-

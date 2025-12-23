@@ -37,13 +37,13 @@ func TestSetVersion(t *testing.T) {
 // TestExecute tests that Execute can be called without panicking.
 func TestExecute(t *testing.T) {
 	tests := []struct {
-		name         string
-		errorCases   string
-		expectPanic  bool
+		name        string
+		errorCases  string
+		expectPanic bool
 	}{
 		{
-			name:       "tests panic and error recovery",
-			errorCases: "tests panic and error recovery",
+			name:        "tests panic and error recovery",
+			errorCases:  "tests panic and error recovery",
 			expectPanic: false,
 		},
 	}

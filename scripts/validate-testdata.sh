@@ -56,6 +56,13 @@ CATEGORY_MAP["struct"]="STRUCT"
 CATEGORY_MAP["test"]="TEST"
 CATEGORY_MAP["var"]="VAR"
 
+# Règles qui nécessitent une résolution de types externe (imports net/http, os, etc.)
+# Ces règles sont testées via analysistest (go test) car elles ont besoin
+# du contexte complet du module pour résoudre les imports externes.
+# La validation directe (fichier isolé) ne peut pas résoudre ces types.
+declare -A RULES_NEED_TYPE_RESOLUTION
+RULES_NEED_TYPE_RESOLUTION["KTN-API-001"]=1
+
 # Fonction pour extraire le code de règle attendu d'un chemin testdata
 get_expected_code() {
     local testname=$1  # ex: func001, const002, var019, func004_special
@@ -103,6 +110,12 @@ check_good_file() {
         return 0
     fi
 
+    # Skip les règles qui nécessitent une résolution de types (testées via analysistest)
+    if [[ -n "${RULES_NEED_TYPE_RESOLUTION[$expected_code]}" ]]; then
+        echo -e "  ${GREEN}✅ ${testname}/good.go (testé via analysistest - types externes)${NC}"
+        return 0
+    fi
+
     total_checks=$((total_checks + 1))
 
     echo -n "  Checking ${testname}/good.go (${expected_code})... "
@@ -143,6 +156,12 @@ check_bad_file() {
     # Les règles TEST analysent les fichiers *_test.go, pas les .go normaux
     if [[ "$expected_code" == KTN-TEST-* ]]; then
         echo -e "  ${GREEN}✅ ${testname} (testé via analysistest)${NC}"
+        return 0
+    fi
+
+    # Skip les règles qui nécessitent une résolution de types (testées via analysistest)
+    if [[ -n "${RULES_NEED_TYPE_RESOLUTION[$expected_code]}" ]]; then
+        echo -e "  ${GREEN}✅ ${testname} (testé via analysistest - types externes)${NC}"
         return 0
     fi
 

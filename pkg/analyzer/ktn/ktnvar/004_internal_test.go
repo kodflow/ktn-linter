@@ -716,7 +716,6 @@ func Test_checkMakeCall(t *testing.T) {
 	}
 }
 
-
 // Test_checkCompositeLit tests the checkCompositeLit private function.
 func Test_checkCompositeLit(t *testing.T) {
 	tests := []struct {
@@ -949,4 +948,3 @@ func Test_checkCompositeLit_inStructLiteral(t *testing.T) {
 		})
 	}
 }
-

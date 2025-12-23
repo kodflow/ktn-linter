@@ -222,26 +222,26 @@ func (g *Generator) buildOutput(rulesList []RuleViolations, phases []PhaseGroup)
 func buildModernizeCode(analyzerName string) string {
 	// Map of known modernize analyzer names to codes
 	modernizeCodes := map[string]string{
-		"stringscut":        "KTN-MODERNIZE-001", // strings.Cut
-		"stringscutprefix":  "KTN-MODERNIZE-002", // CutPrefix/CutSuffix
-		"any":               "KTN-MODERNIZE-003", // interface{} → any
-		"minmax":            "KTN-MODERNIZE-004", // min/max builtins
-		"slicescontains":    "KTN-MODERNIZE-005", // slices.Contains
-		"slicessort":        "KTN-MODERNIZE-006", // slices.Sort
-		"fmtappendf":        "KTN-MODERNIZE-007", // fmt.Appendf
-		"rangeint":          "KTN-MODERNIZE-008", // range over int
-		"bloop":             "KTN-MODERNIZE-009", // b.Loop
-		"waitgroup":         "KTN-MODERNIZE-010", // wg.Go
-		"omitzero":          "KTN-MODERNIZE-011", // omitzero tag
-		"testingcontext":    "KTN-MODERNIZE-012", // t.Context
-		"stringsbuilder":    "KTN-MODERNIZE-013", // strings.Builder
-		"mapsloop":          "KTN-MODERNIZE-014", // maps package
-		"stditerators":      "KTN-MODERNIZE-015", // iterators
-		"stringsseq":        "KTN-MODERNIZE-016", // SplitSeq/FieldsSeq
-		"unsafefuncs":       "KTN-MODERNIZE-017", // unsafe functions
-		"reflecttypefor":    "KTN-MODERNIZE-018", // TypeFor
-		"plusbuild":         "KTN-MODERNIZE-019", // obsolete build comments
-		"forvar":            "KTN-MODERNIZE-020", // loop variables
+		"stringscut":       "KTN-MODERNIZE-001", // strings.Cut
+		"stringscutprefix": "KTN-MODERNIZE-002", // CutPrefix/CutSuffix
+		"any":              "KTN-MODERNIZE-003", // interface{} → any
+		"minmax":           "KTN-MODERNIZE-004", // min/max builtins
+		"slicescontains":   "KTN-MODERNIZE-005", // slices.Contains
+		"slicessort":       "KTN-MODERNIZE-006", // slices.Sort
+		"fmtappendf":       "KTN-MODERNIZE-007", // fmt.Appendf
+		"rangeint":         "KTN-MODERNIZE-008", // range over int
+		"bloop":            "KTN-MODERNIZE-009", // b.Loop
+		"waitgroup":        "KTN-MODERNIZE-010", // wg.Go
+		"omitzero":         "KTN-MODERNIZE-011", // omitzero tag
+		"testingcontext":   "KTN-MODERNIZE-012", // t.Context
+		"stringsbuilder":   "KTN-MODERNIZE-013", // strings.Builder
+		"mapsloop":         "KTN-MODERNIZE-014", // maps package
+		"stditerators":     "KTN-MODERNIZE-015", // iterators
+		"stringsseq":       "KTN-MODERNIZE-016", // SplitSeq/FieldsSeq
+		"unsafefuncs":      "KTN-MODERNIZE-017", // unsafe functions
+		"reflecttypefor":   "KTN-MODERNIZE-018", // TypeFor
+		"plusbuild":        "KTN-MODERNIZE-019", // obsolete build comments
+		"forvar":           "KTN-MODERNIZE-020", // loop variables
 	}
 
 	// Check if it's a known modernize analyzer

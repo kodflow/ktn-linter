@@ -132,4 +132,3 @@ func isSnakeCase(name string) bool {
 	// All uppercase = SCREAMING_SNAKE_CASE, not snake_case
 	return false
 }
-

@@ -28,18 +28,18 @@ func createTempGoFile(t *testing.T, content string) string {
 // Note: Public API tests are in helper_external_test.go
 func Test_runAnalyzerInternal(t *testing.T) {
 	tests := []struct {
-		name             string
-		content          string
+		name              string
+		content           string
 		expectedDiagCount int
 	}{
 		{
-			name:             "valid go file with no errors",
-			content:          "package test\n\nfunc Example() {}\n",
+			name:              "valid go file with no errors",
+			content:           "package test\n\nfunc Example() {}\n",
 			expectedDiagCount: 0,
 		},
 		{
-			name:             "another valid go file",
-			content:          "package test\n\nfunc AnotherExample() int { return 42 }\n",
+			name:              "another valid go file",
+			content:           "package test\n\nfunc AnotherExample() int { return 42 }\n",
 			expectedDiagCount: 0,
 		},
 	}
@@ -105,18 +105,18 @@ func TestRunAnalyzerWithDiagnostics(t *testing.T) {
 // TestRunAnalyzerWithRequiredAnalyzer teste avec un analyzer requis.
 func TestRunAnalyzerWithRequiredAnalyzer(t *testing.T) {
 	tests := []struct {
-		name             string
-		content          string
+		name              string
+		content           string
 		expectedDiagCount int
 	}{
 		{
-			name:             "analyzer with inspect requirement",
-			content:          "package test\n\nfunc Example() {}\n",
+			name:              "analyzer with inspect requirement",
+			content:           "package test\n\nfunc Example() {}\n",
 			expectedDiagCount: 0,
 		},
 		{
-			name:             "analyzer with inspect requirement on complex code",
-			content:          "package test\n\nfunc Complex() { if true { return } }\n",
+			name:              "analyzer with inspect requirement on complex code",
+			content:           "package test\n\nfunc Complex() { if true { return } }\n",
 			expectedDiagCount: 0,
 		},
 	}
@@ -400,28 +400,28 @@ func Test_testGoodBadInternal(t *testing.T) {
 // TestTestGoodBadWithErrors teste TestGoodBad avec mauvais nombre d'erreurs.
 func TestTestGoodBadWithErrors(t *testing.T) {
 	tests := []struct {
-		name             string
-		testDir          string
-		goodContent      string
-		badContent       string
-		expectedErrors   int
-		expectErrorCall  bool
+		name            string
+		testDir         string
+		goodContent     string
+		badContent      string
+		expectedErrors  int
+		expectErrorCall bool
 	}{
 		{
-			name:             "good file has unexpected errors",
-			testDir:          "test002",
-			goodContent:      "package test\n\nfunc Good() {}\n",
-			badContent:       "package test\n\nfunc Bad() {}\n",
-			expectedErrors:   0,
-			expectErrorCall:  true,
+			name:            "good file has unexpected errors",
+			testDir:         "test002",
+			goodContent:     "package test\n\nfunc Good() {}\n",
+			badContent:      "package test\n\nfunc Bad() {}\n",
+			expectedErrors:  0,
+			expectErrorCall: true,
 		},
 		{
-			name:             "another error detection case",
-			testDir:          "test003",
-			goodContent:      "package test\n\nfunc AnotherGood() {}\n",
-			badContent:       "package test\n\nfunc AnotherBad() {}\n",
-			expectedErrors:   0,
-			expectErrorCall:  true,
+			name:            "another error detection case",
+			testDir:         "test003",
+			goodContent:     "package test\n\nfunc AnotherGood() {}\n",
+			badContent:      "package test\n\nfunc AnotherBad() {}\n",
+			expectedErrors:  0,
+			expectErrorCall: true,
 		},
 	}
 
@@ -461,28 +461,28 @@ func TestTestGoodBadWithErrors(t *testing.T) {
 // TestTestGoodBadWrongErrorCount teste avec mauvais nombre d'erreurs dans bad.go.
 func TestTestGoodBadWrongErrorCount(t *testing.T) {
 	tests := []struct {
-		name             string
-		testDir          string
-		goodContent      string
-		badContent       string
-		expectedErrors   int
-		expectErrorCall  bool
+		name            string
+		testDir         string
+		goodContent     string
+		badContent      string
+		expectedErrors  int
+		expectErrorCall bool
 	}{
 		{
-			name:             "bad file has wrong error count",
-			testDir:          "test003",
-			goodContent:      "package test\n\nfunc Good() {}\n",
-			badContent:       "package test\n\nfunc Bad() {}\n",
-			expectedErrors:   10,
-			expectErrorCall:  true,
+			name:            "bad file has wrong error count",
+			testDir:         "test003",
+			goodContent:     "package test\n\nfunc Good() {}\n",
+			badContent:      "package test\n\nfunc Bad() {}\n",
+			expectedErrors:  10,
+			expectErrorCall: true,
 		},
 		{
-			name:             "another wrong error count case",
-			testDir:          "test004",
-			goodContent:      "package test\n\nfunc GoodFunc() {}\n",
-			badContent:       "package test\n\nfunc BadFunc() {}\n",
-			expectedErrors:   5,
-			expectErrorCall:  true,
+			name:            "another wrong error count case",
+			testDir:         "test004",
+			goodContent:     "package test\n\nfunc GoodFunc() {}\n",
+			badContent:      "package test\n\nfunc BadFunc() {}\n",
+			expectedErrors:  5,
+			expectErrorCall: true,
 		},
 	}
 
@@ -610,8 +610,8 @@ func TestRunAnalyzerWithReadFile(t *testing.T) {
 // TestRunAnalyzerWithTypeError teste que Error callback est appelé.
 func TestRunAnalyzerWithTypeError(t *testing.T) {
 	tests := []struct {
-		name             string
-		content          string
+		name              string
+		content           string
 		expectedDiagCount int
 	}{
 		{

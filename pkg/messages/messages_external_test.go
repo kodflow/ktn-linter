@@ -60,11 +60,11 @@ func TestGet(t *testing.T) {
 // TestMessage_Format tests the Format method of Message.
 func TestMessage_Format(t *testing.T) {
 	tests := []struct {
-		name     string
-		code     string
-		verbose  bool
-		args     []any
-		wantLen  int
+		name    string
+		code    string
+		verbose bool
+		args    []any
+		wantLen int
 	}{
 		{
 			name:    "short message without args",
