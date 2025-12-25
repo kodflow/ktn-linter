@@ -129,11 +129,11 @@ func TestClassifyRule(t *testing.T) {
 func TestGetPhaseInfo(t *testing.T) {
 	// Test all phases
 	tests := []struct {
-		name         string
-		phase        prompt.RulePhase
-		wantName     string
-		wantRerun    bool
-		wantDescLen  bool
+		name        string
+		phase       prompt.RulePhase
+		wantName    string
+		wantRerun   bool
+		wantDescLen bool
 	}{
 		{
 			name:        "structural",

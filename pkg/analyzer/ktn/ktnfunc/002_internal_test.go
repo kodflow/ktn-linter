@@ -61,7 +61,7 @@ func Test_runFunc002_excludedFile(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
 					"KTN-FUNC-002": {
-						Enabled:       config.Bool(true),
+						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
 				},
@@ -233,18 +233,18 @@ func Test_isContextType_fallback(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "context.Context selector",
-			code: "context.Context",
+			name:     "context.Context selector",
+			code:     "context.Context",
 			expected: true,
 		},
 		{
-			name: "non-context selector",
-			code: "foo.Bar",
+			name:     "non-context selector",
+			code:     "foo.Bar",
 			expected: false,
 		},
 		{
-			name: "non-selector expression",
-			code: "foo",
+			name:     "non-selector expression",
+			code:     "foo",
 			expected: false,
 		},
 	}
@@ -613,7 +613,7 @@ func Test_isContextTypeWithPass_fallback(t *testing.T) {
 
 			// Créer un pass avec TypesInfo vide (force fallback)
 			pass := &analysis.Pass{
-				Fset:      fset,
+				Fset: fset,
 				TypesInfo: &types.Info{
 					Types: make(map[ast.Expr]types.TypeAndValue),
 				},
@@ -1208,7 +1208,6 @@ func Test_analyzeContextParams_noNames(t *testing.T) {
 	}
 }
 
-
 // Test_reportMultipleContexts tests the reportMultipleContexts private function.
 func Test_reportMultipleContexts(t *testing.T) {
 	tests := []struct {
@@ -1223,7 +1222,6 @@ func Test_reportMultipleContexts(t *testing.T) {
 	}
 }
 
-
 // Test_reportMisplacedContext tests the reportMisplacedContext private function.
 func Test_reportMisplacedContext(t *testing.T) {
 	tests := []struct {
@@ -1237,4 +1235,3 @@ func Test_reportMisplacedContext(t *testing.T) {
 		})
 	}
 }
-

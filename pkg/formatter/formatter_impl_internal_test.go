@@ -762,6 +762,7 @@ func TestFormatHumanModeEmpty(t *testing.T) {
 		})
 	}
 }
+
 // TestFormatterImpl_formatForHuman tests formatForHuman private method
 func TestFormatterImpl_formatForHuman(t *testing.T) {
 	tests := []struct {
@@ -1060,9 +1061,9 @@ func TestFormatterImpl_printSummary(t *testing.T) {
 // TestFormatterImpl_getCodeColor tests getCodeColor private method
 func TestFormatterImpl_getCodeColor(t *testing.T) {
 	tests := []struct {
-		name     string
-		code     string
-		noColor  bool
+		name         string
+		code         string
+		noColor      bool
 		wantNonEmpty bool
 	}{
 		{"with color", "KTN-VAR-001", false, true},

@@ -421,4 +421,3 @@ func isSliceArrayOrMap(typeExpr ast.Expr) bool {
 		return false
 	}
 }
-

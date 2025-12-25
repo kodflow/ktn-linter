@@ -12,7 +12,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-
 // Test_runFunc012_disabled tests behavior when rule is disabled.
 func Test_runFunc012_disabled(t *testing.T) {
 	tests := []struct {

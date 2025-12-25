@@ -144,4 +144,3 @@ func TestPromptOutput_Structure(t *testing.T) {
 		t.Errorf("len(Phases[0].Rules) = %d, want 1", len(output.Phases[0].Rules))
 	}
 }
-

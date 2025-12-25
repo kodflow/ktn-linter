@@ -8,12 +8,10 @@ import (
 
 	"golang.org/x/tools/go/ast/inspector"
 
-
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
-
 
 // Test_runFunc009_disabled tests behavior when rule is disabled.
 func Test_runFunc009_disabled(t *testing.T) {

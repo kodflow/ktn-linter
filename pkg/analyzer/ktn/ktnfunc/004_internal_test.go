@@ -12,7 +12,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-
 // Test_runFunc004_disabled tests behavior when rule is disabled.
 func Test_runFunc004_disabled(t *testing.T) {
 	tests := []struct {
@@ -61,7 +60,7 @@ func Test_runFunc004_excludedFile(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
 					"KTN-FUNC-004": {
-						Enabled:       config.Bool(true),
+						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
 				},
@@ -253,9 +252,9 @@ func Test_reportUnusedPrivateFuncs(t *testing.T) {
 // Test_reportUnusedFunc vérifie le rapport d'une fonction non utilisée.
 func Test_reportUnusedFunc(t *testing.T) {
 	tests := []struct {
-		name         string
-		info         *privateFuncInfo
-		expectedMsg  string
+		name        string
+		info        *privateFuncInfo
+		expectedMsg string
 	}{
 		{
 			name: "unused private function",

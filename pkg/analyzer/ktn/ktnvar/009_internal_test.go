@@ -527,4 +527,3 @@ func Test_isExternalType(t *testing.T) {
 		})
 	}
 }
-

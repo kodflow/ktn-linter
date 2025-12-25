@@ -133,22 +133,22 @@ func TestIsNewer(t *testing.T) {
 // TestGetBinaryName tests platform-specific binary name generation.
 func TestGetBinaryName(t *testing.T) {
 	tests := []struct {
-		name           string
-		version        string
-		wantContains   string
-		wantMinLength  int
+		name          string
+		version       string
+		wantContains  string
+		wantMinLength int
 	}{
 		{
-			name:           "standard version binary name",
-			version:        "v1.0.0",
-			wantContains:   "ktn-linter-",
-			wantMinLength:  15,
+			name:          "standard version binary name",
+			version:       "v1.0.0",
+			wantContains:  "ktn-linter-",
+			wantMinLength: 15,
 		},
 		{
-			name:           "dev version binary name",
-			version:        "dev",
-			wantContains:   "ktn-linter-",
-			wantMinLength:  15,
+			name:          "dev version binary name",
+			version:       "dev",
+			wantContains:  "ktn-linter-",
+			wantMinLength: 15,
 		},
 	}
 

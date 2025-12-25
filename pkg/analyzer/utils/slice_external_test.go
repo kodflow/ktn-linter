@@ -399,9 +399,9 @@ func TestIsSliceOrMapTypeWithPass(t *testing.T) {
 // TestIsByteSliceNonIdent tests IsByteSlice with non-identifier element type
 func TestIsByteSliceNonIdent(t *testing.T) {
 	tests := []struct {
-		name     string
+		name      string
 		sliceExpr *ast.ArrayType
-		expected bool
+		expected  bool
 	}{
 		{
 			name: "slice with SelectorExpr element",

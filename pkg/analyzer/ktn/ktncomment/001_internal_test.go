@@ -185,9 +185,9 @@ func main() {}
 	}
 
 	tests := []struct {
-		name        string
-		commentIdx  int
-		wantLine    int
+		name       string
+		commentIdx int
+		wantLine   int
 	}{
 		{"first comment", 0, 2},
 		{"second comment", 1, 4},

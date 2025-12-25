@@ -411,10 +411,10 @@ func Test_getExternalConcreteType(t *testing.T) {
 	localNamed := types.NewNamed(localTypeName, types.NewStruct(nil, nil), nil)
 
 	tests := []struct {
-		name        string
-		typ         types.Type
-		expectNil   bool
-		expectPkg   string
+		name      string
+		typ       types.Type
+		expectNil bool
+		expectPkg string
 	}{
 		{"basic_string_returns_nil", types.Typ[types.String], true, ""},
 		{"basic_int_returns_nil", types.Typ[types.Int], true, ""},
@@ -917,8 +917,8 @@ func Test_getMethodSignature(t *testing.T) {
 // Test_scanBodyForFieldAccess tests the scanBodyForFieldAccess function.
 func Test_scanBodyForFieldAccess(t *testing.T) {
 	tests := []struct {
-		name               string
-		code               string
+		name                string
+		code                string
 		expectedFieldAccess bool
 	}{
 		{

@@ -42,15 +42,15 @@ var (
 	//
 	// TODO: Make configurable via .ktn-linter.yaml if needed
 	defaultAllowedPackages map[string]bool = map[string]bool{
-		"time":                                     true,
-		"context":                                  true,
-		"strings":                                  true,
-		"bytes":                                    true,
-		"go/ast":                                   true,
-		"go/token":                                 true,
-		"go/types":                                 true,
-		"golang.org/x/tools/go/analysis":           true,
-		"golang.org/x/tools/go/ast/inspector":      true,
+		"time":                                true,
+		"context":                             true,
+		"strings":                             true,
+		"bytes":                               true,
+		"go/ast":                              true,
+		"go/token":                            true,
+		"go/types":                            true,
+		"golang.org/x/tools/go/analysis":      true,
+		"golang.org/x/tools/go/ast/inspector": true,
 		"github.com/kodflow/ktn-linter/pkg/config": true,
 	}
 

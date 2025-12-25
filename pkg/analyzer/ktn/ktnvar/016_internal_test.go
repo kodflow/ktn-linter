@@ -385,7 +385,6 @@ func Test_shouldUseArray(t *testing.T) {
 	}
 }
 
-
 // Test_getConstantSize tests the getConstantSize private function.
 func Test_getConstantSize(t *testing.T) {
 	tests := []struct {
@@ -399,4 +398,3 @@ func Test_getConstantSize(t *testing.T) {
 		})
 	}
 }
-

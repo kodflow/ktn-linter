@@ -472,7 +472,6 @@ func Test_getMutexType(t *testing.T) {
 	}
 }
 
-
 // Test_hasMutex tests the hasMutex private function.
 func Test_hasMutex(t *testing.T) {
 	tests := []struct {
@@ -487,7 +486,6 @@ func Test_hasMutex(t *testing.T) {
 	}
 }
 
-
 // Test_getMutexTypeFromType tests the getMutexTypeFromType private function.
 func Test_getMutexTypeFromType(t *testing.T) {
 	tests := []struct {
@@ -501,4 +499,3 @@ func Test_getMutexTypeFromType(t *testing.T) {
 		})
 	}
 }
-

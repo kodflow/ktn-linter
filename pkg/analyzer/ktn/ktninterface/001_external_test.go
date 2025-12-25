@@ -13,21 +13,21 @@ import (
 // TestInterface001 tests the Analyzer001 for unused interface declarations.
 func TestInterface001(t *testing.T) {
 	tests := []struct {
-		name          string
-		analyzer      *analysis.Analyzer
-		testDataDir   string
+		name             string
+		analyzer         *analysis.Analyzer
+		testDataDir      string
 		expectedBadCount int
 	}{
 		{
-			name:          "unused interfaces detection",
-			analyzer:      ktninterface.Analyzer001,
-			testDataDir:   "interface001",
+			name:             "unused interfaces detection",
+			analyzer:         ktninterface.Analyzer001,
+			testDataDir:      "interface001",
 			expectedBadCount: 3,
 		},
 		{
-			name:          "interface usage validation",
-			analyzer:      ktninterface.Analyzer001,
-			testDataDir:   "interface001",
+			name:             "interface usage validation",
+			analyzer:         ktninterface.Analyzer001,
+			testDataDir:      "interface001",
 			expectedBadCount: 3,
 		},
 	}

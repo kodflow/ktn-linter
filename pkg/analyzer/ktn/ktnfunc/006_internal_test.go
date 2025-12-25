@@ -12,7 +12,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-
 // Test_runFunc006_disabled tests behavior when rule is disabled.
 func Test_runFunc006_disabled(t *testing.T) {
 	tests := []struct {
@@ -61,7 +60,7 @@ func Test_runFunc006_excludedFile(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
 					"KTN-FUNC-006": {
-						Enabled:       config.Bool(true),
+						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
 				},
@@ -173,4 +172,3 @@ func Test_analyzeFuncParams(t *testing.T) {
 		})
 	}
 }
-

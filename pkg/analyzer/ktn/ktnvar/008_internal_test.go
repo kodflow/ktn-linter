@@ -393,7 +393,6 @@ func Test_checkLoopBodyForAlloc(t *testing.T) {
 	}
 }
 
-
 // Test_checkStmtForAlloc tests the checkStmtForAlloc private function.
 func Test_checkStmtForAlloc(t *testing.T) {
 	tests := []struct {
@@ -473,4 +472,3 @@ func Test_checkStmtForAlloc_declStmt(t *testing.T) {
 		})
 	}
 }
-

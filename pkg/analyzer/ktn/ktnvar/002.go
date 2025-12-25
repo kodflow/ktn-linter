@@ -117,4 +117,3 @@ func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 	}
 	// Type explicite présent = OK (avec ou sans valeur)
 }
-

@@ -25,9 +25,9 @@ package example`,
 			want: true,
 		},
 		{
-			name: "file without package comment",
+			name:   "file without package comment",
 			source: `package example`,
-			want: false,
+			want:   false,
 		},
 		{
 			name: "file with empty comment",

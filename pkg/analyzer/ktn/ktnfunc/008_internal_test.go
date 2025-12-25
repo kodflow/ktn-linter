@@ -1,15 +1,15 @@
 package ktnfunc
 
 import (
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"go/ast"
 	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
-	"testing"
 	"golang.org/x/tools/go/analysis"
-	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis/passes/inspect"
+	"testing"
 )
 
 // Test_analyzeFunc008 tests the analyzeFunc008 function.
@@ -288,9 +288,9 @@ func (t T) bar() {}`,
 // Test_getReceiverType tests the getReceiverType function.
 func Test_getReceiverType(t *testing.T) {
 	tests := []struct {
-		name     string
-		code     string
-		wantNil  bool
+		name    string
+		code    string
+		wantNil bool
 	}{
 		{
 			name: "value receiver",
@@ -895,10 +895,10 @@ func bar(x int) { y := x + 1; _ = y }`,
 // Test_findParentAssignToBlank008 tests the findParentAssignToBlank008 function.
 func Test_findParentAssignToBlank008(t *testing.T) {
 	tests := []struct {
-		name       string
-		code       string
-		wantBlank  bool
-		wantFound  bool
+		name      string
+		code      string
+		wantBlank bool
+		wantFound bool
 	}{
 		{
 			name: "variable assigned to blank",
@@ -1062,7 +1062,6 @@ func Test_searchInterfaceInScope(t *testing.T) {
 	}
 }
 
-
 // Test_runFunc008_disabled tests behavior when rule is disabled.
 func Test_runFunc008_disabled(t *testing.T) {
 	tests := []struct {
@@ -1111,7 +1110,7 @@ func Test_runFunc008_excludedFile(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
 					"KTN-FUNC-008": {
-						Enabled:       config.Bool(true),
+						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
 				},
@@ -1165,8 +1164,8 @@ func Test_runFunc008(t *testing.T) {
 		expectResult bool
 	}{
 		{
-			name: "empty package",
-			code: `package test`,
+			name:         "empty package",
+			code:         `package test`,
 			expectResult: true,
 		},
 		{

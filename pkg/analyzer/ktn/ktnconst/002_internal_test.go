@@ -27,12 +27,12 @@ func Test_runConst002(t *testing.T) {
 // Test_collectDeclarations tests the private collectDeclarations function.
 func Test_collectDeclarations(t *testing.T) {
 	tests := []struct {
-		name          string
-		wantConst     int
-		wantVar       int
-		wantType      int
-		wantFunc      int
-		setupFile     func() *ast.File
+		name      string
+		wantConst int
+		wantVar   int
+		wantType  int
+		wantFunc  int
+		setupFile func() *ast.File
 	}{
 		{
 			name:      "empty file",
