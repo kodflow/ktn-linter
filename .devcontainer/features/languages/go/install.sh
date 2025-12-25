@@ -41,7 +41,7 @@ case "$ARCH" in
         GO_ARCH="armv6l"
         ;;
     *)
-        echo -e "${RED}Unsupported architecture: $ARCH${NC}"
+        echo -e "${RED}✗ Unsupported architecture: $ARCH${NC}"
         exit 1
         ;;
 esac
@@ -73,7 +73,7 @@ sudo tar -C /usr/local -xzf "/tmp/${GO_TARBALL}"
 rm "/tmp/${GO_TARBALL}"
 
 GO_INSTALLED=$(go version)
-echo -e "${GREEN}${GO_INSTALLED} installed${NC}"
+echo -e "${GREEN}✓ ${GO_INSTALLED} installed${NC}"
 
 # Create necessary directories
 mkdir -p "$GOPATH/bin"
@@ -81,22 +81,6 @@ mkdir -p "$GOPATH/pkg"
 mkdir -p "$GOPATH/src"
 mkdir -p "$GOCACHE"
 mkdir -p "$GOMODCACHE"
-
-# Fix permissions - ensure vscode user owns all Go cache directories
-# This is critical because features may run as root during installation
-echo -e "${YELLOW}Fixing Go cache permissions...${NC}"
-if id "vscode" &>/dev/null; then
-    sudo chown -R vscode:vscode "$GOPATH" 2>/dev/null || true
-    sudo chown -R vscode:vscode "$GOCACHE" 2>/dev/null || true
-    echo -e "${GREEN}Go cache permissions fixed for vscode user${NC}"
-fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Install golangci-lint
-# ─────────────────────────────────────────────────────────────────────────────
-echo -e "${YELLOW}Installing golangci-lint...${NC}"
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$GOPATH/bin" latest
-echo -e "${GREEN}golangci-lint installed${NC}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Install ktn-linter (Go-specific linter)
@@ -107,15 +91,9 @@ mkdir -p "$HOME/.local/bin"
 KTN_URL="https://github.com/kodflow/ktn-linter/releases/latest/download/ktn-linter-linux-${GO_ARCH}"
 if curl -fsSL --connect-timeout 10 --max-time 60 "$KTN_URL" -o "$HOME/.local/bin/ktn-linter" 2>/dev/null; then
     chmod +x "$HOME/.local/bin/ktn-linter"
-    echo -e "${GREEN}ktn-linter installed${NC}"
+    echo -e "${GREEN}✓ ktn-linter installed${NC}"
 else
-    echo -e "${YELLOW}ktn-linter download failed (optional)${NC}"
-fi
-
-# Final permission fix after all tools are installed
-if id "vscode" &>/dev/null; then
-    sudo chown -R vscode:vscode "$GOPATH" 2>/dev/null || true
-    sudo chown -R vscode:vscode "$GOCACHE" 2>/dev/null || true
+    echo -e "${YELLOW}⚠ ktn-linter download failed (optional)${NC}"
 fi
 
 echo ""
@@ -126,7 +104,6 @@ echo ""
 echo "Installed components:"
 echo "  - ${GO_INSTALLED}"
 echo "  - Go Modules (package manager)"
-echo "  - golangci-lint (linter)"
 echo "  - ktn-linter (Go linter)"
 echo ""
 echo "Cache directories:"

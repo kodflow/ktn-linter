@@ -16,8 +16,6 @@ log_info "onCreate: Container created, performing initial setup..."
 # Ensure cache directories exist with proper permissions
 CACHE_DIRS=(
     "/home/vscode/.cache"
-    "/home/vscode/.cache/go"
-    "/home/vscode/.cache/go-build"
     "/home/vscode/.config"
     "/home/vscode/.local/bin"
     "/home/vscode/.local/share"
@@ -25,19 +23,6 @@ CACHE_DIRS=(
 
 for dir in "${CACHE_DIRS[@]}"; do
     mkdir_safe "$dir"
-done
-
-# Fix permissions for Go cache directories that might have been created by root
-GO_CACHE_DIRS=(
-    "/home/vscode/.cache/go"
-    "/home/vscode/.cache/go-build"
-)
-
-for dir in "${GO_CACHE_DIRS[@]}"; do
-    if [ -d "$dir" ]; then
-        sudo chown -R vscode:vscode "$dir" 2>/dev/null || true
-        log_success "Fixed permissions for $dir"
-    fi
 done
 
 # Note: .claude/ is now baked into the Docker image at /home/vscode/.claude/
