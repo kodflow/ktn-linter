@@ -6,8 +6,20 @@
   // Features - additional languages (tools are already in base image)
   "features": {
     // ========== LANGUAGES ==========
-    // Go is enabled for this project
-    "./features/languages/go": {},
+    // Node.js enabled by default (required for MCP servers)
+    "./features/languages/nodejs": {},
+    // Uncomment other languages as needed
+    // "./features/languages/carbon": {},
+    // "./features/languages/cpp": {},
+    // "./features/languages/dart-flutter": {},
+    // "./features/languages/elixir": {},
+    // "./features/languages/go": {},
+    // "./features/languages/java": {},
+    // "./features/languages/php": {},
+    // "./features/languages/python": {},
+    // "./features/languages/ruby": {},
+    // "./features/languages/rust": {},
+    // "./features/languages/scala": {},
     // ========== EXTERNAL ==========
     // Docker support
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
@@ -29,33 +41,13 @@
         "editor.formatOnSave": true,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
-        "files.trimTrailingWhitespace": true,
-        // Go settings
-        "go.useLanguageServer": true,
-        "go.lintTool": "golangci-lint",
-        "go.lintFlags": ["--fast"],
-        "go.formatTool": "goimports",
-        "go.testFlags": ["-v", "-race"],
-        "[go]": {
-          "editor.defaultFormatter": "golang.go",
-          "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-          }
-        }
+        "files.trimTrailingWhitespace": true
       },
       "extensions": [
-        // Base extensions
-        "usernamehw.errorlens",
         "vscode-icons-team.vscode-icons",
         "redhat.vscode-yaml",
         "tamasfe.even-better-toml",
-        "editorconfig.editorconfig",
-        // Go extensions
-        "golang.go",
-        // Code Quality
-        "codacy-app.codacy",
-        // Trigger Task on Save - for running ktn-linter automatically
-        "Gruntfuggly.triggertaskonsave"
+        "bierner.markdown-mermaid"
       ]
     }
   },
