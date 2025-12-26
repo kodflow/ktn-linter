@@ -3,12 +3,13 @@ package ktntest
 
 import (
 	"go/ast"
+	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -19,10 +20,10 @@ const (
 	ruleCodeTest002 string = "KTN-TEST-002"
 )
 
-// Analyzer002 checks that test files use external test packages (xxx_test)
+// Analyzer002 checks that test files have corresponding source files
 var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest002",
-	Doc:      "KTN-TEST-002: Les fichiers de test doivent utiliser le package xxx_test",
+	Doc:      "KTN-TEST-002: Chaque fichier _test.go doit avoir un fichier .go correspondant",
 	Run:      runTest002,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -47,7 +48,7 @@ func runTest002(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Vérifier si on est dans un fichier de test
+	// Vérifier chaque fichier de test
 	for _, f := range pass.Files {
 		filename := pass.Fset.Position(f.Pos()).Filename
 		// Skip excluded files
@@ -58,25 +59,21 @@ func runTest002(pass *analysis.Pass) (any, error) {
 
 		// Vérification de la condition
 		if !shared.IsTestFile(filename) {
-			// Pas un fichier de test, continuer
+			// Pas un fichier de test
 			continue
 		}
 
-		// Extraire le nom du package attendu
-		dir := filepath.Dir(filename)
-		expectedPkg := filepath.Base(dir) + "_test"
+		// Extraire le nom du fichier source correspondant
+		sourceFile := getSourceFileForTest(filename)
 
-		// Vérifier le nom du package
-		actualPkg := f.Name.Name
-		// Vérification de la condition
-		if actualPkg != expectedPkg && !isExemptPackage(actualPkg) {
+		// Vérifier si le fichier source existe
+		if !fileExists(sourceFile) && !isExemptTestFile(filename) {
 			// Signaler l'erreur
-			msg, _ := messages.Get(ruleCodeTest002)
 			pass.Reportf(
 				f.Name.Pos(),
-				"%s: %s",
-				ruleCodeTest002,
-				msg.Format(config.Get().Verbose, actualPkg, expectedPkg),
+				"KTN-TEST-002: fichier de test '%s' sans fichier source correspondant '%s'",
+				filepath.Base(filename),
+				filepath.Base(sourceFile),
 			)
 		}
 	}
@@ -86,36 +83,83 @@ func runTest002(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Nothing to do in preorder, already handled above
+		// Nothing to do in preorder
 	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// isExemptPackage vérifie si un package est exempté de la règle.
+// getSourceFileForTest retourne le chemin du fichier source correspondant à un fichier de test.
 //
 // Params:
-//   - pkgName: nom du package
+//   - filename: chemin du fichier de test
 //
 // Returns:
-//   - bool: true si le package est exempté
-func isExemptPackage(pkgName string) bool {
-	// Certains packages internes peuvent être exemptés
-	// (ceux qui testent des fonctions privées)
-	exemptPkgs := []string{
-		"main",
-		"testhelper",
-		"cmd",       // tests de fonctions privées cmd
-		"utils",     // tests de fonctions privées utils
-		"formatter", // tests de fonctions privées formatter
-		"ktn",       // registry tests need same package for KTN-TEST-003
-		"ktnconst",  // registry tests need same package for KTN-TEST-003
-		"ktnfunc",   // registry tests need same package for KTN-TEST-003
-		"ktntest",   // registry tests need same package for KTN-TEST-003
-		"ktnvar",    // registry tests need same package for KTN-TEST-003
+//   - string: chemin du fichier source correspondant
+func getSourceFileForTest(filename string) string {
+	var base string
+	var ok bool
+
+	// Vérification du suffixe internal
+	if base, ok = strings.CutSuffix(filename, "_internal_test.go"); ok {
+		// Retour du fichier source
+		return base + ".go"
+	}
+	// Vérification du suffixe external
+	if base, ok = strings.CutSuffix(filename, "_external_test.go"); ok {
+		// Retour du fichier source
+		return base + ".go"
+	}
+	// Vérification du suffixe bench
+	if base, ok = strings.CutSuffix(filename, "_bench_test.go"); ok {
+		// Retour du fichier source
+		return base + ".go"
+	}
+	// Vérification du suffixe integration
+	if base, ok = strings.CutSuffix(filename, "_integration_test.go"); ok {
+		// Retour du fichier source
+		return base + ".go"
+	}
+	// Retour pour fichier test standard
+	return strings.TrimSuffix(filename, "_test.go") + ".go"
+}
+
+// fileExists vérifie si un fichier existe.
+//
+// Params:
+//   - path: chemin du fichier
+//
+// Returns:
+//   - bool: true si le fichier existe
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	// Vérification de la condition
+	if err != nil {
+		// Erreur ou fichier n'existe pas
+		return false
+	}
+	// Retour du résultat
+	return !info.IsDir()
+}
+
+// isExemptTestFile vérifie si un fichier de test est exempté.
+//
+// Params:
+//   - filename: nom du fichier
+//
+// Returns:
+//   - bool: true si le fichier est exempté
+func isExemptTestFile(filename string) bool {
+	baseName := filepath.Base(filename)
+	// Fichiers de test exemptés (integration tests, helper tests, etc.)
+	exemptPatterns := []string{
+		"helper_test.go",
+		"integration_test.go",
+		"suite_test.go",
+		"main_test.go",
 	}
 
-	// Vérifier si le package est exempté
-	return slices.Contains(exemptPkgs, pkgName)
+	// Vérifier si le fichier est exempté
+	return slices.Contains(exemptPatterns, baseName)
 }

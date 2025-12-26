@@ -149,6 +149,43 @@ func TestFindModulesSkipsHidden(t *testing.T) {
 	}
 }
 
+// TestFindModulesSkipsTestdata tests that testdata directories are skipped.
+func TestFindModulesSkipsTestdata(t *testing.T) {
+	// Create temp directory structure
+	tmpDir := t.TempDir()
+	// Create main go.mod
+	mainMod := filepath.Join(tmpDir, "go.mod")
+	err := os.WriteFile(mainMod, []byte("module test\n"), 0o644)
+	// Check error
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Create testdata directory with go.mod
+	testdataDir := filepath.Join(tmpDir, "testdata", "src", "example")
+	err = os.MkdirAll(testdataDir, 0o755)
+	// Check error
+	if err != nil {
+		t.Fatal(err)
+	}
+	testdataMod := filepath.Join(testdataDir, "go.mod")
+	err = os.WriteFile(testdataMod, []byte("module example\n"), 0o644)
+	// Check error
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	d := orchestrator.NewModuleDiscovery()
+	modules, err := d.FindModules([]string{tmpDir})
+	// Check no error
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	// Check only main module found (testdata skipped)
+	if len(modules) != 1 {
+		t.Errorf("expected 1 module (testdata skipped), got %d", len(modules))
+	}
+}
+
 // TestResolvePatternsRecursive tests pattern resolution for recursive.
 func TestResolvePatternsRecursive(t *testing.T) {
 	d := orchestrator.NewModuleDiscovery()

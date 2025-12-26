@@ -22,8 +22,6 @@ func Test_registerTestMessages(t *testing.T) {
 		{name: "KTN-TEST-009", code: "KTN-TEST-009"},
 		{name: "KTN-TEST-010", code: "KTN-TEST-010"},
 		{name: "KTN-TEST-011", code: "KTN-TEST-011"},
-		{name: "KTN-TEST-012", code: "KTN-TEST-012"},
-		{name: "KTN-TEST-013", code: "KTN-TEST-013"},
 	}
 
 	// Iterate over test cases

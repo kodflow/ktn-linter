@@ -6,85 +6,224 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
-
-	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
-	"golang.org/x/tools/go/analysis"
 )
 
-// Test_ParseTestNameForPrivate tests the shared.ParseTestName helper for private functions.
-func Test_ParseTestNameForPrivate(t *testing.T) {
+// Test_isPassthroughTest tests the isPassthroughTest function.
+func Test_isPassthroughTest(t *testing.T) {
 	tests := []struct {
-		name        string
-		testName    string
-		wantFunc    string
-		wantPrivate bool
+		name            string
+		code            string
+		wantPassthrough bool
 	}{
+		// === PASSTHROUGH CASES (should be flagged) ===
 		{
-			name:        "simple private function test",
-			testName:    "Test_doSomething",
-			wantFunc:    "doSomething",
-			wantPrivate: true,
+			name: "empty test body",
+			code: `func TestEmpty(t *testing.T) {
+			}`,
+			wantPassthrough: true,
 		},
 		{
-			name:        "method pattern Type_method",
-			testName:    "TestMyType_doSomething",
-			wantFunc:    "doSomething",
-			wantPrivate: true,
+			name: "only t.Log call",
+			code: `func TestOnlyLog(t *testing.T) {
+				t.Log("hello")
+			}`,
+			wantPassthrough: true,
 		},
 		{
-			name:        "public function",
-			testName:    "TestDoSomething",
-			wantFunc:    "DoSomething",
-			wantPrivate: false,
-		},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			target, ok := shared.ParseTestName(tt.testName)
-			// Vérification parsing
-			if !ok {
-				t.Fatalf("ParseTestName(%q) failed", tt.testName)
-			}
-			// Vérification fonction
-			if target.FuncName != tt.wantFunc {
-				t.Errorf("ParseTestName(%q).FuncName = %q, want %q", tt.testName, target.FuncName, tt.wantFunc)
-			}
-			// Vérification private
-			if target.IsPrivate != tt.wantPrivate {
-				t.Errorf("ParseTestName(%q).IsPrivate = %v, want %v", tt.testName, target.IsPrivate, tt.wantPrivate)
-			}
-		})
-	}
-}
-
-// Test_addPrivateFunction tests the addPrivateFunction function.
-func Test_addPrivateFunction(t *testing.T) {
-	tests := []struct {
-		name         string
-		code         string
-		wantFuncName string
-	}{
-		{
-			name:         "private function",
-			code:         "func privateFunc() {}",
-			wantFuncName: "privateFunc",
+			name: "only function call without validation",
+			code: `func TestOnlyCall(t *testing.T) {
+				Foo()
+			}`,
+			wantPassthrough: true,
 		},
 		{
-			name:         "public function",
-			code:         "func PublicFunc() {}",
-			wantFuncName: "",
+			name: "only variable assignment",
+			code: `func TestOnlyAssign(t *testing.T) {
+				x := Foo()
+				_ = x
+			}`,
+			wantPassthrough: true,
 		},
 		{
-			name:         "private method",
-			code:         "func (r MyType) privateMethod() {}",
-			wantFuncName: "MyType_privateMethod",
+			name: "only t.Parallel call",
+			code: `func TestOnlyParallel(t *testing.T) {
+				t.Parallel()
+			}`,
+			wantPassthrough: true,
 		},
 		{
-			name:         "mock function (excluded)",
-			code:         "func mockPrivateFunc() {}",
-			wantFuncName: "",
+			name: "only t.Helper call",
+			code: `func TestOnlyHelper(t *testing.T) {
+				t.Helper()
+			}`,
+			wantPassthrough: true,
+		},
+		{
+			name: "only t.Skip call",
+			code: `func TestOnlySkip(t *testing.T) {
+				t.Skip("not implemented")
+			}`,
+			wantPassthrough: true,
+		},
+		{
+			name: "only t.Cleanup call",
+			code: `func TestOnlyCleanup(t *testing.T) {
+				t.Cleanup(func() {})
+			}`,
+			wantPassthrough: true,
+		},
+		// === NON-PASSTHROUGH CASES (should NOT be flagged) ===
+		{
+			name: "with t.Error",
+			code: `func TestWithError(t *testing.T) {
+				t.Error("something wrong")
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with t.Errorf",
+			code: `func TestWithErrorf(t *testing.T) {
+				t.Errorf("got %v", 42)
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with t.Fatal",
+			code: `func TestWithFatal(t *testing.T) {
+				t.Fatal("critical")
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with t.Fatalf",
+			code: `func TestWithFatalf(t *testing.T) {
+				t.Fatalf("got %v", 42)
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with t.Fail",
+			code: `func TestWithFail(t *testing.T) {
+				t.Fail()
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with t.FailNow",
+			code: `func TestWithFailNow(t *testing.T) {
+				t.FailNow()
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with t.Run subtest",
+			code: `func TestWithRun(t *testing.T) {
+				t.Run("subtest", func(t *testing.T) {
+					t.Log("in subtest")
+				})
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with assert.Equal",
+			code: `func TestWithAssert(t *testing.T) {
+				assert.Equal(t, 1, 1)
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with require.NoError",
+			code: `func TestWithRequire(t *testing.T) {
+				require.NoError(t, nil)
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with helper call",
+			code: `func TestWithHelper(t *testing.T) {
+				myHelper(t, "data")
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with equality comparison",
+			code: `func TestWithEqual(t *testing.T) {
+				got := Foo()
+				if got == expected {
+					t.Log("ok")
+				}
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with inequality comparison",
+			code: `func TestWithNotEqual(t *testing.T) {
+				got := Foo()
+				if got != want {
+					t.Log("mismatch")
+				}
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with less than comparison",
+			code: `func TestWithLess(t *testing.T) {
+				x := 5
+				if x < 10 {
+					t.Log("small")
+				}
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with greater than comparison",
+			code: `func TestWithGreater(t *testing.T) {
+				x := 15
+				if x > 10 {
+					t.Log("big")
+				}
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with err != nil check",
+			code: `func TestWithErrCheck(t *testing.T) {
+				err := Foo()
+				if err != nil {
+					t.Log("error")
+				}
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with table-driven test",
+			code: `func TestTableDriven(t *testing.T) {
+				tests := []struct{
+					name string
+					want int
+				}{
+					{"case1", 1},
+				}
+				for _, tt := range tests {
+					t.Run(tt.name, func(t *testing.T) {
+						got := 1
+						if got != tt.want {
+							t.Errorf("got %v, want %v", got, tt.want)
+						}
+					})
+				}
+			}`,
+			wantPassthrough: false,
+		},
+		{
+			name: "with len comparison",
+			code: `func TestWithLen(t *testing.T) {
+				items := []int{1, 2, 3}
+				if len(items) == 0 {
+					t.Error("empty")
+				}
+			}`,
+			wantPassthrough: false,
 		},
 	}
 
@@ -93,8 +232,8 @@ func Test_addPrivateFunction(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "", "package test\ntype MyType struct{}\n"+tt.code, 0)
-			// Vérification de l'erreur
+			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
+			// Vérification erreur
 			if err != nil {
 				t.Fatalf("failed to parse code: %v", err)
 			}
@@ -105,10 +244,8 @@ func Test_addPrivateFunction(t *testing.T) {
 				// Vérification du noeud
 				if fd, ok := n.(*ast.FuncDecl); ok {
 					funcDecl = fd
-					// Retour false pour arrêter
 					return false
 				}
-				// Continuer la traversée
 				return true
 			})
 
@@ -117,58 +254,67 @@ func Test_addPrivateFunction(t *testing.T) {
 				t.Fatal("no function declaration found")
 			}
 
-			privateFunctions := make(map[string]bool)
-			addPrivateFunction(funcDecl, privateFunctions)
-
-			// Vérification fonction privée
-			if tt.wantFuncName != "" {
-				// Vérification de la condition
-				if !privateFunctions[tt.wantFuncName] {
-					t.Errorf("expected private function %q to be added, got %v", tt.wantFuncName, privateFunctions)
-				}
-			} else {
-				// Vérification de la condition
-				if len(privateFunctions) > 0 {
-					t.Errorf("expected no functions to be added, got %v", privateFunctions)
-				}
+			got := isPassthroughTest(funcDecl)
+			// Vérification du résultat
+			if got != tt.wantPassthrough {
+				t.Errorf("isPassthroughTest() = %v, want %v", got, tt.wantPassthrough)
 			}
 		})
 	}
 }
 
-// Test_collectPrivateFunctions tests the collectPrivateFunctions function logic.
-func Test_collectPrivateFunctions(t *testing.T) {
+// Test_isComparisonOperator tests the isComparisonOperator function.
+func Test_isComparisonOperator(t *testing.T) {
+	tests := []struct {
+		name string
+		op   token.Token
+		want bool
+	}{
+		{"EQL is comparison", token.EQL, true},
+		{"NEQ is comparison", token.NEQ, true},
+		{"LSS is comparison", token.LSS, true},
+		{"GTR is comparison", token.GTR, true},
+		{"LEQ is comparison", token.LEQ, true},
+		{"GEQ is comparison", token.GEQ, true},
+		{"ADD is not comparison", token.ADD, false},
+		{"SUB is not comparison", token.SUB, false},
+		{"MUL is not comparison", token.MUL, false},
+		{"AND is not comparison", token.AND, false},
+		{"OR is not comparison", token.OR, false},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isComparisonOperator(tt.op)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("isComparisonOperator(%v) = %v, want %v", tt.op, got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isTestingAssertionCall tests the isTestingAssertionCall function.
+func Test_isTestingAssertionCall(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
-		want []string
+		want bool
 	}{
-		{
-			name: "single private function",
-			code: `package test
-func privateFunc() {}`,
-			want: []string{"privateFunc"},
-		},
-		{
-			name: "public and private functions",
-			code: `package test
-func PublicFunc() {}
-func privateFunc() {}`,
-			want: []string{"privateFunc"},
-		},
-		{
-			name: "multiple private functions",
-			code: `package test
-func privateFunc1() {}
-func privateFunc2() {}`,
-			want: []string{"privateFunc1", "privateFunc2"},
-		},
-		{
-			name: "only public functions",
-			code: `package test
-func PublicFunc() {}`,
-			want: []string{},
-		},
+		{"t.Error is assertion", "t.Error(\"msg\")", true},
+		{"t.Errorf is assertion", "t.Errorf(\"msg %v\", x)", true},
+		{"t.Fatal is assertion", "t.Fatal(\"msg\")", true},
+		{"t.Fatalf is assertion", "t.Fatalf(\"msg %v\", x)", true},
+		{"t.Fail is assertion", "t.Fail()", true},
+		{"t.FailNow is assertion", "t.FailNow()", true},
+		{"t.Log is NOT assertion", "t.Log(\"msg\")", false},
+		{"t.Logf is NOT assertion", "t.Logf(\"msg %v\", x)", false},
+		{"t.Run is NOT assertion", "t.Run(\"name\", func(t int){})", false},
+		{"t.Skip is NOT assertion", "t.Skip(\"reason\")", false},
+		{"t.Parallel is NOT assertion", "t.Parallel()", false},
+		{"t.Helper is NOT assertion", "t.Helper()", false},
+		{"t.Cleanup is NOT assertion", "t.Cleanup(func(){})", false},
 	}
 
 	// Parcourir les cas de test
@@ -176,168 +322,314 @@ func PublicFunc() {}`,
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "", tt.code, 0)
-			// Vérification de l'erreur
+			code := "package test\nfunc f() { " + tt.code + " }"
+			file, err := parser.ParseFile(fset, "", code, 0)
+			// Vérification erreur
 			if err != nil {
 				t.Fatalf("failed to parse code: %v", err)
 			}
 
-			privateFunctions := make(map[string]bool, initialPrivateFunctionsCap)
-
-			// Collect private functions
+			// Extract call expression
+			var callExpr *ast.CallExpr
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Vérification du noeud
-				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					// Vérification du nom
-					if funcDecl.Name != nil && len(funcDecl.Name.Name) > 0 {
-						firstChar := rune(funcDecl.Name.Name[0])
-						// Vérification caractère minuscule
-						if firstChar >= 'a' && firstChar <= 'z' {
-							privateFunctions[funcDecl.Name.Name] = true
-						}
-					}
-				}
-				// Continuer la traversée
-				return true
-			})
-
-			// Vérification du nombre de fonctions
-			if len(privateFunctions) != len(tt.want) {
-				t.Errorf("collectPrivateFunctions() count = %d, want %d", len(privateFunctions), len(tt.want))
-			}
-
-			// Vérification de chaque fonction attendue
-			for _, funcName := range tt.want {
-				// Vérification de la condition
-				if !privateFunctions[funcName] {
-					t.Errorf("expected private function %q not found", funcName)
-				}
-			}
-		})
-	}
-}
-
-// Test_checkAndReportPrivateFunctionTest tests checkAndReportPrivateFunctionTest logic.
-func Test_checkAndReportPrivateFunctionTest(t *testing.T) {
-	tests := []struct {
-		name              string
-		testFuncName      string
-		privateFunctions  map[string]bool
-		shouldReportError bool
-	}{
-		{
-			name:         "test for private function",
-			testFuncName: "Test_doSomething",
-			privateFunctions: map[string]bool{
-				"doSomething": true,
-			},
-			shouldReportError: true,
-		},
-		{
-			name:         "test for public function",
-			testFuncName: "TestDoSomething",
-			privateFunctions: map[string]bool{
-				"doSomething": true,
-			},
-			shouldReportError: false,
-		},
-		{
-			name:              "test with empty name",
-			testFuncName:      "Test",
-			privateFunctions:  map[string]bool{},
-			shouldReportError: false,
-		},
-		{
-			name:              "test for non-existent function",
-			testFuncName:      "Test_unknownFunction",
-			privateFunctions:  map[string]bool{"otherFunc": true},
-			shouldReportError: false,
-		},
-		{
-			name:              "empty key generated from test name",
-			testFuncName:      "Test_foo",
-			privateFunctions:  map[string]bool{},
-			shouldReportError: false,
-		},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			code := "package test\nfunc " + tt.testFuncName + "(t *testing.T) {}"
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test_external_test.go", code, 0)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			var funcDecl *ast.FuncDecl
-			ast.Inspect(file, func(n ast.Node) bool {
-				if fd, ok := n.(*ast.FuncDecl); ok {
-					funcDecl = fd
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
 					return false
 				}
 				return true
 			})
 
-			if funcDecl == nil {
-				t.Fatal("no function declaration found")
+			// Vérification de l'expression
+			if callExpr == nil {
+				t.Fatal("no call expression found")
 			}
 
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-				Report: func(d analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
-			checkAndReportPrivateFunctionTest(pass, funcDecl, "test_external_test.go", tt.privateFunctions)
-
-			if tt.shouldReportError && reportCount == 0 {
-				t.Error("expected error to be reported")
-			} else if !tt.shouldReportError && reportCount > 0 {
-				t.Errorf("expected no error, got %d reports", reportCount)
+			got := isTestingAssertionCall(callExpr)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("isTestingAssertionCall() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-// Test_runTest010 tests the runTest010 private function.
+// Test_isSubTestCall tests the isSubTestCall function.
+func Test_isSubTestCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{"t.Run is subtest", "t.Run(\"name\", func(x int){})", true},
+		{"other.Run is NOT subtest", "other.Run(\"name\", func(x int){})", false},
+		{"t.Error is NOT subtest", "t.Error(\"msg\")", false},
+		{"t.Log is NOT subtest", "t.Log(\"msg\")", false},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			code := "package test\nfunc f() { " + tt.code + " }"
+			file, err := parser.ParseFile(fset, "", code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			// Extract call expression
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					return false
+				}
+				return true
+			})
+
+			// Vérification de l'expression
+			if callExpr == nil {
+				t.Fatal("no call expression found")
+			}
+
+			got := isSubTestCall(callExpr)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("isSubTestCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isAssertLibraryCall tests the isAssertLibraryCall function.
+func Test_isAssertLibraryCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{"assert.Equal", "assert.Equal(t, 1, 1)", true},
+		{"assert.NoError", "assert.NoError(t, nil)", true},
+		{"assert.True", "assert.True(t, true)", true},
+		{"require.NoError", "require.NoError(t, nil)", true},
+		{"require.Equal", "require.Equal(t, 1, 1)", true},
+		{"Assert.Equal uppercase", "Assert.Equal(t, 1, 1)", true},
+		{"Require.NoError uppercase", "Require.NoError(t, nil)", true},
+		{"t.Error is NOT assert lib", "t.Error(\"msg\")", false},
+		{"fmt.Println is NOT assert lib", "fmt.Println(\"msg\")", false},
+		{"other.Equal is NOT assert lib", "other.Equal(t, 1, 1)", false},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			code := "package test\nfunc f() { " + tt.code + " }"
+			file, err := parser.ParseFile(fset, "", code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			// Extract call expression
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					return false
+				}
+				return true
+			})
+
+			// Vérification de l'expression
+			if callExpr == nil {
+				t.Fatal("no call expression found")
+			}
+
+			got := isAssertLibraryCall(callExpr)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("isAssertLibraryCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isTestHelperCall tests the isTestHelperCall function.
+func Test_isTestHelperCall(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{"helper(t, data)", "helper(t, \"data\")", true},
+		{"setupTest(t)", "setupTest(t)", true},
+		{"runCheck(t, x, y)", "runCheck(t, x, y)", true},
+		{"func with no args", "noArgs()", false},
+		{"func with non-t first arg", "helper(x, y)", false},
+		{"func with string first arg", "helper(\"t\", y)", false},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			code := "package test\nfunc f() { " + tt.code + " }"
+			file, err := parser.ParseFile(fset, "", code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			// Extract call expression
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					return false
+				}
+				return true
+			})
+
+			// Vérification de l'expression
+			if callExpr == nil {
+				t.Fatal("no call expression found")
+			}
+
+			got := isTestHelperCall(callExpr)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("isTestHelperCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_checkForValidationSignal tests the checkForValidationSignal function.
+func Test_checkForValidationSignal(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{"t.Error call", "t.Error(\"msg\")", true},
+		{"assert.Equal call", "assert.Equal(t, 1, 1)", true},
+		{"helper call", "helper(t, x)", true},
+		{"comparison x == y", "x == y", true},
+		{"comparison x != y", "x != y", true},
+		{"t.Log call", "t.Log(\"msg\")", false},
+		{"simple function call", "Foo()", false},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse expression or statement
+			fset := token.NewFileSet()
+			code := "package test\nfunc f() { " + tt.code + " }"
+			file, err := parser.ParseFile(fset, "", code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			// Find the relevant node
+			found := false
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du signal
+				if checkForValidationSignal(n) {
+					found = true
+					return false
+				}
+				return true
+			})
+
+			// Vérification du résultat
+			if found != tt.want {
+				t.Errorf("checkForValidationSignal() found = %v, want %v", found, tt.want)
+			}
+		})
+	}
+}
+
+// Test_checkCallForValidation tests the checkCallForValidation function.
+func Test_checkCallForValidation(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{"t.Error is validation", "t.Error(\"msg\")", true},
+		{"t.Fatal is validation", "t.Fatal(\"msg\")", true},
+		{"t.Run is validation", "t.Run(\"name\", func(x int){})", true},
+		{"assert.Equal is validation", "assert.Equal(t, 1, 1)", true},
+		{"helper(t, x) is validation", "helper(t, x)", true},
+		{"t.Log is NOT validation", "t.Log(\"msg\")", false},
+		{"Foo() is NOT validation", "Foo()", false},
+		{"fmt.Println is NOT validation", "fmt.Println(\"msg\")", false},
+	}
+
+	// Parcourir les cas de test
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Parse the code
+			fset := token.NewFileSet()
+			code := "package test\nfunc f() { " + tt.code + " }"
+			file, err := parser.ParseFile(fset, "", code, 0)
+			// Vérification erreur
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			// Extract call expression
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				// Vérification du noeud
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					return false
+				}
+				return true
+			})
+
+			// Vérification de l'expression
+			if callExpr == nil {
+				t.Fatal("no call expression found")
+			}
+
+			got := checkCallForValidation(callExpr)
+			// Vérification du résultat
+			if got != tt.want {
+				t.Errorf("checkCallForValidation() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_runTest010 tests the runTest010 function.
 func Test_runTest010(t *testing.T) {
 	tests := []struct {
-		name string
+		name         string
+		expectedName string
 	}{
-		{
-			name: "error case - minimal test",
-		},
+		{"analyzer exists", "ktntest010"},
 	}
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test basic functionality
-			t.Logf("Testing: %s", tt.name)
-		})
-	}
-}
-
-// Test_checkExternalTestsForPrivateFunctions tests checkExternalTestsForPrivateFunctions.
-func Test_checkExternalTestsForPrivateFunctions(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{
-			name: "error case - no tests",
-		},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test basic functionality
-			t.Logf("Testing: %s", tt.name)
+			// Vérification de l'analyseur
+			if Analyzer010 == nil || Analyzer010.Name != tt.expectedName {
+				t.Errorf("Analyzer010 invalid: nil=%v, Name=%q, want %q",
+					Analyzer010 == nil, Analyzer010.Name, tt.expectedName)
+			}
 		})
 	}
 }
@@ -366,6 +658,202 @@ func Test_runTest010_excludedFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
+		})
+	}
+}
+
+// Test_isPassthroughTest_nilBody tests isPassthroughTest with nil body.
+func Test_isPassthroughTest_nilBody(t *testing.T) {
+	tests := []struct {
+		name     string
+		funcDecl *ast.FuncDecl
+		want     bool
+	}{
+		{
+			name: "nil body",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "TestFoo"},
+				Type: &ast.FuncType{},
+				Body: nil,
+			},
+			want: true,
+		},
+		{
+			name: "empty body",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "TestFoo"},
+				Type: &ast.FuncType{},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isPassthroughTest(tt.funcDecl)
+			if got != tt.want {
+				t.Errorf("isPassthroughTest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_checkForValidationSignal_nil tests checkForValidationSignal with nil node.
+func Test_checkForValidationSignal_nil(t *testing.T) {
+	tests := []struct {
+		name string
+		node ast.Node
+		want bool
+	}{
+		{
+			name: "nil node",
+			node: nil,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := checkForValidationSignal(tt.node)
+			if got != tt.want {
+				t.Errorf("checkForValidationSignal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isTestingAssertionCall_notSelector tests isTestingAssertionCall with non-selector.
+func Test_isTestingAssertionCall_notSelector(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "direct function call",
+			code: "package test\nfunc f() { Foo() }",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			var callExpr *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ce, ok := n.(*ast.CallExpr); ok {
+					callExpr = ce
+					return false
+				}
+				return true
+			})
+
+			if callExpr == nil {
+				t.Fatal("no call expression found")
+			}
+
+			got := isTestingAssertionCall(callExpr)
+			if got != tt.want {
+				t.Errorf("isTestingAssertionCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isSubTestCall_notReceiver tests isSubTestCall with non-identifier receiver.
+func Test_isSubTestCall_notReceiver(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "call expression as receiver",
+			code: "package test\nfunc f() { getT().Run(\"name\", func(x int){}) }",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Find the outer call (the one with Run)
+			var runCall *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ce, ok := n.(*ast.CallExpr); ok {
+					if sel, selOk := ce.Fun.(*ast.SelectorExpr); selOk && sel.Sel.Name == "Run" {
+						runCall = ce
+						return false
+					}
+				}
+				return true
+			})
+
+			if runCall == nil {
+				t.Fatal("no Run call expression found")
+			}
+
+			got := isSubTestCall(runCall)
+			if got != tt.want {
+				t.Errorf("isSubTestCall() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_isAssertLibraryCall_notReceiver tests isAssertLibraryCall with non-identifier receiver.
+func Test_isAssertLibraryCall_notReceiver(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+		want bool
+	}{
+		{
+			name: "call expression as receiver",
+			code: "package test\nfunc f() { getAssert().Equal(t, 1, 1) }",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Find the outer call (the one with Equal)
+			var equalCall *ast.CallExpr
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ce, ok := n.(*ast.CallExpr); ok {
+					if sel, selOk := ce.Fun.(*ast.SelectorExpr); selOk && sel.Sel.Name == "Equal" {
+						equalCall = ce
+						return false
+					}
+				}
+				return true
+			})
+
+			if equalCall == nil {
+				t.Fatal("no Equal call expression found")
+			}
+
+			got := isAssertLibraryCall(equalCall)
+			if got != tt.want {
+				t.Errorf("isAssertLibraryCall() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

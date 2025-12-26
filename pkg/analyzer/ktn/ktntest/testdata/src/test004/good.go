@@ -1,93 +1,176 @@
-// Package test004 provides resource management utilities.
-package test004
+// Package test005 provides calculation and validation utilities.
+package test005
 
-// GoodResourceInterface defines the public API for GoodResource.
-type GoodResourceInterface interface {
-	Metadata() string
-	Schema() map[string]string
-	Configure(config string) error
-	Name() string
-}
+import (
+	"errors"
+	"strings"
+)
 
-// GoodResource représente une ressource avec des méthodes publiques.
-// Toutes les méthodes ont des tests correspondants.
-type GoodResource struct {
-	name string
-}
+const (
+	// MIN_EMAIL_LENGTH longueur minimale d'un email
+	MIN_EMAIL_LENGTH int = 3
+	// EMAIL_PARTS_COUNT nombre de parties d'un email (avant/après @)
+	EMAIL_PARTS_COUNT int = 2
+	// DECIMAL_BASE base décimale pour conversion
+	DECIMAL_BASE int = 10
+	// FACTORIAL_LOOP_START début de la boucle factorielle
+	FACTORIAL_LOOP_START int = 2
+)
 
-// NewGoodResource crée une nouvelle instance.
-//
-// Returns:
-//   - *GoodResource: nouvelle instance
-func NewGoodResource() *GoodResource {
-	r := &GoodResource{}
-	// Use private functions to avoid dead code
-	r.name = r.sanitize("init")
-	_ = validateConfig(r.name)
-	// Retour de la nouvelle instance
-	return r
-}
-
-// Metadata retourne les métadonnées.
-//
-// Returns:
-//   - string: nom de la ressource
-func (r *GoodResource) Metadata() string {
-	// Retour des métadonnées
-	return "good_resource"
-}
-
-// Schema retourne le schéma.
-//
-// Returns:
-//   - map[string]string: schéma de la ressource
-func (r *GoodResource) Schema() map[string]string {
-	// Retour du schéma
-	return map[string]string{"type": "test"}
-}
-
-// Configure configure la ressource.
+// Calculator effectue des opérations arithmétiques.
 //
 // Params:
-//   - config: configuration à appliquer
+//   - op: opération à effectuer (+, -, *, /)
+//   - a: premier opérande
+//   - b: deuxième opérande
 //
 // Returns:
-//   - error: erreur éventuelle
-func (r *GoodResource) Configure(config string) error {
-	r.name = config
-	// Retour succès
-	return nil
+//   - int: résultat de l'opération
+//   - error: erreur si opération invalide ou division par zéro
+func Calculator(op string, a, b int) (int, error) {
+	// Sélection selon l'opération
+	switch op {
+	// Addition
+	case "+":
+		// Retour du résultat
+		return a + b, nil
+	// Soustraction
+	case "-":
+		// Retour du résultat
+		return a - b, nil
+	// Multiplication
+	case "*":
+		// Retour du résultat
+		return a * b, nil
+	// Division
+	case "/":
+		// Vérification division par zéro
+		if b == 0 {
+			// Retour erreur
+			return 0, errors.New("division par zéro")
+		}
+		// Retour du résultat
+		return a / b, nil
+	// Opération inconnue
+	default:
+		// Retour erreur
+		return 0, errors.New("opération invalide")
+	}
 }
 
-// validateConfig valide la configuration (fonction privée avec test).
+// ValidateEmail vérifie si une adresse email est valide.
 //
 // Params:
-//   - config: configuration à valider
+//   - email: adresse email à valider
 //
 // Returns:
-//   - bool: true si valide
-func validateConfig(config string) bool {
-	// Validation
-	return len(config) > 0
+//   - bool: true si valide, false sinon
+func ValidateEmail(email string) bool {
+	// Vérification longueur minimale
+	if len(email) < MIN_EMAIL_LENGTH {
+		// Email trop court
+		return false
+	}
+
+	// Vérification présence @
+	if !strings.Contains(email, "@") {
+		// Pas de @
+		return false
+	}
+
+	parts := strings.Split(email, "@")
+	// Vérification exactement 2 parties
+	if len(parts) != EMAIL_PARTS_COUNT {
+		// Format invalide
+		return false
+	}
+
+	// Vérification parties non vides
+	if parts[0] == "" || parts[1] == "" {
+		// Parties vides
+		return false
+	}
+
+	// Vérification domaine
+	if !strings.Contains(parts[1], ".") {
+		// Pas de point dans le domaine
+		return false
+	}
+
+	// Email valide
+	return true
 }
 
-// sanitize nettoie les données (fonction privée avec test).
+// ParseInt convertit une string en entier.
 //
 // Params:
-//   - data: données à nettoyer
+//   - s: string à convertir
 //
 // Returns:
-//   - string: données nettoyées
-func (r *GoodResource) sanitize(data string) string {
-	// Nettoyage
-	return data + "_sanitized"
+//   - int: valeur entière
+//   - error: erreur si conversion impossible
+func ParseInt(s string) (int, error) {
+	// Vérification string vide
+	if s == "" {
+		// Retour erreur
+		return 0, errors.New("string vide")
+	}
+
+	result := 0
+	negative := false
+
+	// Vérification signe négatif
+	if s[0] == '-' {
+		negative = true
+		s = s[1:]
+	}
+
+	// Parcours des caractères
+	for _, c := range s {
+		// Vérification caractère numérique
+		if c < '0' || c > '9' {
+			// Retour erreur
+			return 0, errors.New("caractère non numérique")
+		}
+		result = result*DECIMAL_BASE + int(c-'0')
+	}
+
+	// Application du signe
+	if negative {
+		result = -result
+	}
+
+	// Retour du résultat
+	return result, nil
 }
 
-// Name retourne le nom de la ressource.
+// Factorial calcule la factorielle d'un nombre.
+//
+// Params:
+//   - n: nombre dont calculer la factorielle
 //
 // Returns:
-//   - string: nom de la ressource
-func (r *GoodResource) Name() string {
-	// Retour du nom
-	return r.name
+//   - int: factorielle de n
+//   - error: erreur si n négatif
+func Factorial(n int) (int, error) {
+	// Vérification n négatif
+	if n < 0 {
+		// Retour erreur
+		return 0, errors.New("nombre négatif")
+	}
+
+	// Cas de base
+	if n == 0 || n == 1 {
+		// Retour 1
+		return 1, nil
+	}
+
+	result := 1
+	// Calcul de la factorielle
+	for i := FACTORIAL_LOOP_START; i <= n; i++ {
+		result *= i
+	}
+
+	// Retour du résultat
+	return result, nil
 }

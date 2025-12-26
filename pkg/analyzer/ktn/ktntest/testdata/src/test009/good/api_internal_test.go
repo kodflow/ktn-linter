@@ -1,8 +1,8 @@
-package test009
+package test011
 
 import "testing"
 
-// TestPrivateHelper teste la fonction privée (correct dans internal)
+// TestPrivateHelper teste la fonction privée (correct: package test011)
 func TestPrivateHelper(t *testing.T) {
 	tests := []struct {
 		name string

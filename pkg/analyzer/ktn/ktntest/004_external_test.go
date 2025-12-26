@@ -13,19 +13,27 @@ func TestTest004(t *testing.T) {
 		analyzer string
 	}{
 		{
-			name:     "public function test coverage",
+			name:     "table-driven pattern detection",
 			analyzer: "test004",
 		},
 		{
-			name:     "validate test completeness",
+			name:     "validate test structure compliance",
 			analyzer: "test004",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// 2 erreurs: fonctions Multiply et Divide sans test
-			testhelper.TestGoodBadPackage(t, ktntest.Analyzer004, tt.analyzer, 2)
+			// 8 erreurs: tests sans table-driven pattern (>= 2 assertions)
+			// - TestCalculatorTwoAssertions (2 assertions)
+			// - TestStringLengthMultipleCases
+			// - TestIsEmptyRepeatedAssertions
+			// - TestToUpperManyScenarios
+			// - TestContainsManyChecks
+			// - TestCountWordsMultipleInputs
+			// - TestWithAssertManyScenarios (testify/assert)
+			// - TestWithRequireManyScenarios (testify/require)
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer004, tt.analyzer, "good_test.go", "bad_test.go", 8)
 		})
 	}
 }

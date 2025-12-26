@@ -24,21 +24,6 @@ FICHIERS SUGGÉRÉS:
 
 	Register(Message{
 		Code:  "KTN-TEST-002",
-		Short: "package test incorrect '%s'. Utiliser '%s_test'",
-		Verbose: `PROBLÈME: Le fichier test utilise le package '%s'.
-
-POURQUOI: Les tests doivent utiliser le package xxx_test
-pour du black-box testing (tester l'API publique).
-
-EXEMPLE INCORRECT:
-  package mypackage  // Même package = white-box
-
-EXEMPLE CORRECT:
-  package mypackage_test  // Black-box testing`,
-	})
-
-	Register(Message{
-		Code:  "KTN-TEST-003",
 		Short: "fichier test '%s' sans fichier source '%s'",
 		Verbose: `PROBLÈME: Le fichier test '%s' n'a pas de fichier source '%s'.
 
@@ -51,7 +36,7 @@ SOLUTIONS:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-004",
+		Code:  "KTN-TEST-003",
 		Short: "fonction '%s' sans test correspondant",
 		Verbose: `PROBLÈME: La fonction '%s' n'a pas de test.
 
@@ -66,7 +51,7 @@ FORMAT ATTENDU:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-005",
+		Code:  "KTN-TEST-004",
 		Short: "test '%s' sans table-driven pattern",
 		Verbose: `PROBLÈME: Le test '%s' n'utilise pas table-driven.
 
@@ -97,20 +82,7 @@ EXEMPLE:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-006",
-		Short: "fichier test '%s' sans fichier source correspondant",
-		Verbose: `PROBLÈME: Le fichier test '%s' n'a pas de fichier source 1:1.
-
-POURQUOI: Chaque fichier de test doit correspondre exactement
-à un fichier source (pattern 1:1).
-
-CONVENTION:
-  - foo.go → foo_internal_test.go et/ou foo_external_test.go
-  - Pas de tests orphelins`,
-	})
-
-	Register(Message{
-		Code:  "KTN-TEST-007",
+		Code:  "KTN-TEST-005",
 		Short: "t.Skip() interdit dans '%s'. Les tests doivent passer",
 		Verbose: `PROBLÈME: Le test '%s' utilise t.Skip().
 
@@ -126,7 +98,7 @@ ALTERNATIVES:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-008",
+		Code:  "KTN-TEST-006",
 		Short: "fichier '%s' sans tests. Créer %s",
 		Verbose: `PROBLÈME: Le fichier '%s' n'a pas de fichier test approprié.
 
@@ -140,7 +112,7 @@ CONVENTION:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-009",
+		Code:  "KTN-TEST-007",
 		Short: "test '%s' de fonction publique doit être dans _external_test.go",
 		Verbose: `PROBLÈME: Le test '%s' teste une fonction publique mais n'est pas dans _external_test.go.
 
@@ -152,7 +124,7 @@ en black-box testing uniquement:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-010",
+		Code:  "KTN-TEST-008",
 		Short: "test '%s' de fonction privée doit être dans _internal_test.go",
 		Verbose: `PROBLÈME: Le test '%s' teste une fonction privée mais n'est pas dans _internal_test.go.
 
@@ -164,7 +136,7 @@ en white-box testing uniquement:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-011",
+		Code:  "KTN-TEST-009",
 		Short: "package '%s' incorrect pour fichier %s",
 		Verbose: `PROBLÈME: Le package '%s' ne correspond pas au type de fichier test.
 
@@ -174,7 +146,7 @@ CONVENTION:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-012",
+		Code:  "KTN-TEST-010",
 		Short: "test '%s' sans assertions. Un test doit tester",
 		Verbose: `PROBLÈME: Le test '%s' ne contient pas d'assertions.
 
@@ -190,7 +162,7 @@ UN TEST DOIT CONTENIR:
 	})
 
 	Register(Message{
-		Code:  "KTN-TEST-013",
+		Code:  "KTN-TEST-011",
 		Short: "test '%s' ne couvre pas les cas d'erreur",
 		Verbose: `PROBLÈME: Le test '%s' ne teste pas les erreurs.
 

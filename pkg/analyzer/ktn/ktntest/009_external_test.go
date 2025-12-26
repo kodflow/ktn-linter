@@ -7,15 +7,16 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestTest009 teste l'analyseur KTN-TEST-009.
+// TestTest009 teste l'analyseur KTN-TEST-011.
 func TestTest009(t *testing.T) {
 	tests := []struct {
 		name           string
 		dir            string
 		expectedErrors int
 	}{
-		{"good - tests in correct files", "testdata/src/test009/good", 0},
-		{"bad - public test in internal error case", "testdata/src/test009/bad", 1},
+		{"good - conventions respected", "testdata/src/test009/good", 0},
+		{"bad - internal with wrong package error case", "testdata/src/test009/bad_internal", 1},
+		{"bad - external with wrong package error case", "testdata/src/test009/bad_external", 1},
 	}
 
 	// Itération sur les cas de test
