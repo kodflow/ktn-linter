@@ -3,7 +3,8 @@ package const003
 
 // Good: All constants use CamelCase naming (Go standard)
 const (
-	// Single letter constants are valid
+	// === Single letter constants (valid) ===
+
 	// A represents the first value
 	A int = 1
 	// B represents the second value
@@ -11,7 +12,8 @@ const (
 	// C represents the third value
 	C int = 3
 
-	// PascalCase for exported constants
+	// === PascalCase for exported constants ===
+
 	// MaxSize defines the maximum size
 	MaxSize int = 100
 	// ApiKey is the authentication key
@@ -23,7 +25,8 @@ const (
 	// MinRetryCount defines minimum retries
 	MinRetryCount int = 3
 
-	// Acronyms in PascalCase
+	// === Acronyms in PascalCase ===
+
 	// APIEndpoint is the API endpoint
 	APIEndpoint string = "/api"
 	// HTTPStatus is the HTTP status code
@@ -31,7 +34,8 @@ const (
 	// URLPath is the URL path
 	URLPath string = "/path"
 
-	// camelCase for unexported constants
+	// === camelCase for unexported constants ===
+
 	// maxInternalSize is internal max size
 	maxInternalSize int = 50
 	// defaultTimeout is the default timeout
@@ -39,7 +43,8 @@ const (
 	// httpInternalPort is internal port
 	httpInternalPort int = 8080
 
-	// Constants with numbers
+	// === Constants with numbers ===
+
 	// Http2Protocol is HTTP/2 protocol
 	Http2Protocol string = "h2"
 	// Tls12Version is TLS 1.2 version
@@ -47,7 +52,8 @@ const (
 	// Version100 is version 1.0.0
 	Version100 string = "1.0.0"
 
-	// Complex names without underscores
+	// === Complex names without underscores ===
+
 	// MaxConnectionPoolSize defines pool size
 	MaxConnectionPoolSize int = 50
 	// DefaultRequestTimeoutSeconds timeout value
@@ -55,7 +61,8 @@ const (
 	// ApiKeyHeaderName header name for API key
 	ApiKeyHeaderName string = "X-API-Key"
 
-	// Status codes
+	// === Status codes ===
+
 	// StatusOK success status
 	StatusOK int = 200
 	// StatusCreated resource created
@@ -63,11 +70,30 @@ const (
 	// StatusAccepted request accepted
 	StatusAccepted int = 202
 
+	// === Special cases ===
+
 	// Blank identifier (valid - should be skipped)
 	_ int = 999
-
 	// TestValue used for testing
 	TestValue int = 123
+
+	// === Constant without explicit type (T3.2) ===
+	// This tests that CONST-003 works independently from CONST-001
+	// The naming is still valid CamelCase
+
+	// NoTypeValue is a constant without explicit type
+	NoTypeValue = 42
+	// NoTypeString is a string without explicit type
+	NoTypeString = "test"
+
+	// === Very long names (T3.3) ===
+
+	// VeryLongConstantNameWithManyWordsInCamelCaseFormat is a long name
+	VeryLongConstantNameWithManyWordsInCamelCaseFormat int = 1
+	// ThisIsAnExtremelyLongConstantNameThatShouldStillBeValidCamelCase long
+	ThisIsAnExtremelyLongConstantNameThatShouldStillBeValidCamelCase int = 2
+	// shortName is a short name for comparison
+	shortName int = 3
 )
 
 // Variable declaration to test that only const are checked

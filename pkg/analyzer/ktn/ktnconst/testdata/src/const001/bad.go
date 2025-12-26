@@ -4,43 +4,57 @@ package const001
 // Bad: All constants WITHOUT explicit types (violates KTN-CONST-001)
 // Names use CamelCase to avoid CONST-003 errors
 const (
-	// BadMaxConnections defines max connections
+	// === Basic types without explicit type ===
+
+	// BadMaxConnections defines max connections (int)
 	BadMaxConnections = 100 // want "KTN-CONST-001"
-	// BadPortNumber defines server port
+	// BadPortNumber defines server port (int)
 	BadPortNumber = 8080 // want "KTN-CONST-001"
-	// BadTimeoutMs defines timeout in ms
+	// BadTimeoutMs defines timeout in ms (int)
 	BadTimeoutMs = 5000 // want "KTN-CONST-001"
 
-	// BadHttpOk represents HTTP 200 status
-	BadHttpOk = 200 // want "KTN-CONST-001"
-	// BadHttpNotFound represents 404
-	BadHttpNotFound = 404 // want "KTN-CONST-001"
-
-	// BadApiVersion defines API version
+	// BadApiVersion defines API version (string)
 	BadApiVersion = "v1.0" // want "KTN-CONST-001"
-	// BadDefaultLang defines default lang
+	// BadDefaultLang defines default lang (string)
 	BadDefaultLang = "en" // want "KTN-CONST-001"
 
-	// BadIsProduction indicates prod mode
+	// BadIsProduction indicates prod mode (bool)
 	BadIsProduction = true // want "KTN-CONST-001"
-	// BadEnableCache indicates cache on
+	// BadEnableCache indicates cache on (bool)
 	BadEnableCache = false // want "KTN-CONST-001"
 
-	// BadRatio defines calculation ratio
+	// BadRatio defines calculation ratio (float64)
 	BadRatio = 1.5 // want "KTN-CONST-001"
+
+	// === Additional numeric types without explicit type (T1.3) ===
+
+	// BadByteVal represents a byte value
+	BadByteVal = 0xFF // want "KTN-CONST-001"
+	// BadInt64Val represents a large int
+	BadInt64Val = 9223372036854775807 // want "KTN-CONST-001"
+	// BadUintVal represents an unsigned int
+	BadUintVal = 42 // want "KTN-CONST-001"
+	// BadFloat32Val represents a float
+	BadFloat32Val = 3.14 // want "KTN-CONST-001"
+
+	// === Rune type without explicit type ===
+
+	// BadNewlineChar represents a newline
+	BadNewlineChar = '\n' // want "KTN-CONST-001"
+
+	// === Iota without explicit type ===
 
 	// BadStateA without explicit type
 	BadStateA = iota // want "KTN-CONST-001"
-	// BadStateB inherits (no error)
+	// BadStateB inherits (no error - inherits from previous)
 	BadStateB
-	// BadStateC inherits (no error)
+	// BadStateC inherits (no error - inherits from previous)
 	BadStateC
 
-	// BadMultiA without explicit type
+	// === Multi-name without explicit type ===
+
+	// BadMultiA and BadMultiB without explicit type
 	// want "KTN-CONST-001"
 	// want "KTN-CONST-001"
 	BadMultiA, BadMultiB = 10, 20
 )
-
-// BadStatus is a type declared after const (for testing purposes only)
-type BadStatus int

@@ -20,20 +20,20 @@ func TestConst001(t *testing.T) {
 			name:           "constants without explicit type",
 			analyzer:       ktnconst.Analyzer001,
 			testdataDir:    "const001",
-			expectedErrors: 13,
+			expectedErrors: 16,
 		},
 		{
 			name:           "valid constants with explicit type",
 			analyzer:       ktnconst.Analyzer001,
 			testdataDir:    "const001",
-			expectedErrors: 13,
+			expectedErrors: 16,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// good.go: 0 errors, bad.go: 13 errors (constants without explicit type)
-			// - 10 in block + 1 iota + 2 multi-name
+			// good.go: 0 errors, bad.go: 16 errors (constants without explicit type)
+			// - 8 basic + 5 numeric + 1 rune + 1 iota + 2 multi-name - 1 inherited = 16
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}
