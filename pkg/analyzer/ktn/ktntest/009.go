@@ -16,14 +16,12 @@ import (
 const (
 	// ruleCode est le code de la règle.
 	ruleCodeTest009 string = "KTN-TEST-009"
-	// initialPublicFuncsCap initial capacity for public funcs map
-	initialPublicFuncsCap int = 32
 )
 
-// Analyzer009 checks that public function tests are in external test files
+// Analyzer009 checks package naming convention for internal/external test files
 var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktntest009",
-	Doc:      "KTN-TEST-009: Les tests de fonctions publiques (exportées) doivent être dans _external_test.go uniquement (black-box testing)",
+	Doc:      "KTN-TEST-009: Les fichiers _internal_test.go doivent utiliser 'package xxx', les fichiers _external_test.go doivent utiliser 'package xxx_test'",
 	Run:      runTest009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -48,176 +46,108 @@ func runTest009(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Collecter toutes les fonctions publiques
-	publicFunctions := collectPublicFunctions(pass, insp)
+	// Valider les fichiers de test
+	validateTestFiles011(pass, cfg)
 
-	// Vérifier les tests dans les fichiers _internal_test.go
-	checkInternalTestsForPublicFunctions(pass, insp, publicFunctions)
+	// Définir le filtre de nœuds
+	nodeFilter := []ast.Node{
+		(*ast.File)(nil),
+	}
+
+	// Parcourir les nœuds
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Rien à faire dans preorder
+	})
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// collectPublicFunctions collecte les fonctions publiques du package.
+// validateTestFiles011 valide les conventions de package pour les fichiers de test.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//
-// Returns:
-//   - map[string]bool: map des noms de fonctions publiques
-func collectPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
-	publicFunctions := make(map[string]bool, initialPublicFuncsCap)
-	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
-
-	// Parcourir les fonctions
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-
-		// Vérification fichier test
-		if shared.IsTestFile(filename) {
-			// Retour si test
-			return
-		}
-
-		// Vérification fichier mock
-		if shared.IsMockFile(filename) {
-			// Retour si mock
-			return
-		}
-
-		// Ajouter fonction publique
-		addPublicFunction(funcDecl, publicFunctions)
-	})
-
-	// Retour de la map
-	return publicFunctions
-}
-
-// addPublicFunction ajoute une fonction publique à la map.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//   - publicFunctions: map des fonctions publiques
-func addPublicFunction(funcDecl *ast.FuncDecl, publicFunctions map[string]bool) {
-	// Vérification nom fonction
-	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
-		// Retour si pas de nom
-		return
-	}
-
-	// Vérification fonction mock
-	if shared.IsMockName(funcDecl.Name.Name) {
-		// Retour si mock
-		return
-	}
-
-	// Classifier la fonction
-	meta := shared.ClassifyFunc(funcDecl)
-
-	// Vérification receiver mock
-	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
-		// Retour si mock
-		return
-	}
-
-	// Vérification visibilité publique
-	if meta.Visibility != shared.VisPublic {
-		// Retour si pas publique
-		return
-	}
-
-	// Construire clé recherche
-	key := shared.BuildTestLookupKey(meta)
-	// Vérification clé non vide
-	if key != "" {
-		// Ajouter à la map
-		publicFunctions[key] = true
-	}
-}
-
-// checkInternalTestsForPublicFunctions vérifie les tests de fonctions publiques.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//   - publicFunctions: map des fonctions publiques
-func checkInternalTestsForPublicFunctions(pass *analysis.Pass, insp *inspector.Inspector, publicFunctions map[string]bool) {
-	// Récupération de la configuration
-	cfg := config.Get()
-
-	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
-
-	// Parcourir les tests
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
+//   - cfg: configuration
+func validateTestFiles011(pass *analysis.Pass, cfg *config.Config) {
+	// Itération sur les fichiers
+	for _, file := range pass.Files {
+		// Obtenir le chemin du fichier
+		filename := pass.Fset.Position(file.Pos()).Filename
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeTest009, filename) {
 			// Fichier exclu
-			return
+			continue
 		}
 
-		baseName := filepath.Base(filename)
+		// Extraire le nom de base
+		basename := filepath.Base(filename)
 
-		// Vérification fichier internal et test unitaire
-		if !strings.HasSuffix(baseName, "_internal_test.go") || !shared.IsUnitTestFunction(funcDecl) {
-			// Retour si pas internal ou pas unitaire
-			return
+		// Vérification si test
+		if !shared.IsTestFile(basename) {
+			// Continuer si pas test
+			continue
 		}
 
-		// Vérification fichier exempté
-		if shared.IsExemptTestFile(filename) {
-			// Retour si exempté
-			return
-		}
+		// Extraire le package actuel
+		actualPkg := file.Name.Name
 
-		// Vérifier et reporter
-		checkAndReportPublicFunctionTest(pass, funcDecl, baseName, publicFunctions)
-	})
+		// Valider le package selon le type de fichier
+		validatePackageConvention011(pass, file, basename, actualPkg)
+	}
 }
 
-// checkAndReportPublicFunctionTest vérifie et reporte un test de fonction publique mal placé.
+// validatePackageConvention011 valide la convention de package selon le type de fichier test.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - funcDecl: déclaration de fonction de test
-//   - baseName: nom de base du fichier
-//   - publicFunctions: map des fonctions publiques
-func checkAndReportPublicFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, publicFunctions map[string]bool) {
-	testName := funcDecl.Name.Name
-
-	// Vérification nom exempté
-	if shared.IsExemptTestName(testName) {
-		// Retour si exempté
-		return
+//   - file: nœud AST du fichier
+//   - basename: nom de base du fichier
+//   - actualPkg: nom du package actuel
+func validatePackageConvention011(pass *analysis.Pass, file *ast.File, basename, actualPkg string) {
+	// Vérification suffixe internal
+	if strings.HasSuffix(basename, "_internal_test.go") {
+		// Vérification package _test
+		if basePkg, ok := strings.CutSuffix(actualPkg, "_test"); ok {
+			// Signaler erreur package
+			pass.Reportf(
+				file.Name.Pos(),
+				"KTN-TEST-009: le fichier '%s' doit utiliser 'package %s' (white-box testing) au lieu de 'package %s'. Les fichiers _internal_test.go testent les fonctions privées et doivent partager le même package",
+				basename,
+				basePkg,
+				actualPkg,
+			)
+		}
+	} else {
+		// Vérification suffixe external
+		if strings.HasSuffix(basename, "_external_test.go") {
+			// Cas alternatif: external
+			// Vérification package sans _test
+			if !strings.HasSuffix(actualPkg, "_test") {
+				// Extraire package attendu
+				expectedPkg := extractExpectedPackageFromFilename(basename)
+				// Signaler erreur package
+				pass.Reportf(
+					file.Name.Pos(),
+					"KTN-TEST-009: le fichier '%s' doit utiliser 'package %s_test' (black-box testing) au lieu de 'package %s'. Les fichiers _external_test.go testent l'API publique et doivent utiliser un package externe",
+					basename,
+					expectedPkg,
+					actualPkg,
+				)
+			}
+		}
 	}
+}
 
-	// Parser nom test
-	target, ok := shared.ParseTestName(testName)
-	// Vérification parsing
-	if !ok {
-		// Retour si échec parsing
-		return
-	}
-
-	// Construire clé
-	key := shared.BuildTestTargetKey(target)
-	// Vérification clé
-	if key == "" {
-		// Retour si clé vide
-		return
-	}
-
-	// Vérification fonction publique
-	if publicFunctions[key] {
-		// Signaler erreur
-		pass.Reportf(
-			funcDecl.Pos(),
-			"KTN-TEST-009: le test '%s' dans '%s' teste une fonction publique '%s'. Les tests de fonctions publiques doivent être dans '%s' (black-box testing avec package xxx_test)",
-			testName, baseName, key,
-			strings.Replace(baseName, "_internal_test.go", "_external_test.go", 1),
-		)
-	}
+// extractExpectedPackageFromFilename extrait le nom de package attendu depuis le nom de fichier.
+//
+// Params:
+//   - filename: nom du fichier (ex: calculator_external_test.go)
+//
+// Returns:
+//   - string: nom du package attendu (ex: calculator)
+func extractExpectedPackageFromFilename(filename string) string {
+	// Retirer _external_test.go
+	baseName := strings.TrimSuffix(filename, "_external_test.go")
+	// Retour du nom de base
+	return baseName
 }

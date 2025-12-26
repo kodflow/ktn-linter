@@ -148,6 +148,12 @@ func (d *ModuleDiscovery) searchDirectory(dir string) ([]string, error) {
 			return filepath.SkipDir
 		}
 
+		// Skip testdata directories (not part of Go package hierarchy)
+		if entry.IsDir() && entry.Name() == "testdata" {
+			// Skip testdata directory
+			return filepath.SkipDir
+		}
+
 		// Check for go.mod file
 		if entry.Name() == "go.mod" {
 			modules = append(modules, filepath.Dir(path))

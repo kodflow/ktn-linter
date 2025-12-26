@@ -1,8 +1,8 @@
-package test009
+package test011
 
-// PublicFunction est une fonction publique
-func PublicFunction() string {
-	return "public"
+// PublicFunc est une fonction publique
+func PublicFunc() string {
+	return privateHelper()
 }
 
 // privateHelper est une fonction privée

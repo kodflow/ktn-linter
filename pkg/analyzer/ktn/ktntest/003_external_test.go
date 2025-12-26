@@ -13,19 +13,19 @@ func TestTest003(t *testing.T) {
 		analyzer string
 	}{
 		{
-			name:     "orphan test detection",
+			name:     "public function test coverage",
 			analyzer: "test003",
 		},
 		{
-			name:     "validate source file correspondence",
+			name:     "validate test completeness",
 			analyzer: "test003",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// 1 erreur: bad_test.go sans fichier bad.go correspondant
-			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer003, tt.analyzer, "good_test.go", "bad_test.go", 1)
+			// 2 erreurs: fonctions Multiply et Divide sans test
+			testhelper.TestGoodBadPackage(t, ktntest.Analyzer003, tt.analyzer, 2)
 		})
 	}
 }

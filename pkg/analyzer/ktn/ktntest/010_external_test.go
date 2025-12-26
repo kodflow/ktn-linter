@@ -1,3 +1,4 @@
+// External tests for analyzer 012.
 package ktntest_test
 
 import (
@@ -7,29 +8,26 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestTest010 teste l'analyseur KTN-TEST-010.
+// TestTest010 tests the passthrough test detection.
 func TestTest010(t *testing.T) {
 	tests := []struct {
-		name           string
-		dir            string
-		expectedErrors int
+		name     string
+		analyzer string
 	}{
-		{"good - tests in correct files", "testdata/src/test010/good", 0},
-		{"bad - private test in external error case", "testdata/src/test010/bad", 1},
+		{
+			name:     "passthrough test detection",
+			analyzer: "test010",
+		},
+		{
+			name:     "validate test implementation quality",
+			analyzer: "test010",
+		},
 	}
 
-	// Itération sur les cas de test
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			diags := testhelper.RunAnalyzerOnPackage(t, ktntest.Analyzer010, tc.dir)
-			// Vérification du nombre de diagnostics
-			if len(diags) != tc.expectedErrors {
-				t.Errorf("%s should have %d errors, got %d", tc.dir, tc.expectedErrors, len(diags))
-				// Affichage des diagnostics
-				for _, d := range diags {
-					t.Logf("  %v", d.Message)
-				}
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 8 erreurs: 8 tests passthrough dans bad_test.go
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer010, tt.analyzer, "good_test.go", "bad_test.go", 8)
 		})
 	}
 }

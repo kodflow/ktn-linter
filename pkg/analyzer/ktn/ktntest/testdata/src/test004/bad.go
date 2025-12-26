@@ -1,75 +1,71 @@
-// Package test004 provides test cases for untested functions.
-package test004
+// Package test005 provides test cases for table-driven tests.
+package test005
 
-// BadResourceInterface defines the public API for BadResource.
-type BadResourceInterface interface {
-	GetData() string
-	Process(input string) string
-}
+import "strings"
 
-// Ensure BadResource implements BadResourceInterface.
-var _ BadResourceInterface = (*BadResource)(nil)
-
-// BadResource représente une ressource sans tests.
-// Les méthodes publiques n'ont PAS de tests correspondants.
-type BadResource struct {
-	name string
-}
-
-// NewBadResource crée une nouvelle instance. // want "KTN-TEST-004: fonction publique 'NewBadResource' n'a pas de test correspondant. Créer un test nommé 'TestNewBadResource' dans le fichier 'bad_external_test.go' \\(black-box testing avec package xxx_test\\)"
-//
-// Returns:
-//   - *BadResource: nouvelle instance
-func NewBadResource() *BadResource {
-	r := &BadResource{}
-	// Use private functions
-	r.name = r.formatOutput("init")
-	_ = validateInput(r.name)
-	// Retour de la nouvelle instance
-	return r
-}
-
-// GetData retourne des données. // want "KTN-TEST-004: fonction publique 'GetData' n'a pas de test correspondant. Créer un test nommé 'TestBadResource_GetData' dans le fichier 'bad_external_test.go' \\(black-box testing avec package xxx_test\\)"
-//
-// Returns:
-//   - string: données
-func (r *BadResource) GetData() string {
-	// Retour des données
-	return "data"
-}
-
-// Process traite les données. // want "KTN-TEST-004: fonction publique 'Process' n'a pas de test correspondant. Créer un test nommé 'TestBadResource_Process' dans le fichier 'bad_external_test.go' \\(black-box testing avec package xxx_test\\)"
+// StringLength retourne la longueur d'une string.
 //
 // Params:
-//   - input: données à traiter
+//   - s: string à mesurer
 //
 // Returns:
-//   - string: résultat
-func (r *BadResource) Process(input string) string {
-	// Traitement
-	return input + "_processed"
+//   - int: longueur de la string
+func StringLength(s string) int {
+	// Retour de la longueur
+	return len(s)
 }
 
-// validateInput valide l'entrée (fonction privée). // want "KTN-TEST-004: fonction privée 'validateInput' n'a pas de test correspondant. Créer un test nommé 'TestvalidateInput' dans le fichier 'bad_internal_test.go' \\(white-box testing avec package xxx\\)"
+// IsEmpty vérifie si une string est vide.
 //
 // Params:
-//   - input: données à valider
+//   - s: string à vérifier
 //
 // Returns:
-//   - bool: true si valide
-func validateInput(input string) bool {
-	// Validation
-	return len(input) > 0
+//   - bool: true si vide, false sinon
+func IsEmpty(s string) bool {
+	// Retour du résultat
+	return s == ""
 }
 
-// formatOutput formate la sortie (fonction privée). // want "KTN-TEST-004: fonction privée 'formatOutput' n'a pas de test correspondant. Créer un test nommé 'TestBadResource_formatOutput' dans le fichier 'bad_internal_test.go' \\(white-box testing avec package xxx\\)"
+// ToUpper convertit une string en majuscules.
 //
 // Params:
-//   - data: données à formater
+//   - s: string à convertir
 //
 // Returns:
-//   - string: données formatées
-func (r *BadResource) formatOutput(data string) string {
-	// Formatage
-	return "[" + data + "]"
+//   - string: string en majuscules
+func ToUpper(s string) string {
+	// Retour de la conversion
+	return strings.ToUpper(s)
+}
+
+// Contains vérifie si une string contient une sous-string.
+//
+// Params:
+//   - s: string principale
+//   - substr: sous-string à chercher
+//
+// Returns:
+//   - bool: true si substr est dans s
+func Contains(s, substr string) bool {
+	// Retour du résultat
+	return strings.Contains(s, substr)
+}
+
+// CountWords compte le nombre de mots dans une string.
+//
+// Params:
+//   - s: string à analyser
+//
+// Returns:
+//   - int: nombre de mots
+func CountWords(s string) int {
+	// Vérification string vide
+	if s == "" {
+		// Retour 0
+		return 0
+	}
+	words := strings.Fields(s)
+	// Retour du nombre de mots
+	return len(words)
 }

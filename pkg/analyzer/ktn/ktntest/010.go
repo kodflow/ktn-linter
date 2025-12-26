@@ -3,11 +3,13 @@ package ktntest
 
 import (
 	"go/ast"
-	"path/filepath"
+	"go/token"
+	"slices"
 	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -16,17 +18,30 @@ import (
 const (
 	// ruleCode est le code de la règle.
 	ruleCodeTest010 string = "KTN-TEST-010"
-	// initialPrivateFunctionsCap initial cap for private funcs map
-	initialPrivateFunctionsCap int = 32
 )
 
-// Analyzer010 checks private function tests are in internal test files
-var Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktntest010",
-	Doc:      "KTN-TEST-010: Les tests de fonctions privées (non-exportées) doivent être dans _internal_test.go uniquement (white-box testing)",
-	Run:      runTest010,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+var (
+	// assertionMethods contient uniquement les méthodes d'assertion de testing.T.
+	// Log, Logf, Run, Skip*, Parallel, Helper, Cleanup ne sont PAS des assertions.
+	assertionMethods []string = []string{
+		"Error", "Errorf",
+		"Fatal", "Fatalf",
+		"Fail", "FailNow",
+	}
+
+	// subTestMethods contient les méthodes qui lancent des sous-tests.
+	subTestMethods []string = []string{
+		"Run",
+	}
+
+	// Analyzer010 detects passthrough tests that don't test anything.
+	Analyzer010 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktntest010",
+		Doc:      "KTN-TEST-010: Les tests doivent contenir des assertions et vraiment tester quelque chose",
+		Run:      runTest010,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+)
 
 // runTest010 exécute l'analyse KTN-TEST-010.
 //
@@ -48,110 +63,15 @@ func runTest010(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Collecter toutes les fonctions privées
-	privateFunctions := collectPrivateFunctions(pass, insp)
-
-	// Vérifier les tests dans les fichiers _external_test.go
-	checkExternalTestsForPrivateFunctions(pass, insp, privateFunctions)
-
-	// Retour de la fonction
-	return nil, nil
-}
-
-// collectPrivateFunctions collecte les fonctions privées du package.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//
-// Returns:
-//   - map[string]bool: map des noms de fonctions privées
-func collectPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector) map[string]bool {
-	privateFunctions := make(map[string]bool, initialPrivateFunctionsCap)
-	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
+	}
 
 	// Parcourir les fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Conversion en FuncDecl
 		funcDecl := n.(*ast.FuncDecl)
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-
-		// Vérification fichier test
-		if shared.IsTestFile(filename) {
-			// Retour si test
-			return
-		}
-
-		// Vérification fichier mock
-		if shared.IsMockFile(filename) {
-			// Retour si mock
-			return
-		}
-
-		// Ajouter fonction privée
-		addPrivateFunction(funcDecl, privateFunctions)
-	})
-
-	// Retour de la map
-	return privateFunctions
-}
-
-// addPrivateFunction ajoute une fonction privée à la map.
-//
-// Params:
-//   - funcDecl: déclaration de fonction
-//   - privateFunctions: map des fonctions privées
-func addPrivateFunction(funcDecl *ast.FuncDecl, privateFunctions map[string]bool) {
-	// Vérification nom fonction
-	if funcDecl.Name == nil || len(funcDecl.Name.Name) == 0 {
-		// Retour si pas de nom
-		return
-	}
-
-	// Vérification fonction mock
-	if shared.IsMockName(funcDecl.Name.Name) {
-		// Retour si mock
-		return
-	}
-
-	// Classifier la fonction
-	meta := shared.ClassifyFunc(funcDecl)
-
-	// Vérification receiver mock
-	if meta.ReceiverName != "" && shared.IsMockName(meta.ReceiverName) {
-		// Retour si mock
-		return
-	}
-
-	// Vérification visibilité privée
-	if meta.Visibility != shared.VisPrivate {
-		// Retour si pas privée
-		return
-	}
-
-	// Construire clé recherche
-	key := shared.BuildTestLookupKey(meta)
-	// Vérification clé non vide
-	if key != "" {
-		// Ajouter à la map
-		privateFunctions[key] = true
-	}
-}
-
-// checkExternalTestsForPrivateFunctions vérifie les tests de fonctions privées.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//   - privateFunctions: map des fonctions privées
-func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.Inspector, privateFunctions map[string]bool) {
-	// Récupération de la configuration
-	cfg := config.Get()
-
-	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
-
-	// Parcourir les tests
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+		// Obtenir le chemin du fichier
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeTest010, filename) {
@@ -159,11 +79,9 @@ func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.
 			return
 		}
 
-		baseName := filepath.Base(filename)
-
-		// Vérification fichier external et test unitaire
-		if !strings.HasSuffix(baseName, "_external_test.go") || !shared.IsUnitTestFunction(funcDecl) {
-			// Retour si pas external ou pas unitaire
+		// Vérification si test
+		if !shared.IsTestFile(filename) {
+			// Retour si pas test
 			return
 		}
 
@@ -173,57 +91,265 @@ func checkExternalTestsForPrivateFunctions(pass *analysis.Pass, insp *inspector.
 			return
 		}
 
-		// Vérifier et reporter
-		checkAndReportPrivateFunctionTest(pass, funcDecl, baseName, privateFunctions)
+		// Vérification fichier mock
+		if shared.IsMockFile(filename) {
+			// Retour si mock
+			return
+		}
+
+		// Vérification si test unitaire
+		if !shared.IsUnitTestFunction(funcDecl) {
+			// Retour si pas unitaire
+			return
+		}
+
+		// Vérification nom exempté
+		if shared.IsExemptTestName(funcDecl.Name.Name) {
+			// Retour si exempté
+			return
+		}
+
+		// Vérification si passthrough
+		if isPassthroughTest(funcDecl) {
+			// Signaler test passthrough
+			msg, _ := messages.Get(ruleCodeTest010)
+			pass.Reportf(
+				funcDecl.Pos(),
+				"%s: %s",
+				ruleCodeTest010,
+				msg.Format(config.Get().Verbose, funcDecl.Name.Name),
+			)
+		}
 	})
+
+	// Retour de la fonction
+	return nil, nil
 }
 
-// checkAndReportPrivateFunctionTest vérifie et reporte un test de fonction privée mal placé.
+// isPassthroughTest vérifie si un test est passthrough.
+// Un test est passthrough s'il ne contient aucun signal de validation:
+//   - Pas d'assertion (t.Error, t.Fatal, assert.Equal, etc.)
+//   - Pas de comparaison logique (==, !=, <, >, etc.)
+//   - Pas de sous-test (t.Run)
+//   - Pas d'appel à un helper de test
 //
 // Params:
-//   - pass: contexte d'analyse
 //   - funcDecl: déclaration de fonction de test
-//   - baseName: nom de base du fichier
-//   - privateFunctions: map des fonctions privées
-func checkAndReportPrivateFunctionTest(pass *analysis.Pass, funcDecl *ast.FuncDecl, baseName string, privateFunctions map[string]bool) {
-	testName := funcDecl.Name.Name
-
-	// Vérification nom exempté
-	if shared.IsExemptTestName(testName) {
-		// Retour si exempté
-		return
+//
+// Returns:
+//   - bool: true si le test est passthrough
+func isPassthroughTest(funcDecl *ast.FuncDecl) bool {
+	// Vérification corps vide
+	if funcDecl.Body == nil || len(funcDecl.Body.List) == 0 {
+		// Retour passthrough si vide
+		return true
 	}
 
-	// Parser nom test
-	target, ok := shared.ParseTestName(testName)
-	// Vérification parsing
+	// Initialiser validation
+	hasValidation := false
+
+	// Parcourir le corps
+	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
+		// Vérification si déjà trouvé
+		if hasValidation || n == nil {
+			// Arrêter la recherche
+			return false
+		}
+
+		// Vérification signal validation
+		if checkForValidationSignal(n) {
+			// Marquer comme trouvé
+			hasValidation = true
+			// Arrêter la recherche
+			return false
+		}
+
+		// Continuer la recherche
+		return true
+	})
+
+	// Passthrough si pas de signal de validation
+	return !hasValidation
+}
+
+// checkForValidationSignal vérifie si un nœud contient un signal de validation.
+// Cela inclut: assertions, comparaisons, sous-tests, helpers.
+//
+// Params:
+//   - n: nœud AST
+//
+// Returns:
+//   - bool: true si signal trouvé
+func checkForValidationSignal(n ast.Node) bool {
+	// Sélection selon le type
+	switch node := n.(type) {
+	// Vérification appel de fonction
+	case *ast.CallExpr:
+		// Cas appel de fonction
+		// Vérifier appel validation
+		return checkCallForValidation(node)
+	// Vérification expression binaire
+	case *ast.BinaryExpr:
+		// Cas expression binaire
+		// Vérifier opérateur comparaison
+		return isComparisonOperator(node.Op)
+	}
+
+	// Pas de signal trouvé
+	return false
+}
+
+// checkCallForValidation vérifie si un appel est une validation.
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est une validation
+func checkCallForValidation(callExpr *ast.CallExpr) bool {
+	// Vérification assertion testing.T
+	if isTestingAssertionCall(callExpr) {
+		// Retour si assertion trouvée
+		return true
+	}
+
+	// Vérification sous-test
+	if isSubTestCall(callExpr) {
+		// Retour si sous-test trouvé
+		return true
+	}
+
+	// Vérification bibliothèque assertion
+	if isAssertLibraryCall(callExpr) {
+		// Retour si assertion trouvée
+		return true
+	}
+
+	// Retour vérification helper
+	return isTestHelperCall(callExpr)
+}
+
+// isComparisonOperator vérifie si un opérateur est une comparaison.
+//
+// Params:
+//   - op: opérateur token
+//
+// Returns:
+//   - bool: true si c'est une comparaison
+func isComparisonOperator(op token.Token) bool {
+	// Sélection selon opérateur
+	switch op {
+	// Vérification opérateurs de comparaison
+	case token.EQL, token.NEQ, token.LSS, token.GTR, token.LEQ, token.GEQ:
+		// Cas opérateur comparaison
+		// Retour trouvé
+		return true
+	}
+	// Pas une comparaison
+	return false
+}
+
+// isTestingAssertionCall vérifie si c'est un appel t.Error, t.Fatal, etc.
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est une assertion testing.T
+func isTestingAssertionCall(callExpr *ast.CallExpr) bool {
+	// Conversion en SelectorExpr
+	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
+	// Vérification si sélecteur
 	if !ok {
-		// Retour si échec parsing
-		return
+		// Retour si pas sélecteur
+		return false
 	}
 
-	// Vérification fonction privée
-	if !target.IsPrivate {
-		// Retour si pas privée
-		return
+	// Retour vérification méthode
+	return slices.Contains(assertionMethods, sel.Sel.Name)
+}
+
+// isSubTestCall vérifie si c'est un appel t.Run (sous-test).
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est un sous-test
+func isSubTestCall(callExpr *ast.CallExpr) bool {
+	// Conversion en SelectorExpr
+	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
+	// Vérification si sélecteur
+	if !ok {
+		// Retour si pas sélecteur
+		return false
 	}
 
-	// Construire clé
-	key := shared.BuildTestTargetKey(target)
-	// Vérification clé
-	if key == "" {
-		// Retour si clé vide
-		return
+	// Vérifier le receiver
+	recv, recvOk := sel.X.(*ast.Ident)
+	// Vérification receiver t
+	if !recvOk || recv.Name != "t" {
+		// Retour si pas t
+		return false
 	}
 
-	// Vérification fonction privée
-	if privateFunctions[key] {
-		// Signaler erreur
-		pass.Reportf(
-			funcDecl.Pos(),
-			"KTN-TEST-010: le test '%s' dans '%s' teste une fonction privée '%s'. Les tests de fonctions privées doivent être dans '%s' (white-box testing avec package xxx)",
-			testName, baseName, target.FuncName,
-			strings.Replace(baseName, "_external_test.go", "_internal_test.go", 1),
-		)
+	// Retour vérification Run
+	return slices.Contains(subTestMethods, sel.Sel.Name)
+}
+
+// isAssertLibraryCall vérifie si c'est un appel à une bibliothèque d'assertion.
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est une assertion de bibliothèque
+func isAssertLibraryCall(callExpr *ast.CallExpr) bool {
+	// Conversion en SelectorExpr
+	sel, ok := callExpr.Fun.(*ast.SelectorExpr)
+	// Vérification si sélecteur
+	if !ok {
+		// Retour si pas sélecteur
+		return false
 	}
+
+	// Vérifier le receiver
+	recv, recvOk := sel.X.(*ast.Ident)
+	// Vérification identifiant
+	if !recvOk {
+		// Retour si pas identifiant
+		return false
+	}
+
+	// Vérifier bibliothèque assertion
+	receiverName := strings.ToLower(recv.Name)
+	// Retour vérification nom
+	return receiverName == "assert" || receiverName == "require"
+}
+
+// isTestHelperCall vérifie si c'est un appel à un helper de test.
+// Un helper de test est une fonction qui reçoit t (*testing.T) comme argument.
+//
+// Params:
+//   - callExpr: expression d'appel
+//
+// Returns:
+//   - bool: true si c'est un appel de helper de test
+func isTestHelperCall(callExpr *ast.CallExpr) bool {
+	// Vérification arguments présents
+	if len(callExpr.Args) == 0 {
+		// Retour si pas d'arguments
+		return false
+	}
+
+	// Vérifier premier argument
+	firstArg, ok := callExpr.Args[0].(*ast.Ident)
+	// Vérification identifiant
+	if !ok {
+		// Retour si pas identifiant
+		return false
+	}
+
+	// Retour vérification nom t
+	return firstArg.Name == "t"
 }

@@ -1,74 +1,69 @@
-package test003_test
+package test004
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest/testdata/src/test002"
-)
+// TestNewGoodResource teste le constructeur
+func TestNewGoodResource(t *testing.T) {
+	r := NewGoodResource()
+	if r == nil {
+		t.Error("Expected non-nil resource")
+	}
+}
 
-// TestProcessItemComplete teste avec couverture complète (BIEN).
-// A un fichier source good.go correspondant.
-func TestProcessItemComplete(t *testing.T) {
-	// Table de tests
+// TestGoodResource_Metadata teste la méthode Metadata
+func TestGoodResource_Metadata(t *testing.T) {
+	r := NewGoodResource()
+	result := r.Metadata()
+	if result != "good_resource" {
+		t.Errorf("Expected 'good_resource', got '%s'", result)
+	}
+}
+
+// TestGoodResource_Schema teste la méthode Schema
+func TestGoodResource_Schema(t *testing.T) {
+	r := NewGoodResource()
+	schema := r.Schema()
+	if len(schema) == 0 {
+		t.Error("Expected non-empty schema")
+	}
+}
+
+// TestGoodResource_Configure teste la méthode Configure
+func TestGoodResource_Configure(t *testing.T) {
+	r := NewGoodResource()
+	err := r.Configure("test")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
+
+// TestvalidateConfig teste la fonction privée validateConfig
+func TestvalidateConfig(t *testing.T) {
 	tests := []struct {
-		name      string
-		item      string
-		want      string
-		wantError bool
+		name   string
+		config string
+		want   bool
 	}{
-		{"valid item", "data", "processed:data", false},
-		{"empty item", "", "", true},
+		{"valid config", "test", true},
+		{"empty config", "", false},
 	}
 
-	// Parcours des tests
 	for _, tt := range tests {
-		// Exécution sous-test
 		t.Run(tt.name, func(t *testing.T) {
-			// Appel fonction
-			result, err := test002.ProcessItem(tt.item)
-			// Vérification erreur
-			if (err != nil) != tt.wantError {
-				t.Errorf("ProcessItem(%q) error = %v, wantError %v", tt.item, err, tt.wantError)
-			}
-			// Vérification résultat
-			if !tt.wantError && result != tt.want {
-				t.Errorf("ProcessItem(%q) = %q, want %q", tt.item, result, tt.want)
+			result := validateConfig(tt.config)
+			if result != tt.want {
+				t.Errorf("validateConfig() = %v, want %v", result, tt.want)
 			}
 		})
 	}
 }
 
-// TestCountItemsComplete teste avec couverture complète (BIEN).
-// A un fichier source good.go correspondant.
-func TestCountItemsComplete(t *testing.T) {
-	const MAX_ITEMS int = 1000
-	// Table de tests
-	tests := []struct {
-		name      string
-		items     []string
-		want      int
-		wantError bool
-	}{
-		{"empty list", []string{}, 0, false},
-		{"single item", []string{"a"}, 1, false},
-		{"multiple items", []string{"a", "b", "c"}, 3, false},
-		{"too many items", make([]string, MAX_ITEMS+1), 0, true},
-	}
-
-	// Parcours des tests
-	for _, tt := range tests {
-		// Exécution sous-test
-		t.Run(tt.name, func(t *testing.T) {
-			// Appel fonction
-			result, err := test002.CountItems(tt.items)
-			// Vérification erreur
-			if (err != nil) != tt.wantError {
-				t.Errorf("CountItems() error = %v, wantError %v", err, tt.wantError)
-			}
-			// Vérification résultat
-			if !tt.wantError && result != tt.want {
-				t.Errorf("CountItems() = %d, want %d", result, tt.want)
-			}
-		})
+// TestGoodResource_sanitize teste la méthode privée sanitize
+func TestGoodResource_sanitize(t *testing.T) {
+	r := NewGoodResource()
+	result := r.sanitize("test")
+	expected := "test_sanitized"
+	if result != expected {
+		t.Errorf("sanitize() = %v, want %v", result, expected)
 	}
 }

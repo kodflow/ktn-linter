@@ -26,7 +26,7 @@ Rapport de couverture généré automatiquement.
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.7% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 93.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 100.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
@@ -35,7 +35,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 81.2% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 81.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 98.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
@@ -132,45 +132,42 @@ Rapport de couverture généré automatiquement.
 | 🟢 `005.go:runStruct005` | 94.4% |
 | 🟢 `006.go:runStruct006` | 94.1% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 90.7%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` - 90.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `001.go:runTest001` | 82.4% |
-| 🟡 `002.go:runTest002` | 84.2% |
-| 🟡 `003.go:runTest003` | 81.2% |
-| 🟡 `004.go:collectFunctions` | 87.5% |
-| 🟡 `004.go:runTest004` | 88.9% |
-| 🟡 `004.go:reportMissingTest` | 88.9% |
-| 🟡 `004.go:findPackageDir` | 83.3% |
-| 🟡 `004.go:collectExternalTestFunctions` | 83.3% |
-| 🟡 `004.go:collectExternalTestedFunctions` | 86.7% |
+| 🟡 `002.go:runTest002` | 81.2% |
+| 🟡 `003.go:collectFunctions` | 87.5% |
+| 🟡 `003.go:runTest003` | 88.9% |
+| 🟡 `003.go:reportMissingTest` | 88.9% |
+| 🟡 `003.go:findPackageDir` | 83.3% |
+| 🟡 `003.go:collectExternalTestFunctions` | 83.3% |
+| 🟡 `003.go:collectExternalTestedFunctions` | 86.7% |
+| 🟡 `004.go:runTest004` | 83.3% |
 | 🟡 `005.go:runTest005` | 83.3% |
-| 🔴 `006.go:runTest006` | 77.8% |
-| 🟢 `006.go:collectFiles006` | 92.3% |
-| 🟡 `007.go:runTest007` | 83.3% |
-| 🔴 `008.go:runTest008` | 73.7% |
-| 🟢 `008.go:checkVariables` | 92.9% |
-| 🟡 `008.go:checkTypes` | 90.0% |
-| 🟡 `008.go:checkConsts` | 90.9% |
-| 🟡 `009.go:runTest009` | 85.7% |
-| 🟡 `009.go:collectPublicFunctions` | 90.9% |
-| 🟡 `009.go:addPublicFunction` | 83.3% |
-| 🟡 `009.go:checkInternalTestsForPublicFunctions` | 84.6% |
-| 🟡 `009.go:checkAndReportPublicFunctionTest` | 81.8% |
-| 🟡 `010.go:runTest010` | 85.7% |
-| 🟡 `010.go:collectPrivateFunctions` | 90.9% |
-| 🟡 `010.go:addPrivateFunction` | 83.3% |
-| 🟡 `010.go:checkExternalTestsForPrivateFunctions` | 84.6% |
-| 🟡 `010.go:checkAndReportPrivateFunctionTest` | 84.6% |
-| 🟡 `011.go:runTest011` | 87.5% |
-| 🟡 `011.go:validateTestFiles011` | 88.9% |
-| 🔴 `012.go:runTest012` | 75.0% |
-| 🔴 `013.go:runTest013` | 69.6% |
-| 🟡 `013.go:collectFuncSignatures` | 85.7% |
-| 🟡 `013.go:collectExternalSourceSignatures` | 90.9% |
-| 🟢 `013.go:scanSourceFile` | 94.7% |
-| 🟢 `013.go:analyzeTestFunction` | 92.9% |
+| 🔴 `006.go:runTest006` | 73.7% |
+| 🟢 `006.go:checkVariables` | 92.9% |
+| 🟡 `006.go:checkTypes` | 90.0% |
+| 🟡 `006.go:checkConsts` | 90.9% |
+| 🟡 `007.go:runTest007` | 85.7% |
+| 🟡 `007.go:collectPublicFunctions` | 90.9% |
+| 🟡 `007.go:addPublicFunction` | 83.3% |
+| 🟡 `007.go:checkInternalTestsForPublicFunctions` | 84.6% |
+| 🟡 `007.go:checkAndReportPublicFunctionTest` | 81.8% |
+| 🟡 `008.go:runTest008` | 85.7% |
+| 🟡 `008.go:collectPrivateFunctions` | 90.9% |
+| 🟡 `008.go:addPrivateFunction` | 83.3% |
+| 🟡 `008.go:checkExternalTestsForPrivateFunctions` | 84.6% |
+| 🟡 `008.go:checkAndReportPrivateFunctionTest` | 84.6% |
+| 🟡 `009.go:runTest009` | 87.5% |
+| 🟡 `009.go:validateTestFiles011` | 88.9% |
+| 🔴 `010.go:runTest010` | 75.0% |
+| 🔴 `011.go:runTest011` | 69.6% |
+| 🟡 `011.go:collectFuncSignatures` | 85.7% |
+| 🟡 `011.go:collectExternalSourceSignatures` | 90.9% |
+| 🟢 `011.go:scanSourceFile` | 94.7% |
+| 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 93.2%
 
@@ -238,14 +235,14 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🟡 `json.go:severityToLevel` | 80.0% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 81.2%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 81.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟡 `discovery.go:FindModules` | 90.9% |
 | 🟡 `discovery.go:findInPath` | 88.9% |
 | 🔴 `discovery.go:findModuleForFile` | 71.4% |
-| 🟡 `discovery.go:searchDirectory` | 85.7% |
+| 🟡 `discovery.go:searchDirectory` | 87.5% |
 | 🟡 `loader.go:LoadFromDir` | 85.7% |
 | 🟡 `orchestrator.go:Run` | 90.0% |
 | ⚫ `orchestrator.go:DiscoverModules` | 0.0% |
@@ -282,4 +279,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-23 00:06:05*
+*Généré le: 2025-12-26 12:27:18*

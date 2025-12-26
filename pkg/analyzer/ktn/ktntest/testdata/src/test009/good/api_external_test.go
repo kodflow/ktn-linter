@@ -1,14 +1,14 @@
-package test009_test
+package test011_test
 
 import (
-	"test009"
+	"test011"
 	"testing"
 )
 
-// TestPublicFunction teste la fonction publique (correct dans external)
-func TestPublicFunction(t *testing.T) {
-	result := test009.PublicFunction()
-	if result != "public" {
-		t.Errorf("expected 'public', got '%s'", result)
+// TestPublicFunc teste la fonction publique (correct: package test011_test)
+func TestPublicFunc(t *testing.T) {
+	result := test011.PublicFunc()
+	if result != "helper" {
+		t.Errorf("expected 'helper', got '%s'", result)
 	}
 }

@@ -7,30 +7,27 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestTest011 teste l'analyseur KTN-TEST-011.
 func TestTest011(t *testing.T) {
 	tests := []struct {
-		name           string
-		dir            string
-		expectedErrors int
+		name     string
+		analyzer string
 	}{
-		{"good - conventions respected", "testdata/src/test011/good", 0},
-		{"bad - internal with wrong package error case", "testdata/src/test011/bad_internal", 1},
-		{"bad - external with wrong package error case", "testdata/src/test011/bad_external", 1},
+		{
+			name:     "error case coverage validation",
+			analyzer: "test011",
+		},
+		{
+			name:     "verify error path testing",
+			analyzer: "test011",
+		},
 	}
 
-	// Itération sur les cas de test
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			diags := testhelper.RunAnalyzerOnPackage(t, ktntest.Analyzer011, tc.dir)
-			// Vérification du nombre de diagnostics
-			if len(diags) != tc.expectedErrors {
-				t.Errorf("%s should have %d errors, got %d", tc.dir, tc.expectedErrors, len(diags))
-				// Affichage des diagnostics
-				for _, d := range diags {
-					t.Logf("  %v", d.Message)
-				}
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 2 erreurs: tests de fonctions retournant error sans couverture d'erreur
+			// - TestParseConfig: ParseConfig retourne error mais test sans cas d'erreur
+			// - TestValidateInput: ValidateInput retourne error mais test sans cas d'erreur
+			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer011, tt.analyzer, "good_test.go", "bad_test.go", 2)
 		})
 	}
 }
