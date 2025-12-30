@@ -46,7 +46,7 @@ func (t T) foo() {}
 			config.Reset()
 
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
 			// Check parsing error
 			if err != nil {
 				t.Fatalf("failed to parse: %v", err)
@@ -137,7 +137,10 @@ func Test_checkFuncParams009(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
 					Types: make(map[ast.Expr]types.TypeAndValue),
+					Defs:  make(map[*ast.Ident]types.Object),
+					Uses:  make(map[*ast.Ident]types.Object),
 				},
+				TypesSizes: types.SizesFor("gc", "amd64"),
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
@@ -188,7 +191,10 @@ func Test_checkParamType009(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
 					Types: make(map[ast.Expr]types.TypeAndValue),
+					Defs:  make(map[*ast.Ident]types.Object),
+					Uses:  make(map[*ast.Ident]types.Object),
 				},
+				TypesSizes: types.SizesFor("gc", "amd64"),
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
