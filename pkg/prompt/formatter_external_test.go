@@ -26,6 +26,7 @@ func TestNewMarkdownFormatter(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer
 			var buf bytes.Buffer
@@ -238,6 +239,7 @@ func TestMarkdownFormatter_Format(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer and formatter
 			var buf bytes.Buffer
