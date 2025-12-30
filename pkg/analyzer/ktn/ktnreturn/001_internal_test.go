@@ -65,6 +65,7 @@ func GetError() error {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
@@ -169,6 +170,7 @@ type MyInt int
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var expr ast.Expr
 			// Find type expression
@@ -209,6 +211,7 @@ func Test_isNilIdent(t *testing.T) {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			expr, err := parser.ParseExpr(tt.code)
@@ -254,6 +257,7 @@ func GetSlice() []int {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
@@ -356,6 +360,7 @@ func UnnamedReturn() []string {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
@@ -435,6 +440,7 @@ type MyStruct struct{}`,
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
@@ -478,6 +484,7 @@ func Test_isSliceOrMapTypeWithNilTypeInfo(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			fset := token.NewFileSet()
@@ -525,6 +532,7 @@ func Test_runReturn001WithDisabledRule(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Set configuration to disable rule
@@ -606,6 +614,7 @@ func Test_runReturn001WithFileExclusion(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Set configuration to exclude specific file
@@ -690,6 +699,7 @@ func Test_collectSliceMapReturnTypesWithNilTypeInfo(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -741,6 +751,7 @@ func Test_checkNilReturnsWithEmptyTypeInfo(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -800,6 +811,7 @@ func Test_checkNilReturnsNonReturnStatement(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test

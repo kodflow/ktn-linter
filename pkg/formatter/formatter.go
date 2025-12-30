@@ -59,9 +59,9 @@ func extractCode(message string) string {
 	// Format 2: KTN-XXX-XXX: (au début du message)
 	if strings.HasPrefix(message, "KTN-") {
 		// Vérification de la condition
-		if idx := strings.Index(message, ":"); idx != -1 {
+		if before, _, found := strings.Cut(message, ":"); found {
 			// Early return from function.
-			return message[:idx]
+			return before
 		}
 	}
 

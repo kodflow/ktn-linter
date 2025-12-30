@@ -21,6 +21,7 @@ func TestNewDiagnosticsProcessor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			processor := orchestrator.NewDiagnosticsProcessor()
 
@@ -86,6 +87,7 @@ func TestDiagnosticsProcessor_Filter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			processor := orchestrator.NewDiagnosticsProcessor()
 			diagnostics := tt.setup()
@@ -190,6 +192,7 @@ func TestDiagnosticsProcessor_Extract(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			processor := orchestrator.NewDiagnosticsProcessor()
 			diagnostics := tt.setup()

@@ -92,6 +92,7 @@ rules:
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			path := tt.setupFunc(t)
 			defer tt.cleanupFunc(path)
@@ -117,6 +118,7 @@ func TestLoad_EmptyPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Change to temp dir with no config file
 			tmpDir := t.TempDir()
@@ -145,6 +147,7 @@ func TestLoad_FindsConfigInParentDir(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a temp directory structure
 			tmpDir := t.TempDir()
@@ -187,6 +190,7 @@ func TestLoadAndSet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temp config
 			tmpDir := t.TempDir()
@@ -238,6 +242,7 @@ func TestSaveToFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			path := filepath.Join(tmpDir, "saved-config.yaml")
@@ -281,6 +286,7 @@ func TestMustLoad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
 				r := recover()

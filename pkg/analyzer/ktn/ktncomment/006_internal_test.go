@@ -62,6 +62,7 @@ func Test_extractCommentLines(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractCommentLines(tt.cg)
 			// Check result length
@@ -102,6 +103,7 @@ func Test_validateDescriptionLine(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateDescriptionLine(tt.comments, tt.funcName)
 			// Check error presence
@@ -153,6 +155,7 @@ func Test_validateParamsSection(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err, idx := validateParamsSection(tt.comments, tt.startIdx)
 			// Check error presence
@@ -201,6 +204,7 @@ func Test_validateReturnsSection(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err, idx := validateReturnsSection(tt.comments, tt.startIdx)
 			// Check error presence
@@ -321,6 +325,7 @@ func Test_validateDocFormat(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateDocFormat(tt.comments, tt.funcName, tt.hasParams, tt.hasReturns)
 			// Check error presence
@@ -341,6 +346,7 @@ func Test_runComment006(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify that Analyzer006 is properly configured
 			if Analyzer006 == nil {
@@ -363,6 +369,7 @@ func Test_runComment006_ruleDisabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -429,6 +436,7 @@ func Test_runComment006_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -528,6 +536,7 @@ func Test_validateDocFormat_skipDescriptionLines(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateDocFormat(tt.comments, tt.funcName, tt.hasParams, tt.hasReturns)
 			// Check error presence
@@ -546,6 +555,7 @@ func Test_runComment006_testFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			cfg := config.DefaultConfig()
@@ -607,6 +617,7 @@ func Test_runComment006_testFunction(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			cfg := config.DefaultConfig()
@@ -670,6 +681,7 @@ func Test_runComment006_missingDoc(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			cfg := config.DefaultConfig()
@@ -731,6 +743,7 @@ func Test_runComment006_invalidDocFormat(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			cfg := config.DefaultConfig()

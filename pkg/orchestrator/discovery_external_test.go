@@ -3,6 +3,7 @@ package orchestrator_test
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/orchestrator"
@@ -10,254 +11,287 @@ import (
 
 // TestNewModuleDiscovery tests the constructor.
 func TestNewModuleDiscovery(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	// Check not nil
-	if d == nil {
-		t.Error("expected non-nil ModuleDiscovery")
+	tests := []struct {
+		name string
+	}{
+		{name: "returns non-nil instance"},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			d := orchestrator.NewModuleDiscovery()
+			// Check not nil
+			if d == nil {
+				t.Error("expected non-nil ModuleDiscovery")
+			}
+		})
 	}
 }
 
-// TestFindModulesEmpty tests finding modules with empty input.
-func TestFindModulesEmpty(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	modules, err := d.FindModules([]string{})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+// TestFindModules tests the FindModules method with various inputs.
+func TestFindModules(t *testing.T) {
+	tests := []struct {
+		name           string
+		paths          []string
+		expectedCount  int
+		setupFunc      func(t *testing.T) string
+		cleanupFunc    func(string)
+		useSetupResult bool
+		pathCount      int // Number of times to duplicate the setup path (0 or 1 = single path)
+	}{
+		{
+			name:          "empty input returns empty result",
+			paths:         []string{},
+			expectedCount: 0,
+		},
+		{
+			name:          "current directory finds module",
+			paths:         []string{}, // Will be set by setupFunc
+			expectedCount: 1,
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module test\n"), 0o644)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return tmpDir
+			},
+			useSetupResult: true,
+		},
+		{
+			name:          "non-existent path returns empty",
+			paths:         []string{filepath.Join(string(filepath.Separator), "nonexistent", "path")},
+			expectedCount: 0,
+		},
+		{
+			name:          "file path finds module",
+			paths:         []string{}, // Will be set by setupFunc
+			expectedCount: 1,
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				goModPath := filepath.Join(tmpDir, "go.mod")
+				err := os.WriteFile(goModPath, []byte("module test\n"), 0o644)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return goModPath // Return the go.mod file path
+			},
+			useSetupResult: true,
+		},
+		{
+			name:          "duplicate paths are deduplicated",
+			paths:         []string{}, // Will be set by setupFunc
+			expectedCount: 1,
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module test\n"), 0o644)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return tmpDir
+			},
+			useSetupResult: true,
+			pathCount:      2, // Duplicate the path to test deduplication
+		},
 	}
-	// Check empty result
-	if len(modules) != 0 {
-		t.Errorf("expected 0 modules, got %d", len(modules))
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			d := orchestrator.NewModuleDiscovery()
+			paths := tt.paths
+			// Use setup result if configured
+			if tt.setupFunc != nil && tt.useSetupResult {
+				setupResult := tt.setupFunc(t)
+				// Handle path count for duplicate testing
+				count := tt.pathCount
+				if count <= 1 {
+					count = 1
+				}
+				paths = make([]string, count)
+				for i := range paths {
+					paths[i] = setupResult
+				}
+				// Cleanup if needed
+				if tt.cleanupFunc != nil {
+					defer tt.cleanupFunc(setupResult)
+				}
+			}
+
+			modules, err := d.FindModules(paths)
+			// Check no error
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			// Check expected count
+			if len(modules) != tt.expectedCount {
+				t.Errorf("expected %d modules, got %d", tt.expectedCount, len(modules))
+			}
+		})
 	}
 }
 
-// TestFindModulesCurrentDir tests finding module in current directory.
-func TestFindModulesCurrentDir(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	// Use workspace root which has go.mod
-	modules, err := d.FindModules([]string{"/workspace"})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+// TestFindModulesSkipsDirectories tests that specific directories are skipped.
+func TestFindModulesSkipsDirectories(t *testing.T) {
+	tests := []struct {
+		name       string
+		setupDir   string
+		setupMod   string
+		moduleName string
+	}{
+		{
+			name:       "skips vendor directories",
+			setupDir:   "vendor/dep",
+			setupMod:   "module dep\n",
+			moduleName: "dep",
+		},
+		{
+			name:       "skips hidden directories",
+			setupDir:   ".hidden",
+			setupMod:   "module hidden\n",
+			moduleName: "hidden",
+		},
+		{
+			name:       "skips testdata directories",
+			setupDir:   "testdata/src/example",
+			setupMod:   "module example\n",
+			moduleName: "example",
+		},
 	}
-	// Check found module
-	if len(modules) != 1 {
-		t.Errorf("expected 1 module, got %d", len(modules))
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temp directory structure
+			tmpDir := t.TempDir()
+			// Create main go.mod
+			mainMod := filepath.Join(tmpDir, "go.mod")
+			err := os.WriteFile(mainMod, []byte("module test\n"), 0o644)
+			// Check error
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Create skipped directory with go.mod
+			skipDir := filepath.Join(tmpDir, tt.setupDir)
+			err = os.MkdirAll(skipDir, 0o755)
+			// Check error
+			if err != nil {
+				t.Fatal(err)
+			}
+			skipMod := filepath.Join(skipDir, "go.mod")
+			err = os.WriteFile(skipMod, []byte(tt.setupMod), 0o644)
+			// Check error
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			d := orchestrator.NewModuleDiscovery()
+			modules, err := d.FindModules([]string{tmpDir})
+			// Check no error
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			// Check only main module found (directory skipped)
+			if len(modules) != 1 {
+				t.Errorf("expected 1 module (%s skipped), got %d", tt.setupDir, len(modules))
+			}
+		})
 	}
 }
 
-// TestFindModulesNonExistent tests finding modules in non-existent path.
-func TestFindModulesNonExistent(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	modules, err := d.FindModules([]string{"/nonexistent/path"})
-	// Check no error (returns empty)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check empty result
-	if len(modules) != 0 {
-		t.Errorf("expected 0 modules, got %d", len(modules))
-	}
-}
-
-// TestFindModulesFile tests finding module for a file.
-func TestFindModulesFile(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	// Use a file in the workspace
-	modules, err := d.FindModules([]string{"/workspace/go.mod"})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check found module
-	if len(modules) != 1 {
-		t.Errorf("expected 1 module, got %d", len(modules))
-	}
-}
-
-// TestFindModulesSkipsVendor tests that vendor directories are skipped.
-func TestFindModulesSkipsVendor(t *testing.T) {
-	// Create temp directory structure
-	tmpDir := t.TempDir()
-	// Create main go.mod
-	mainMod := filepath.Join(tmpDir, "go.mod")
-	err := os.WriteFile(mainMod, []byte("module test\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Create vendor directory with go.mod
-	vendorDir := filepath.Join(tmpDir, "vendor", "dep")
-	err = os.MkdirAll(vendorDir, 0o755)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	vendorMod := filepath.Join(vendorDir, "go.mod")
-	err = os.WriteFile(vendorMod, []byte("module dep\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
+// TestResolvePatterns tests pattern resolution.
+func TestResolvePatterns(t *testing.T) {
+	tests := []struct {
+		name     string
+		patterns []string
+		expected []string
+	}{
+		{
+			name:     "recursive pattern preserved",
+			patterns: []string{"./..."},
+			expected: []string{"./..."},
+		},
+		{
+			name:     "path defaults to recursive",
+			patterns: []string{"/some/path"},
+			expected: []string{"./..."},
+		},
 	}
 
-	d := orchestrator.NewModuleDiscovery()
-	modules, err := d.FindModules([]string{tmpDir})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check only main module found (vendor skipped)
-	if len(modules) != 1 {
-		t.Errorf("expected 1 module (vendor skipped), got %d", len(modules))
-	}
-}
-
-// TestFindModulesSkipsHidden tests that hidden directories are skipped.
-func TestFindModulesSkipsHidden(t *testing.T) {
-	// Create temp directory structure
-	tmpDir := t.TempDir()
-	// Create main go.mod
-	mainMod := filepath.Join(tmpDir, "go.mod")
-	err := os.WriteFile(mainMod, []byte("module test\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Create hidden directory with go.mod
-	hiddenDir := filepath.Join(tmpDir, ".hidden")
-	err = os.MkdirAll(hiddenDir, 0o755)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	hiddenMod := filepath.Join(hiddenDir, "go.mod")
-	err = os.WriteFile(hiddenMod, []byte("module hidden\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	d := orchestrator.NewModuleDiscovery()
-	modules, err := d.FindModules([]string{tmpDir})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check only main module found (hidden skipped)
-	if len(modules) != 1 {
-		t.Errorf("expected 1 module (hidden skipped), got %d", len(modules))
-	}
-}
-
-// TestFindModulesSkipsTestdata tests that testdata directories are skipped.
-func TestFindModulesSkipsTestdata(t *testing.T) {
-	// Create temp directory structure
-	tmpDir := t.TempDir()
-	// Create main go.mod
-	mainMod := filepath.Join(tmpDir, "go.mod")
-	err := os.WriteFile(mainMod, []byte("module test\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Create testdata directory with go.mod
-	testdataDir := filepath.Join(tmpDir, "testdata", "src", "example")
-	err = os.MkdirAll(testdataDir, 0o755)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	testdataMod := filepath.Join(testdataDir, "go.mod")
-	err = os.WriteFile(testdataMod, []byte("module example\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	d := orchestrator.NewModuleDiscovery()
-	modules, err := d.FindModules([]string{tmpDir})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check only main module found (testdata skipped)
-	if len(modules) != 1 {
-		t.Errorf("expected 1 module (testdata skipped), got %d", len(modules))
-	}
-}
-
-// TestResolvePatternsRecursive tests pattern resolution for recursive.
-func TestResolvePatternsRecursive(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	patterns := d.ResolvePatterns("/workspace", []string{"./..."})
-	// Check result
-	if len(patterns) != 1 || patterns[0] != "./..." {
-		t.Errorf("expected [./...], got %v", patterns)
-	}
-}
-
-// TestResolvePatternsDefault tests pattern resolution for default.
-func TestResolvePatternsDefault(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	patterns := d.ResolvePatterns("/workspace", []string{"/some/path"})
-	// Check result (default to recursive)
-	if len(patterns) != 1 || patterns[0] != "./..." {
-		t.Errorf("expected [./...], got %v", patterns)
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Use temp directory as rootPath
+			rootPath := t.TempDir()
+			d := orchestrator.NewModuleDiscovery()
+			patterns := d.ResolvePatterns(rootPath, tt.patterns)
+			// Check result
+			if len(patterns) != len(tt.expected) {
+				t.Errorf("expected %v, got %v", tt.expected, patterns)
+				return
+			}
+			// Check each pattern
+			for i, p := range patterns {
+				// Verify pattern matches
+				if p != tt.expected[i] {
+					t.Errorf("expected pattern[%d]=%s, got %s", i, tt.expected[i], p)
+				}
+			}
+		})
 	}
 }
 
 // TestFindModulesMultiple tests finding multiple modules.
 func TestFindModulesMultiple(t *testing.T) {
-	// Create temp directory structure with 2 modules
-	tmpDir := t.TempDir()
-	// Create first module
-	mod1 := filepath.Join(tmpDir, "mod1")
-	err := os.MkdirAll(mod1, 0o755)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.WriteFile(filepath.Join(mod1, "go.mod"), []byte("module mod1\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Create second module
-	mod2 := filepath.Join(tmpDir, "mod2")
-	err = os.MkdirAll(mod2, 0o755)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.WriteFile(filepath.Join(mod2, "go.mod"), []byte("module mod2\n"), 0o644)
-	// Check error
-	if err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name          string
+		moduleCount   int
+		expectedCount int
+	}{
+		{
+			name:          "finds two modules in subdirectories",
+			moduleCount:   2,
+			expectedCount: 2,
+		},
 	}
 
-	d := orchestrator.NewModuleDiscovery()
-	modules, err := d.FindModules([]string{tmpDir})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check found both modules
-	if len(modules) != 2 {
-		t.Errorf("expected 2 modules, got %d", len(modules))
-	}
-}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temp directory structure with modules
+			tmpDir := t.TempDir()
 
-// TestFindModulesDeduplicate tests that duplicate modules are handled.
-func TestFindModulesDeduplicate(t *testing.T) {
-	d := orchestrator.NewModuleDiscovery()
-	// Pass same path twice
-	modules, err := d.FindModules([]string{"/workspace", "/workspace"})
-	// Check no error
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	// Check deduplicated
-	if len(modules) != 1 {
-		t.Errorf("expected 1 module (deduplicated), got %d", len(modules))
+			// Create modules
+			for i := 1; i <= tt.moduleCount; i++ {
+				suffix := strconv.Itoa(i)
+				modDir := filepath.Join(tmpDir, "mod"+suffix)
+				err := os.MkdirAll(modDir, 0o755)
+				// Check error
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = os.WriteFile(
+					filepath.Join(modDir, "go.mod"),
+					[]byte("module mod"+suffix+"\n"),
+					0o644,
+				)
+				// Check error
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			d := orchestrator.NewModuleDiscovery()
+			modules, err := d.FindModules([]string{tmpDir})
+			// Check no error
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			// Check found expected modules
+			if len(modules) != tt.expectedCount {
+				t.Errorf("expected %d modules, got %d", tt.expectedCount, len(modules))
+			}
+		})
 	}
 }

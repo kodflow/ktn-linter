@@ -20,6 +20,7 @@ func Test_runStruct002(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - logique principale testée via API publique
 		})
@@ -50,6 +51,7 @@ func (a *Admin) GetRole() string { return "" }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -121,6 +123,7 @@ func NewUser() {}`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -181,6 +184,7 @@ func NewTime() time.Time { return time.Now() }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -253,6 +257,7 @@ func Test_hasConstructor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := hasConstructor(tt.constructors, tt.funcName, tt.typeName)
 			if got != tt.want {
@@ -279,6 +284,7 @@ func Test_constructorInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.ci.name != tt.expectedName || tt.ci.returnType != tt.expectedReturn {
 				t.Errorf("expected name=%s returnType=%s, got name=%s returnType=%s",
@@ -296,6 +302,7 @@ func Test_runStruct002_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{
@@ -350,6 +357,7 @@ func Test_runStruct002_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{

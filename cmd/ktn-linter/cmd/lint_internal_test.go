@@ -30,6 +30,7 @@ func Test_runLint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -147,6 +148,7 @@ func Test_parseOptions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 			opts := parseOptions()
@@ -237,6 +239,7 @@ exclude:
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -319,6 +322,7 @@ func Test_runPipeline(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			orch := orchestrator.NewOrchestrator(os.Stderr, tt.opts.Verbose)
 
@@ -379,6 +383,7 @@ func Test_formatAndDisplay(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Capture stdout
 			oldStdout := os.Stdout
@@ -455,6 +460,7 @@ func TestLintCmdStructure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
 		})
@@ -508,6 +514,7 @@ func Test_getOutputWriter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -573,6 +580,181 @@ func Test_getOutputWriter(t *testing.T) {
 				if writerCleanup != nil {
 					writerCleanup()
 				}
+			}
+		})
+	}
+}
+
+// Test_needsModuleDiscovery tests the needsModuleDiscovery function.
+func Test_needsModuleDiscovery(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		expected bool
+	}{
+		{
+			name:     "standard pattern ./...",
+			args:     []string{"./..."},
+			expected: false,
+		},
+		{
+			name:     "single dot pattern",
+			args:     []string{"."},
+			expected: false,
+		},
+		{
+			name:     "package path pattern",
+			args:     []string{"github.com/example/pkg"},
+			expected: false,
+		},
+		{
+			name:     "nonexistent directory",
+			args:     []string{"/nonexistent/path/to/dir"},
+			expected: false,
+		},
+		{
+			name:     "multiple standard patterns",
+			args:     []string{"./...", "."},
+			expected: false,
+		},
+		{
+			name:     "empty args",
+			args:     []string{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := needsModuleDiscovery(tt.args)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("needsModuleDiscovery(%v) = %v, want %v", tt.args, result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_runMultiModulePipeline tests the runMultiModulePipeline function.
+func Test_runMultiModulePipeline(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		opts        orchestrator.Options
+		expectError bool
+	}{
+		{
+			name:        "valid path",
+			args:        []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{},
+			expectError: false,
+		},
+		{
+			name:        "with category filter",
+			args:        []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "func"},
+			expectError: false,
+		},
+		{
+			name:        "invalid category returns error",
+			args:        []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "nonexistent"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // capture
+		t.Run(tt.name, func(t *testing.T) {
+			orch := orchestrator.NewOrchestrator(os.Stderr, false)
+
+			diags, fset, err := runMultiModulePipeline(orch, tt.args, tt.opts)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("expected error but got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			// When no diagnostics exist, fset may be nil (expected behavior)
+			if fset == nil && len(diags) > 0 {
+				t.Fatal("expected non-nil FileSet when diagnostics exist")
+			}
+			// nil slice is valid in Go for empty results
+			if diags == nil {
+				diags = []analysis.Diagnostic{}
+			}
+			_ = diags
+		})
+	}
+}
+
+// Test_runSingleModulePipeline tests the runSingleModulePipeline function.
+func Test_runSingleModulePipeline(t *testing.T) {
+	tests := []struct {
+		name        string
+		packages    []string
+		opts        orchestrator.Options
+		expectError bool
+	}{
+		{
+			name:        "valid package",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{},
+			expectError: false,
+		},
+		{
+			name:        "with category filter",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "func"},
+			expectError: false,
+		},
+		{
+			name:        "with single rule",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{OnlyRule: "KTN-FUNC-001"},
+			expectError: false,
+		},
+		{
+			name:        "invalid category returns error",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "nonexistent"},
+			expectError: true,
+		},
+		{
+			name:        "invalid rule returns error",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{OnlyRule: "KTN-INVALID-999"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			orch := orchestrator.NewOrchestrator(os.Stderr, false)
+
+			diags, fset, err := runSingleModulePipeline(orch, tt.packages, tt.opts)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			// Verify results type
+			if !tt.expectError {
+				_ = diags // Diagnostics slice
+				_ = fset  // FileSet pointer
 			}
 		})
 	}

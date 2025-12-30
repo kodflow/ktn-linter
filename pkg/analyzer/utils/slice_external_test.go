@@ -46,6 +46,7 @@ func TestIsSliceType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -94,6 +95,7 @@ func TestIsMapType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -142,6 +144,7 @@ func TestIsSliceOrMapType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -185,6 +188,7 @@ func TestIsEmptySliceLiteral(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -243,6 +247,7 @@ func TestIsByteSlice(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -268,6 +273,7 @@ func TestIsSliceTypeWithPass(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -299,6 +305,7 @@ func TestIsMapTypeWithPass(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -333,6 +340,7 @@ func TestIsByteSliceWithPass(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -364,6 +372,7 @@ func TestIsSliceOrMapTypeWithPass(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -428,6 +437,7 @@ func TestIsByteSliceNonIdent(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsByteSlice(tt.sliceExpr)
 			if got != tt.expected {
@@ -448,6 +458,7 @@ func TestIsSmallConstantSize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -481,6 +492,7 @@ func TestIsSmallConstantSizeWithConstants(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr := &ast.BasicLit{Value: "x"}
 			pass := &analysis.Pass{
@@ -509,6 +521,7 @@ func TestIsSmallConstantSizeNonInt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr := &ast.BasicLit{Value: "x"}
 			pass := &analysis.Pass{
@@ -535,6 +548,7 @@ func TestIsSmallConstantSizeIntOverflow(t *testing.T) {
 		{"integer overflow edge case"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a constant value that's larger than int64 max using big.Int
 			// MakeInt64 creates int64 values, but constant.Shift can create larger values

@@ -126,7 +126,7 @@ func (d *ModuleDiscovery) findModuleForFile(filePath string) ([]string, error) {
 //   - []string: module roots found
 //   - error: search error if any
 func (d *ModuleDiscovery) searchDirectory(dir string) ([]string, error) {
-	var modules []string
+	modules := []string{}
 
 	// Walk directory tree
 	err := filepath.WalkDir(dir, func(path string, entry os.DirEntry, walkErr error) error {

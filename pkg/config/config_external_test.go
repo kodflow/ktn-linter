@@ -14,6 +14,7 @@ func TestDefaultConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := config.DefaultConfig()
 			if cfg == nil {
@@ -79,6 +80,7 @@ func TestConfig_IsRuleEnabled(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.IsRuleEnabled(tt.ruleCode)
 			if got != tt.want {
@@ -135,6 +137,7 @@ func TestConfig_GetThreshold(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.GetThreshold(tt.ruleCode, tt.defaultValue)
 			if got != tt.want {
@@ -277,6 +280,7 @@ func TestConfig_IsFileExcluded(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.IsFileExcluded(tt.ruleCode, tt.filename)
 			if got != tt.want {
@@ -336,6 +340,7 @@ func TestConfig_Merge(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.base.Merge(tt.other)
 			got := tt.base.IsRuleEnabled(tt.checkRule)
@@ -354,6 +359,7 @@ func TestGetAndSet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset to default
 			config.Reset()
@@ -393,6 +399,7 @@ func TestBoolAndInt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			boolPtr := config.Bool(true)
 			if boolPtr == nil || *boolPtr != true {
@@ -447,6 +454,7 @@ func TestConfig_IsFileExcludedGlobally(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.IsFileExcludedGlobally(tt.filename)
 			if got != tt.want {
@@ -463,6 +471,7 @@ func TestGet(t *testing.T) {
 		{"returns global config"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := config.Get()
 			if cfg == nil {
@@ -479,6 +488,7 @@ func TestSet(t *testing.T) {
 		{"sets global config"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			customCfg := &config.Config{Version: 1}
 			config.Set(customCfg)
@@ -498,6 +508,7 @@ func TestReset(t *testing.T) {
 		{"resets to default"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			customCfg := &config.Config{Version: 99}
 			config.Set(customCfg)
@@ -520,6 +531,7 @@ func TestBool(t *testing.T) {
 		{"false value", false, false},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			ptr := config.Bool(tt.value)
 			if ptr == nil {
@@ -543,6 +555,7 @@ func TestInt(t *testing.T) {
 		{"zero value", 0, 0},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			ptr := config.Int(tt.value)
 			if ptr == nil {

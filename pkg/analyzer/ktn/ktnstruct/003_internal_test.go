@@ -55,6 +55,7 @@ func (u *User) GetName() string { return u.name }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -146,6 +147,7 @@ type Empty struct{}`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -250,6 +252,7 @@ func (u *User) GetName() string { return u.name }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -360,6 +363,7 @@ func (is IntSlice) Method() {}`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -402,6 +406,7 @@ func Test_constants(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.got != tt.expected {
 				t.Errorf("expected %s to be %d, got %d", tt.name, tt.expected, tt.got)
@@ -418,6 +423,7 @@ func Test_runStruct003_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{
@@ -472,6 +478,7 @@ func Test_runStruct003_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{
@@ -530,6 +537,7 @@ func Test_isValidGetterToReport(t *testing.T) {
 		{"error case"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -582,6 +590,7 @@ func Test_capitalizeFirstLetter(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := capitalizeFirstLetter(tt.input)
 			// Verify result

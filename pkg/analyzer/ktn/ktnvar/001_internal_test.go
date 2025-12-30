@@ -22,6 +22,7 @@ func Test_runVar001(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
 		})
@@ -73,6 +74,7 @@ func Test_isScreamingSnakeCase(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isScreamingSnakeCase(tt.varName)
 			// Vérification du résultat
@@ -91,6 +93,7 @@ func Test_runVar001_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -148,6 +151,7 @@ func Test_runVar001_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion

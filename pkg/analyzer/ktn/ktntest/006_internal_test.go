@@ -28,6 +28,7 @@ func Test_runTest006(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing package: %s", tt.pkgPath)
@@ -90,6 +91,7 @@ var privateVar int`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -155,6 +157,7 @@ var PublicVar, privateVar int`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -215,6 +218,7 @@ type PublicInterface interface{}`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -274,6 +278,7 @@ const (
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -361,6 +366,7 @@ func Test_checkTestFilesExist(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Créer les fichiers selon le cas de test
 			if tt.createInternal {
@@ -450,6 +456,7 @@ func Test_fileExistsOnDisk(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := fileExistsOnDisk(tt.path)
 			// Vérification de la condition
@@ -546,6 +553,7 @@ func Test_reportTestFileIssues(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
@@ -609,6 +617,7 @@ func Test_reportMixedFunctionsIssues(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
@@ -680,6 +689,7 @@ func Test_reportPublicOnlyIssues(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
@@ -751,6 +761,7 @@ func Test_reportPrivateOnlyIssues(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
@@ -839,6 +850,7 @@ func Test_classifyFunction(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := fileAnalysisResult{
 				publicFuncs:  []string{},
@@ -910,6 +922,7 @@ func Test_buildFunctionDisplayName(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := buildFunctionDisplayName(tt.funcDecl)
 			// Vérification du résultat
@@ -951,6 +964,7 @@ func Test_extractReceiverTypeString(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractReceiverTypeString(tt.expr)
 			// Vérification du résultat
@@ -969,6 +983,7 @@ func Test_runTest006_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -983,6 +998,7 @@ func Test_runTest006_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -1022,6 +1038,7 @@ import "fmt"`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -1067,6 +1084,7 @@ type MyType struct{}`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -1103,6 +1121,7 @@ var x int`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -1139,6 +1158,7 @@ type MyType struct{}`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -1190,6 +1210,7 @@ import "fmt"`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -1240,6 +1261,7 @@ import "fmt"`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -1294,6 +1316,7 @@ func (m *MockService) Method() {}`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)

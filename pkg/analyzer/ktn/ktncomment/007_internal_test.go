@@ -22,6 +22,7 @@ func Test_runComment007(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify that Analyzer007 is properly configured
 			if Analyzer007 == nil {
@@ -48,6 +49,7 @@ func Test_checkIfStmt(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -67,6 +69,7 @@ func Test_checkSwitchStmt(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -86,6 +89,7 @@ func Test_checkTypeSwitchStmt(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -105,6 +109,7 @@ func Test_checkLoopStmt(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -124,6 +129,7 @@ func Test_checkReturnStmt(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -143,6 +149,7 @@ func Test_hasCommentBefore(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -162,6 +169,7 @@ func Test_hasInlineComment(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -181,6 +189,7 @@ func Test_hasCommentBeforeOrInside(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify the function exists by checking Analyzer007
 			if Analyzer007 == nil {
@@ -198,6 +207,7 @@ func Test_runComment007_ruleDisabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -269,6 +279,7 @@ func Test_runComment007_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -368,6 +379,7 @@ func myFunc() {}`,
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, tt.filename, tt.code, parser.ParseComments)
@@ -460,6 +472,7 @@ func myFunc() {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
@@ -511,6 +524,7 @@ func Test_checkFunctionBody(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -600,6 +614,7 @@ func Test_hasCommentBeforeOrInside_nonBlockStmt(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test

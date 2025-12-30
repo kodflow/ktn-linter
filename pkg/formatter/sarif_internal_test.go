@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/severity"
 	sarif "github.com/owenrumney/go-sarif/v3/pkg/report/v210/sarif"
 	"golang.org/x/tools/go/analysis"
 )
@@ -15,15 +16,36 @@ import (
 // Params:
 //   - t: testing object for running test cases
 func Test_sarifFormatter_severityToSARIF(t *testing.T) {
-	// Create formatter
-	f := &sarifFormatter{}
+	// Define test cases for severity mapping
+	tests := []struct {
+		name           string
+		severityLevel  severity.Level
+		expectedResult string
+	}{
+		{
+			// Test unknown severity defaults to warning
+			name:           "unknown severity returns warning",
+			severityLevel:  severity.Level(99),
+			expectedResult: "warning",
+		},
+	}
 
-	// Test unknown severity defaults to warning
-	result := f.severityToSARIF(99)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &sarifFormatter{}
 
-	// Verify default
-	if result != "warning" {
-		t.Errorf("expected warning for unknown severity, got %s", result)
+			// Execute severity mapping
+			result := f.severityToSARIF(tt.severityLevel)
+
+			// Verify result
+			if result != tt.expectedResult {
+				t.Errorf("expected %s, got %s", tt.expectedResult, result)
+			}
+		})
 	}
 }
 
@@ -32,25 +54,55 @@ func Test_sarifFormatter_severityToSARIF(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func Test_sarifFormatter_addRule(t *testing.T) {
-	// Create formatter
-	f := &sarifFormatter{verbose: false}
-
-	// Create a new run
-	run := sarif.NewRunWithInformationURI("test", "http://test.com")
-
-	// Add a rule
-	f.addRule(run, "KTN-VAR-001")
-
-	// Verify rule was added
-	if len(run.Tool.Driver.Rules) != 1 {
-		t.Errorf("expected 1 rule, got %d", len(run.Tool.Driver.Rules))
+	// Define test cases for addRule method
+	tests := []struct {
+		name           string
+		ruleID         string
+		verbose        bool
+		expectedRules  int
+		expectedRuleID string
+	}{
+		{
+			// Test adding a single rule
+			name:           "add single rule",
+			ruleID:         "KTN-VAR-001",
+			verbose:        false,
+			expectedRules:  1,
+			expectedRuleID: "KTN-VAR-001",
+		},
 	}
 
-	// Verify rule ID
-	ruleID := run.Tool.Driver.Rules[0].ID
-	// Check rule ID is set
-	if ruleID == nil || *ruleID != "KTN-VAR-001" {
-		t.Errorf("expected rule ID KTN-VAR-001, got %v", ruleID)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &sarifFormatter{verbose: tt.verbose}
+
+			// Create a new run
+			run := sarif.NewRunWithInformationURI("test", "http://test.com")
+
+			// Add a rule
+			f.addRule(run, tt.ruleID)
+
+			// Verify rule was added
+			if len(run.Tool.Driver.Rules) != tt.expectedRules {
+				t.Fatalf("expected %d rule, got %d", tt.expectedRules, len(run.Tool.Driver.Rules))
+			}
+
+			// Guard clause for empty slice access
+			if len(run.Tool.Driver.Rules) == 0 {
+				t.Fatal("no rules found, cannot verify rule ID")
+			}
+
+			// Verify rule ID
+			ruleID := run.Tool.Driver.Rules[0].ID
+			// Check rule ID is set
+			if ruleID == nil || *ruleID != tt.expectedRuleID {
+				t.Errorf("expected rule ID %s, got %v", tt.expectedRuleID, ruleID)
+			}
+		})
 	}
 }
 
@@ -59,35 +111,60 @@ func Test_sarifFormatter_addRule(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func Test_sarifFormatter_addResults(t *testing.T) {
-	// Create formatter
-	f := &sarifFormatter{verbose: false}
-
-	// Create a new run
-	run := sarif.NewRunWithInformationURI("test", "http://test.com")
-
-	// Create fileset
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create test diagnostics
-	diags := []analysis.Diagnostic{
+	// Define test cases for addResults method
+	tests := []struct {
+		name            string
+		verbose         bool
+		message         string
+		expectedResults int
+		expectedRules   int
+	}{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: test message",
+			// Test adding diagnostic results
+			name:            "add single diagnostic result",
+			verbose:         false,
+			message:         "KTN-VAR-001: test message",
+			expectedResults: 1,
+			expectedRules:   1,
 		},
 	}
 
-	// Add results
-	f.addResults(run, fset, diags)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &sarifFormatter{verbose: tt.verbose}
 
-	// Verify results were added
-	if len(run.Results) != 1 {
-		t.Errorf("expected 1 result, got %d", len(run.Results))
-	}
+			// Create a new run
+			run := sarif.NewRunWithInformationURI("test", "http://test.com")
 
-	// Verify rules were added
-	if len(run.Tool.Driver.Rules) != 1 {
-		t.Errorf("expected 1 rule, got %d", len(run.Tool.Driver.Rules))
+			// Create fileset
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+
+			// Create test diagnostics
+			diags := []analysis.Diagnostic{
+				{
+					Pos:     file.Pos(10),
+					Message: tt.message,
+				},
+			}
+
+			// Add results
+			f.addResults(run, fset, diags)
+
+			// Verify results were added
+			if len(run.Results) != tt.expectedResults {
+				t.Errorf("expected %d result, got %d", tt.expectedResults, len(run.Results))
+			}
+
+			// Verify rules were added
+			if len(run.Tool.Driver.Rules) != tt.expectedRules {
+				t.Errorf("expected %d rule, got %d", tt.expectedRules, len(run.Tool.Driver.Rules))
+			}
+		})
 	}
 }
 
@@ -96,33 +173,56 @@ func Test_sarifFormatter_addResults(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func Test_sarifFormatter_Format(t *testing.T) {
-	// Create buffer for output
-	var buf bytes.Buffer
-
-	// Create formatter
-	f := &sarifFormatter{
-		writer:  &buf,
-		verbose: false,
-	}
-
-	// Create fileset
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create test diagnostics
-	diags := []analysis.Diagnostic{
+	// Define test cases for Format method
+	tests := []struct {
+		name          string
+		verbose       bool
+		message       string
+		expectOutput  bool
+	}{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: test message",
+			// Test formatting produces non-empty output
+			name:         "format produces non-empty output",
+			verbose:      false,
+			message:      "KTN-VAR-001: test message",
+			expectOutput: true,
 		},
 	}
 
-	// Format diagnostics
-	f.Format(fset, diags)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
 
-	// Verify output is not empty
-	if buf.Len() == 0 {
-		t.Error("expected non-empty output")
+			// Create formatter
+			f := &sarifFormatter{
+				writer:  &buf,
+				verbose: tt.verbose,
+			}
+
+			// Create fileset
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+
+			// Create test diagnostics
+			diags := []analysis.Diagnostic{
+				{
+					Pos:     file.Pos(10),
+					Message: tt.message,
+				},
+			}
+
+			// Format diagnostics
+			f.Format(fset, diags)
+
+			// Verify output
+			if tt.expectOutput && buf.Len() == 0 {
+				t.Error("expected non-empty output")
+			}
+		})
 	}
 }
 
@@ -131,38 +231,64 @@ func Test_sarifFormatter_Format(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func Test_sarifFormatter_RuleDeduplication(t *testing.T) {
-	// Create formatter
-	f := &sarifFormatter{verbose: false}
-
-	// Create a new run
-	run := sarif.NewRunWithInformationURI("test", "http://test.com")
-
-	// Create fileset
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create test diagnostics with same rule
-	diags := []analysis.Diagnostic{
+	// Define test cases for rule deduplication
+	tests := []struct {
+		name            string
+		verbose         bool
+		messages        []string
+		expectedRules   int
+		expectedResults int
+	}{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: first message",
-		},
-		{
-			Pos:     file.Pos(20),
-			Message: "KTN-VAR-001: second message",
+			// Test duplicate rules are deduplicated
+			name:    "duplicate rules are deduplicated",
+			verbose: false,
+			messages: []string{
+				"KTN-VAR-001: first message",
+				"KTN-VAR-001: second message",
+			},
+			expectedRules:   1,
+			expectedResults: 2,
 		},
 	}
 
-	// Add results
-	f.addResults(run, fset, diags)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &sarifFormatter{verbose: tt.verbose}
 
-	// Verify only one rule was added
-	if len(run.Tool.Driver.Rules) != 1 {
-		t.Errorf("expected 1 rule (deduped), got %d", len(run.Tool.Driver.Rules))
-	}
+			// Create a new run
+			run := sarif.NewRunWithInformationURI("test", "http://test.com")
 
-	// Verify both results were added
-	if len(run.Results) != 2 {
-		t.Errorf("expected 2 results, got %d", len(run.Results))
+			// Create fileset
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+
+			// Create test diagnostics with same rule
+			diags := make([]analysis.Diagnostic, len(tt.messages))
+			// Create diagnostics from messages
+			for i, msg := range tt.messages {
+				diags[i] = analysis.Diagnostic{
+					Pos:     file.Pos(10 + i*10),
+					Message: msg,
+				}
+			}
+
+			// Add results
+			f.addResults(run, fset, diags)
+
+			// Verify only one rule was added
+			if len(run.Tool.Driver.Rules) != tt.expectedRules {
+				t.Errorf("expected %d rule (deduped), got %d", tt.expectedRules, len(run.Tool.Driver.Rules))
+			}
+
+			// Verify both results were added
+			if len(run.Results) != tt.expectedResults {
+				t.Errorf("expected %d results, got %d", tt.expectedResults, len(run.Results))
+			}
+		})
 	}
 }

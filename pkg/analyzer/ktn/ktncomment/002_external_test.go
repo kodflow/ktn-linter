@@ -27,6 +27,7 @@ func TestComment002(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Exécuter chaque test
 		t.Run(tt.name, func(t *testing.T) {
 			// good/: 0 errors, bad/: 2 errors for missing package comments

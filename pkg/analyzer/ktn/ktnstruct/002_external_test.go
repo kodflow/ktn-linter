@@ -28,6 +28,7 @@ func TestStruct002(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Vérifie que bad.go génère exactement 1 erreur
 			testhelper.TestGoodBad(t, ktnstruct.Analyzer002, tt.analyzer, tt.expected)

@@ -22,6 +22,7 @@ func Test_runVar005(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
 		})
@@ -36,6 +37,7 @@ func Test_checkMakeCallVar008_notMake(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -61,6 +63,7 @@ func Test_checkMakeCallVar008_tooFewArgs(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -87,6 +90,7 @@ func Test_runVar005_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -144,6 +148,7 @@ func Test_runVar005_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion
@@ -203,6 +208,7 @@ func Test_checkMakeCallVar008(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

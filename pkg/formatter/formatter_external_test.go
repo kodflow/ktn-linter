@@ -19,6 +19,7 @@ func TestDiagnosticGroupData(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			data := formatter.DiagnosticGroupData{
@@ -45,6 +46,7 @@ func TestFormatterConstants(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.check() {
 				t.Error(tt.msg)

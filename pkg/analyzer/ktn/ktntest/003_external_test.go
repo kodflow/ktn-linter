@@ -23,6 +23,7 @@ func TestTest003(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// 2 erreurs: fonctions Multiply et Divide sans test
 			testhelper.TestGoodBadPackage(t, ktntest.Analyzer003, tt.analyzer, 2)

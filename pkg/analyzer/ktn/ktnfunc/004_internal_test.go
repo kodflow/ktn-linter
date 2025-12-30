@@ -20,6 +20,7 @@ func Test_runFunc004_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec règle désactivée
@@ -54,6 +55,7 @@ func Test_runFunc004_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec fichier exclu
@@ -120,6 +122,7 @@ func Test_runFunc004(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique principale est dans external tests
@@ -137,6 +140,7 @@ func Test_collectPrivateFunctions(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite un contexte d'analyse complet
@@ -187,6 +191,7 @@ func Test_extractPrivateFuncInfo(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractPrivateFuncInfo(tt.funcDecl)
@@ -208,6 +213,7 @@ func Test_collectCalledFunctions(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite un contexte d'analyse complet
@@ -225,6 +231,7 @@ func Test_collectCallbackUsages(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite un contexte d'analyse complet
@@ -242,6 +249,7 @@ func Test_reportUnusedPrivateFuncs(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite un contexte d'analyse complet
@@ -278,6 +286,7 @@ func Test_reportUnusedFunc(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			reported := false
@@ -328,6 +337,7 @@ func Test_extractReceiverType(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractReceiverType(tt.expr)
@@ -374,6 +384,7 @@ func Test_extractCalledFuncName(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractCalledFuncName(tt.callExpr)
@@ -444,6 +455,7 @@ func Test_collectCallExprCallbacks(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			calledInProduction := make(map[string]bool)
@@ -494,6 +506,7 @@ func Test_markIfPrivateFunc(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			calledInProduction := make(map[string]bool)
@@ -556,6 +569,7 @@ func Test_collectIdentCallbacks(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			calledInProduction := make(map[string]bool)
@@ -636,6 +650,7 @@ func Test_extractPrivateFuncInfo_withReceiver(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractPrivateFuncInfo(tt.funcDecl)

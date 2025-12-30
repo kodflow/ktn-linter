@@ -28,6 +28,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -56,6 +57,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -84,6 +86,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -111,6 +114,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -167,6 +171,7 @@ func TestGetPhaseInfo(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			name, desc, needsRerun := prompt.GetPhaseInfo(tt.phase)
 
@@ -193,23 +198,45 @@ func TestGetPhaseInfo(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestGetPhaseInfo_UnknownPhase(t *testing.T) {
-	// Test with invalid phase value
-	invalidPhase := prompt.RulePhase(999)
-	name, desc, needsRerun := prompt.GetPhaseInfo(invalidPhase)
-
-	// Verify default case returns "Unknown"
-	if name != "Unknown" {
-		t.Errorf("GetPhaseInfo(999) name = %q, want \"Unknown\"", name)
+	// Define test cases for unknown phase handling
+	tests := []struct {
+		name           string
+		phase          prompt.RulePhase
+		expectedName   string
+		expectedDesc   string
+		expectedRerun  bool
+	}{
+		{
+			name:          "unknown phase returns default values",
+			phase:         prompt.RulePhase(999),
+			expectedName:  "Unknown",
+			expectedDesc:  "",
+			expectedRerun: false,
+		},
 	}
 
-	// Verify empty description
-	if desc != "" {
-		t.Errorf("GetPhaseInfo(999) description = %q, want empty", desc)
-	}
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Get phase info
+			name, desc, needsRerun := prompt.GetPhaseInfo(tt.phase)
 
-	// Verify needsRerun is false
-	if needsRerun {
-		t.Errorf("GetPhaseInfo(999) needsRerun = true, want false")
+			// Verify name
+			if name != tt.expectedName {
+				t.Errorf("GetPhaseInfo() name = %q, want %q", name, tt.expectedName)
+			}
+
+			// Verify description
+			if desc != tt.expectedDesc {
+				t.Errorf("GetPhaseInfo() description = %q, want %q", desc, tt.expectedDesc)
+			}
+
+			// Verify needsRerun
+			if needsRerun != tt.expectedRerun {
+				t.Errorf("GetPhaseInfo() needsRerun = %v, want %v", needsRerun, tt.expectedRerun)
+			}
+		})
 	}
 }
 
@@ -218,36 +245,49 @@ func TestGetPhaseInfo_UnknownPhase(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestSortRulesByPhase(t *testing.T) {
-	// Create mixed rules
-	rules := []prompt.RuleViolations{
-		{Code: "KTN-COMMENT-001", Violations: []prompt.Violation{{}}},
-		{Code: "KTN-FUNC-001", Violations: []prompt.Violation{{}}},
-		{Code: "KTN-STRUCT-004", Violations: []prompt.Violation{{}}},
-		{Code: "KTN-TEST-001", Violations: []prompt.Violation{{}}},
+	// Define test cases for phase sorting
+	tests := []struct {
+		name           string
+		rules          []prompt.RuleViolations
+		expectedPhases []prompt.RulePhase
+	}{
+		{
+			name: "groups and orders mixed rules correctly",
+			rules: []prompt.RuleViolations{
+				{Code: "KTN-COMMENT-001", Violations: []prompt.Violation{{}}},
+				{Code: "KTN-FUNC-001", Violations: []prompt.Violation{{}}},
+				{Code: "KTN-STRUCT-004", Violations: []prompt.Violation{{}}},
+				{Code: "KTN-TEST-001", Violations: []prompt.Violation{{}}},
+			},
+			expectedPhases: []prompt.RulePhase{
+				prompt.PhaseStructural,
+				prompt.PhaseTestOrg,
+				prompt.PhaseLocal,
+				prompt.PhaseComment,
+			},
+		},
 	}
 
-	// Sort rules
-	groups := prompt.SortRulesByPhase(rules)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Sort rules
+			groups := prompt.SortRulesByPhase(tt.rules)
 
-	// Verify we have all 4 phases
-	if len(groups) != 4 {
-		t.Errorf("SortRulesByPhase() returned %d groups, want 4", len(groups))
-		return
-	}
+			// Verify group count
+			if len(groups) != len(tt.expectedPhases) {
+				t.Errorf("SortRulesByPhase() returned %d groups, want %d", len(groups), len(tt.expectedPhases))
+				return
+			}
 
-	// Verify phase order
-	expectedOrder := []prompt.RulePhase{
-		prompt.PhaseStructural,
-		prompt.PhaseTestOrg,
-		prompt.PhaseLocal,
-		prompt.PhaseComment,
-	}
-
-	// Check each phase
-	for i, expected := range expectedOrder {
-		if groups[i].Phase != expected {
-			t.Errorf("groups[%d].Phase = %v, want %v", i, groups[i].Phase, expected)
-		}
+			// Check each phase
+			for i, expected := range tt.expectedPhases {
+				if groups[i].Phase != expected {
+					t.Errorf("groups[%d].Phase = %v, want %v", i, groups[i].Phase, expected)
+				}
+			}
+		})
 	}
 }
 
@@ -256,29 +296,49 @@ func TestSortRulesByPhase(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestSortRulesByPhase_EmptyPhases(t *testing.T) {
-	// Create rules for only two phases
-	rules := []prompt.RuleViolations{
-		{Code: "KTN-FUNC-001", Violations: []prompt.Violation{{}}},
-		{Code: "KTN-VAR-002", Violations: []prompt.Violation{{}}},
+	// Define test cases for empty phase handling
+	tests := []struct {
+		name           string
+		rules          []prompt.RuleViolations
+		expectedGroups int
+		expectedPhase  prompt.RulePhase
+		expectedRules  int
+	}{
+		{
+			name: "excludes phases without rules",
+			rules: []prompt.RuleViolations{
+				{Code: "KTN-FUNC-001", Violations: []prompt.Violation{{}}},
+				{Code: "KTN-VAR-002", Violations: []prompt.Violation{{}}},
+			},
+			expectedGroups: 1,
+			expectedPhase:  prompt.PhaseLocal,
+			expectedRules:  2,
+		},
 	}
 
-	// Sort rules
-	groups := prompt.SortRulesByPhase(rules)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Sort rules
+			groups := prompt.SortRulesByPhase(tt.rules)
 
-	// Verify only local phase exists
-	if len(groups) != 1 {
-		t.Errorf("SortRulesByPhase() returned %d groups, want 1", len(groups))
-		return
-	}
+			// Verify group count
+			if len(groups) != tt.expectedGroups {
+				t.Errorf("SortRulesByPhase() returned %d groups, want %d", len(groups), tt.expectedGroups)
+				return
+			}
 
-	// Verify it's the local phase
-	if groups[0].Phase != prompt.PhaseLocal {
-		t.Errorf("groups[0].Phase = %v, want PhaseLocal", groups[0].Phase)
-	}
+			// Verify phase
+			if groups[0].Phase != tt.expectedPhase {
+				t.Errorf("groups[0].Phase = %v, want %v", groups[0].Phase, tt.expectedPhase)
+			}
 
-	// Verify both rules are in the group
-	if len(groups[0].Rules) != 2 {
-		t.Errorf("groups[0].Rules has %d rules, want 2", len(groups[0].Rules))
+			// Verify rule count
+			if len(groups[0].Rules) != tt.expectedRules {
+				t.Errorf("groups[0].Rules has %d rules, want %d", len(groups[0].Rules), tt.expectedRules)
+			}
+		})
 	}
 }
 
@@ -287,26 +347,41 @@ func TestSortRulesByPhase_EmptyPhases(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestSortRulesByPhase_SortsRulesWithinPhase(t *testing.T) {
-	// Create unsorted rules in same phase
-	rules := []prompt.RuleViolations{
-		{Code: "KTN-FUNC-003", Violations: []prompt.Violation{{}}},
-		{Code: "KTN-FUNC-001", Violations: []prompt.Violation{{}}},
-		{Code: "KTN-FUNC-002", Violations: []prompt.Violation{{}}},
+	// Define test cases for rule sorting within phase
+	tests := []struct {
+		name          string
+		rules         []prompt.RuleViolations
+		expectedCodes []string
+	}{
+		{
+			name: "sorts rules alphabetically within phase",
+			rules: []prompt.RuleViolations{
+				{Code: "KTN-FUNC-003", Violations: []prompt.Violation{{}}},
+				{Code: "KTN-FUNC-001", Violations: []prompt.Violation{{}}},
+				{Code: "KTN-FUNC-002", Violations: []prompt.Violation{{}}},
+			},
+			expectedCodes: []string{"KTN-FUNC-001", "KTN-FUNC-002", "KTN-FUNC-003"},
+		},
 	}
 
-	// Sort rules
-	groups := prompt.SortRulesByPhase(rules)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Sort rules
+			groups := prompt.SortRulesByPhase(tt.rules)
 
-	// Verify sorting within phase
-	if len(groups) != 1 {
-		t.Fatalf("expected 1 group, got %d", len(groups))
-	}
+			// Verify single group
+			if len(groups) != 1 {
+				t.Fatalf("expected 1 group, got %d", len(groups))
+			}
 
-	// Check order
-	expected := []string{"KTN-FUNC-001", "KTN-FUNC-002", "KTN-FUNC-003"}
-	for i, code := range expected {
-		if groups[0].Rules[i].Code != code {
-			t.Errorf("groups[0].Rules[%d].Code = %q, want %q", i, groups[0].Rules[i].Code, code)
-		}
+			// Check order
+			for i, code := range tt.expectedCodes {
+				if groups[0].Rules[i].Code != code {
+					t.Errorf("groups[0].Rules[%d].Code = %q, want %q", i, groups[0].Rules[i].Code, code)
+				}
+			}
+		})
 	}
 }

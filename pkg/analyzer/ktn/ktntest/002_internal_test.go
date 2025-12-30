@@ -23,6 +23,7 @@ func Test_runTest002(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing package: %s", tt.pkgPath)
@@ -81,6 +82,7 @@ func Test_fileExists(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := fileExists(tt.path)
 			// Vérification de la condition
@@ -137,6 +139,7 @@ func Test_isExemptTestFile(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isExemptTestFile(tt.filename)
 			// Vérification de la condition
@@ -183,6 +186,7 @@ func Test_getSourceFileForTest(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := getSourceFileForTest(tt.filename)
 			// Vérification du résultat
@@ -214,6 +218,7 @@ func Test_fileExists_edgeCases(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := fileExists(tt.path)
 			// Vérification de la condition
@@ -232,6 +237,7 @@ func Test_runTest002_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -246,6 +252,7 @@ func Test_runTest002_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

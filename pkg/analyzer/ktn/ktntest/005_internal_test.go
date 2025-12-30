@@ -20,6 +20,7 @@ func Test_runTest005(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
@@ -38,6 +39,7 @@ func Test_runTest005_integration(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Check analyzer is valid
 			if Analyzer007 == nil || Analyzer007.Name != tt.expectedName {
@@ -89,6 +91,7 @@ func Test_isSkipMethod(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isSkipMethod(tt.methodName)
 			// Check result
@@ -107,6 +110,7 @@ func Test_runTest005_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -121,6 +125,7 @@ func Test_runTest005_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

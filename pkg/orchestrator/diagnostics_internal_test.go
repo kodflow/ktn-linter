@@ -40,6 +40,7 @@ func TestDiagnosticsProcessor_isModernize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			p := NewDiagnosticsProcessor()
 			got := p.isModernize(tt.analyzer)
@@ -77,6 +78,7 @@ func TestDiagnosticsProcessor_formatModernizeCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			p := NewDiagnosticsProcessor()
 			got := p.formatModernizeCode(tt.analyzer)

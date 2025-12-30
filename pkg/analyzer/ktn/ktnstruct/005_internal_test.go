@@ -20,6 +20,7 @@ func Test_runStruct005(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - logique principale testée via API publique
 		})
@@ -72,6 +73,7 @@ type User struct {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.src, 0)
@@ -133,6 +135,7 @@ func Test_fieldInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.fi.name != tt.expected || tt.fi.exported != tt.exported {
 				t.Errorf("expected name=%s exported=%v, got name=%s exported=%v",
@@ -150,6 +153,7 @@ func Test_runStruct005_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{
@@ -204,6 +208,7 @@ func Test_runStruct005_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{

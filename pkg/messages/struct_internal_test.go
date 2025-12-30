@@ -21,6 +21,7 @@ func Test_registerStructMessages(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := Get(tt.code)
 			// Verify message exists in registry

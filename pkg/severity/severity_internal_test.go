@@ -19,6 +19,7 @@ func Test_rulesSeverity(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			level, ok := rulesSeverity[tt.ruleCode]
@@ -45,6 +46,7 @@ func Test_rulesSeverityCompleteness(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if len(rulesSeverity) == 0 {
 				t.Error("rulesSeverity should not be empty")

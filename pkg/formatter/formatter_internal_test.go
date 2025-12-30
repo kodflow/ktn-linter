@@ -34,6 +34,7 @@ func Test_extractCode(t *testing.T) {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractCode(tt.message)
 			// Check result matches expectation
@@ -55,6 +56,7 @@ func Test_groupByFile(t *testing.T) {
 
 	// Iteration over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			f := &formatterImpl{noColor: true}
 			fset := token.NewFileSet()
@@ -96,6 +98,7 @@ func Test_filterAndSortDiagnostics(t *testing.T) {
 
 	// Iteration over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			f := &formatterImpl{}
 			fset := token.NewFileSet()

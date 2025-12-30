@@ -21,6 +21,7 @@ func TestLevel_String(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.level.String(); got != tt.want {
 				t.Errorf("Level.String() = %v, want %v", got, tt.want)
@@ -44,6 +45,7 @@ func TestGetSeverity(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if got := severity.GetSeverity(tt.ruleCode); got != tt.want {
 				t.Errorf("GetSeverity() = %v, want %v", got, tt.want)
@@ -66,6 +68,7 @@ func TestLevel_ColorCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.level.ColorCode(); got != tt.want {
 				t.Errorf("Level.ColorCode() = %v, want %v", got, tt.want)
@@ -88,6 +91,7 @@ func TestLevel_Symbol(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.level.Symbol(); got != tt.want {
 				t.Errorf("Level.Symbol() = %v, want %v", got, tt.want)

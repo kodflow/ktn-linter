@@ -14,15 +14,38 @@ import (
 // Params:
 //   - t: testing object
 func TestNewGenerator(t *testing.T) {
-	// Create stderr buffer
-	var stderr bytes.Buffer
+	tests := []struct {
+		name    string
+		verbose bool
+		wantNil bool
+	}{
+		{
+			name:    "creates generator",
+			verbose: false,
+			wantNil: false,
+		},
+		{
+			name:    "creates verbose generator",
+			verbose: true,
+			wantNil: false,
+		},
+	}
 
-	// Create generator
-	gen := prompt.NewGenerator(&stderr, false)
+	// Run test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Create stderr buffer
+			var stderr bytes.Buffer
 
-	// Verify not nil
-	if gen == nil {
-		t.Error("NewGenerator() returned nil")
+			// Create generator
+			gen := prompt.NewGenerator(&stderr, tt.verbose)
+
+			// Verify not nil
+			if (gen == nil) != tt.wantNil {
+				t.Errorf("NewGenerator() nil = %v, want %v", gen == nil, tt.wantNil)
+			}
+		})
 	}
 }
 
@@ -31,82 +54,61 @@ func TestNewGenerator(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestGenerator_Generate(t *testing.T) {
-	// Test with empty patterns
-	t.Run("empty patterns", func(t *testing.T) {
-		// Create generator
-		var stderr bytes.Buffer
-		gen := prompt.NewGenerator(&stderr, false)
+	tests := []struct {
+		name     string
+		patterns []string
+		options  orchestrator.Options
+		wantErr  bool
+	}{
+		{
+			name:     "empty patterns",
+			patterns: []string{},
+			options:  orchestrator.Options{},
+			wantErr:  false,
+		},
+		{
+			name:     "valid pattern",
+			patterns: []string{"github.com/kodflow/ktn-linter/pkg/prompt"},
+			options:  orchestrator.Options{},
+			wantErr:  false,
+		},
+		{
+			name:     "invalid pattern",
+			patterns: []string{"invalid/package/path/does/not/exist"},
+			options:  orchestrator.Options{},
+			wantErr:  true,
+		},
+		{
+			name:     "invalid analyzer",
+			patterns: []string{"github.com/kodflow/ktn-linter/pkg/prompt"},
+			options:  orchestrator.Options{OnlyRule: "INVALID-RULE-999"},
+			wantErr:  true,
+		},
+	}
 
-		// Generate with empty patterns (loads current dir)
-		output, err := gen.Generate([]string{}, orchestrator.Options{})
+	// Run test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Create generator
+			var stderr bytes.Buffer
+			gen := prompt.NewGenerator(&stderr, false)
 
-		// Should not return error
-		if err != nil {
-			t.Errorf("Generate() error = %v, want nil", err)
-			return
-		}
+			// Generate
+			output, err := gen.Generate(tt.patterns, tt.options)
 
-		// Verify output exists
-		if output == nil {
-			t.Error("Generate() returned nil output")
-		}
-	})
+			// Check error
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Generate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 
-	// Test with valid pattern
-	t.Run("valid pattern", func(t *testing.T) {
-		// Create generator
-		var stderr bytes.Buffer
-		gen := prompt.NewGenerator(&stderr, false)
-
-		// Generate with valid pattern (this package)
-		output, err := gen.Generate([]string{"github.com/kodflow/ktn-linter/pkg/prompt"}, orchestrator.Options{})
-
-		// Should not return error
-		if err != nil {
-			t.Errorf("Generate() error = %v", err)
-			return
-		}
-
-		// Verify output
-		if output == nil {
-			t.Error("Generate() returned nil output")
-		}
-	})
-
-	// Test with invalid pattern
-	t.Run("invalid pattern", func(t *testing.T) {
-		// Create generator
-		var stderr bytes.Buffer
-		gen := prompt.NewGenerator(&stderr, false)
-
-		// Generate with invalid pattern
-		_, err := gen.Generate([]string{"invalid/package/path/does/not/exist"}, orchestrator.Options{})
-
-		// Should return error from LoadPackages
-		if err == nil {
-			t.Error("Generate() with invalid pattern should return error")
-		}
-	})
-
-	// Test with invalid analyzer
-	t.Run("invalid analyzer", func(t *testing.T) {
-		// Create generator
-		var stderr bytes.Buffer
-		gen := prompt.NewGenerator(&stderr, false)
-
-		// Generate with invalid analyzer option
-		_, err := gen.Generate(
-			[]string{"github.com/kodflow/ktn-linter/pkg/prompt"},
-			orchestrator.Options{
-				OnlyRule: "INVALID-RULE-999",
-			},
-		)
-
-		// Should return error from SelectAnalyzers
-		if err == nil {
-			t.Error("Generate() with invalid analyzer should return error")
-		}
-	})
+			// Successful runs must return non-nil output
+			if !tt.wantErr && output == nil {
+				t.Error("Generate() returned nil output")
+			}
+		})
+	}
 }
 
 // TestPromptOutput_Structure tests PromptOutput structure.
@@ -114,33 +116,63 @@ func TestGenerator_Generate(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestPromptOutput_Structure(t *testing.T) {
-	// Create a sample output
-	output := &prompt.PromptOutput{
-		TotalViolations: 10,
-		TotalRules:      3,
-		Phases: []prompt.PhaseGroup{
-			{
-				Phase: prompt.PhaseStructural,
-				Name:  "Structural",
-				Rules: []prompt.RuleViolations{
-					{Code: "KTN-STRUCT-004", Violations: []prompt.Violation{{}}},
+	tests := []struct {
+		name           string
+		output         *prompt.PromptOutput
+		wantViolations int
+		wantPhases     int
+		wantRules      int
+	}{
+		{
+			name: "sample output",
+			output: &prompt.PromptOutput{
+				TotalViolations: 10,
+				TotalRules:      3,
+				Phases: []prompt.PhaseGroup{
+					{
+						Phase: prompt.PhaseStructural,
+						Name:  "Structural",
+						Rules: []prompt.RuleViolations{
+							{Code: "KTN-STRUCT-004", Violations: []prompt.Violation{{}}},
+						},
+					},
 				},
 			},
+			wantViolations: 10,
+			wantPhases:     1,
+			wantRules:      1,
+		},
+		{
+			name: "empty output",
+			output: &prompt.PromptOutput{
+				TotalViolations: 0,
+				TotalRules:      0,
+				Phases:          []prompt.PhaseGroup{},
+			},
+			wantViolations: 0,
+			wantPhases:     0,
+			wantRules:      0,
 		},
 	}
 
-	// Verify structure
-	if output.TotalViolations != 10 {
-		t.Errorf("TotalViolations = %d, want 10", output.TotalViolations)
-	}
+	// Run test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Verify structure
+			if tt.output.TotalViolations != tt.wantViolations {
+				t.Errorf("TotalViolations = %d, want %d", tt.output.TotalViolations, tt.wantViolations)
+			}
 
-	// Verify phases
-	if len(output.Phases) != 1 {
-		t.Errorf("len(Phases) = %d, want 1", len(output.Phases))
-	}
+			// Verify phases
+			if len(tt.output.Phases) != tt.wantPhases {
+				t.Errorf("len(Phases) = %d, want %d", len(tt.output.Phases), tt.wantPhases)
+			}
 
-	// Verify phase rules
-	if len(output.Phases[0].Rules) != 1 {
-		t.Errorf("len(Phases[0].Rules) = %d, want 1", len(output.Phases[0].Rules))
+			// Verify phase rules if phases exist
+			if tt.wantPhases > 0 && len(tt.output.Phases[0].Rules) != tt.wantRules {
+				t.Errorf("len(Phases[0].Rules) = %d, want %d", len(tt.output.Phases[0].Rules), tt.wantRules)
+			}
+		})
 	}
 }

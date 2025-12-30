@@ -22,6 +22,7 @@ func Test_typeFunctions(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - public functions tested via external tests
@@ -41,6 +42,7 @@ func Test_makeConstants(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.got != tt.expected {
 				t.Errorf("%s = %d, want %d", tt.name, tt.got, tt.expected)
@@ -125,6 +127,7 @@ func Test_hasPositiveLength(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := HasPositiveLength(tt.pass, tt.expr)
@@ -167,6 +170,7 @@ func Test_hasPositiveLengthWithConstant(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			expr := &ast.Ident{Name: "const"}

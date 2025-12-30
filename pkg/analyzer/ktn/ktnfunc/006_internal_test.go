@@ -20,6 +20,7 @@ func Test_runFunc006_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec règle désactivée
@@ -54,6 +55,7 @@ func Test_runFunc006_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec fichier exclu
@@ -120,6 +122,7 @@ func Test_runFunc006(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique principale est dans external tests
@@ -145,6 +148,7 @@ func Test_countEffectiveParams(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test avec nil params
@@ -167,6 +171,7 @@ func Test_analyzeFuncParams(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

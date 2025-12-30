@@ -36,6 +36,7 @@ func TestIsTestFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := shared.IsTestFile(tt.filename)
 			if got != tt.want {
@@ -94,6 +95,7 @@ func TestIsTestFunction(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := shared.IsTestFunction(tt.funcDecl)
 			if got != tt.want {
@@ -152,6 +154,7 @@ func TestIsUnitTestFunction(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := shared.IsUnitTestFunction(tt.funcDecl)
 			if got != tt.want {
@@ -189,6 +192,7 @@ func TestIsExportedFunction(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := shared.IsExportedFunction(tt.funcDecl)
 			if got != tt.want {

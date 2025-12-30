@@ -22,6 +22,7 @@ func Test_runVar010(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
 		})
@@ -36,6 +37,7 @@ func Test_checkLoopBodyVar015(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks loop bodies
 		})
@@ -50,6 +52,7 @@ func Test_checkAssignmentForBuffer(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks assignments for buffers
 		})
@@ -64,6 +67,7 @@ func Test_checkMakeCallForByteSlice(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks make calls for byte slices
 		})
@@ -78,6 +82,7 @@ func Test_runVar010_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -135,6 +140,7 @@ func Test_runVar010_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion

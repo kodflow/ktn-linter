@@ -23,6 +23,7 @@ func Test_runVar004(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
 		})
@@ -68,6 +69,7 @@ func Test_isAppendCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isAppendCall(tt.expr)
 			// Vérification du résultat
@@ -118,6 +120,7 @@ func Test_isSliceArrayOrMap(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isSliceArrayOrMap(tt.typeExpr)
 			// Vérification du résultat
@@ -161,6 +164,7 @@ func Test_isInReturnStatement(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isInReturnStatement(tt.stack)
 			// Vérification du résultat
@@ -210,6 +214,7 @@ func Test_isInStructLiteral(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isInStructLiteral(tt.stack)
 			// Vérification du résultat
@@ -228,6 +233,7 @@ func Test_collectAppendVariables(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function collects append variables
 		})
@@ -242,6 +248,7 @@ func Test_checkMakeCalls(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks make calls
 		})
@@ -256,6 +263,7 @@ func Test_checkMakeCalls_nonCallExpr(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -299,6 +307,7 @@ func Test_checkMakeCalls_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion
@@ -351,6 +360,7 @@ func Test_checkMakeCall_notMake(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -376,6 +386,7 @@ func Test_checkMakeCall_wrongArgs(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -413,6 +424,7 @@ func Test_checkEmptySliceLiterals(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks empty slice literals
 		})
@@ -427,6 +439,7 @@ func Test_checkMakeCall_notSlice(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -474,6 +487,7 @@ func Test_checkCompositeLit_nonEmptySlice(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			ctx := &litCheckContext{
@@ -507,6 +521,7 @@ func Test_checkCompositeLit_invalidIndex(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			ctx := &litCheckContext{
@@ -540,6 +555,7 @@ func Test_checkCompositeLit_notSliceType(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -594,6 +610,7 @@ func Test_runVar004_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -651,6 +668,7 @@ func Test_runVar004_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion
@@ -710,6 +728,7 @@ func Test_checkMakeCall(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -724,6 +743,7 @@ func Test_checkCompositeLit(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -738,6 +758,7 @@ func Test_checkCompositeLit_notIdent(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -794,6 +815,7 @@ func Test_checkCompositeLit_notUsedWithAppend(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -844,6 +866,7 @@ func Test_checkCompositeLit_inReturnStmt(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -898,6 +921,7 @@ func Test_checkCompositeLit_inStructLiteral(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test

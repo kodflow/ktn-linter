@@ -22,6 +22,7 @@ func Test_runVar008(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
 		})
@@ -73,6 +74,7 @@ func Test_isSliceOrMapAlloc(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isSliceOrMapAlloc(tt.expr)
 			// Vérification du résultat
@@ -91,6 +93,7 @@ func Test_checkLoopBodyForAlloc_nilBody(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -113,6 +116,7 @@ func Test_checkStmtForAlloc_emptyStmt(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -141,6 +145,7 @@ func Test_checkAssignForAlloc(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks assignments for allocations
 		})
@@ -197,6 +202,7 @@ func Test_checkDeclForAlloc(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create real pass with no-op reporter
 			pass := &analysis.Pass{
@@ -253,6 +259,7 @@ func Test_isByteSliceMake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isByteSliceMake(tt.call)
 			// Vérification du résultat
@@ -271,6 +278,7 @@ func Test_runVar008_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -328,6 +336,7 @@ func Test_runVar008_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion
@@ -387,6 +396,7 @@ func Test_checkLoopBodyForAlloc(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -401,6 +411,7 @@ func Test_checkStmtForAlloc(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -415,6 +426,7 @@ func Test_checkStmtForAlloc_assignStmt(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{
@@ -445,6 +457,7 @@ func Test_checkStmtForAlloc_declStmt(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			pass := &analysis.Pass{

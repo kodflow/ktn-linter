@@ -2,10 +2,10 @@
 package formatter
 
 import (
-	"bytes"
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/severity"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -14,30 +14,71 @@ import (
 // Params:
 //   - t: testing object for running test cases
 func Test_jsonFormatter_buildResult(t *testing.T) {
-	// Create formatter
-	f := &jsonFormatter{verbose: false}
-
-	// Create fileset and position
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create test diagnostic
-	diag := analysis.Diagnostic{
-		Pos:     file.Pos(10),
-		Message: "KTN-VAR-001: test message",
+	// Define test cases
+	tests := []struct {
+		name           string
+		verbose        bool
+		message        string
+		expectedRuleID string
+		expectedLevel  string
+	}{
+		{
+			// Test error severity rule
+			name:           "error severity rule",
+			verbose:        false,
+			message:        "KTN-VAR-001: test message",
+			expectedRuleID: "KTN-VAR-001",
+			expectedLevel:  "error",
+		},
+		{
+			// Test warning severity rule
+			name:           "warning severity rule",
+			verbose:        false,
+			message:        "KTN-VAR-003: test message",
+			expectedRuleID: "KTN-VAR-003",
+			expectedLevel:  "warning",
+		},
+		{
+			// Test info severity rule
+			name:           "info severity rule",
+			verbose:        false,
+			message:        "KTN-CONST-002: test message",
+			expectedRuleID: "KTN-CONST-002",
+			expectedLevel:  "info",
+		},
 	}
 
-	// Build result
-	result := f.buildResult(fset, diag)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &jsonFormatter{verbose: tt.verbose}
 
-	// Verify rule ID
-	if result.RuleID != "KTN-VAR-001" {
-		t.Errorf("expected ruleId KTN-VAR-001, got %s", result.RuleID)
-	}
+			// Create fileset and position
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
 
-	// Verify level is error (KTN-VAR-001 is error severity)
-	if result.Level != "error" {
-		t.Errorf("expected level error, got %s", result.Level)
+			// Create test diagnostic
+			diag := analysis.Diagnostic{
+				Pos:     file.Pos(10),
+				Message: tt.message,
+			}
+
+			// Build result
+			result := f.buildResult(fset, diag)
+
+			// Verify rule ID
+			if result.RuleID != tt.expectedRuleID {
+				t.Errorf("expected ruleId %s, got %s", tt.expectedRuleID, result.RuleID)
+			}
+
+			// Verify level
+			if result.Level != tt.expectedLevel {
+				t.Errorf("expected level %s, got %s", tt.expectedLevel, result.Level)
+			}
+		})
 	}
 }
 
@@ -46,15 +87,54 @@ func Test_jsonFormatter_buildResult(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func Test_jsonFormatter_severityToLevel(t *testing.T) {
-	// Create formatter
-	f := &jsonFormatter{}
+	// Define test cases
+	tests := []struct {
+		name           string
+		severityLevel  severity.Level
+		expectedResult string
+	}{
+		{
+			// Test error severity
+			name:           "error severity returns error",
+			severityLevel:  severity.SeverityError,
+			expectedResult: "error",
+		},
+		{
+			// Test warning severity
+			name:           "warning severity returns warning",
+			severityLevel:  severity.SeverityWarning,
+			expectedResult: "warning",
+		},
+		{
+			// Test info severity
+			name:           "info severity returns info",
+			severityLevel:  severity.SeverityInfo,
+			expectedResult: "info",
+		},
+		{
+			// Test unknown severity defaults to warning
+			name:           "unknown severity defaults to warning",
+			severityLevel:  severity.Level(99),
+			expectedResult: "warning",
+		},
+	}
 
-	// Test unknown severity defaults to warning
-	result := f.severityToLevel(99)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &jsonFormatter{}
 
-	// Verify default
-	if result != "warning" {
-		t.Errorf("expected warning for unknown severity, got %s", result)
+			// Call severityToLevel
+			result := f.severityToLevel(tt.severityLevel)
+
+			// Verify result
+			if result != tt.expectedResult {
+				t.Errorf("severityToLevel(%v) = %s, want %s", tt.severityLevel, result, tt.expectedResult)
+			}
+		})
 	}
 }
 
@@ -63,70 +143,73 @@ func Test_jsonFormatter_severityToLevel(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func Test_jsonFormatter_buildReport(t *testing.T) {
-	// Create formatter
-	f := &jsonFormatter{verbose: false}
-
-	// Create fileset
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create test diagnostics
-	diags := []analysis.Diagnostic{
+	// Define test cases
+	tests := []struct {
+		name              string
+		verbose           bool
+		diagnosticCount   int
+		expectedTotal     int
+		expectedResultLen int
+	}{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: error message",
+			// Test empty diagnostics
+			name:              "empty diagnostics",
+			verbose:           false,
+			diagnosticCount:   0,
+			expectedTotal:     0,
+			expectedResultLen: 0,
 		},
 		{
-			Pos:     file.Pos(20),
-			Message: "KTN-CONST-002: info message",
+			// Test single diagnostic
+			name:              "single diagnostic",
+			verbose:           false,
+			diagnosticCount:   1,
+			expectedTotal:     1,
+			expectedResultLen: 1,
 		},
-	}
-
-	// Build report
-	report := f.buildReport(fset, diags)
-
-	// Verify total issues
-	if report.Summary.TotalIssues != 2 {
-		t.Errorf("expected 2 total issues, got %d", report.Summary.TotalIssues)
-	}
-
-	// Verify results count
-	if len(report.Results) != 2 {
-		t.Errorf("expected 2 results, got %d", len(report.Results))
-	}
-}
-
-// Test_jsonFormatter_Format tests the Format method.
-//
-// Params:
-//   - t: testing object for running test cases
-func Test_jsonFormatter_Format(t *testing.T) {
-	// Create buffer for output
-	var buf bytes.Buffer
-
-	// Create formatter
-	f := &jsonFormatter{
-		writer:  &buf,
-		verbose: false,
-	}
-
-	// Create fileset
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-
-	// Create test diagnostics
-	diags := []analysis.Diagnostic{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: test message",
+			// Test multiple diagnostics
+			name:              "multiple diagnostics",
+			verbose:           false,
+			diagnosticCount:   3,
+			expectedTotal:     3,
+			expectedResultLen: 3,
 		},
 	}
 
-	// Format diagnostics
-	f.Format(fset, diags)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create formatter
+			f := &jsonFormatter{verbose: tt.verbose}
 
-	// Verify output is not empty
-	if buf.Len() == 0 {
-		t.Error("expected non-empty output")
+			// Create fileset
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+
+			// Create test diagnostics
+			diags := make([]analysis.Diagnostic, tt.diagnosticCount)
+			for i := range diags {
+				diags[i] = analysis.Diagnostic{
+					Pos:     file.Pos(10 + i),
+					Message: "KTN-VAR-001: test message",
+				}
+			}
+
+			// Build report
+			report := f.buildReport(fset, diags)
+
+			// Verify total issues
+			if report.Summary.TotalIssues != tt.expectedTotal {
+				t.Errorf("expected %d total issues, got %d", tt.expectedTotal, report.Summary.TotalIssues)
+			}
+
+			// Verify results count
+			if len(report.Results) != tt.expectedResultLen {
+				t.Errorf("expected %d results, got %d", tt.expectedResultLen, len(report.Results))
+			}
+		})
 	}
 }

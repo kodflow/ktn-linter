@@ -18,6 +18,7 @@ func Test_runConst002(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API
 		})
@@ -84,6 +85,7 @@ func Test_collectDeclarations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			file := tt.setupFile()
 			decls := collectDeclarations(file)
@@ -138,6 +140,7 @@ func Test_checkScatteredConstBlocks(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
 			reportCount := 0
@@ -200,6 +203,7 @@ func Test_checkConstBeforeVar(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
 			reportCount := 0
@@ -255,6 +259,7 @@ func Test_checkConstBeforeType(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
 			reportCount := 0
@@ -311,6 +316,7 @@ func Test_checkConstBeforeFunc(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
 			reportCount := 0
@@ -378,6 +384,7 @@ func Test_checkConstOrder(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
 			reportCount := 0
@@ -408,6 +415,7 @@ func Test_fileDeclarations(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create declarations
 			decls := &fileDeclarations{
@@ -455,6 +463,7 @@ func Test_runConst002_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup: disable the rule
@@ -560,6 +569,7 @@ func Test_extractConstTypeName(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractConstTypeName(tt.genDecl)
 			// Verify result
@@ -633,6 +643,7 @@ func Test_collectTypeNames(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			typeNames := make(map[string]token.Pos)
 			collectTypeNames(tt.genDecl, typeNames)
@@ -694,6 +705,7 @@ func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal mock pass
 			reportCount := 0
@@ -722,6 +734,7 @@ func Test_runConst002_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup: exclude test.go

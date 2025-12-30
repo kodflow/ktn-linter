@@ -44,6 +44,7 @@ func TestIsSnakeCase(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isSnakeCase(tt.input)
 			// Vérification du résultat
@@ -85,6 +86,7 @@ func TestCheckVar018Names(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test\n"+tt.code, 0)
@@ -161,6 +163,7 @@ var (
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -204,6 +207,7 @@ func Test_runVar018_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -261,6 +265,7 @@ func Test_runVar018_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion

@@ -15,6 +15,7 @@ func Test_categoryAnalyzers(t *testing.T) {
 
 	// Iteration over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			categories := categoryAnalyzers()
 			// Check that map is not empty
@@ -55,6 +56,7 @@ func Test_codeToAnalyzerName(t *testing.T) {
 
 	// Iteration over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := codeToAnalyzerName(tt.code)
 			// Check result matches expected

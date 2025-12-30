@@ -40,6 +40,7 @@ func Test_MarkdownFormatter_writeHeader(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -85,6 +86,7 @@ func Test_MarkdownFormatter_writeInstructions(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -116,14 +118,14 @@ func Test_MarkdownFormatter_writeInstructions(t *testing.T) {
 func Test_MarkdownFormatter_writePhase(t *testing.T) {
 	tests := []struct {
 		name       string
-		phase      PhaseGroup
+		phase      *PhaseGroup
 		phaseNum   int
 		wantHeader string
 		wantRerun  bool
 	}{
 		{
 			name: "structural phase with rerun",
-			phase: PhaseGroup{
+			phase: &PhaseGroup{
 				Phase:       PhaseStructural,
 				Name:        "Structural Changes",
 				Description: "May create/move/delete files.",
@@ -138,7 +140,7 @@ func Test_MarkdownFormatter_writePhase(t *testing.T) {
 		},
 		{
 			name: "local phase without rerun",
-			phase: PhaseGroup{
+			phase: &PhaseGroup{
 				Phase:       PhaseLocal,
 				Name:        "Local Fixes",
 				Description: "Code modifications within existing files.",
@@ -155,6 +157,7 @@ func Test_MarkdownFormatter_writePhase(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -185,13 +188,13 @@ func Test_MarkdownFormatter_writePhase(t *testing.T) {
 func Test_MarkdownFormatter_writeRule(t *testing.T) {
 	tests := []struct {
 		name        string
-		rule        RuleViolations
+		rule        *RuleViolations
 		wantHeader  string
 		wantExample bool
 	}{
 		{
 			name: "rule with example",
-			rule: RuleViolations{
+			rule: &RuleViolations{
 				Code:        "KTN-FUNC-001",
 				Category:    "func",
 				Description: "Function too long",
@@ -203,7 +206,7 @@ func Test_MarkdownFormatter_writeRule(t *testing.T) {
 		},
 		{
 			name: "rule without example",
-			rule: RuleViolations{
+			rule: &RuleViolations{
 				Code:        "KTN-VAR-002",
 				Category:    "var",
 				Description: "Variable naming",
@@ -217,6 +220,7 @@ func Test_MarkdownFormatter_writeRule(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -273,6 +277,7 @@ func Test_MarkdownFormatter_writeGoodExample(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -330,6 +335,7 @@ func Test_MarkdownFormatter_writeViolations(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -382,6 +388,7 @@ func Test_MarkdownFormatter_writeViolation(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -399,54 +406,6 @@ func Test_MarkdownFormatter_writeViolation(t *testing.T) {
 			// Verify not contains unwanted
 			if tt.notWant != "" && strings.Contains(result, tt.notWant) {
 				t.Errorf("writeViolation() = %q, should not contain %q", result, tt.notWant)
-			}
-		})
-	}
-}
-
-// TestMarkdownFormatter_Format tests the Format public method.
-//
-// Params:
-//   - t: testing object
-func TestMarkdownFormatter_Format(t *testing.T) {
-	tests := []struct {
-		name   string
-		output *PromptOutput
-	}{
-		{
-			name: "complete format",
-			output: &PromptOutput{
-				TotalViolations: 1,
-				TotalRules:      1,
-				Phases: []PhaseGroup{
-					{
-						Phase: PhaseLocal,
-						Name:  "Local Fixes",
-						Rules: []RuleViolations{
-							{
-								Code:       "KTN-TEST-001",
-								Category:   "test",
-								Violations: []Violation{{FilePath: "t.go", Line: 1}},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Run test cases
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			f := NewMarkdownFormatter(&buf)
-
-			// Call Format
-			f.Format(tt.output)
-
-			// Verify output is not empty
-			if buf.Len() == 0 {
-				t.Error("Format() produced empty output")
 			}
 		})
 	}

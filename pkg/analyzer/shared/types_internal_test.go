@@ -25,6 +25,7 @@ func Test_hasSerializableSuffix(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := hasSerializableSuffix(tt.input)
 			// Vérification résultat
@@ -68,6 +69,7 @@ type User struct {}`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
@@ -117,6 +119,7 @@ func Test_hasSerializationTags_NilFields(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create struct with nil fields
 			structType := &ast.StructType{

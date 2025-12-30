@@ -192,6 +192,7 @@ type myInterface interface { Method() }
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset config
 			config.Reset()
@@ -295,6 +296,7 @@ func Test_extractTypeIdents(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -354,6 +356,7 @@ func Test_extractTypeIdents_nil(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractTypeIdents(tt.expr)
 			if len(result) != len(tt.expected) {
@@ -411,6 +414,7 @@ type MyInterface interface { Method() }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &config.Config{
 				Rules: make(map[string]*config.RuleConfig),
@@ -479,6 +483,7 @@ type myI interface { M() }`,
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -539,6 +544,7 @@ func Test_reportUnused(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			reportCount := 0
@@ -589,6 +595,7 @@ func Test_runInterface001_disabled(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
@@ -665,6 +672,7 @@ func Test_extractTypesFromNode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -716,6 +724,7 @@ func f(x interface{}) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -764,6 +773,7 @@ func Test_extractEmbeddedTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -787,17 +797,6 @@ func Test_extractEmbeddedTypes(t *testing.T) {
 	}
 }
 
-// Test_extractEmbeddedTypes_nil tests nil handling in extractEmbeddedTypes.
-func Test_extractEmbeddedTypes_nil(t *testing.T) {
-	// Test with nil Methods
-	nilMethodsIface := &ast.InterfaceType{
-		Methods: nil,
-	}
-	result := extractEmbeddedTypes(nilMethodsIface)
-	if len(result) != 0 {
-		t.Errorf("expected empty result for nil Methods, got %v", result)
-	}
-}
 
 // Test_extractMapTypes tests map type extraction.
 func Test_extractMapTypes(t *testing.T) {
@@ -814,6 +813,7 @@ func Test_extractMapTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -862,6 +862,7 @@ func Test_extractFuncTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -900,6 +901,7 @@ func Test_extractIndexTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -938,6 +940,7 @@ func Test_extractIndexListTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -986,6 +989,7 @@ func Test_collectInterfacesFromFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1026,6 +1030,7 @@ func Test_findUsagesInFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1067,6 +1072,7 @@ func Test_extractSimpleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1115,6 +1121,7 @@ func Test_extractRecursiveType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1173,6 +1180,7 @@ func Test_extractCompositeType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1191,6 +1199,32 @@ func Test_extractCompositeType(t *testing.T) {
 
 			if count < tt.expected {
 				t.Errorf("got %d types, want at least %d", count, tt.expected)
+			}
+		})
+	}
+}
+// Test_extractEmbeddedTypes_nil tests nil handling in extractEmbeddedTypes.
+func Test_extractEmbeddedTypes_nil(t *testing.T) {
+	tests := []struct {
+		name     string
+		iface    *ast.InterfaceType
+		expected int
+	}{
+		{
+			name: "nil Methods",
+			iface: &ast.InterfaceType{
+				Methods: nil,
+			},
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractEmbeddedTypes(tt.iface)
+			if len(result) != tt.expected {
+				t.Errorf("expected %d types, got %d", tt.expected, len(result))
 			}
 		})
 	}

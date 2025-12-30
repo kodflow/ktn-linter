@@ -17,6 +17,7 @@ func Test_registerConstMessages(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := Get(tt.code)
 			if !found {

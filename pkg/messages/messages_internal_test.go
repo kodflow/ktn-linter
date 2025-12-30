@@ -26,6 +26,7 @@ func Test_registryInitialized(t *testing.T) {
 
 	// Itération sur les règles essentielles
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Vérification existence
 			if _, ok := registry[tt.code]; !ok {

@@ -77,6 +77,7 @@ func Test_hasErrorCaseCoverage(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -169,6 +170,7 @@ func Test_isErrorIndicatorName(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isErrorIndicatorName(tt.varName)
 			// Vérification de la condition
@@ -231,6 +233,7 @@ func TestSomething(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -298,6 +301,7 @@ func Test_runTest011(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if Analyzer011 == nil || Analyzer011.Name != tt.expectedName {
 				t.Errorf("Analyzer011 invalid: nil=%v, Name=%q, want %q",
@@ -341,6 +345,7 @@ func Test_collectFuncSignatures(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -419,6 +424,7 @@ func Test_addFuncSignature(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -465,6 +471,7 @@ func Test_collectExternalSourceSignatures(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Vérification que la fonction existe
 			// Les tests réels nécessitent un *analysis.Pass complet
@@ -497,6 +504,7 @@ func Test_scanSourceFile(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := make(map[string]testedFuncInfo)
 			// Appel avec fichier inexistant ne doit pas paniquer
@@ -517,6 +525,7 @@ func Test_extractFuncInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -548,6 +557,7 @@ func Test_functionReturnsError(t *testing.T) {
 	}
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test\n"+tt.code, 0)
@@ -605,6 +615,7 @@ func Test_isErrorType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -637,6 +648,7 @@ func Test_ExtractReceiverTypeName013(t *testing.T) {
 	}
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test\ntype Service struct{}\n"+tt.code, 0)
@@ -692,6 +704,7 @@ func Test_analyzeTestFunction(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			code := "package test\n" + tt.funcCode + "\n" + tt.testCode
 			fset := token.NewFileSet()
@@ -760,6 +773,7 @@ func Test_ParseTestName013(t *testing.T) {
 	}
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			target, ok := shared.ParseTestName(tt.input)
 			// Vérification ok
@@ -787,6 +801,7 @@ func Test_checkErrorInNode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -818,6 +833,7 @@ func Test_checkErrorInBasicLit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -881,6 +897,7 @@ func Test_checkErrorInKeyValue(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -912,6 +929,7 @@ func Test_runTest011_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -926,6 +944,7 @@ func Test_runTest011_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -952,6 +971,7 @@ func Test_hasErrorTestCases_nonKeyValue(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1000,6 +1020,7 @@ func Test_scanSourceFile_various(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := make(map[string]testedFuncInfo)
 			// These should all return early without adding signatures
@@ -1036,6 +1057,7 @@ func Test_checkErrorInBasicLit_nonString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1079,6 +1101,7 @@ func Test_addFuncSignature_mockReceiver(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -1120,6 +1143,7 @@ func Test_analyzeTestFunction_noMatch(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			code := "package test\n" + tt.testCode
 			fset := token.NewFileSet()
@@ -1181,6 +1205,7 @@ func Test_collectExternalSourceSignatures_emptyPass(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			pass := &analysis.Pass{
@@ -1222,6 +1247,7 @@ func Test_functionReturnsError_nilType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := functionReturnsError(tt.funcDecl)
 			if got != tt.want {
@@ -1240,6 +1266,7 @@ func Test_scanSourceFile_parseError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := make(map[string]testedFuncInfo)
 			// Invalid Go file that will fail parsing
@@ -1266,6 +1293,7 @@ func Test_analyzeTestFunction_emptyKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			code := "package test\n" + tt.testCode
 			fset := token.NewFileSet()

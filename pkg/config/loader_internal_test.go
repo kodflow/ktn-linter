@@ -26,6 +26,7 @@ func TestLoadFromFile_ReadError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := loadFromFile(tt.path)
 			if (err != nil) != tt.wantErr {
@@ -58,6 +59,7 @@ func TestLoadFromFile_InvalidYAML(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if err := os.WriteFile(path, []byte(tt.content), 0644); err != nil {
 				t.Fatalf("Failed to write test file: %v", err)
@@ -114,6 +116,7 @@ func TestValidateConfig_InvalidVersion(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateConfig(tt.cfg)
 			if (err != nil) != tt.wantErr {
@@ -158,6 +161,7 @@ func TestValidateConfig_NegativeThreshold(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{
 				Version: 1,
@@ -229,6 +233,7 @@ func TestValidateConfig_EmptyPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateConfig(tt.cfg)
 			if (err != nil) != tt.wantErr {
@@ -246,6 +251,7 @@ func TestLoadFromDefaultLocations_NoConfigFile(t *testing.T) {
 		{"no config file returns default"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a temp directory with no config files
 			tmpDir := t.TempDir()
@@ -284,6 +290,7 @@ func TestLoadFromDefaultLocations_FindsInCurrentDir(t *testing.T) {
 		{"finds config in current directory"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 
@@ -330,6 +337,7 @@ func TestLoadFromDefaultLocations_ErrorInFile(t *testing.T) {
 		{"error on invalid file"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 
@@ -370,6 +378,7 @@ func TestLoadFromDefaultLocations_AlternateFileName(t *testing.T) {
 		{"finds alternate filename"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 
@@ -445,6 +454,7 @@ func TestFileExists(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			path := tt.setup()
 			got := fileExists(path)
@@ -463,6 +473,7 @@ func TestLoadAndSet_Error(t *testing.T) {
 		{"error on nonexistent file"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := LoadAndSet("/nonexistent/path/config.yaml")
 			if err == nil {
@@ -480,6 +491,7 @@ func TestMustLoad_Success(t *testing.T) {
 		{"success with valid file"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			path := filepath.Join(tmpDir, "config.yaml")
@@ -525,6 +537,7 @@ func TestSaveToFile_WriteError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := SaveToFile(cfg, tt.path)
 			if (err != nil) != tt.wantErr {
@@ -542,6 +555,7 @@ func TestSaveToFile_NilConfig(t *testing.T) {
 		{"nil config marshals to null"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpPath := filepath.Join(t.TempDir(), "nil-config.yaml")
 			// nil config should marshal successfully to "null"
@@ -571,6 +585,7 @@ func TestSaveToFile_ComplexConfig(t *testing.T) {
 		{"complex config saves and loads correctly"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tmpPath := filepath.Join(t.TempDir(), "complex-config.yaml")
 
@@ -638,6 +653,7 @@ func TestLoad_EmptyPathReturnsDefault(t *testing.T) {
 		{"empty path returns default config"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Change to directory with no config
 			tmpDir := t.TempDir()
@@ -696,6 +712,7 @@ func TestValidateConfig_MultipleErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateConfig(tt.cfg)
 			if (err != nil) != tt.wantErr {
@@ -714,6 +731,7 @@ func Test_loadFromFile(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via Load function
 		})
@@ -729,6 +747,7 @@ func Test_loadFromDefaultLocations(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via Load("") function
 		})
@@ -744,6 +763,7 @@ func Test_validateConfig(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via Load function
 		})

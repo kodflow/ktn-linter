@@ -27,6 +27,7 @@ func TestGetExprAsString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -66,6 +67,7 @@ func TestGetExprAsStringWithUnknownType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.GetExprAsString(tt.expr)
 			if got != tt.expected {
@@ -90,6 +92,7 @@ func TestGetTypeString(t *testing.T) {
 
 	fset := token.NewFileSet()
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
 			if err != nil {
@@ -119,6 +122,7 @@ func TestGetTypeStringWithNoType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -152,6 +156,7 @@ func TestGetExprAsStringNested(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {

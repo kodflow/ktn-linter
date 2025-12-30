@@ -21,6 +21,7 @@ func TestTest009(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tc := range tests {
+		tc := tc // Capture range variable
 		t.Run(tc.name, func(t *testing.T) {
 			diags := testhelper.RunAnalyzerOnPackage(t, ktntest.Analyzer009, tc.dir)
 			// Vérification du nombre de diagnostics

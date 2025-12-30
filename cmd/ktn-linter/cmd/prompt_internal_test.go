@@ -40,6 +40,7 @@ func Test_runPrompt(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -174,6 +175,7 @@ func Test_parsePromptOptions(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 			opts := parsePromptOptions()
@@ -258,6 +260,7 @@ exclude:
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -353,6 +356,7 @@ func Test_getPromptOutputWriter(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -423,6 +427,27 @@ func Test_getPromptOutputWriter(t *testing.T) {
 	}
 }
 
+// TestPromptCommand_Registered tests that the prompt command is registered in rootCmd.
+//
+// Params:
+//   - t: testing object
+func TestPromptCommand_Registered(t *testing.T) {
+	// Search for prompt command in rootCmd's subcommands
+	found := false
+	for _, c := range rootCmd.Commands() {
+		// Check if command name matches
+		if c.Name() == "prompt" {
+			found = true
+			break
+		}
+	}
+
+	// Verify command is registered
+	if !found {
+		t.Fatalf("expected %q command to be registered", "prompt")
+	}
+}
+
 // TestPromptCmdStructure tests the prompt command structure.
 //
 // Params:
@@ -482,6 +507,7 @@ func TestPromptCmdStructure(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
 		})

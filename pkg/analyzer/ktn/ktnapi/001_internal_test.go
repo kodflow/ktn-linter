@@ -42,6 +42,7 @@ func Test_isAllowedType(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isAllowedType(tt.pkgPath, tt.typeName)
 			// Vérifier le résultat
@@ -69,6 +70,7 @@ func Test_getBaseIdent(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := getBaseIdent(tt.expr)
 			// Vérifier si nil attendu
@@ -110,6 +112,7 @@ func Test_suggestInterfaceName(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := suggestInterfaceName(tt.paramName, tt.typeName)
 			// Vérifier le résultat
@@ -137,6 +140,7 @@ func Test_lowerFirst(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := lowerFirst(tt.input)
 			// Vérifier le résultat
@@ -161,6 +165,7 @@ func Test_getSortedMethods(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := getSortedMethods(tt.methods)
 			// Vérifier la longueur
@@ -190,6 +195,7 @@ func Test_runAPI001(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config
 			config.Set(&config.Config{
@@ -264,6 +270,7 @@ func DoSomething() {}`,
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse test code
 			fset := token.NewFileSet()
@@ -342,6 +349,7 @@ func DoSomething(a int, b string) {}`,
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse test code
 			fset := token.NewFileSet()
@@ -436,6 +444,7 @@ func Test_getExternalConcreteType(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := getExternalConcreteType(pass, tt.typ)
 			// Verify nil expectation
@@ -479,6 +488,7 @@ func DoSomething(m *MyType) { m.Method() }`,
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse test code
 			fset := token.NewFileSet()
@@ -539,6 +549,7 @@ func Test_matchesParam(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create pass with minimal info
 			pass := &analysis.Pass{
@@ -579,6 +590,7 @@ func Test_reportDiagnostics(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse test code
 			src := `package test
@@ -661,6 +673,7 @@ func Test_formatTypeName(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := formatTypeName(tt.typ)
 			// Verify result matches expected
@@ -684,6 +697,7 @@ func Test_shortQualifier(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := shortQualifier(tt.pkg)
 			// Verify result
@@ -721,6 +735,7 @@ func Test_formatTupleTypes(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := formatTupleTypes(tt.tuple)
 			// Verify result
@@ -785,6 +800,7 @@ func Test_formatMethodSignature(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := formatMethodSignature(tt.methodName, tt.sig)
 			// Verify result matches expected
@@ -845,6 +861,7 @@ func Test_buildInterfaceSignatures(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := buildInterfaceSignatures(named, tt.methods)
 			// Verify result
@@ -904,6 +921,7 @@ func Test_getMethodSignature(t *testing.T) {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := getMethodSignature(named, tt.methodName)
 			// Verify result
@@ -953,6 +971,7 @@ func DoSomething(req *http.Request) string {
 
 	// Iterate over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse test code
 			fset := token.NewFileSet()

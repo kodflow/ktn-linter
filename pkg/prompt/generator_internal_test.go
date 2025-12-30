@@ -13,61 +13,49 @@ import (
 // Params:
 //   - t: testing object
 func Test_Generator_runLinter(t *testing.T) {
-	// Test with valid pattern
-	t.Run("valid pattern returns diagnostics slice", func(t *testing.T) {
-		var stderr bytes.Buffer
-		gen := NewGenerator(&stderr, false)
+	// Define test cases for runLinter
+	tests := []struct {
+		name        string
+		patterns    []string
+		opts        orchestrator.Options
+		expectError bool
+	}{
+		{
+			name:        "valid pattern returns diagnostics slice",
+			patterns:    []string{"github.com/kodflow/ktn-linter/pkg/prompt"},
+			opts:        orchestrator.Options{},
+			expectError: false,
+		},
+		{
+			name:        "invalid pattern returns error",
+			patterns:    []string{"invalid/nonexistent/package/path"},
+			opts:        orchestrator.Options{},
+			expectError: true,
+		},
+		{
+			name:        "invalid analyzer returns error",
+			patterns:    []string{"github.com/kodflow/ktn-linter/pkg/prompt"},
+			opts:        orchestrator.Options{OnlyRule: "INVALID-RULE-999"},
+			expectError: true,
+		},
+	}
 
-		// Run linter on self
-		diags, err := gen.runLinter(
-			[]string{"github.com/kodflow/ktn-linter/pkg/prompt"},
-			orchestrator.Options{},
-		)
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var stderr bytes.Buffer
+			gen := NewGenerator(&stderr, false)
 
-		// Should not error
-		if err != nil {
-			t.Errorf("runLinter() error = %v", err)
-			return
-		}
+			// Run linter
+			_, err := gen.runLinter(tt.patterns, tt.opts)
 
-		// Diagnostics should be a non-nil slice (can be empty if no issues)
-		// The slice being non-nil is what matters, not its length
-		_ = diags // Just verify it returned without error
-	})
-
-	// Test with invalid pattern
-	t.Run("invalid pattern returns error", func(t *testing.T) {
-		var stderr bytes.Buffer
-		gen := NewGenerator(&stderr, false)
-
-		// Run linter with invalid pattern
-		_, err := gen.runLinter(
-			[]string{"invalid/nonexistent/package/path"},
-			orchestrator.Options{},
-		)
-
-		// Should return error
-		if err == nil {
-			t.Error("runLinter() with invalid pattern should return error")
-		}
-	})
-
-	// Test with invalid analyzer option
-	t.Run("invalid analyzer returns error", func(t *testing.T) {
-		var stderr bytes.Buffer
-		gen := NewGenerator(&stderr, false)
-
-		// Run linter with invalid analyzer
-		_, err := gen.runLinter(
-			[]string{"github.com/kodflow/ktn-linter/pkg/prompt"},
-			orchestrator.Options{OnlyRule: "INVALID-RULE-999"},
-		)
-
-		// Should return error
-		if err == nil {
-			t.Error("runLinter() with invalid analyzer should return error")
-		}
-	})
+			// Verify error expectation symmetrically
+			if (err != nil) != tt.expectError {
+				t.Fatalf("runLinter() error = %v, expectError %v", err, tt.expectError)
+			}
+		})
+	}
 }
 
 // Test_buildModernizeCode tests modernize analyzer code generation.
@@ -109,6 +97,7 @@ func Test_buildModernizeCode(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := buildModernizeCode(tt.analyzerName)
 			// Verify result
@@ -184,6 +173,7 @@ func Test_extractRuleCode(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractRuleCode(tt.message)
 			// Verify extracted code matches expected
@@ -259,6 +249,7 @@ func Test_extractMessage(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractMessage(tt.message)
 			// Verify extracted message matches expected
@@ -274,17 +265,29 @@ func Test_extractMessage(t *testing.T) {
 // Params:
 //   - t: testing object
 func Test_Generator_collectViolations(t *testing.T) {
-	// Create generator for testing
-	gen := &Generator{}
+	// Define test cases for collectViolations
+	tests := []struct {
+		name         string
+		expectedLen  int
+	}{
+		{
+			name:        "empty diagnostics returns empty map",
+			expectedLen: 0,
+		},
+	}
 
-	// Test with empty diagnostics
-	t.Run("empty diagnostics", func(t *testing.T) {
-		result := gen.collectViolations(nil)
-		// Verify empty result
-		if len(result) != 0 {
-			t.Errorf("collectViolations([]) returned %d rules, want 0", len(result))
-		}
-	})
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			gen := &Generator{}
+			result := gen.collectViolations(nil)
+			// Verify empty result
+			if len(result) != tt.expectedLen {
+				t.Errorf("collectViolations([]) returned %d rules, want %d", len(result), tt.expectedLen)
+			}
+		})
+	}
 }
 
 // Test_Generator_enrichWithMetadata tests metadata enrichment.
@@ -292,38 +295,51 @@ func Test_Generator_collectViolations(t *testing.T) {
 // Params:
 //   - t: testing object
 func Test_Generator_enrichWithMetadata(t *testing.T) {
-	// Create generator for testing
-	gen := &Generator{}
-
-	// Test with empty violations
-	t.Run("empty violations", func(t *testing.T) {
-		violations := make(map[string]*RuleViolations)
-		result := gen.enrichWithMetadata(violations)
-		// Verify empty result
-		if len(result) != 0 {
-			t.Errorf("enrichWithMetadata({}) returned %d rules, want 0", len(result))
-		}
-	})
-
-	// Test with rule violations
-	t.Run("enrich violations", func(t *testing.T) {
-		violations := map[string]*RuleViolations{
-			"KTN-FUNC-001": {
-				Code:       "KTN-FUNC-001",
-				Violations: []Violation{{FilePath: "test.go", Line: 10}},
+	// Define test cases for enrichWithMetadata
+	tests := []struct {
+		name         string
+		violations   map[string]*RuleViolations
+		expectedLen  int
+		expectedCode string
+	}{
+		{
+			name:         "empty violations returns empty slice",
+			violations:   make(map[string]*RuleViolations),
+			expectedLen:  0,
+			expectedCode: "",
+		},
+		{
+			name: "enriches violations with metadata",
+			violations: map[string]*RuleViolations{
+				"KTN-FUNC-001": {
+					Code:       "KTN-FUNC-001",
+					Violations: []Violation{{FilePath: "test.go", Line: 10}},
+				},
 			},
-		}
-		result := gen.enrichWithMetadata(violations)
-		// Verify result length
-		if len(result) != 1 {
-			t.Errorf("enrichWithMetadata() returned %d rules, want 1", len(result))
-			return
-		}
-		// Verify enrichment occurred (metadata should be populated)
-		if result[0].Code != "KTN-FUNC-001" {
-			t.Errorf("enrichWithMetadata() code = %q, want KTN-FUNC-001", result[0].Code)
-		}
-	})
+			expectedLen:  1,
+			expectedCode: "KTN-FUNC-001",
+		},
+	}
+
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			gen := &Generator{}
+			result := gen.enrichWithMetadata(tt.violations)
+			// Verify result length
+			if len(result) != tt.expectedLen {
+				t.Errorf("enrichWithMetadata() returned %d rules, want %d", len(result), tt.expectedLen)
+				return
+			}
+			// Verify code if expected
+			if tt.expectedCode != "" && len(result) > 0 {
+				if result[0].Code != tt.expectedCode {
+					t.Errorf("enrichWithMetadata() code = %q, want %q", result[0].Code, tt.expectedCode)
+				}
+			}
+		})
+	}
 }
 
 // Test_Generator_buildOutput tests output construction.
@@ -331,45 +347,57 @@ func Test_Generator_enrichWithMetadata(t *testing.T) {
 // Params:
 //   - t: testing object
 func Test_Generator_buildOutput(t *testing.T) {
-	// Create generator for testing
-	gen := &Generator{}
+	// Define test cases for buildOutput
+	tests := []struct {
+		name               string
+		rules              []RuleViolations
+		phases             []PhaseGroup
+		expectedViolations int
+		expectedRules      int
+		expectedPhases     int
+	}{
+		{
+			name:               "empty output returns zeros",
+			rules:              []RuleViolations{},
+			phases:             []PhaseGroup{},
+			expectedViolations: 0,
+			expectedRules:      0,
+			expectedPhases:     0,
+		},
+		{
+			name: "with violations counts correctly",
+			rules: []RuleViolations{
+				{Code: "KTN-FUNC-001", Violations: []Violation{{}, {}}},
+				{Code: "KTN-FUNC-002", Violations: []Violation{{}}},
+			},
+			phases:             []PhaseGroup{{Phase: PhaseLocal}},
+			expectedViolations: 3,
+			expectedRules:      2,
+			expectedPhases:     1,
+		},
+	}
 
-	// Test with empty rules and phases
-	t.Run("empty output", func(t *testing.T) {
-		output := gen.buildOutput([]RuleViolations{}, []PhaseGroup{})
-		// Verify zero violations
-		if output.TotalViolations != 0 {
-			t.Errorf("buildOutput() TotalViolations = %d, want 0", output.TotalViolations)
-		}
-		// Verify zero rules
-		if output.TotalRules != 0 {
-			t.Errorf("buildOutput() TotalRules = %d, want 0", output.TotalRules)
-		}
-	})
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			gen := &Generator{}
+			output := gen.buildOutput(tt.rules, tt.phases)
 
-	// Test with rules and violations
-	t.Run("with violations", func(t *testing.T) {
-		rules := []RuleViolations{
-			{Code: "KTN-FUNC-001", Violations: []Violation{{}, {}}},
-			{Code: "KTN-FUNC-002", Violations: []Violation{{}}},
-		}
-		phases := []PhaseGroup{{Phase: PhaseLocal}}
+			// Verify total violations count
+			if output.TotalViolations != tt.expectedViolations {
+				t.Errorf("buildOutput() TotalViolations = %d, want %d", output.TotalViolations, tt.expectedViolations)
+			}
 
-		output := gen.buildOutput(rules, phases)
+			// Verify total rules count
+			if output.TotalRules != tt.expectedRules {
+				t.Errorf("buildOutput() TotalRules = %d, want %d", output.TotalRules, tt.expectedRules)
+			}
 
-		// Verify total violations count
-		if output.TotalViolations != 3 {
-			t.Errorf("buildOutput() TotalViolations = %d, want 3", output.TotalViolations)
-		}
-
-		// Verify total rules count
-		if output.TotalRules != 2 {
-			t.Errorf("buildOutput() TotalRules = %d, want 2", output.TotalRules)
-		}
-
-		// Verify phases
-		if len(output.Phases) != 1 {
-			t.Errorf("buildOutput() len(Phases) = %d, want 1", len(output.Phases))
-		}
-	})
+			// Verify phases count
+			if len(output.Phases) != tt.expectedPhases {
+				t.Errorf("buildOutput() len(Phases) = %d, want %d", len(output.Phases), tt.expectedPhases)
+			}
+		})
+	}
 }

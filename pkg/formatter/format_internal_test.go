@@ -5,60 +5,61 @@ import (
 	"testing"
 )
 
-// TestOutputFormat_IsValid tests the IsValid method on OutputFormat.
+// Test_outputFormatString tests the string representation of OutputFormat.
 //
 // Params:
 //   - t: testing object for running test cases
-func TestOutputFormat_IsValid(t *testing.T) {
+func Test_outputFormatString(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name     string
 		format   OutputFormat
-		expected bool
+		expected string
 	}{
 		{
-			// Test FormatText is valid
-			name:     "text is valid",
+			// Test text format string
+			name:     "text format string",
 			format:   FormatText,
-			expected: true,
+			expected: "text",
 		},
 		{
-			// Test FormatJSON is valid
-			name:     "json is valid",
+			// Test json format string
+			name:     "json format string",
 			format:   FormatJSON,
-			expected: true,
+			expected: "json",
 		},
 		{
-			// Test FormatSARIF is valid
-			name:     "sarif is valid",
+			// Test sarif format string
+			name:     "sarif format string",
 			format:   FormatSARIF,
-			expected: true,
+			expected: "sarif",
 		},
 		{
-			// Test unknown format is invalid
-			name:     "xml is invalid",
-			format:   OutputFormat("xml"),
-			expected: false,
+			// Test custom format string
+			name:     "custom format preserves value",
+			format:   OutputFormat("custom"),
+			expected: "custom",
 		},
 		{
-			// Test empty format is invalid
-			name:     "empty is invalid",
+			// Test empty format string
+			name:     "empty format string",
 			format:   OutputFormat(""),
-			expected: false,
+			expected: "",
 		},
 	}
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
-			// Check if format is valid
-			result := tt.format.IsValid()
+			// Get string representation
+			result := string(tt.format)
 
-			// Verify result matches expected
+			// Verify string matches expected
 			if result != tt.expected {
 				// Report error with details
-				t.Errorf("OutputFormat(%q).IsValid() = %v, want %v", tt.format, result, tt.expected)
+				t.Errorf("string(%v) = %q, want %q", tt.format, result, tt.expected)
 			}
 		})
 	}

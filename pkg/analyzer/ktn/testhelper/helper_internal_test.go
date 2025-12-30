@@ -45,6 +45,7 @@ func Test_runAnalyzerInternal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Création d'un analyzer de test simple
 			testAnalyzer := &analysis.Analyzer{
@@ -78,6 +79,7 @@ func TestRunAnalyzerWithDiagnostics(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			testAnalyzer := &analysis.Analyzer{
 				Name: "test",
@@ -122,6 +124,7 @@ func TestRunAnalyzerWithRequiredAnalyzer(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Analyzer qui nécessite inspect
 			testAnalyzer := &analysis.Analyzer{
@@ -170,6 +173,7 @@ func TestRunAnalyzerError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Utilisation d'un mock qui ne fail pas vraiment
 			mockT := &MockTestingT{}
@@ -219,6 +223,7 @@ func TestRunAnalyzerRequiredError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			mockT := &MockTestingT{}
 
@@ -275,6 +280,7 @@ func TestRunAnalyzerInvalidFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			mockT := &MockTestingT{}
 
@@ -367,6 +373,7 @@ func Test_testGoodBadInternal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			mockT := &MockTestingT{}
 
@@ -426,6 +433,7 @@ func TestTestGoodBadWithErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			mockT := &MockTestingT{}
 
@@ -487,6 +495,7 @@ func TestTestGoodBadWrongErrorCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			mockT := &MockTestingT{}
 
@@ -600,6 +609,7 @@ func TestRunAnalyzerWithReadFile(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
@@ -636,6 +646,7 @@ var anotherWrongType bool = 42
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Simple analyzer - le Error callback sera appelé lors du type checking
 			testAnalyzer := &analysis.Analyzer{
@@ -722,6 +733,7 @@ func Test_testGoodBadWithFilesInternal(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			mockT := &MockTestingT{}
@@ -868,6 +880,7 @@ func TestParsePackageFiles(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			dir := tt.setupFunc(t)
@@ -1018,6 +1031,7 @@ func Test_runAnalyzerOnPackageInternal(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := tt.setupFiles(t)
@@ -1171,6 +1185,7 @@ func Test_testGoodBadPackageInternal(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
@@ -1230,6 +1245,7 @@ func Test_createTypeInfo(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			info := createTypeInfo()
@@ -1265,6 +1281,7 @@ func Test_createPass(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -1306,6 +1323,7 @@ func Test_createPassForPackage(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()

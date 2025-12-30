@@ -31,6 +31,7 @@ func TestConst001(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors, bad.go: 16 errors (constants without explicit type)
 			// - 8 basic + 5 numeric + 1 rune + 1 iota + 2 multi-name - 1 inherited = 16

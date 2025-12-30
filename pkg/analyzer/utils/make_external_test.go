@@ -42,6 +42,7 @@ func TestIsMakeCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -95,6 +96,7 @@ func TestIsMakeCallWithLength(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -148,6 +150,7 @@ func TestIsMakeSliceCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -201,6 +204,7 @@ func TestIsMakeMapCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -254,6 +258,7 @@ func TestIsMakeByteSliceCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -293,6 +298,7 @@ func TestIsMakeCallsWithNoArgs(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Appel fonction

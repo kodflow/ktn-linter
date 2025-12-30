@@ -46,7 +46,7 @@ coverage: ## Génère le rapport de couverture (COVERAGE.MD)
 	@./scripts/generate-coverage.sh
 
 lint: ## Lance le linter sur le projet (exclut *_test.go)
-	@go run -buildvcs=false ./cmd/ktn-linter lint ./...
+	@go run -buildvcs=false ./cmd/ktn-linter --verbose lint ./...
 
 validate: build ## Valide que tous les testdata good.go/bad.go sont corrects
 	@./scripts/validate-testdata.sh

@@ -32,6 +32,7 @@ func TestFunc005(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// func005/bad.go doit avoir 2 erreurs (TooLong: 36 lignes, VeryLong: 37 lignes)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataFolder, tt.expectedErrors)

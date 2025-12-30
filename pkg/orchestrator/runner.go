@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -65,10 +66,13 @@ func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Ana
 	workerCount := runtime.GOMAXPROCS(0)
 	pkgChan := make(chan *packages.Package, len(pkgs))
 
+	// Pre-allocate results map size for workers
+	resultsMapSize := len(analyzers)
+
 	// Start workers (one goroutine per available CPU)
 	for range workerCount {
 		wg.Add(1)
-		go r.worker(analyzers, pkgChan, diagChan, &wg)
+		go r.worker(analyzers, pkgChan, diagChan, &wg, resultsMapSize)
 	}
 
 	// Send packages to workers
@@ -101,11 +105,13 @@ func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Ana
 //   - pkgChan: channel receiving packages to analyze
 //   - diagChan: channel for sending diagnostics
 //   - wg: wait group to signal completion
+//   - resultsMapSize: pre-computed size for results map
 func (r *AnalysisRunner) worker(
 	analyzers []*analysis.Analyzer,
 	pkgChan <-chan *packages.Package,
 	diagChan chan<- DiagnosticResult,
 	wg waitGroup,
+	resultsMapSize int,
 ) {
 	defer wg.Done()
 
@@ -113,7 +119,7 @@ func (r *AnalysisRunner) worker(
 	for pkg := range pkgChan {
 		// Create fresh results map for each package to avoid cache corruption
 		// between packages (inspect.Analyzer caches AST data that is package-specific)
-		results := make(map[*analysis.Analyzer]any, len(analyzers))
+		results := make(map[*analysis.Analyzer]any, resultsMapSize)
 		r.analyzePackageParallel(pkg, analyzers, results, diagChan)
 	}
 }
@@ -250,20 +256,111 @@ func (r *AnalysisRunner) createPassParallel(
 // Returns:
 //   - []*ast.File: files to analyze
 func (r *AnalysisRunner) selectFiles(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet) []*ast.File {
-	// Test analyzers need all files
+	// First filter globally excluded files (applies to ALL analyzers)
+	files := r.filterExcludedFiles(pkg.Syntax, fset)
+
+	// Test analyzers need both test and non-test files (skip test file filtering)
 	if strings.HasPrefix(a.Name, "ktntest") {
-		// Return all files
-		return pkg.Syntax
+		// Return all non-excluded files for test analyzers
+		return files
 	}
 
 	// Check force mode
-	if config.Get().ForceAllRulesOnTests {
-		// Return all files
-		return pkg.Syntax
+	cfg := config.Get()
+	// Return all files if force mode is enabled
+	if cfg != nil && cfg.ForceAllRulesOnTests {
+		// Return all non-excluded files
+		return files
 	}
 
 	// Filter test files for other analyzers
-	return r.filterTestFiles(pkg.Syntax, fset)
+	return r.filterTestFiles(files, fset)
+}
+
+// filterExcludedFiles filters out globally excluded files.
+//
+// Params:
+//   - files: files to filter
+//   - fset: fileset for position
+//
+// Returns:
+//   - []*ast.File: filtered files (excluding globally excluded)
+func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
+	cfg := config.Get()
+	// Check if filtering should be skipped
+	if !r.shouldFilterExcluded(cfg, fset) {
+		return files
+	}
+
+	filtered := make([]*ast.File, 0, len(files))
+	// Iterate over files
+	for _, file := range files {
+		// Check if file should be included
+		if r.shouldIncludeFile(file, fset, cfg) {
+			filtered = append(filtered, file)
+		}
+	}
+	// Return filtered files
+	return filtered
+}
+
+// shouldFilterExcluded checks if exclusion filtering should be applied.
+//
+// Params:
+//   - cfg: configuration
+//   - fset: fileset for position
+//
+// Returns:
+//   - bool: true if filtering should be applied
+func (r *AnalysisRunner) shouldFilterExcluded(cfg *config.Config, fset *token.FileSet) bool {
+	// Check if no exclusions configured
+	if cfg == nil || len(cfg.Exclude) == 0 {
+		return false
+	}
+	// Check if fileset is available
+	return fset != nil
+}
+
+// shouldIncludeFile checks if a file should be included (not excluded).
+//
+// Params:
+//   - file: file to check
+//   - fset: fileset for position
+//   - cfg: configuration
+//
+// Returns:
+//   - bool: true if file should be included
+func (r *AnalysisRunner) shouldIncludeFile(file *ast.File, fset *token.FileSet, cfg *config.Config) bool {
+	pos := fset.Position(file.Pos())
+	// Include files with empty filename (synthetic/unknown position)
+	if pos.Filename == "" {
+		return true
+	}
+
+	// Normalize path for cross-platform compatibility
+	cleaned := filepath.Clean(pos.Filename)
+	base := filepath.Base(cleaned)
+	filename := filepath.ToSlash(cleaned)
+
+	// Check if file is excluded globally
+	if cfg.IsFileExcludedGlobally(filename) || cfg.IsFileExcludedGlobally(base) {
+		// Log excluded file when verbose mode is enabled
+		r.logExcludedFile(filename)
+		return false
+	}
+	// File should be included
+	return true
+}
+
+// logExcludedFile logs an excluded file if verbose mode is enabled.
+//
+// Params:
+//   - filename: path of excluded file
+func (r *AnalysisRunner) logExcludedFile(filename string) {
+	// Check if verbose logging is enabled
+	if r.verbose && r.stderr != nil {
+		fmt.Fprintf(r.stderr, "Excluding file: %s\n", filename)
+	}
 }
 
 // filterTestFiles filters out test files.

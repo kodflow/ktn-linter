@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"runtime"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -50,12 +51,19 @@ func createTypeInfo() *types.Info {
 // Returns:
 //   - *analysis.Pass: contexte d'analyse créé
 func createPass(fset *token.FileSet, file *ast.File, pkg *types.Package, info *types.Info, diagnostics *[]analysis.Diagnostic) *analysis.Pass {
+	// Get type sizes with fallback to amd64 if GOARCH is unsupported
+	sizes := types.SizesFor("gc", runtime.GOARCH)
+	// Fallback to amd64 if sizes is nil
+	if sizes == nil {
+		sizes = types.SizesFor("gc", "amd64")
+	}
 	// Retour du pass d'analyse
 	return &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		Pkg:       pkg,
-		TypesInfo: info,
+		Fset:       fset,
+		Files:      []*ast.File{file},
+		Pkg:        pkg,
+		TypesInfo:  info,
+		TypesSizes: sizes,
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},
@@ -239,12 +247,19 @@ func createPassForPackage(fset *token.FileSet, files []*ast.File, diagnostics *[
 	info := createTypeInfo()
 	pkg, _ := conf.Check(files[0].Name.Name, fset, files, info)
 
+	// Get type sizes with fallback to amd64 if GOARCH is unsupported
+	sizes := types.SizesFor("gc", runtime.GOARCH)
+	// Fallback to amd64 if sizes is nil
+	if sizes == nil {
+		sizes = types.SizesFor("gc", "amd64")
+	}
 	// Retour du pass d'analyse
 	return &analysis.Pass{
-		Fset:      fset,
-		Files:     files,
-		Pkg:       pkg,
-		TypesInfo: info,
+		Fset:       fset,
+		Files:      files,
+		Pkg:        pkg,
+		TypesInfo:  info,
+		TypesSizes: sizes,
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},

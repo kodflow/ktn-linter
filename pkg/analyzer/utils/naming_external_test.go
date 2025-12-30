@@ -25,6 +25,7 @@ func TestIsAllCaps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsAllCaps(tt.input)
 			if got != tt.expected {
@@ -54,6 +55,7 @@ func TestIsMixedCaps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsMixedCaps(tt.input)
 			if got != tt.expected {
@@ -82,6 +84,7 @@ func TestIsValidInitialism(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsValidInitialism(tt.input)
 			if got != tt.expected {

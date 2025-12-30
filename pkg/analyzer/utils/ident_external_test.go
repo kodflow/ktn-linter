@@ -42,6 +42,7 @@ func TestIsIdentCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -107,6 +108,7 @@ func TestIsBuiltinCall(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -150,6 +152,7 @@ func TestGetIdentName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -198,6 +201,7 @@ func TestExtractVarName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -247,6 +251,7 @@ func TestExtractVarNameExtended(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {
@@ -311,6 +316,7 @@ func TestExtractVarNameEdgeCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := parser.ParseExpr(tt.code)
 			if err != nil {

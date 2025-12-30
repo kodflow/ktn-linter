@@ -46,6 +46,7 @@ func TestAnalyzerSelector_selectSingleRule(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			selector := NewAnalyzerSelector(&buf, tt.verbose)
@@ -105,6 +106,7 @@ func TestAnalyzerSelector_selectByCategory(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			selector := NewAnalyzerSelector(&buf, tt.verbose)
@@ -151,6 +153,7 @@ func TestAnalyzerSelector_selectAll(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			selector := NewAnalyzerSelector(&buf, tt.verbose)

@@ -32,6 +32,7 @@ func TestFunc010(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// func010/bad.go doit avoir 4 erreurs (naked returns dans fonctions trop longues)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataFolder, tt.expectedErrors)

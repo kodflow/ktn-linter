@@ -35,6 +35,7 @@ func bar(x int) { _ = x + 1 }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -116,6 +117,7 @@ func TestParamCheckContext_checkParam008(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := &paramCheckContext{
@@ -157,6 +159,7 @@ func Test_reportUnusedWithBypass(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
@@ -193,6 +196,7 @@ func Test_reportUnusedParam(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
@@ -232,6 +236,7 @@ func (t T) bar() {}`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -310,6 +315,7 @@ func (t *T) bar() {}`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -381,6 +387,7 @@ func Test_getReceiverType_nilType(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Créer un pass avec TypesInfo vide
@@ -410,6 +417,7 @@ func Test_analyzeFunc008_noBody(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Créer une fonction sans body
@@ -450,6 +458,7 @@ func Test_collectFunctionParams008_noParams(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Créer une fonction sans paramètres
@@ -479,6 +488,7 @@ func Test_checkParam008_underscore(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			ctx := &paramCheckContext{
@@ -508,6 +518,7 @@ func Test_findImplementedInterface_noReceiver(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -566,6 +577,7 @@ func Test_findImplementedInterface_nilRecvType(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -639,6 +651,7 @@ func Test_interfaceHasMethod(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := interfaceHasMethod(iface, tt.methodName)
@@ -677,6 +690,7 @@ func Test_implementsWithPointer(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := implementsWithPointer(typ, iface)
@@ -723,6 +737,7 @@ func qux(a, b int, c string) {}`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -785,6 +800,7 @@ func bar(x int) { _ = x }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -856,6 +872,7 @@ func bar(x int) { y := x + 1; _ = y }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -918,6 +935,7 @@ func bar(x int) { y := x }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -999,6 +1017,7 @@ func Test_findInterfaceForMethod(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -1051,6 +1070,7 @@ func Test_searchInterfaceInScope(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := searchInterfaceInScope(scope, typ, tt.methodName)
@@ -1070,6 +1090,7 @@ func Test_runFunc008_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec règle désactivée
@@ -1104,6 +1125,7 @@ func Test_runFunc008_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec fichier exclu
@@ -1178,6 +1200,7 @@ func foo() {}`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Créer un FileSet

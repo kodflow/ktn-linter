@@ -46,6 +46,7 @@ func TestIsFileExcludedGlobally(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.IsFileExcludedGlobally(tt.filename)
 			if got != tt.want {
@@ -140,6 +141,7 @@ func TestMatchesAnyPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := cfg.matchesAnyPattern(tt.filename, tt.patterns)
 			if got != tt.want {
@@ -246,6 +248,7 @@ func TestMatchDoubleStarPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := cfg.matchDoubleStarPattern(tt.filename, tt.pattern)
 			if got != tt.want {
@@ -386,6 +389,7 @@ func TestMerge(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.base.Merge(tt.other)
 			tt.check(t, tt.base)
@@ -401,6 +405,7 @@ func TestGet_Concurrent(t *testing.T) {
 		{"concurrent access safety"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset global state to nil
 			globalConfigMu.Lock()
@@ -439,6 +444,7 @@ func TestGet_ExistingConfig(t *testing.T) {
 		{"existing config not re-initialized"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Set a custom config
 			customCfg := &Config{
@@ -473,6 +479,7 @@ func TestGet_DoubleCheckLocking(t *testing.T) {
 		{"double-check locking pattern"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Force nil state
 			globalConfigMu.Lock()
@@ -540,6 +547,7 @@ func TestIsRuleEnabled_NilRules(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.IsRuleEnabled(tt.ruleCode)
 			if got != tt.want {
@@ -590,6 +598,7 @@ func TestGetThreshold_NilCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.GetThreshold(tt.ruleCode, tt.defaultValue)
 			if got != tt.want {
@@ -629,6 +638,7 @@ func TestIsFileExcluded_NilRules(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.cfg.IsFileExcluded(tt.ruleCode, tt.filename)
 			if got != tt.want {
@@ -646,6 +656,7 @@ func TestBoolAndIntHelpers(t *testing.T) {
 		{"helper functions work correctly"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test Bool helper
 			b := Bool(false)
@@ -724,6 +735,7 @@ func TestConfig_matchesAnyPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{}
 			got := cfg.matchesAnyPattern(tt.filename, tt.patterns)
@@ -793,6 +805,7 @@ func TestConfig_matchDoubleStarPattern(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{}
 			got := cfg.matchDoubleStarPattern(tt.filename, tt.pattern)
@@ -816,6 +829,7 @@ func TestConfig_matchTriplePattern(t *testing.T) {
 		{"middle no match", []string{"", "/testdata/", ""}, "foo/other/bar", false},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Config{}
 			got := c.matchTriplePattern(tt.parts, tt.filename)
@@ -840,6 +854,7 @@ func TestConfig_matchPrefixSuffix(t *testing.T) {
 		{"no match", []string{"src/", ".go"}, "other/path", false},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Config{}
 			got := c.matchPrefixSuffix(tt.parts, tt.filename)

@@ -54,6 +54,7 @@ var x = 1`,
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
@@ -142,6 +143,7 @@ const (
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
@@ -195,6 +197,7 @@ func main() {}
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Check comment exists
 			if tt.commentIdx >= len(file.Comments) {
@@ -236,6 +239,7 @@ func main() { x := 1 // inline
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
@@ -296,6 +300,7 @@ func Test_containsURL(t *testing.T) {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := containsURL(tt.text)
 			// Check result matches expectation
@@ -337,6 +342,7 @@ func Test_checkMultiLineComment(t *testing.T) {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			comment := &ast.Comment{
@@ -371,6 +377,7 @@ func Test_runComment001_ruleDisabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -439,6 +446,7 @@ func Test_runComment001_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -510,6 +518,7 @@ func Test_runComment001_customThreshold(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configure custom threshold
@@ -601,6 +610,7 @@ func main() {
 
 	// Iteration over table-driven tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.ParseComments)
@@ -636,6 +646,7 @@ func Test_runComment001_multiLineBlock(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
