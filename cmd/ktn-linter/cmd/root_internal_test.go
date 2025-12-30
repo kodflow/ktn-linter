@@ -27,9 +27,9 @@ func mockExitInCmd(t *testing.T) (restore func()) {
 
 	return func() {
 		OsExit = oldOsExit
-		// Reset Cobra flags to defaults
-		rootCmd.PersistentFlags().Set(flagVerbose, "false")
-		rootCmd.PersistentFlags().Set(flagCategory, "")
+		// Reset Cobra flags to defaults (best effort cleanup - ignore errors)
+		_ = rootCmd.PersistentFlags().Set(flagVerbose, "false")
+		_ = rootCmd.PersistentFlags().Set(flagCategory, "")
 	}
 }
 

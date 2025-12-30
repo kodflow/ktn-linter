@@ -142,8 +142,10 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 		}
 		// Grande struct détectée
 		msg, ok := messages.Get(ruleCodeVar009)
-		// Check for missing message to prevent panic
+		// Check for missing message and use fallback
 		if !ok {
+			pass.Reportf(pos, "%s: struct size %d bytes exceeds %d bytes; use pointer",
+				ruleCodeVar009, displaySize, maxBytes)
 			return
 		}
 		pass.Reportf(

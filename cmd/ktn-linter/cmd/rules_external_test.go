@@ -38,8 +38,11 @@ func TestRulesOutput_Formatting(t *testing.T) {
 				Categories: []string{},
 				Rules:      []rules.RuleInfo{},
 			},
-			format:          "markdown",
-			expectedStrings: []string{},
+			format: "markdown",
+			expectedStrings: []string{
+				"KTN-Linter Rules Reference",
+				"**Total**: 0 rules",
+			},
 		},
 	}
 

@@ -74,8 +74,9 @@ func (t T) foo() {}
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},
-				TypesInfo: info,
-				Report:    func(_d analysis.Diagnostic) {},
+				TypesInfo:  info,
+				TypesSizes: types.SizesFor("gc", "amd64"),
+				Report:     func(_d analysis.Diagnostic) {},
 			}
 
 			_, err = runVar009(pass)

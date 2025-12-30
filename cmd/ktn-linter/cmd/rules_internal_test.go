@@ -25,8 +25,12 @@ func Test_parseRulesOptions(t *testing.T) {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset flags
-			rulesCmd.Flags().Set(flagRulesFormat, tt.wantFormat)
-			rulesCmd.Flags().Set(flagRulesNoExamples, "false")
+			if err := rulesCmd.Flags().Set(flagRulesFormat, tt.wantFormat); err != nil {
+				t.Fatalf("failed to set %s: %v", flagRulesFormat, err)
+			}
+			if err := rulesCmd.Flags().Set(flagRulesNoExamples, "false"); err != nil {
+				t.Fatalf("failed to set %s: %v", flagRulesNoExamples, err)
+			}
 
 			opts := parseRulesOptions(rulesCmd)
 			if opts.Format != tt.wantFormat {
@@ -419,13 +423,18 @@ func Test_runRules(t *testing.T) {
 			prevFormat, _ := rulesCmd.Flags().GetString(flagRulesFormat)
 			prevNoExamples, _ := rulesCmd.Flags().GetString(flagRulesNoExamples)
 			t.Cleanup(func() {
-				rulesCmd.Flags().Set(flagRulesFormat, prevFormat)
-				rulesCmd.Flags().Set(flagRulesNoExamples, prevNoExamples)
+				// Best effort cleanup - ignore errors
+				_ = rulesCmd.Flags().Set(flagRulesFormat, prevFormat)
+				_ = rulesCmd.Flags().Set(flagRulesNoExamples, prevNoExamples)
 			})
 
 			// Set flags
-			rulesCmd.Flags().Set(flagRulesFormat, tt.format)
-			rulesCmd.Flags().Set(flagRulesNoExamples, tt.noExamples)
+			if err := rulesCmd.Flags().Set(flagRulesFormat, tt.format); err != nil {
+				t.Fatalf("failed to set %s: %v", flagRulesFormat, err)
+			}
+			if err := rulesCmd.Flags().Set(flagRulesNoExamples, tt.noExamples); err != nil {
+				t.Fatalf("failed to set %s: %v", flagRulesNoExamples, err)
+			}
 
 			// runRules writes to stdout, just verify it doesn't panic
 			runRules(rulesCmd, []string{})
