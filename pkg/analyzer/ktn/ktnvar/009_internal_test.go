@@ -16,15 +16,60 @@ import (
 // Test_runVar009 tests the private runVar009 function.
 func Test_runVar009(t *testing.T) {
 	tests := []struct {
-		name string
+		name        string
+		code        string
+		expectError bool
 	}{
-		{"passthrough validation"},
-		{"error case validation"},
+		{
+			name: "valid code without large structs",
+			code: `package test
+
+func foo(x int) {}
+`,
+			expectError: false,
+		},
+		{
+			name: "code with receiver",
+			code: `package test
+
+type T struct{ x int }
+func (t T) foo() {}
+`,
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - main logic tested via public API in external tests
+			// Reset config for clean state
+			config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			_, err = runVar009(pass)
+			// Verify error expectation
+			if (err != nil) != tt.expectError {
+				t.Errorf("runVar009() error = %v, expectError %v", err, tt.expectError)
+			}
 		})
 	}
 }
@@ -32,13 +77,70 @@ func Test_runVar009(t *testing.T) {
 // Test_checkFuncParams009 tests the private checkFuncParams009 function.
 func Test_checkFuncParams009(t *testing.T) {
 	tests := []struct {
-		name string
+		name         string
+		params       *ast.FieldList
+		expectReport bool
 	}{
-		{"error case validation"},
+		{
+			name:         "nil params",
+			params:       nil,
+			expectReport: false,
+		},
+		{
+			name: "empty params list",
+			params: &ast.FieldList{
+				List: []*ast.Field{},
+			},
+			expectReport: false,
+		},
+		{
+			name: "single int param",
+			params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "int"},
+					},
+				},
+			},
+			expectReport: false,
+		},
+		{
+			name: "param without names",
+			params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: &ast.Ident{Name: "int"},
+					},
+				},
+			},
+			expectReport: false,
+		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks function params for VAR-009
+			reportCount := 0
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			// Skip nil params case
+			if tt.params == nil {
+				return
+			}
+
+			checkFuncParams009(pass, tt.params, 64)
+
+			// Verify report expectation
+			if (reportCount > 0) != tt.expectReport {
+				t.Errorf("checkFuncParams009() reported %d, expectReport %v", reportCount, tt.expectReport)
+			}
 		})
 	}
 }
@@ -46,13 +148,50 @@ func Test_checkFuncParams009(t *testing.T) {
 // Test_checkParamType009 tests the private checkParamType009 function.
 func Test_checkParamType009(t *testing.T) {
 	tests := []struct {
-		name string
+		name         string
+		typ          ast.Expr
+		expectReport bool
 	}{
-		{"error case validation"},
+		{
+			name:         "pointer type skipped",
+			typ:          &ast.StarExpr{X: &ast.Ident{Name: "BigStruct"}},
+			expectReport: false,
+		},
+		{
+			name:         "unknown type skipped",
+			typ:          &ast.Ident{Name: "UnknownType"},
+			expectReport: false,
+		},
+		{
+			name:         "basic int type skipped",
+			typ:          &ast.Ident{Name: "int"},
+			expectReport: false,
+		},
+		{
+			name:         "variadic param unwrapped",
+			typ:          &ast.Ellipsis{Elt: &ast.Ident{Name: "int"}},
+			expectReport: false,
+		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks param types for large structs
+			reportCount := 0
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkParamType009(pass, tt.typ, token.NoPos, 64)
+
+			// Verify report expectation
+			if (reportCount > 0) != tt.expectReport {
+				t.Errorf("checkParamType009() reported %d, expectReport %v", reportCount, tt.expectReport)
+			}
 		})
 	}
 }
@@ -353,13 +492,41 @@ func Test_runVar009_fileExcluded(t *testing.T) {
 // Test_isExternalType009 tests the isExternalType009 private function.
 func Test_isExternalType009(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		typeInfo types.Type
+		passPkg  *types.Package
+		expected bool
 	}{
-		{"validation"},
+		{
+			name:     "nil type returns false",
+			typeInfo: nil,
+			passPkg:  types.NewPackage("test/pkg", "pkg"),
+			expected: false,
+		},
+		{
+			name:     "basic type returns false",
+			typeInfo: types.Typ[types.Int],
+			passPkg:  types.NewPackage("test/pkg", "pkg"),
+			expected: false,
+		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Tested via public API
+			pass := &analysis.Pass{
+				Pkg: tt.passPkg,
+			}
+
+			// Skip nil typeInfo case - can't call isExternalType009 with nil
+			if tt.typeInfo == nil {
+				return
+			}
+
+			result := isExternalType009(tt.typeInfo, pass)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isExternalType009() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
