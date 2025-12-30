@@ -86,7 +86,12 @@ func Test_sarifFormatter_addRule(t *testing.T) {
 
 			// Verify rule was added
 			if len(run.Tool.Driver.Rules) != tt.expectedRules {
-				t.Errorf("expected %d rule, got %d", tt.expectedRules, len(run.Tool.Driver.Rules))
+				t.Fatalf("expected %d rule, got %d", tt.expectedRules, len(run.Tool.Driver.Rules))
+			}
+
+			// Guard clause for empty slice access
+			if len(run.Tool.Driver.Rules) == 0 {
+				t.Fatal("no rules found, cannot verify rule ID")
 			}
 
 			// Verify rule ID

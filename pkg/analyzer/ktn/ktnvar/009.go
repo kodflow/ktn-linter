@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"math"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -133,13 +134,19 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 	sizeBytes := getStructSize009(pass, typ)
 	// Check if size exceeds threshold
 	if sizeBytes > int64(maxBytes) {
+		// Guard against int64 to int overflow on 32-bit systems
+		displaySize := sizeBytes
+		// Cap displaySize to math.MaxInt32 for safe int cast
+		if displaySize > math.MaxInt32 {
+			displaySize = math.MaxInt32
+		}
 		// Grande struct détectée
 		msg, _ := messages.Get(ruleCodeVar009)
 		pass.Reportf(
 			pos,
 			"%s: %s",
 			ruleCodeVar009,
-			msg.Format(verbose, int(sizeBytes), maxBytes, maxBytes),
+			msg.Format(verbose, int(displaySize), maxBytes, maxBytes),
 		)
 	}
 }

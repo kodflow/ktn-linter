@@ -345,6 +345,7 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	newReq := req.Clone(req.Context())
 	newReq.URL = target
 	newReq.Host = target.Host
+	newReq.RequestURI = "" // Clear RequestURI to prevent HTTP client errors
 	newReq.Header = req.Header.Clone()
 
 	// Get transport with nil fallback (and prevent self-recursion)

@@ -60,7 +60,7 @@ func TestFindModules(t *testing.T) {
 		},
 		{
 			name:          "non-existent path returns empty",
-			paths:         []string{"/nonexistent/path"},
+			paths:         []string{filepath.Join(string(filepath.Separator), "nonexistent", "path")},
 			expectedCount: 0,
 		},
 		{

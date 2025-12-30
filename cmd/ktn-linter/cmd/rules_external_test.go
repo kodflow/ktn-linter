@@ -48,7 +48,7 @@ func TestRulesOutput_Formatting(t *testing.T) {
 			var buf bytes.Buffer
 
 			// Simulate markdown formatting
-			if tt.format == "markdown" && len(tt.output.Rules) > 0 {
+			if tt.format == "markdown" {
 				buf.WriteString("# KTN-Linter Rules Reference\n\n")
 				buf.WriteString(fmt.Sprintf(
 					"**Total**: %d rules | **Categories**: %s\n\n",
