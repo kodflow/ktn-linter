@@ -44,6 +44,7 @@ func Test_groupRulesByPhase(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := groupRulesByPhase(tt.rules)
 

@@ -320,6 +320,10 @@ type mockTransport struct {
 //   - *http.Response: the HTTP response
 //   - error: any error during transport
 func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if m == nil || m.client == nil {
+		return nil, http.ErrUseLastResponse
+	}
+
 	// Parse test-server base URL
 	base, err := url.Parse(m.url)
 	if err != nil {

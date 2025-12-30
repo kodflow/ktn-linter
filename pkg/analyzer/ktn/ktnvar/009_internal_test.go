@@ -54,15 +54,23 @@ func (t T) foo() {}
 
 			insp := inspector.New([]*ast.File{file})
 
+			// Properly type-check the code to populate TypesInfo
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Defs:  make(map[*ast.Ident]types.Object),
+				Uses:  make(map[*ast.Ident]types.Object),
+			}
+			conf := types.Config{}
+			pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
 			pass := &analysis.Pass{
 				Fset: fset,
+				Pkg:  pkg,
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},
-				TypesInfo: &types.Info{
-					Types: make(map[ast.Expr]types.TypeAndValue),
-				},
-				Report: func(_d analysis.Diagnostic) {},
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
 			}
 
 			_, err = runVar009(pass)
@@ -510,11 +518,6 @@ func Test_isExternalType009(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				Pkg: tt.passPkg,
-			}
-
-			// Skip nil typeInfo case - can't call isExternalType009 with nil
-			if tt.typeInfo == nil {
-				return
 			}
 
 			result := isExternalType009(tt.typeInfo, pass)

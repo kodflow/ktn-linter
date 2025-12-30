@@ -423,6 +423,27 @@ func Test_getPromptOutputWriter(t *testing.T) {
 	}
 }
 
+// TestPromptCommand_Registered tests that the prompt command is registered in rootCmd.
+//
+// Params:
+//   - t: testing object
+func TestPromptCommand_Registered(t *testing.T) {
+	// Search for prompt command in rootCmd's subcommands
+	found := false
+	for _, c := range rootCmd.Commands() {
+		// Check if command name matches
+		if c.Name() == "prompt" {
+			found = true
+			break
+		}
+	}
+
+	// Verify command is registered
+	if !found {
+		t.Fatalf("expected %q command to be registered", "prompt")
+	}
+}
+
 // TestPromptCmdStructure tests the prompt command structure.
 //
 // Params:

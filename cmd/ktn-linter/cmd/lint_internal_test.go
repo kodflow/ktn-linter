@@ -657,24 +657,29 @@ func Test_runMultiModulePipeline(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture
 		t.Run(tt.name, func(t *testing.T) {
 			orch := orchestrator.NewOrchestrator(os.Stderr, false)
 
 			diags, fset, err := runMultiModulePipeline(orch, tt.args, tt.opts)
 
-			// Verify error expectation
-			if tt.expectError && err == nil {
-				t.Error("expected error but got nil")
-			}
-			// Verify no error expectation
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected error: %v", err)
+			if tt.expectError {
+				if err == nil {
+					t.Error("expected error but got nil")
+				}
+				return
 			}
 
-			// Verify results type
-			if !tt.expectError {
-				_ = diags // Diagnostics slice
-				_ = fset  // FileSet pointer
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			// When no diagnostics exist, fset may be nil (expected behavior)
+			if fset == nil && len(diags) > 0 {
+				t.Fatal("expected non-nil FileSet when diagnostics exist")
+			}
+			if diags == nil {
+				t.Fatal("expected non-nil diagnostics slice on success")
 			}
 		})
 	}

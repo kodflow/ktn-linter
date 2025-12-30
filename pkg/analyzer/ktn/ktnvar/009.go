@@ -94,6 +94,10 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int
 	if params == nil {
 		return
 	}
+	// Clamp invalid threshold to default
+	if maxBytes <= 0 {
+		maxBytes = defaultMaxStructBytes
+	}
 	// Parcours des paramètres
 	for _, param := range params.List {
 		// Si le paramètre a des noms (ex: a, b T), vérifier chaque nom

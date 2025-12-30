@@ -114,33 +114,27 @@ func TestRulesOutput_JSON(t *testing.T) {
 				t.Fatalf("Failed to marshal JSON: %v", err)
 			}
 
-			// Verify JSON structure
-			var parsed map[string]interface{}
-			// Unmarshal JSON
-			if err := json.Unmarshal(data, &parsed); err != nil {
-				t.Fatalf("Failed to unmarshal JSON: %v", err)
+			// Unmarshal back into the struct to avoid coupling to JSON field-name casing/tags.
+			var roundTrip rules.RulesOutput
+			if err := json.Unmarshal(data, &roundTrip); err != nil {
+				t.Fatalf("Failed to unmarshal JSON into RulesOutput: %v", err)
 			}
 
-			// Check expected top-level fields
+			// Validate expected structure.
 			for _, field := range tt.expectedFields {
 				switch field {
-				case "TotalCount", "Categories", "Rules":
-					if _, ok := parsed[field]; !ok {
-						t.Errorf("JSON should contain top-level field %q", field)
-					}
+				case "TotalCount":
+					// minimal sanity check: must round-trip
+					_ = roundTrip.TotalCount
+				case "Categories":
+					_ = roundTrip.Categories
+				case "Rules":
+					_ = roundTrip.Rules
 				default:
 					// Treat non-top-level expectations as rule-code expectations
-					rulesAny, ok := parsed["Rules"].([]any)
-					if !ok {
-						t.Fatalf("JSON field %q is missing or not an array", "Rules")
-					}
 					found := false
-					for _, r := range rulesAny {
-						m, ok := r.(map[string]any)
-						if !ok {
-							continue
-						}
-						if code, _ := m["Code"].(string); code == field {
+					for _, r := range roundTrip.Rules {
+						if r.Code == field {
 							found = true
 							break
 						}

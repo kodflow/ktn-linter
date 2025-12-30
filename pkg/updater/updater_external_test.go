@@ -67,24 +67,26 @@ func TestUpdater_CheckForUpdate(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // capture
 		t.Run(tt.name, func(t *testing.T) {
 			u := updater.NewUpdater(tt.version)
 			info, err := u.CheckForUpdate()
-			// Check error expectation
+
 			if tt.wantErr {
-				// Expect error for dev builds
 				if err == nil {
 					t.Error("CheckForUpdate() should return error for dev build")
 				}
-				// Skip remaining checks on expected error
+				// Validate info object even on error paths.
+				if info.CurrentVersion != tt.wantCurrent {
+					t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.wantCurrent)
+				}
 				return
 			}
-			// Expect no error
+
 			if err != nil {
 				t.Errorf("CheckForUpdate() unexpected error = %v", err)
 				return
 			}
-			// Check current version is set
 			if info.CurrentVersion != tt.wantCurrent {
 				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.wantCurrent)
 			}
