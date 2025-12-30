@@ -105,6 +105,7 @@ func TestJSONFormatter(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output
@@ -121,19 +122,23 @@ func TestJSONFormatter(t *testing.T) {
 
 			// Create fileset
 			fset := token.NewFileSet()
+
+			// Work on a local copy to avoid mutating test-case data
+			diags := append([]analysis.Diagnostic(nil), tt.diagnostics...)
+
 			// Add file if we have diagnostics with positions
-			if len(tt.diagnostics) > 0 {
+			if len(diags) > 0 {
 				file := fset.AddFile("test.go", -1, 100)
 				// Update diagnostic positions
-				for i := range tt.diagnostics {
-					if tt.diagnostics[i].Pos == token.NoPos {
-						tt.diagnostics[i].Pos = file.Pos(10)
+				for i := range diags {
+					if diags[i].Pos == token.NoPos {
+						diags[i].Pos = file.Pos(10)
 					}
 				}
 			}
 
 			// Format diagnostics
-			fmtr.Format(fset, tt.diagnostics)
+			fmtr.Format(fset, diags)
 
 			// Parse the output JSON
 			var report map[string]interface{}

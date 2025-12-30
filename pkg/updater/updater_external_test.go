@@ -116,21 +116,27 @@ func TestUpdater_Upgrade(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			u := updater.NewUpdater(tt.version)
 			info, err := u.Upgrade()
+
 			// Check error expectation
 			if tt.wantErr {
 				// Expect error for dev builds
 				if err == nil {
 					t.Error("Upgrade() should return error for dev build")
 				}
-			} else {
-				// Expect no error
-				if err != nil {
-					t.Errorf("Upgrade() unexpected error = %v", err)
-				}
+				// Avoid nil deref on error paths
+				return
 			}
+
+			// Expect no error
+			if err != nil {
+				t.Errorf("Upgrade() unexpected error = %v", err)
+				return
+			}
+
 			// Check current version is set
 			if info.CurrentVersion != tt.wantCurrent {
 				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.wantCurrent)

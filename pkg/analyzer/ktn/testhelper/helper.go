@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"runtime"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -56,7 +57,7 @@ func createPass(fset *token.FileSet, file *ast.File, pkg *types.Package, info *t
 		Files:      []*ast.File{file},
 		Pkg:        pkg,
 		TypesInfo:  info,
-		TypesSizes: types.SizesFor("gc", "amd64"),
+		TypesSizes: types.SizesFor("gc", runtime.GOARCH),
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},
@@ -246,7 +247,7 @@ func createPassForPackage(fset *token.FileSet, files []*ast.File, diagnostics *[
 		Files:      files,
 		Pkg:        pkg,
 		TypesInfo:  info,
-		TypesSizes: types.SizesFor("gc", "amd64"),
+		TypesSizes: types.SizesFor("gc", runtime.GOARCH),
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},

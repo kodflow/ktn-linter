@@ -321,13 +321,18 @@ type mockTransport struct {
 func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Preserve original path + query, redirect to test server host
 	redirectURL := m.url + req.URL.RequestURI()
-	newReq, err := http.NewRequest(req.Method, redirectURL, req.Body)
-	// Handle request creation error
+
+	// Clone the request preserving context
+	newReq := req.Clone(req.Context())
+	u, err := newReq.URL.Parse(redirectURL)
+	// Handle URL parsing error
 	if err != nil {
 		return nil, err
 	}
-	// Copy headers
-	newReq.Header = req.Header
+	newReq.URL = u
+	newReq.Host = u.Host
+	newReq.Header = req.Header.Clone()
+
 	// Get transport with nil fallback
 	rt := m.client.Transport
 	if rt == nil {

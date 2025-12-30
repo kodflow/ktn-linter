@@ -3,6 +3,7 @@ package cmd_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -49,7 +50,11 @@ func TestRulesOutput_Formatting(t *testing.T) {
 			// Simulate markdown formatting
 			if tt.format == "markdown" && len(tt.output.Rules) > 0 {
 				buf.WriteString("# KTN-Linter Rules Reference\n\n")
-				buf.WriteString("**Total**: 2 rules | **Categories**: func, var\n\n")
+				buf.WriteString(fmt.Sprintf(
+					"**Total**: %d rules | **Categories**: %s\n\n",
+					tt.output.TotalCount,
+					strings.Join(tt.output.Categories, ", "),
+				))
 			}
 
 			result := buf.String()

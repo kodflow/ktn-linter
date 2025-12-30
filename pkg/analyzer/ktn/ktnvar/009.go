@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"runtime"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -168,10 +169,14 @@ func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
 
 	// Calcul de la taille en bytes
 	sizes := pass.TypesSizes
-	// Vérification des sizes
+	// Fallback to runtime architecture if not provided
 	if sizes == nil {
-		// Can't determine sizes reliably
-		return -1
+		sizes = types.SizesFor("gc", runtime.GOARCH)
+		// Vérification des sizes après fallback
+		if sizes == nil {
+			// Can't determine sizes reliably
+			return -1
+		}
 	}
 
 	// Retour de la taille

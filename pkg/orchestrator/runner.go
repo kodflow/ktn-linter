@@ -265,7 +265,8 @@ func (r *AnalysisRunner) selectFiles(a *analysis.Analyzer, pkg *packages.Package
 	}
 
 	// Check force mode
-	if config.Get().ForceAllRulesOnTests {
+	cfg := config.Get()
+	if cfg != nil && cfg.ForceAllRulesOnTests {
 		// Return all non-excluded files
 		return files
 	}
