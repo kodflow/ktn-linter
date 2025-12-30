@@ -94,8 +94,10 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int
 	for _, param := range params.List {
 		// Si le paramètre a des noms (ex: a, b T), vérifier chaque nom
 		if len(param.Names) > 0 {
+			// Itération sur chaque nom de paramètre
 			for _, name := range param.Names {
 				pos := param.Pos()
+				// Utiliser la position du nom si disponible
 				if name != nil {
 					pos = name.NamePos
 				}
@@ -175,7 +177,9 @@ func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
 	// pass.TypesSizes is the only reliable source for the analysis target;
 	// if unavailable, skip size-based reporting to avoid false positives.
 	sizes := pass.TypesSizes
+	// Vérifier si les informations de taille sont disponibles
 	if sizes == nil {
+		// Retour anticipé si taille indisponible
 		return -1
 	}
 

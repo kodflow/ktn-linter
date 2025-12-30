@@ -8,6 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Flag for check-only mode.
+const (
+	// flagCheck is the flag name for check-only mode.
+	flagCheck string = "check"
+)
+
 // upgradeCmd represents the upgrade command.
 var upgradeCmd *cobra.Command = &cobra.Command{
 	Use:   "upgrade",
@@ -22,12 +28,6 @@ Examples:
   ktn-linter upgrade --check  Only check for updates without upgrading`,
 	Run: runUpgrade,
 }
-
-// Flag for check-only mode.
-const (
-	// flagCheck is the flag name for check-only mode.
-	flagCheck string = "check"
-)
 
 // init registers the upgrade command with root.
 func init() {
@@ -50,6 +50,7 @@ func runUpgrade(cmd *cobra.Command, args []string) {
 	// Handle check-only mode
 	if checkOnly {
 		handleCheckOnly(upd)
+		// Exit after check-only mode
 		return
 	}
 
@@ -69,6 +70,7 @@ func handleCheckOnly(upd *updater.Updater) {
 	if err != nil {
 		fmt.Printf("Error checking for updates: %v\n", err)
 		OsExit(1)
+		// Exit after error
 		return
 	}
 
@@ -76,7 +78,9 @@ func handleCheckOnly(upd *updater.Updater) {
 	if info.Available {
 		fmt.Printf("Update available: %s → %s\n", info.CurrentVersion, info.LatestVersion)
 		fmt.Println("Run 'ktn-linter upgrade' to update.")
+		// Update is available, handled above
 	} else {
+		// Already up to date
 		fmt.Printf("Already up to date: %s\n", info.CurrentVersion)
 	}
 }
@@ -93,13 +97,16 @@ func handleUpgrade(upd *updater.Updater) {
 	if err != nil {
 		fmt.Printf("Error upgrading: %v\n", err)
 		OsExit(1)
+		// Exit after error
 		return
 	}
 
 	// Display result
 	if info.Available {
 		fmt.Printf("Successfully upgraded: %s → %s\n", info.CurrentVersion, info.LatestVersion)
+		// Upgrade completed successfully
 	} else {
+		// Already up to date
 		fmt.Printf("Already up to date: %s\n", info.CurrentVersion)
 	}
 }

@@ -31,6 +31,7 @@ func NewMarkdownFormatter(w io.Writer) *MarkdownFormatter {
 func (f *MarkdownFormatter) Format(output *PromptOutput) {
 	// Guard against nil receiver, writer, or output
 	if f == nil || f.writer == nil || output == nil {
+		// Return early to avoid nil pointer dereference
 		return
 	}
 
@@ -80,6 +81,7 @@ func (f *MarkdownFormatter) writeInstructions() {
 func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
 	// Guard against nil phase
 	if phase == nil {
+		// Return early to avoid nil pointer dereference
 		return
 	}
 
@@ -112,6 +114,7 @@ func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
 func (f *MarkdownFormatter) writeRule(rule *RuleViolations) {
 	// Guard against nil rule
 	if rule == nil {
+		// Return early to avoid nil pointer dereference
 		return
 	}
 

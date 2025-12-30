@@ -191,9 +191,11 @@ func needsModuleDiscovery(args []string) bool {
 		}
 		// Check if directory
 		if info.IsDir() {
+			// Directory found, discovery needed
 			return true
 		}
 	}
+	// No directory found, no discovery needed
 	return false
 }
 
@@ -213,6 +215,7 @@ func runMultiModulePipeline(orch lintOrchestrator, args []string, opts orchestra
 	rawDiags, err := orch.RunMultiModule(args, opts)
 	// Check for error
 	if err != nil {
+		// Return error from multi-module analysis
 		return []analysis.Diagnostic{}, nil, err
 	}
 

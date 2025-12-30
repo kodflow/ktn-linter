@@ -69,7 +69,7 @@ func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Ana
 	resultsMapSize := len(analyzers)
 
 	// Start workers (one goroutine per available CPU)
-	for i := 0; i < workerCount; i++ {
+	for range workerCount {
 		wg.Add(1)
 		go r.worker(analyzers, pkgChan, diagChan, &wg, resultsMapSize)
 	}
@@ -266,6 +266,7 @@ func (r *AnalysisRunner) selectFiles(a *analysis.Analyzer, pkg *packages.Package
 
 	// Check force mode
 	cfg := config.Get()
+	// Return all files if force mode is enabled
 	if cfg != nil && cfg.ForceAllRulesOnTests {
 		// Return all non-excluded files
 		return files
@@ -300,13 +301,15 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 			filtered = append(filtered, file)
 			continue
 		}
-		// Skip globally excluded files
+		// Check if file should be excluded globally
 		if !cfg.IsFileExcludedGlobally(pos.Filename) {
 			// Add file to filtered list
 			filtered = append(filtered, file)
-		} else if r.verbose && r.stderr != nil {
-			// Log excluded file
-			fmt.Fprintf(r.stderr, "Excluding file: %s\n", pos.Filename)
+		} else { // File is globally excluded
+			// Log excluded file when verbose mode is enabled
+			if r.verbose && r.stderr != nil {
+				fmt.Fprintf(r.stderr, "Excluding file: %s\n", pos.Filename)
+			}
 		}
 	}
 	// Return filtered files
