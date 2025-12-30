@@ -48,6 +48,8 @@ func runVar009(pass *analysis.Pass) (any, error) {
 
 	// Récupérer le seuil configuré en bytes
 	maxBytes := cfg.GetThreshold(ruleCodeVar009, defaultMaxStructBytes)
+	// Get verbose setting to pass down (avoid global dependency in helpers)
+	verbose := cfg.Verbose
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -69,13 +71,13 @@ func runVar009(pass *analysis.Pass) (any, error) {
 		// Vérifier les receivers (méthodes)
 		if funcDecl.Recv != nil {
 			// Analyse des receivers
-			checkFuncParams009(pass, funcDecl.Recv, maxBytes)
+			checkFuncParams009(pass, funcDecl.Recv, maxBytes, verbose)
 		}
 
 		// Vérifier les paramètres de la fonction
 		if funcDecl.Type.Params != nil {
 			// Analyse des paramètres
-			checkFuncParams009(pass, funcDecl.Type.Params, maxBytes)
+			checkFuncParams009(pass, funcDecl.Type.Params, maxBytes, verbose)
 		}
 	})
 
@@ -89,7 +91,8 @@ func runVar009(pass *analysis.Pass) (any, error) {
 //   - pass: contexte d'analyse
 //   - params: liste des paramètres
 //   - maxBytes: taille max en bytes
-func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int) {
+//   - verbose: mode verbose pour les messages
+func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int, verbose bool) {
 	// Handle nil params gracefully
 	if params == nil {
 		return
@@ -104,11 +107,11 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int
 		if len(param.Names) > 0 {
 			// Pour (a, b T), ne reporter qu'une seule fois pour éviter les doublons
 			pos := param.Names[0].NamePos
-			checkParamType009(pass, param.Type, pos, maxBytes)
+			checkParamType009(pass, param.Type, pos, maxBytes, verbose)
 			continue
 		}
 		// Paramètre sans nom (ex: func f(T)), utiliser la position du type
-		checkParamType009(pass, param.Type, param.Pos(), maxBytes)
+		checkParamType009(pass, param.Type, param.Pos(), maxBytes, verbose)
 	}
 }
 
@@ -119,7 +122,8 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int
 //   - typ: type du paramètre
 //   - pos: position du paramètre
 //   - maxBytes: taille max en bytes
-func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxBytes int) {
+//   - verbose: mode verbose pour les messages
+func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxBytes int, verbose bool) {
 	// Handle variadic params: `...T` should be checked as `T`
 	if ell, ok := typ.(*ast.Ellipsis); ok && ell.Elt != nil {
 		typ = ell.Elt
@@ -135,7 +139,7 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 			pos,
 			"%s: %s",
 			ruleCodeVar009,
-			msg.Format(config.Get().Verbose, int(sizeBytes), maxBytes, maxBytes),
+			msg.Format(verbose, int(sizeBytes), maxBytes, maxBytes),
 		)
 	}
 }

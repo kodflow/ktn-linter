@@ -120,16 +120,34 @@ func TestRulesOutput_JSON(t *testing.T) {
 				t.Fatalf("Failed to unmarshal JSON into RulesOutput: %v", err)
 			}
 
-			// Validate expected structure.
+			// Assert values actually round-trip.
+			if roundTrip.TotalCount != tt.output.TotalCount {
+				t.Errorf("TotalCount = %d, want %d", roundTrip.TotalCount, tt.output.TotalCount)
+			}
+			if len(roundTrip.Categories) != len(tt.output.Categories) {
+				t.Fatalf("Categories len = %d, want %d", len(roundTrip.Categories), len(tt.output.Categories))
+			}
+			// Verify categories match
+			for i := range tt.output.Categories {
+				if roundTrip.Categories[i] != tt.output.Categories[i] {
+					t.Errorf("Categories[%d] = %q, want %q", i, roundTrip.Categories[i], tt.output.Categories[i])
+				}
+			}
+			if len(roundTrip.Rules) != len(tt.output.Rules) {
+				t.Fatalf("Rules len = %d, want %d", len(roundTrip.Rules), len(tt.output.Rules))
+			}
+			// Verify rule codes match
+			for i := range tt.output.Rules {
+				if roundTrip.Rules[i].Code != tt.output.Rules[i].Code {
+					t.Errorf("Rules[%d].Code = %q, want %q", i, roundTrip.Rules[i].Code, tt.output.Rules[i].Code)
+				}
+			}
+
+			// Validate expected structure / rule-code expectations.
 			for _, field := range tt.expectedFields {
 				switch field {
-				case "TotalCount":
-					// minimal sanity check: must round-trip
-					_ = roundTrip.TotalCount
-				case "Categories":
-					_ = roundTrip.Categories
-				case "Rules":
-					_ = roundTrip.Rules
+				case "TotalCount", "Categories", "Rules":
+					// already asserted above
 				default:
 					// Treat non-top-level expectations as rule-code expectations
 					found := false

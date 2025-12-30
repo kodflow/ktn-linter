@@ -64,6 +64,10 @@ func Test_groupRulesByPhase(t *testing.T) {
 				if got[0].Code != tt.rules[0].Code {
 					t.Errorf("grouped rule code = %q, want %q", got[0].Code, tt.rules[0].Code)
 				}
+				// Verify the phase is actually set on the grouped item
+				if got[0].Phase != tt.expectedPhase {
+					t.Errorf("grouped rule phase = %v, want %v", got[0].Phase, tt.expectedPhase)
+				}
 			}
 		})
 	}

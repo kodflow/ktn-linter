@@ -187,7 +187,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `007.go:checkStringConcatInLoop` | 92.3% |
 | 🟡 `007.go:isStringConcatenation` | 87.5% |
 | 🟡 `008.go:runVar008` | 86.7% |
-| 🟢 `009.go:runVar009` | 93.8% |
+| 🟢 `009.go:runVar009` | 94.1% |
 | 🟡 `009.go:checkFuncParams009` | 90.0% |
 | 🟢 `009.go:getStructSize009` | 93.8% |
 | 🟡 `009.go:isExternalType009` | 85.7% |
@@ -283,4 +283,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-30 17:21:34*
+*Généré le: 2025-12-30 17:28:26*
