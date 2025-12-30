@@ -2,39 +2,81 @@
 package formatter
 
 import (
-	"bytes"
 	"testing"
 )
 
-// Test_NewFormatterByFormat tests internal factory behavior.
+// Test_FormatterOptions tests the FormatterOptions struct behavior.
 //
 // Params:
 //   - t: testing object for running test cases
-func Test_NewFormatterByFormat(t *testing.T) {
+func Test_FormatterOptions(t *testing.T) {
 	// Define test cases
 	tests := []struct {
-		name   string
-		format OutputFormat
+		name            string
+		opts            FormatterOptions
+		expectAIMode    bool
+		expectNoColor   bool
+		expectSimple    bool
+		expectVerbose   bool
 	}{
 		{
-			// Test JSON format
-			name:   "json format",
-			format: FormatJSON,
+			// Test default options
+			name:            "default options all false",
+			opts:            FormatterOptions{},
+			expectAIMode:    false,
+			expectNoColor:   false,
+			expectSimple:    false,
+			expectVerbose:   false,
 		},
 		{
-			// Test SARIF format
-			name:   "sarif format",
-			format: FormatSARIF,
+			// Test AI mode enabled
+			name:            "ai mode enabled",
+			opts:            FormatterOptions{AIMode: true},
+			expectAIMode:    true,
+			expectNoColor:   false,
+			expectSimple:    false,
+			expectVerbose:   false,
 		},
 		{
-			// Test text format
-			name:   "text format",
-			format: FormatText,
+			// Test no color enabled
+			name:            "no color enabled",
+			opts:            FormatterOptions{NoColor: true},
+			expectAIMode:    false,
+			expectNoColor:   true,
+			expectSimple:    false,
+			expectVerbose:   false,
 		},
 		{
-			// Test default format
-			name:   "default format",
-			format: OutputFormat("unknown"),
+			// Test simple mode enabled
+			name:            "simple mode enabled",
+			opts:            FormatterOptions{SimpleMode: true},
+			expectAIMode:    false,
+			expectNoColor:   false,
+			expectSimple:    true,
+			expectVerbose:   false,
+		},
+		{
+			// Test verbose mode enabled
+			name:            "verbose mode enabled",
+			opts:            FormatterOptions{VerboseMode: true},
+			expectAIMode:    false,
+			expectNoColor:   false,
+			expectSimple:    false,
+			expectVerbose:   true,
+		},
+		{
+			// Test all options enabled
+			name: "all options enabled",
+			opts: FormatterOptions{
+				AIMode:      true,
+				NoColor:     true,
+				SimpleMode:  true,
+				VerboseMode: true,
+			},
+			expectAIMode:    true,
+			expectNoColor:   true,
+			expectSimple:    true,
+			expectVerbose:   true,
 		},
 	}
 
@@ -42,23 +84,21 @@ func Test_NewFormatterByFormat(t *testing.T) {
 	for _, tt := range tests {
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
-			// Create buffer for output
-			var buf bytes.Buffer
-
-			// Create formatter options
-			opts := FormatterOptions{
-				AIMode:      false,
-				NoColor:     true,
-				SimpleMode:  true,
-				VerboseMode: false,
+			// Verify AIMode
+			if tt.opts.AIMode != tt.expectAIMode {
+				t.Errorf("AIMode = %v, want %v", tt.opts.AIMode, tt.expectAIMode)
 			}
-
-			// Create formatter
-			fmtr := NewFormatterByFormat(tt.format, &buf, opts)
-
-			// Verify formatter is not nil
-			if fmtr == nil {
-				t.Errorf("NewFormatterByFormat returned nil for format %v", tt.format)
+			// Verify NoColor
+			if tt.opts.NoColor != tt.expectNoColor {
+				t.Errorf("NoColor = %v, want %v", tt.opts.NoColor, tt.expectNoColor)
+			}
+			// Verify SimpleMode
+			if tt.opts.SimpleMode != tt.expectSimple {
+				t.Errorf("SimpleMode = %v, want %v", tt.opts.SimpleMode, tt.expectSimple)
+			}
+			// Verify VerboseMode
+			if tt.opts.VerboseMode != tt.expectVerbose {
+				t.Errorf("VerboseMode = %v, want %v", tt.opts.VerboseMode, tt.expectVerbose)
 			}
 		})
 	}

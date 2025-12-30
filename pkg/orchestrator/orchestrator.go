@@ -154,7 +154,7 @@ func (o *Orchestrator) Run(patterns []string, opts Options) ([]analysis.Diagnost
 func GetFirstFset(diagnostics []DiagnosticResult) any {
 	// Check if empty
 	if len(diagnostics) == 0 {
-		// Return nil
+		// Return nil for empty slice
 		return nil
 	}
 	// Return first fset
@@ -202,7 +202,8 @@ func (o *Orchestrator) RunMultiModule(paths []string, opts Options) ([]Diagnosti
 	modules, err := o.DiscoverModules(paths)
 	// Check for error
 	if err != nil {
-		return nil, fmt.Errorf("discovering modules: %w", err)
+		// Return empty slice on error
+		return []DiagnosticResult{}, fmt.Errorf("discovering modules: %w", err)
 	}
 
 	// Check if no modules found
@@ -220,7 +221,8 @@ func (o *Orchestrator) RunMultiModule(paths []string, opts Options) ([]Diagnosti
 	analyzers, err := o.SelectAnalyzers(opts)
 	// Check for error
 	if err != nil {
-		return nil, err
+		// Return empty slice on error
+		return []DiagnosticResult{}, err
 	}
 
 	// Aggregate results
@@ -252,6 +254,7 @@ func (o *Orchestrator) RunMultiModule(paths []string, opts Options) ([]Diagnosti
 		allDiags = append(allDiags, diags...)
 	}
 
+	// Return aggregated diagnostics
 	return allDiags, nil
 }
 
@@ -270,16 +273,18 @@ func (o *Orchestrator) runSingleModule(dir string, patterns []string, opts Optio
 	pkgs, err := o.LoadPackagesFromDir(dir, patterns)
 	// Check for error
 	if err != nil {
-		return nil, err
+		// Return empty slice on error
+		return []DiagnosticResult{}, err
 	}
 
 	// Select analyzers
 	analyzers, err := o.SelectAnalyzers(opts)
 	// Check for error
 	if err != nil {
-		return nil, err
+		// Return empty slice on error
+		return []DiagnosticResult{}, err
 	}
 
-	// Run analyzers
+	// Run analyzers and return results
 	return o.RunAnalyzers(pkgs, analyzers), nil
 }

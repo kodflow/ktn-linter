@@ -787,17 +787,6 @@ func Test_extractEmbeddedTypes(t *testing.T) {
 	}
 }
 
-// Test_extractEmbeddedTypes_nil tests nil handling in extractEmbeddedTypes.
-func Test_extractEmbeddedTypes_nil(t *testing.T) {
-	// Test with nil Methods
-	nilMethodsIface := &ast.InterfaceType{
-		Methods: nil,
-	}
-	result := extractEmbeddedTypes(nilMethodsIface)
-	if len(result) != 0 {
-		t.Errorf("expected empty result for nil Methods, got %v", result)
-	}
-}
 
 // Test_extractMapTypes tests map type extraction.
 func Test_extractMapTypes(t *testing.T) {
@@ -1191,6 +1180,31 @@ func Test_extractCompositeType(t *testing.T) {
 
 			if count < tt.expected {
 				t.Errorf("got %d types, want at least %d", count, tt.expected)
+			}
+		})
+	}
+}
+// Test_extractEmbeddedTypes_nil tests nil handling in extractEmbeddedTypes.
+func Test_extractEmbeddedTypes_nil(t *testing.T) {
+	tests := []struct {
+		name     string
+		iface    *ast.InterfaceType
+		expected int
+	}{
+		{
+			name: "nil Methods",
+			iface: &ast.InterfaceType{
+				Methods: nil,
+			},
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractEmbeddedTypes(tt.iface)
+			if len(result) != tt.expected {
+				t.Errorf("expected %d types, got %d", tt.expected, len(result))
 			}
 		})
 	}

@@ -36,8 +36,8 @@ func (f *MarkdownFormatter) Format(output *PromptOutput) {
 	f.writeInstructions()
 
 	// Write each phase
-	for i, phase := range output.Phases {
-		f.writePhase(phase, i+1)
+	for i := range output.Phases {
+		f.writePhase(&output.Phases[i], i+1)
 	}
 }
 
@@ -70,9 +70,9 @@ func (f *MarkdownFormatter) writeInstructions() {
 // writePhase writes a single phase group.
 //
 // Params:
-//   - phase: phase group to write
+//   - phase: phase group to write (pointer for efficiency)
 //   - phaseNum: phase number for display
-func (f *MarkdownFormatter) writePhase(phase PhaseGroup, phaseNum int) {
+func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
 	// Phase header
 	fmt.Fprintf(f.writer, "## Phase %d: %s\n\n", phaseNum, phase.Name)
 
@@ -86,8 +86,8 @@ func (f *MarkdownFormatter) writePhase(phase PhaseGroup, phaseNum int) {
 	}
 
 	// Write each rule
-	for _, rule := range phase.Rules {
-		f.writeRule(rule)
+	for i := range phase.Rules {
+		f.writeRule(&phase.Rules[i])
 	}
 
 	// Phase separator
@@ -98,8 +98,8 @@ func (f *MarkdownFormatter) writePhase(phase PhaseGroup, phaseNum int) {
 // writeRule writes a single rule with its violations.
 //
 // Params:
-//   - rule: rule violations to write
-func (f *MarkdownFormatter) writeRule(rule RuleViolations) {
+//   - rule: rule violations to write (pointer for efficiency)
+func (f *MarkdownFormatter) writeRule(rule *RuleViolations) {
 	// Rule header
 	fmt.Fprintf(f.writer, "### %s\n\n", rule.Code)
 

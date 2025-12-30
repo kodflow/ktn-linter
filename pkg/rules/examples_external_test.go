@@ -117,49 +117,200 @@ func TestLoadGoodExample(t *testing.T) {
 }
 
 func TestLoadGoodExamples(t *testing.T) {
-	// Create sample infos
-	infos := []rules.RuleInfo{
-		{Code: "KTN-FUNC-001", Category: "func"},
-		{Code: "KTN-FUNC-002", Category: "func"},
-		{Code: "KTN-FAKE-999", Category: "fake"},
-		{Code: "", Category: ""},
+	tests := []struct {
+		name           string
+		infos          []rules.RuleInfo
+		checkIndex     int
+		wantHasExample bool
+	}{
+		{
+			name: "valid rule has example",
+			infos: []rules.RuleInfo{
+				{Code: "KTN-FUNC-001", Category: "func"},
+			},
+			checkIndex:     0,
+			wantHasExample: true,
+		},
+		{
+			name: "fake rule has no example",
+			infos: []rules.RuleInfo{
+				{Code: "KTN-FAKE-999", Category: "fake"},
+			},
+			checkIndex:     0,
+			wantHasExample: false,
+		},
+		{
+			name: "empty code has no example",
+			infos: []rules.RuleInfo{
+				{Code: "", Category: ""},
+			},
+			checkIndex:     0,
+			wantHasExample: false,
+		},
+		{
+			name: "multiple rules preserves length",
+			infos: []rules.RuleInfo{
+				{Code: "KTN-FUNC-001", Category: "func"},
+				{Code: "KTN-FUNC-002", Category: "func"},
+			},
+			checkIndex:     0,
+			wantHasExample: true,
+		},
 	}
 
-	// Load examples
-	enriched := rules.LoadGoodExamples(infos)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			enriched := rules.LoadGoodExamples(tt.infos)
 
-	// Should have same length
-	if len(enriched) != len(infos) {
-		t.Errorf("LoadGoodExamples() returned %d items, want %d", len(enriched), len(infos))
-	}
+			// Check length preserved
+			if len(enriched) != len(tt.infos) {
+				t.Errorf("LoadGoodExamples() returned %d items, want %d", len(enriched), len(tt.infos))
+			}
 
-	// First two should have examples
-	if enriched[0].GoodExample == "" {
-		t.Error("LoadGoodExamples() should populate KTN-FUNC-001 example")
-	}
-
-	// Last one (fake) should be empty
-	if enriched[2].GoodExample != "" {
-		t.Error("LoadGoodExamples() should leave KTN-FAKE-999 example empty")
-	}
-
-	// Empty code should also be empty
-	if enriched[3].GoodExample != "" {
-		t.Error("LoadGoodExamples() should leave empty code example empty")
+			// Check example presence at index
+			if tt.checkIndex < len(enriched) {
+				hasExample := enriched[tt.checkIndex].GoodExample != ""
+				if hasExample != tt.wantHasExample {
+					t.Errorf("enriched[%d].GoodExample empty = %v, want %v", tt.checkIndex, !hasExample, !tt.wantHasExample)
+				}
+			}
+		})
 	}
 }
 
 func TestInvalidCodeError(t *testing.T) {
-	_, err := rules.GetTestdataPath("INVALID")
-	if err == nil {
-		t.Fatal("Expected error for invalid code")
+	tests := []struct {
+		name            string
+		code            string
+		wantContains    string
+		wantErrContains string
+	}{
+		{
+			name:            "missing prefix",
+			code:            "INVALID",
+			wantContains:    "INVALID",
+			wantErrContains: "invalid rule code",
+		},
+		{
+			name:            "missing number",
+			code:            "KTN-FUNC",
+			wantContains:    "KTN-FUNC",
+			wantErrContains: "invalid rule code",
+		},
+		{
+			name:            "empty code",
+			code:            "",
+			wantContains:    "",
+			wantErrContains: "invalid rule code",
+		},
 	}
 
-	errStr := err.Error()
-	if !strings.Contains(errStr, "INVALID") {
-		t.Errorf("Error message should contain code: %s", errStr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := rules.GetTestdataPath(tt.code)
+			if err == nil {
+				t.Fatal("Expected error for invalid code")
+			}
+
+			errStr := err.Error()
+			if tt.wantContains != "" && !strings.Contains(errStr, tt.wantContains) {
+				t.Errorf("Error message should contain %q: %s", tt.wantContains, errStr)
+			}
+			if !strings.Contains(errStr, tt.wantErrContains) {
+				t.Errorf("Error message should contain %q: %s", tt.wantErrContains, errStr)
+			}
+		})
 	}
-	if !strings.Contains(errStr, "invalid rule code") {
-		t.Errorf("Error message should describe the error: %s", errStr)
+}
+
+func TestNewInvalidCodeError(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		reason     string
+		wantCode   string
+		wantReason string
+	}{
+		{
+			name:       "basic error",
+			code:       "BAD-CODE",
+			reason:     "invalid format",
+			wantCode:   "BAD-CODE",
+			wantReason: "invalid format",
+		},
+		{
+			name:       "empty reason",
+			code:       "TEST",
+			reason:     "",
+			wantCode:   "TEST",
+			wantReason: "",
+		},
+		{
+			name:       "empty code",
+			code:       "",
+			reason:     "missing code",
+			wantCode:   "",
+			wantReason: "missing code",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := rules.NewInvalidCodeError(tt.code, tt.reason)
+
+			if err.Code != tt.wantCode {
+				t.Errorf("Code = %q, want %q", err.Code, tt.wantCode)
+			}
+			if err.Reason != tt.wantReason {
+				t.Errorf("Reason = %q, want %q", err.Reason, tt.wantReason)
+			}
+
+			errStr := err.Error()
+			if errStr == "" {
+				t.Error("Error() returned empty string")
+			}
+		})
+	}
+}
+
+func TestInvalidCodeError_Error(t *testing.T) {
+	tests := []struct {
+		name         string
+		code         string
+		reason       string
+		wantContains string
+	}{
+		{
+			name:         "basic error with reason",
+			code:         "BAD",
+			reason:       "invalid",
+			wantContains: "invalid",
+		},
+		{
+			name:         "error contains code",
+			code:         "TEST-CODE",
+			reason:       "some reason",
+			wantContains: "TEST-CODE",
+		},
+		{
+			name:         "empty reason still works",
+			code:         "EMPTY",
+			reason:       "",
+			wantContains: "EMPTY",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := &rules.InvalidCodeError{Code: tt.code, Reason: tt.reason}
+			result := err.Error()
+
+			if result == "" {
+				t.Error("Error() should not return empty string")
+			}
+			if !strings.Contains(result, tt.wantContains) {
+				t.Errorf("Error() = %q, should contain %q", result, tt.wantContains)
+			}
+		})
 	}
 }

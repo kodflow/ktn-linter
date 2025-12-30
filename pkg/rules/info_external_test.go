@@ -141,31 +141,65 @@ func TestExtractCategory(t *testing.T) {
 }
 
 func TestGetAllRuleInfos(t *testing.T) {
-	infos := rules.GetAllRuleInfos()
-
-	// Should have multiple rules
-	if len(infos) == 0 {
-		t.Error("GetAllRuleInfos() returned empty slice")
+	tests := []struct {
+		name          string
+		checkNonEmpty bool
+		checkSorted   bool
+		checkFields   bool
+	}{
+		{
+			name:          "returns non-empty slice",
+			checkNonEmpty: true,
+			checkSorted:   false,
+			checkFields:   false,
+		},
+		{
+			name:          "rules are sorted by code",
+			checkNonEmpty: false,
+			checkSorted:   true,
+			checkFields:   false,
+		},
+		{
+			name:          "all rules have required fields",
+			checkNonEmpty: false,
+			checkSorted:   false,
+			checkFields:   true,
+		},
 	}
 
-	// Should be sorted by code
-	for i := 1; i < len(infos); i++ {
-		if infos[i-1].Code >= infos[i].Code {
-			t.Errorf("Rules not sorted: %s >= %s", infos[i-1].Code, infos[i].Code)
-		}
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			infos := rules.GetAllRuleInfos()
 
-	// Each rule should have required fields
-	for _, info := range infos {
-		if info.Code == "" {
-			t.Error("Rule with empty code found")
-		}
-		if info.Category == "" {
-			t.Errorf("Rule %s has empty category", info.Code)
-		}
-		if info.Name == "" {
-			t.Errorf("Rule %s has empty name", info.Code)
-		}
+			// Check non-empty
+			if tt.checkNonEmpty && len(infos) == 0 {
+				t.Error("GetAllRuleInfos() returned empty slice")
+			}
+
+			// Check sorted
+			if tt.checkSorted {
+				for i := 1; i < len(infos); i++ {
+					if infos[i-1].Code >= infos[i].Code {
+						t.Errorf("Rules not sorted: %s >= %s", infos[i-1].Code, infos[i].Code)
+					}
+				}
+			}
+
+			// Check required fields
+			if tt.checkFields {
+				for _, info := range infos {
+					if info.Code == "" {
+						t.Error("Rule with empty code found")
+					}
+					if info.Category == "" {
+						t.Errorf("Rule %s has empty category", info.Code)
+					}
+					if info.Name == "" {
+						t.Errorf("Rule %s has empty name", info.Code)
+					}
+				}
+			}
+		})
 	}
 }
 
@@ -247,37 +281,74 @@ func TestGetRuleInfoByCode(t *testing.T) {
 }
 
 func TestGetCategories(t *testing.T) {
-	categories := rules.GetCategories()
-
-	// Should have multiple categories
-	if len(categories) == 0 {
-		t.Error("GetCategories() returned empty slice")
+	tests := []struct {
+		name             string
+		checkNonEmpty    bool
+		checkExpected    bool
+		checkSorted      bool
+		expectedCategory string
+	}{
+		{
+			name:          "returns non-empty slice",
+			checkNonEmpty: true,
+		},
+		{
+			name:             "contains func category",
+			checkExpected:    true,
+			expectedCategory: "func",
+		},
+		{
+			name:             "contains var category",
+			checkExpected:    true,
+			expectedCategory: "var",
+		},
+		{
+			name:             "contains struct category",
+			checkExpected:    true,
+			expectedCategory: "struct",
+		},
+		{
+			name:             "contains const category",
+			checkExpected:    true,
+			expectedCategory: "const",
+		},
+		{
+			name:        "categories are sorted",
+			checkSorted: true,
+		},
 	}
 
-	// Check expected categories exist
-	expected := map[string]bool{
-		"func":   false,
-		"var":    false,
-		"struct": false,
-		"const":  false,
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			categories := rules.GetCategories()
 
-	for _, cat := range categories {
-		if _, ok := expected[cat]; ok {
-			expected[cat] = true
-		}
-	}
+			// Check non-empty
+			if tt.checkNonEmpty && len(categories) == 0 {
+				t.Error("GetCategories() returned empty slice")
+			}
 
-	for cat, found := range expected {
-		if !found {
-			t.Errorf("Expected category %q not found", cat)
-		}
-	}
+			// Check expected category exists
+			if tt.checkExpected {
+				found := false
+				for _, cat := range categories {
+					if cat == tt.expectedCategory {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected category %q not found", tt.expectedCategory)
+				}
+			}
 
-	// Should be sorted
-	for i := 1; i < len(categories); i++ {
-		if categories[i-1] >= categories[i] {
-			t.Errorf("Categories not sorted: %s >= %s", categories[i-1], categories[i])
-		}
+			// Check sorted
+			if tt.checkSorted {
+				for i := 1; i < len(categories); i++ {
+					if categories[i-1] >= categories[i] {
+						t.Errorf("Categories not sorted: %s >= %s", categories[i-1], categories[i])
+					}
+				}
+			}
+		})
 	}
 }

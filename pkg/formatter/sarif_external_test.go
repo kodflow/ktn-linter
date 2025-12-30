@@ -16,15 +16,35 @@ import (
 // Params:
 //   - t: testing object for running test cases
 func TestNewSARIFFormatter(t *testing.T) {
-	// Create buffer for output
-	var buf bytes.Buffer
+	// Define test cases for NewSARIFFormatter
+	tests := []struct {
+		name     string
+		verbose  bool
+		expectNil bool
+	}{
+		{
+			// Test creating SARIF formatter with verbose disabled
+			name:      "create SARIF formatter with verbose disabled",
+			verbose:   false,
+			expectNil: false,
+		},
+	}
 
-	// Create SARIF formatter
-	fmtr := formatter.NewSARIFFormatter(&buf, false)
+	// Run all test cases
+	for _, tt := range tests {
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
 
-	// Verify formatter is not nil
-	if fmtr == nil {
-		t.Error("NewSARIFFormatter returned nil")
+			// Create SARIF formatter
+			fmtr := formatter.NewSARIFFormatter(&buf, tt.verbose)
+
+			// Verify formatter is not nil
+			if (fmtr == nil) != tt.expectNil {
+				t.Errorf("expected nil=%v, got nil=%v", tt.expectNil, fmtr == nil)
+			}
+		})
 	}
 }
 
@@ -33,35 +53,57 @@ func TestNewSARIFFormatter(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func TestSARIFFormatterEmptyDiagnostics(t *testing.T) {
-	// Create buffer for output
-	var buf bytes.Buffer
-
-	// Create SARIF formatter
-	fmtr := formatter.NewSARIFFormatter(&buf, false)
-
-	// Format empty diagnostics
-	fmtr.Format(nil, nil)
-
-	// Parse the output JSON
-	var report map[string]interface{}
-	err := json.Unmarshal(buf.Bytes(), &report)
-	// Verify JSON is valid
-	if err != nil {
-		t.Errorf("invalid SARIF output: %v", err)
+	// Define test cases for empty diagnostics
+	tests := []struct {
+		name            string
+		verbose         bool
+		expectedVersion string
+		expectRuns      bool
+	}{
+		{
+			// Test empty diagnostics produces valid SARIF
+			name:            "empty diagnostics produces valid SARIF 2.1.0",
+			verbose:         false,
+			expectedVersion: "2.1.0",
+			expectRuns:      true,
+		},
 	}
 
-	// Verify SARIF version
-	version, ok := report["version"].(string)
-	// Check version exists
-	if !ok || version != "2.1.0" {
-		t.Errorf("expected SARIF version 2.1.0, got %v", version)
-	}
+	// Run all test cases
+	for _, tt := range tests {
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
 
-	// Verify runs array exists
-	runs, ok := report["runs"].([]interface{})
-	// Check runs exists
-	if !ok || len(runs) == 0 {
-		t.Error("missing runs in SARIF output")
+			// Create SARIF formatter
+			fmtr := formatter.NewSARIFFormatter(&buf, tt.verbose)
+
+			// Format empty diagnostics
+			fmtr.Format(nil, nil)
+
+			// Parse the output JSON
+			var report map[string]interface{}
+			err := json.Unmarshal(buf.Bytes(), &report)
+			// Verify JSON is valid
+			if err != nil {
+				t.Errorf("invalid SARIF output: %v", err)
+			}
+
+			// Verify SARIF version
+			version, ok := report["version"].(string)
+			// Check version exists
+			if !ok || version != tt.expectedVersion {
+				t.Errorf("expected SARIF version %s, got %v", tt.expectedVersion, version)
+			}
+
+			// Verify runs array exists
+			runs, ok := report["runs"].([]interface{})
+			// Check runs exists
+			if tt.expectRuns && (!ok || len(runs) == 0) {
+				t.Error("missing runs in SARIF output")
+			}
+		})
 	}
 }
 
@@ -70,54 +112,76 @@ func TestSARIFFormatterEmptyDiagnostics(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func TestSARIFFormatterWithDiagnostics(t *testing.T) {
-	// Create buffer for output
-	var buf bytes.Buffer
-
-	// Create SARIF formatter
-	fmtr := formatter.NewSARIFFormatter(&buf, false)
-
-	// Create fileset and diagnostic
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-	diags := []analysis.Diagnostic{
+	// Define test cases for diagnostics output
+	tests := []struct {
+		name            string
+		verbose         bool
+		message         string
+		expectedResults int
+	}{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: test message",
+			// Test single diagnostic produces one result
+			name:            "single diagnostic produces one result",
+			verbose:         false,
+			message:         "KTN-VAR-001: test message",
+			expectedResults: 1,
 		},
 	}
 
-	// Format diagnostics
-	fmtr.Format(fset, diags)
+	// Run all test cases
+	for _, tt := range tests {
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
 
-	// Parse the output JSON
-	var report map[string]interface{}
-	err := json.Unmarshal(buf.Bytes(), &report)
-	// Verify JSON is valid
-	if err != nil {
-		t.Errorf("invalid SARIF output: %v", err)
-	}
+			// Create SARIF formatter
+			fmtr := formatter.NewSARIFFormatter(&buf, tt.verbose)
 
-	// Get runs array
-	runs, ok := report["runs"].([]interface{})
-	// Check runs exists
-	if !ok || len(runs) == 0 {
-		t.Error("missing runs in SARIF output")
-		return
-	}
+			// Create fileset and diagnostic
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+			diags := []analysis.Diagnostic{
+				{
+					Pos:     file.Pos(10),
+					Message: tt.message,
+				},
+			}
 
-	// Get first run
-	run, ok := runs[0].(map[string]interface{})
-	// Check run exists
-	if !ok {
-		t.Error("invalid run structure")
-		return
-	}
+			// Format diagnostics
+			fmtr.Format(fset, diags)
 
-	// Verify results exist
-	results, ok := run["results"].([]interface{})
-	// Check results exists
-	if !ok || len(results) != 1 {
-		t.Errorf("expected 1 result, got %v", len(results))
+			// Parse the output JSON
+			var report map[string]interface{}
+			err := json.Unmarshal(buf.Bytes(), &report)
+			// Verify JSON is valid
+			if err != nil {
+				t.Errorf("invalid SARIF output: %v", err)
+			}
+
+			// Get runs array
+			runs, ok := report["runs"].([]interface{})
+			// Check runs exists
+			if !ok || len(runs) == 0 {
+				t.Error("missing runs in SARIF output")
+				return
+			}
+
+			// Get first run
+			run, ok := runs[0].(map[string]interface{})
+			// Check run exists
+			if !ok {
+				t.Error("invalid run structure")
+				return
+			}
+
+			// Verify results exist
+			results, ok := run["results"].([]interface{})
+			// Check results exists
+			if !ok || len(results) != tt.expectedResults {
+				t.Errorf("expected %d result, got %v", tt.expectedResults, len(results))
+			}
+		})
 	}
 }
 
@@ -126,70 +190,92 @@ func TestSARIFFormatterWithDiagnostics(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func TestSARIFFormatterToolInfo(t *testing.T) {
-	// Create buffer for output
-	var buf bytes.Buffer
-
-	// Create SARIF formatter
-	fmtr := formatter.NewSARIFFormatter(&buf, false)
-
-	// Create fileset and diagnostic
-	fset := token.NewFileSet()
-	file := fset.AddFile("test.go", -1, 100)
-	diags := []analysis.Diagnostic{
+	// Define test cases for tool information
+	tests := []struct {
+		name             string
+		verbose          bool
+		message          string
+		expectedToolName string
+	}{
 		{
-			Pos:     file.Pos(10),
-			Message: "KTN-VAR-001: test message",
+			// Test tool name is ktn-linter
+			name:             "tool name is ktn-linter",
+			verbose:          false,
+			message:          "KTN-VAR-001: test message",
+			expectedToolName: "ktn-linter",
 		},
 	}
 
-	// Format diagnostics
-	fmtr.Format(fset, diags)
+	// Run all test cases
+	for _, tt := range tests {
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
 
-	// Parse the output JSON
-	var report map[string]interface{}
-	err := json.Unmarshal(buf.Bytes(), &report)
-	// Verify JSON is valid
-	if err != nil {
-		t.Errorf("invalid SARIF output: %v", err)
-	}
+			// Create SARIF formatter
+			fmtr := formatter.NewSARIFFormatter(&buf, tt.verbose)
 
-	// Get runs array
-	runs, ok := report["runs"].([]interface{})
-	// Check runs exists
-	if !ok || len(runs) == 0 {
-		t.Error("missing runs in SARIF output")
-		return
-	}
+			// Create fileset and diagnostic
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+			diags := []analysis.Diagnostic{
+				{
+					Pos:     file.Pos(10),
+					Message: tt.message,
+				},
+			}
 
-	// Get first run
-	run, ok := runs[0].(map[string]interface{})
-	// Check run exists
-	if !ok {
-		t.Error("invalid run structure")
-		return
-	}
+			// Format diagnostics
+			fmtr.Format(fset, diags)
 
-	// Verify tool information
-	tool, ok := run["tool"].(map[string]interface{})
-	// Check tool exists
-	if !ok {
-		t.Error("missing tool in SARIF output")
-		return
-	}
+			// Parse the output JSON
+			var report map[string]interface{}
+			err := json.Unmarshal(buf.Bytes(), &report)
+			// Verify JSON is valid
+			if err != nil {
+				t.Errorf("invalid SARIF output: %v", err)
+			}
 
-	// Verify driver information
-	driver, ok := tool["driver"].(map[string]interface{})
-	// Check driver exists
-	if !ok {
-		t.Error("missing driver in tool")
-		return
-	}
+			// Get runs array
+			runs, ok := report["runs"].([]interface{})
+			// Check runs exists
+			if !ok || len(runs) == 0 {
+				t.Error("missing runs in SARIF output")
+				return
+			}
 
-	// Verify tool name
-	name, ok := driver["name"].(string)
-	// Check name matches
-	if !ok || name != "ktn-linter" {
-		t.Errorf("expected tool name 'ktn-linter', got %v", name)
+			// Get first run
+			run, ok := runs[0].(map[string]interface{})
+			// Check run exists
+			if !ok {
+				t.Error("invalid run structure")
+				return
+			}
+
+			// Verify tool information
+			tool, ok := run["tool"].(map[string]interface{})
+			// Check tool exists
+			if !ok {
+				t.Error("missing tool in SARIF output")
+				return
+			}
+
+			// Verify driver information
+			driver, ok := tool["driver"].(map[string]interface{})
+			// Check driver exists
+			if !ok {
+				t.Error("missing driver in tool")
+				return
+			}
+
+			// Verify tool name
+			name, ok := driver["name"].(string)
+			// Check name matches
+			if !ok || name != tt.expectedToolName {
+				t.Errorf("expected tool name '%s', got %v", tt.expectedToolName, name)
+			}
+		})
 	}
 }
 

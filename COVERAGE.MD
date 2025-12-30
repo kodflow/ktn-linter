@@ -15,9 +15,9 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **93.9%** |
+| 🟢 | **TOTAL (Global)** | **94.2%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 84.2% |
+| 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 89.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 96.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
@@ -33,26 +33,24 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/formatter` | 99.5% |
+| 🔵 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/messages` | 100.0% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 82.3% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 98.0% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 82.4% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/prompt` | 90.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/severity` | 100.0% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/updater` | 32.1% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/updater` | 53.1% |
 
 ---
 
 ## Détail des packages incomplets
 
-### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 84.2%
+### 🟡 `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` - 89.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟢 `lint.go:runLint` | 91.7% |
 | 🟡 `lint.go:loadConfiguration` | 90.0% |
-| 🟡 `lint.go:needsModuleDiscovery` | 88.9% |
-| 🔴 `lint.go:runSingleModulePipeline` | 23.1% |
 | 🟡 `lint.go:formatAndDisplay` | 88.9% |
 | 🔴 `prompt.go:runPrompt` | 75.0% |
 | 🟡 `rules.go:runRules` | 83.3% |
@@ -228,13 +226,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `loader.go:loadFromDefaultLocations` | 93.8% |
 | 🟡 `loader.go:SaveToFile` | 83.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/formatter` - 99.5%
-
-| Fichier:Fonction | Couverture |
-|------------------|------------|
-| 🟡 `json.go:severityToLevel` | 80.0% |
-
-### 🟡 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 82.3%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/orchestrator` - 82.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -248,15 +240,15 @@ Rapport de couverture généré automatiquement.
 | ⚫ `orchestrator.go:LoadPackagesFromDir` | 0.0% |
 | ⚫ `orchestrator.go:RunMultiModule` | 0.0% |
 | ⚫ `orchestrator.go:runSingleModule` | 0.0% |
-| 🟢 `runner.go:Run` | 94.1% |
+| 🟢 `runner.go:Run` | 94.4% |
 | 🟢 `runner.go:analyzePackageParallel` | 91.7% |
 | 🟡 `runner.go:runAnalyzerGroup` | 83.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/prompt` - 98.0%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/prompt` - 90.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟡 `generator.go:collectViolations` | 87.5% |
+| 🔴 `generator.go:collectViolations` | 18.8% |
 | 🟡 `phases.go:ClassifyRule` | 88.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/rules` - 96.0%
@@ -265,17 +257,17 @@ Rapport de couverture généré automatiquement.
 |------------------|------------|
 | 🔴 `examples.go:findProjectRoot` | 60.0% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/updater` - 32.1%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/updater` - 53.1%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🔴 `updater.go:CheckForUpdate` | 28.6% |
 | 🔴 `updater.go:Upgrade` | 33.3% |
-| ⚫ `updater.go:getLatestVersion` | 0.0% |
-| ⚫ `updater.go:downloadAndReplace` | 0.0% |
+| 🟡 `updater.go:getLatestVersion` | 90.9% |
+| 🔴 `updater.go:downloadAndReplace` | 21.9% |
 | 🔴 `updater.go:getBinaryName` | 75.0% |
 
 
 ---
 
-*Généré le: 2025-12-30 13:43:56*
+*Généré le: 2025-12-30 14:27:02*

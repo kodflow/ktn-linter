@@ -65,10 +65,13 @@ func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Ana
 	workerCount := runtime.GOMAXPROCS(0)
 	pkgChan := make(chan *packages.Package, len(pkgs))
 
+	// Pre-allocate results map size for workers
+	resultsMapSize := len(analyzers)
+
 	// Start workers (one goroutine per available CPU)
 	for range workerCount {
 		wg.Add(1)
-		go r.worker(analyzers, pkgChan, diagChan, &wg)
+		go r.worker(analyzers, pkgChan, diagChan, &wg, resultsMapSize)
 	}
 
 	// Send packages to workers
@@ -101,11 +104,13 @@ func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Ana
 //   - pkgChan: channel receiving packages to analyze
 //   - diagChan: channel for sending diagnostics
 //   - wg: wait group to signal completion
+//   - resultsMapSize: pre-computed size for results map
 func (r *AnalysisRunner) worker(
 	analyzers []*analysis.Analyzer,
 	pkgChan <-chan *packages.Package,
 	diagChan chan<- DiagnosticResult,
 	wg waitGroup,
+	resultsMapSize int,
 ) {
 	defer wg.Done()
 
@@ -113,7 +118,7 @@ func (r *AnalysisRunner) worker(
 	for pkg := range pkgChan {
 		// Create fresh results map for each package to avoid cache corruption
 		// between packages (inspect.Analyzer caches AST data that is package-specific)
-		results := make(map[*analysis.Analyzer]any, len(analyzers))
+		results := make(map[*analysis.Analyzer]any, resultsMapSize)
 		r.analyzePackageParallel(pkg, analyzers, results, diagChan)
 	}
 }
@@ -291,8 +296,10 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 		pos := fset.Position(file.Pos())
 		// Skip globally excluded files
 		if !cfg.IsFileExcludedGlobally(pos.Filename) {
+			// Add file to filtered list
 			filtered = append(filtered, file)
 		} else if r.verbose {
+			// Log excluded file
 			fmt.Fprintf(r.stderr, "Excluding file: %s\n", pos.Filename)
 		}
 	}

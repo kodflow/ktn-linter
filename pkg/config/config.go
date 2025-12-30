@@ -198,6 +198,7 @@ func (c *Config) IsFileExcluded(ruleCode, filename string) bool {
 
 	// Check global exclusions (KTN-TEST rules ignore them)
 	if !strings.HasPrefix(ruleCode, "KTN-TEST-") && c.matchesAnyPattern(filename, c.Exclude) {
+		// Return excluded by global pattern
 		return true
 	}
 

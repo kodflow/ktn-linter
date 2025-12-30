@@ -577,3 +577,169 @@ func Test_getOutputWriter(t *testing.T) {
 		})
 	}
 }
+
+// Test_needsModuleDiscovery tests the needsModuleDiscovery function.
+func Test_needsModuleDiscovery(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		expected bool
+	}{
+		{
+			name:     "standard pattern ./...",
+			args:     []string{"./..."},
+			expected: false,
+		},
+		{
+			name:     "single dot pattern",
+			args:     []string{"."},
+			expected: false,
+		},
+		{
+			name:     "package path pattern",
+			args:     []string{"github.com/example/pkg"},
+			expected: false,
+		},
+		{
+			name:     "nonexistent directory",
+			args:     []string{"/nonexistent/path/to/dir"},
+			expected: false,
+		},
+		{
+			name:     "multiple standard patterns",
+			args:     []string{"./...", "."},
+			expected: false,
+		},
+		{
+			name:     "empty args",
+			args:     []string{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := needsModuleDiscovery(tt.args)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("needsModuleDiscovery(%v) = %v, want %v", tt.args, result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_runMultiModulePipeline tests the runMultiModulePipeline function.
+func Test_runMultiModulePipeline(t *testing.T) {
+	tests := []struct {
+		name        string
+		args        []string
+		opts        orchestrator.Options
+		expectError bool
+	}{
+		{
+			name:        "valid path",
+			args:        []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{},
+			expectError: false,
+		},
+		{
+			name:        "with category filter",
+			args:        []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "func"},
+			expectError: false,
+		},
+		{
+			name:        "invalid category returns error",
+			args:        []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "nonexistent"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			orch := orchestrator.NewOrchestrator(os.Stderr, false)
+
+			diags, fset, err := runMultiModulePipeline(orch, tt.args, tt.opts)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			// Verify results type
+			if !tt.expectError {
+				_ = diags // Diagnostics slice
+				_ = fset  // FileSet pointer
+			}
+		})
+	}
+}
+
+// Test_runSingleModulePipeline tests the runSingleModulePipeline function.
+func Test_runSingleModulePipeline(t *testing.T) {
+	tests := []struct {
+		name        string
+		packages    []string
+		opts        orchestrator.Options
+		expectError bool
+	}{
+		{
+			name:        "valid package",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{},
+			expectError: false,
+		},
+		{
+			name:        "with category filter",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "func"},
+			expectError: false,
+		},
+		{
+			name:        "with single rule",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{OnlyRule: "KTN-FUNC-001"},
+			expectError: false,
+		},
+		{
+			name:        "invalid category returns error",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{Category: "nonexistent"},
+			expectError: true,
+		},
+		{
+			name:        "invalid rule returns error",
+			packages:    []string{"../../../pkg/formatter"},
+			opts:        orchestrator.Options{OnlyRule: "KTN-INVALID-999"},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			orch := orchestrator.NewOrchestrator(os.Stderr, false)
+
+			diags, fset, err := runSingleModulePipeline(orch, tt.packages, tt.opts)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			// Verify results type
+			if !tt.expectError {
+				_ = diags // Diagnostics slice
+				_ = fset  // FileSet pointer
+			}
+		})
+	}
+}

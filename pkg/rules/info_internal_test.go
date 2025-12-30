@@ -88,8 +88,60 @@ func Test_extractCodeWithoutColon(t *testing.T) {
 }
 
 func Test_analyzerToRuleInfo(t *testing.T) {
-	// Test with nil analyzer would panic, so skip
-	// This tests the conversion logic indirectly through exported functions
+	tests := []struct {
+		name         string
+		analyzer     *analysis.Analyzer
+		wantCode     string
+		wantCategory string
+		wantName     string
+	}{
+		{
+			name: "valid analyzer with KTN code",
+			analyzer: &analysis.Analyzer{
+				Name: "ktnfunc001",
+				Doc:  "KTN-FUNC-001: error must be last return value",
+			},
+			wantCode:     "KTN-FUNC-001",
+			wantCategory: "func",
+			wantName:     "ktnfunc001",
+		},
+		{
+			name: "analyzer without colon in doc",
+			analyzer: &analysis.Analyzer{
+				Name: "ktnvar002",
+				Doc:  "KTN-VAR-002 variable naming",
+			},
+			wantCode:     "KTN-VAR-002",
+			wantCategory: "var",
+			wantName:     "ktnvar002",
+		},
+		{
+			name: "non-KTN analyzer",
+			analyzer: &analysis.Analyzer{
+				Name: "modernize",
+				Doc:  "modernize: use modern Go idioms",
+			},
+			wantCode:     "",
+			wantCategory: "",
+			wantName:     "modernize",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info := analyzerToRuleInfo(tt.analyzer)
+
+			if info.Code != tt.wantCode {
+				t.Errorf("Code = %q, want %q", info.Code, tt.wantCode)
+			}
+			if info.Category != tt.wantCategory {
+				t.Errorf("Category = %q, want %q", info.Category, tt.wantCategory)
+			}
+			if info.Name != tt.wantName {
+				t.Errorf("Name = %q, want %q", info.Name, tt.wantName)
+			}
+		})
+	}
 }
 
 // Test_analyzersToRuleInfos tests conversion of analyzers to rule info.

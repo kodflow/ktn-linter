@@ -173,7 +173,7 @@ func TestAnalysisRunner_worker(t *testing.T) {
 
 			wg.Add(1)
 			// Worker will call wg.Done() via defer
-			runner.worker([]*analysis.Analyzer{}, pkgChan, diagChan, &wg)
+			runner.worker([]*analysis.Analyzer{}, pkgChan, diagChan, &wg, 0)
 			close(diagChan)
 			// Wait for worker to complete
 			wg.Wait()

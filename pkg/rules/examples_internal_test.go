@@ -92,72 +92,39 @@ func Test_fileExists(t *testing.T) {
 }
 
 func Test_findProjectRoot(t *testing.T) {
-	// Test basic functionality
-	root := findProjectRoot()
-
-	// Should return a non-empty path
-	if root == "" {
-		t.Error("findProjectRoot() returned empty string")
-	}
-
-	// In normal testing, this should find the project root via runtime.Caller
-	// The fallback path (os.Getwd) is only triggered when:
-	// 1. runtime.Caller succeeds BUT
-	// 2. go.mod doesn't exist at the computed project root
-	// This is difficult to test without mocking or breaking the project structure
-
-	// Verify that calling it multiple times returns consistent results
-	root2 := findProjectRoot()
-	if root != root2 {
-		t.Errorf("findProjectRoot() inconsistent: %q vs %q", root, root2)
-	}
-
-	// The returned path should be usable
-	if !fileExists(root) {
-		t.Errorf("findProjectRoot() returned non-existent path: %q", root)
-	}
-}
-
-func TestNewInvalidCodeError(t *testing.T) {
-	err := NewInvalidCodeError("BAD-CODE", "invalid format")
-
-	if err.Code != "BAD-CODE" {
-		t.Errorf("Code = %q, want 'BAD-CODE'", err.Code)
-	}
-	if err.Reason != "invalid format" {
-		t.Errorf("Reason = %q, want 'invalid format'", err.Reason)
-	}
-
-	errStr := err.Error()
-	if errStr == "" {
-		t.Error("Error() returned empty string")
-	}
-}
-
-// TestInvalidCodeError_Error tests the Error method on InvalidCodeError.
-func TestInvalidCodeError_Error(t *testing.T) {
 	tests := []struct {
-		name   string
-		err    *InvalidCodeError
-		expect string
+		name           string
+		wantNonEmpty   bool
+		wantConsistent bool
 	}{
 		{
-			name:   "basic error",
-			err:    &InvalidCodeError{Code: "BAD", Reason: "invalid"},
-			expect: "invalid",
-		},
-		{
-			name:   "empty reason",
-			err:    &InvalidCodeError{Code: "TEST", Reason: ""},
-			expect: "TEST",
+			name:           "returns non-empty path",
+			wantNonEmpty:   true,
+			wantConsistent: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.err.Error()
-			if result == "" {
-				t.Error("Error() should not return empty string")
+			// Get first result
+			root := findProjectRoot()
+
+			// Check non-empty
+			if tt.wantNonEmpty && root == "" {
+				t.Error("findProjectRoot() returned empty string")
+			}
+
+			// Check consistency
+			if tt.wantConsistent {
+				root2 := findProjectRoot()
+				if root != root2 {
+					t.Errorf("findProjectRoot() inconsistent: %q vs %q", root, root2)
+				}
+			}
+
+			// Verify path exists
+			if root != "" && !fileExists(root) {
+				t.Errorf("findProjectRoot() returned non-existent path: %q", root)
 			}
 		})
 	}

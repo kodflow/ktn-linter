@@ -25,6 +25,10 @@ func TestNewUpdater(t *testing.T) {
 			name:    "empty version",
 			version: "",
 		},
+		{
+			name:    "prerelease version",
+			version: "v1.0.0-beta.1",
+		},
 	}
 
 	// Run each test case
@@ -39,19 +43,25 @@ func TestNewUpdater(t *testing.T) {
 	}
 }
 
-// TestCheckForUpdateDevBuild tests that dev builds cannot check for updates.
-func TestCheckForUpdateDevBuild(t *testing.T) {
+// TestUpdater_CheckForUpdate tests that dev builds cannot check for updates.
+func TestUpdater_CheckForUpdate(t *testing.T) {
 	tests := []struct {
-		name    string
-		version string
+		name        string
+		version     string
+		wantErr     bool
+		wantCurrent string
 	}{
 		{
-			name:    "empty version",
-			version: "",
+			name:        "empty version returns error",
+			version:     "",
+			wantErr:     true,
+			wantCurrent: "",
 		},
 		{
-			name:    "dev version",
-			version: "dev",
+			name:        "dev version returns error",
+			version:     "dev",
+			wantErr:     true,
+			wantCurrent: "dev",
 		},
 	}
 
@@ -60,31 +70,45 @@ func TestCheckForUpdateDevBuild(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			u := updater.NewUpdater(tt.version)
 			info, err := u.CheckForUpdate()
-			// Check error is returned for dev builds
-			if err == nil {
-				t.Error("CheckForUpdate() should return error for dev build")
+			// Check error expectation
+			if tt.wantErr {
+				// Expect error for dev builds
+				if err == nil {
+					t.Error("CheckForUpdate() should return error for dev build")
+				}
+			} else {
+				// Expect no error
+				if err != nil {
+					t.Errorf("CheckForUpdate() unexpected error = %v", err)
+				}
 			}
 			// Check current version is set
-			if info.CurrentVersion != tt.version {
-				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.version)
+			if info.CurrentVersion != tt.wantCurrent {
+				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.wantCurrent)
 			}
 		})
 	}
 }
 
-// TestUpgradeDevBuild tests that dev builds cannot upgrade.
-func TestUpgradeDevBuild(t *testing.T) {
+// TestUpdater_Upgrade tests that dev builds cannot upgrade.
+func TestUpdater_Upgrade(t *testing.T) {
 	tests := []struct {
-		name    string
-		version string
+		name        string
+		version     string
+		wantErr     bool
+		wantCurrent string
 	}{
 		{
-			name:    "empty version",
-			version: "",
+			name:        "empty version returns error",
+			version:     "",
+			wantErr:     true,
+			wantCurrent: "",
 		},
 		{
-			name:    "dev version",
-			version: "dev",
+			name:        "dev version returns error",
+			version:     "dev",
+			wantErr:     true,
+			wantCurrent: "dev",
 		},
 	}
 
@@ -93,13 +117,21 @@ func TestUpgradeDevBuild(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			u := updater.NewUpdater(tt.version)
 			info, err := u.Upgrade()
-			// Check error is returned for dev builds
-			if err == nil {
-				t.Error("Upgrade() should return error for dev build")
+			// Check error expectation
+			if tt.wantErr {
+				// Expect error for dev builds
+				if err == nil {
+					t.Error("Upgrade() should return error for dev build")
+				}
+			} else {
+				// Expect no error
+				if err != nil {
+					t.Errorf("Upgrade() unexpected error = %v", err)
+				}
 			}
 			// Check current version is set
-			if info.CurrentVersion != tt.version {
-				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.version)
+			if info.CurrentVersion != tt.wantCurrent {
+				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, tt.wantCurrent)
 			}
 		})
 	}

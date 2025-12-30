@@ -2,11 +2,14 @@
 package updater
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-// TestParseVersion tests version parsing for various formats.
-func TestParseVersion(t *testing.T) {
+// TestUpdater_parseVersion tests version parsing for various formats.
+func TestUpdater_parseVersion(t *testing.T) {
 	u := NewUpdater("v1.0.0")
 
 	tests := []struct {
@@ -44,6 +47,16 @@ func TestParseVersion(t *testing.T) {
 			version:  "invalid",
 			expected: [3]int{0, 0, 0},
 		},
+		{
+			name:     "version with extra parts",
+			version:  "v1.2.3.4",
+			expected: [3]int{1, 2, 3},
+		},
+		{
+			name:     "version with leading zeros",
+			version:  "v01.02.03",
+			expected: [3]int{1, 2, 3},
+		},
 	}
 
 	// Run each test case
@@ -58,8 +71,8 @@ func TestParseVersion(t *testing.T) {
 	}
 }
 
-// TestIsNewer tests version comparison logic for various scenarios.
-func TestIsNewer(t *testing.T) {
+// TestUpdater_isNewer tests version comparison logic for various scenarios.
+func TestUpdater_isNewer(t *testing.T) {
 	tests := []struct {
 		name     string
 		current  string
@@ -114,6 +127,18 @@ func TestIsNewer(t *testing.T) {
 			latest:   "v2.0.0",
 			expected: true,
 		},
+		{
+			name:     "same major higher remote minor",
+			current:  "v2.0.0",
+			latest:   "v2.1.0",
+			expected: true,
+		},
+		{
+			name:     "same major minor higher remote patch",
+			current:  "v2.1.0",
+			latest:   "v2.1.5",
+			expected: true,
+		},
 	}
 
 	// Run each test case
@@ -130,8 +155,8 @@ func TestIsNewer(t *testing.T) {
 	}
 }
 
-// TestGetBinaryName tests platform-specific binary name generation.
-func TestGetBinaryName(t *testing.T) {
+// TestUpdater_getBinaryName tests platform-specific binary name generation.
+func TestUpdater_getBinaryName(t *testing.T) {
 	tests := []struct {
 		name          string
 		version       string
@@ -150,6 +175,12 @@ func TestGetBinaryName(t *testing.T) {
 			wantContains:  "ktn-linter-",
 			wantMinLength: 15,
 		},
+		{
+			name:          "empty version binary name",
+			version:       "",
+			wantContains:  "ktn-linter-",
+			wantMinLength: 15,
+		},
 	}
 
 	// Run each test case
@@ -162,7 +193,7 @@ func TestGetBinaryName(t *testing.T) {
 				t.Error("getBinaryName() returned empty string")
 			}
 			// Check name contains expected prefix
-			if !containsSubstring(name, tt.wantContains) {
+			if !strings.Contains(name, tt.wantContains) {
 				t.Errorf("getBinaryName() = %q, want to contain %q", name, tt.wantContains)
 			}
 			// Check minimum length
@@ -173,23 +204,203 @@ func TestGetBinaryName(t *testing.T) {
 	}
 }
 
-// containsSubstring checks if a string contains a substring.
+// TestUpdater_getLatestVersion tests fetching latest version from GitHub API.
+func TestUpdater_getLatestVersion(t *testing.T) {
+	tests := []struct {
+		name           string
+		responseBody   string
+		responseStatus int
+		wantVersion    string
+		wantErr        bool
+		wantErrContain string
+	}{
+		{
+			name:           "successful response",
+			responseBody:   `{"tag_name": "v1.2.3"}`,
+			responseStatus: http.StatusOK,
+			wantVersion:    "v1.2.3",
+			wantErr:        false,
+		},
+		{
+			name:           "not found status",
+			responseBody:   `{"message": "Not Found"}`,
+			responseStatus: http.StatusNotFound,
+			wantVersion:    "",
+			wantErr:        true,
+			wantErrContain: "unexpected status",
+		},
+		{
+			name:           "server error status",
+			responseBody:   `{"message": "Internal Server Error"}`,
+			responseStatus: http.StatusInternalServerError,
+			wantVersion:    "",
+			wantErr:        true,
+			wantErrContain: "unexpected status",
+		},
+		{
+			name:           "invalid json response",
+			responseBody:   `{invalid json`,
+			responseStatus: http.StatusOK,
+			wantVersion:    "",
+			wantErr:        true,
+			wantErrContain: "parsing release info",
+		},
+		{
+			name:           "empty tag name",
+			responseBody:   `{"tag_name": ""}`,
+			responseStatus: http.StatusOK,
+			wantVersion:    "",
+			wantErr:        false,
+		},
+	}
+
+	// Run each test case
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test server
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tt.responseStatus)
+				_, _ = w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			// Create updater with custom client pointing to test server
+			u := &Updater{
+				version: "v1.0.0",
+				client:  server.Client(),
+			}
+
+			// Override the API URL by using a custom transport
+			originalClient := u.client
+			u.client = &http.Client{
+				Transport: &mockTransport{
+					url:    server.URL,
+					client: originalClient,
+				},
+			}
+
+			version, err := u.getLatestVersion()
+
+			// Check error expectation
+			if tt.wantErr {
+				// Expect error
+				if err == nil {
+					t.Errorf("getLatestVersion() error = nil, wantErr %v", tt.wantErr)
+				} else if tt.wantErrContain != "" && !strings.Contains(err.Error(), tt.wantErrContain) {
+					t.Errorf("getLatestVersion() error = %v, want error containing %q", err, tt.wantErrContain)
+				}
+			} else {
+				// Expect no error
+				if err != nil {
+					t.Errorf("getLatestVersion() unexpected error = %v", err)
+				}
+			}
+
+			// Check version
+			if version != tt.wantVersion {
+				t.Errorf("getLatestVersion() = %q, want %q", version, tt.wantVersion)
+			}
+		})
+	}
+}
+
+// mockTransport is a custom RoundTripper that redirects requests to test server.
+type mockTransport struct {
+	url    string
+	client *http.Client
+}
+
+// RoundTrip implements http.RoundTripper interface.
 //
 // Params:
-//   - s: string to search in
-//   - substr: substring to find
+//   - req: the HTTP request
 //
 // Returns:
-//   - bool: true if substr found in s
-func containsSubstring(s, substr string) bool {
-	// Check each possible starting position
-	for i := 0; i <= len(s)-len(substr); i++ {
-		// Check if substring matches at position
-		if s[i:i+len(substr)] == substr {
-			// Match found
-			return true
-		}
+//   - *http.Response: the HTTP response
+//   - error: any error during transport
+func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Redirect to test server
+	newReq, err := http.NewRequest(req.Method, m.url, req.Body)
+	// Handle request creation error
+	if err != nil {
+		// Return wrapped error
+		return nil, err
 	}
-	// No match found
-	return false
+	// Copy headers
+	newReq.Header = req.Header
+	// Execute request
+	return m.client.Transport.RoundTrip(newReq)
+}
+
+// TestUpdater_downloadAndReplace tests the download and replace functionality.
+func TestUpdater_downloadAndReplace(t *testing.T) {
+	tests := []struct {
+		name           string
+		responseStatus int
+		responseBody   string
+		wantErr        bool
+		wantErrContain string
+	}{
+		{
+			name:           "download not found",
+			responseStatus: http.StatusNotFound,
+			responseBody:   "Not Found",
+			wantErr:        true,
+			wantErrContain: "download failed",
+		},
+		{
+			name:           "server error",
+			responseStatus: http.StatusInternalServerError,
+			responseBody:   "Internal Server Error",
+			wantErr:        true,
+			wantErrContain: "download failed",
+		},
+		{
+			name:           "forbidden access",
+			responseStatus: http.StatusForbidden,
+			responseBody:   "Forbidden",
+			wantErr:        true,
+			wantErrContain: "download failed",
+		},
+	}
+
+	// Run each test case
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test server that returns specified response
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tt.responseStatus)
+				_, _ = w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			// Create updater with custom client
+			u := &Updater{
+				version: "v1.0.0",
+				client: &http.Client{
+					Transport: &mockTransport{
+						url:    server.URL,
+						client: server.Client(),
+					},
+				},
+			}
+
+			err := u.downloadAndReplace("v1.1.0")
+
+			// Check error expectation
+			if tt.wantErr {
+				// Expect error
+				if err == nil {
+					t.Errorf("downloadAndReplace() error = nil, wantErr %v", tt.wantErr)
+				} else if tt.wantErrContain != "" && !strings.Contains(err.Error(), tt.wantErrContain) {
+					t.Errorf("downloadAndReplace() error = %v, want error containing %q", err, tt.wantErrContain)
+				}
+			} else {
+				// Expect no error
+				if err != nil {
+					t.Errorf("downloadAndReplace() unexpected error = %v", err)
+				}
+			}
+		})
+	}
 }

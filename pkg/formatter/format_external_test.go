@@ -135,22 +135,38 @@ func TestOutputFormatIsValid(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func TestFormatConstants(t *testing.T) {
-	// Test FormatText constant
-	if !formatter.FormatText.IsValid() {
-		// Report error if FormatText is invalid
-		t.Error("FormatText should be valid")
+	// Define test cases
+	tests := []struct {
+		name   string
+		format formatter.OutputFormat
+	}{
+		{
+			// Test FormatText constant
+			name:   "FormatText is valid constant",
+			format: formatter.FormatText,
+		},
+		{
+			// Test FormatJSON constant
+			name:   "FormatJSON is valid constant",
+			format: formatter.FormatJSON,
+		},
+		{
+			// Test FormatSARIF constant
+			name:   "FormatSARIF is valid constant",
+			format: formatter.FormatSARIF,
+		},
 	}
 
-	// Test FormatJSON constant
-	if !formatter.FormatJSON.IsValid() {
-		// Report error if FormatJSON is invalid
-		t.Error("FormatJSON should be valid")
-	}
-
-	// Test FormatSARIF constant
-	if !formatter.FormatSARIF.IsValid() {
-		// Report error if FormatSARIF is invalid
-		t.Error("FormatSARIF should be valid")
+	// Run all test cases
+	for _, tt := range tests {
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Check if format constant is valid
+			if !tt.format.IsValid() {
+				// Report error if constant is invalid
+				t.Errorf("Format constant %q should be valid", tt.format)
+			}
+		})
 	}
 }
 
@@ -159,26 +175,45 @@ func TestFormatConstants(t *testing.T) {
 // Params:
 //   - t: testing object for running test cases
 func TestParseOutputFormatRoundTrip(t *testing.T) {
-	// Define valid format strings
-	validFormats := []string{"text", "json", "sarif"}
+	// Define test cases
+	tests := []struct {
+		name      string
+		formatStr string
+	}{
+		{
+			// Test text format round trip
+			name:      "text format round trip",
+			formatStr: "text",
+		},
+		{
+			// Test json format round trip
+			name:      "json format round trip",
+			formatStr: "json",
+		},
+		{
+			// Test sarif format round trip
+			name:      "sarif format round trip",
+			formatStr: "sarif",
+		},
+	}
 
-	// Test each valid format
-	for _, formatStr := range validFormats {
-		// Run test case for this format
-		t.Run(formatStr, func(t *testing.T) {
+	// Run all test cases
+	for _, tt := range tests {
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
 			// Parse the format string
-			format := formatter.ParseOutputFormat(formatStr)
+			format := formatter.ParseOutputFormat(tt.formatStr)
 
 			// Verify the parsed format is valid
 			if !format.IsValid() {
 				// Report error if valid format becomes invalid
-				t.Errorf("ParseOutputFormat(%q).IsValid() = false, want true", formatStr)
+				t.Errorf("ParseOutputFormat(%q).IsValid() = false, want true", tt.formatStr)
 			}
 
 			// Verify the format matches the input
-			if string(format) != formatStr {
+			if string(format) != tt.formatStr {
 				// Report error if format string doesn't match
-				t.Errorf("ParseOutputFormat(%q) = %q, want %q", formatStr, format, formatStr)
+				t.Errorf("ParseOutputFormat(%q) = %q, want %q", tt.formatStr, format, tt.formatStr)
 			}
 		})
 	}

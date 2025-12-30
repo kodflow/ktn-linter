@@ -36,45 +36,83 @@ func Test_parseRulesOptions(t *testing.T) {
 }
 
 func Test_buildRulesOutput(t *testing.T) {
-	infos := []rules.RuleInfo{
-		{Code: "KTN-FUNC-001", Category: "func", Description: "Test"},
-		{Code: "KTN-VAR-001", Category: "var", Description: "Test2"},
+	// Define test cases for buildRulesOutput
+	tests := []struct {
+		name          string
+		infos         []rules.RuleInfo
+		expectedCount int
+	}{
+		{
+			name: "builds output with correct count and rules",
+			infos: []rules.RuleInfo{
+				{Code: "KTN-FUNC-001", Category: "func", Description: "Test"},
+				{Code: "KTN-VAR-001", Category: "var", Description: "Test2"},
+			},
+			expectedCount: 2,
+		},
 	}
 
-	output := buildRulesOutput(infos)
+	// Run all test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := buildRulesOutput(tt.infos)
 
-	if output.TotalCount != 2 {
-		t.Errorf("buildRulesOutput().TotalCount = %d, want 2", output.TotalCount)
-	}
+			// Check total count
+			if output.TotalCount != tt.expectedCount {
+				t.Errorf("buildRulesOutput().TotalCount = %d, want %d", output.TotalCount, tt.expectedCount)
+			}
 
-	if len(output.Rules) != 2 {
-		t.Errorf("buildRulesOutput().Rules length = %d, want 2", len(output.Rules))
+			// Check rules length
+			if len(output.Rules) != tt.expectedCount {
+				t.Errorf("buildRulesOutput().Rules length = %d, want %d", len(output.Rules), tt.expectedCount)
+			}
+		})
 	}
 }
 
 func Test_formatRulesMarkdown(t *testing.T) {
-	output := rules.RulesOutput{
-		TotalCount: 1,
-		Categories: []string{"func"},
-		Rules: []rules.RuleInfo{
-			{
-				Code:        "KTN-FUNC-001",
-				Category:    "func",
-				Description: "Test description",
-				GoodExample: "func Test() {}",
+	// Define test cases for markdown formatting
+	tests := []struct {
+		name           string
+		output         rules.RulesOutput
+		expectCode     string
+		expectSection  string
+	}{
+		{
+			name: "formats rules as markdown with code and examples",
+			output: rules.RulesOutput{
+				TotalCount: 1,
+				Categories: []string{"func"},
+				Rules: []rules.RuleInfo{
+					{
+						Code:        "KTN-FUNC-001",
+						Category:    "func",
+						Description: "Test description",
+						GoodExample: "func Test() {}",
+					},
+				},
 			},
+			expectCode:    "KTN-FUNC-001",
+			expectSection: "Good Example",
 		},
 	}
 
-	var buf bytes.Buffer
-	formatRulesMarkdown(&buf, output)
+	// Run all test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			formatRulesMarkdown(&buf, tt.output)
 
-	result := buf.String()
-	if !strings.Contains(result, "KTN-FUNC-001") {
-		t.Error("Markdown output should contain rule code")
-	}
-	if !strings.Contains(result, "Good Example") {
-		t.Error("Markdown output should contain Good Example section")
+			result := buf.String()
+			// Check rule code
+			if !strings.Contains(result, tt.expectCode) {
+				t.Error("Markdown output should contain rule code")
+			}
+			// Check section
+			if !strings.Contains(result, tt.expectSection) {
+				t.Error("Markdown output should contain Good Example section")
+			}
+		})
 	}
 }
 
@@ -205,67 +243,127 @@ func (fw *failingWriter) Write(p []byte) (int, error) {
 }
 
 func Test_formatRulesText(t *testing.T) {
-	output := rules.RulesOutput{
-		TotalCount: 1,
-		Categories: []string{"func"},
-		Rules: []rules.RuleInfo{
-			{
-				Code:        "KTN-FUNC-001",
-				Category:    "func",
-				Description: "Test description",
+	// Define test cases for text formatting
+	tests := []struct {
+		name           string
+		output         rules.RulesOutput
+		expectCode     string
+		expectCategory string
+	}{
+		{
+			name: "formats rules as text with code and category",
+			output: rules.RulesOutput{
+				TotalCount: 1,
+				Categories: []string{"func"},
+				Rules: []rules.RuleInfo{
+					{
+						Code:        "KTN-FUNC-001",
+						Category:    "func",
+						Description: "Test description",
+					},
+				},
 			},
+			expectCode:     "KTN-FUNC-001",
+			expectCategory: "FUNC",
 		},
 	}
 
-	var buf bytes.Buffer
-	formatRulesText(&buf, output)
+	// Run all test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			formatRulesText(&buf, tt.output)
 
-	result := buf.String()
-	if !strings.Contains(result, "KTN-FUNC-001") {
-		t.Error("Text output should contain rule code")
-	}
-	if !strings.Contains(result, "FUNC") {
-		t.Error("Text output should contain category header")
+			result := buf.String()
+			// Check rule code
+			if !strings.Contains(result, tt.expectCode) {
+				t.Error("Text output should contain rule code")
+			}
+			// Check category
+			if !strings.Contains(result, tt.expectCategory) {
+				t.Error("Text output should contain category header")
+			}
+		})
 	}
 }
 
 func Test_writeRuleMarkdown(t *testing.T) {
-	rule := rules.RuleInfo{
-		Code:        "KTN-TEST-001",
-		Category:    "test",
-		Description: "Test rule",
-		GoodExample: "func Example() {}",
+	// Define test cases for markdown rule writing
+	tests := []struct {
+		name           string
+		rule           rules.RuleInfo
+		expectHeader   string
+		expectCategory string
+	}{
+		{
+			name: "writes rule with header and category in markdown",
+			rule: rules.RuleInfo{
+				Code:        "KTN-TEST-001",
+				Category:    "test",
+				Description: "Test rule",
+				GoodExample: "func Example() {}",
+			},
+			expectHeader:   "## KTN-TEST-001",
+			expectCategory: "**Category**: test",
+		},
 	}
 
-	var buf bytes.Buffer
-	writeRuleMarkdown(&buf, rule)
+	// Run all test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writeRuleMarkdown(&buf, tt.rule)
 
-	result := buf.String()
-	if !strings.Contains(result, "## KTN-TEST-001") {
-		t.Error("Should contain rule header")
-	}
-	if !strings.Contains(result, "**Category**: test") {
-		t.Error("Should contain category")
+			result := buf.String()
+			// Check header
+			if !strings.Contains(result, tt.expectHeader) {
+				t.Error("Should contain rule header")
+			}
+			// Check category
+			if !strings.Contains(result, tt.expectCategory) {
+				t.Error("Should contain category")
+			}
+		})
 	}
 }
 
 func Test_writeRuleText(t *testing.T) {
-	rule := rules.RuleInfo{
-		Code:        "KTN-TEST-001",
-		Category:    "test",
-		Description: "Test rule",
-		GoodExample: "func Example() {}",
+	// Define test cases for text rule writing
+	tests := []struct {
+		name          string
+		rule          rules.RuleInfo
+		expectCode    string
+		expectSection string
+	}{
+		{
+			name: "writes rule with code and example in text format",
+			rule: rules.RuleInfo{
+				Code:        "KTN-TEST-001",
+				Category:    "test",
+				Description: "Test rule",
+				GoodExample: "func Example() {}",
+			},
+			expectCode:    "KTN-TEST-001",
+			expectSection: "Good Example",
+		},
 	}
 
-	var buf bytes.Buffer
-	writeRuleText(&buf, rule)
+	// Run all test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writeRuleText(&buf, tt.rule)
 
-	result := buf.String()
-	if !strings.Contains(result, "KTN-TEST-001") {
-		t.Error("Should contain rule code")
-	}
-	if !strings.Contains(result, "Good Example") {
-		t.Error("Should contain example section")
+			result := buf.String()
+			// Check rule code
+			if !strings.Contains(result, tt.expectCode) {
+				t.Error("Should contain rule code")
+			}
+			// Check example section
+			if !strings.Contains(result, tt.expectSection) {
+				t.Error("Should contain example section")
+			}
+		})
 	}
 }
 
@@ -296,12 +394,26 @@ func Test_formatRulesOutput(t *testing.T) {
 
 // Test_runRules tests the runRules command function.
 func Test_runRules(t *testing.T) {
-	// Test with default flags - should not panic
-	rulesCmd.Flags().Set(flagRulesFormat, "markdown")
-	rulesCmd.Flags().Set(flagRulesNoExamples, "true")
+	// Define test cases for runRules
+	tests := []struct {
+		name       string
+		format     string
+		noExamples string
+	}{
+		{name: "executes without panic with default flags", format: "markdown", noExamples: "true"},
+	}
 
-	// runRules writes to stdout, just verify it doesn't panic
-	runRules(rulesCmd, []string{})
+	// Run all test cases
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set flags
+			rulesCmd.Flags().Set(flagRulesFormat, tt.format)
+			rulesCmd.Flags().Set(flagRulesNoExamples, tt.noExamples)
+
+			// runRules writes to stdout, just verify it doesn't panic
+			runRules(rulesCmd, []string{})
+		})
+	}
 }
 
 // Test_getRulesWithFilters tests the getRulesWithFilters function.
