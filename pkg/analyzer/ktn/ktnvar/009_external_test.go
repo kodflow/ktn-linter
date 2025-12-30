@@ -17,22 +17,22 @@ func TestVar009(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Large structs without pointer",
+			name:           "Large structs passed by value in function params",
 			analyzer:       ktnvar.Analyzer009,
 			testdataDir:    "var009",
-			expectedErrors: 5,
+			expectedErrors: 4,
 		},
 		{
 			name:           "Valid pointer usage for large structs",
 			analyzer:       ktnvar.Analyzer009,
 			testdataDir:    "var009",
-			expectedErrors: 5,
+			expectedErrors: 4,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// 5 grandes structures sans pointeur
+			// 4 grandes structures passées par valeur en paramètres
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

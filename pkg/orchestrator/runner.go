@@ -250,20 +250,54 @@ func (r *AnalysisRunner) createPassParallel(
 // Returns:
 //   - []*ast.File: files to analyze
 func (r *AnalysisRunner) selectFiles(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet) []*ast.File {
-	// Test analyzers need all files
+	// First filter globally excluded files
+	files := r.filterExcludedFiles(pkg.Syntax, fset)
+
+	// Test analyzers need all non-excluded files
 	if strings.HasPrefix(a.Name, "ktntest") {
-		// Return all files
-		return pkg.Syntax
+		// Return all non-excluded files
+		return files
 	}
 
 	// Check force mode
 	if config.Get().ForceAllRulesOnTests {
-		// Return all files
-		return pkg.Syntax
+		// Return all non-excluded files
+		return files
 	}
 
 	// Filter test files for other analyzers
-	return r.filterTestFiles(pkg.Syntax, fset)
+	return r.filterTestFiles(files, fset)
+}
+
+// filterExcludedFiles filters out globally excluded files.
+//
+// Params:
+//   - files: files to filter
+//   - fset: fileset for position
+//
+// Returns:
+//   - []*ast.File: filtered files (excluding globally excluded)
+func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
+	cfg := config.Get()
+	// Check if no exclusions configured
+	if cfg == nil || len(cfg.Exclude) == 0 {
+		// Return all files
+		return files
+	}
+
+	filtered := make([]*ast.File, 0, len(files))
+	// Iterate over files
+	for _, file := range files {
+		pos := fset.Position(file.Pos())
+		// Skip globally excluded files
+		if !cfg.IsFileExcludedGlobally(pos.Filename) {
+			filtered = append(filtered, file)
+		} else if r.verbose {
+			fmt.Fprintf(r.stderr, "Excluding file: %s\n", pos.Filename)
+		}
+	}
+	// Return filtered files
+	return filtered
 }
 
 // filterTestFiles filters out test files.

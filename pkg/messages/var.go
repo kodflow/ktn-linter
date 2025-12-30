@@ -166,13 +166,13 @@ EXEMPLE CORRECT:
 
 	Register(Message{
 		Code:  "KTN-VAR-009",
-		Short: "struct de %d bytes passée par valeur. Utiliser pointeur",
-		Verbose: `PROBLÈME: Struct de %d bytes passée par valeur (>64 bytes).
+		Short: "struct de %d champs passée par valeur. Utiliser pointeur",
+		Verbose: `PROBLÈME: Struct de %d champs passée par valeur (>3 champs).
 
-POURQUOI: Passer par valeur copie toute la struct.
-Un pointeur copie seulement 8 bytes (64-bit).
+POURQUOI: Les grandes structs devraient utiliser des pointeurs
+pour éviter les copies coûteuses lors des appels de fonction.
 
-SEUIL: >64 bytes → utiliser pointeur
+SEUIL: >3 champs → utiliser pointeur
 
 EXEMPLE INCORRECT:
   func Process(data LargeStruct) { ... }

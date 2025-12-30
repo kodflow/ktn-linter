@@ -1,50 +1,39 @@
-// Package var009 provides good test cases.
+// Package var009 provides good test cases for KTN-VAR-009.
 package var009
 
-const (
-	// Answer is the answer
-	Answer int = 42
-	// AgeValue is age value
-	AgeValue int = 25
-	// IdValue is id value
-	IdValue int = 1
-	// UserAge is user age
-	UserAge int = 30
-	// UserBalance is user balance
-	UserBalance float64 = 100.0
-	// PiValue is pi value
-	PiValue float64 = 3.14
-	// ConfigValue is config value
-	ConfigValue int = 10
-)
-
-// GoodStruct démontre l'utilisation correcte des structures.
-// Elle illustre comment allouer des structures avec pointeurs pour optimiser la mémoire.
-type GoodStruct struct {
-	Field1 int
-	Field2 string
-	Field3 bool
-	Field4 float64
+// SmallStruct a 3 champs ou moins (OK par valeur).
+type SmallStruct struct {
+	A int
+	B string
+	C bool
 }
 
-// init demonstrates correct usage patterns
-func init() {
-	// Structure avec pointeur
-	data := &GoodStruct{
-		Field1: Answer,
-		Field2: "test",
-		Field3: true,
-		Field4: PiValue,
-	}
-	_ = data
+// goodSmallByValue prend une petite struct par valeur (OK).
+func goodSmallByValue(data SmallStruct) {
+	// Petite struct, pas de problème
+	_ = data.A
+}
 
-	// Déclaration de pointeur
-	var config *GoodStruct
-	config = &GoodStruct{Field1: ConfigValue}
-	_ = config
+// goodLargeByPointer prend une grande struct par pointeur (correct).
+func goodLargeByPointer(data *LargeStruct) {
+	// Pointeur, pas de copie
+	_ = data.Field1
+}
 
-	// Allocation avec new
-	newData := new(GoodStruct)
-	newData.Field1 = Answer
-	_ = newData
+// goodMultiplePointers prend plusieurs pointeurs.
+func goodMultiplePointers(a *LargeStruct, b *LargeStruct) {
+	// Tous les pointeurs
+	_, _ = a.Field1, b.Field1
+}
+
+// goodMixedSmall mélange petite struct et pointeur.
+func goodMixedSmall(small SmallStruct, large *LargeStruct) {
+	// Petite par valeur OK, grande par pointeur OK
+	_ = small.A + large.Field1
+}
+
+// goodPrimitives utilise des types primitifs.
+func goodPrimitives(a int, b string, c bool) {
+	// Primitifs par valeur, pas de problème
+	_, _, _ = a, b, c
 }
