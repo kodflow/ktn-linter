@@ -293,6 +293,11 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 		return files
 	}
 
+	// Defensive: cannot resolve filenames without a FileSet
+	if fset == nil {
+		return files
+	}
+
 	filtered := make([]*ast.File, 0, len(files))
 	// Iterate over files
 	for _, file := range files {

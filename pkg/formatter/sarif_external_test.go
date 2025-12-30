@@ -85,9 +85,9 @@ func TestSARIFFormatterEmptyDiagnostics(t *testing.T) {
 			// Parse the output JSON
 			var report map[string]interface{}
 			err := json.Unmarshal(buf.Bytes(), &report)
-			// Verify JSON is valid
+			// Fail fast on invalid JSON
 			if err != nil {
-				t.Errorf("invalid SARIF output: %v", err)
+				t.Fatalf("invalid SARIF output: %v", err)
 			}
 
 			// Verify SARIF version
@@ -154,17 +154,16 @@ func TestSARIFFormatterWithDiagnostics(t *testing.T) {
 			// Parse the output JSON
 			var report map[string]interface{}
 			err := json.Unmarshal(buf.Bytes(), &report)
-			// Verify JSON is valid
+			// Fail fast on invalid JSON
 			if err != nil {
-				t.Errorf("invalid SARIF output: %v", err)
+				t.Fatalf("invalid SARIF output: %v", err)
 			}
 
 			// Get runs array
 			runs, ok := report["runs"].([]interface{})
-			// Check runs exists
+			// Check runs exists - fail fast if missing
 			if !ok || len(runs) == 0 {
-				t.Error("missing runs in SARIF output")
-				return
+				t.Fatal("missing runs in SARIF output")
 			}
 
 			// Get first run
@@ -232,17 +231,16 @@ func TestSARIFFormatterToolInfo(t *testing.T) {
 			// Parse the output JSON
 			var report map[string]interface{}
 			err := json.Unmarshal(buf.Bytes(), &report)
-			// Verify JSON is valid
+			// Fail fast on invalid JSON
 			if err != nil {
-				t.Errorf("invalid SARIF output: %v", err)
+				t.Fatalf("invalid SARIF output: %v", err)
 			}
 
 			// Get runs array
 			runs, ok := report["runs"].([]interface{})
-			// Check runs exists
+			// Check runs exists - fail fast if missing
 			if !ok || len(runs) == 0 {
-				t.Error("missing runs in SARIF output")
-				return
+				t.Fatal("missing runs in SARIF output")
 			}
 
 			// Get first run
@@ -336,17 +334,16 @@ func TestSARIFFormatterSeverityLevels(t *testing.T) {
 			// Parse the output JSON
 			var report map[string]interface{}
 			err := json.Unmarshal(buf.Bytes(), &report)
-			// Verify JSON is valid
+			// Fail fast on invalid JSON
 			if err != nil {
-				t.Errorf("invalid SARIF output: %v", err)
+				t.Fatalf("invalid SARIF output: %v", err)
 			}
 
 			// Get runs array
 			runs, ok := report["runs"].([]interface{})
-			// Check runs exists
+			// Check runs exists - fail fast if missing
 			if !ok || len(runs) == 0 {
-				t.Error("missing runs in SARIF output")
-				return
+				t.Fatal("missing runs in SARIF output")
 			}
 
 			// Get first run
