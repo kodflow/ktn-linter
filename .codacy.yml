@@ -20,3 +20,10 @@ engines:
   trivy:
     exclude_paths:
       - '.devcontainer/mcp.json'
+
+  # Exclude test files from Lizard complexity analysis
+  # Test functions are inherently longer due to table-driven patterns
+  lizard:
+    exclude_paths:
+      - '**/*_test.go'
+      - '**/testdata/**'
