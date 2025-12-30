@@ -68,8 +68,9 @@ func (t T) foo() {}
 			}
 
 			pass := &analysis.Pass{
-				Fset: fset,
-				Pkg:  pkg,
+				Fset:  fset,
+				Files: []*ast.File{file},
+				Pkg:   pkg,
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},

@@ -324,6 +324,10 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if m == nil || m.client == nil {
 		return nil, errors.New("mockTransport: nil client")
 	}
+	// Guard against nil request
+	if req == nil || req.URL == nil {
+		return nil, errors.New("mockTransport: nil request")
+	}
 
 	// Parse test-server base URL
 	base, err := url.Parse(m.url)
