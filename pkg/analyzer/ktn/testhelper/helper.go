@@ -52,10 +52,11 @@ func createTypeInfo() *types.Info {
 func createPass(fset *token.FileSet, file *ast.File, pkg *types.Package, info *types.Info, diagnostics *[]analysis.Diagnostic) *analysis.Pass {
 	// Retour du pass d'analyse
 	return &analysis.Pass{
-		Fset:      fset,
-		Files:     []*ast.File{file},
-		Pkg:       pkg,
-		TypesInfo: info,
+		Fset:       fset,
+		Files:      []*ast.File{file},
+		Pkg:        pkg,
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor("gc", "amd64"),
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},
@@ -241,10 +242,11 @@ func createPassForPackage(fset *token.FileSet, files []*ast.File, diagnostics *[
 
 	// Retour du pass d'analyse
 	return &analysis.Pass{
-		Fset:      fset,
-		Files:     files,
-		Pkg:       pkg,
-		TypesInfo: info,
+		Fset:       fset,
+		Files:      files,
+		Pkg:        pkg,
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor("gc", "amd64"),
 		Report: func(d analysis.Diagnostic) {
 			*diagnostics = append(*diagnostics, d)
 		},

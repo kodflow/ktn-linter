@@ -111,6 +111,11 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int
 //   - pos: position du paramètre
 //   - maxBytes: taille max en bytes
 func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxBytes int) {
+	// Handle variadic params: `...T` should be checked as `T`
+	if ell, ok := typ.(*ast.Ellipsis); ok && ell.Elt != nil {
+		typ = ell.Elt
+	}
+
 	// Ignorer les pointeurs (déjà passés par référence)
 	if _, isPointer := typ.(*ast.StarExpr); isPointer {
 		// C'est un pointeur, OK
@@ -142,10 +147,7 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 	// Calcul de la taille en bytes (use compiler/arch sizes when available)
 	sizes := pass.TypesSizes
 	if sizes == nil {
-		sizes = types.SizesFor("gc", "amd64")
-	}
-	if sizes == nil {
-		// Can't determine sizes reliably; avoid false positives/panics
+		// Can't determine sizes reliably; avoid false positives
 		return
 	}
 	sizeBytes := sizes.Sizeof(typeInfo)

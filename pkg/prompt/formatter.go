@@ -29,8 +29,8 @@ func NewMarkdownFormatter(w io.Writer) *MarkdownFormatter {
 // Params:
 //   - output: prompt output to format
 func (f *MarkdownFormatter) Format(output *PromptOutput) {
-	// Guard against nil output
-	if output == nil {
+	// Guard against nil receiver, writer, or output
+	if f == nil || f.writer == nil || output == nil {
 		return
 	}
 
