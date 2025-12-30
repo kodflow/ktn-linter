@@ -130,11 +130,6 @@ func Test_checkFuncParams009(t *testing.T) {
 				},
 			}
 
-			// Skip nil params case
-			if tt.params == nil {
-				return
-			}
-
 			checkFuncParams009(pass, tt.params, 64)
 
 			// Verify report expectation

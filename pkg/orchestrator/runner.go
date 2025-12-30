@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -301,14 +302,18 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 			filtered = append(filtered, file)
 			continue
 		}
+
+		// Normalize path for cross-platform compatibility
+		filename := filepath.ToSlash(pos.Filename)
+
 		// Check if file should be excluded globally
-		if !cfg.IsFileExcludedGlobally(pos.Filename) {
+		if !cfg.IsFileExcludedGlobally(filename) {
 			// Add file to filtered list
 			filtered = append(filtered, file)
 		} else { // File is globally excluded
 			// Log excluded file when verbose mode is enabled
 			if r.verbose && r.stderr != nil {
-				fmt.Fprintf(r.stderr, "Excluding file: %s\n", pos.Filename)
+				fmt.Fprintf(r.stderr, "Excluding file: %s\n", filename)
 			}
 		}
 	}

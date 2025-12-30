@@ -79,8 +79,8 @@ func (f *MarkdownFormatter) writeInstructions() {
 //   - phase: phase group to write (pointer for efficiency)
 //   - phaseNum: phase number for display
 func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
-	// Guard against nil phase
-	if phase == nil {
+	// Guard against nil receiver, writer, or phase
+	if f == nil || f.writer == nil || phase == nil {
 		// Return early to avoid nil pointer dereference
 		return
 	}
@@ -112,8 +112,8 @@ func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
 // Params:
 //   - rule: rule violations to write (pointer for efficiency)
 func (f *MarkdownFormatter) writeRule(rule *RuleViolations) {
-	// Guard against nil rule
-	if rule == nil {
+	// Guard against nil receiver, writer, or rule
+	if f == nil || f.writer == nil || rule == nil {
 		// Return early to avoid nil pointer dereference
 		return
 	}

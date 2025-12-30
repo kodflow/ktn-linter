@@ -121,12 +121,33 @@ func TestRulesOutput_JSON(t *testing.T) {
 				t.Fatalf("Failed to unmarshal JSON: %v", err)
 			}
 
-			// Check expected fields in raw JSON string
-			jsonStr := string(data)
+			// Check expected top-level fields
 			for _, field := range tt.expectedFields {
-				// Verify field is present
-				if !strings.Contains(jsonStr, field) {
-					t.Errorf("JSON should contain %q", field)
+				switch field {
+				case "TotalCount", "Categories", "Rules":
+					if _, ok := parsed[field]; !ok {
+						t.Errorf("JSON should contain top-level field %q", field)
+					}
+				default:
+					// Treat non-top-level expectations as rule-code expectations
+					rulesAny, ok := parsed["Rules"].([]any)
+					if !ok {
+						t.Fatalf("JSON field %q is missing or not an array", "Rules")
+					}
+					found := false
+					for _, r := range rulesAny {
+						m, ok := r.(map[string]any)
+						if !ok {
+							continue
+						}
+						if code, _ := m["Code"].(string); code == field {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("JSON should contain rule code %q", field)
+					}
 				}
 			}
 		})

@@ -251,7 +251,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `runner.go:Run` | 94.4% |
 | 🟢 `runner.go:analyzePackageParallel` | 91.7% |
 | 🟡 `runner.go:runAnalyzerGroup` | 83.3% |
-| 🟡 `runner.go:filterExcludedFiles` | 85.7% |
+| 🟡 `runner.go:filterExcludedFiles` | 86.7% |
 
 ### 🟡 `github.com/kodflow/ktn-linter/pkg/prompt` - 89.2%
 
@@ -282,4 +282,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-30 16:47:29*
+*Généré le: 2025-12-30 16:58:15*

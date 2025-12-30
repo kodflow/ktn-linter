@@ -90,19 +90,17 @@ func runVar009(pass *analysis.Pass) (any, error) {
 //   - params: liste des paramètres
 //   - maxBytes: taille max en bytes
 func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int) {
+	// Handle nil params gracefully
+	if params == nil {
+		return
+	}
 	// Parcours des paramètres
 	for _, param := range params.List {
 		// Si le paramètre a des noms (ex: a, b T), vérifier chaque nom
 		if len(param.Names) > 0 {
-			// Itération sur chaque nom de paramètre
-			for _, name := range param.Names {
-				pos := param.Pos()
-				// Utiliser la position du nom si disponible
-				if name != nil {
-					pos = name.NamePos
-				}
-				checkParamType009(pass, param.Type, pos, maxBytes)
-			}
+			// Pour (a, b T), ne reporter qu'une seule fois pour éviter les doublons
+			pos := param.Names[0].NamePos
+			checkParamType009(pass, param.Type, pos, maxBytes)
 			continue
 		}
 		// Paramètre sans nom (ex: func f(T)), utiliser la position du type

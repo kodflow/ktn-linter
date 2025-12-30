@@ -4,6 +4,7 @@ package updater
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -319,18 +320,22 @@ type mockTransport struct {
 //   - *http.Response: the HTTP response
 //   - error: any error during transport
 func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Preserve original path + query, redirect to test server host
-	redirectURL := m.url + req.URL.RequestURI()
-
-	// Clone the request preserving context
-	newReq := req.Clone(req.Context())
-	u, err := newReq.URL.Parse(redirectURL)
-	// Handle URL parsing error
+	// Parse test-server base URL
+	base, err := url.Parse(m.url)
 	if err != nil {
 		return nil, err
 	}
-	newReq.URL = u
-	newReq.Host = u.Host
+
+	// Preserve original path + query, redirect to test server host
+	target := base.ResolveReference(&url.URL{
+		Path:     req.URL.Path,
+		RawQuery: req.URL.RawQuery,
+	})
+
+	// Clone the request preserving context
+	newReq := req.Clone(req.Context())
+	newReq.URL = target
+	newReq.Host = target.Host
 	newReq.Header = req.Header.Clone()
 
 	// Get transport with nil fallback

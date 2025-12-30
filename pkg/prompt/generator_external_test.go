@@ -54,39 +54,34 @@ func TestNewGenerator(t *testing.T) {
 //   - t: testing object
 func TestGenerator_Generate(t *testing.T) {
 	tests := []struct {
-		name      string
-		patterns  []string
-		options   orchestrator.Options
-		wantErr   bool
-		checkNil  bool
+		name     string
+		patterns []string
+		options  orchestrator.Options
+		wantErr  bool
 	}{
 		{
 			name:     "empty patterns",
 			patterns: []string{},
 			options:  orchestrator.Options{},
 			wantErr:  false,
-			checkNil: false,
 		},
 		{
 			name:     "valid pattern",
 			patterns: []string{"github.com/kodflow/ktn-linter/pkg/prompt"},
 			options:  orchestrator.Options{},
 			wantErr:  false,
-			checkNil: false,
 		},
 		{
 			name:     "invalid pattern",
 			patterns: []string{"invalid/package/path/does/not/exist"},
 			options:  orchestrator.Options{},
 			wantErr:  true,
-			checkNil: false,
 		},
 		{
 			name:     "invalid analyzer",
 			patterns: []string{"github.com/kodflow/ktn-linter/pkg/prompt"},
 			options:  orchestrator.Options{OnlyRule: "INVALID-RULE-999"},
 			wantErr:  true,
-			checkNil: false,
 		},
 	}
 
@@ -106,8 +101,8 @@ func TestGenerator_Generate(t *testing.T) {
 				return
 			}
 
-			// Check nil output if not error
-			if !tt.wantErr && tt.checkNil && output == nil {
+			// Successful runs must return non-nil output
+			if !tt.wantErr && output == nil {
 				t.Error("Generate() returned nil output")
 			}
 		})

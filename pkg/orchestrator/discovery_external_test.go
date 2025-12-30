@@ -37,6 +37,7 @@ func TestFindModules(t *testing.T) {
 		setupFunc      func(t *testing.T) string
 		cleanupFunc    func(string)
 		useSetupResult bool
+		pathCount      int // Number of times to duplicate the setup path (0 or 1 = single path)
 	}{
 		{
 			name:          "empty input returns empty result",
@@ -45,8 +46,17 @@ func TestFindModules(t *testing.T) {
 		},
 		{
 			name:          "current directory finds module",
-			paths:         []string{"/workspace"},
+			paths:         []string{}, // Will be set by setupFunc
 			expectedCount: 1,
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module test\n"), 0o644)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return tmpDir
+			},
+			useSetupResult: true,
 		},
 		{
 			name:          "non-existent path returns empty",
@@ -55,13 +65,33 @@ func TestFindModules(t *testing.T) {
 		},
 		{
 			name:          "file path finds module",
-			paths:         []string{"/workspace/go.mod"},
+			paths:         []string{}, // Will be set by setupFunc
 			expectedCount: 1,
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				goModPath := filepath.Join(tmpDir, "go.mod")
+				err := os.WriteFile(goModPath, []byte("module test\n"), 0o644)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return goModPath // Return the go.mod file path
+			},
+			useSetupResult: true,
 		},
 		{
 			name:          "duplicate paths are deduplicated",
-			paths:         []string{"/workspace", "/workspace"},
+			paths:         []string{}, // Will be set by setupFunc
 			expectedCount: 1,
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module test\n"), 0o644)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return tmpDir
+			},
+			useSetupResult: true,
+			pathCount:      2, // Duplicate the path to test deduplication
 		},
 	}
 
@@ -71,11 +101,19 @@ func TestFindModules(t *testing.T) {
 			paths := tt.paths
 			// Use setup result if configured
 			if tt.setupFunc != nil && tt.useSetupResult {
-				tmpDir := tt.setupFunc(t)
-				paths = []string{tmpDir}
+				setupResult := tt.setupFunc(t)
+				// Handle path count for duplicate testing
+				count := tt.pathCount
+				if count <= 1 {
+					count = 1
+				}
+				paths = make([]string, count)
+				for i := range paths {
+					paths[i] = setupResult
+				}
 				// Cleanup if needed
 				if tt.cleanupFunc != nil {
-					defer tt.cleanupFunc(tmpDir)
+					defer tt.cleanupFunc(setupResult)
 				}
 			}
 
@@ -163,19 +201,16 @@ func TestFindModulesSkipsDirectories(t *testing.T) {
 func TestResolvePatterns(t *testing.T) {
 	tests := []struct {
 		name     string
-		rootPath string
 		patterns []string
 		expected []string
 	}{
 		{
 			name:     "recursive pattern preserved",
-			rootPath: "/workspace",
 			patterns: []string{"./..."},
 			expected: []string{"./..."},
 		},
 		{
 			name:     "path defaults to recursive",
-			rootPath: "/workspace",
 			patterns: []string{"/some/path"},
 			expected: []string{"./..."},
 		},
@@ -183,8 +218,10 @@ func TestResolvePatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Use temp directory as rootPath
+			rootPath := t.TempDir()
 			d := orchestrator.NewModuleDiscovery()
-			patterns := d.ResolvePatterns(tt.rootPath, tt.patterns)
+			patterns := d.ResolvePatterns(rootPath, tt.patterns)
 			// Check result
 			if len(patterns) != len(tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected, patterns)
