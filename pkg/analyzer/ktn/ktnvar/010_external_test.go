@@ -31,6 +31,7 @@ func TestVar010(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// 8 buffers créés dans des boucles (4 original + 4 nouveaux edge cases)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)

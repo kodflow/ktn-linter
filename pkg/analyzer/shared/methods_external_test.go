@@ -84,6 +84,7 @@ func (u User) Name() string {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -164,6 +165,7 @@ func Function() {}`,
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -221,6 +223,7 @@ func TestExtractReceiverNameEdgeCases(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := shared.ExtractReceiverName(tt.recv)
 			// Verify result

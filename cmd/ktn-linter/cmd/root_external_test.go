@@ -19,6 +19,7 @@ func TestSetVersion(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// This function should not panic
@@ -49,6 +50,7 @@ func TestExecute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// This test verifies Execute doesn't panic when called
 			// More detailed testing is done in internal tests

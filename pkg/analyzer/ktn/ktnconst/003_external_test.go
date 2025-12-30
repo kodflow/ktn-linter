@@ -31,6 +31,7 @@ func TestConst003(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors (CamelCase is valid)
 			// bad.go: 20 errors (constants with underscores violate CamelCase convention)

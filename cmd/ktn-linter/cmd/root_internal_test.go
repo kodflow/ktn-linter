@@ -65,6 +65,7 @@ func TestExecuteSuccess(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -118,6 +119,7 @@ func TestExecuteError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -178,6 +180,7 @@ func TestInitFlags(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Vérification flag
@@ -225,6 +228,7 @@ func TestRootCmdStructure(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
@@ -246,6 +250,7 @@ func Test_execute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// This test verifies internal execution behavior
 			// using mocked dependencies (OsExit, etc.)
@@ -284,6 +289,7 @@ func Test_setVersion(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration de la version

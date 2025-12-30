@@ -30,6 +30,7 @@ func Test_runLint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -147,6 +148,7 @@ func Test_parseOptions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 			opts := parseOptions()
@@ -237,6 +239,7 @@ exclude:
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -319,6 +322,7 @@ func Test_runPipeline(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			orch := orchestrator.NewOrchestrator(os.Stderr, tt.opts.Verbose)
 
@@ -379,6 +383,7 @@ func Test_formatAndDisplay(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Capture stdout
 			oldStdout := os.Stdout
@@ -455,6 +460,7 @@ func TestLintCmdStructure(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
 		})
@@ -508,6 +514,7 @@ func Test_getOutputWriter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -618,6 +625,7 @@ func Test_needsModuleDiscovery(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := needsModuleDiscovery(tt.args)
 			// Verify result
@@ -726,6 +734,7 @@ func Test_runSingleModulePipeline(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			orch := orchestrator.NewOrchestrator(os.Stderr, false)
 

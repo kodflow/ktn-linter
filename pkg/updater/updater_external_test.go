@@ -33,6 +33,7 @@ func TestNewUpdater(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			u := updater.NewUpdater(tt.version)
 			// Check updater is not nil

@@ -43,6 +43,7 @@ func TestIsTestFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsTestFile(tt.filename)
 			if got != tt.want {
@@ -105,6 +106,7 @@ func TestIsGeneratedFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsGeneratedFile(tt.file)
 			if got != tt.want {
@@ -148,6 +150,7 @@ func TestShouldSkipFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			f := fset.AddFile(tt.filename, -1, 100)
 			tt.file.Package = f.Pos(0)
@@ -183,6 +186,7 @@ func TestShouldSkipTestFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			f := fset.AddFile(tt.filename, -1, 100)
 			file := &ast.File{Package: f.Pos(0)}
@@ -220,6 +224,7 @@ func TestShouldSkipGeneratedFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.ShouldSkipGeneratedFile(tt.file)
 			if got != tt.want {

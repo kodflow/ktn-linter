@@ -125,6 +125,7 @@ func Test_sortRulesInPhases(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			sortRulesInPhases(tt.phaseMap)
 
@@ -206,6 +207,7 @@ func Test_buildPhaseGroups(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := buildPhaseGroups(tt.phaseMap)
 

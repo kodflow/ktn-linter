@@ -23,6 +23,7 @@ func Test_runComment003(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify that Analyzer003 is properly configured
 			if Analyzer003 == nil {
@@ -49,6 +50,7 @@ func Test_runComment003_ruleDisabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -115,6 +117,7 @@ func Test_runComment003_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test

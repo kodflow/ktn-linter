@@ -50,6 +50,7 @@ func TestFormatEmpty(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode, false)
@@ -75,6 +76,7 @@ func TestFormatHumanMode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, false, false, false, false)
@@ -105,6 +107,7 @@ func TestFormatAIMode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, true, false, false, false)
@@ -174,6 +177,7 @@ func TestFormatSimpleMode(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t, output, lines)
@@ -192,6 +196,7 @@ func TestFormatNoColor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, false, true, false, false)
@@ -252,6 +257,7 @@ func TestExtractCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractCode(tt.message)
 			if got != tt.expected {
@@ -336,6 +342,7 @@ func TestExtractMessageWithOptions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractMessageWithOptions(tt.message, true)
 			if got != tt.expected {
@@ -361,6 +368,7 @@ func TestGetCodeColor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.code, func(t *testing.T) {
 			got := formatter.getCodeColor(tt.code)
 			if got != tt.expected {
@@ -382,6 +390,7 @@ func TestGetCodeColorNoColor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := &formatterImpl{noColor: true}
 			got := formatter.getCodeColor(tt.code)
@@ -451,6 +460,7 @@ func TestGroupByFile(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t, groups, fset)
@@ -469,6 +479,7 @@ func TestGroupByFileFiltering(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := &formatterImpl{}
 			fset := token.NewFileSet()
@@ -560,6 +571,7 @@ func TestFilterAndSortDiagnostics(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t, filtered, fset)
@@ -578,6 +590,7 @@ func TestPrintFunctions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{
@@ -724,6 +737,7 @@ func TestFormatSimpleModeWithFiltering(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t, output, lines)
@@ -742,6 +756,7 @@ func TestFormatHumanModeEmpty(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{
@@ -775,6 +790,7 @@ func TestFormatterImpl_formatForHuman(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, false, false, false, false).(*formatterImpl)
@@ -807,6 +823,7 @@ func TestFormatterImpl_formatForAI(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, true, false, false, false).(*formatterImpl)
@@ -839,6 +856,7 @@ func TestFormatterImpl_formatSimple(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := NewFormatter(buf, false, false, true, false).(*formatterImpl)
@@ -870,6 +888,7 @@ func TestFormatterImpl_groupByFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := &formatterImpl{}
 			fset := token.NewFileSet()
@@ -901,6 +920,7 @@ func TestFormatterImpl_filterAndSortDiagnostics(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := &formatterImpl{}
 			fset := token.NewFileSet()
@@ -934,6 +954,7 @@ func TestFormatterImpl_printHeader(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{writer: buf, noColor: true}
@@ -960,6 +981,7 @@ func TestFormatterImpl_printFileHeader(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{writer: buf, noColor: true}
@@ -986,6 +1008,7 @@ func TestFormatterImpl_printDiagnostic(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{writer: buf, noColor: true}
@@ -1019,6 +1042,7 @@ func TestFormatterImpl_printSuccess(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{writer: buf, noColor: true}
@@ -1044,6 +1068,7 @@ func TestFormatterImpl_printSummary(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			formatter := &formatterImpl{writer: buf, noColor: true}
@@ -1071,6 +1096,7 @@ func TestFormatterImpl_getCodeColor(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := &formatterImpl{noColor: tt.noColor}
 			result := formatter.getCodeColor(tt.code)
@@ -1096,6 +1122,7 @@ func TestFormatterImpl_getSymbol(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := &formatterImpl{}
 			symbol := formatter.getSymbol(tt.code)
@@ -1148,6 +1175,7 @@ func Test_formatterImpl_printMessage(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &formatterImpl{

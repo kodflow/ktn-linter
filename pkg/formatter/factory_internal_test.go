@@ -82,6 +82,7 @@ func Test_FormatterOptions(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify AIMode

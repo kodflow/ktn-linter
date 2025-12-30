@@ -22,6 +22,7 @@ func Test_runVar006(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API in external tests
 		})
@@ -75,6 +76,7 @@ func Test_isBuilderCompositeLit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isBuilderCompositeLit(tt.lit)
 			// Vérification du résultat
@@ -93,6 +95,7 @@ func Test_checkBuilderWithoutGrow(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function checks builders without Grow
 		})
@@ -165,6 +168,7 @@ func Test_checkValueSpec(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			lit, pos := checkValueSpec(tt.node)
 			// Check composite literal result
@@ -230,6 +234,7 @@ func Test_checkAssignStmt(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			lit, pos := checkAssignStmt(tt.node)
 			// Check composite literal result
@@ -252,6 +257,7 @@ func Test_reportMissingGrow(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function reports missing Grow
 		})
@@ -318,6 +324,7 @@ func Test_extractTypeString(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractTypeString(tt.typeExpr, tt.values)
 			// Check result matches expected
@@ -336,6 +343,7 @@ func Test_extractAssignTypeString(t *testing.T) {
 		{"error case validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - function extracts assign type strings
 		})
@@ -350,6 +358,7 @@ func Test_runVar006_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with rule disabled
@@ -407,6 +416,7 @@ func Test_runVar006_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup config with file exclusion

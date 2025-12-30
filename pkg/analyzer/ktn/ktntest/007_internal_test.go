@@ -32,6 +32,7 @@ func Test_ExtractReceiverType(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -106,6 +107,7 @@ func Test_addPublicFunction(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -206,6 +208,7 @@ func Test_checkAndReportPublicFunctionTest(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			code := "package test\nfunc " + tt.testFuncName + "(t *testing.T) {}"
 			fset := token.NewFileSet()
@@ -283,6 +286,7 @@ func (m MyType) PublicMethod() {}`,
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test conceptual logic
 			t.Logf("Testing code with expected functions: %v", tt.want)
@@ -302,6 +306,7 @@ func Test_runTest007(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
@@ -321,6 +326,7 @@ func Test_checkInternalTestsForPublicFunctions(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
@@ -336,6 +342,7 @@ func Test_runTest007_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -350,6 +357,7 @@ func Test_runTest007_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

@@ -82,6 +82,7 @@ func Test_hasValidDocumentation(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := hasValidDocumentation(tt.doc, tt.structName, defaultMinStructDocLines)
 			// Check result
@@ -102,6 +103,7 @@ func Test_runComment005(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify that Analyzer005 is properly configured
 			if Analyzer005 == nil {
@@ -124,6 +126,7 @@ func Test_runComment005_ruleDisabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -190,6 +193,7 @@ func Test_runComment005_fileExcluded(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Import config package for test
@@ -259,6 +263,7 @@ func Test_runComment005_customThreshold(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configure custom threshold
@@ -356,6 +361,7 @@ func Test_hasValidDocumentation_blockComments(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := hasValidDocumentation(tt.doc, tt.structName, defaultMinStructDocLines)
 			// Check result
@@ -374,6 +380,7 @@ func Test_runComment005_privateStruct(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test
@@ -431,6 +438,7 @@ func Test_runComment005_nonStruct(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			code := `package test

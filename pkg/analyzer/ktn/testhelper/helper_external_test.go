@@ -109,6 +109,7 @@ func TestRunAnalyzer(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			analyzer, filename := tt.setupFunc(t)
@@ -242,6 +243,7 @@ func TestTestGoodBad(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			testDir := "testgoodbad" + tt.testDirSuffix
@@ -292,6 +294,7 @@ func TestTestGoodBadWithFiles(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			createTestDataStructureForTest(t, tt.testDirName, tt.goodContent, tt.badContent)
@@ -399,6 +402,7 @@ func TestRunAnalyzerOnPackage(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			analyzer, dir := tt.setupFunc(t)
@@ -441,6 +445,7 @@ func TestTestGoodBadPackage(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			createPackageTestDataForTest(t, tt.pkgName, tt.goodContent, tt.badContent)

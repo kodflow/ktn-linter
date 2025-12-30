@@ -32,6 +32,7 @@ func TestIsTestsVariableName(t *testing.T) {
 
 	// Parcours des cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isTestsVariableName(tt.varName)
 			// Vérification du résultat
@@ -62,6 +63,7 @@ func TestExample(t *testing.T) {
 		{"case2", 2, 4},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {})
 	}
 }`,
@@ -149,6 +151,7 @@ func TestExample(t *testing.T) {
 
 	// Parcours des cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parser le code
 			fset := token.NewFileSet()
@@ -221,6 +224,7 @@ func TestExample(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -286,6 +290,7 @@ func TestExample(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -334,6 +339,7 @@ func TestEmpty(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing code: %s", tt.code)
@@ -349,6 +355,7 @@ func Test_runTest004_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -363,6 +370,7 @@ func Test_runTest004_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

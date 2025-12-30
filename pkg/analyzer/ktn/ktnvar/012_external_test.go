@@ -32,6 +32,7 @@ func TestVar012(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// 12 conversions répétées détectées (5 original + 7 nouveaux edge cases)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)

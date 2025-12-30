@@ -50,6 +50,7 @@ func TestGetAllRules(t *testing.T) {
 
 	// Exécution des tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t, rules)
@@ -75,6 +76,7 @@ func TestGetRulesByCategory(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			rules := ktn.GetRulesByCategory(tt.category)
 
@@ -121,6 +123,7 @@ func TestGetRuleByCode(t *testing.T) {
 
 	// Iteration over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := ktn.GetRuleByCode(tt.code)
 			// Check nil expectation

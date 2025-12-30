@@ -130,6 +130,7 @@ func TestNewFormatterByFormat(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output

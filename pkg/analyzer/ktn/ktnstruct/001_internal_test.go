@@ -33,6 +33,7 @@ func Test_runStruct001(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite analysis.Pass réel
@@ -97,6 +98,7 @@ type Empty struct{}`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -227,6 +229,7 @@ func (u *User) GetName() (string, error) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -344,6 +347,7 @@ func Test_extractReceiverType(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Skip nil test pour éviter panic
@@ -385,6 +389,7 @@ func Test_extractReturnedField(t *testing.T) {
 
 	// Exécution des tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractReturnedField(tt.expr)
 			// Vérification du résultat
@@ -492,6 +497,7 @@ func Test_checkNamingConventions(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Create minimal pass for testing
@@ -556,6 +562,7 @@ func GetAge() int {
 
 	// Iteration over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -718,6 +725,7 @@ func (u *User) GetName() string {
 
 	// Iteration over tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -817,6 +825,7 @@ func Test_runStruct001_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{
@@ -871,6 +880,7 @@ func Test_runStruct001_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{

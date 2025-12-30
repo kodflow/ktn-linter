@@ -13,6 +13,7 @@ func Test_getKnownInitialisms(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			initialisms := getKnownInitialisms()
 			if len(initialisms) == 0 {
@@ -52,6 +53,7 @@ func Test_tryMatchInitialismPrefix(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			remaining, matched := tryMatchInitialismPrefix(tt.input, initialisms)
 			if remaining != tt.expectedRemaining {

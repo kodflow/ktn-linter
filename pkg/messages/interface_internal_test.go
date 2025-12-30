@@ -19,6 +19,7 @@ func Test_registerInterfaceMessages(t *testing.T) {
 
 	// Iterate through test cases
 	for _, test := range tests {
+		test := test // Capture range variable
 		t.Run(test.name, func(t *testing.T) {
 			msg, found := Get(test.code)
 			// Verify message is found

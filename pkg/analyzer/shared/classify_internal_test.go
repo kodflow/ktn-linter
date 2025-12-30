@@ -42,6 +42,7 @@ func Test_getVisibility(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := getVisibility(tt.id)
 			// Check result
@@ -102,6 +103,7 @@ func Test_parsePrivateTestName(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got, ok := parsePrivateTestName(tt.privateName)
 			// Check success status
@@ -137,6 +139,7 @@ func Test_extractReceiverTypeName_IndexListExpr(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test is a placeholder - ExtractReceiverTypeName handles IndexListExpr
 			// This ensures the switch case is covered
@@ -188,6 +191,7 @@ func Test_extractReceiverTypeName_UnknownExpr(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := ExtractReceiverTypeName(tt.expr)
 			// Check result

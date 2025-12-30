@@ -32,6 +32,7 @@ func Test_sarifFormatter_severityToSARIF(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create formatter
@@ -73,6 +74,7 @@ func Test_sarifFormatter_addRule(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create formatter
@@ -129,6 +131,7 @@ func Test_sarifFormatter_addResults(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create formatter
@@ -188,6 +191,7 @@ func Test_sarifFormatter_Format(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output
@@ -250,6 +254,7 @@ func Test_sarifFormatter_RuleDeduplication(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create formatter

@@ -26,6 +26,7 @@ func TestNewOrchestrator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, tt.verbose)
@@ -61,6 +62,7 @@ func TestOrchestrator_LoadPackages(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, false)
@@ -124,6 +126,7 @@ func TestOrchestrator_SelectAnalyzers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, false)
@@ -166,6 +169,7 @@ func TestOrchestrator_RunAnalyzers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, false)
@@ -220,6 +224,7 @@ func TestOrchestrator_FilterDiagnostics(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, false)
@@ -254,6 +259,7 @@ func TestOrchestrator_ExtractDiagnostics(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, false)
@@ -291,6 +297,7 @@ func TestOrchestrator_Run(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			orch := orchestrator.NewOrchestrator(&buf, false)
@@ -342,6 +349,7 @@ func TestGetFirstFset(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := orchestrator.GetFirstFset(tt.diagnostics)
 
@@ -387,6 +395,7 @@ func TestOptionsDefaults(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			opts := orchestrator.Options{}
 

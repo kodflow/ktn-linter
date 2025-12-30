@@ -32,6 +32,7 @@ func TestIsExportedIdent(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check result
@@ -64,6 +65,7 @@ func TestClassifyFunc(t *testing.T) {
 	}
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create file set
 			fset := token.NewFileSet()
@@ -119,6 +121,7 @@ func TestBuildSuggestedTestName(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Build name
@@ -159,6 +162,7 @@ func TestParseTestName(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse name
@@ -214,6 +218,7 @@ func TestBuildTestLookupKey(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Build key
@@ -242,6 +247,7 @@ func TestBuildTestTargetKey(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Build key
@@ -275,6 +281,7 @@ func TestIsMockFile(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check result
@@ -309,6 +316,7 @@ func TestIsMockName(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check result
@@ -346,6 +354,7 @@ func TestIsExemptTestFile(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check result
@@ -378,6 +387,7 @@ func TestIsExemptTestName(t *testing.T) {
 	}
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run each test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check result
@@ -406,6 +416,7 @@ func TestExtractReceiverTypeName(t *testing.T) {
 	}
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create file set
 			fset := token.NewFileSet()

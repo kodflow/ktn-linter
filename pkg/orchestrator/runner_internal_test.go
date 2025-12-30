@@ -31,6 +31,7 @@ func TestAnalysisRunner_analyzePackageParallel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, tt.verbose)
@@ -74,6 +75,7 @@ func TestAnalysisRunner_createPassParallel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, false)
@@ -153,6 +155,7 @@ func TestAnalysisRunner_worker(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, false)
@@ -201,6 +204,7 @@ func TestAnalysisRunner_selectFiles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, false)
@@ -249,6 +253,7 @@ func TestAnalysisRunner_selectFilesWithConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Save and restore config
 			oldCfg := config.Get()
@@ -321,6 +326,7 @@ func TestAnalysisRunner_filterTestFiles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, false)
@@ -361,6 +367,7 @@ func TestAnalysisRunner_filterTestFilesWithActualFiles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, false)
@@ -441,6 +448,7 @@ func TestAnalysisRunner_runRequired(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			runner := NewAnalysisRunner(&buf, false)
@@ -517,6 +525,7 @@ func TestAnalysisRunner_filterExcludedFiles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config
 			config.Set(&config.Config{

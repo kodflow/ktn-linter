@@ -18,6 +18,7 @@ func TestNewModuleDiscovery(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			d := orchestrator.NewModuleDiscovery()
 			// Check not nil
@@ -96,6 +97,7 @@ func TestFindModules(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			d := orchestrator.NewModuleDiscovery()
 			paths := tt.paths
@@ -159,6 +161,7 @@ func TestFindModulesSkipsDirectories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temp directory structure
 			tmpDir := t.TempDir()
@@ -217,6 +220,7 @@ func TestResolvePatterns(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Use temp directory as rootPath
 			rootPath := t.TempDir()
@@ -253,6 +257,7 @@ func TestFindModulesMultiple(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temp directory structure with modules
 			tmpDir := t.TempDir()

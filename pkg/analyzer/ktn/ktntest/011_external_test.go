@@ -23,6 +23,7 @@ func TestTest011(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// 2 erreurs: tests de fonctions retournant error sans couverture d'erreur
 			// - TestParseConfig: ParseConfig retourne error mais test sans cas d'erreur

@@ -20,6 +20,7 @@ func Test_runConst003(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - main logic tested via public API
 		})
@@ -68,6 +69,7 @@ func Test_isValidGoConstantName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isValidGoConstantName(tt.constName)
 			// Verify result
@@ -86,6 +88,7 @@ func Test_runConst003_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup: disable the rule
@@ -145,6 +148,7 @@ func Test_runConst003_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Setup: exclude test.go files

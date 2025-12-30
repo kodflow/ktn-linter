@@ -57,6 +57,7 @@ func TestParseOutputFormat(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the format
@@ -116,6 +117,7 @@ func TestOutputFormatIsValid(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check if format is valid
@@ -159,6 +161,7 @@ func TestFormatConstants(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Check if format constant is valid
@@ -199,6 +202,7 @@ func TestParseOutputFormatRoundTrip(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the format string

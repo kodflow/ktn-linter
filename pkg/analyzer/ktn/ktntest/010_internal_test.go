@@ -205,6 +205,7 @@ func Test_isPassthroughTest(t *testing.T) {
 					{"case1", 1},
 				}
 				for _, tt := range tests {
+					tt := tt // Capture range variable
 					t.Run(tt.name, func(t *testing.T) {
 						got := 1
 						if got != tt.want {
@@ -229,6 +230,7 @@ func Test_isPassthroughTest(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -285,6 +287,7 @@ func Test_isComparisonOperator(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isComparisonOperator(tt.op)
 			// Vérification du résultat
@@ -319,6 +322,7 @@ func Test_isTestingAssertionCall(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -369,6 +373,7 @@ func Test_isSubTestCall(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -425,6 +430,7 @@ func Test_isAssertLibraryCall(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -477,6 +483,7 @@ func Test_isTestHelperCall(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -530,6 +537,7 @@ func Test_checkForValidationSignal(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse expression or statement
 			fset := token.NewFileSet()
@@ -578,6 +586,7 @@ func Test_checkCallForValidation(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -624,6 +633,7 @@ func Test_runTest010(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Vérification de l'analyseur
 			if Analyzer010 == nil || Analyzer010.Name != tt.expectedName {
@@ -642,6 +652,7 @@ func Test_runTest010_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -656,6 +667,7 @@ func Test_runTest010_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -690,6 +702,7 @@ func Test_isPassthroughTest_nilBody(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isPassthroughTest(tt.funcDecl)
 			if got != tt.want {
@@ -714,6 +727,7 @@ func Test_checkForValidationSignal_nil(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := checkForValidationSignal(tt.node)
 			if got != tt.want {
@@ -738,6 +752,7 @@ func Test_isTestingAssertionCall_notSelector(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -781,6 +796,7 @@ func Test_isSubTestCall_notReceiver(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)
@@ -827,6 +843,7 @@ func Test_isAssertLibraryCall_notReceiver(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", tt.code, 0)

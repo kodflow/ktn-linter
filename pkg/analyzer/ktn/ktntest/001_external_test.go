@@ -23,6 +23,7 @@ func TestAnalyzer001(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Expected 2 errors in bad package:
 			// - helper_test.go (should be renamed to helper_internal_test.go or helper_external_test.go)

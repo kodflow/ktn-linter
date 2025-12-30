@@ -40,6 +40,7 @@ func TestExtractRuleCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := rules.ExtractRuleCode(tt.doc)
 			if got != tt.want {
@@ -78,6 +79,7 @@ func TestExtractDescription(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := rules.ExtractDescription(tt.doc)
 			if got != tt.want {
@@ -131,6 +133,7 @@ func TestExtractCategory(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := rules.ExtractCategory(tt.code)
 			if got != tt.want {
@@ -168,6 +171,7 @@ func TestGetAllRuleInfos(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			infos := rules.GetAllRuleInfos()
 
@@ -227,6 +231,7 @@ func TestGetRuleInfosByCategory(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			infos := rules.GetRuleInfosByCategory(tt.category)
 			if len(infos) < tt.wantMin {
@@ -267,6 +272,7 @@ func TestGetRuleInfoByCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			info := rules.GetRuleInfoByCode(tt.code)
 			gotNil := info == nil
@@ -319,6 +325,7 @@ func TestGetCategories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			categories := rules.GetCategories()
 

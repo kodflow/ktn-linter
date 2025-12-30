@@ -20,6 +20,7 @@ func Test_runFunc007_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec règle désactivée
@@ -54,6 +55,7 @@ func Test_runFunc007_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec fichier exclu
@@ -120,6 +122,7 @@ func Test_runFunc007(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique principale est dans external tests
@@ -158,6 +161,7 @@ func Test_isGetter(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := isGetter(tt.funcName)
@@ -203,6 +207,7 @@ func Test_hasSideEffect(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := hasSideEffect(tt.expr)
@@ -226,6 +231,7 @@ func Test_checkGetterSideEffects(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite analysis.Pass réel
@@ -246,6 +252,7 @@ func Test_reportAssignSideEffect(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite analysis.Pass réel
@@ -266,6 +273,7 @@ func Test_reportIncDecSideEffect(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite analysis.Pass réel
@@ -286,6 +294,7 @@ func Test_collectLazyLoadFields(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test avec body vide (pas nil pour éviter panic)
@@ -337,6 +346,7 @@ func Test_isNilComparison(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := isNilComparison(tt.binary)
@@ -397,6 +407,7 @@ func Test_extractFieldName(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractFieldName(tt.binary)
@@ -444,6 +455,7 @@ func Test_isLazyLoadAssignment(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			result := isLazyLoadAssignment(tt.lhs, tt.lazyFields)

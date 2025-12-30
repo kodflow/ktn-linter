@@ -27,6 +27,7 @@ func TestComment005(t *testing.T) {
 
 	// Parcourir les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Exécuter chaque test
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors, bad.go: 1 error for missing struct documentation

@@ -25,6 +25,7 @@ func TestNewFormatter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
 			f := formatter.NewFormatter(buf, tt.aiMode, tt.noColor, tt.simpleMode, false)
@@ -50,6 +51,7 @@ func TestFormatterImpl_Format(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := formatter.NewFormatter(&buf, false, true, false, false)

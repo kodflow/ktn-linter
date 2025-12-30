@@ -33,6 +33,7 @@ func TestNewGenerator(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create stderr buffer
 			var stderr bytes.Buffer
@@ -87,6 +88,7 @@ func TestGenerator_Generate(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create generator
 			var stderr bytes.Buffer
@@ -155,6 +157,7 @@ func TestPromptOutput_Structure(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify structure
 			if tt.output.TotalViolations != tt.wantViolations {

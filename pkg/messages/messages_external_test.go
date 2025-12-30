@@ -43,6 +43,7 @@ func TestGet(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := messages.Get(tt.code)
 			// Vérification du résultat
@@ -91,6 +92,7 @@ func TestMessage_Format(t *testing.T) {
 
 	// Itération sur les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := messages.Get(tt.code)
 			// Vérification existence
@@ -130,6 +132,7 @@ func TestMessage_FormatShort(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := messages.Get(tt.code)
 			// Verify message exists
@@ -169,6 +172,7 @@ func TestMessage_FormatVerbose(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := messages.Get(tt.code)
 			// Verify message exists
@@ -213,6 +217,7 @@ func TestRegister(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Register the message
 			messages.Register(tt.msg)

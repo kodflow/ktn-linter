@@ -45,6 +45,7 @@ func Test_isValidRuleCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isValidRuleCode(tt.code)
 			if got != tt.want {
@@ -78,6 +79,7 @@ func Test_extractCodeWithoutColon(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractCodeWithoutColon(tt.doc)
 			if got != tt.want {
@@ -128,6 +130,7 @@ func Test_analyzerToRuleInfo(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			info := analyzerToRuleInfo(tt.analyzer)
 
@@ -171,6 +174,7 @@ func Test_analyzersToRuleInfos(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := analyzersToRuleInfos(tt.input)
 			if len(result) != tt.wantLen {

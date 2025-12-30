@@ -20,6 +20,7 @@ func Test_registerReturnMessages(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify message exists
 			msg, found := Get(tt.code)

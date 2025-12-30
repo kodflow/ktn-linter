@@ -25,6 +25,7 @@ func Test_runTest001(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing: %s", tt.name)
@@ -42,6 +43,7 @@ func Test_runTest012_integration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			if Analyzer001 == nil || Analyzer001.Name != tt.expectedName {
 				t.Errorf("Analyzer001 invalid: nil=%v, Name=%q, want %q",
@@ -82,6 +84,7 @@ func Test_runTest012_fileNamingPatterns(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test conceptual logic
 			t.Logf("Testing filename: %s (shouldFail=%v)", tt.filename, tt.shouldFail)
@@ -120,6 +123,7 @@ func Test_runTest012_edgeCases(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test conceptual logic
 			t.Logf("Testing edge case: %s (isValid=%v)", tt.filename, tt.isValid)
@@ -168,6 +172,7 @@ func Test_hasValidTestSuffix(t *testing.T) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := hasValidTestSuffix(tt.filename)
 			// Check result
@@ -262,6 +267,7 @@ func BenchmarkWithHelper(b *testing.B) {
 
 	// Iterate over test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -300,6 +306,7 @@ func Test_runTest001_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -314,6 +321,7 @@ func Test_runTest001_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

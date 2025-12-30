@@ -21,6 +21,7 @@ func Test_runFunc001_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec règle désactivée
@@ -55,6 +56,7 @@ func Test_runFunc001_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec fichier exclu
@@ -121,6 +123,7 @@ func Test_runFunc001(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique principale est dans external tests
@@ -138,6 +141,7 @@ func Test_validateErrorInReturns(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique est testée via external tests
@@ -183,6 +187,7 @@ func qux() CustomError { return nil }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -282,6 +287,7 @@ func bad() BadError { return nil }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -366,6 +372,7 @@ func foo() *PtrError { return nil }`,
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -424,6 +431,7 @@ func Test_isErrorType_nilType(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			fset := token.NewFileSet()
@@ -459,6 +467,7 @@ func Test_isErrorType_namedBuiltinError(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test le cas où le type est nommé "error" avec pkg == nil
@@ -528,6 +537,7 @@ func Test_isErrorType_aliasedError(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test le cas où le type est un alias de error
@@ -597,6 +607,7 @@ func Test_isErrorType_namedNonError(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type nommé qui n'est pas error
@@ -666,6 +677,7 @@ func Test_isErrorType_underlyingError(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type nommé dont le underlying est error

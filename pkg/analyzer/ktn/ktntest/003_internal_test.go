@@ -47,6 +47,7 @@ func Test_isExemptFunction(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isExemptFunction(tt.funcName)
 			// Vérification de la condition
@@ -78,6 +79,7 @@ func Test_ClassifyFunc(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -136,6 +138,7 @@ func Test_ExtractReceiverTypeName(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Parse the code
 			fset := token.NewFileSet()
@@ -211,6 +214,7 @@ func Test_BuildSuggestedTestName(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := shared.BuildSuggestedTestName(tt.meta)
 			// Vérification de la condition
@@ -247,6 +251,7 @@ func Test_buildTestNames(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := buildTestNames([]string{}, tt.fn)
 			// Vérification de la longueur
@@ -278,6 +283,7 @@ func Test_buildFuncLookupKey(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := buildFuncLookupKey(tt.fn)
 			// Vérification du résultat
@@ -324,6 +330,7 @@ func Test_hasMatchingTest(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := hasMatchingTest(tt.testNames, tt.testedFuncs)
 			// Vérification de la condition
@@ -380,6 +387,7 @@ func Test_collectExternalTestedFunctions(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "", "package test\n"+tt.code, 0)
@@ -444,6 +452,7 @@ func Test_collectFunctions(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -483,6 +492,7 @@ func Test_runTest003(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -526,6 +536,7 @@ func Test_countTestFiles(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, tt.filename, "package test", 0)
@@ -566,6 +577,7 @@ func Test_collectAllFunctionsAndTests(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic functionality
 			t.Logf("Testing code: %s", tt.code)
@@ -623,6 +635,7 @@ func Test_checkFunctionsHaveTests(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
@@ -668,6 +681,7 @@ func Test_reportMissingTest(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", "package test", 0)
@@ -707,6 +721,7 @@ func Test_collectExternalTestFunctions(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				Fset:  token.NewFileSet(),
@@ -740,6 +755,7 @@ func Test_findPackageDir(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				Fset:  token.NewFileSet(),
@@ -786,6 +802,7 @@ func Test_isCacheOrTempFile(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := isCacheOrTempFile(tt.filename)
 			// Vérification résultat
@@ -810,6 +827,7 @@ func Test_parseTestFile(t *testing.T) {
 
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			testedFuncs := make(map[string]bool)
 			// Should not panic on non-existent file
@@ -830,6 +848,7 @@ func Test_runTest003_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -844,6 +863,7 @@ func Test_runTest003_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

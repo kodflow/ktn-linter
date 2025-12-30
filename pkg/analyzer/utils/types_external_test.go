@@ -26,6 +26,7 @@ func TestIsZeroLiteral(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			got := utils.IsZeroLiteral(expr)
@@ -55,6 +56,7 @@ func TestIsReferenceType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			got := utils.IsReferenceType(expr)
@@ -79,6 +81,7 @@ func TestIsStructType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			got := utils.IsStructType(expr)
@@ -106,6 +109,7 @@ func TestGetTypeName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			got := utils.GetTypeName(expr)
@@ -142,6 +146,7 @@ func TestGetTypeNameWithUnsupportedType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.GetTypeName(tt.expr)
 			if got != tt.expected {
@@ -168,6 +173,7 @@ func TestIsMakeSliceZero(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			got := utils.IsMakeSliceZero(expr)
@@ -198,6 +204,7 @@ func TestIsMakeSliceZeroWithNonCallExpr(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := utils.IsMakeSliceZero(tt.expr)
 			if got != tt.expected {
@@ -227,6 +234,7 @@ func TestIsMakeSliceZeroWithNonMake(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			expr, _ := parser.ParseExprFrom(fset, "", tt.code, 0)
@@ -253,6 +261,7 @@ func TestHasPositiveLength(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			expr, _ := parser.ParseExpr(tt.code)
 			// Call with nil pass to test AST-only path

@@ -63,6 +63,7 @@ func TestUpdater_parseVersion(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := u.parseVersion(tt.version)
 			// Check result matches expected
@@ -145,6 +146,7 @@ func TestUpdater_isNewer(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			u := NewUpdater(tt.current)
 			result := u.isNewer(tt.latest)
@@ -187,6 +189,7 @@ func TestUpdater_getBinaryName(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			u := NewUpdater(tt.version)
 			name := u.getBinaryName()
@@ -258,6 +261,7 @@ func TestUpdater_getLatestVersion(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create test server
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -395,6 +399,7 @@ func TestUpdater_downloadAndReplace(t *testing.T) {
 
 	// Run each test case
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Create test server that returns specified response
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

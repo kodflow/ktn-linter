@@ -44,6 +44,7 @@ func TestRulesOutput_Formatting(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 
@@ -106,6 +107,7 @@ func TestRulesOutput_JSON(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Marshal to JSON
 			data, err := json.Marshal(tt.output)
@@ -210,6 +212,7 @@ func TestRulesInfo_Fields(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Verify all fields
 			if tt.info.Code != tt.checkCode {
@@ -248,6 +251,7 @@ func TestGetCategories_Integration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			categories := rules.GetCategories()
 
@@ -291,6 +295,7 @@ func TestGetAllRuleInfos_Integration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			infos := rules.GetAllRuleInfos()
 
@@ -341,6 +346,7 @@ func TestGetRuleInfosByCategory_Integration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			ruleInfos := rules.GetRuleInfosByCategory(tt.category)
 
@@ -386,6 +392,7 @@ func TestGetRuleInfoByCode_Integration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			info := rules.GetRuleInfoByCode(tt.code)
 

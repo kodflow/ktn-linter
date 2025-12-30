@@ -40,6 +40,7 @@ func Test_MarkdownFormatter_writeHeader(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -85,6 +86,7 @@ func Test_MarkdownFormatter_writeInstructions(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -155,6 +157,7 @@ func Test_MarkdownFormatter_writePhase(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -217,6 +220,7 @@ func Test_MarkdownFormatter_writeRule(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -273,6 +277,7 @@ func Test_MarkdownFormatter_writeGoodExample(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -330,6 +335,7 @@ func Test_MarkdownFormatter_writeViolations(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}
@@ -382,6 +388,7 @@ func Test_MarkdownFormatter_writeViolation(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			f := &MarkdownFormatter{writer: &buf}

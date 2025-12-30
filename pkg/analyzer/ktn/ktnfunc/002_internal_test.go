@@ -21,6 +21,7 @@ func Test_runFunc002_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec règle désactivée
@@ -55,6 +56,7 @@ func Test_runFunc002_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Configuration avec fichier exclu
@@ -121,6 +123,7 @@ func Test_runFunc002(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique principale est dans external tests
@@ -138,6 +141,7 @@ func Test_isContextType(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - logique principale testée via API publique
@@ -157,6 +161,7 @@ func Test_isContextTypeWithPass(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite analysis.Pass réel
@@ -177,6 +182,7 @@ func Test_isContextTypeByType(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite types.Type réel
@@ -197,6 +203,7 @@ func Test_isContextObj(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite types.TypeName réel
@@ -217,6 +224,7 @@ func Test_isContextUnderlying(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite types.Type réel
@@ -251,6 +259,7 @@ func Test_isContextType_fallback(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -279,6 +288,7 @@ func Test_reportMultipleContexts_withMultiple(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec plusieurs contextes pour déclencher le rapport d'erreur
@@ -344,6 +354,7 @@ func Test_reportMultipleContexts_withSingle(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un seul contexte (ne doit pas déclencher d'erreur)
@@ -394,6 +405,7 @@ func Test_analyzeContextParams_multipleInSameField(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec plusieurs contextes dans le même champ (ctx1, ctx2 context.Context)
@@ -465,6 +477,7 @@ func Test_isContextTypeByType_notNamed(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type de base (non Named)
@@ -490,6 +503,7 @@ func Test_isContextTypeByType_realContext(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec context.Context réel
@@ -554,6 +568,7 @@ func Test_isContextTypeByType_noObject(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Créer un Named type sans objet (edge case rare)
@@ -578,6 +593,7 @@ func Test_isContextTypeWithPass_fallback(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test du fallback AST quand TypesInfo est vide
@@ -639,6 +655,7 @@ func Test_isContextUnderlying_withAlias(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un alias de context.Context
@@ -702,6 +719,7 @@ func Test_isContextUnderlying_realContext(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec context.Context réel depuis le paramètre
@@ -773,6 +791,7 @@ func Test_isContextUnderlying_underlyingNilObj(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type dont le sous-jacent est Named mais sans objet valide
@@ -829,6 +848,7 @@ func Test_isContextUnderlying_wrappedType(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type défini dont l'underlying est un autre Named type
@@ -890,6 +910,7 @@ func Test_isContextUnderlying_contextTypedef(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un typedef de context.Context (pas un alias mais type Foo context.Context)
@@ -953,6 +974,7 @@ func Test_isContextUnderlying_notContext(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type dont l'underlying est Named mais pas context.Context
@@ -1011,6 +1033,7 @@ func Test_isContextUnderlying_noPackage(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un objet sans package (early return)
@@ -1070,6 +1093,7 @@ func Test_isContextUnderlying_nonNamed(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un type dont l'underlying n'est pas Named
@@ -1126,6 +1150,7 @@ func Test_analyzeContextParams(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -1140,6 +1165,7 @@ func Test_analyzeContextParams_noNames(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test avec un paramètre context.Context sans nom explicite
@@ -1216,6 +1242,7 @@ func Test_reportMultipleContexts(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})
@@ -1230,6 +1257,7 @@ func Test_reportMisplacedContext(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Tested via public API
 		})

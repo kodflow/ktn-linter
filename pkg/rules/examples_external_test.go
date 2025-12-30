@@ -53,6 +53,7 @@ func TestGetTestdataPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := rules.GetTestdataPath(tt.code)
 			gotErr := err != nil
@@ -103,6 +104,7 @@ func TestLoadGoodExample(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := rules.LoadGoodExample(tt.code)
 			gotEmpty := got == ""
@@ -159,6 +161,7 @@ func TestLoadGoodExamples(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			enriched := rules.LoadGoodExamples(tt.infos)
 
@@ -206,6 +209,7 @@ func TestInvalidCodeError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := rules.GetTestdataPath(tt.code)
 			if err == nil {
@@ -255,6 +259,7 @@ func TestNewInvalidCodeError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := rules.NewInvalidCodeError(tt.code, tt.reason)
 
@@ -301,6 +306,7 @@ func TestInvalidCodeError_Error(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			err := &rules.InvalidCodeError{Code: tt.code, Reason: tt.reason}
 			result := err.Error()

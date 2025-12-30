@@ -22,6 +22,7 @@ func Test_parseRulesOptions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset flags
 			rulesCmd.Flags().Set(flagRulesFormat, tt.wantFormat)
@@ -54,6 +55,7 @@ func Test_buildRulesOutput(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			output := buildRulesOutput(tt.infos)
 
@@ -99,6 +101,7 @@ func Test_formatRulesMarkdown(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			formatRulesMarkdown(&buf, tt.output)
@@ -171,6 +174,7 @@ func Test_formatRulesJSON(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -270,6 +274,7 @@ func Test_formatRulesText(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			formatRulesText(&buf, tt.output)
@@ -310,6 +315,7 @@ func Test_writeRuleMarkdown(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			writeRuleMarkdown(&buf, tt.rule)
@@ -350,6 +356,7 @@ func Test_writeRuleText(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			writeRuleText(&buf, tt.rule)
@@ -385,6 +392,7 @@ func Test_formatRulesOutput(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Should not panic
 			formatRulesOutput(output, tt.format)
@@ -405,6 +413,7 @@ func Test_runRules(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Snapshot existing flags to avoid leaking state
 			prevFormat, _ := rulesCmd.Flags().GetString(flagRulesFormat)
@@ -453,6 +462,7 @@ func Test_getRulesWithFilters(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Set flags via rootCmd
 			flags := rootCmd.PersistentFlags()

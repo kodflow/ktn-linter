@@ -19,6 +19,7 @@ func TestUpgradeCmd(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Check command exists
 			if upgradeCmd == nil {
@@ -57,6 +58,7 @@ func TestUpgradeCmdFlags(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Check flag exists
 			flag := upgradeCmd.Flags().Lookup(tt.flagName)
@@ -90,6 +92,7 @@ func TestUpgradeCmdRegistered(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Find command in root's subcommands
 			found := false
@@ -123,6 +126,7 @@ func TestRunUpgradeDevBuild(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Save original values
 			origVersion := version

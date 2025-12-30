@@ -97,6 +97,7 @@ func Test_buildModernizeCode(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := buildModernizeCode(tt.analyzerName)
 			// Verify result
@@ -172,6 +173,7 @@ func Test_extractRuleCode(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractRuleCode(tt.message)
 			// Verify extracted code matches expected
@@ -247,6 +249,7 @@ func Test_extractMessage(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractMessage(tt.message)
 			// Verify extracted message matches expected
@@ -275,6 +278,7 @@ func Test_Generator_collectViolations(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			gen := &Generator{}
 			result := gen.collectViolations(nil)
@@ -319,6 +323,7 @@ func Test_Generator_enrichWithMetadata(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			gen := &Generator{}
 			result := gen.enrichWithMetadata(tt.violations)
@@ -374,6 +379,7 @@ func Test_Generator_buildOutput(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			gen := &Generator{}
 			output := gen.buildOutput(tt.rules, tt.phases)

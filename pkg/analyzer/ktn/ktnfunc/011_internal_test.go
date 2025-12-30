@@ -20,6 +20,7 @@ func Test_runFunc011_disabled(t *testing.T) {
 		{"rule disabled returns early"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec règle désactivée
 			config.Set(&config.Config{
@@ -52,6 +53,7 @@ func Test_runFunc011_excludedFile(t *testing.T) {
 		{"excluded file skipped"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec fichier exclu
 			config.Set(&config.Config{
@@ -116,6 +118,7 @@ func Test_runFunc011(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - la logique principale est dans external tests
@@ -133,6 +136,7 @@ func Test_calculateComplexity(t *testing.T) {
 
 	// Exécution tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - logique principale testée via API publique

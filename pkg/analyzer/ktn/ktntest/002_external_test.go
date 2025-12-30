@@ -23,6 +23,7 @@ func TestTest002(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// 1 erreur: bad_test.go sans fichier bad.go correspondant
 			testhelper.TestGoodBadWithFiles(t, ktntest.Analyzer002, tt.analyzer, "good_test.go", "bad_test.go", 1)

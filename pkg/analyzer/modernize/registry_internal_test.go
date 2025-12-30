@@ -18,6 +18,7 @@ func Test_disabled(t *testing.T) {
 	analyzers := Analyzers()
 	// Parcourir les cas de test
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Vérifier que l'analyseur désactivé n'est pas présent
 			for _, a := range analyzers {

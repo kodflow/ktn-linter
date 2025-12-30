@@ -30,6 +30,7 @@ func Test_runStruct006(t *testing.T) {
 
 	// Itération sur les tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Sous-test
 		t.Run(tt.name, func(t *testing.T) {
 			// Test passthrough - nécessite analysis.Pass réel
@@ -87,6 +88,7 @@ type User struct {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -177,6 +179,7 @@ func Test_isPrivateField(t *testing.T) {
 
 	// Exécution des tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			result := isPrivateField(tt.input)
 			// Vérification du résultat
@@ -195,6 +198,7 @@ func Test_runStruct006_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{
@@ -249,6 +253,7 @@ func Test_runStruct006_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 
 			config.Set(&config.Config{

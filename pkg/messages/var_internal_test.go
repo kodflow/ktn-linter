@@ -33,6 +33,7 @@ func Test_registerVarMessages(t *testing.T) {
 
 	// Test each rule code in the table.
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			msg, found := Get(tt.code)
 			// Verify message exists

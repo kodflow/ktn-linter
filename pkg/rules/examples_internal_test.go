@@ -44,6 +44,7 @@ func Test_parseRuleCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			category, number, err := parseRuleCode(tt.code)
 			gotErr := err != nil
@@ -82,6 +83,7 @@ func Test_fileExists(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			got := fileExists(tt.path)
 			if got != tt.want {
@@ -105,6 +107,7 @@ func Test_findProjectRoot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Get first result
 			root := findProjectRoot()

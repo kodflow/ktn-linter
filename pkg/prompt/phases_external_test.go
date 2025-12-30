@@ -28,6 +28,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -56,6 +57,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -84,6 +86,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -111,6 +114,7 @@ func TestClassifyRule(t *testing.T) {
 
 		// Run test cases
 		for _, tt := range tests {
+			tt := tt // Capture range variable
 			t.Run(tt.name, func(t *testing.T) {
 				got := prompt.ClassifyRule(tt.code)
 				// Verify classification
@@ -167,6 +171,7 @@ func TestGetPhaseInfo(t *testing.T) {
 
 	// Run test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			name, desc, needsRerun := prompt.GetPhaseInfo(tt.phase)
 
@@ -212,6 +217,7 @@ func TestGetPhaseInfo_UnknownPhase(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Get phase info
 			name, desc, needsRerun := prompt.GetPhaseInfo(tt.phase)
@@ -264,6 +270,7 @@ func TestSortRulesByPhase(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Sort rules
 			groups := prompt.SortRulesByPhase(tt.rules)
@@ -311,6 +318,7 @@ func TestSortRulesByPhase_EmptyPhases(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Sort rules
 			groups := prompt.SortRulesByPhase(tt.rules)
@@ -358,6 +366,7 @@ func TestSortRulesByPhase_SortsRulesWithinPhase(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Sort rules
 			groups := prompt.SortRulesByPhase(tt.rules)

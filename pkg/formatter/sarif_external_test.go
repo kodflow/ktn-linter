@@ -32,6 +32,7 @@ func TestNewSARIFFormatter(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output
@@ -71,6 +72,7 @@ func TestSARIFFormatterEmptyDiagnostics(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output
@@ -130,6 +132,7 @@ func TestSARIFFormatterWithDiagnostics(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output
@@ -207,6 +210,7 @@ func TestSARIFFormatterToolInfo(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output
@@ -310,6 +314,7 @@ func TestSARIFFormatterSeverityLevels(t *testing.T) {
 
 	// Run all test cases
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		// Run individual test case
 		t.Run(tt.name, func(t *testing.T) {
 			// Create buffer for output

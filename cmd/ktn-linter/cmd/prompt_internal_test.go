@@ -40,6 +40,7 @@ func Test_runPrompt(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -174,6 +175,7 @@ func Test_parsePromptOptions(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 			opts := parsePromptOptions()
@@ -258,6 +260,7 @@ exclude:
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -353,6 +356,7 @@ func Test_getPromptOutputWriter(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			restore := mockExitInCmd(t)
 			defer restore()
@@ -503,6 +507,7 @@ func TestPromptCmdStructure(t *testing.T) {
 
 	// Run tests
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.check(t)
 		})

@@ -32,6 +32,7 @@ func TestFunc008(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// Expected errors in bad.go:
 			// - Delete: ctx (_ = ctx), req, resp (3 erreurs)
