@@ -61,7 +61,11 @@ func (t T) foo() {}
 				Uses:  make(map[*ast.Ident]types.Object),
 			}
 			conf := types.Config{}
-			pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+			pkg, checkErr := conf.Check("test", fset, []*ast.File{file}, info)
+			// Fail fast on type-check errors
+			if checkErr != nil {
+				t.Fatalf("failed to type-check: %v", checkErr)
+			}
 
 			pass := &analysis.Pass{
 				Fset: fset,

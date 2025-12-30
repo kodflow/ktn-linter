@@ -304,8 +304,10 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 		}
 
 		// Normalize path for cross-platform compatibility
-		filename := filepath.ToSlash(filepath.Clean(pos.Filename))
-		base := filepath.Base(filename)
+		// Calculate base before ToSlash to ensure correct behavior on Windows
+		cleaned := filepath.Clean(pos.Filename)
+		base := filepath.Base(cleaned)
+		filename := filepath.ToSlash(cleaned)
 
 		// Check if file should be excluded globally
 		if !cfg.IsFileExcludedGlobally(filename) && !cfg.IsFileExcludedGlobally(base) {

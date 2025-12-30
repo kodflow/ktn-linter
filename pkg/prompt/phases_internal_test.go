@@ -53,10 +53,16 @@ func Test_groupRulesByPhase(t *testing.T) {
 				t.Errorf("groupRulesByPhase() returned %d groups, want %d", len(result), tt.expectedGroups)
 			}
 
-			// Verify Phase field if needed
+			// Verify Phase field by checking the returned grouping (not input mutation)
 			if tt.checkPhase && len(tt.rules) > 0 {
-				if tt.rules[0].Phase != tt.expectedPhase {
-					t.Errorf("rule.Phase = %v, want %v", tt.rules[0].Phase, tt.expectedPhase)
+				got, exists := result[tt.expectedPhase]
+				// Assert the expected phase has rules
+				if !exists || len(got) == 0 {
+					t.Fatalf("expected phase %v to have rules", tt.expectedPhase)
+				}
+				// Verify the grouped rule matches input
+				if got[0].Code != tt.rules[0].Code {
+					t.Errorf("grouped rule code = %q, want %q", got[0].Code, tt.rules[0].Code)
 				}
 			}
 		})

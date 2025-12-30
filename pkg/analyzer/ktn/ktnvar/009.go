@@ -135,7 +135,7 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 			pos,
 			"%s: %s",
 			ruleCodeVar009,
-			msg.Format(config.Get().Verbose, sizeBytes),
+			msg.Format(config.Get().Verbose, int(sizeBytes), maxBytes, maxBytes),
 		)
 	}
 }
@@ -185,8 +185,15 @@ func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
 		return -1
 	}
 
+	// Calcul de la taille
+	sz := sizes.Sizeof(typeInfo)
+	// Skip reporting on unknown/invalid sizes
+	if sz <= 0 {
+		return -1
+	}
+
 	// Retour de la taille
-	return sizes.Sizeof(typeInfo)
+	return sz
 }
 
 // isExternalType009 checks if type is from external package.

@@ -2,6 +2,7 @@
 package updater
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -321,7 +322,7 @@ type mockTransport struct {
 //   - error: any error during transport
 func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if m == nil || m.client == nil {
-		return nil, http.ErrUseLastResponse
+		return nil, errors.New("mockTransport: nil client")
 	}
 
 	// Parse test-server base URL
@@ -342,9 +343,13 @@ func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	newReq.Host = target.Host
 	newReq.Header = req.Header.Clone()
 
-	// Get transport with nil fallback
+	// Get transport with nil fallback (and prevent self-recursion)
 	rt := m.client.Transport
 	if rt == nil {
+		rt = http.DefaultTransport
+	}
+	// Prevent self-recursion
+	if _, ok := rt.(*mockTransport); ok {
 		rt = http.DefaultTransport
 	}
 	// Execute request
