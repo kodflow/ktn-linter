@@ -9,13 +9,13 @@ type LargeStruct struct {
 	Field4 float64
 }
 
-// badProcessByValue prend une grande struct par valeur. // want "KTN-VAR-009"
+// badProcessByValue prend une grande struct par valeur.
 func badProcessByValue(data LargeStruct) { // want "KTN-VAR-009"
 	// Utilise la structure
 	_ = data.Field1
 }
 
-// badMultipleParams prend plusieurs grandes structs par valeur. // want "KTN-VAR-009" "KTN-VAR-009"
+// badMultipleParams prend plusieurs grandes structs par valeur.
 func badMultipleParams(a LargeStruct, b LargeStruct) { // want "KTN-VAR-009" "KTN-VAR-009"
 	// Utilise les structures
 	_, _ = a.Field1, b.Field1

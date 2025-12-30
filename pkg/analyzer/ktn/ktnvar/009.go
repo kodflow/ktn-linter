@@ -94,8 +94,8 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxFields in
 	for _, param := range params.List {
 		// Utiliser la position du nom si disponible, sinon la position du type
 		pos := param.Pos()
-		// Vérifier si des noms sont disponibles
-		if len(param.Names) > 0 {
+		// Vérifier si des noms sont disponibles et non nil
+		if len(param.Names) > 0 && param.Names[0] != nil {
 			pos = param.Names[0].NamePos
 		}
 		// Vérification du type de paramètre

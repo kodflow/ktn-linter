@@ -250,14 +250,14 @@ func (r *AnalysisRunner) createPassParallel(
 // Returns:
 //   - []*ast.File: files to analyze
 func (r *AnalysisRunner) selectFiles(a *analysis.Analyzer, pkg *packages.Package, fset *token.FileSet) []*ast.File {
+	// Test analyzers need all files (they ignore global exclusions)
+	if strings.HasPrefix(a.Name, "ktntest") {
+		// Return all files for test analyzers
+		return pkg.Syntax
+	}
+
 	// First filter globally excluded files
 	files := r.filterExcludedFiles(pkg.Syntax, fset)
-
-	// Test analyzers need all non-excluded files
-	if strings.HasPrefix(a.Name, "ktntest") {
-		// Return all non-excluded files
-		return files
-	}
 
 	// Check force mode
 	if config.Get().ForceAllRulesOnTests {

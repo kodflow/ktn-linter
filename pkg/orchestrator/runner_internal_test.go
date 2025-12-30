@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"go/ast"
 	"go/token"
+	"strings"
 	"sync"
 	"testing"
 
@@ -550,7 +551,7 @@ func TestAnalysisRunner_filterExcludedFiles(t *testing.T) {
 			if tt.verbose && len(tt.excludePattern) > 0 && len(tt.files) > 0 {
 				output := buf.String()
 				// Check if "Excluding file" is in output
-				if len(result) < len(astFiles) && !bytes.Contains(buf.Bytes(), []byte("Excluding file")) {
+				if len(result) < len(astFiles) && !strings.Contains(output, "Excluding file") {
 					t.Errorf("expected verbose exclusion output, got: %s", output)
 				}
 			}
