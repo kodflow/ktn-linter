@@ -1,16 +1,21 @@
 // Package var009 provides good test cases for KTN-VAR-009.
 package var009
 
-// SmallStruct a 3 champs ou moins (OK par valeur).
+// SmallStruct a exactement 64 bytes (8 * 8 = 64 bytes, seuil OK).
 type SmallStruct struct {
-	A int
-	B string
-	C bool
+	A int64
+	B int64
+	C int64
+	D int64
+	E int64
+	F int64
+	G int64
+	H int64
 }
 
-// goodSmallByValue prend une petite struct par valeur (OK).
+// goodSmallByValue prend une struct ≤64 bytes par valeur (OK).
 func goodSmallByValue(data SmallStruct) {
-	// Petite struct, pas de problème
+	// Struct ≤64 bytes, pas de problème
 	_ = data.A
 }
 
@@ -36,4 +41,10 @@ func goodMixedSmall(small SmallStruct, large *LargeStruct) {
 func goodPrimitives(a int, b string, c bool) {
 	// Primitifs par valeur, pas de problème
 	_, _, _ = a, b, c
+}
+
+// goodMethodReceiver utilise receiver par pointeur.
+func (s *LargeStruct) goodMethodReceiver() int64 {
+	// Pointeur, pas de copie
+	return s.Field1
 }

@@ -78,7 +78,7 @@ func Test_checkParamType009_pointer(t *testing.T) {
 			typ := &ast.StarExpr{
 				X: &ast.Ident{Name: "BigStruct"},
 			}
-			checkParamType009(pass, typ, token.NoPos, 3)
+			checkParamType009(pass, typ, token.NoPos, 64)
 			// No error expected for pointer
 
 		})
@@ -104,7 +104,7 @@ func Test_checkParamType009_nilTypeInfo(t *testing.T) {
 
 			// Test with type that won't have TypeOf info
 			typ := &ast.Ident{Name: "UnknownType"}
-			checkParamType009(pass, typ, token.NoPos, 3)
+			checkParamType009(pass, typ, token.NoPos, 64)
 			// No error expected when type info is nil
 
 		})
@@ -148,7 +148,7 @@ func Test_checkParamType009_externalType(t *testing.T) {
 				Report: func(_d analysis.Diagnostic) {},
 			}
 
-			checkParamType009(pass, typeIdent, token.NoPos, 3)
+			checkParamType009(pass, typeIdent, token.NoPos, 64)
 			// No error expected for external type
 
 		})
@@ -175,7 +175,7 @@ func Test_checkParamType009_notStruct(t *testing.T) {
 				Report: func(_d analysis.Diagnostic) {},
 			}
 
-			checkParamType009(pass, typeIdent, token.NoPos, 3)
+			checkParamType009(pass, typeIdent, token.NoPos, 64)
 			// No error expected for non-struct type
 
 		})

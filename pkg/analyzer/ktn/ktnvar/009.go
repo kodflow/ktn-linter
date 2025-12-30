@@ -16,14 +16,14 @@ import (
 const (
 	// ruleCodeVar009 is the rule code for this analyzer
 	ruleCodeVar009 string = "KTN-VAR-009"
-	// defaultMaxStructFields max fields for struct without pointer
-	defaultMaxStructFields int = 3
+	// defaultMaxStructBytes max bytes for struct without pointer
+	defaultMaxStructBytes int = 64
 )
 
 // Analyzer009 checks for large struct passed by value in function parameters
 var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar009",
-	Doc:      "KTN-VAR-009: Utilise des pointeurs pour les structs avec >3 champs",
+	Doc:      "KTN-VAR-009: Utilise des pointeurs pour les structs >64 bytes",
 	Run:      runVar009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -46,8 +46,8 @@ func runVar009(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Récupérer le seuil configuré
-	maxFields := cfg.GetThreshold(ruleCodeVar009, defaultMaxStructFields)
+	// Récupérer le seuil configuré en bytes
+	maxBytes := cfg.GetThreshold(ruleCodeVar009, defaultMaxStructBytes)
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
@@ -69,13 +69,13 @@ func runVar009(pass *analysis.Pass) (any, error) {
 		// Vérifier les receivers (méthodes)
 		if funcDecl.Recv != nil {
 			// Analyse des receivers
-			checkFuncParams009(pass, funcDecl.Recv, maxFields)
+			checkFuncParams009(pass, funcDecl.Recv, maxBytes)
 		}
 
 		// Vérifier les paramètres de la fonction
 		if funcDecl.Type.Params != nil {
 			// Analyse des paramètres
-			checkFuncParams009(pass, funcDecl.Type.Params, maxFields)
+			checkFuncParams009(pass, funcDecl.Type.Params, maxBytes)
 		}
 	})
 
@@ -88,8 +88,8 @@ func runVar009(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - params: liste des paramètres
-//   - maxFields: nombre max de champs
-func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxFields int) {
+//   - maxBytes: taille max en bytes
+func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int) {
 	// Parcours des paramètres
 	for _, param := range params.List {
 		// Utiliser la position du nom si disponible, sinon la position du type
@@ -99,7 +99,7 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxFields in
 			pos = param.Names[0].NamePos
 		}
 		// Vérification du type de paramètre
-		checkParamType009(pass, param.Type, pos, maxFields)
+		checkParamType009(pass, param.Type, pos, maxBytes)
 	}
 }
 
@@ -109,8 +109,8 @@ func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxFields in
 //   - pass: contexte d'analyse
 //   - typ: type du paramètre
 //   - pos: position du paramètre
-//   - maxFields: nombre max de champs
-func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxFields int) {
+//   - maxBytes: taille max en bytes
+func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxBytes int) {
 	// Ignorer les pointeurs (déjà passés par référence)
 	if _, isPointer := typ.(*ast.StarExpr); isPointer {
 		// C'est un pointeur, OK
@@ -132,24 +132,25 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxFiel
 	}
 
 	// Vérification que c'est une struct
-	structType, ok := typeInfo.Underlying().(*types.Struct)
+	_, ok := typeInfo.Underlying().(*types.Struct)
 	// Vérification du type struct
 	if !ok {
 		// Pas une struct
 		return
 	}
 
-	// Comptage des champs
-	numFields := structType.NumFields()
-	// Vérification du nombre de champs
-	if numFields > maxFields {
+	// Calcul de la taille en bytes (amd64)
+	sizes := types.SizesFor("gc", "amd64")
+	sizeBytes := sizes.Sizeof(typeInfo)
+	// Vérification de la taille
+	if sizeBytes > int64(maxBytes) {
 		// Grande struct détectée
 		msg, _ := messages.Get(ruleCodeVar009)
 		pass.Reportf(
 			pos,
 			"%s: %s",
 			ruleCodeVar009,
-			msg.Format(config.Get().Verbose, numFields),
+			msg.Format(config.Get().Verbose, sizeBytes),
 		)
 	}
 }

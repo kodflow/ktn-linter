@@ -17,16 +17,16 @@ func TestVar009(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Large structs passed by value in function params",
+			name:           "Large structs (>64 bytes) passed by value",
 			analyzer:       ktnvar.Analyzer009,
 			testdataDir:    "var009",
-			expectedErrors: 4,
+			expectedErrors: 5,
 		},
 		{
 			name:           "Valid pointer usage for large structs",
 			analyzer:       ktnvar.Analyzer009,
 			testdataDir:    "var009",
-			expectedErrors: 4,
+			expectedErrors: 5,
 		},
 	}
 
