@@ -366,10 +366,10 @@ Voir `/pkg/analyzer/ktn/const/001.go` pour un exemple de règle complète.
 
 **État actuel du projet :**
 
-- ✅ `make test` : **94 tests PASS** (0 échec)
-- 📊 **Coverage globale** : **76.8%**
+- ✅ `make test` : **Tous tests PASS** (0 échec)
+- 📊 **Coverage globale** : **93.9%**
   - `pkg/analyzer/utils` : **100%** ✅
   - `pkg/formatter` : **100%** ✅
   - `pkg/analyzer/ktn/const` : **92.9%** ✅
   - `cmd/ktn-linter` : **0%** (code CLI, normal)
-- ⚠️ `make lint` : **18 erreurs** (constantes à renommer en SCREAMING_SNAKE_CASE)
+- ⚠️ `make lint` : **152 issues** (principalement tests sans table-driven pattern)
