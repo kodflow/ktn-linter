@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"runtime"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -93,14 +92,19 @@ func runVar009(pass *analysis.Pass) (any, error) {
 func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int) {
 	// Parcours des paramètres
 	for _, param := range params.List {
-		// Utiliser la position du nom si disponible, sinon la position du type
-		pos := param.Pos()
-		// Vérifier si des noms sont disponibles et non nil
-		if len(param.Names) > 0 && param.Names[0] != nil {
-			pos = param.Names[0].NamePos
+		// Si le paramètre a des noms (ex: a, b T), vérifier chaque nom
+		if len(param.Names) > 0 {
+			for _, name := range param.Names {
+				pos := param.Pos()
+				if name != nil {
+					pos = name.NamePos
+				}
+				checkParamType009(pass, param.Type, pos, maxBytes)
+			}
+			continue
 		}
-		// Vérification du type de paramètre
-		checkParamType009(pass, param.Type, pos, maxBytes)
+		// Paramètre sans nom (ex: func f(T)), utiliser la position du type
+		checkParamType009(pass, param.Type, param.Pos(), maxBytes)
 	}
 }
 
@@ -168,15 +172,11 @@ func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
 	}
 
 	// Calcul de la taille en bytes
+	// pass.TypesSizes is the only reliable source for the analysis target;
+	// if unavailable, skip size-based reporting to avoid false positives.
 	sizes := pass.TypesSizes
-	// Fallback to runtime architecture if not provided
 	if sizes == nil {
-		sizes = types.SizesFor("gc", runtime.GOARCH)
-		// Vérification des sizes après fallback
-		if sizes == nil {
-			// Can't determine sizes reliably
-			return -1
-		}
+		return -1
 	}
 
 	// Retour de la taille

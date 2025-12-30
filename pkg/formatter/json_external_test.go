@@ -140,6 +140,11 @@ func TestJSONFormatter(t *testing.T) {
 			// Format diagnostics
 			fmtr.Format(fset, diags)
 
+			// Fail fast if buffer is empty
+			if buf.Len() == 0 {
+				t.Fatal("Format() produced empty output")
+			}
+
 			// Parse the output JSON
 			var report map[string]interface{}
 			err := json.Unmarshal(buf.Bytes(), &report)
