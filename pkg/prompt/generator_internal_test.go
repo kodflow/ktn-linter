@@ -49,9 +49,9 @@ func Test_Generator_runLinter(t *testing.T) {
 			// Run linter
 			_, err := gen.runLinter(tt.patterns, tt.opts)
 
-			// Verify error expectation
-			if tt.expectError && err == nil {
-				t.Error("runLinter() should return error")
+			// Verify error expectation symmetrically
+			if (err != nil) != tt.expectError {
+				t.Fatalf("runLinter() error = %v, expectError %v", err, tt.expectError)
 			}
 		})
 	}

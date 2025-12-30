@@ -76,11 +76,13 @@ func TestUpdater_CheckForUpdate(t *testing.T) {
 				if err == nil {
 					t.Error("CheckForUpdate() should return error for dev build")
 				}
-			} else {
-				// Expect no error
-				if err != nil {
-					t.Errorf("CheckForUpdate() unexpected error = %v", err)
-				}
+				// Skip remaining checks on expected error
+				return
+			}
+			// Expect no error
+			if err != nil {
+				t.Errorf("CheckForUpdate() unexpected error = %v", err)
+				return
 			}
 			// Check current version is set
 			if info.CurrentVersion != tt.wantCurrent {

@@ -406,6 +406,14 @@ func Test_runRules(t *testing.T) {
 	// Run all test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Snapshot existing flags to avoid leaking state
+			prevFormat, _ := rulesCmd.Flags().GetString(flagRulesFormat)
+			prevNoExamples, _ := rulesCmd.Flags().GetString(flagRulesNoExamples)
+			t.Cleanup(func() {
+				rulesCmd.Flags().Set(flagRulesFormat, prevFormat)
+				rulesCmd.Flags().Set(flagRulesNoExamples, prevNoExamples)
+			})
+
 			// Set flags
 			rulesCmd.Flags().Set(flagRulesFormat, tt.format)
 			rulesCmd.Flags().Set(flagRulesNoExamples, tt.noExamples)

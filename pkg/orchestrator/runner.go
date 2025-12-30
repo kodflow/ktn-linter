@@ -69,7 +69,7 @@ func (r *AnalysisRunner) Run(pkgs []*packages.Package, analyzers []*analysis.Ana
 	resultsMapSize := len(analyzers)
 
 	// Start workers (one goroutine per available CPU)
-	for range workerCount {
+	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
 		go r.worker(analyzers, pkgChan, diagChan, &wg, resultsMapSize)
 	}
@@ -294,11 +294,16 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 	// Iterate over files
 	for _, file := range files {
 		pos := fset.Position(file.Pos())
+		// Skip files with empty filename (synthetic/unknown position)
+		if pos.Filename == "" {
+			filtered = append(filtered, file)
+			continue
+		}
 		// Skip globally excluded files
 		if !cfg.IsFileExcludedGlobally(pos.Filename) {
 			// Add file to filtered list
 			filtered = append(filtered, file)
-		} else if r.verbose {
+		} else if r.verbose && r.stderr != nil {
 			// Log excluded file
 			fmt.Fprintf(r.stderr, "Excluding file: %s\n", pos.Filename)
 		}

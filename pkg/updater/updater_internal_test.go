@@ -319,17 +319,22 @@ type mockTransport struct {
 //   - *http.Response: the HTTP response
 //   - error: any error during transport
 func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Redirect to test server
-	newReq, err := http.NewRequest(req.Method, m.url, req.Body)
+	// Preserve original path + query, redirect to test server host
+	redirectURL := m.url + req.URL.RequestURI()
+	newReq, err := http.NewRequest(req.Method, redirectURL, req.Body)
 	// Handle request creation error
 	if err != nil {
-		// Return wrapped error
 		return nil, err
 	}
 	// Copy headers
 	newReq.Header = req.Header
+	// Get transport with nil fallback
+	rt := m.client.Transport
+	if rt == nil {
+		rt = http.DefaultTransport
+	}
 	// Execute request
-	return m.client.Transport.RoundTrip(newReq)
+	return rt.RoundTrip(newReq)
 }
 
 // TestUpdater_downloadAndReplace tests the download and replace functionality.
