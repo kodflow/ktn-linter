@@ -475,3 +475,85 @@ func TestAnalysisRunner_runRequired(t *testing.T) {
 		})
 	}
 }
+
+// TestAnalysisRunner_filterExcludedFiles tests the filterExcludedFiles method.
+func TestAnalysisRunner_filterExcludedFiles(t *testing.T) {
+	tests := []struct {
+		name           string
+		excludePattern []string
+		files          []string
+		wantCount      int
+		verbose        bool
+	}{
+		{
+			name:           "no exclusions returns all files",
+			excludePattern: []string{},
+			files:          []string{"file1.go", "file2.go"},
+			wantCount:      2,
+			verbose:        false,
+		},
+		{
+			name:           "excludes matching files",
+			excludePattern: []string{"**/gen/**"},
+			files:          []string{"src/gen/file.go", "src/main.go"},
+			wantCount:      1,
+			verbose:        false,
+		},
+		{
+			name:           "excludes pb.go files",
+			excludePattern: []string{"*.pb.go"},
+			files:          []string{"service.pb.go", "main.go"},
+			wantCount:      1,
+			verbose:        false,
+		},
+		{
+			name:           "verbose logs excluded files",
+			excludePattern: []string{"*.pb.go"},
+			files:          []string{"service.pb.go"},
+			wantCount:      0,
+			verbose:        true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup config
+			config.Set(&config.Config{
+				Exclude: tt.excludePattern,
+			})
+			defer config.Reset()
+
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, tt.verbose)
+
+			// Create fset and files
+			fset := token.NewFileSet()
+			var astFiles []*ast.File
+			// Add files to fset
+			for _, filename := range tt.files {
+				f := fset.AddFile(filename, -1, 100)
+				astFile := &ast.File{
+					Package: f.Pos(0),
+				}
+				astFiles = append(astFiles, astFile)
+			}
+
+			// Call filterExcludedFiles
+			result := runner.filterExcludedFiles(astFiles, fset)
+
+			// Verify count
+			if len(result) != tt.wantCount {
+				t.Errorf("filterExcludedFiles() got %d files, want %d", len(result), tt.wantCount)
+			}
+
+			// Verify verbose output
+			if tt.verbose && len(tt.excludePattern) > 0 && len(tt.files) > 0 {
+				output := buf.String()
+				// Check if "Excluding file" is in output
+				if len(result) < len(astFiles) && !bytes.Contains(buf.Bytes(), []byte("Excluding file")) {
+					t.Errorf("expected verbose exclusion output, got: %s", output)
+				}
+			}
+		})
+	}
+}

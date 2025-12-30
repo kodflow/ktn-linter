@@ -66,6 +66,12 @@ func runVar009(pass *analysis.Pass) (any, error) {
 			return
 		}
 
+		// Vérifier les receivers (méthodes)
+		if funcDecl.Recv != nil {
+			// Analyse des receivers
+			checkFuncParams009(pass, funcDecl.Recv, maxFields)
+		}
+
 		// Vérifier les paramètres de la fonction
 		if funcDecl.Type.Params != nil {
 			// Analyse des paramètres
@@ -86,8 +92,14 @@ func runVar009(pass *analysis.Pass) (any, error) {
 func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxFields int) {
 	// Parcours des paramètres
 	for _, param := range params.List {
+		// Utiliser la position du nom si disponible, sinon la position du type
+		pos := param.Pos()
+		// Vérifier si des noms sont disponibles
+		if len(param.Names) > 0 {
+			pos = param.Names[0].NamePos
+		}
 		// Vérification du type de paramètre
-		checkParamType009(pass, param.Type, param.Pos(), maxFields)
+		checkParamType009(pass, param.Type, pos, maxFields)
 	}
 }
 
