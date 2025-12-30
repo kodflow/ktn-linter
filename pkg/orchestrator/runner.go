@@ -287,46 +287,80 @@ func (r *AnalysisRunner) selectFiles(a *analysis.Analyzer, pkg *packages.Package
 //   - []*ast.File: filtered files (excluding globally excluded)
 func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.FileSet) []*ast.File {
 	cfg := config.Get()
-	// Check if no exclusions configured
-	if cfg == nil || len(cfg.Exclude) == 0 {
-		// Return all files
-		return files
-	}
-
-	// Defensive: cannot resolve filenames without a FileSet
-	if fset == nil {
+	// Check if filtering should be skipped
+	if !r.shouldFilterExcluded(cfg, fset) {
 		return files
 	}
 
 	filtered := make([]*ast.File, 0, len(files))
 	// Iterate over files
 	for _, file := range files {
-		pos := fset.Position(file.Pos())
-		// Skip files with empty filename (synthetic/unknown position)
-		if pos.Filename == "" {
+		// Check if file should be included
+		if r.shouldIncludeFile(file, fset, cfg) {
 			filtered = append(filtered, file)
-			continue
-		}
-
-		// Normalize path for cross-platform compatibility
-		// Calculate base before ToSlash to ensure correct behavior on Windows
-		cleaned := filepath.Clean(pos.Filename)
-		base := filepath.Base(cleaned)
-		filename := filepath.ToSlash(cleaned)
-
-		// Check if file should be excluded globally
-		if !cfg.IsFileExcludedGlobally(filename) && !cfg.IsFileExcludedGlobally(base) {
-			// Add file to filtered list
-			filtered = append(filtered, file)
-		} else { // File is globally excluded
-			// Log excluded file when verbose mode is enabled
-			if r.verbose && r.stderr != nil {
-				fmt.Fprintf(r.stderr, "Excluding file: %s\n", filename)
-			}
 		}
 	}
 	// Return filtered files
 	return filtered
+}
+
+// shouldFilterExcluded checks if exclusion filtering should be applied.
+//
+// Params:
+//   - cfg: configuration
+//   - fset: fileset for position
+//
+// Returns:
+//   - bool: true if filtering should be applied
+func (r *AnalysisRunner) shouldFilterExcluded(cfg *config.Config, fset *token.FileSet) bool {
+	// Check if no exclusions configured
+	if cfg == nil || len(cfg.Exclude) == 0 {
+		return false
+	}
+	// Check if fileset is available
+	return fset != nil
+}
+
+// shouldIncludeFile checks if a file should be included (not excluded).
+//
+// Params:
+//   - file: file to check
+//   - fset: fileset for position
+//   - cfg: configuration
+//
+// Returns:
+//   - bool: true if file should be included
+func (r *AnalysisRunner) shouldIncludeFile(file *ast.File, fset *token.FileSet, cfg *config.Config) bool {
+	pos := fset.Position(file.Pos())
+	// Include files with empty filename (synthetic/unknown position)
+	if pos.Filename == "" {
+		return true
+	}
+
+	// Normalize path for cross-platform compatibility
+	cleaned := filepath.Clean(pos.Filename)
+	base := filepath.Base(cleaned)
+	filename := filepath.ToSlash(cleaned)
+
+	// Check if file is excluded globally
+	if cfg.IsFileExcludedGlobally(filename) || cfg.IsFileExcludedGlobally(base) {
+		// Log excluded file when verbose mode is enabled
+		r.logExcludedFile(filename)
+		return false
+	}
+	// File should be included
+	return true
+}
+
+// logExcludedFile logs an excluded file if verbose mode is enabled.
+//
+// Params:
+//   - filename: path of excluded file
+func (r *AnalysisRunner) logExcludedFile(filename string) {
+	// Check if verbose logging is enabled
+	if r.verbose && r.stderr != nil {
+		fmt.Fprintf(r.stderr, "Excluding file: %s\n", filename)
+	}
 }
 
 // filterTestFiles filters out test files.
