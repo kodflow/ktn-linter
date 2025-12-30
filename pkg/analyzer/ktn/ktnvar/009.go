@@ -116,42 +116,9 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 		typ = ell.Elt
 	}
 
-	// Ignorer les pointeurs (déjà passés par référence)
-	if _, isPointer := typ.(*ast.StarExpr); isPointer {
-		// C'est un pointeur, OK
-		return
-	}
-
-	// Récupération du type réel
-	typeInfo := pass.TypesInfo.TypeOf(typ)
-	// Vérification du type
-	if typeInfo == nil {
-		// Type inconnu
-		return
-	}
-
-	// Ignorer les types externes (frameworks comme Terraform)
-	if isExternalType009(typeInfo, pass) {
-		// Retour de la fonction
-		return
-	}
-
-	// Vérification que c'est une struct
-	_, ok := typeInfo.Underlying().(*types.Struct)
-	// Vérification du type struct
-	if !ok {
-		// Pas une struct
-		return
-	}
-
-	// Calcul de la taille en bytes (use compiler/arch sizes when available)
-	sizes := pass.TypesSizes
-	if sizes == nil {
-		// Can't determine sizes reliably; avoid false positives
-		return
-	}
-	sizeBytes := sizes.Sizeof(typeInfo)
-	// Vérification de la taille
+	// Get struct size if applicable
+	sizeBytes := getStructSize009(pass, typ)
+	// Check if size exceeds threshold
 	if sizeBytes > int64(maxBytes) {
 		// Grande struct détectée
 		msg, _ := messages.Get(ruleCodeVar009)
@@ -162,6 +129,53 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 			msg.Format(config.Get().Verbose, sizeBytes),
 		)
 	}
+}
+
+// getStructSize009 returns the size of a struct type, or -1 if not applicable.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - typ: type expression
+//
+// Returns:
+//   - int64: size in bytes, or -1 if not a local struct or can't determine
+func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
+	// Ignorer les pointeurs (déjà passés par référence)
+	if _, isPointer := typ.(*ast.StarExpr); isPointer {
+		// C'est un pointeur, OK
+		return -1
+	}
+
+	// Récupération du type réel
+	typeInfo := pass.TypesInfo.TypeOf(typ)
+	// Vérification du type
+	if typeInfo == nil {
+		// Type inconnu
+		return -1
+	}
+
+	// Ignorer les types externes (frameworks comme Terraform)
+	if isExternalType009(typeInfo, pass) {
+		// Retour de la fonction
+		return -1
+	}
+
+	// Vérification que c'est une struct
+	if _, ok := typeInfo.Underlying().(*types.Struct); !ok {
+		// Pas une struct
+		return -1
+	}
+
+	// Calcul de la taille en bytes
+	sizes := pass.TypesSizes
+	// Vérification des sizes
+	if sizes == nil {
+		// Can't determine sizes reliably
+		return -1
+	}
+
+	// Retour de la taille
+	return sizes.Sizeof(typeInfo)
 }
 
 // isExternalType009 checks if type is from external package.
