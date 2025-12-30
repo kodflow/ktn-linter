@@ -81,8 +81,8 @@ func TestSARIFFormatterEmptyDiagnostics(t *testing.T) {
 			// Create SARIF formatter
 			fmtr := formatter.NewSARIFFormatter(&buf, tt.verbose)
 
-			// Format empty diagnostics (use non-nil FileSet to avoid nil dereference)
-			fmtr.Format(token.NewFileSet(), nil)
+			// Format empty diagnostics (use non-nil FileSet and empty slice)
+			fmtr.Format(token.NewFileSet(), []analysis.Diagnostic{})
 
 			// Parse the output JSON
 			var report map[string]interface{}

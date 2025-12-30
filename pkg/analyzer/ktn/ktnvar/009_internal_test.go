@@ -5,6 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"runtime"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -75,7 +76,7 @@ func (t T) foo() {}
 					inspect.Analyzer: insp,
 				},
 				TypesInfo:  info,
-				TypesSizes: types.SizesFor("gc", "amd64"),
+				TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
 				Report:     func(_d analysis.Diagnostic) {},
 			}
 
@@ -141,7 +142,7 @@ func Test_checkFuncParams009(t *testing.T) {
 					Defs:  make(map[*ast.Ident]types.Object),
 					Uses:  make(map[*ast.Ident]types.Object),
 				},
-				TypesSizes: types.SizesFor("gc", "amd64"),
+				TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
@@ -195,7 +196,7 @@ func Test_checkParamType009(t *testing.T) {
 					Defs:  make(map[*ast.Ident]types.Object),
 					Uses:  make(map[*ast.Ident]types.Object),
 				},
-				TypesSizes: types.SizesFor("gc", "amd64"),
+				TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
