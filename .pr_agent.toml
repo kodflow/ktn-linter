@@ -1,0 +1,21 @@
+# Qodo PR-Agent Configuration
+# Documentation: https://docs.qodo.ai/qodo-documentation/qodo-merge/configuration/configuration-file
+
+[pr_reviewer]
+extra_instructions = """
+Project context:
+- Go version: 1.25.5 (see go.mod) - math.MaxInt exists since Go 1.17
+- This is a Go static analysis linter (ktn-linter)
+- Uses golang.org/x/tools/go/analysis framework
+- Message templates in pkg/messages/ use fmt.Sprintf with varying placeholder counts
+- Verbose templates may have more placeholders than Short templates (this is intentional)
+"""
+
+[pr_code_suggestions]
+extra_instructions = """
+Project context:
+- Go version: 1.25.5 (see go.mod) - all Go 1.17+ features available (math.MaxInt, generics, etc.)
+- Test files follow naming convention: *_internal_test.go (white-box) and *_external_test.go (black-box)
+- Testdata directories are excluded from linting by go list ./...
+- Use filepath.Join for cross-platform path handling
+"""
