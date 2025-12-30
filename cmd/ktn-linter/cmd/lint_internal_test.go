@@ -638,19 +638,19 @@ func Test_runMultiModulePipeline(t *testing.T) {
 	}{
 		{
 			name:        "valid path",
-			args:        []string{"../../../pkg/formatter"},
+			args:        []string{"github.com/kodflow/ktn-linter/pkg/formatter"},
 			opts:        orchestrator.Options{},
 			expectError: false,
 		},
 		{
 			name:        "with category filter",
-			args:        []string{"../../../pkg/formatter"},
+			args:        []string{"github.com/kodflow/ktn-linter/pkg/formatter"},
 			opts:        orchestrator.Options{Category: "func"},
 			expectError: false,
 		},
 		{
 			name:        "invalid category returns error",
-			args:        []string{"../../../pkg/formatter"},
+			args:        []string{"github.com/kodflow/ktn-linter/pkg/formatter"},
 			opts:        orchestrator.Options{Category: "nonexistent"},
 			expectError: true,
 		},

@@ -29,6 +29,11 @@ func NewMarkdownFormatter(w io.Writer) *MarkdownFormatter {
 // Params:
 //   - output: prompt output to format
 func (f *MarkdownFormatter) Format(output *PromptOutput) {
+	// Guard against nil output
+	if output == nil {
+		return
+	}
+
 	// Write header
 	f.writeHeader(output)
 
@@ -73,6 +78,11 @@ func (f *MarkdownFormatter) writeInstructions() {
 //   - phase: phase group to write (pointer for efficiency)
 //   - phaseNum: phase number for display
 func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
+	// Guard against nil phase
+	if phase == nil {
+		return
+	}
+
 	// Phase header
 	fmt.Fprintf(f.writer, "## Phase %d: %s\n\n", phaseNum, phase.Name)
 
@@ -100,6 +110,11 @@ func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
 // Params:
 //   - rule: rule violations to write (pointer for efficiency)
 func (f *MarkdownFormatter) writeRule(rule *RuleViolations) {
+	// Guard against nil rule
+	if rule == nil {
+		return
+	}
+
 	// Rule header
 	fmt.Fprintf(f.writer, "### %s\n\n", rule.Code)
 

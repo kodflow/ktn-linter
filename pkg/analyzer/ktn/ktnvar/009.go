@@ -139,8 +139,15 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 		return
 	}
 
-	// Calcul de la taille en bytes (amd64)
-	sizes := types.SizesFor("gc", "amd64")
+	// Calcul de la taille en bytes (use compiler/arch sizes when available)
+	sizes := pass.TypesSizes
+	if sizes == nil {
+		sizes = types.SizesFor("gc", "amd64")
+	}
+	if sizes == nil {
+		// Can't determine sizes reliably; avoid false positives/panics
+		return
+	}
 	sizeBytes := sizes.Sizeof(typeInfo)
 	// Vérification de la taille
 	if sizeBytes > int64(maxBytes) {

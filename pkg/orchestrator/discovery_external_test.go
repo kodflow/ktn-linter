@@ -3,6 +3,7 @@ package orchestrator_test
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/orchestrator"
@@ -221,7 +222,8 @@ func TestFindModulesMultiple(t *testing.T) {
 
 			// Create modules
 			for i := 1; i <= tt.moduleCount; i++ {
-				modDir := filepath.Join(tmpDir, "mod"+string(rune('0'+i)))
+				suffix := strconv.Itoa(i)
+				modDir := filepath.Join(tmpDir, "mod"+suffix)
 				err := os.MkdirAll(modDir, 0o755)
 				// Check error
 				if err != nil {
@@ -229,7 +231,7 @@ func TestFindModulesMultiple(t *testing.T) {
 				}
 				err = os.WriteFile(
 					filepath.Join(modDir, "go.mod"),
-					[]byte("module mod"+string(rune('0'+i))+"\n"),
+					[]byte("module mod"+suffix+"\n"),
 					0o644,
 				)
 				// Check error
