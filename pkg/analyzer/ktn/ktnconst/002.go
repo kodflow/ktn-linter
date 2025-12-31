@@ -206,7 +206,13 @@ func checkConstOrder(pass *analysis.Pass, decls *fileDeclarations) {
 			continue
 		}
 
-		msg, _ := messages.Get(ruleCodeConst002)
+		msg, ok := messages.Get(ruleCodeConst002)
+		// Fallback to rule code only if message not found
+		if !ok {
+			pass.Reportf(pos, "%s", ruleCodeConst002)
+			continue
+		}
+
 		pass.Reportf(
 			pos,
 			"%s: %s",
