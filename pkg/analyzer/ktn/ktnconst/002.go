@@ -278,21 +278,23 @@ func collectScatteredViolations(decls *fileDeclarations, violations map[token.Po
 // Returns:
 //   - token.Pos: minimum position or token.NoPos if empty
 func minPos(positions []token.Pos) token.Pos {
-	// Empty slice, return NoPos
-	if len(positions) == 0 {
-		return token.NoPos
-	}
+	// Track whether we found any valid positions
+	min := token.NoPos
 
-	// Find minimum
-	min := positions[0]
-	for _, pos := range positions[1:] {
-		// Update if smaller
-		if pos < min {
+	// Find minimum valid position
+	for _, pos := range positions {
+		// Skip invalid positions
+		if pos == token.NoPos {
+			continue
+		}
+
+		// Initialize or update minimum
+		if min == token.NoPos || pos < min {
 			min = pos
 		}
 	}
 
-	// Return minimum position
+	// Return minimum position (or NoPos if none)
 	return min
 }
 

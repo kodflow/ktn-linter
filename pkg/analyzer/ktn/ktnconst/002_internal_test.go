@@ -216,6 +216,21 @@ func Test_minPos(t *testing.T) {
 			positions: []token.Pos{token.Pos(50), token.Pos(50), token.Pos(50)},
 			expected:  token.Pos(50),
 		},
+		{
+			name:      "slice with NoPos values",
+			positions: []token.Pos{token.NoPos, token.Pos(100), token.NoPos},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "only NoPos values",
+			positions: []token.Pos{token.NoPos, token.NoPos},
+			expected:  token.NoPos,
+		},
+		{
+			name:      "NoPos at start",
+			positions: []token.Pos{token.NoPos, token.Pos(200), token.Pos(100)},
+			expected:  token.Pos(100),
+		},
 	}
 
 	for _, tt := range tests {
