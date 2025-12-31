@@ -179,6 +179,57 @@ func Test_collectScatteredViolations(t *testing.T) {
 	}
 }
 
+// Test_minPos tests the private minPos function.
+func Test_minPos(t *testing.T) {
+	tests := []struct {
+		name      string
+		positions []token.Pos
+		expected  token.Pos
+	}{
+		{
+			name:      "empty slice",
+			positions: []token.Pos{},
+			expected:  token.NoPos,
+		},
+		{
+			name:      "single element",
+			positions: []token.Pos{token.Pos(100)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "two elements ascending",
+			positions: []token.Pos{token.Pos(100), token.Pos(200)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "two elements descending",
+			positions: []token.Pos{token.Pos(200), token.Pos(100)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "multiple elements unsorted",
+			positions: []token.Pos{token.Pos(300), token.Pos(100), token.Pos(200)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "all same value",
+			positions: []token.Pos{token.Pos(50), token.Pos(50), token.Pos(50)},
+			expected:  token.Pos(50),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := minPos(tt.positions)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("minPos() = %d, want %d", result, tt.expected)
+			}
+		})
+	}
+}
+
 // Test_findFirstNonConstPos tests the private findFirstNonConstPos function.
 func Test_findFirstNonConstPos(t *testing.T) {
 	tests := []struct {

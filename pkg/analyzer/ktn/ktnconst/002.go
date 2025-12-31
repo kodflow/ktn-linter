@@ -199,8 +199,13 @@ func checkConstOrder(pass *analysis.Pass, decls *fileDeclarations) {
 	// Check const vs func order
 	collectFuncOrderViolations(decls, violations)
 
-	// Report one error per violation position
-	for pos := range violations {
+	// Report one error per violation position (deterministic order)
+	for _, pos := range decls.constDecls {
+		// Skip if not a violation
+		if !violations[pos] {
+			continue
+		}
+
 		msg, _ := messages.Get(ruleCodeConst002)
 		pass.Reportf(
 			pos,
@@ -258,6 +263,33 @@ func collectScatteredViolations(decls *fileDeclarations, violations map[token.Po
 	}
 }
 
+// minPos returns the minimum position from a slice.
+// Returns token.NoPos if the slice is empty.
+//
+// Params:
+//   - positions: slice of token positions
+//
+// Returns:
+//   - token.Pos: minimum position or token.NoPos if empty
+func minPos(positions []token.Pos) token.Pos {
+	// Empty slice, return NoPos
+	if len(positions) == 0 {
+		return token.NoPos
+	}
+
+	// Find minimum
+	min := positions[0]
+	for _, pos := range positions[1:] {
+		// Update if smaller
+		if pos < min {
+			min = pos
+		}
+	}
+
+	// Return minimum position
+	return min
+}
+
 // findFirstNonConstPos returns the position of the first var/type/func declaration.
 //
 // Params:
@@ -266,31 +298,27 @@ func collectScatteredViolations(decls *fileDeclarations, violations map[token.Po
 // Returns:
 //   - token.Pos: position of first non-const, or token.NoPos if none
 func findFirstNonConstPos(decls *fileDeclarations) token.Pos {
+	// Get minimum position from each declaration type
+	varMin := minPos(decls.varDecls)
+	typeMin := minPos(decls.typeDecls)
+	funcMin := minPos(decls.funcDecls)
+
 	// Start with no position
 	firstPos := token.NoPos
 
-	// Check first var position
-	if len(decls.varDecls) > 0 {
-		// Update first position
-		firstPos = decls.varDecls[0]
+	// Check var minimum
+	if varMin != token.NoPos {
+		firstPos = varMin
 	}
 
-	// Check first type position
-	if len(decls.typeDecls) > 0 {
-		typePos := decls.typeDecls[0]
-		// Update if earlier
-		if firstPos == token.NoPos || typePos < firstPos {
-			firstPos = typePos
-		}
+	// Check type minimum
+	if typeMin != token.NoPos && (firstPos == token.NoPos || typeMin < firstPos) {
+		firstPos = typeMin
 	}
 
-	// Check first func position
-	if len(decls.funcDecls) > 0 {
-		funcPos := decls.funcDecls[0]
-		// Update if earlier
-		if firstPos == token.NoPos || funcPos < firstPos {
-			firstPos = funcPos
-		}
+	// Check func minimum
+	if funcMin != token.NoPos && (firstPos == token.NoPos || funcMin < firstPos) {
+		firstPos = funcMin
 	}
 
 	// Return first non-const position
@@ -304,14 +332,14 @@ func findFirstNonConstPos(decls *fileDeclarations) token.Pos {
 //   - decls: collected declarations
 //   - violations: map to collect violation positions
 func collectVarOrderViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// Get first var position (using minPos for robustness)
+	firstVarPos := minPos(decls.varDecls)
+
 	// No var declarations, nothing to check
-	if len(decls.varDecls) == 0 {
+	if firstVarPos == token.NoPos {
 		// Return early
 		return
 	}
-
-	// Get first var position
-	firstVarPos := decls.varDecls[0]
 
 	// Check each const declaration
 	for _, constPos := range decls.constDecls {
@@ -339,14 +367,14 @@ func collectVarOrderViolations(decls *fileDeclarations, violations map[token.Pos
 //   - decls: collected declarations
 //   - violations: map to collect violation positions
 func collectTypeOrderViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// Get first type position (using minPos for robustness)
+	firstTypePos := minPos(decls.typeDecls)
+
 	// No type declarations, nothing to check
-	if len(decls.typeDecls) == 0 {
+	if firstTypePos == token.NoPos {
 		// Return early
 		return
 	}
-
-	// Get first type position
-	firstTypePos := decls.typeDecls[0]
 
 	// Check each const declaration
 	for _, constPos := range decls.constDecls {
@@ -376,14 +404,14 @@ func collectTypeOrderViolations(decls *fileDeclarations, violations map[token.Po
 //   - decls: collected declarations
 //   - violations: map to collect violation positions
 func collectFuncOrderViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// Get first func position (using minPos for robustness)
+	firstFuncPos := minPos(decls.funcDecls)
+
 	// No func declarations, nothing to check
-	if len(decls.funcDecls) == 0 {
+	if firstFuncPos == token.NoPos {
 		// Return early
 		return
 	}
-
-	// Get first func position
-	firstFuncPos := decls.funcDecls[0]
 
 	// Check each const declaration
 	for _, constPos := range decls.constDecls {
