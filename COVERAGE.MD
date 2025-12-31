@@ -21,7 +21,7 @@ Rapport de couverture généré automatiquement.
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 93.9% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 97.7% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.5% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
@@ -87,13 +87,12 @@ Rapport de couverture généré automatiquement.
 | 🟢 `007.go:hasCommentBefore` | 92.9% |
 | 🟢 `007.go:hasInlineComment` | 93.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 97.7%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 98.5%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟢 `001.go:runConst001` | 95.0% |
 | 🟡 `002.go:extractConstTypeName` | 87.5% |
-| 🟡 `002.go:checkScatteredConstBlocks` | 88.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 96.4%
 
@@ -296,4 +295,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-31 17:30:36*
+*Généré le: 2025-12-31 21:39:53*

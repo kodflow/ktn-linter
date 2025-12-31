@@ -20,21 +20,22 @@ func TestConst002(t *testing.T) {
 			name:           "scattered constants",
 			analyzer:       ktnconst.Analyzer002,
 			testdataDir:    "const002",
-			expectedErrors: 10,
+			expectedErrors: 7,
 		},
 		{
 			name:           "valid grouped constants",
 			analyzer:       ktnconst.Analyzer002,
 			testdataDir:    "const002",
-			expectedErrors: 10,
+			expectedErrors: 7,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// good.go: 0 errors
-			// bad.go: 10 errors (4 scattered + 3 after var + 2 after type + 1 after func)
+			// good.go: 0 errors (iota with custom types after type declaration is OK)
+			// bad.go: 7 errors (scattered blocks + after var/type/func violations)
+			// Sections: scattered(3) + after var(1) + after type(1) + after func(2) = 7
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}
