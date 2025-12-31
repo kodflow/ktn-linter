@@ -167,8 +167,8 @@ func (f *formatterImpl) formatSimple(fset *token.FileSet, diagnostics []analysis
 	for _, diag := range filtered {
 		pos := fset.Position(diag.Pos)
 		code := extractCode(diag.Message)
-		// En mode verbose, ne pas tronquer le message
-		message := extractMessageWithOptions(diag.Message, !f.verboseMode)
+		// Toujours afficher le message complet (jamais tronquer)
+		message := extractMessageWithOptions(diag.Message, false)
 
 		// Format compatible avec golangci-lint et VSCode : code en premier
 		fmt.Fprintf(f.writer, "%s:%d:%d: [%s] %s\n",
@@ -306,8 +306,8 @@ func (f *formatterImpl) printFileHeader(filename string, count int) {
 //   - diag: diagnostic à afficher
 func (f *formatterImpl) printDiagnostic(num int, pos token.Position, diag analysis.Diagnostic) {
 	code := extractCode(diag.Message)
-	// En mode verbose, ne pas tronquer le message
-	message := extractMessageWithOptions(diag.Message, !f.verboseMode)
+	// Toujours afficher le message complet (jamais tronquer)
+	message := extractMessageWithOptions(diag.Message, false)
 	location := fmt.Sprintf("%s:%d:%d", pos.Filename, pos.Line, pos.Column)
 
 	// Vérification de la condition

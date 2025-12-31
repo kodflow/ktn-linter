@@ -36,6 +36,14 @@ var lintCmd *cobra.Command = &cobra.Command{
 	Run:   runLint,
 }
 
+// Flag names for lint command.
+const (
+	// flagSarif is the flag name for SARIF output.
+	flagSarif string = "sarif"
+	// flagJSON is the flag name for JSON output.
+	flagJSON string = "json"
+)
+
 // init registers the lint command with root.
 //
 // Params: none
@@ -43,6 +51,9 @@ var lintCmd *cobra.Command = &cobra.Command{
 // Returns: none
 func init() {
 	rootCmd.AddCommand(lintCmd)
+	// Add lint-specific flags
+	lintCmd.Flags().Bool(flagSarif, false, "Output in SARIF format (for IDE integration)")
+	lintCmd.Flags().Bool(flagJSON, false, "Output in JSON format")
 }
 
 // runLint executes the linting analysis.
@@ -52,8 +63,8 @@ func init() {
 //   - args: command line arguments
 //
 // Returns: none
-func runLint(_ *cobra.Command, args []string) {
-	opts := parseOptions()
+func runLint(cmd *cobra.Command, args []string) {
+	opts := parseOptions(cmd)
 
 	// Load configuration
 	loadConfiguration(opts.Options)
@@ -91,17 +102,33 @@ type lintOptions struct {
 
 // parseOptions extracts options from Cobra flags.
 //
+// Params:
+//   - cmd: Cobra command with flags
+//
 // Returns:
 //   - lintOptions: extracted options including format and output
-func parseOptions() lintOptions {
+func parseOptions(cmd *cobra.Command) lintOptions {
 	flags := rootCmd.PersistentFlags()
 
 	verbose, _ := flags.GetBool(flagVerbose)
 	category, _ := flags.GetString(flagCategory)
 	onlyRule, _ := flags.GetString(flagOnlyRule)
 	configPath, _ := flags.GetString(flagConfig)
-	formatStr, _ := flags.GetString(flagFormat)
 	outputPath, _ := flags.GetString(flagOutput)
+
+	// Check lint-specific format flags (--sarif, --json)
+	sarifMode, _ := cmd.Flags().GetBool(flagSarif)
+	jsonMode, _ := cmd.Flags().GetBool(flagJSON)
+
+	// Determine output format
+	outputFormat := formatter.FormatText
+	// Check for SARIF format
+	if sarifMode {
+		outputFormat = formatter.FormatSARIF
+	} else if jsonMode {
+		// Check for JSON format
+		outputFormat = formatter.FormatJSON
+	}
 
 	// Return parsed options
 	return lintOptions{
@@ -111,7 +138,7 @@ func parseOptions() lintOptions {
 			OnlyRule:   onlyRule,
 			ConfigPath: configPath,
 		},
-		Format:     formatter.ParseOutputFormat(formatStr),
+		Format:     outputFormat,
 		OutputPath: outputPath,
 	}
 }
@@ -301,11 +328,13 @@ func formatAndDisplay(diagnostics []analysis.Diagnostic, fset *token.FileSet, op
 	}
 
 	// Create formatter options
+	// SimpleMode désactivé : on affiche toujours le format complet
+	// VerboseMode n'affecte plus les messages (toujours longs)
 	fmtOpts := formatter.FormatterOptions{
 		AIMode:      false,
 		NoColor:     opts.OutputPath != "",
-		SimpleMode:  opts.Format == formatter.FormatText,
-		VerboseMode: opts.Verbose,
+		SimpleMode:  false,
+		VerboseMode: false,
 	}
 
 	// Create formatter based on format

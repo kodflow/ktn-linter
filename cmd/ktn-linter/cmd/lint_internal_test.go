@@ -151,7 +151,7 @@ func Test_parseOptions(t *testing.T) {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			opts := parseOptions()
+			opts := parseOptions(lintCmd)
 
 			// Verify all fields
 			if opts.Verbose != tt.wantOpts.Verbose {

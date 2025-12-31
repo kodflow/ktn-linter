@@ -410,3 +410,201 @@ func Test_MarkdownFormatter_writeViolation(t *testing.T) {
 		})
 	}
 }
+
+// Test_countPhaseViolations tests the countPhaseViolations private function.
+//
+// Params:
+//   - t: testing object
+func Test_countPhaseViolations(t *testing.T) {
+	tests := []struct {
+		name  string
+		phase *PhaseGroup
+		want  int
+	}{
+		{
+			name:  "nil phase returns zero",
+			phase: nil,
+			want:  0,
+		},
+		{
+			name: "empty phase returns zero",
+			phase: &PhaseGroup{
+				Rules: []RuleViolations{},
+			},
+			want: 0,
+		},
+		{
+			name: "single rule single violation",
+			phase: &PhaseGroup{
+				Rules: []RuleViolations{
+					{
+						Code:       "KTN-FUNC-001",
+						Violations: []Violation{{FilePath: "a.go", Line: 1}},
+					},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "multiple rules multiple violations",
+			phase: &PhaseGroup{
+				Rules: []RuleViolations{
+					{
+						Code: "KTN-FUNC-001",
+						Violations: []Violation{
+							{FilePath: "a.go", Line: 1},
+							{FilePath: "b.go", Line: 2},
+						},
+					},
+					{
+						Code: "KTN-FUNC-002",
+						Violations: []Violation{
+							{FilePath: "c.go", Line: 3},
+						},
+					},
+				},
+			},
+			want: 3,
+		},
+	}
+
+	// Run test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			got := countPhaseViolations(tt.phase)
+			// Verify count
+			if got != tt.want {
+				t.Errorf("countPhaseViolations() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+// Test_MarkdownFormatter_writeBlockedPhase tests the writeBlockedPhase private method.
+//
+// Params:
+//   - t: testing object
+func Test_MarkdownFormatter_writeBlockedPhase(t *testing.T) {
+	tests := []struct {
+		name           string
+		phase          *PhaseGroup
+		phaseNum       int
+		violationCount int
+		wantHeader     string
+		wantBlocked    bool
+		wantRuleCodes  []string
+	}{
+		{
+			name: "blocked phase with violations",
+			phase: &PhaseGroup{
+				Phase:       PhaseLocal,
+				Name:        "Local Fixes",
+				Description: "Code modifications",
+				Rules: []RuleViolations{
+					{Code: "KTN-FUNC-001", Violations: []Violation{{}, {}}},
+					{Code: "KTN-VAR-002", Violations: []Violation{{}}},
+				},
+			},
+			phaseNum:       3,
+			violationCount: 3,
+			wantHeader:     "## Phase 3: Local Fixes",
+			wantBlocked:    true,
+			wantRuleCodes:  []string{"KTN-FUNC-001", "KTN-VAR-002"},
+		},
+		{
+			name: "blocked phase without violations",
+			phase: &PhaseGroup{
+				Phase:       PhaseComment,
+				Name:        "Comments & Documentation",
+				Description: "Documentation rules",
+				Rules:       []RuleViolations{},
+			},
+			phaseNum:       4,
+			violationCount: 0,
+			wantHeader:     "## Phase 4: Comments & Documentation",
+			wantBlocked:    true,
+			wantRuleCodes:  nil,
+		},
+	}
+
+	// Run test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			f := &MarkdownFormatter{writer: &buf}
+
+			// Call private function
+			f.writeBlockedPhase(tt.phase, tt.phaseNum, tt.violationCount)
+
+			result := buf.String()
+
+			// Verify header with blocked indicator
+			if !strings.Contains(result, tt.wantHeader) {
+				t.Errorf("writeBlockedPhase() should contain %q", tt.wantHeader)
+			}
+
+			// Verify blocked indicator
+			if tt.wantBlocked && !strings.Contains(result, "BLOQUEE") {
+				t.Error("writeBlockedPhase() should contain BLOQUEE indicator")
+			}
+
+			// Verify warning message
+			if !strings.Contains(result, "Completez les phases precedentes") {
+				t.Error("writeBlockedPhase() should contain warning message")
+			}
+
+			// Verify rule codes are listed
+			for _, code := range tt.wantRuleCodes {
+				if !strings.Contains(result, code) {
+					t.Errorf("writeBlockedPhase() should list rule code %q", code)
+				}
+			}
+
+			// Verify violation count if present
+			if tt.violationCount > 0 {
+				if !strings.Contains(result, "violations") {
+					t.Error("writeBlockedPhase() should mention violations")
+				}
+			}
+		})
+	}
+}
+
+// Test_MarkdownFormatter_writeBlockedPhase_NilGuards tests nil guards.
+//
+// Params:
+//   - t: testing object
+func Test_MarkdownFormatter_writeBlockedPhase_NilGuards(t *testing.T) {
+	tests := []struct {
+		name      string
+		formatter *MarkdownFormatter
+		phase     *PhaseGroup
+	}{
+		{
+			name:      "nil formatter",
+			formatter: nil,
+			phase:     &PhaseGroup{Name: "Test"},
+		},
+		{
+			name:      "nil writer",
+			formatter: &MarkdownFormatter{writer: nil},
+			phase:     &PhaseGroup{Name: "Test"},
+		},
+		{
+			name:      "nil phase",
+			formatter: &MarkdownFormatter{writer: &bytes.Buffer{}},
+			phase:     nil,
+		},
+	}
+
+	// Run test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic
+			tt.formatter.writeBlockedPhase(tt.phase, 1, 0)
+		})
+	}
+}

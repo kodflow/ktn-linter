@@ -18,20 +18,21 @@ type Message struct {
 	Verbose string
 }
 
-// Format retourne le message approprié selon le mode verbose.
+// Format retourne toujours le message verbose (détaillé).
+// Le paramètre verbose est conservé pour compatibilité mais ignoré.
 //
 // Params:
-//   - verbose: true pour le message détaillé
+//   - verbose: ignoré (conservé pour compatibilité API)
 //   - args: arguments pour le formatage
 //
 // Returns:
-//   - string: message formaté
-func (m Message) Format(verbose bool, args ...any) string {
-	// Sélectionner le template
-	template := m.Short
-	// Vérifier si mode verbose
-	if verbose && m.Verbose != "" {
-		template = m.Verbose
+//   - string: message formaté (toujours verbose)
+func (m Message) Format(_ bool, args ...any) string {
+	// Toujours utiliser le message verbose (long) par défaut
+	template := m.Verbose
+	// Fallback sur Short si pas de message verbose défini
+	if template == "" {
+		template = m.Short
 	}
 
 	// Formater avec les arguments
