@@ -245,9 +245,15 @@ func collectScatteredViolations(decls *fileDeclarations, violations map[token.Po
 		return
 	}
 
-	// Check each const block after the first one
-	for i := 1; i < len(decls.constDecls); i++ {
-		constPos := decls.constDecls[i]
+	// Identify the first const position (robust to unsorted input)
+	firstConstPos := minPos(decls.constDecls)
+
+	// Check each const block except the first one
+	for _, constPos := range decls.constDecls {
+		// Skip the first const block
+		if constPos == firstConstPos {
+			continue
+		}
 
 		// Skip if this const is before the first var/type/func
 		if constPos < firstNonConstPos {
