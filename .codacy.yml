@@ -27,3 +27,15 @@ engines:
     exclude_paths:
       - '**/*_test.go'
       - '**/testdata/**'
+
+  # Exclude CLAUDE.md files from markdownlint
+  # These are internal AI context files, not public documentation
+  markdownlint:
+    exclude_paths:
+      - '**/CLAUDE.md'
+
+  # Exclude testdata from Semgrep security checks
+  # Testdata intentionally contains non-production patterns
+  semgrep:
+    exclude_paths:
+      - '**/testdata/**'
