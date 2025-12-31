@@ -20,7 +20,13 @@ type httpDoer interface {
 //   - error: erreur éventuelle
 func GoodWithInterface(d httpDoer) (*http.Response, error) {
 	// Création de la requête
-	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	req, err := http.NewRequest("GET", "http://example.com", nil)
+	// Vérification de l'erreur de création
+	if err != nil {
+		// Retour de l'erreur
+		return nil, err
+	}
+
 	// Exécution via interface
 	return d.Do(req)
 }
