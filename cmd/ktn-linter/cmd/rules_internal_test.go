@@ -62,6 +62,71 @@ func Test_parseRulesOptions(t *testing.T) {
 	}
 }
 
+func Test_NewRulesFormatter(t *testing.T) {
+	tests := []struct {
+		name         string
+		format       string
+		expectedType string
+	}{
+		{
+			name:         "text format",
+			format:       "text",
+			expectedType: "*cmd.textRulesFormatter",
+		},
+		{
+			name:         "markdown format",
+			format:       "markdown",
+			expectedType: "*cmd.markdownRulesFormatter",
+		},
+		{
+			name:         "md alias for markdown",
+			format:       "md",
+			expectedType: "*cmd.markdownRulesFormatter",
+		},
+		{
+			name:         "json format",
+			format:       "json",
+			expectedType: "*cmd.jsonRulesFormatter",
+		},
+		{
+			name:         "unknown format defaults to text",
+			format:       "unknown",
+			expectedType: "*cmd.textRulesFormatter",
+		},
+		{
+			name:         "empty format defaults to text",
+			format:       "",
+			expectedType: "*cmd.textRulesFormatter",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			formatter := NewRulesFormatter(tt.format)
+			// Verify formatter is not nil
+			if formatter == nil {
+				t.Fatal("NewRulesFormatter returned nil")
+			}
+			// Verify type by checking interface implementation
+			switch tt.expectedType {
+			case "*cmd.textRulesFormatter":
+				if _, ok := formatter.(*textRulesFormatter); !ok {
+					t.Errorf("expected *textRulesFormatter, got %T", formatter)
+				}
+			case "*cmd.markdownRulesFormatter":
+				if _, ok := formatter.(*markdownRulesFormatter); !ok {
+					t.Errorf("expected *markdownRulesFormatter, got %T", formatter)
+				}
+			case "*cmd.jsonRulesFormatter":
+				if _, ok := formatter.(*jsonRulesFormatter); !ok {
+					t.Errorf("expected *jsonRulesFormatter, got %T", formatter)
+				}
+			}
+		})
+	}
+}
+
 func Test_displayCategories(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -93,7 +158,9 @@ func Test_displayCategories(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			displayCategories(tt.format)
+			// Create formatter and call function
+			formatter := NewRulesFormatter(tt.format)
+			displayCategories(formatter)
 
 			w.Close()
 			var stdout bytes.Buffer
@@ -112,12 +179,12 @@ func Test_displayCategories(t *testing.T) {
 
 func Test_displayCategoryRules(t *testing.T) {
 	tests := []struct {
-		name        string
-		category    string
-		format      string
-		expectText  string
-		expectExit  bool
-		exitCode    int
+		name       string
+		category   string
+		format     string
+		expectText string
+		expectExit bool
+		exitCode   int
 	}{
 		{
 			name:       "valid category text format",
@@ -161,8 +228,11 @@ func Test_displayCategoryRules(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Create formatter
+			formatter := NewRulesFormatter(tt.format)
+
 			exitCode, didExit := catchExitInCmd(t, func() {
-				displayCategoryRules(tt.category, tt.format)
+				displayCategoryRules(tt.category, formatter)
 			})
 
 			w.Close()
@@ -249,13 +319,15 @@ func Test_displayRuleDetails(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Create formatter
+			formatter := NewRulesFormatter(tt.format)
 			opts := rulesOptions{
 				Format:     tt.format,
 				NoExamples: tt.noExamples,
 			}
 
 			exitCode, didExit := catchExitInCmd(t, func() {
-				displayRuleDetails(tt.code, opts)
+				displayRuleDetails(tt.code, formatter, opts)
 			})
 
 			w.Close()
@@ -328,13 +400,15 @@ func Test_handleSingleArg(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Create formatter
+			formatter := NewRulesFormatter(tt.format)
 			opts := rulesOptions{
 				Format:     tt.format,
 				NoExamples: true,
 			}
 
 			_, didExit := catchExitInCmd(t, func() {
-				handleSingleArg(tt.arg, opts)
+				handleSingleArg(tt.arg, formatter, opts)
 			})
 
 			w.Close()
@@ -397,13 +471,15 @@ func Test_handleCategoryAndRule(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Create formatter
+			formatter := NewRulesFormatter(tt.format)
 			opts := rulesOptions{
 				Format:     tt.format,
 				NoExamples: true,
 			}
 
 			exitCode, didExit := catchExitInCmd(t, func() {
-				handleCategoryAndRule(tt.category, tt.ruleNum, opts)
+				handleCategoryAndRule(tt.category, tt.ruleNum, formatter, opts)
 			})
 
 			w.Close()
@@ -601,13 +677,15 @@ func Test_handleCategoryAndRule_InvalidFormat(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stderr = w
 
+			// Create formatter
+			formatter := NewRulesFormatter("text")
 			opts := rulesOptions{
 				Format:     "text",
 				NoExamples: true,
 			}
 
 			exitCode, didExit := catchExitInCmd(t, func() {
-				handleCategoryAndRule(tt.category, tt.ruleNum, opts)
+				handleCategoryAndRule(tt.category, tt.ruleNum, formatter, opts)
 			})
 
 			w.Close()

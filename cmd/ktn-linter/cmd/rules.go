@@ -48,6 +48,39 @@ func init() {
 	rulesCmd.Flags().Bool(flagRulesNoExamples, false, "Exclude code examples from output")
 }
 
+// RulesFormatter defines the interface for formatting rules output.
+// Implementations handle different output formats (text, markdown, json).
+type RulesFormatter interface {
+	// DisplayCategories shows all available categories.
+	DisplayCategories(categories []string)
+	// DisplayCategoryRules shows all rules in a category.
+	DisplayCategoryRules(category string, catRules []rules.RuleInfo)
+	// DisplayRuleDetails shows detailed information for a single rule.
+	DisplayRuleDetails(info rules.RuleInfo)
+}
+
+// NewRulesFormatter creates a formatter for the specified format.
+//
+// Params:
+//   - format: output format (text, markdown, json)
+//
+// Returns:
+//   - RulesFormatter: formatter implementation
+func NewRulesFormatter(format string) RulesFormatter {
+	// Select format implementation
+	switch strings.ToLower(format) {
+	// JSON format
+	case "json":
+		return &jsonRulesFormatter{}
+	// Markdown format
+	case "markdown", "md":
+		return &markdownRulesFormatter{}
+	// Text format (default)
+	default:
+		return &textRulesFormatter{}
+	}
+}
+
 // runRules executes the rules command.
 //
 // Params:
@@ -59,123 +92,57 @@ func runRules(cmd *cobra.Command, args []string) {
 	// Parse command-specific flags
 	opts := parseRulesOptions(cmd)
 
+	// Create formatter for selected format
+	formatter := NewRulesFormatter(opts.Format)
+
 	// Handle hierarchical navigation based on args
 	switch len(args) {
 	// No args: list categories
 	case 0:
-		displayCategories(opts.Format)
+		displayCategories(formatter)
 	// One arg: category name or full rule code
 	case 1:
-		handleSingleArg(args[0], opts)
+		handleSingleArg(args[0], formatter, opts)
 	// Two args: category and rule number
 	case 2:
-		handleCategoryAndRule(args[0], args[1], opts)
+		handleCategoryAndRule(args[0], args[1], formatter, opts)
 	}
 }
 
 // displayCategories shows all available categories.
 //
 // Params:
-//   - format: output format (text, markdown, json)
-func displayCategories(format string) {
+//   - formatter: rules formatter to use
+func displayCategories(formatter RulesFormatter) {
 	categories := rules.GetCategories()
-
-	// Select format
-	switch strings.ToLower(format) {
-	// JSON format
-	case "json":
-		displayCategoriesJSON(categories)
-	// Markdown format
-	case "markdown", "md":
-		displayCategoriesMarkdown(categories)
-	// Text format (default)
-	default:
-		displayCategoriesText(categories)
-	}
-}
-
-// displayCategoriesText shows categories in text format.
-//
-// Params:
-//   - categories: list of category names
-func displayCategoriesText(categories []string) {
-	fmt.Println("KTN-Linter Categories")
-	fmt.Println("=====================")
-	fmt.Println()
-	// Iterate categories
-	for _, cat := range categories {
-		// Get rule count for category
-		catRules := rules.GetRuleInfosByCategory(cat)
-		fmt.Printf("  %s (%d rules)\n", cat, len(catRules))
-	}
-	fmt.Println()
-	fmt.Println("Usage: ktn-linter rules <category> to see rules")
-}
-
-// displayCategoriesMarkdown shows categories in markdown format.
-//
-// Params:
-//   - categories: list of category names
-func displayCategoriesMarkdown(categories []string) {
-	fmt.Println("# KTN-Linter Categories")
-	fmt.Println()
-	// Iterate categories
-	for _, cat := range categories {
-		// Get rule count for category
-		catRules := rules.GetRuleInfosByCategory(cat)
-		fmt.Printf("- **%s** (%d rules)\n", cat, len(catRules))
-	}
-}
-
-// displayCategoriesJSON shows categories in JSON format.
-//
-// Params:
-//   - categories: list of category names
-func displayCategoriesJSON(categories []string) {
-	// Build JSON structure
-	type categoryInfo struct {
-		Name  string `json:"name"`
-		Count int    `json:"count"`
-	}
-	var catInfos []categoryInfo
-	// Iterate categories
-	for _, cat := range categories {
-		catRules := rules.GetRuleInfosByCategory(cat)
-		catInfos = append(catInfos, categoryInfo{Name: cat, Count: len(catRules)})
-	}
-	// Encode JSON
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
-	// Handle encoding error
-	if err := encoder.Encode(map[string]any{"categories": catInfos}); err != nil {
-		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
-		OsExit(1)
-	}
+	// Delegate to formatter
+	formatter.DisplayCategories(categories)
 }
 
 // handleSingleArg handles one argument (category or full rule code).
 //
 // Params:
 //   - arg: category name or rule code (e.g., "func" or "KTN-FUNC-001")
+//   - formatter: rules formatter to use
 //   - opts: rules options
-func handleSingleArg(arg string, opts rulesOptions) {
+func handleSingleArg(arg string, formatter RulesFormatter, opts rulesOptions) {
 	// Check if it's a full rule code (KTN-XXX-YYY)
 	if strings.HasPrefix(strings.ToUpper(arg), "KTN-") {
 		// Display single rule details
-		displayRuleDetails(strings.ToUpper(arg), opts)
+		displayRuleDetails(strings.ToUpper(arg), formatter, opts)
 		return
 	}
 
 	// Otherwise treat as category
-	displayCategoryRules(arg, opts.Format)
+	displayCategoryRules(arg, formatter)
 }
 
 // displayCategoryRules shows all rules in a category.
 //
 // Params:
 //   - category: category name
-//   - format: output format
-func displayCategoryRules(category string, format string) {
+//   - formatter: rules formatter to use
+func displayCategoryRules(category string, formatter RulesFormatter) {
 	catRules := rules.GetRuleInfosByCategory(category)
 
 	// Check if category exists
@@ -185,66 +152,8 @@ func displayCategoryRules(category string, format string) {
 		OsExit(1)
 	}
 
-	// Select format
-	switch strings.ToLower(format) {
-	// JSON format
-	case "json":
-		displayCategoryRulesJSON(category, catRules)
-	// Markdown format
-	case "markdown", "md":
-		displayCategoryRulesMarkdown(category, catRules)
-	// Text format (default)
-	default:
-		displayCategoryRulesText(category, catRules)
-	}
-}
-
-// displayCategoryRulesText shows rules in text format.
-//
-// Params:
-//   - category: category name
-//   - catRules: list of rules in the category
-func displayCategoryRulesText(category string, catRules []rules.RuleInfo) {
-	fmt.Printf("KTN-%s Rules\n", strings.ToUpper(category))
-	fmt.Println(strings.Repeat("=", 20))
-	fmt.Println()
-	// Iterate rules
-	for _, rule := range catRules {
-		fmt.Printf("  %s: %s\n", rule.Code, rule.Description)
-	}
-	fmt.Println()
-	fmt.Printf("Usage: ktn-linter rules %s <number> for details\n", category)
-}
-
-// displayCategoryRulesMarkdown shows rules in markdown format.
-//
-// Params:
-//   - category: category name
-//   - catRules: list of rules
-func displayCategoryRulesMarkdown(category string, catRules []rules.RuleInfo) {
-	fmt.Printf("# KTN-%s Rules\n\n", strings.ToUpper(category))
-	// Iterate rules
-	for _, rule := range catRules {
-		fmt.Printf("- **%s**: %s\n", rule.Code, rule.Description)
-	}
-}
-
-// displayCategoryRulesJSON shows rules in JSON format.
-//
-// Params:
-//   - category: category name
-//   - catRules: list of rules
-func displayCategoryRulesJSON(category string, catRules []rules.RuleInfo) {
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
-	// Handle encoding error
-	if err := encoder.Encode(map[string]any{
-		"category": category,
-		"rules":    catRules,
-	}); err != nil {
-		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
-		OsExit(1)
-	}
+	// Delegate to formatter
+	formatter.DisplayCategoryRules(category, catRules)
 }
 
 // handleCategoryAndRule handles two arguments (category and rule number).
@@ -252,8 +161,9 @@ func displayCategoryRulesJSON(category string, catRules []rules.RuleInfo) {
 // Params:
 //   - category: category name (e.g., "func")
 //   - ruleNum: rule number (e.g., "001")
+//   - formatter: rules formatter to use
 //   - opts: rules options
-func handleCategoryAndRule(category, ruleNum string, opts rulesOptions) {
+func handleCategoryAndRule(category, ruleNum string, formatter RulesFormatter, opts rulesOptions) {
 	// Validate rule number format (must be 3 digits)
 	if !isValidRuleNumber(ruleNum) {
 		fmt.Fprintf(os.Stderr, "Invalid rule number format: %s (expected 3 digits, e.g., 001)\n", ruleNum)
@@ -262,7 +172,7 @@ func handleCategoryAndRule(category, ruleNum string, opts rulesOptions) {
 
 	// Build full rule code
 	code := fmt.Sprintf("KTN-%s-%s", strings.ToUpper(category), ruleNum)
-	displayRuleDetails(code, opts)
+	displayRuleDetails(code, formatter, opts)
 }
 
 // isValidRuleNumber checks if a rule number has the correct format.
@@ -296,8 +206,9 @@ func isValidRuleNumber(ruleNum string) bool {
 //
 // Params:
 //   - code: full rule code (e.g., "KTN-FUNC-001")
+//   - formatter: rules formatter to use
 //   - opts: rules options
-func displayRuleDetails(code string, opts rulesOptions) {
+func displayRuleDetails(code string, formatter RulesFormatter, opts rulesOptions) {
 	// Get rule info
 	info := rules.GetRuleInfoByCode(code)
 	// Check if found
@@ -315,72 +226,8 @@ func displayRuleDetails(code string, opts rulesOptions) {
 		}
 	}
 
-	// Select format
-	switch strings.ToLower(opts.Format) {
-	// JSON format
-	case "json":
-		displayRuleDetailsJSON(*info)
-	// Markdown format
-	case "markdown", "md":
-		displayRuleDetailsMarkdown(*info)
-	// Text format (default)
-	default:
-		displayRuleDetailsText(*info)
-	}
-}
-
-// displayRuleDetailsText shows rule details in text format.
-//
-// Params:
-//   - info: rule information
-func displayRuleDetailsText(info rules.RuleInfo) {
-	fmt.Printf("%s\n", info.Code)
-	fmt.Println(strings.Repeat("=", len(info.Code)))
-	fmt.Println()
-	fmt.Printf("Category: %s\n", info.Category)
-	fmt.Printf("Description: %s\n", info.Description)
-	// Show example if available
-	if info.GoodExample != "" {
-		fmt.Println()
-		fmt.Println("Good Example:")
-		fmt.Println("-------------")
-		// Iterate lines
-		for line := range strings.SplitSeq(info.GoodExample, "\n") {
-			fmt.Printf("  %s\n", line)
-		}
-	}
-}
-
-// displayRuleDetailsMarkdown shows rule details in markdown format.
-//
-// Params:
-//   - info: rule information
-func displayRuleDetailsMarkdown(info rules.RuleInfo) {
-	fmt.Printf("# %s\n\n", info.Code)
-	fmt.Printf("**Category**: %s\n\n", info.Category)
-	fmt.Printf("%s\n\n", info.Description)
-	// Show example if available
-	if info.GoodExample != "" {
-		fmt.Println("## Good Example")
-		fmt.Println()
-		fmt.Println("```go")
-		fmt.Print(info.GoodExample)
-		fmt.Println("```")
-	}
-}
-
-// displayRuleDetailsJSON shows rule details in JSON format.
-//
-// Params:
-//   - info: rule information
-func displayRuleDetailsJSON(info rules.RuleInfo) {
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
-	// Handle encoding error
-	if err := encoder.Encode(info); err != nil {
-		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
-		OsExit(1)
-	}
+	// Delegate to formatter
+	formatter.DisplayRuleDetails(*info)
 }
 
 // rulesOptions contains options for the rules command.
@@ -407,3 +254,182 @@ func parseRulesOptions(cmd *cobra.Command) rulesOptions {
 	}
 }
 
+// =============================================================================
+// Text Formatter Implementation
+// =============================================================================
+
+// textRulesFormatter formats rules output as plain text.
+type textRulesFormatter struct{}
+
+// DisplayCategories shows categories in text format.
+//
+// Params:
+//   - categories: list of category names
+func (f *textRulesFormatter) DisplayCategories(categories []string) {
+	fmt.Println("KTN-Linter Categories")
+	fmt.Println("=====================")
+	fmt.Println()
+	// Iterate categories
+	for _, cat := range categories {
+		// Get rule count for category
+		catRules := rules.GetRuleInfosByCategory(cat)
+		fmt.Printf("  %s (%d rules)\n", cat, len(catRules))
+	}
+	fmt.Println()
+	fmt.Println("Usage: ktn-linter rules <category> to see rules")
+}
+
+// DisplayCategoryRules shows rules in text format.
+//
+// Params:
+//   - category: category name
+//   - catRules: list of rules in the category
+func (f *textRulesFormatter) DisplayCategoryRules(category string, catRules []rules.RuleInfo) {
+	fmt.Printf("KTN-%s Rules\n", strings.ToUpper(category))
+	fmt.Println(strings.Repeat("=", 20))
+	fmt.Println()
+	// Iterate rules
+	for _, rule := range catRules {
+		fmt.Printf("  %s: %s\n", rule.Code, rule.Description)
+	}
+	fmt.Println()
+	fmt.Printf("Usage: ktn-linter rules %s <number> for details\n", category)
+}
+
+// DisplayRuleDetails shows rule details in text format.
+//
+// Params:
+//   - info: rule information
+func (f *textRulesFormatter) DisplayRuleDetails(info rules.RuleInfo) {
+	fmt.Printf("%s\n", info.Code)
+	fmt.Println(strings.Repeat("=", len(info.Code)))
+	fmt.Println()
+	fmt.Printf("Category: %s\n", info.Category)
+	fmt.Printf("Description: %s\n", info.Description)
+	// Show example if available
+	if info.GoodExample != "" {
+		fmt.Println()
+		fmt.Println("Good Example:")
+		fmt.Println("-------------")
+		// Iterate lines
+		for line := range strings.SplitSeq(info.GoodExample, "\n") {
+			fmt.Printf("  %s\n", line)
+		}
+	}
+}
+
+// =============================================================================
+// Markdown Formatter Implementation
+// =============================================================================
+
+// markdownRulesFormatter formats rules output as markdown.
+type markdownRulesFormatter struct{}
+
+// DisplayCategories shows categories in markdown format.
+//
+// Params:
+//   - categories: list of category names
+func (f *markdownRulesFormatter) DisplayCategories(categories []string) {
+	fmt.Println("# KTN-Linter Categories")
+	fmt.Println()
+	// Iterate categories
+	for _, cat := range categories {
+		// Get rule count for category
+		catRules := rules.GetRuleInfosByCategory(cat)
+		fmt.Printf("- **%s** (%d rules)\n", cat, len(catRules))
+	}
+}
+
+// DisplayCategoryRules shows rules in markdown format.
+//
+// Params:
+//   - category: category name
+//   - catRules: list of rules
+func (f *markdownRulesFormatter) DisplayCategoryRules(category string, catRules []rules.RuleInfo) {
+	fmt.Printf("# KTN-%s Rules\n\n", strings.ToUpper(category))
+	// Iterate rules
+	for _, rule := range catRules {
+		fmt.Printf("- **%s**: %s\n", rule.Code, rule.Description)
+	}
+}
+
+// DisplayRuleDetails shows rule details in markdown format.
+//
+// Params:
+//   - info: rule information
+func (f *markdownRulesFormatter) DisplayRuleDetails(info rules.RuleInfo) {
+	fmt.Printf("# %s\n\n", info.Code)
+	fmt.Printf("**Category**: %s\n\n", info.Category)
+	fmt.Printf("%s\n\n", info.Description)
+	// Show example if available
+	if info.GoodExample != "" {
+		fmt.Println("## Good Example")
+		fmt.Println()
+		fmt.Println("```go")
+		fmt.Print(info.GoodExample)
+		fmt.Println("```")
+	}
+}
+
+// =============================================================================
+// JSON Formatter Implementation
+// =============================================================================
+
+// jsonRulesFormatter formats rules output as JSON.
+type jsonRulesFormatter struct{}
+
+// DisplayCategories shows categories in JSON format.
+//
+// Params:
+//   - categories: list of category names
+func (f *jsonRulesFormatter) DisplayCategories(categories []string) {
+	// Build JSON structure
+	type categoryInfo struct {
+		Name  string `json:"name"`
+		Count int    `json:"count"`
+	}
+	var catInfos []categoryInfo
+	// Iterate categories
+	for _, cat := range categories {
+		catRules := rules.GetRuleInfosByCategory(cat)
+		catInfos = append(catInfos, categoryInfo{Name: cat, Count: len(catRules)})
+	}
+	// Encode JSON
+	f.encodeJSON(map[string]any{"categories": catInfos})
+}
+
+// DisplayCategoryRules shows rules in JSON format.
+//
+// Params:
+//   - category: category name
+//   - catRules: list of rules
+func (f *jsonRulesFormatter) DisplayCategoryRules(category string, catRules []rules.RuleInfo) {
+	// Encode JSON
+	f.encodeJSON(map[string]any{
+		"category": category,
+		"rules":    catRules,
+	})
+}
+
+// DisplayRuleDetails shows rule details in JSON format.
+//
+// Params:
+//   - info: rule information
+func (f *jsonRulesFormatter) DisplayRuleDetails(info rules.RuleInfo) {
+	// Encode JSON
+	f.encodeJSON(info)
+}
+
+// encodeJSON encodes data to JSON and writes to stdout.
+//
+// Params:
+//   - data: data to encode
+func (f *jsonRulesFormatter) encodeJSON(data any) {
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	// Handle encoding error
+	if err := encoder.Encode(data); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		OsExit(1)
+	}
+}
