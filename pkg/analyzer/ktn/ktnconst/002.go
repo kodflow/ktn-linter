@@ -248,8 +248,18 @@ func collectScatteredViolations(decls *fileDeclarations, violations map[token.Po
 	// Identify the first const position (robust to unsorted input)
 	firstConstPos := minPos(decls.constDecls)
 
+	// Defensive: if no valid const position, nothing to report
+	if firstConstPos == token.NoPos {
+		return
+	}
+
 	// Check each const block except the first one
 	for _, constPos := range decls.constDecls {
+		// Skip invalid positions
+		if constPos == token.NoPos {
+			continue
+		}
+
 		// Skip the first const block
 		if constPos == firstConstPos {
 			continue

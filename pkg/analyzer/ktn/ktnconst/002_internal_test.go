@@ -154,6 +154,18 @@ func Test_collectScatteredViolations(t *testing.T) {
 			varDecls:       []token.Pos{token.Pos(300)},
 			wantViolations: 2,
 		},
+		{
+			name:           "only NoPos values (defensive guard)",
+			constDecls:     []token.Pos{token.NoPos, token.NoPos},
+			varDecls:       []token.Pos{token.Pos(100)},
+			wantViolations: 0,
+		},
+		{
+			name:           "mixed NoPos and valid positions",
+			constDecls:     []token.Pos{token.NoPos, token.Pos(100), token.Pos(400)},
+			varDecls:       []token.Pos{token.Pos(300)},
+			wantViolations: 1,
+		},
 	}
 
 	for _, tt := range tests {
