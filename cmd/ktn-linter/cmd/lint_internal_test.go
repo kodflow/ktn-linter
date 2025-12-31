@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/formatter"
 	"github.com/kodflow/ktn-linter/pkg/orchestrator"
 	"golang.org/x/tools/go/analysis"
 )
@@ -151,7 +152,7 @@ func Test_parseOptions(t *testing.T) {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			opts := parseOptions()
+			opts := parseOptions(lintCmd)
 
 			// Verify all fields
 			if opts.Verbose != tt.wantOpts.Verbose {
@@ -168,6 +169,62 @@ func Test_parseOptions(t *testing.T) {
 			// Verify config path
 			if opts.ConfigPath != tt.wantOpts.ConfigPath {
 				t.Errorf("ConfigPath = %v, want %v", opts.ConfigPath, tt.wantOpts.ConfigPath)
+			}
+		})
+	}
+}
+
+// Test_parseOptions_FormatFlags tests the --sarif and --json flags.
+func Test_parseOptions_FormatFlags(t *testing.T) {
+	tests := []struct {
+		name       string
+		setup      func()
+		wantFormat formatter.OutputFormat
+	}{
+		{
+			name: "default format is text",
+			setup: func() {
+				// Reset lint-specific flags
+				lintCmd.Flags().Set(flagSarif, "false")
+				lintCmd.Flags().Set(flagJSON, "false")
+			},
+			wantFormat: formatter.FormatText,
+		},
+		{
+			name: "sarif flag produces SARIF format",
+			setup: func() {
+				lintCmd.Flags().Set(flagSarif, "true")
+				lintCmd.Flags().Set(flagJSON, "false")
+			},
+			wantFormat: formatter.FormatSARIF,
+		},
+		{
+			name: "json flag produces JSON format",
+			setup: func() {
+				lintCmd.Flags().Set(flagSarif, "false")
+				lintCmd.Flags().Set(flagJSON, "true")
+			},
+			wantFormat: formatter.FormatJSON,
+		},
+		{
+			name: "sarif takes precedence over json",
+			setup: func() {
+				lintCmd.Flags().Set(flagSarif, "true")
+				lintCmd.Flags().Set(flagJSON, "true")
+			},
+			wantFormat: formatter.FormatSARIF,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			opts := parseOptions(lintCmd)
+
+			// Verify format
+			if opts.Format != tt.wantFormat {
+				t.Errorf("Format = %v, want %v", opts.Format, tt.wantFormat)
 			}
 		})
 	}

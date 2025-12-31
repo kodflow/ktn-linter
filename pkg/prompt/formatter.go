@@ -25,6 +25,7 @@ func NewMarkdownFormatter(w io.Writer) *MarkdownFormatter {
 }
 
 // Format writes the complete prompt output as markdown.
+// Implements phase dependencies: only shows active phase, blocks subsequent phases.
 //
 // Params:
 //   - output: prompt output to format
@@ -41,10 +42,54 @@ func (f *MarkdownFormatter) Format(output *PromptOutput) {
 	// Write instructions
 	f.writeInstructions()
 
-	// Write each phase
+	// Track if previous phases have unresolved violations
+	previousPhasesHaveViolations := false
+
+	// Write each phase with dependency logic
 	for i := range output.Phases {
-		f.writePhase(&output.Phases[i], i+1)
+		phase := &output.Phases[i]
+		phaseNum := i + 1
+
+		// Count violations in this phase
+		phaseViolationCount := countPhaseViolations(phase)
+
+		// Check if this phase should be blocked
+		if previousPhasesHaveViolations {
+			// Show blocked message for this phase
+			f.writeBlockedPhase(phase, phaseNum, phaseViolationCount)
+		} else {
+			// Show full phase details
+			f.writePhase(phase, phaseNum)
+		}
+
+		// Update tracking: if this phase has violations, block subsequent phases
+		if phaseViolationCount > 0 {
+			previousPhasesHaveViolations = true
+		}
 	}
+}
+
+// countPhaseViolations counts total violations in a phase.
+//
+// Params:
+//   - phase: phase group to count
+//
+// Returns:
+//   - int: total violation count
+func countPhaseViolations(phase *PhaseGroup) int {
+	// Guard against nil phase
+	if phase == nil {
+		// Return zero for nil phase
+		return 0
+	}
+
+	count := 0
+	// Sum violations from all rules
+	for i := range phase.Rules {
+		count += len(phase.Rules[i].Violations)
+	}
+	// Return total count
+	return count
 }
 
 // writeHeader writes the markdown header with summary.
@@ -65,9 +110,19 @@ func (f *MarkdownFormatter) writeHeader(output *PromptOutput) {
 func (f *MarkdownFormatter) writeInstructions() {
 	fmt.Fprintln(f.writer, "## Instructions")
 	fmt.Fprintln(f.writer)
-	fmt.Fprintln(f.writer, "Ce prompt guide la correction des violations KTN. Suivez les phases dans l'ordre.")
-	fmt.Fprintln(f.writer, "Les regles structurelles (Phase 1) peuvent modifier/supprimer des fichiers.")
-	fmt.Fprintln(f.writer, "Re-executez le linter apres les phases structurelles avant de continuer.")
+	fmt.Fprintln(f.writer, "Ce prompt guide la correction des violations KTN. **Suivez les phases dans l'ordre strict.**")
+	fmt.Fprintln(f.writer)
+	fmt.Fprintln(f.writer, "### Workflow")
+	fmt.Fprintln(f.writer, "1. Corrigez toutes les violations de la phase active")
+	fmt.Fprintln(f.writer, "2. Re-executez le linter: `ktn-linter prompt ./...`")
+	fmt.Fprintln(f.writer, "3. La phase suivante sera alors debloquee")
+	fmt.Fprintln(f.writer)
+	fmt.Fprintln(f.writer, "### Pourquoi cet ordre?")
+	fmt.Fprintln(f.writer, "- **Phase 1-2**: Peuvent creer/supprimer/deplacer des fichiers")
+	fmt.Fprintln(f.writer, "- **Phase 3**: Modifications locales dans les fichiers existants")
+	fmt.Fprintln(f.writer, "- **Phase 4**: Commentaires (en dernier, quand le code est finalise)")
+	fmt.Fprintln(f.writer)
+	fmt.Fprintln(f.writer, "Les phases bloquees (⏸️) indiquent des violations en attente.")
 	fmt.Fprintln(f.writer)
 	fmt.Fprintln(f.writer, "---")
 	fmt.Fprintln(f.writer)
@@ -101,6 +156,46 @@ func (f *MarkdownFormatter) writePhase(phase *PhaseGroup, phaseNum int) {
 	for i := range phase.Rules {
 		f.writeRule(&phase.Rules[i])
 	}
+
+	// Phase separator
+	fmt.Fprintln(f.writer, "---")
+	fmt.Fprintln(f.writer)
+}
+
+// writeBlockedPhase writes a blocked phase with summary only.
+// Shows that violations exist but details are hidden until previous phases complete.
+//
+// Params:
+//   - phase: phase group to write (pointer for efficiency)
+//   - phaseNum: phase number for display
+//   - violationCount: number of violations in this phase
+func (f *MarkdownFormatter) writeBlockedPhase(phase *PhaseGroup, phaseNum int, violationCount int) {
+	// Guard against nil receiver, writer, or phase
+	if f == nil || f.writer == nil || phase == nil {
+		// Return early to avoid nil pointer dereference
+		return
+	}
+
+	// Phase header with blocked indicator
+	fmt.Fprintf(f.writer, "## Phase %d: %s ⏸️ BLOQUEE\n\n", phaseNum, phase.Name)
+
+	// Show violation count without details
+	if violationCount > 0 {
+		fmt.Fprintf(f.writer, "**%d violations** en attente dans cette phase.\n\n", violationCount)
+		// List rule codes only (no details)
+		fmt.Fprintln(f.writer, "Regles concernees:")
+		// Iterate over rules
+		for i := range phase.Rules {
+			rule := &phase.Rules[i]
+			fmt.Fprintf(f.writer, "- %s (%d violations)\n", rule.Code, len(rule.Violations))
+		}
+		fmt.Fprintln(f.writer)
+	}
+
+	// Blocking message
+	fmt.Fprintln(f.writer, "> ⚠️ **Completez les phases precedentes avant de traiter celle-ci.**")
+	fmt.Fprintln(f.writer, "> Les fichiers peuvent changer suite aux corrections structurelles.")
+	fmt.Fprintln(f.writer)
 
 	// Phase separator
 	fmt.Fprintln(f.writer, "---")
