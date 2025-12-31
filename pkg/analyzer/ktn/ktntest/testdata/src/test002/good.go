@@ -1,13 +1,13 @@
-// Package test003 provides item processing utilities.
-package test003
+// Package test002 provides item processing utilities.
+package test002
 
 import "errors"
 
 const (
-	// MIN_LENGTH longueur minimale
-	MIN_LENGTH int = 1
-	// MAX_COUNT compteur maximal
-	MAX_COUNT int = 1000
+	// minLength longueur minimale
+	minLength int = 1
+	// maxCount compteur maximal
+	maxCount int = 1000
 )
 
 // ProcessItem traite un item.
@@ -20,7 +20,7 @@ const (
 //   - error: erreur si invalide
 func ProcessItem(item string) (string, error) {
 	// Vérification longueur
-	if len(item) < MIN_LENGTH {
+	if len(item) < minLength {
 		// Retour erreur
 		return "", errors.New("item too short")
 	}
@@ -39,7 +39,7 @@ func ProcessItem(item string) (string, error) {
 func CountItems(items []string) (int, error) {
 	count := len(items)
 	// Vérification dépassement
-	if count > MAX_COUNT {
+	if count > maxCount {
 		// Retour erreur
 		return 0, errors.New("too many items")
 	}

@@ -2,14 +2,14 @@
 package func003
 
 const (
-	// MULTIPLIER_DOUBLE constante pour doubler une valeur
-	MULTIPLIER_DOUBLE int = 2
-	// MULTIPLIER_TRIPLE constante pour tripler une valeur
-	MULTIPLIER_TRIPLE int = 3
-	// MAX_LOOP_ITERATIONS nombre maximum d'itérations de boucle
-	MAX_LOOP_ITERATIONS int = 10
-	// MODULO_EVEN modulo pour vérifier les nombres pairs
-	MODULO_EVEN int = 2
+	// multiplierDouble constante pour doubler une valeur
+	multiplierDouble int = 2
+	// multiplierTriple constante pour tripler une valeur
+	multiplierTriple int = 3
+	// maxLoopIterations nombre maximum d'itérations de boucle
+	maxLoopIterations int = 10
+	// moduloEven modulo pour vérifier les nombres pairs
+	moduloEven int = 2
 )
 
 // checkPositive vérifie si un nombre est positif
@@ -43,7 +43,7 @@ func processValue(val int) int {
 		return 0
 	}
 	// Retour valeur doublée
-	return val * MULTIPLIER_DOUBLE
+	return val * multiplierDouble
 }
 
 // findMax trouve le maximum entre deux nombres
@@ -67,9 +67,9 @@ func findMax(a, b int) int {
 // loopExample illustre l'utilisation de continue sans else
 func loopExample() {
 	// Boucle sur les 10 premières valeurs
-	for i := 0; i < MAX_LOOP_ITERATIONS; i++ {
+	for i := 0; i < maxLoopIterations; i++ {
 		// Vérification si pair
-		if i%MODULO_EVEN == 0 {
+		if i%moduloEven == 0 {
 			// Continue si pair
 			continue
 		}
@@ -86,7 +86,7 @@ func switchExample(x int) {
 	// Boucle infinie avec condition de sortie
 	for {
 		// Vérification condition de sortie
-		if x > MAX_LOOP_ITERATIONS {
+		if x > maxLoopIterations {
 			// Sortie de boucle
 			break
 		}
@@ -123,10 +123,10 @@ func complexLogic(x int) int {
 	// Vérification si positif
 	if x > 0 {
 		// Doublement si positif
-		x = x * MULTIPLIER_DOUBLE
+		x = x * multiplierDouble
 	} else {
 		// Triplement si négatif ou nul
-		x = x * MULTIPLIER_TRIPLE
+		x = x * multiplierTriple
 	}
 	// Retour résultat transformé
 	return x

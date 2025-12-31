@@ -1,38 +1,58 @@
 // Package struct006 provides good test cases.
+// Demonstrates correct usage of unexported fields.
 package struct006
 
-// GoodUserDTO est un DTO avec seulement des champs publics tagués.
-// Représente un utilisateur pour le transfert de données.
+// GoodUserDTO est un DTO avec champ privé sans tag sérialisable.
+// Le champ privé counter n'a pas de tag = OK car c'est un détail interne.
 type GoodUserDTO struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	id      int    // Champ privé pour l'identifiant
+	name    string // Champ privé pour le nom
+	counter int    // Champ privé sans tag = OK
 }
 
-// GoodConfigRequest est un DTO correct.
-// Contient les paramètres de configuration YAML.
-type GoodConfigRequest struct {
-	Timeout int    `yaml:"timeout"`
-	Secret  string `yaml:"secret"`
+// GoodUserDTOInterface définit le contrat public de GoodUserDTO.
+type GoodUserDTOInterface interface {
+	Id() int
+	Name() string
+	Counter() int
 }
 
-// GoodResponseData est un DTO avec tous les champs publics.
-// Représente la structure de réponse standard.
-type GoodResponseData struct {
-	Status  int    `json:"status"`
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+// NewGoodUserDTO crée une nouvelle instance de GoodUserDTO.
+//
+// Params:
+//   - id: identifiant de l'utilisateur
+//   - name: nom de l'utilisateur
+//
+// Returns:
+//   - *GoodUserDTO: nouvelle instance
+func NewGoodUserDTO(id int, name string) *GoodUserDTO {
+	// Retour de la nouvelle instance
+	return &GoodUserDTO{id: id, name: name, counter: 0}
 }
 
-// GoodPrivateWithoutTag est un DTO avec champ privé sans tag.
-// Démontre qu'un champ privé sans tag est conforme.
-type GoodPrivateWithoutTag struct {
-	ID      int `json:"id"`
-	counter int // Pas de tag = OK
+// Id retourne l'identifiant de l'utilisateur.
+//
+// Returns:
+//   - int: identifiant
+func (u *GoodUserDTO) Id() int {
+	// Retour de l'ID
+	return u.id
 }
 
-// goodRegularStruct est une struct privée non-DTO avec champs privés.
-// Les structs privées ne nécessitent pas de getters.
-type goodRegularStruct struct {
-	name string
-	age  int
+// Name retourne le nom de l'utilisateur.
+//
+// Returns:
+//   - string: nom
+func (u *GoodUserDTO) Name() string {
+	// Retour du nom
+	return u.name
+}
+
+// Counter retourne le compteur interne.
+//
+// Returns:
+//   - int: valeur du compteur
+func (u *GoodUserDTO) Counter() int {
+	// Retour du compteur
+	return u.counter
 }

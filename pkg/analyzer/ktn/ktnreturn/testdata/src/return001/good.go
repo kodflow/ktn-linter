@@ -1,9 +1,9 @@
 // Package return001 provides good test cases.
-package return002
+package return001
 
 const (
-	// DEFAULT_MAP_CAPACITY capacité par défaut des maps
-	DEFAULT_MAP_CAPACITY int = 10
+	// defaultMapCapacity capacité par défaut des maps
+	defaultMapCapacity int = 10
 )
 
 // goodReturnEmptySlice returns an empty slice instead of nil.
@@ -86,7 +86,7 @@ func goodReturnMakeSlice(size int) []int {
 //   - map[string]bool: map créée avec make
 func goodReturnMakeMap() map[string]bool {
 	// Retourne map avec capacité par défaut
-	return make(map[string]bool, DEFAULT_MAP_CAPACITY)
+	return make(map[string]bool, defaultMapCapacity)
 }
 
 // init utilise les fonctions privées

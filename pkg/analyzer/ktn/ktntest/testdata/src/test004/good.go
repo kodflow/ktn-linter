@@ -1,5 +1,5 @@
-// Package test005 provides calculation and validation utilities.
-package test005
+// Package test004 provides calculation and validation utilities.
+package test004
 
 import (
 	"errors"
@@ -7,14 +7,14 @@ import (
 )
 
 const (
-	// MIN_EMAIL_LENGTH longueur minimale d'un email
-	MIN_EMAIL_LENGTH int = 3
-	// EMAIL_PARTS_COUNT nombre de parties d'un email (avant/après @)
-	EMAIL_PARTS_COUNT int = 2
-	// DECIMAL_BASE base décimale pour conversion
-	DECIMAL_BASE int = 10
-	// FACTORIAL_LOOP_START début de la boucle factorielle
-	FACTORIAL_LOOP_START int = 2
+	// minEmailLength longueur minimale d'un email
+	minEmailLength int = 3
+	// emailPartsCount nombre de parties d'un email (avant/après @)
+	emailPartsCount int = 2
+	// decimalBase base décimale pour conversion
+	decimalBase int = 10
+	// factorialLoopStart début de la boucle factorielle
+	factorialLoopStart int = 2
 )
 
 // Calculator effectue des opérations arithmétiques.
@@ -67,7 +67,7 @@ func Calculator(op string, a, b int) (int, error) {
 //   - bool: true si valide, false sinon
 func ValidateEmail(email string) bool {
 	// Vérification longueur minimale
-	if len(email) < MIN_EMAIL_LENGTH {
+	if len(email) < minEmailLength {
 		// Email trop court
 		return false
 	}
@@ -80,7 +80,7 @@ func ValidateEmail(email string) bool {
 
 	parts := strings.Split(email, "@")
 	// Vérification exactement 2 parties
-	if len(parts) != EMAIL_PARTS_COUNT {
+	if len(parts) != emailPartsCount {
 		// Format invalide
 		return false
 	}
@@ -132,7 +132,7 @@ func ParseInt(s string) (int, error) {
 			// Retour erreur
 			return 0, errors.New("caractère non numérique")
 		}
-		result = result*DECIMAL_BASE + int(c-'0')
+		result = result*decimalBase + int(c-'0')
 	}
 
 	// Application du signe
@@ -167,7 +167,7 @@ func Factorial(n int) (int, error) {
 
 	result := 1
 	// Calcul de la factorielle
-	for i := FACTORIAL_LOOP_START; i <= n; i++ {
+	for i := factorialLoopStart; i <= n; i++ {
 		result *= i
 	}
 

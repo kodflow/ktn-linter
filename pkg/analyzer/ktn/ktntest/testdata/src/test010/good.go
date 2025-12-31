@@ -1,5 +1,10 @@
-// Package test012 is used for testing passthrough test detection.
-package test012
+// Package test010 is used for testing passthrough test detection.
+package test010
+
+const (
+	// countValue valeur du compteur
+	countValue int = 42
+)
 
 // ProcessData traite des données.
 //
@@ -19,7 +24,7 @@ func ProcessData(data string) string {
 //   - int: valeur du compteur
 func GetCount() int {
 	// Retour de la valeur
-	return 42
+	return countValue
 }
 
 // IsValid vérifie si une valeur est valide.

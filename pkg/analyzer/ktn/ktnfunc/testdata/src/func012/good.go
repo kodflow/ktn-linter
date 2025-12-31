@@ -2,12 +2,12 @@
 package func012
 
 const (
-	// TWO_INT représente la valeur 2
-	TWO_INT int = 2
-	// THIRTY_INT représente la valeur 30
-	THIRTY_INT int = 30
-	// NINETY_FIVE_DOT représente la valeur 95.5
-	NINETY_FIVE_DOT float64 = 95.5
+	// twoInt représente la valeur 2
+	twoInt int = 2
+	// thirtyInt représente la valeur 30
+	thirtyInt int = 30
+	// ninetyFiveDot représente la valeur 95.5
+	ninetyFiveDot float64 = 95.5
 )
 
 // OneReturn retourne une seule valeur entière.
@@ -62,7 +62,7 @@ func FourNamedReturns() (count int, name string, valid bool, err error) {
 //   - e: nil
 func FiveNamedReturns() (a int, b int, c string, d bool, e error) {
 	// Retourne les cinq valeurs nommées
-	return 1, TWO_INT, "test", true, nil
+	return 1, twoInt, "test", true, nil
 }
 
 // ManyNamedReturns retourne plusieurs valeurs nommées.
@@ -75,7 +75,7 @@ func FiveNamedReturns() (a int, b int, c string, d bool, e error) {
 //   - score: valeur 95.5
 func ManyNamedReturns() (id int, name string, age int, active bool, score float64) {
 	// Retourne les valeurs pour id, name, age, active et score
-	return 1, "test", THIRTY_INT, true, NINETY_FIVE_DOT
+	return 1, "test", thirtyInt, true, ninetyFiveDot
 }
 
 // NoReturn ne retourne aucune valeur.
@@ -122,7 +122,7 @@ func NoReturnValue() {
 //   - err: erreur éventuelle
 func GetFourValuesCompact() (x, y int, name string, err error) {
 	// Retour des coordonnées et du nom
-	return 1, TWO_INT, "point", nil
+	return 1, twoInt, "point", nil
 }
 
 // testSomething est une fonction de test.

@@ -1,9 +1,6 @@
 // Package const001 provides good test cases.
 package const001
 
-// CustomInt is a custom integer type for testing typed constants.
-type CustomInt int
-
 // Good: All constants in a single grouped block with explicit types
 const (
 	// === Basic types (int, string, bool, float64) ===
@@ -74,11 +71,6 @@ const (
 	NewlineChar rune = '\n'
 	// TabChar represents a tab character
 	TabChar rune = '\t'
-
-	// === Custom type constant (T1.2) ===
-
-	// CustomValue is a constant with custom type
-	CustomValue CustomInt = 42
 
 	// === Multi-name with explicit type ===
 

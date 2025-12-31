@@ -50,14 +50,16 @@ type Status int
 
 // === Functions come after types (correct order - T2.1) ===
 
-// helperFunc is a helper function to validate const → var → type → func order
-func helperFunc() string {
+// init demonstrates func declarations after types (correct order).
+//
+// Params: none
+//
+// Returns: none
+func init() {
 	// Use declarations to avoid unused errors
-	return ConfigValue1
-}
-
-// anotherFunc demonstrates multiple functions after types
-func anotherFunc() int {
-	// Return a constant value
-	return MaxRetry
+	_ = ConfigValue1
+	_ = GlobalVar1
+	_ = goodType{}
+	_ = anotherType(0)
+	_ = Status(0)
 }

@@ -3,37 +3,33 @@ package func009
 
 // Constantes bien définies
 const (
-	DEFAULT_ITEM_COUNT  int     = 6
-	MIN_LEGAL_AGE       int     = 18
-	MAX_HUMAN_AGE       int     = 120
-	DISCOUNT_RATE       float64 = 0.15
-	MAX_RETRIES         int     = 3
-	BUFFER_SIZE         int     = 1024
-	HIGH_THRESHOLD      int     = 100
-	DEFAULT_TIMEOUT_SEC int     = 30
-	DEFAULT_PORT        int     = 8080
-	ARRAY_SIZE          int     = 10
-)
+	defaultItemCount  int     = 6
+	minLegalAge       int     = 18
+	maxHumanAge       int     = 120
+	discountRate      float64 = 0.15
+	maxRetries        int     = 3
+	bufferSize        int     = 1024
+	highThreshold     int     = 100
+	defaultTimeoutSec int     = 30
+	defaultPort       int     = 8080
+	arraySize         int     = 10
 
-// Constantes avec iota (bitflags) - ne doivent pas déclencher KTN-FUNC-009
-const (
-	FLAG_NONE  int = 0
-	FLAG_READ  int = 1 << iota
-	FLAG_WRITE     // = 1 << 1
-	FLAG_EXEC      // = 1 << 2
-)
+	// Constantes avec iota (bitflags) - ne doivent pas déclencher KTN-FUNC-009
+	flagNone  int = 0
+	flagRead  int = 1 << iota
+	flagWrite     // = 1 << 1
+	flagExec      // = 1 << 2
 
-// Constantes avec iota simple
-const (
-	LEVEL_DEBUG int = iota
-	LEVEL_INFO
-	LEVEL_WARN
-	LEVEL_ERROR
+	// Constantes avec iota simple
+	levelDebug int = iota
+	levelInfo
+	levelWarn
+	levelError
 )
 
 // processSixItems utilise une constante nommée
 func processSixItems() {
-	items := [DEFAULT_ITEM_COUNT]int{}
+	items := [defaultItemCount]int{}
 	_ = items
 }
 
@@ -46,7 +42,7 @@ func processSixItems() {
 //   - bool: true si l'âge est valide
 func validateAge(age int) bool {
 	// Retourne la validation de l'âge
-	return age >= MIN_LEGAL_AGE && age <= MAX_HUMAN_AGE
+	return age >= minLegalAge && age <= maxHumanAge
 }
 
 // calculateDiscount utilise une constante nommée
@@ -58,18 +54,18 @@ func validateAge(age int) bool {
 //   - float64: montant de la réduction
 func calculateDiscount(price float64) float64 {
 	// Retourne le montant de la réduction
-	return price * DISCOUNT_RATE
+	return price * discountRate
 }
 
 // processRetries utilise une constante nommée
 func processRetries() {
-	maxRetries := MAX_RETRIES
-	_ = maxRetries
+	retries := maxRetries
+	_ = retries
 }
 
 // setBufferSize utilise une constante nommée
 func setBufferSize() {
-	buffer := [BUFFER_SIZE]byte{}
+	buffer := [bufferSize]byte{}
 	_ = buffer
 }
 
@@ -82,18 +78,18 @@ func setBufferSize() {
 //   - bool: true si la valeur dépasse le seuil
 func checkThreshold(value int) bool {
 	// Retourne true si la valeur dépasse le seuil
-	return value > HIGH_THRESHOLD
+	return value > highThreshold
 }
 
 // waitTimeout utilise une constante nommée
 func waitTimeout() {
-	timeout := DEFAULT_TIMEOUT_SEC
+	timeout := defaultTimeoutSec
 	_ = timeout
 }
 
 // setPort utilise une constante nommée
 func setPort() {
-	port := DEFAULT_PORT
+	port := defaultPort
 	_ = port
 }
 
@@ -107,10 +103,10 @@ func allowedNumbers() {
 	_ = minusOne
 }
 
-// arraySize tailles de tableaux doivent utiliser des constantes
-func arraySize() {
+// arraySizeFunc tailles de tableaux doivent utiliser des constantes
+func arraySizeFunc() {
 	// arr tableau d'entiers de taille définie par constante
-	var arr [ARRAY_SIZE]int
+	var arr [arraySize]int
 	_ = arr
 }
 
@@ -143,8 +139,8 @@ func init() {
 	setPort()
 	// Appel de allowedNumbers
 	allowedNumbers()
-	// Appel de arraySize
-	arraySize()
+	// Appel de arraySizeFunc
+	arraySizeFunc()
 	// Appel de stringLiterals
 	stringLiterals()
 }

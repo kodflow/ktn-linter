@@ -1,7 +1,12 @@
-// Package test013 provides data processing utilities.
-package test013
+// Package test011 provides data processing utilities.
+package test011
 
 import "errors"
+
+const (
+	// countValue valeur du compteur
+	countValue int = 42
+)
 
 // ProcessData traite des données.
 // Retourne error → le test a des cas d'erreur = OK.
@@ -39,5 +44,5 @@ func GetName() string {
 //   - int: compteur
 func GetCount() int {
 	// Retour du compteur
-	return 42
+	return countValue
 }

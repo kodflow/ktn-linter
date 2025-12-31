@@ -2,8 +2,8 @@
 package struct002
 
 const (
-	// DEFAULT_MAP_SIZE taille par défaut des maps
-	DEFAULT_MAP_SIZE int = 10
+	// defaultMapSize taille par défaut des maps
+	defaultMapSize int = 10
 )
 
 // UserServiceConfig gère les utilisateurs du système.
@@ -19,7 +19,7 @@ type UserServiceConfig struct {
 func NewUserService() *UserServiceConfig {
 	// Retourne nouvelle instance avec map initialisée
 	return &UserServiceConfig{
-		users: make(map[int]string, DEFAULT_MAP_SIZE),
+		users: make(map[int]string, defaultMapSize),
 	}
 }
 
@@ -212,7 +212,7 @@ type ValidatorConfig struct {
 func NewValidator() ValidatorConfig {
 	// Retourne nouvelle instance avec map initialisée
 	return ValidatorConfig{
-		rules: make(map[string]func(string) bool, DEFAULT_MAP_SIZE),
+		rules: make(map[string]func(string) bool, defaultMapSize),
 	}
 }
 

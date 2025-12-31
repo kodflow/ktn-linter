@@ -4,49 +4,49 @@ package comment004
 // Good: All variables have comments, explicit types, proper naming, single-block grouping
 
 const (
-	// DEFAULT_TIMEOUT is the default timeout
-	DEFAULT_TIMEOUT int = 30
-	// HTTP_PORT is the default HTTP port
-	HTTP_PORT int = 80
-	// HTTPS_PORT is the default HTTPS port
-	HTTPS_PORT int = 443
-	// FTP_PORT is the default FTP port
-	FTP_PORT int = 21
-	// MAX_CONNECTIONS defines maximum concurrent connections
-	MAX_CONNECTIONS int = 1000
-	// MIN_CONNECTIONS defines minimum concurrent connections
-	MIN_CONNECTIONS int = 10
-	// MAX_RETRY_COUNT defines maximum number of retries
-	MAX_RETRY_COUNT int = 5
-	// RETRY_DELAY_MS defines delay between retries in milliseconds
-	RETRY_DELAY_MS int = 1000
-	// BACKOFF_MULTIPLIER defines the backoff multiplier
-	BACKOFF_MULTIPLIER float64 = 1.5
-	// DB_PORT is the database port
-	DB_PORT int = 5432
-	// ONLY_CONST is valid edge case
-	ONLY_CONST int = 999
+	// defaultTimeoutValue is the default timeout
+	defaultTimeoutValue int = 30
+	// httpPortValue is the default HTTP port
+	httpPortValue int = 80
+	// httpsPortValue is the default HTTPS port
+	httpsPortValue int = 443
+	// ftpPortValue is the default FTP port
+	ftpPortValue int = 21
+	// maxConnectionsValue defines maximum concurrent connections
+	maxConnectionsValue int = 1000
+	// minConnectionsValue defines minimum concurrent connections
+	minConnectionsValue int = 10
+	// maxRetryCountValue defines maximum number of retries
+	maxRetryCountValue int = 5
+	// retryDelayMsValue defines delay between retries in milliseconds
+	retryDelayMsValue int = 1000
+	// backoffMultiplierValue defines the backoff multiplier
+	backoffMultiplierValue float64 = 1.5
+	// dbPortValue is the database port
+	dbPortValue int = 5432
+	// onlyConstValue is valid edge case
+	onlyConstValue int = 999
 )
 
 // All package-level variables grouped in a single block
 var (
 	// httpPort is the default HTTP port
-	httpPort int = HTTP_PORT
+	httpPort int = httpPortValue
 
 	// httpsPort is the default HTTPS port
-	httpsPort int = HTTPS_PORT
+	httpsPort int = httpsPortValue
 
 	// ftpPort is the default FTP port
-	ftpPort int = FTP_PORT
+	ftpPort int = ftpPortValue
 
 	// maxConnections defines maximum concurrent connections
-	maxConnections int = MAX_CONNECTIONS
+	maxConnections int = maxConnectionsValue
 
 	// minConnections defines minimum concurrent connections
-	minConnections int = MIN_CONNECTIONS
+	minConnections int = minConnectionsValue
 
 	// defaultTimeout defines the default timeout in seconds
-	defaultTimeout int = DEFAULT_TIMEOUT
+	defaultTimeout int = defaultTimeoutValue
 
 	// apiVersion is the current API version
 	apiVersion string = "v1.0"
@@ -67,19 +67,19 @@ var (
 	verboseLogging bool = false
 
 	// maxRetryCount defines maximum number of retries
-	maxRetryCount int = MAX_RETRY_COUNT
+	maxRetryCount int = maxRetryCountValue
 
 	// retryDelayMs defines delay between retries in milliseconds
-	retryDelayMs int = RETRY_DELAY_MS
+	retryDelayMs int = retryDelayMsValue
 
 	// backoffMultiplier defines the backoff multiplier
-	backoffMultiplier float64 = BACKOFF_MULTIPLIER
+	backoffMultiplier float64 = backoffMultiplierValue
 
 	// dbHost is the database host
 	dbHost string = "localhost"
 
 	// dbPort is the database port
-	dbPort int = DB_PORT
+	dbPort int = dbPortValue
 
 	// dbName is the database name
 	dbName string = "mydb"
@@ -87,3 +87,29 @@ var (
 	// dbUser is the database user
 	dbUser string = "admin"
 )
+
+// init uses all constants and variables
+func init() {
+	// Use constants
+	_ = onlyConstValue
+	// Use variables
+	_ = httpPort
+	_ = httpsPort
+	_ = ftpPort
+	_ = maxConnections
+	_ = minConnections
+	_ = defaultTimeout
+	_ = apiVersion
+	_ = apiEndpoint
+	_ = apiKey
+	_ = featureEnabled
+	_ = debugMode
+	_ = verboseLogging
+	_ = maxRetryCount
+	_ = retryDelayMs
+	_ = backoffMultiplier
+	_ = dbHost
+	_ = dbPort
+	_ = dbName
+	_ = dbUser
+}

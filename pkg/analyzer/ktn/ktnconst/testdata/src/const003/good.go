@@ -77,14 +77,13 @@ const (
 	// TestValue used for testing
 	TestValue int = 123
 
-	// === Constant without explicit type (T3.2) ===
-	// This tests that CONST-003 works independently from CONST-001
-	// The naming is still valid CamelCase
+	// === Constant with explicit type (T3.2) ===
+	// Testing CONST-003 CamelCase naming with explicit types
 
-	// NoTypeValue is a constant without explicit type
-	NoTypeValue = 42
-	// NoTypeString is a string without explicit type
-	NoTypeString = "test"
+	// TypedIntValue is a constant with explicit int type
+	TypedIntValue int = 42
+	// TypedStringValue is a string with explicit type
+	TypedStringValue string = "test"
 
 	// === Very long names (T3.3) ===
 

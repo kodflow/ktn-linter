@@ -1,4 +1,4 @@
-// Package struct006 contient les exemples de test pour KTN-STRUCT-003.
+// Package struct003 provides good test cases.
 // Ce fichier démontre les getters idiomatiques Go (sans préfixe Get).
 package struct003
 
