@@ -52,6 +52,7 @@ builds/*
 !builds/.gitkeep
 bin/*
 !bin/.gitkeep
+!bin/CLAUDE.md
 dist/
 tmp/
 
@@ -104,6 +105,3 @@ claude-flow
 hive-mind-prompt-*.txt
 CONTEXT.md
 
-# Claude contextual files (auto-generated, not the root CLAUDE.md)
-**/CLAUDE.md
-!/CLAUDE.md
