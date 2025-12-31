@@ -489,6 +489,148 @@ func Test_runRules(t *testing.T) {
 	}
 }
 
+func Test_isValidRuleNumber(t *testing.T) {
+	tests := []struct {
+		name     string
+		ruleNum  string
+		expected bool
+	}{
+		{
+			name:     "valid three digits",
+			ruleNum:  "001",
+			expected: true,
+		},
+		{
+			name:     "valid mid range",
+			ruleNum:  "123",
+			expected: true,
+		},
+		{
+			name:     "valid all nines",
+			ruleNum:  "999",
+			expected: true,
+		},
+		{
+			name:     "invalid too short",
+			ruleNum:  "01",
+			expected: false,
+		},
+		{
+			name:     "invalid too long",
+			ruleNum:  "0001",
+			expected: false,
+		},
+		{
+			name:     "invalid contains letter",
+			ruleNum:  "00a",
+			expected: false,
+		},
+		{
+			name:     "invalid all letters",
+			ruleNum:  "abc",
+			expected: false,
+		},
+		{
+			name:     "invalid empty string",
+			ruleNum:  "",
+			expected: false,
+		},
+		{
+			name:     "invalid special characters",
+			ruleNum:  "0-1",
+			expected: false,
+		},
+		{
+			name:     "invalid spaces",
+			ruleNum:  " 01",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := isValidRuleNumber(tt.ruleNum)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isValidRuleNumber(%q) = %v, want %v", tt.ruleNum, result, tt.expected)
+			}
+		})
+	}
+}
+
+func Test_handleCategoryAndRule_InvalidFormat(t *testing.T) {
+	tests := []struct {
+		name       string
+		category   string
+		ruleNum    string
+		expectExit bool
+		exitCode   int
+	}{
+		{
+			name:       "invalid rule number too short",
+			category:   "func",
+			ruleNum:    "01",
+			expectExit: true,
+			exitCode:   1,
+		},
+		{
+			name:       "invalid rule number too long",
+			category:   "func",
+			ruleNum:    "0001",
+			expectExit: true,
+			exitCode:   1,
+		},
+		{
+			name:       "invalid rule number contains letter",
+			category:   "func",
+			ruleNum:    "00a",
+			expectExit: true,
+			exitCode:   1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			restore := mockExitInCmd(t)
+			defer restore()
+
+			// Capture stderr for error message
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
+			opts := rulesOptions{
+				Format:     "text",
+				NoExamples: true,
+			}
+
+			exitCode, didExit := catchExitInCmd(t, func() {
+				handleCategoryAndRule(tt.category, tt.ruleNum, opts)
+			})
+
+			w.Close()
+			var stderr bytes.Buffer
+			stderr.ReadFrom(r)
+			os.Stderr = oldStderr
+
+			// Verify exit expectation
+			if tt.expectExit && !didExit {
+				t.Error("expected exit but did not exit")
+			}
+			// Verify exit code
+			if tt.expectExit && exitCode != tt.exitCode {
+				t.Errorf("expected exit code %d, got %d", tt.exitCode, exitCode)
+			}
+			// Verify error message contains expected text
+			if tt.expectExit && !strings.Contains(stderr.String(), "Invalid rule number format") {
+				t.Errorf("expected error message about invalid format, got: %s", stderr.String())
+			}
+		})
+	}
+}
+
 func TestRulesCmdStructure(t *testing.T) {
 	tests := []struct {
 		name  string

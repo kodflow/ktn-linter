@@ -146,7 +146,11 @@ func displayCategoriesJSON(categories []string) {
 	// Encode JSON
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	_ = encoder.Encode(map[string]any{"categories": catInfos})
+	// Handle encoding error
+	if err := encoder.Encode(map[string]any{"categories": catInfos}); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		OsExit(1)
+	}
 }
 
 // handleSingleArg handles one argument (category or full rule code).
@@ -233,10 +237,14 @@ func displayCategoryRulesMarkdown(category string, catRules []rules.RuleInfo) {
 func displayCategoryRulesJSON(category string, catRules []rules.RuleInfo) {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	_ = encoder.Encode(map[string]any{
+	// Handle encoding error
+	if err := encoder.Encode(map[string]any{
 		"category": category,
 		"rules":    catRules,
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		OsExit(1)
+	}
 }
 
 // handleCategoryAndRule handles two arguments (category and rule number).
@@ -246,9 +254,42 @@ func displayCategoryRulesJSON(category string, catRules []rules.RuleInfo) {
 //   - ruleNum: rule number (e.g., "001")
 //   - opts: rules options
 func handleCategoryAndRule(category, ruleNum string, opts rulesOptions) {
+	// Validate rule number format (must be 3 digits)
+	if !isValidRuleNumber(ruleNum) {
+		fmt.Fprintf(os.Stderr, "Invalid rule number format: %s (expected 3 digits, e.g., 001)\n", ruleNum)
+		OsExit(1)
+	}
+
 	// Build full rule code
 	code := fmt.Sprintf("KTN-%s-%s", strings.ToUpper(category), ruleNum)
 	displayRuleDetails(code, opts)
+}
+
+// isValidRuleNumber checks if a rule number has the correct format.
+// Rule numbers must be exactly 3 digits (e.g., "001", "012", "123").
+//
+// Params:
+//   - ruleNum: rule number to validate
+//
+// Returns:
+//   - bool: true if valid format
+func isValidRuleNumber(ruleNum string) bool {
+	// Check length
+	if len(ruleNum) != 3 {
+		// Invalid length
+		return false
+	}
+
+	// Check all characters are digits
+	for _, c := range ruleNum {
+		if c < '0' || c > '9' {
+			// Non-digit character found
+			return false
+		}
+	}
+
+	// Valid format
+	return true
 }
 
 // displayRuleDetails shows detailed information for a single rule.
@@ -335,7 +376,11 @@ func displayRuleDetailsMarkdown(info rules.RuleInfo) {
 func displayRuleDetailsJSON(info rules.RuleInfo) {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	_ = encoder.Encode(info)
+	// Handle encoding error
+	if err := encoder.Encode(info); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		OsExit(1)
+	}
 }
 
 // rulesOptions contains options for the rules command.
