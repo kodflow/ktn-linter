@@ -11,7 +11,7 @@ Analyze struct declarations for field count, embedding, and organization.
 | KTN-STRUCT-003 | Exported field without doc | Info |
 | KTN-STRUCT-004 | Embedded type not first | Info |
 | KTN-STRUCT-005 | Multiple embedding levels | Warning |
-| KTN-STRUCT-006 | Unexported field in exported struct | Info |
+| KTN-STRUCT-006 | Private field with serialization tag in DTO | Info |
 
 ## File Structure
 ```
