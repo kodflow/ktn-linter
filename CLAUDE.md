@@ -2,10 +2,14 @@
 
 ## ⚠️ RÈGLES ABSOLUES
 
-1. ❌ **INTERDICTION** : Créer des fichiers .md sauf `/workspace/README.md`
+1. ❌ **INTERDICTION** : Créer des fichiers .md de documentation (guides, rapports, tutoriels)
 2. ❌ **INTERDICTION** : Générer des rapports/docs dans des dossiers
 3. ❌ **INTERDICTION FORMELLE** : Utiliser des exclusions basées sur les chemins (IsTestdataPath, isTestdataFile, etc.) qui réduisent artificiellement les tests. Les fichiers testdata doivent être RÉELLEMENT conformes aux règles, pas exclus artificiellement.
-4. ✅ **SEULE EXCEPTION** : Mettre à jour `/workspace/README.md` avec format :
+4. ✅ **FICHIERS .md AUTORISÉS** :
+   - `/workspace/README.md` : Documentation projet principale
+   - `**/CLAUDE.md` : Fichiers contexte IA (obligatoires dans chaque package/dossier)
+   - `/workspace/COVERAGE.MD` : Rapport de couverture
+5. 📋 **FORMAT README.md** :
    - `KTN-XXX-YYY: Description minimaliste`
    - Informations pertinentes uniquement
    - Pas de contenu superflu
