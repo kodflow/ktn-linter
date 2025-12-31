@@ -20,13 +20,13 @@ func TestConst002(t *testing.T) {
 			name:           "scattered constants",
 			analyzer:       ktnconst.Analyzer002,
 			testdataDir:    "const002",
-			expectedErrors: 7,
+			expectedErrors: 10,
 		},
 		{
 			name:           "valid grouped constants",
 			analyzer:       ktnconst.Analyzer002,
 			testdataDir:    "const002",
-			expectedErrors: 7,
+			expectedErrors: 10,
 		},
 	}
 
@@ -34,7 +34,7 @@ func TestConst002(t *testing.T) {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors
-			// bad.go: 7 errors (4 scattered + 2 after type + 1 after func)
+			// bad.go: 10 errors (4 scattered + 3 after var + 2 after type + 1 after func)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}
