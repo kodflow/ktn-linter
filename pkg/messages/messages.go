@@ -106,6 +106,7 @@ func init() {
 	registerCommentMessages()
 	registerConstMessages()
 	registerFuncMessages()
+	registerGenericMessages()
 	registerStructMessages()
 	registerTestMessages()
 	registerVarMessages()

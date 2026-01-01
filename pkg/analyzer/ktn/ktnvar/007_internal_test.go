@@ -52,7 +52,7 @@ func Test_hasInitWithoutType(t *testing.T) {
 				Type:   &ast.Ident{Name: "int"},
 				Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
 			},
-			expected: false,
+			expected: true, // Now reports both "var x = v" and "var x Type = v"
 		},
 		{
 			name: "no init",

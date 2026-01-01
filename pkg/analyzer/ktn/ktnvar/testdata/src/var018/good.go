@@ -1,49 +1,48 @@
-// Package var016 provides good test cases.
-package var016
+// Package var018 provides good test cases.
+package var018
 
-// Good: Using arrays for small fixed sizes or slices when appropriate
+// Good: Using arrays for ≤64 bytes or slices when appropriate
 
-const (
-	// ArraySizeSmall is small array size
-	ArraySizeSmall int = 10
-	// BufferSize is buffer size
-	BufferSize int = 64
-	// LargeSize is large allocation size
-	LargeSize int = 2048
-	// CapacityMedium is medium capacity
-	CapacityMedium int = 100
-	// LengthSmall is small length
-	LengthSmall int = 10
-	// CapacitySmall is small capacity
-	CapacitySmall int = 20
-)
+// goodLargeBuffer creates slice >64 bytes
+func goodLargeBuffer() {
+	// 128 bytes: heap acceptable (>64 bytes)
+	buf := make([]byte, 128)
+	_ = buf
+}
 
-// init demonstrates good practices for array and slice allocation
-func init() {
-	// Array allocated on stack - good for small fixed sizes
-	var items [ArraySizeSmall]int
-	_ = items
+// goodAlreadyArray uses array correctly
+func goodAlreadyArray() {
+	// Already using array syntax
+	var small [32]byte
+	_ = small
+}
 
-	// Fixed size buffer as array
-	var buffer [BufferSize]byte
-	_ = buffer
+// goodDynamicSize uses dynamic size
+func goodDynamicSize() {
+	n := 32
+	// Dynamic size: must use slice
+	dynamic := make([]byte, n)
+	_ = dynamic
+}
 
-	// Dynamic size - use slice with capacity
-	dynamicItems := make([]int, 0, CapacitySmall)
-	dynamicItems = append(dynamicItems, LengthSmall)
-	_ = dynamicItems
-
-	// Size > 1024, slice is appropriate
-	large := make([]byte, 0, LargeSize)
+// goodLargeIntArray creates slice >64 bytes
+func goodLargeIntArray() {
+	// 100 ints * 8 bytes = 800 bytes (>64 bytes)
+	large := make([]int, 100)
 	_ = large
+}
 
-	// Slice will grow, needs heap allocation
-	growingItems := make([]string, 0, CapacityMedium)
-	growingItems = append(growingItems, "test")
-	_ = growingItems
+// goodWithCapacity uses different length and capacity
+func goodWithCapacity() {
+	// Different capacity: needs slice semantics
+	withCap := make([]byte, 32, 64)
+	_ = withCap
+}
 
-	// Different length and capacity
-	withCapacity := make([]int, 0, CapacitySmall)
-	withCapacity = append(withCapacity, LengthSmall)
-	_ = withCapacity
+// goodGrowingSlice creates slice that will grow
+func goodGrowingSlice() {
+	// Slice will grow: needs heap allocation
+	growing := make([]string, 0, 10)
+	growing = append(growing, "test")
+	_ = growing
 }

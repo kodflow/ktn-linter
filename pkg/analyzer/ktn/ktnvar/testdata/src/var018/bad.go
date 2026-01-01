@@ -1,66 +1,39 @@
-// Package var016 contains test cases for KTN rules.
-package var016
+// Package var018 contains test cases for KTN-VAR-018.
+package var018
 
-// Bad: Using make([]T, N) where N is small constant
+// Bad: Using make([]T, N) where total size <= 64 bytes
 
-const (
-	// FixedSize est la taille fixe pour le test
-	FixedSize int = 10
-	// SmallSize est la petite taille pour le test
-	SmallSize int = 64
-	// TinySize est la très petite taille pour le test
-	TinySize int = 5
-	// MediumSize est la taille moyenne pour le test
-	MediumSize int = 256
-	// MaxSize est la taille maximale pour le test
-	MaxSize int = 1024
-)
-
-// badFixedSize uses make with small constant size
-func badFixedSize() {
-	// Small fixed size should use array
-	items := make([]int, FixedSize)
-	_ = items
+// badByteBuffer creates slice with 32 bytes (≤64)
+func badByteBuffer() {
+	// 32 bytes: should use [32]byte
+	buf := make([]byte, 32) // want "KTN-VAR-018"
+	_ = buf
 }
 
-// badSmallBuffer creates slice with constant small size
-func badSmallBuffer() {
-	// Constant size 64 should be array
-	buffer := make([]byte, SmallSize)
-	_ = buffer
+// badIntArray creates slice with 8 ints (64 bytes on 64-bit)
+func badIntArray() {
+	// 8 ints * 8 bytes = 64 bytes
+	arr := make([]int, 8) // want "KTN-VAR-018"
+	_ = arr
+}
+
+// badSmallExact creates slice exactly 64 bytes
+func badSmallExact() {
+	// Exactly 64 bytes
+	small := make([]byte, 64) // want "KTN-VAR-018"
+	_ = small
 }
 
 // badTinySlice creates very small slice
 func badTinySlice() {
-	// Very small size should use array
-	data := make([]string, TinySize)
-	_ = data
+	// 4 ints * 8 bytes = 32 bytes
+	tiny := make([]int64, 4) // want "KTN-VAR-018"
+	_ = tiny
 }
 
-// badMediumSlice creates medium-sized slice
-func badMediumSlice() {
-	// Size 256 still small enough for stack
-	values := make([]float64, MediumSize)
-	_ = values
-}
-
-// badMaxAllowed creates slice at boundary
-func badMaxAllowed() {
-	// Size 1024 is at the limit
-	large := make([]int32, MaxSize)
-	_ = large
-}
-
-// init utilise les fonctions privées
-func init() {
-	// Appel de badFixedSize
-	badFixedSize()
-	// Appel de badSmallBuffer
-	badSmallBuffer()
-	// Appel de badTinySlice
-	badTinySlice()
-	// Appel de badMediumSlice
-	badMediumSlice()
-	// Appel de badMaxAllowed
-	badMaxAllowed()
+// badSingleInt creates single element array
+func badSingleInt() {
+	// 1 int * 8 bytes = 8 bytes
+	single := make([]int, 1) // want "KTN-VAR-018"
+	_ = single
 }

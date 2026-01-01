@@ -47,8 +47,8 @@ func runVar013(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Récupérer le seuil configuré en bytes
-	maxBytes := cfg.GetThreshold(ruleCodeVar013, defaultMaxStructBytes)
+	// Seuil fixe : 64 bytes (1 L1 cache line sur x86-64 et ARM64)
+	maxBytes := defaultMaxStructBytes
 	// Get verbose setting to pass down (avoid global dependency in helpers)
 	verbose := cfg.Verbose
 

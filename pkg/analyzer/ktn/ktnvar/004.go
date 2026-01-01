@@ -28,10 +28,15 @@ var (
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 	}
 
-	// loopVars004 contains single-letter loop variable names that are allowed.
-	loopVars004 map[string]bool = map[string]bool{
+	// idiomaticOneChar004 contains 1-char names allowed in function scope.
+	idiomaticOneChar004 map[string]bool = map[string]bool{
+		// Loop counters
 		"i": true, "j": true, "k": true, "n": true,
-		"x": true, "y": true, "z": true, "v": true,
+		// Type hints
+		"b": true, "c": true, "f": true, "m": true,
+		"r": true, "s": true, "t": true, "w": true,
+		// Results
+		"_": true,
 	}
 
 	// idiomaticShort004 contains short idiomatic Go variable names.
@@ -112,7 +117,7 @@ func checkVar004PackageLevel(
 			// Check each variable specification
 			for _, spec := range genDecl.Specs {
 				valueSpec := spec.(*ast.ValueSpec)
-				checkVar004Spec(pass, valueSpec, false)
+				checkVar004Spec(pass, valueSpec, true)
 			}
 		}
 	})
@@ -148,64 +153,14 @@ func checkVar004LocalVars(
 			return
 		}
 
-		// Track loop init positions to avoid double-processing
-		loopInits := collectLoopInitPositions004(funcDecl.Body)
-
 		// Visit all statements in the function
 		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
 			// Check the node type
-			checkVar004Node(pass, node, loopInits)
+			checkVar004Node(pass, node)
 			// Continue traversal
 			return true
 		})
 	})
-}
-
-// collectLoopInitPositions004 collects positions of for/range loop init vars.
-//
-// Params:
-//   - body: function body to analyze
-//
-// Returns:
-//   - map[token.Pos]bool: set of positions that are loop inits
-func collectLoopInitPositions004(body *ast.BlockStmt) map[token.Pos]bool {
-	positions := make(map[token.Pos]bool)
-
-	// Walk the AST to find loop init positions
-	ast.Inspect(body, func(node ast.Node) bool {
-		// Check for for statements
-		switch stmt := node.(type) {
-		// Handle for statements
-		case *ast.ForStmt:
-			// Add init positions
-			if init, ok := stmt.Init.(*ast.AssignStmt); ok {
-				if init.Tok == token.DEFINE {
-					for _, lhs := range init.Lhs {
-						if ident, ok := lhs.(*ast.Ident); ok {
-							positions[ident.Pos()] = true
-						}
-					}
-				}
-			}
-		// Handle range statements
-		case *ast.RangeStmt:
-			// Add key position
-			if key, ok := stmt.Key.(*ast.Ident); ok {
-				positions[key.Pos()] = true
-			}
-			// Add value position
-			if stmt.Value != nil {
-				if value, ok := stmt.Value.(*ast.Ident); ok {
-					positions[value.Pos()] = true
-				}
-			}
-		}
-		// Continue traversal
-		return true
-	})
-
-	// Return positions
-	return positions
 }
 
 // checkVar004Node vérifie un nœud AST pour les variables courtes.
@@ -213,18 +168,16 @@ func collectLoopInitPositions004(body *ast.BlockStmt) map[token.Pos]bool {
 // Params:
 //   - pass: contexte d'analyse
 //   - node: nœud à vérifier
-//   - loopInits: positions of loop init variables
-func checkVar004Node(pass *analysis.Pass, node ast.Node, loopInits map[token.Pos]bool) {
+func checkVar004Node(pass *analysis.Pass, node ast.Node) {
 	// Switch on node type
 	switch stmt := node.(type) {
 	// Handle assignment statements
 	case *ast.AssignStmt:
-		checkVar004AssignStmt(pass, stmt, loopInits)
+		checkVar004AssignStmt(pass, stmt)
 	// Handle var declarations in blocks
 	case *ast.DeclStmt:
 		checkVar004DeclStmt(pass, stmt)
 	}
-	// Note: ForStmt and RangeStmt are handled via collectLoopInitPositions004
 }
 
 // checkVar004AssignStmt vérifie une assignation pour les noms courts.
@@ -232,12 +185,7 @@ func checkVar004Node(pass *analysis.Pass, node ast.Node, loopInits map[token.Pos
 // Params:
 //   - pass: contexte d'analyse
 //   - stmt: statement d'assignation
-//   - loopInits: positions of loop init variables
-func checkVar004AssignStmt(
-	pass *analysis.Pass,
-	stmt *ast.AssignStmt,
-	loopInits map[token.Pos]bool,
-) {
+func checkVar004AssignStmt(pass *analysis.Pass, stmt *ast.AssignStmt) {
 	// Only check short declarations (:=)
 	if stmt.Tok != token.DEFINE {
 		// Not a short declaration
@@ -252,11 +200,8 @@ func checkVar004AssignStmt(
 			continue
 		}
 
-		// Check if this is a loop init variable
-		isLoopVar := loopInits[ident.Pos()]
-
-		// Check if name is too short
-		checkVar004Name(pass, ident, isLoopVar)
+		// Check if name is too short (function-level)
+		checkVar004Name(pass, ident, false)
 	}
 }
 
@@ -291,11 +236,11 @@ func checkVar004DeclStmt(pass *analysis.Pass, stmt *ast.DeclStmt) {
 // Params:
 //   - pass: contexte d'analyse
 //   - valueSpec: spécification de variable
-//   - isLoop: indique si c'est dans un contexte de boucle
-func checkVar004Spec(pass *analysis.Pass, valueSpec *ast.ValueSpec, isLoop bool) {
+//   - isPackageLevel: indique si c'est une variable package-level
+func checkVar004Spec(pass *analysis.Pass, valueSpec *ast.ValueSpec, isPackageLevel bool) {
 	// Check each variable name
 	for _, name := range valueSpec.Names {
-		checkVar004Name(pass, name, isLoop)
+		checkVar004Name(pass, name, isPackageLevel)
 	}
 }
 
@@ -304,8 +249,8 @@ func checkVar004Spec(pass *analysis.Pass, valueSpec *ast.ValueSpec, isLoop bool)
 // Params:
 //   - pass: contexte d'analyse
 //   - ident: identifiant à vérifier
-//   - isLoop: indique si c'est dans un contexte de boucle
-func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isLoop bool) {
+//   - isPackageLevel: indique si c'est une variable package-level
+func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isPackageLevel bool) {
 	varName := ident.Name
 
 	// Skip blank identifier
@@ -320,13 +265,26 @@ func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isLoop bool) {
 		return
 	}
 
-	// Allow loop variables in loop context
-	if isLoop && loopVars004[varName] {
-		// Loop variable is allowed
+	// Package-level: require min 2 chars always
+	if isPackageLevel {
+		// Report error for package-level short names
+		msg, _ := messages.Get(ruleCodeVar004)
+		pass.Reportf(
+			ident.Pos(),
+			"%s: %s",
+			ruleCodeVar004,
+			msg.Format(config.Get().Verbose, varName),
+		)
 		return
 	}
 
-	// Allow idiomatic short names
+	// Function-level: allow idiomatic 1-char names
+	if idiomaticOneChar004[varName] {
+		// Idiomatic 1-char name is allowed
+		return
+	}
+
+	// Allow idiomatic short names like "ok"
 	if idiomaticShort004[varName] {
 		// Idiomatic name is allowed
 		return

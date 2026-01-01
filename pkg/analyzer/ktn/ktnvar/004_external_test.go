@@ -10,5 +10,5 @@ import (
 // TestAnalyzer004 tests the KTN-VAR-004 analyzer.
 func TestAnalyzer004(t *testing.T) {
 	// Test with expected errors count
-	testhelper.TestGoodBad(t, ktnvar.Analyzer004, "var004", 3)
+	testhelper.TestGoodBad(t, ktnvar.Analyzer004, "var004", 4)
 }

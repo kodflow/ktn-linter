@@ -17,13 +17,7 @@ func TestVar018(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Slice literal with initial capacity",
-			analyzer:       ktnvar.Analyzer018,
-			testdataDir:    "var018",
-			expectedErrors: 5,
-		},
-		{
-			name:           "Valid make for empty slices",
+			name:           "Make with constant size ≤64 bytes should use array",
 			analyzer:       ktnvar.Analyzer018,
 			testdataDir:    "var018",
 			expectedErrors: 5,

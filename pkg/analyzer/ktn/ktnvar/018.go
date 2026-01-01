@@ -4,6 +4,7 @@ package ktnvar
 import (
 	"go/ast"
 	"go/constant"
+	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -20,8 +21,8 @@ const (
 	minMakeArgsVar016 int = 2
 	// minMakeArgsWithCapVar016 is minimum arguments for make with capacity
 	minMakeArgsWithCapVar016 int = 3
-	// defaultMaxArraySize is maximum size for recommending array over slice
-	defaultMaxArraySize int = 1024
+	// maxArraySizeBytes is maximum total bytes for recommending array over slice
+	maxArraySizeBytes int64 = 64
 )
 
 // Analyzer018 checks for make([]T, N) with small constant N
@@ -50,9 +51,6 @@ func runVar018(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Récupérer le seuil configuré
-	maxArraySize := int64(cfg.GetThreshold(ruleCodeVar018, defaultMaxArraySize))
-
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
@@ -74,8 +72,8 @@ func runVar018(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Check if it's make([]T, N) with small constant N
-		if shouldUseArray(pass, call, maxArraySize) {
+		// Check if it's make([]T, N) with small constant N and ≤64 bytes
+		if shouldUseArray(pass, call) {
 			reportArraySuggestion(pass, call)
 		}
 	})
@@ -89,11 +87,10 @@ func runVar018(pass *analysis.Pass) (any, error) {
 // Params:
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
-//   - maxArraySize: taille max pour suggérer un array
 //
 // Returns:
 //   - bool: true si un array est préférable
-func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr, maxArraySize int64) bool {
+func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
 	// Need at least 2 args: make([]T, size)
 	if len(call.Args) < minMakeArgsVar016 {
 		// Not enough arguments
@@ -112,10 +109,16 @@ func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr, maxArraySize int64)
 		return false
 	}
 
-	// Second arg should be small constant
+	// Second arg should be constant
 	size := getConstantSize(pass, call.Args[1])
-	// Return true if size is small constant
-	return isSmallConstant(size, maxArraySize)
+	// Not a constant size
+	if size <= 0 {
+		// Dynamic or invalid size, can't use array
+		return false
+	}
+
+	// Check total size in bytes
+	return isTotalSizeSmall(pass, call.Args[0], size)
 }
 
 // hasDifferentCapacity vérifie si make a une capacité différente.
@@ -157,17 +160,52 @@ func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
 	return -1
 }
 
-// isSmallConstant vérifie si la taille est petite et constante.
+// isTotalSizeSmall vérifie si la taille totale en bytes est petite.
 //
 // Params:
-//   - size: taille à vérifier
-//   - maxArraySize: taille max autorisée
+//   - pass: contexte d'analyse
+//   - sliceType: type de slice
+//   - elementCount: nombre d'éléments
 //
 // Returns:
-//   - bool: true si petite constante (<= maxArraySize)
-func isSmallConstant(size int64, maxArraySize int64) bool {
-	// Check if it's a positive small constant
-	return size > 0 && size <= maxArraySize
+//   - bool: true si taille totale <= 64 bytes
+func isTotalSizeSmall(pass *analysis.Pass, sliceType ast.Expr, elementCount int64) bool {
+	// Get element type from []T
+	arrayType, ok := sliceType.(*ast.ArrayType)
+	// Not a valid array type
+	if !ok {
+		// Invalid slice type expression
+		return false
+	}
+
+	// Get element type
+	elemType := pass.TypesInfo.TypeOf(arrayType.Elt)
+	// Could not determine element type
+	if elemType == nil {
+		// Type information not available
+		return false
+	}
+
+	// Get size of element type in bytes using Sizes API
+	sizes := pass.TypesSizes
+	// Use default sizes for amd64 if not available
+	if sizes == nil {
+		sizes = types.SizesFor("gc", "amd64")
+	}
+	// Still no sizes information available
+	if sizes == nil {
+		// Cannot determine type sizes
+		return false
+	}
+
+	// Get element size
+	elemSize := sizes.Sizeof(elemType)
+
+	// Calculate total size
+	totalSize := elemSize * elementCount
+
+	// Check if total size <= 64 bytes
+	return totalSize <= maxArraySizeBytes
 }
 
 // reportArraySuggestion rapporte la suggestion d'utiliser un array.

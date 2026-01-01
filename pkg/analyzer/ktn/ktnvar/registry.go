@@ -8,7 +8,7 @@ import "golang.org/x/tools/go/analysis"
 // Returns:
 //   - []*analysis.Analyzer: liste des analyseurs VAR
 func Analyzers() []*analysis.Analyzer {
-	// Retour de la liste complète des analyseurs VAR (19 règles)
+	// Retour de la liste complete des analyseurs VAR (36 regles)
 	return []*analysis.Analyzer{
 		Analyzer001, // Types explicites (ex-VAR-002)
 		Analyzer002, // Ordre déclaration (ex-VAR-014)
@@ -29,5 +29,22 @@ func Analyzers() []*analysis.Analyzer {
 		Analyzer017, // Map prealloc (ex-VAR-015)
 		Analyzer018, // Array vs slice (ex-VAR-016)
 		Analyzer019, // Mutex copies (ex-VAR-017)
+		Analyzer020, // Nil slice preferred (NEW)
+		Analyzer021, // Receiver consistency (NEW)
+		Analyzer022, // Pointer to interface
+		Analyzer023, // crypto/rand for secrets
+		Analyzer024, // any vs interface{}
+		Analyzer025, // clear() built-in (Go 1.21+)
+		Analyzer026, // min()/max() built-in (Go 1.21+)
+		Analyzer027, // range over int (Go 1.22+)
+		Analyzer028, // loop var copy obsolete (Go 1.22+)
+		Analyzer029, // slices.Grow (Go 1.21+)
+		Analyzer030, // slices.Clone (Go 1.21+)
+		Analyzer031, // maps.Clone (Go 1.21+)
+		Analyzer033, // cmp.Or (Go 1.22+)
+		Analyzer034, // WaitGroup.Go (Go 1.25+)
+		Analyzer035, // slices.Contains (Go 1.21+)
+		Analyzer036, // slices.Index (Go 1.21+)
+		Analyzer037, // maps.Keys/Values (Go 1.23+)
 	}
 }

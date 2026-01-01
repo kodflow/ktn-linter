@@ -75,6 +75,8 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-VAR-016": SeverityInfo,    // Utiliser [N]T au lieu de make([]T, N) (ex-017)
 	"KTN-VAR-017": SeverityInfo,    // Copies de mutex (ex-018)
 	"KTN-VAR-018": SeverityWarning, // snake_case interdit, utiliser camelCase
+	"KTN-VAR-026": SeverityInfo,    // min()/max() built-in (Go 1.21+)
+	"KTN-VAR-031": SeverityInfo,    // maps.Clone (Go 1.21+)
 
 	// FUNC - Fonctions (12 règles, ex-007 et ex-009 déplacés vers COMMENT)
 	"KTN-FUNC-001": SeverityError,   // Erreur en dernière position retour

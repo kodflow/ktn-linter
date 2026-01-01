@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-// TestLoopVars004 tests the loopVars004 map.
-func TestLoopVars004(t *testing.T) {
-	expectedLoopVars := []string{"i", "j", "k", "n", "x", "y", "z", "v"}
+// TestIdiomaticOneChar004 tests the idiomaticOneChar004 map.
+func TestIdiomaticOneChar004(t *testing.T) {
+	expectedOneChar := []string{"i", "j", "k", "n", "b", "c", "f", "m", "r", "s", "t", "w", "_"}
 
-	for _, v := range expectedLoopVars {
-		if !loopVars004[v] {
-			t.Errorf("loopVars004 should contain %q", v)
+	for _, v := range expectedOneChar {
+		if !idiomaticOneChar004[v] {
+			t.Errorf("idiomaticOneChar004 should contain %q", v)
 		}
 	}
 }

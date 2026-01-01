@@ -1,19 +1,27 @@
 package var004
 
+import "strings"
+
 // Good examples - valid name lengths
 
-var maxSize int = 100           // length >= 2 - OK
-var ok bool = true              // idiomatic short - OK
-var id string = "123"           // length >= 2 - OK
+var count int = 1      // length >= 2 - OK
+var name string = "x"  // length >= 2 - OK
 
-// Good - loop variables in loops
 func goodExample() {
+	// Loop counters allowed
 	for i := 0; i < 10; i++ {
-		// i is allowed in loop
+		_ = i
 	}
 
 	items := []int{1, 2, 3}
-	for j, v := range items {
-		_, _ = j, v
+	for j := range items {
+		_ = j
 	}
+
+	// Type hints allowed
+	r := strings.NewReader("")
+	m := make(map[string]int)
+	ok := true
+
+	_, _, _ = r, m, ok
 }

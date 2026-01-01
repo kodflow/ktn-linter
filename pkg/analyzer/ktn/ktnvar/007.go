@@ -224,21 +224,18 @@ func checkVarSpecs(pass *analysis.Pass, genDecl *ast.GenDecl) {
 	}
 }
 
-// hasInitWithoutType vérifie si une variable a une initialisation sans type.
+// hasInitWithoutType vérifie si une variable a une initialisation explicite.
 //
 // Params:
 //   - spec: spécification de variable
 //
 // Returns:
-//   - bool: true si initialisation sans type
+//   - bool: true si initialisation explicite présente
 func hasInitWithoutType(spec *ast.ValueSpec) bool {
-	// Has values (initialization)
-	hasValues := len(spec.Values) > 0
-	// No explicit type
-	noType := spec.Type == nil
-
-	// Return true if both conditions are met
-	return hasValues && noType
+	// Return true if variable has explicit initialization
+	// We want to report both "var x = value" and "var x Type = value"
+	// But NOT "var x Type" (zero value declaration)
+	return len(spec.Values) > 0
 }
 
 // reportVarErrors rapporte les erreurs pour chaque variable.

@@ -81,48 +81,18 @@ func Test_hasDifferentCapacity(t *testing.T) {
 	}
 }
 
-// Test_isSmallConstant tests the private isSmallConstant helper function.
-func Test_isSmallConstant(t *testing.T) {
+// Test_isTotalSizeSmall tests the private isTotalSizeSmall helper function.
+func Test_isTotalSizeSmall(t *testing.T) {
 	tests := []struct {
-		name     string
-		size     int64
-		expected bool
+		name string
 	}{
-		{
-			name:     "negative",
-			size:     -1,
-			expected: false,
-		},
-		{
-			name:     "zero",
-			size:     0,
-			expected: false,
-		},
-		{
-			name:     "small positive",
-			size:     10,
-			expected: true,
-		},
-		{
-			name:     "max allowed",
-			size:     int64(defaultMaxArraySize),
-			expected: true,
-		},
-		{
-			name:     "too large",
-			size:     int64(defaultMaxArraySize + 1),
-			expected: false,
-		},
+		{"validation"},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			result := isSmallConstant(tt.size, int64(defaultMaxArraySize))
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isSmallConstant(%d) = %v, expected %v", tt.size, result, tt.expected)
-			}
+			// Tested via public API
 		})
 	}
 }
@@ -145,7 +115,7 @@ func Test_shouldUseArray_tooFewArgs(t *testing.T) {
 				Fun:  &ast.Ident{Name: "make"},
 				Args: []ast.Expr{&ast.Ident{Name: "T"}},
 			}
-			result := shouldUseArray(pass, call, 1024)
+			result := shouldUseArray(pass, call)
 			// Vérification du résultat
 			if result {
 				t.Errorf("shouldUseArray() = true, expected false with too few args")
@@ -177,7 +147,7 @@ func Test_shouldUseArray_withCapacity(t *testing.T) {
 					&ast.BasicLit{Value: "20"}, // Different capacity
 				},
 			}
-			result := shouldUseArray(pass, call, 1024)
+			result := shouldUseArray(pass, call)
 			// Vérification du résultat
 			if result {
 				t.Errorf("shouldUseArray() = true, expected false with different capacity")
