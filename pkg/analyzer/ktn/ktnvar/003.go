@@ -95,7 +95,12 @@ func checkVar003Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 
 		// Check for underscore in name (detects SCREAMING_SNAKE_CASE and snake_case)
 		if hasUnderscore003(varName) {
-			msg, _ := messages.Get(ruleCodeVar003)
+			msg, ok := messages.Get(ruleCodeVar003)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(name.Pos(), "%s: utiliser camelCase pour %q", ruleCodeVar003, varName)
+				continue
+			}
 			pass.Reportf(
 				name.Pos(),
 				"%s: %s",

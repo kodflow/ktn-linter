@@ -368,7 +368,12 @@ func ifBodyReturnsIndex(body *ast.BlockStmt, indexName string) bool {
 //   - cfg: configuration
 func reportIndexPattern(pass *analysis.Pass, pos token.Pos, cfg *config.Config) {
 	// Get the message
-	msg, _ := messages.Get(ruleCodeVar036)
+	msg, ok := messages.Get(ruleCodeVar036)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(pos, "%s: utiliser slices.Index() (Go 1.21+)", ruleCodeVar036)
+		return
+	}
 	// Report the issue
 	pass.Reportf(
 		pos,

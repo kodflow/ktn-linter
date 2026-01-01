@@ -190,7 +190,12 @@ func reportMissingGrow(pass *analysis.Pass, node ast.Node) {
 
 	// Check if type string is valid
 	if typeStr != "" {
-		msg, _ := messages.Get(ruleCodeVar010)
+		msg, ok := messages.Get(ruleCodeVar010)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(node.Pos(), "%s: utiliser bytes.Buffer.Grow() pour préallouer", ruleCodeVar010)
+			return
+		}
 		pass.Reportf(
 			node.Pos(),
 			"%s: %s",

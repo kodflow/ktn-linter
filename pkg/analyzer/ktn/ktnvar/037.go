@@ -347,7 +347,12 @@ func reportMapCollectionPattern(
 	cfg *config.Config,
 ) {
 	// Get message and format based on collection type
-	msg, _ := messages.Get(ruleCodeVar037)
+	msg, ok := messages.Get(ruleCodeVar037)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(rangeStmt.Body.List[0].Pos(), "%s: utiliser slices.Collect(maps.%s()) (Go 1.23+)", ruleCodeVar037, collectionType)
+		return
+	}
 
 	// Report the issue on the append statement
 	pass.Reportf(

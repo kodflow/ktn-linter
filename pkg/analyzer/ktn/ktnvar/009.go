@@ -64,7 +64,12 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
-	msg, _ := messages.Get(ruleCodeVar009)
+	msg, ok := messages.Get(ruleCodeVar009)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: éviter make+append, utiliser append directement", ruleCodeVar009)
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

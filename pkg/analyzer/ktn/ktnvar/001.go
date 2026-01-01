@@ -106,7 +106,12 @@ func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 				continue
 			}
 
-			msg, _ := messages.Get(ruleCodeVar001)
+			msg, ok := messages.Get(ruleCodeVar001)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(name.Pos(), "%s: type explicite requis pour %q", ruleCodeVar001, name.Name)
+				continue
+			}
 			pass.Reportf(
 				name.Pos(),
 				"%s: %s",

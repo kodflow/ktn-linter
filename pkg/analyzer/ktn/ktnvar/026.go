@@ -120,7 +120,12 @@ func checkMathMinMax(pass *analysis.Pass, call *ast.CallExpr) {
 	builtinName := getBuiltinName(sel.Sel.Name)
 
 	// Report de l'erreur
-	msg, _ := messages.Get(ruleCodeVar026)
+	msg, ok := messages.Get(ruleCodeVar026)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: utiliser %s() built-in au lieu de math.%s", ruleCodeVar026, builtinName, sel.Sel.Name)
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",
@@ -171,7 +176,12 @@ func checkIfMinMaxPattern(pass *analysis.Pass, ifStmt *ast.IfStmt) {
 	}
 
 	// Report de l'erreur
-	msg, _ := messages.Get(ruleCodeVar026)
+	msg, ok := messages.Get(ruleCodeVar026)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(ifStmt.Pos(), "%s: utiliser min()/max() built-in", ruleCodeVar026)
+		return
+	}
 	pass.Reportf(
 		ifStmt.Pos(),
 		"%s: %s",

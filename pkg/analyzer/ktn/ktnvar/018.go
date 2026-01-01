@@ -214,7 +214,12 @@ func isTotalSizeSmall(pass *analysis.Pass, sliceType ast.Expr, elementCount int6
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
 func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
-	msg, _ := messages.Get(ruleCodeVar018)
+	msg, ok := messages.Get(ruleCodeVar018)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: utiliser [N]T au lieu de make([]T, N) pour ≤64 bytes", ruleCodeVar018)
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

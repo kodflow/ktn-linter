@@ -131,7 +131,12 @@ func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
 		// Vérification si allocation de slice ou map
 		if isSliceOrMapAlloc(rhs) {
 			// Allocation de slice/map détectée
-			msg, _ := messages.Get(ruleCodeVar012)
+			msg, ok := messages.Get(ruleCodeVar012)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(rhs.Pos(), "%s: éviter allocation dans une boucle", ruleCodeVar012)
+				continue
+			}
 			pass.Reportf(
 				rhs.Pos(),
 				"%s: %s",
@@ -170,7 +175,12 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 			// Vérification si allocation de slice ou map
 			if isSliceOrMapAlloc(value) {
 				// Allocation de slice/map détectée
-				msg, _ := messages.Get(ruleCodeVar012)
+				msg, ok := messages.Get(ruleCodeVar012)
+				// Defensive: avoid panic if message is missing
+				if !ok {
+					pass.Reportf(value.Pos(), "%s: éviter allocation dans une boucle", ruleCodeVar012)
+					continue
+				}
 				pass.Reportf(
 					value.Pos(),
 					"%s: %s",

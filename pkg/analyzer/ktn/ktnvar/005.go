@@ -274,7 +274,12 @@ func checkVar005Name(pass *analysis.Pass, ident *ast.Ident) {
 	}
 
 	// Report error
-	msg, _ := messages.Get(ruleCodeVar005)
+	msg, ok := messages.Get(ruleCodeVar005)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(ident.Pos(), "%s: nom de variable trop long: %q", ruleCodeVar005, varName)
+		return
+	}
 	pass.Reportf(
 		ident.Pos(),
 		"%s: %s",

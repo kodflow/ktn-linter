@@ -61,7 +61,12 @@ func runVar027(pass *analysis.Pass) (any, error) {
 
 		// Check if this is a convertible for loop
 		if isConvertibleToRangeInt(forStmt) {
-			msg, _ := messages.Get(ruleCodeVar027)
+			msg, ok := messages.Get(ruleCodeVar027)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(forStmt.Pos(), "%s: utiliser 'for i := range n' (Go 1.22+)", ruleCodeVar027)
+				return
+			}
 			pass.Reportf(
 				forStmt.Pos(),
 				"%s: %s",

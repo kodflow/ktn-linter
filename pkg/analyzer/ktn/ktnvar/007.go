@@ -246,7 +246,12 @@ func hasInitWithoutType(spec *ast.ValueSpec) bool {
 func reportVarErrors(pass *analysis.Pass, spec *ast.ValueSpec) {
 	// Iterate through variable names
 	for _, name := range spec.Names {
-		msg, _ := messages.Get(ruleCodeVar007)
+		msg, ok := messages.Get(ruleCodeVar007)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(name.Pos(), "%s: utiliser := au lieu de var pour les valeurs non-zéro", ruleCodeVar007)
+			continue
+		}
 		pass.Reportf(
 			name.Pos(),
 			"%s: %s",

@@ -191,14 +191,19 @@ func checkReceiverConsistency(pass *analysis.Pass, typeReceivers map[string][]re
 //   - typeName: nom du type
 //   - dominantIsPointer: si le type dominant est pointeur
 func reportInconsistency(pass *analysis.Pass, pos ast.Node, typeName string, dominantIsPointer bool) {
-	// Récupération du message
-	msg, _ := messages.Get(ruleCodeVar021)
-
 	// Détermination du type attendu
 	expected := "valeur"
 	// Vérification si pointeur attendu
 	if dominantIsPointer {
 		expected = "pointeur"
+	}
+
+	// Récupération du message
+	msg, ok := messages.Get(ruleCodeVar021)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(pos.Pos(), "%s: receiver incohérent pour %s, attendu %s", ruleCodeVar021, typeName, expected)
+		return
 	}
 
 	// Rapport d'erreur

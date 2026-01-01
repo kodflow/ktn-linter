@@ -90,7 +90,12 @@ func checkEmptyInterface(pass *analysis.Pass, interfaceType *ast.InterfaceType) 
 	}
 
 	// Report de l'erreur
-	msg, _ := messages.Get(ruleCodeVar024)
+	msg, ok := messages.Get(ruleCodeVar024)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(interfaceType.Pos(), "%s: préférer any à interface{}", ruleCodeVar024)
+		return
+	}
 	pass.Reportf(
 		interfaceType.Pos(),
 		"%s: %s",

@@ -101,7 +101,12 @@ func checkEmptySliceLiteral(pass *analysis.Pass, lit *ast.CompositeLit) {
 	typeStr := formatSliceType(lit.Type)
 
 	// Report de l'erreur
-	msg, _ := messages.Get(ruleCodeVar020)
+	msg, ok := messages.Get(ruleCodeVar020)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(lit.Pos(), "%s: préférer nil slice à %s{}", ruleCodeVar020, typeStr)
+		return
+	}
 	pass.Reportf(
 		lit.Pos(),
 		"%s: %s",
@@ -150,7 +155,12 @@ func checkMakeSliceZero(pass *analysis.Pass, call *ast.CallExpr) {
 	typeStr := "make(" + formatSliceType(call.Args[0]) + ", 0)"
 
 	// Report de l'erreur
-	msg, _ := messages.Get(ruleCodeVar020)
+	msg, ok := messages.Get(ruleCodeVar020)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: préférer nil slice à %s", ruleCodeVar020, typeStr)
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

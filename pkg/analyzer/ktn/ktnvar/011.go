@@ -98,7 +98,12 @@ func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
 			if assign.Tok == token.ADD_ASSIGN {
 				// Check if string concatenation
 				if isStringConcatenation(pass, assign) {
-					msg, _ := messages.Get(ruleCodeVar011)
+					msg, ok := messages.Get(ruleCodeVar011)
+					// Defensive: avoid panic if message is missing
+					if !ok {
+						pass.Reportf(assign.Pos(), "%s: utiliser strings.Builder pour concaténation en boucle", ruleCodeVar011)
+						return true
+					}
 					pass.Reportf(
 						assign.Pos(),
 						"%s: %s",

@@ -118,7 +118,12 @@ func checkLoopsForStringConversion(pass *analysis.Pass, body *ast.BlockStmt) {
 		// Vérification des conversions dans la boucle
 		if hasStringConversion(loop) {
 			// Rapport d'erreur
-			msg, _ := messages.Get(ruleCodeVar015)
+			msg, ok := messages.Get(ruleCodeVar015)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(loop.Pos(), "%s: éviter string() répété dans une boucle", ruleCodeVar015)
+				return true
+			}
 			pass.Reportf(
 				loop.Pos(),
 				"%s: %s",
@@ -265,7 +270,12 @@ func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt, maxConve
 		// Vérification de la condition
 		if count > maxConversions {
 			pos := firstPos[varName]
-			msg, _ := messages.Get(ruleCodeVar015)
+			msg, ok := messages.Get(ruleCodeVar015)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(pos.Pos(), "%s: %d conversions string() répétées", ruleCodeVar015, count)
+				continue
+			}
 			pass.Reportf(
 				pos.Pos(),
 				"%s: %s",

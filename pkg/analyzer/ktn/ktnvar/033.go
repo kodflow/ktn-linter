@@ -316,7 +316,12 @@ func returnsVariableFor033(returnStmt *ast.ReturnStmt, varExpr ast.Expr) bool {
 //   - cfg: configuration
 func reportCmpOrPattern(pass *analysis.Pass, ifStmt *ast.IfStmt, cfg *config.Config) {
 	// Report the issue at the if condition position
-	msg, _ := messages.Get(ruleCodeVar033)
+	msg, ok := messages.Get(ruleCodeVar033)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(ifStmt.Cond.Pos(), "%s: utiliser cmp.Or() (Go 1.22+)", ruleCodeVar033)
+		return
+	}
 	pass.Reportf(
 		ifStmt.Cond.Pos(),
 		"%s: %s",

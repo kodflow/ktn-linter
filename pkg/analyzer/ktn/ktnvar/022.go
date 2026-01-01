@@ -224,7 +224,12 @@ func checkPointerToInterface(pass *analysis.Pass, expr ast.Expr) {
 	// Vérification si c'est une interface
 	if isInterfaceType(underlyingType) {
 		// Rapport d'erreur
-		msg, _ := messages.Get(ruleCodeVar022)
+		msg, ok := messages.Get(ruleCodeVar022)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(expr.Pos(), "%s: éviter pointeur vers interface %s", ruleCodeVar022, underlyingType.String())
+			return
+		}
 		pass.Reportf(
 			expr.Pos(),
 			"%s: %s",

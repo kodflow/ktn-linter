@@ -208,7 +208,12 @@ func checkAssignmentPair(
 //   - node: noeud a signaler
 //   - varName: nom de la variable
 func reportLoopVarCopy(pass *analysis.Pass, node ast.Node, varName string) {
-	msg, _ := messages.Get(ruleCodeVar028)
+	msg, ok := messages.Get(ruleCodeVar028)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(node.Pos(), "%s: %s := %s est obsolète depuis Go 1.22", ruleCodeVar028, varName, varName)
+		return
+	}
 	pass.Reportf(
 		node.Pos(),
 		"%s: %s",

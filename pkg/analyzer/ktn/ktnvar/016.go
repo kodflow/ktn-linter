@@ -102,7 +102,12 @@ func checkVarGrouping(pass *analysis.Pass, varGroups []shared.DeclGroup) {
 
 	// Report all var groups except the first as scattered
 	for i := 1; i < len(varGroups); i++ {
-		msg, _ := messages.Get(ruleCodeVar016)
+		msg, ok := messages.Get(ruleCodeVar016)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(varGroups[i].Pos, "%s: regrouper les variables dans un seul bloc var ()", ruleCodeVar016)
+			continue
+		}
 		pass.Reportf(
 			varGroups[i].Pos,
 			"%s: %s",

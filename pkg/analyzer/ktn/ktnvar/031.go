@@ -114,7 +114,12 @@ func analyzeBlockForMapClone(pass *analysis.Pass, block *ast.BlockStmt) {
 		// Check if this is a simple map clone pattern
 		if isSimpleMapClone(rangeStmt, mapMakes, i, block.List) {
 			// Report the issue
-			msg, _ := messages.Get(ruleCodeVar031)
+			msg, ok := messages.Get(ruleCodeVar031)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(rangeStmt.Pos(), "%s: utiliser maps.Clone() (Go 1.21+)", ruleCodeVar031)
+				continue
+			}
 			pass.Reportf(
 				rangeStmt.Pos(),
 				"%s: %s",

@@ -345,7 +345,12 @@ func reportContainsPattern(pass *analysis.Pass, rangeStmt *ast.RangeStmt, cfg *c
 	ifStmt := rangeStmt.Body.List[0].(*ast.IfStmt)
 
 	// Report the issue
-	msg, _ := messages.Get(ruleCodeVar035)
+	msg, ok := messages.Get(ruleCodeVar035)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(ifStmt.Cond.Pos(), "%s: utiliser slices.Contains() (Go 1.21+)", ruleCodeVar035)
+		return
+	}
 	pass.Reportf(
 		ifStmt.Cond.Pos(),
 		"%s: %s",

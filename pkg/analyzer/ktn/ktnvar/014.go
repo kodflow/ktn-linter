@@ -128,7 +128,12 @@ func checkMakeCallForByteSlice(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Report the issue
-	msg, _ := messages.Get(ruleCodeVar014)
+	msg, ok := messages.Get(ruleCodeVar014)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: utiliser sync.Pool pour les buffers répétés", ruleCodeVar014)
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

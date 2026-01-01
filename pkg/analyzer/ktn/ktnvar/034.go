@@ -396,7 +396,12 @@ func isDeferDoneForWaitGroup(pass *analysis.Pass, deferStmt *ast.DeferStmt, wgNa
 //   - stmt: statement ou reporter l'erreur
 func reportVar034(pass *analysis.Pass, stmt ast.Stmt) {
 	// Recuperation du message
-	msg, _ := messages.Get(ruleCodeVar034)
+	msg, ok := messages.Get(ruleCodeVar034)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(stmt.Pos(), "%s: utiliser wg.Go() (Go 1.25+)", ruleCodeVar034)
+		return
+	}
 
 	// Rapport d'erreur
 	pass.Reportf(

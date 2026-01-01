@@ -136,7 +136,12 @@ func runVar006(pass *analysis.Pass) (any, error) {
 
 				// Check if name shadows built-in
 				if isBuiltinIdentifier006(varName) {
-					msg, _ := messages.Get(ruleCodeVar006)
+					msg, ok := messages.Get(ruleCodeVar006)
+					// Defensive: avoid panic if message is missing
+					if !ok {
+						pass.Reportf(name.Pos(), "%s: shadowing d'identifiant builtin: %q", ruleCodeVar006, varName)
+						continue
+					}
 					pass.Reportf(
 						name.Pos(),
 						"%s: %s",
