@@ -1,5 +1,10 @@
-// Package test007 provides simple test utilities.
-package test007
+// Package test005 provides simple test utilities.
+package test005
+
+const (
+	// answerValue valeur de réponse
+	answerValue int = 42
+)
 
 // GoodFunction est une fonction qui sera testée.
 //
@@ -7,5 +12,5 @@ package test007
 //   - int: valeur de retour
 func GoodFunction() int {
 	// Retour de la valeur
-	return 42
+	return answerValue
 }

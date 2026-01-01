@@ -22,21 +22,21 @@ const (
 	SEVENTEEN    int = SIXTEEN + 1
 	EIGHTEEN     int = SEVENTEEN + 1
 	NINETEEN     int = EIGHTEEN + 1
-	TWENTY       int = NINETEEN + 1
-	TWENTY_ONE   int = TWENTY + 1
-	TWENTY_TWO   int = TWENTY_ONE + 1
-	TWENTY_THREE int = TWENTY_TWO + 1
-	TWENTY_FOUR  int = TWENTY_THREE + 1
-	TWENTY_FIVE  int = TWENTY_FOUR + 1
-	TWENTY_SIX   int = TWENTY_FIVE + 1
-	TWENTY_SEVEN int = TWENTY_SIX + 1
-	TWENTY_EIGHT int = TWENTY_SEVEN + 1
-	TWENTY_NINE  int = TWENTY_EIGHT + 1
-	THIRTY       int = TWENTY_NINE + 1
-	THIRTY_ONE   int = THIRTY + 1
-	THIRTY_TWO   int = THIRTY_ONE + 1
-	THIRTY_THREE int = THIRTY_TWO + 1
-	THIRTY_FOUR  int = THIRTY_THREE + 1
+	TWENTY      int = NINETEEN + 1
+	TwentyOne   int = TWENTY + 1
+	TwentyTwo   int = TwentyOne + 1
+	TwentyThree int = TwentyTwo + 1
+	TwentyFour  int = TwentyThree + 1
+	TwentyFive  int = TwentyFour + 1
+	TwentySix   int = TwentyFive + 1
+	TwentySeven int = TwentySix + 1
+	TwentyEight int = TwentySeven + 1
+	TwentyNine  int = TwentyEight + 1
+	THIRTY      int = TwentyNine + 1
+	ThirtyOne   int = THIRTY + 1
+	ThirtyTwo   int = ThirtyOne + 1
+	ThirtyThree int = ThirtyTwo + 1
+	ThirtyFour  int = ThirtyThree + 1
 )
 
 // smallFunction est une petite fonction avec peu de code
@@ -76,20 +76,20 @@ func exactlyThirtyFive() {
 	r := EIGHTEEN                                                                                                                                     // 18
 	s := NINETEEN                                                                                                                                     // 19
 	t := TWENTY                                                                                                                                       // 20
-	u := TWENTY_ONE                                                                                                                                   // 21
-	v := TWENTY_TWO                                                                                                                                   // 22
-	w := TWENTY_THREE                                                                                                                                 // 23
-	x := TWENTY_FOUR                                                                                                                                  // 24
-	y := TWENTY_FIVE                                                                                                                                  // 25
-	z := TWENTY_SIX                                                                                                                                   // 26
-	aa := TWENTY_SEVEN                                                                                                                                // 27
-	ab := TWENTY_EIGHT                                                                                                                                // 28
-	ac := TWENTY_NINE                                                                                                                                 // 29
+	u := TwentyOne                                                                                                                                    // 21
+	v := TwentyTwo                                                                                                                                    // 22
+	w := TwentyThree                                                                                                                                  // 23
+	x := TwentyFour                                                                                                                                   // 24
+	y := TwentyFive                                                                                                                                   // 25
+	z := TwentySix                                                                                                                                    // 26
+	aa := TwentySeven                                                                                                                                 // 27
+	ab := TwentyEight                                                                                                                                 // 28
+	ac := TwentyNine                                                                                                                                  // 29
 	ad := THIRTY                                                                                                                                      // 30
-	ae := THIRTY_ONE                                                                                                                                  // 31
-	af := THIRTY_TWO                                                                                                                                  // 32
-	ag := THIRTY_THREE                                                                                                                                // 33
-	ah := THIRTY_FOUR                                                                                                                                 // 34
+	ae := ThirtyOne                                                                                                                                   // 31
+	af := ThirtyTwo                                                                                                                                   // 32
+	ag := ThirtyThree                                                                                                                                 // 33
+	ah := ThirtyFour                                                                                                                                  // 34
 	_ = a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z + aa + ab + ac + ad + ae + af + ag + ah // 35
 }
 

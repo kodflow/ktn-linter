@@ -110,150 +110,393 @@ func Test_collectDeclarations(t *testing.T) {
 	}
 }
 
-// Test_checkScatteredConstBlocks tests the private checkScatteredConstBlocks function.
-func Test_checkScatteredConstBlocks(t *testing.T) {
+// Test_collectScatteredViolations tests the private collectScatteredViolations function.
+func Test_collectScatteredViolations(t *testing.T) {
 	tests := []struct {
-		name        string
-		constDecls  []token.Pos
-		wantReports int
+		name           string
+		constDecls     []token.Pos
+		varDecls       []token.Pos
+		wantViolations int
 	}{
 		{
-			name:        "no const groups",
-			constDecls:  []token.Pos{},
-			wantReports: 0,
+			name:           "no const groups",
+			constDecls:     []token.Pos{},
+			varDecls:       []token.Pos{},
+			wantViolations: 0,
 		},
 		{
-			name:        "single const group",
-			constDecls:  []token.Pos{token.Pos(100)},
-			wantReports: 0,
+			name:           "single const group",
+			constDecls:     []token.Pos{token.Pos(100)},
+			varDecls:       []token.Pos{},
+			wantViolations: 0,
 		},
 		{
-			name:        "two const groups",
-			constDecls:  []token.Pos{token.Pos(100), token.Pos(200)},
-			wantReports: 1,
+			name:           "two const groups no var (allowed)",
+			constDecls:     []token.Pos{token.Pos(100), token.Pos(200)},
+			varDecls:       []token.Pos{},
+			wantViolations: 0,
 		},
 		{
-			name:        "three const groups",
-			constDecls:  []token.Pos{token.Pos(100), token.Pos(200), token.Pos(300)},
-			wantReports: 2,
+			name:           "two const groups both before var (allowed)",
+			constDecls:     []token.Pos{token.Pos(100), token.Pos(200)},
+			varDecls:       []token.Pos{token.Pos(300)},
+			wantViolations: 0,
+		},
+		{
+			name:           "two const groups one after var (scattered)",
+			constDecls:     []token.Pos{token.Pos(100), token.Pos(400)},
+			varDecls:       []token.Pos{token.Pos(300)},
+			wantViolations: 1,
+		},
+		{
+			name:           "three const groups two after var (scattered)",
+			constDecls:     []token.Pos{token.Pos(100), token.Pos(400), token.Pos(500)},
+			varDecls:       []token.Pos{token.Pos(300)},
+			wantViolations: 2,
+		},
+		{
+			name:           "only NoPos values (defensive guard)",
+			constDecls:     []token.Pos{token.NoPos, token.NoPos},
+			varDecls:       []token.Pos{token.Pos(100)},
+			wantViolations: 0,
+		},
+		{
+			name:           "mixed NoPos and valid positions",
+			constDecls:     []token.Pos{token.NoPos, token.Pos(100), token.Pos(400)},
+			varDecls:       []token.Pos{token.Pos(300)},
+			wantViolations: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Create minimal mock pass
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset: token.NewFileSet(),
-				Report: func(_ analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
-			// Create fileDeclarations with const positions
+			// Create fileDeclarations with const and var positions
 			decls := &fileDeclarations{
 				constDecls: tt.constDecls,
+				varDecls:   tt.varDecls,
 				typeNames:  make(map[string]token.Pos),
 				constTypes: make(map[token.Pos]string),
 			}
 
-			checkScatteredConstBlocks(pass, decls)
+			// Create violations map
+			violations := make(map[token.Pos]bool)
+			collectScatteredViolations(decls, violations)
 
-			// Verify report count
-			if reportCount != tt.wantReports {
-				t.Errorf("checkScatteredConstBlocks() reports = %d, want %d", reportCount, tt.wantReports)
+			// Verify violations count
+			if len(violations) != tt.wantViolations {
+				t.Errorf("collectScatteredViolations() violations = %d, want %d", len(violations), tt.wantViolations)
 			}
 		})
 	}
 }
 
-// Test_checkConstBeforeVar tests the private checkConstBeforeVar function.
-func Test_checkConstBeforeVar(t *testing.T) {
+// Test_isScatteredViolation tests the private isScatteredViolation function.
+func Test_isScatteredViolation(t *testing.T) {
 	tests := []struct {
-		name        string
-		constDecls  []token.Pos
-		varDecls    []token.Pos
-		wantReports int
+		name             string
+		constPos         token.Pos
+		firstConstPos    token.Pos
+		firstNonConstPos token.Pos
+		decls            *fileDeclarations
+		expected         bool
 	}{
 		{
-			name:        "no var declarations",
-			constDecls:  []token.Pos{token.Pos(100)},
-			varDecls:    []token.Pos{},
-			wantReports: 0,
+			name:             "NoPos returns false",
+			constPos:         token.NoPos,
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         false,
 		},
 		{
-			name:        "const before var",
-			constDecls:  []token.Pos{token.Pos(100)},
-			varDecls:    []token.Pos{token.Pos(200)},
-			wantReports: 0,
+			name:             "first const returns false",
+			constPos:         token.Pos(100),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         false,
 		},
 		{
-			name:        "const after var",
-			constDecls:  []token.Pos{token.Pos(200)},
-			varDecls:    []token.Pos{token.Pos(100)},
-			wantReports: 1,
+			name:             "const before first non-const returns false",
+			constPos:         token.Pos(150),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         false,
 		},
 		{
-			name:        "multiple consts some after var",
-			constDecls:  []token.Pos{token.Pos(50), token.Pos(200)},
-			varDecls:    []token.Pos{token.Pos(100)},
-			wantReports: 1,
+			name:             "const after first non-const is violation",
+			constPos:         token.Pos(300),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         true,
+		},
+		{
+			name:             "iota pattern with custom type returns false",
+			constPos:         token.Pos(300),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls: &fileDeclarations{
+				typeNames:  map[string]token.Pos{"Status": token.Pos(150)},
+				constTypes: map[token.Pos]string{token.Pos(300): "Status"},
+			},
+			expected: false,
+		},
+		{
+			name:             "const with unknown type is violation",
+			constPos:         token.Pos(300),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls: &fileDeclarations{
+				typeNames:  map[string]token.Pos{"Status": token.Pos(150)},
+				constTypes: map[token.Pos]string{token.Pos(300): "UnknownType"},
+			},
+			expected: true,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Create minimal mock pass
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset: token.NewFileSet(),
-				Report: func(_ analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
-			decls := &fileDeclarations{
-				constDecls: tt.constDecls,
-				varDecls:   tt.varDecls,
-			}
-
-			checkConstBeforeVar(pass, decls)
-
-			// Verify report count
-			if reportCount != tt.wantReports {
-				t.Errorf("checkConstBeforeVar() reports = %d, want %d", reportCount, tt.wantReports)
+			result := isScatteredViolation(tt.constPos, tt.firstConstPos, tt.firstNonConstPos, tt.decls)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isScatteredViolation() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkConstBeforeType tests the private checkConstBeforeType function.
-func Test_checkConstBeforeType(t *testing.T) {
+// Test_minPos tests the private minPos function.
+func Test_minPos(t *testing.T) {
 	tests := []struct {
-		name        string
-		constDecls  []token.Pos
-		typeDecls   []token.Pos
-		wantReports int
+		name      string
+		positions []token.Pos
+		expected  token.Pos
 	}{
 		{
-			name:        "no type declarations",
-			constDecls:  []token.Pos{token.Pos(100)},
-			typeDecls:   []token.Pos{},
-			wantReports: 0,
+			name:      "empty slice",
+			positions: []token.Pos{},
+			expected:  token.NoPos,
 		},
 		{
-			name:        "const before type",
-			constDecls:  []token.Pos{token.Pos(100)},
-			typeDecls:   []token.Pos{token.Pos(200)},
-			wantReports: 0,
+			name:      "single element",
+			positions: []token.Pos{token.Pos(100)},
+			expected:  token.Pos(100),
 		},
 		{
-			name:        "const after type",
-			constDecls:  []token.Pos{token.Pos(200)},
-			typeDecls:   []token.Pos{token.Pos(100)},
-			wantReports: 1,
+			name:      "two elements ascending",
+			positions: []token.Pos{token.Pos(100), token.Pos(200)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "two elements descending",
+			positions: []token.Pos{token.Pos(200), token.Pos(100)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "multiple elements unsorted",
+			positions: []token.Pos{token.Pos(300), token.Pos(100), token.Pos(200)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "all same value",
+			positions: []token.Pos{token.Pos(50), token.Pos(50), token.Pos(50)},
+			expected:  token.Pos(50),
+		},
+		{
+			name:      "slice with NoPos values",
+			positions: []token.Pos{token.NoPos, token.Pos(100), token.NoPos},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "only NoPos values",
+			positions: []token.Pos{token.NoPos, token.NoPos},
+			expected:  token.NoPos,
+		},
+		{
+			name:      "NoPos at start",
+			positions: []token.Pos{token.NoPos, token.Pos(200), token.Pos(100)},
+			expected:  token.Pos(100),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := minPos(tt.positions)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("minPos() = %d, want %d", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_findFirstNonConstPos tests the private findFirstNonConstPos function.
+func Test_findFirstNonConstPos(t *testing.T) {
+	tests := []struct {
+		name      string
+		varDecls  []token.Pos
+		typeDecls []token.Pos
+		funcDecls []token.Pos
+		expected  token.Pos
+	}{
+		{
+			name:      "no declarations",
+			varDecls:  []token.Pos{},
+			typeDecls: []token.Pos{},
+			funcDecls: []token.Pos{},
+			expected:  token.NoPos,
+		},
+		{
+			name:      "only var",
+			varDecls:  []token.Pos{token.Pos(100)},
+			typeDecls: []token.Pos{},
+			funcDecls: []token.Pos{},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "only type",
+			varDecls:  []token.Pos{},
+			typeDecls: []token.Pos{token.Pos(200)},
+			funcDecls: []token.Pos{},
+			expected:  token.Pos(200),
+		},
+		{
+			name:      "only func",
+			varDecls:  []token.Pos{},
+			typeDecls: []token.Pos{},
+			funcDecls: []token.Pos{token.Pos(300)},
+			expected:  token.Pos(300),
+		},
+		{
+			name:      "var before type before func",
+			varDecls:  []token.Pos{token.Pos(100)},
+			typeDecls: []token.Pos{token.Pos(200)},
+			funcDecls: []token.Pos{token.Pos(300)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "func first",
+			varDecls:  []token.Pos{token.Pos(300)},
+			typeDecls: []token.Pos{token.Pos(200)},
+			funcDecls: []token.Pos{token.Pos(100)},
+			expected:  token.Pos(100),
+		},
+		{
+			name:      "type first",
+			varDecls:  []token.Pos{token.Pos(300)},
+			typeDecls: []token.Pos{token.Pos(100)},
+			funcDecls: []token.Pos{token.Pos(200)},
+			expected:  token.Pos(100),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Create fileDeclarations
+			decls := &fileDeclarations{
+				varDecls:  tt.varDecls,
+				typeDecls: tt.typeDecls,
+				funcDecls: tt.funcDecls,
+			}
+
+			// Call function
+			result := findFirstNonConstPos(decls)
+
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("findFirstNonConstPos() = %d, want %d", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_collectVarOrderViolations tests the private collectVarOrderViolations function.
+func Test_collectVarOrderViolations(t *testing.T) {
+	tests := []struct {
+		name           string
+		constDecls     []token.Pos
+		varDecls       []token.Pos
+		wantViolations int
+	}{
+		{
+			name:           "no var declarations",
+			constDecls:     []token.Pos{token.Pos(100)},
+			varDecls:       []token.Pos{},
+			wantViolations: 0,
+		},
+		{
+			name:           "const before var",
+			constDecls:     []token.Pos{token.Pos(100)},
+			varDecls:       []token.Pos{token.Pos(200)},
+			wantViolations: 0,
+		},
+		{
+			name:           "const after var",
+			constDecls:     []token.Pos{token.Pos(200)},
+			varDecls:       []token.Pos{token.Pos(100)},
+			wantViolations: 1,
+		},
+		{
+			name:           "multiple consts some after var",
+			constDecls:     []token.Pos{token.Pos(50), token.Pos(200)},
+			varDecls:       []token.Pos{token.Pos(100)},
+			wantViolations: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			decls := &fileDeclarations{
+				constDecls: tt.constDecls,
+				varDecls:   tt.varDecls,
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
+			}
+
+			// Create violations map
+			violations := make(map[token.Pos]bool)
+			collectVarOrderViolations(decls, violations)
+
+			// Verify violations count
+			if len(violations) != tt.wantViolations {
+				t.Errorf("collectVarOrderViolations() violations = %d, want %d", len(violations), tt.wantViolations)
+			}
+		})
+	}
+}
+
+// Test_collectTypeOrderViolations tests the private collectTypeOrderViolations function.
+func Test_collectTypeOrderViolations(t *testing.T) {
+	tests := []struct {
+		name           string
+		constDecls     []token.Pos
+		typeDecls      []token.Pos
+		wantViolations int
+	}{
+		{
+			name:           "no type declarations",
+			constDecls:     []token.Pos{token.Pos(100)},
+			typeDecls:      []token.Pos{},
+			wantViolations: 0,
+		},
+		{
+			name:           "const before type",
+			constDecls:     []token.Pos{token.Pos(100)},
+			typeDecls:      []token.Pos{token.Pos(200)},
+			wantViolations: 0,
+		},
+		{
+			name:           "const after type",
+			constDecls:     []token.Pos{token.Pos(200)},
+			typeDecls:      []token.Pos{token.Pos(100)},
+			wantViolations: 1,
 		},
 	}
 
@@ -261,15 +504,6 @@ func Test_checkConstBeforeType(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Create minimal mock pass
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset: token.NewFileSet(),
-				Report: func(_ analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
 			decls := &fileDeclarations{
 				constDecls: tt.constDecls,
 				typeDecls:  tt.typeDecls,
@@ -277,66 +511,61 @@ func Test_checkConstBeforeType(t *testing.T) {
 				constTypes: make(map[token.Pos]string),
 			}
 
-			checkConstBeforeType(pass, decls)
+			// Create violations map
+			violations := make(map[token.Pos]bool)
+			collectTypeOrderViolations(decls, violations)
 
-			// Verify report count
-			if reportCount != tt.wantReports {
-				t.Errorf("checkConstBeforeType() reports = %d, want %d", reportCount, tt.wantReports)
+			// Verify violations count
+			if len(violations) != tt.wantViolations {
+				t.Errorf("collectTypeOrderViolations() violations = %d, want %d", len(violations), tt.wantViolations)
 			}
 		})
 	}
 }
 
-// Test_checkConstBeforeFunc tests the private checkConstBeforeFunc function.
-func Test_checkConstBeforeFunc(t *testing.T) {
+// Test_collectFuncOrderViolations tests the private collectFuncOrderViolations function.
+func Test_collectFuncOrderViolations(t *testing.T) {
 	tests := []struct {
-		name        string
-		constDecls  []token.Pos
-		funcDecls   []token.Pos
-		wantReports int
+		name           string
+		constDecls     []token.Pos
+		funcDecls      []token.Pos
+		wantViolations int
 	}{
 		{
-			name:        "no func declarations",
-			constDecls:  []token.Pos{token.Pos(100)},
-			funcDecls:   []token.Pos{},
-			wantReports: 0,
+			name:           "no func declarations",
+			constDecls:     []token.Pos{token.Pos(100)},
+			funcDecls:      []token.Pos{},
+			wantViolations: 0,
 		},
 		{
-			name:        "const before func",
-			constDecls:  []token.Pos{token.Pos(100)},
-			funcDecls:   []token.Pos{token.Pos(200)},
-			wantReports: 0,
+			name:           "const before func",
+			constDecls:     []token.Pos{token.Pos(100)},
+			funcDecls:      []token.Pos{token.Pos(200)},
+			wantViolations: 0,
 		},
 		{
-			name:        "const after func",
-			constDecls:  []token.Pos{token.Pos(200)},
-			funcDecls:   []token.Pos{token.Pos(100)},
-			wantReports: 1,
+			name:           "const after func",
+			constDecls:     []token.Pos{token.Pos(200)},
+			funcDecls:      []token.Pos{token.Pos(100)},
+			wantViolations: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Create minimal mock pass
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset: token.NewFileSet(),
-				Report: func(_ analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
 			decls := &fileDeclarations{
 				constDecls: tt.constDecls,
 				funcDecls:  tt.funcDecls,
 			}
 
-			checkConstBeforeFunc(pass, decls)
+			// Create violations map
+			violations := make(map[token.Pos]bool)
+			collectFuncOrderViolations(decls, violations)
 
-			// Verify report count
-			if reportCount != tt.wantReports {
-				t.Errorf("checkConstBeforeFunc() reports = %d, want %d", reportCount, tt.wantReports)
+			// Verify violations count
+			if len(violations) != tt.wantViolations {
+				t.Errorf("collectFuncOrderViolations() violations = %d, want %d", len(violations), tt.wantViolations)
 			}
 		})
 	}
@@ -379,7 +608,7 @@ func Test_checkConstOrder(t *testing.T) {
 				typeNames:  make(map[string]token.Pos),
 				constTypes: make(map[token.Pos]string),
 			},
-			wantReports: 3,
+			wantReports: 1, // Only one error per position after deduplication
 		},
 	}
 
@@ -664,12 +893,12 @@ func Test_collectTypeNames(t *testing.T) {
 	}
 }
 
-// Test_checkConstBeforeType_iotaPattern tests the iota pattern exception.
-func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
+// Test_collectTypeOrderViolations_iotaPattern tests the iota pattern exception.
+func Test_collectTypeOrderViolations_iotaPattern(t *testing.T) {
 	tests := []struct {
-		name        string
-		decls       *fileDeclarations
-		wantReports int
+		name           string
+		decls          *fileDeclarations
+		wantViolations int
 	}{
 		{
 			name: "const after type using same type (valid iota pattern)",
@@ -679,7 +908,7 @@ func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
 				typeNames:  map[string]token.Pos{"Status": token.Pos(100)},
 				constTypes: map[token.Pos]string{token.Pos(200): "Status"},
 			},
-			wantReports: 0,
+			wantViolations: 0,
 		},
 		{
 			name: "const after type not using that type",
@@ -689,7 +918,7 @@ func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
 				typeNames:  map[string]token.Pos{"Status": token.Pos(100)},
 				constTypes: map[token.Pos]string{},
 			},
-			wantReports: 1,
+			wantViolations: 1,
 		},
 		{
 			name: "const after type using different type",
@@ -699,7 +928,7 @@ func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
 				typeNames:  map[string]token.Pos{"Status": token.Pos(100)},
 				constTypes: map[token.Pos]string{token.Pos(200): "OtherType"},
 			},
-			wantReports: 1,
+			wantViolations: 1,
 		},
 	}
 
@@ -707,20 +936,13 @@ func Test_checkConstBeforeType_iotaPattern(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Create minimal mock pass
-			reportCount := 0
-			pass := &analysis.Pass{
-				Fset: token.NewFileSet(),
-				Report: func(_ analysis.Diagnostic) {
-					reportCount++
-				},
-			}
+			// Create violations map
+			violations := make(map[token.Pos]bool)
+			collectTypeOrderViolations(tt.decls, violations)
 
-			checkConstBeforeType(pass, tt.decls)
-
-			// Verify report count
-			if reportCount != tt.wantReports {
-				t.Errorf("checkConstBeforeType() reports = %d, want %d", reportCount, tt.wantReports)
+			// Verify violations count
+			if len(violations) != tt.wantViolations {
+				t.Errorf("collectTypeOrderViolations() violations = %d, want %d", len(violations), tt.wantViolations)
 			}
 		})
 	}

@@ -172,6 +172,7 @@ func collectTypeNames(genDecl *ast.GenDecl, typeNames map[string]token.Pos) {
 }
 
 // checkConstOrder verifies const declarations are properly ordered and grouped.
+// Reports at most one error per const block position.
 //
 // Params:
 //   - pass: analysis context
@@ -183,49 +184,37 @@ func checkConstOrder(pass *analysis.Pass, decls *fileDeclarations) {
 		return
 	}
 
+	// Collect all violations first (one error per position max)
+	violations := make(map[token.Pos]bool, len(decls.constDecls))
+
 	// Check scattered const blocks (all except first, unless iota with custom type)
-	checkScatteredConstBlocks(pass, decls)
+	collectScatteredViolations(decls, violations)
 
 	// Check const vs var order
-	checkConstBeforeVar(pass, decls)
+	collectVarOrderViolations(decls, violations)
 
 	// Check const vs type order
-	checkConstBeforeType(pass, decls)
+	collectTypeOrderViolations(decls, violations)
 
 	// Check const vs func order
-	checkConstBeforeFunc(pass, decls)
-}
+	collectFuncOrderViolations(decls, violations)
 
-// checkScatteredConstBlocks reports if const declarations are scattered.
-// Exception: const blocks using iota with custom types are allowed separate.
-//
-// Params:
-//   - pass: analysis context
-//   - decls: collected declarations (includes constTypes for iota detection)
-func checkScatteredConstBlocks(pass *analysis.Pass, decls *fileDeclarations) {
-	// If 0 or 1 const block, they're not scattered
-	if len(decls.constDecls) <= 1 {
-		// Return early
-		return
-	}
-
-	// Report const groups except the first, unless they use iota with custom type
-	for i := 1; i < len(decls.constDecls); i++ {
-		constPos := decls.constDecls[i]
-
-		// Skip if this const uses a custom type (iota pattern)
-		if usedType, hasType := decls.constTypes[constPos]; hasType {
-			// Check if the type is defined in this file
-			if _, typeExists := decls.typeNames[usedType]; typeExists {
-				// Valid iota pattern - skip
-				continue
-			}
+	// Report one error per violation position (deterministic order)
+	for _, pos := range decls.constDecls {
+		// Skip if not a violation
+		if !violations[pos] {
+			continue
 		}
 
-		// Report violation
-		msg, _ := messages.Get(ruleCodeConst002)
+		msg, ok := messages.Get(ruleCodeConst002)
+		// Fallback to rule code only if message not found
+		if !ok {
+			pass.Reportf(pos, "%s", ruleCodeConst002)
+			continue
+		}
+
 		pass.Reportf(
-			constPos,
+			pos,
 			"%s: %s",
 			ruleCodeConst002,
 			msg.Format(config.Get().Verbose),
@@ -233,51 +222,206 @@ func checkScatteredConstBlocks(pass *analysis.Pass, decls *fileDeclarations) {
 	}
 }
 
-// checkConstBeforeVar ensures const declarations come before var declarations.
+// collectScatteredViolations collects violations for scattered const blocks.
+// Multiple const blocks at the top (before any var/type/func) are allowed.
+// Exception: const blocks using iota with custom types are allowed separate.
 //
 // Params:
-//   - pass: analysis context
-//   - decls: collected declarations
-func checkConstBeforeVar(pass *analysis.Pass, decls *fileDeclarations) {
-	// No var declarations, nothing to check
-	if len(decls.varDecls) == 0 {
+//   - decls: collected declarations (includes constTypes for iota detection)
+//   - violations: map to collect violation positions
+func collectScatteredViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// If 0 or 1 const block, nothing to check
+	if len(decls.constDecls) <= 1 {
 		// Return early
 		return
 	}
 
-	// Get first var position
-	firstVarPos := decls.varDecls[0]
+	// Find the first non-const declaration position
+	firstNonConstPos := findFirstNonConstPos(decls)
 
-	// Check each const declaration
+	// If no var/type/func, multiple const blocks are allowed
+	if firstNonConstPos == token.NoPos {
+		// Return early
+		return
+	}
+
+	// Identify the first const position (robust to unsorted input)
+	firstConstPos := minPos(decls.constDecls)
+
+	// Defensive: if no valid const position, nothing to report
+	if firstConstPos == token.NoPos {
+		// Return early
+		return
+	}
+
+	// Check each const block except the first one
 	for _, constPos := range decls.constDecls {
-		// Const after var is a violation
-		if constPos > firstVarPos {
-			msg, _ := messages.Get(ruleCodeConst002)
-			pass.Reportf(
-				constPos,
-				"%s: %s",
-				ruleCodeConst002,
-				msg.Format(config.Get().Verbose),
-			)
+		// Check if this position is a scattered violation
+		if isScatteredViolation(constPos, firstConstPos, firstNonConstPos, decls) {
+			// Add to violations
+			violations[constPos] = true
 		}
 	}
 }
 
-// checkConstBeforeType ensures const declarations come before type declarations.
-// Exception: const blocks using iota with a custom type are allowed after that type.
+// isScatteredViolation checks if a const at the given position is scattered.
+// Returns true if the const is after the first non-const declaration
+// and doesn't use a custom type (iota pattern exception).
 //
 // Params:
-//   - pass: analysis context
+//   - constPos: position of the const to check
+//   - firstConstPos: position of the first const block
+//   - firstNonConstPos: position of the first non-const declaration
+//   - decls: collected declarations for type lookup
+//
+// Returns:
+//   - bool: true if this const is a scattered violation
+func isScatteredViolation(constPos, firstConstPos, firstNonConstPos token.Pos, decls *fileDeclarations) bool {
+	// Skip invalid positions
+	if constPos == token.NoPos {
+		// Invalid position
+		return false
+	}
+
+	// Skip the first const block
+	if constPos == firstConstPos {
+		// First const is never scattered
+		return false
+	}
+
+	// Skip if this const is before the first var/type/func
+	if constPos < firstNonConstPos {
+		// Const is at the top, not scattered
+		return false
+	}
+
+	// Check if this const uses a custom type (iota pattern)
+	if usedType, hasType := decls.constTypes[constPos]; hasType {
+		// Check if the type is defined in this file
+		if _, typeExists := decls.typeNames[usedType]; typeExists {
+			// Valid iota pattern - not a violation
+			return false
+		}
+	}
+
+	// This const is scattered
+	return true
+}
+
+// minPos returns the minimum position from a slice.
+// Returns token.NoPos if the slice is empty.
+//
+// Params:
+//   - positions: slice of token positions
+//
+// Returns:
+//   - token.Pos: minimum position or token.NoPos if empty
+func minPos(positions []token.Pos) token.Pos {
+	// Track whether we found any valid positions
+	min := token.NoPos
+
+	// Find minimum valid position
+	for _, pos := range positions {
+		// Skip invalid positions
+		if pos == token.NoPos {
+			continue
+		}
+
+		// Initialize or update minimum
+		if min == token.NoPos || pos < min {
+			min = pos
+		}
+	}
+
+	// Return minimum position (or NoPos if none)
+	return min
+}
+
+// findFirstNonConstPos returns the position of the first var/type/func declaration.
+//
+// Params:
 //   - decls: collected declarations
-func checkConstBeforeType(pass *analysis.Pass, decls *fileDeclarations) {
-	// No type declarations, nothing to check
-	if len(decls.typeDecls) == 0 {
+//
+// Returns:
+//   - token.Pos: position of first non-const, or token.NoPos if none
+func findFirstNonConstPos(decls *fileDeclarations) token.Pos {
+	// Get minimum position from each declaration type
+	varMin := minPos(decls.varDecls)
+	typeMin := minPos(decls.typeDecls)
+	funcMin := minPos(decls.funcDecls)
+
+	// Start with no position
+	firstPos := token.NoPos
+
+	// Check var minimum
+	if varMin != token.NoPos {
+		firstPos = varMin
+	}
+
+	// Check type minimum
+	if typeMin != token.NoPos && (firstPos == token.NoPos || typeMin < firstPos) {
+		firstPos = typeMin
+	}
+
+	// Check func minimum
+	if funcMin != token.NoPos && (firstPos == token.NoPos || funcMin < firstPos) {
+		firstPos = funcMin
+	}
+
+	// Return first non-const position
+	return firstPos
+}
+
+// collectVarOrderViolations collects violations for const after var.
+// Exception: const blocks using iota with a custom type are allowed after var.
+//
+// Params:
+//   - decls: collected declarations
+//   - violations: map to collect violation positions
+func collectVarOrderViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// Get first var position (using minPos for robustness)
+	firstVarPos := minPos(decls.varDecls)
+
+	// No var declarations, nothing to check
+	if firstVarPos == token.NoPos {
 		// Return early
 		return
 	}
 
-	// Get first type position
-	firstTypePos := decls.typeDecls[0]
+	// Check each const declaration
+	for _, constPos := range decls.constDecls {
+		// Const after var is a violation, unless it uses iota with custom type
+		if constPos > firstVarPos {
+			// Check if this const uses a custom type (iota pattern)
+			if usedType, hasType := decls.constTypes[constPos]; hasType {
+				// Check if the type is defined in this file
+				if _, typeExists := decls.typeNames[usedType]; typeExists {
+					// Valid iota pattern - skip
+					continue
+				}
+			}
+
+			// Add to violations
+			violations[constPos] = true
+		}
+	}
+}
+
+// collectTypeOrderViolations collects violations for const after type.
+// Exception: const blocks using iota with a custom type are allowed after that type.
+//
+// Params:
+//   - decls: collected declarations
+//   - violations: map to collect violation positions
+func collectTypeOrderViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// Get first type position (using minPos for robustness)
+	firstTypePos := minPos(decls.typeDecls)
+
+	// No type declarations, nothing to check
+	if firstTypePos == token.NoPos {
+		// Return early
+		return
+	}
 
 	// Check each const declaration
 	for _, constPos := range decls.constDecls {
@@ -295,44 +439,33 @@ func checkConstBeforeType(pass *analysis.Pass, decls *fileDeclarations) {
 				}
 			}
 
-			// Report violation
-			msg, _ := messages.Get(ruleCodeConst002)
-			pass.Reportf(
-				constPos,
-				"%s: %s",
-				ruleCodeConst002,
-				msg.Format(config.Get().Verbose),
-			)
+			// Add to violations
+			violations[constPos] = true
 		}
 	}
 }
 
-// checkConstBeforeFunc ensures const declarations come before func declarations.
+// collectFuncOrderViolations collects violations for const after func.
 //
 // Params:
-//   - pass: analysis context
 //   - decls: collected declarations
-func checkConstBeforeFunc(pass *analysis.Pass, decls *fileDeclarations) {
+//   - violations: map to collect violation positions
+func collectFuncOrderViolations(decls *fileDeclarations, violations map[token.Pos]bool) {
+	// Get first func position (using minPos for robustness)
+	firstFuncPos := minPos(decls.funcDecls)
+
 	// No func declarations, nothing to check
-	if len(decls.funcDecls) == 0 {
+	if firstFuncPos == token.NoPos {
 		// Return early
 		return
 	}
-
-	// Get first func position
-	firstFuncPos := decls.funcDecls[0]
 
 	// Check each const declaration
 	for _, constPos := range decls.constDecls {
 		// Const after func is a violation
 		if constPos > firstFuncPos {
-			msg, _ := messages.Get(ruleCodeConst002)
-			pass.Reportf(
-				constPos,
-				"%s: %s",
-				ruleCodeConst002,
-				msg.Format(config.Get().Verbose),
-			)
+			// Add to violations
+			violations[constPos] = true
 		}
 	}
 }

@@ -2,20 +2,20 @@
 package func011
 
 const (
-	// THRESHOLD_FIVE represents a threshold value of 5
-	THRESHOLD_FIVE int = 5
-	// THRESHOLD_TEN represents a threshold value of 10
-	THRESHOLD_TEN int = 10
-	// LOOP_ITERATIONS represents the number of iterations in loops
-	LOOP_ITERATIONS int = 3
-	// CASE_VALUE_TWO represents case value 2
-	CASE_VALUE_TWO int = 2
-	// CASE_VALUE_THREE represents case value 3
-	CASE_VALUE_THREE int = 3
-	// CASE_VALUE_FOUR represents case value 4
-	CASE_VALUE_FOUR int = 4
-	// CASE_VALUE_FIVE represents case value 5
-	CASE_VALUE_FIVE int = 5
+	// thresholdFive represents a threshold value of 5
+	thresholdFive int = 5
+	// thresholdTen represents a threshold value of 10
+	thresholdTen int = 10
+	// loopIterations represents the number of iterations in loops
+	loopIterations int = 3
+	// caseValueTwo represents case value 2
+	caseValueTwo int = 2
+	// caseValueThree represents case value 3
+	caseValueThree int = 3
+	// caseValueFour represents case value 4
+	caseValueFour int = 4
+	// caseValueFive represents case value 5
+	caseValueFive int = 5
 )
 
 // Simple is a simple function with minimal complexity.
@@ -52,28 +52,28 @@ func ComplexityTen(x int) {
 		x++
 	}
 	// Check if x exceeds threshold of 5
-	if x > THRESHOLD_FIVE {
+	if x > thresholdFive {
 		// Increment x
 		x++
 	}
 	// Check if x exceeds threshold of 10
-	if x > THRESHOLD_TEN {
+	if x > thresholdTen {
 		// Increment x
 		x++
 	}
 
 	// First loop to increment x
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment x in loop
 		x++
 	}
 	// Second loop to increment x
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment x in loop
 		x++
 	}
 	// Third loop to increment x
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment x in loop
 		x++
 	}
@@ -84,10 +84,10 @@ func ComplexityTen(x int) {
 	case 1:
 		x++
 	// Handle case 2
-	case CASE_VALUE_TWO:
+	case caseValueTwo:
 		x++
 	// Handle case 3
-	case CASE_VALUE_THREE:
+	case caseValueThree:
 		x++
 	}
 }
@@ -115,14 +115,14 @@ func MultipleIfs(x int) int {
 		return 0
 	}
 	// Check if x exceeds upper threshold
-	if x > THRESHOLD_TEN {
+	if x > thresholdTen {
 		// Return capped value
-		return THRESHOLD_TEN
+		return thresholdTen
 	}
 	// Check if x is below lower threshold
-	if x < -THRESHOLD_TEN {
+	if x < -thresholdTen {
 		// Return capped negative value
-		return -THRESHOLD_TEN
+		return -thresholdTen
 	}
 	// Return original value
 	return x
@@ -142,13 +142,13 @@ func SwitchWithDefault(x int) int {
 		// Return 1 for case 1
 		return 1
 	// Return 2 for case 2
-	case CASE_VALUE_TWO:
+	case caseValueTwo:
 		// Return 2 for case 2
-		return CASE_VALUE_TWO
+		return caseValueTwo
 	// Return 3 for case 3
-	case CASE_VALUE_THREE:
+	case caseValueThree:
 		// Return 3 for case 3
-		return CASE_VALUE_THREE
+		return caseValueThree
 	// Return 0 for default case
 	default:
 		// Return 0 for default case
@@ -208,27 +208,27 @@ func TestComplexFunction(t int) {
 		t++
 	}
 	// Check if t exceeds threshold of 5
-	if t > THRESHOLD_FIVE {
+	if t > thresholdFive {
 		// Increment t
 		t++
 	}
 	// Check if t exceeds threshold of 10
-	if t > THRESHOLD_TEN {
+	if t > thresholdTen {
 		// Increment t
 		t++
 	}
 	// First loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment t in loop
 		t++
 	}
 	// Second loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment t in loop
 		t++
 	}
 	// Third loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment t in loop
 		t++
 	}
@@ -237,16 +237,16 @@ func TestComplexFunction(t int) {
 	case 1:
 		// Handle case 1
 		t++
-	case CASE_VALUE_TWO:
+	case caseValueTwo:
 		// Handle case 2
 		t++
-	case CASE_VALUE_THREE:
+	case caseValueThree:
 		// Handle case 3
 		t++
-	case CASE_VALUE_FOUR:
+	case caseValueFour:
 		// Handle case 4
 		t++
-	case CASE_VALUE_FIVE:
+	case caseValueFive:
 		// Handle case 5
 		t++
 	}
@@ -264,27 +264,27 @@ func BenchmarkComplexFunction(b int) {
 		b++
 	}
 	// Check if b exceeds threshold of 5
-	if b > THRESHOLD_FIVE {
+	if b > thresholdFive {
 		// Increment b
 		b++
 	}
 	// Check if b exceeds threshold of 10
-	if b > THRESHOLD_TEN {
+	if b > thresholdTen {
 		// Increment b
 		b++
 	}
 	// First loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment b in loop
 		b++
 	}
 	// Second loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment b in loop
 		b++
 	}
 	// Third loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment b in loop
 		b++
 	}
@@ -293,16 +293,16 @@ func BenchmarkComplexFunction(b int) {
 	case 1:
 		// Handle case 1
 		b++
-	case CASE_VALUE_TWO:
+	case caseValueTwo:
 		// Handle case 2
 		b++
-	case CASE_VALUE_THREE:
+	case caseValueThree:
 		// Handle case 3
 		b++
-	case CASE_VALUE_FOUR:
+	case caseValueFour:
 		// Handle case 4
 		b++
-	case CASE_VALUE_FIVE:
+	case caseValueFive:
 		// Handle case 5
 		b++
 	}
@@ -319,27 +319,27 @@ func ExampleComplexFunction() {
 		x++
 	}
 	// Check if x exceeds threshold of 5
-	if x > THRESHOLD_FIVE {
+	if x > thresholdFive {
 		// Increment x
 		x++
 	}
 	// Check if x exceeds threshold of 10
-	if x > THRESHOLD_TEN {
+	if x > thresholdTen {
 		// Increment x
 		x++
 	}
 	// First loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment x in loop
 		x++
 	}
 	// Second loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment x in loop
 		x++
 	}
 	// Third loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment x in loop
 		x++
 	}
@@ -348,16 +348,16 @@ func ExampleComplexFunction() {
 	case 1:
 		// Handle case 1
 		x++
-	case CASE_VALUE_TWO:
+	case caseValueTwo:
 		// Handle case 2
 		x++
-	case CASE_VALUE_THREE:
+	case caseValueThree:
 		// Handle case 3
 		x++
-	case CASE_VALUE_FOUR:
+	case caseValueFour:
 		// Handle case 4
 		x++
-	case CASE_VALUE_FIVE:
+	case caseValueFive:
 		// Handle case 5
 		x++
 	}
@@ -375,27 +375,27 @@ func FuzzComplexFunction(f int) {
 		f++
 	}
 	// Check if f exceeds threshold of 5
-	if f > THRESHOLD_FIVE {
+	if f > thresholdFive {
 		// Increment f
 		f++
 	}
 	// Check if f exceeds threshold of 10
-	if f > THRESHOLD_TEN {
+	if f > thresholdTen {
 		// Increment f
 		f++
 	}
 	// First loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment f in loop
 		f++
 	}
 	// Second loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment f in loop
 		f++
 	}
 	// Third loop iteration
-	for i := 0; i < LOOP_ITERATIONS; i++ {
+	for i := 0; i < loopIterations; i++ {
 		// Increment f in loop
 		f++
 	}
@@ -404,16 +404,16 @@ func FuzzComplexFunction(f int) {
 	case 1:
 		// Handle case 1
 		f++
-	case CASE_VALUE_TWO:
+	case caseValueTwo:
 		// Handle case 2
 		f++
-	case CASE_VALUE_THREE:
+	case caseValueThree:
 		// Handle case 3
 		f++
-	case CASE_VALUE_FOUR:
+	case caseValueFour:
 		// Handle case 4
 		f++
-	case CASE_VALUE_FIVE:
+	case caseValueFive:
 		// Handle case 5
 		f++
 	}

@@ -1,29 +1,34 @@
+// Package struct001 provides good test cases.
+// GoodService demonstrates correct getter naming.
 package struct001
 
 // GoodService est une struct avec getter correctement nommé.
 // Démontre la convention Go idiomatique: Name() retourne le champ name.
 type GoodService struct {
 	name string
+	age  int
 }
 
 // GoodServiceInterface définit le contrat public de GoodService.
 type GoodServiceInterface interface {
 	Name() string
+	Age() int
 }
 
 // NewGoodService crée une nouvelle instance de GoodService.
 //
 // Params:
 //   - name: nom du service
+//   - age: âge du service
 //
 // Returns:
 //   - *GoodService: nouvelle instance
-func NewGoodService(name string) *GoodService {
+func NewGoodService(name string, age int) *GoodService {
 	// Retour de la nouvelle instance
-	return &GoodService{name: name}
+	return &GoodService{name: name, age: age}
 }
 
-// Name retourne le nom du service (getter correct: nom = champ).
+// Name retourne le nom du service (getter correct: Name = champ name).
 //
 // Returns:
 //   - string: nom du service
@@ -32,44 +37,11 @@ func (s *GoodService) Name() string {
 	return s.name
 }
 
-// GoodDTO est un DTO sans getters - c'est acceptable pour les DTOs.
-// Les DTOs n'ont pas besoin de getters car leurs champs sont publics.
-type GoodDTO struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-// goodPrivateStruct est une struct privée (non exportée).
-// La règle KTN-STRUCT-001 ne s'applique pas aux structs privées.
-type goodPrivateStruct struct {
-	value int
-}
-
-// GoodNoGetter est une struct sans getter pour son champ privé.
-// C'est acceptable car les getters sont OPTIONNELS.
-type GoodNoGetter struct {
-	internalData string
-}
-
-// GoodNoGetterInterface définit les méthodes de GoodNoGetter.
-type GoodNoGetterInterface interface {
-	Process() error
-}
-
-// NewGoodNoGetter crée une nouvelle instance.
+// Age retourne l'âge du service (getter correct: Age = champ age).
 //
 // Returns:
-//   - *GoodNoGetter: nouvelle instance
-func NewGoodNoGetter() *GoodNoGetter {
-	// Retour de la nouvelle instance
-	return &GoodNoGetter{}
-}
-
-// Process traite les données internes.
-//
-// Returns:
-//   - error: erreur éventuelle
-func (g *GoodNoGetter) Process() error {
-	// Traitement
-	return nil
+//   - int: âge du service
+func (s *GoodService) Age() int {
+	// Retour de l'âge
+	return s.age
 }

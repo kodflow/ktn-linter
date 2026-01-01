@@ -114,56 +114,14 @@ func GoodClosure() func() error {
 	}
 }
 
-// CustomError represents a custom error type.
-// Implémente l'interface error pour fournir des erreurs personnalisées.
-type CustomError struct {
-	msg string
-}
-
-// CustomErrorInterface définit les méthodes de CustomError.
-type CustomErrorInterface interface {
-	Error() string
-	Msg() string
-}
-
-// NewCustomError crée une nouvelle instance de CustomError.
-//
-// Params:
-//   - msg: le message d'erreur
-//
-// Returns:
-//   - CustomError: nouvelle instance d'erreur
-func NewCustomError(msg string) CustomError {
-	// Retour de la nouvelle instance
-	return CustomError{msg: msg}
-}
-
-// Error returns the error message.
-//
-// Returns:
-//   - string: the error message
-func (e CustomError) Error() string {
-	// Delegate to Msg getter
-	return e.Msg()
-}
-
-// Msg retourne le message d'erreur.
-//
-// Returns:
-//   - string: le message d'erreur
-func (e CustomError) Msg() string {
-	// Retour du champ msg
-	return e.msg
-}
-
-// GoodCustomError returns a string and a custom error.
+// GoodCustomError returns a string and an error.
 //
 // Returns:
 //   - string: empty string
-//   - error: custom error with test message
+//   - error: nil on success
 func GoodCustomError() (string, error) {
-	// Return custom error
-	return "", CustomError{msg: "test"}
+	// Return nil error
+	return "", nil
 }
 
 // GoodInterface returns an interface and a string (not error).

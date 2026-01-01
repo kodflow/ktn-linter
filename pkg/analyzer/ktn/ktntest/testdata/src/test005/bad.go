@@ -1,5 +1,5 @@
-// Package test007 provides test cases for run functions.
-package test007
+// Package test005 provides test cases for skip detection.
+package test005
 
 // BadFunction est une fonction qui sera testée.
 //
