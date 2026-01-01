@@ -299,7 +299,17 @@ func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isPackageLevel bool)
 	}
 
 	// Report error
-	msg, _ := messages.Get(ruleCodeVar004)
+	msg, ok := messages.Get(ruleCodeVar004)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(
+			ident.Pos(),
+			"%s: nom de variable trop court: %q",
+			ruleCodeVar004,
+			varName,
+		)
+		return
+	}
 	pass.Reportf(
 		ident.Pos(),
 		"%s: %s",

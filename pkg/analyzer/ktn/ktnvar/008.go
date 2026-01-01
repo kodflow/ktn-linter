@@ -195,7 +195,16 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
-	msg, _ := messages.Get(ruleCodeVar008)
+	msg, ok := messages.Get(ruleCodeVar008)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(
+			call.Pos(),
+			"%s: préallouer la slice avec une capacité quand elle est connue",
+			ruleCodeVar008,
+		)
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

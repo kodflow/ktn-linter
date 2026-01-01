@@ -170,7 +170,17 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 			// Vérification si le champ est un mutex
 			if mutexType := getMutexType(pass, field.Type); mutexType != "" {
 				// Rapport d'erreur seulement si le type a des receivers par valeur
-				msg, _ := messages.Get(ruleCodeVar019)
+				msg, ok := messages.Get(ruleCodeVar019)
+				// Defensive: avoid panic if message is missing
+				if !ok {
+					pass.Reportf(
+						field.Pos(),
+						"%s: copie de mutex interdite (%s)",
+						ruleCodeVar019,
+						mutexType,
+					)
+					continue
+				}
 				pass.Reportf(
 					field.Pos(),
 					"%s: %s",

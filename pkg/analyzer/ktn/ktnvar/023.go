@@ -411,7 +411,16 @@ func isSecurityName(name string) bool {
 //   - pos: position to report
 func reportMathRandInSecurity(pass *analysis.Pass, pos token.Pos) {
 	// Récupération du message
-	msg, _ := messages.Get(ruleCodeVar023)
+	msg, ok := messages.Get(ruleCodeVar023)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(
+			pos,
+			"%s: utiliser crypto/rand au lieu de math/rand en contexte sécurité",
+			ruleCodeVar023,
+		)
+		return
+	}
 
 	// Rapport de l'erreur
 	pass.Reportf(
