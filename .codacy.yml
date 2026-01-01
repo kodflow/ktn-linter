@@ -4,7 +4,8 @@
 
 # Exclude patterns - files that should not be analyzed
 exclude_paths:
-  # DevContainer generated files with secrets
+  # DevContainer internal docs and generated files
+  - '.devcontainer/docs/**'
   - '.devcontainer/mcp.json'
 
   # Standard exclusions
