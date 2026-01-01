@@ -142,7 +142,7 @@ EXEMPLE CORRECT:
 	// VAR-008: Slices prealloc (ex-VAR-004)
 	Register(Message{
 		Code:  "KTN-VAR-008",
-		Short: "slice non preallouee. Utiliser make([]T, 0, %d)",
+		Short: "slice non preallouee. Utiliser make([]T, 0, cap)",
 		Verbose: `PROBLEME: La slice n'est pas preallouee malgre capacite connue.
 
 POURQUOI: Sans preallocation, append() realloue a chaque depassement,
@@ -388,7 +388,7 @@ EXEMPLE CORRECT:
 	Register(Message{
 		Code:  "KTN-VAR-020",
 		Short: "preferer nil slice a '%s'. Utiliser: var s []T",
-		Verbose: `PROBLEME: Slice vide declaree avec []T{} ou make([]T, 0).
+		Verbose: `PROBLEME: Slice vide '%s' declaree avec []T{} ou make([]T, 0).
 
 POURQUOI: Une nil slice est fonctionnellement equivalente a une
 slice vide, mais plus efficace (pas d'allocation).

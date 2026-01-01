@@ -251,9 +251,9 @@ Rapport de couverture généré automatiquement.
 | 🟡 `019.go:checkValueReceivers` | 87.5% |
 | 🟡 `019.go:checkValueParams` | 84.6% |
 | 🟡 `019.go:checkAssignments` | 84.6% |
-| 🟡 `019.go:hasMutexInType` | 83.3% |
-| 🟡 `019.go:getMutexTypeFromType` | 86.7% |
-| 🟡 `019.go:isMutexCopy` | 85.7% |
+| 🟡 `019.go:hasMutexInType` | 84.6% |
+| 🟡 `019.go:getMutexTypeFromType` | 87.5% |
+| 🟡 `019.go:isMutexCopy` | 88.9% |
 | 🟡 `020.go:runVar020` | 83.3% |
 | 🟡 `020.go:checkEmptySliceLiteral` | 85.7% |
 | 🔴 `020.go:checkMakeSliceZero` | 76.9% |
@@ -438,4 +438,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-01 22:10:39*
+*Généré le: 2026-01-01 22:29:35*

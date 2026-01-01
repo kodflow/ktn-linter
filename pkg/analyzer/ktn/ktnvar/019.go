@@ -322,13 +322,13 @@ func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
 			// Vérification si on assigne un mutex
 			if i < len(assign.Lhs) {
 				// Vérification de la condition
-				if isMutexCopy(pass, assign.Lhs[i], rhs) {
+				if mutexType := isMutexCopy(pass, assign.Lhs[i], rhs); mutexType != "" {
 					msg, _ := messages.Get(ruleCodeVar019)
 					pass.Reportf(
 						assign.Pos(),
 						"%s: %s",
 						ruleCodeVar019,
-						msg.Format(config.Get().Verbose),
+						msg.Format(config.Get().Verbose, mutexType),
 					)
 				}
 			}
@@ -466,7 +466,8 @@ func hasMutexInType(t types.Type) bool {
 	}
 
 	// Parcours des champs avec itérateur standard
-	for field := range st.Fields() {
+	for i := 0; i < st.NumFields(); i++ {
+		field := st.Field(i)
 		// Vérification de la condition
 		if getMutexTypeName(field.Type()) != "" {
 			// Traitement
@@ -513,7 +514,8 @@ func getMutexTypeFromType(pass *analysis.Pass, expr ast.Expr) string {
 	}
 
 	// Parcours des champs avec itérateur standard
-	for field := range st.Fields() {
+	for i := 0; i < st.NumFields(); i++ {
+		field := st.Field(i)
 		// Vérification de la condition
 		if mutexType := getMutexTypeName(field.Type()); mutexType != "" {
 			// Traitement
@@ -557,24 +559,27 @@ func getTypeName(expr ast.Expr) string {
 //   - rhs: partie droite de l'assignation
 //
 // Returns:
-//   - bool: true si copie de mutex
-func isMutexCopy(pass *analysis.Pass, _lhs, rhs ast.Expr) bool {
+//   - string: type de mutex si copie, "" sinon
+func isMutexCopy(pass *analysis.Pass, _lhs, rhs ast.Expr) string {
 	// Récupération du type RHS
 	tv, ok := pass.TypesInfo.Types[rhs]
 	// Vérification de la condition
 	if !ok {
 		// Traitement
-		return false
+		return ""
 	}
 
 	// Vérification si c'est un mutex
-	if getMutexTypeName(tv.Type) != "" {
+	mutexType := getMutexTypeName(tv.Type)
+	if mutexType != "" {
 		// Vérification que ce n'est pas un pointeur
 		_, isPointer := tv.Type.(*types.Pointer)
-		// Traitement
-		return !isPointer
+		// Retourne le type si pas pointeur
+		if !isPointer {
+			return mutexType
+		}
 	}
 
 	// Traitement
-	return false
+	return ""
 }

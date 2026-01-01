@@ -280,8 +280,12 @@ func Test_checkMakeCalls_nonCallExpr(t *testing.T) {
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
 			pass := &analysis.Pass{
-				Fset: fset,
+				Fset:      fset,
+				TypesInfo: info,
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
