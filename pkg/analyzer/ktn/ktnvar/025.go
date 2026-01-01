@@ -366,6 +366,12 @@ func isZeroConversion(pass *analysis.Pass, callExpr *ast.CallExpr) bool {
 		return false
 	}
 
+	// Guard against nil type info
+	if pass.TypesInfo == nil || pass.TypesInfo.Uses == nil {
+		// No type information available to confirm conversion
+		return false
+	}
+
 	// Vérification si c'est un type basique
 	if obj := pass.TypesInfo.Uses[funIdent]; obj != nil {
 		// Vérification du type de l'objet

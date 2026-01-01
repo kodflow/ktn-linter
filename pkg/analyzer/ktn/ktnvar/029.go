@@ -267,6 +267,11 @@ func extractSliceName(expr ast.Expr) string {
 // Returns:
 //   - bool: true if pattern found
 func hasGrowPatternInBody(body *ast.BlockStmt, sliceName string) bool {
+	// Defensive: malformed ASTs may have a nil body
+	if body == nil {
+		return false
+	}
+
 	// Track pattern components
 	info := &growPatternInfo{
 		sliceName: sliceName,

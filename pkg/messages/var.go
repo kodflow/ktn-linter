@@ -409,7 +409,7 @@ EXEMPLE CORRECT:
 	Register(Message{
 		Code:  "KTN-VAR-021",
 		Short: "type '%s': receiver incohérent. Attendu: %s",
-		Verbose: `PROBLEME: Le type '%s' a des receivers de types differents.
+		Verbose: `PROBLEME: Le type '%s' a des receivers de types differents. Attendu: %s
 
 POURQUOI: Toutes les methodes d'un type doivent utiliser
 le meme type de receiver (tous pointeur ou tous valeur).
