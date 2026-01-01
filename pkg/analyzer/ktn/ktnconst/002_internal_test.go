@@ -191,6 +191,84 @@ func Test_collectScatteredViolations(t *testing.T) {
 	}
 }
 
+// Test_isScatteredViolation tests the private isScatteredViolation function.
+func Test_isScatteredViolation(t *testing.T) {
+	tests := []struct {
+		name             string
+		constPos         token.Pos
+		firstConstPos    token.Pos
+		firstNonConstPos token.Pos
+		decls            *fileDeclarations
+		expected         bool
+	}{
+		{
+			name:             "NoPos returns false",
+			constPos:         token.NoPos,
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         false,
+		},
+		{
+			name:             "first const returns false",
+			constPos:         token.Pos(100),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         false,
+		},
+		{
+			name:             "const before first non-const returns false",
+			constPos:         token.Pos(150),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         false,
+		},
+		{
+			name:             "const after first non-const is violation",
+			constPos:         token.Pos(300),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls:            &fileDeclarations{typeNames: make(map[string]token.Pos), constTypes: make(map[token.Pos]string)},
+			expected:         true,
+		},
+		{
+			name:             "iota pattern with custom type returns false",
+			constPos:         token.Pos(300),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls: &fileDeclarations{
+				typeNames:  map[string]token.Pos{"Status": token.Pos(150)},
+				constTypes: map[token.Pos]string{token.Pos(300): "Status"},
+			},
+			expected: false,
+		},
+		{
+			name:             "const with unknown type is violation",
+			constPos:         token.Pos(300),
+			firstConstPos:    token.Pos(100),
+			firstNonConstPos: token.Pos(200),
+			decls: &fileDeclarations{
+				typeNames:  map[string]token.Pos{"Status": token.Pos(150)},
+				constTypes: map[token.Pos]string{token.Pos(300): "UnknownType"},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := isScatteredViolation(tt.constPos, tt.firstConstPos, tt.firstNonConstPos, tt.decls)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isScatteredViolation() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
 // Test_minPos tests the private minPos function.
 func Test_minPos(t *testing.T) {
 	tests := []struct {

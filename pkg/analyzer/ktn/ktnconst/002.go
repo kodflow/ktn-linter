@@ -250,39 +250,62 @@ func collectScatteredViolations(decls *fileDeclarations, violations map[token.Po
 
 	// Defensive: if no valid const position, nothing to report
 	if firstConstPos == token.NoPos {
+		// Return early
 		return
 	}
 
 	// Check each const block except the first one
 	for _, constPos := range decls.constDecls {
-		// Skip invalid positions
-		if constPos == token.NoPos {
-			continue
+		// Check if this position is a scattered violation
+		if isScatteredViolation(constPos, firstConstPos, firstNonConstPos, decls) {
+			// Add to violations
+			violations[constPos] = true
 		}
-
-		// Skip the first const block
-		if constPos == firstConstPos {
-			continue
-		}
-
-		// Skip if this const is before the first var/type/func
-		if constPos < firstNonConstPos {
-			// Const is at the top, not scattered
-			continue
-		}
-
-		// Skip if this const uses a custom type (iota pattern)
-		if usedType, hasType := decls.constTypes[constPos]; hasType {
-			// Check if the type is defined in this file
-			if _, typeExists := decls.typeNames[usedType]; typeExists {
-				// Valid iota pattern - skip
-				continue
-			}
-		}
-
-		// Add to violations
-		violations[constPos] = true
 	}
+}
+
+// isScatteredViolation checks if a const at the given position is scattered.
+// Returns true if the const is after the first non-const declaration
+// and doesn't use a custom type (iota pattern exception).
+//
+// Params:
+//   - constPos: position of the const to check
+//   - firstConstPos: position of the first const block
+//   - firstNonConstPos: position of the first non-const declaration
+//   - decls: collected declarations for type lookup
+//
+// Returns:
+//   - bool: true if this const is a scattered violation
+func isScatteredViolation(constPos, firstConstPos, firstNonConstPos token.Pos, decls *fileDeclarations) bool {
+	// Skip invalid positions
+	if constPos == token.NoPos {
+		// Invalid position
+		return false
+	}
+
+	// Skip the first const block
+	if constPos == firstConstPos {
+		// First const is never scattered
+		return false
+	}
+
+	// Skip if this const is before the first var/type/func
+	if constPos < firstNonConstPos {
+		// Const is at the top, not scattered
+		return false
+	}
+
+	// Check if this const uses a custom type (iota pattern)
+	if usedType, hasType := decls.constTypes[constPos]; hasType {
+		// Check if the type is defined in this file
+		if _, typeExists := decls.typeNames[usedType]; typeExists {
+			// Valid iota pattern - not a violation
+			return false
+		}
+	}
+
+	// This const is scattered
+	return true
 }
 
 // minPos returns the minimum position from a slice.
