@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 80.4% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 80.2% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
@@ -189,7 +189,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 80.4%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 80.2%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -203,7 +203,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `004.go:checkVar004Node` | 66.7% |
 | 🟡 `004.go:checkVar004AssignStmt` | 85.7% |
 | ⚫ `004.go:checkVar004DeclStmt` | 0.0% |
-| 🔴 `004.go:checkVar004Name` | 77.8% |
+| 🔴 `004.go:checkVar004Name` | 71.4% |
 | 🟡 `005.go:runVar005` | 85.7% |
 | 🔴 `005.go:checkVar005PackageLevel` | 78.6% |
 | 🔴 `005.go:checkVar005LocalVars` | 20.0% |
@@ -249,8 +249,8 @@ Rapport de couverture généré automatiquement.
 | 🟢 `019.go:collectTypesWithValueReceivers` | 92.9% |
 | 🔴 `019.go:checkStructsWithMutex` | 75.0% |
 | 🔴 `019.go:checkValueReceivers` | 78.9% |
-| 🟡 `019.go:checkValueParams` | 84.6% |
-| 🟡 `019.go:checkAssignments` | 84.6% |
+| 🔴 `019.go:checkValueParams` | 75.0% |
+| 🔴 `019.go:checkAssignments` | 75.0% |
 | 🟡 `019.go:hasMutexInType` | 84.6% |
 | 🟡 `019.go:getMutexTypeFromType` | 87.5% |
 | 🟡 `019.go:isMutexCopy` | 88.9% |
@@ -442,4 +442,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-01 23:13:03*
+*Généré le: 2026-01-01 23:25:48*

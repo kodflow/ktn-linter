@@ -276,7 +276,17 @@ func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isPackageLevel bool)
 	// Package-level: require min 2 chars always
 	if isPackageLevel {
 		// Report error for package-level short names
-		msg, _ := messages.Get(ruleCodeVar004)
+		msg, ok := messages.Get(ruleCodeVar004)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(
+				ident.Pos(),
+				"%s: nom de variable trop court: %q",
+				ruleCodeVar004,
+				varName,
+			)
+			return
+		}
 		pass.Reportf(
 			ident.Pos(),
 			"%s: %s",
