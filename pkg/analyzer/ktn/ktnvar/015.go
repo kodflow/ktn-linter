@@ -53,8 +53,13 @@ func runVar015(pass *analysis.Pass) (any, error) {
 	// Récupérer le seuil configuré
 	maxConversions := cfg.GetThreshold(ruleCodeVar015, defaultMaxAllowedConversions)
 
-	// Récupération de l'inspecteur AST
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
 
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{

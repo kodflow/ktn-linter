@@ -52,7 +52,13 @@ func runVar013(pass *analysis.Pass) (any, error) {
 	// Get verbose setting to pass down (avoid global dependency in helpers)
 	verbose := cfg.Verbose
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
 
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),

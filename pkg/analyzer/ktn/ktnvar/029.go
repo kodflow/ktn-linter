@@ -61,7 +61,12 @@ func runVar029(pass *analysis.Pass) (any, error) {
 	}
 
 	// Get AST inspector
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
 
 	// Node types to analyze
 	nodeFilter := []ast.Node{
@@ -77,9 +82,9 @@ func runVar029(pass *analysis.Pass) (any, error) {
 		}
 
 		// Cast to if statement
-		ifStmt, ok := n.(*ast.IfStmt)
+		ifStmt, okIf := n.(*ast.IfStmt)
 		// Check if valid
-		if !ok {
+		if !okIf {
 			// Not an if statement
 			return
 		}

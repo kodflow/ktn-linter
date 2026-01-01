@@ -52,7 +52,12 @@ func runVar037(pass *analysis.Pass) (any, error) {
 	}
 
 	// Get AST inspector
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
 
 	// Check for manual map key/value collection patterns
 	checkMapCollectionPatterns(pass, insp, cfg)
