@@ -86,6 +86,8 @@ OUTPUT FORMAT (EXACT)
 [pr_code_suggestions]
 # Suggestions should be few but high quality; patches only for P0.
 num_code_suggestions = 6
+# Increase threshold to reduce false positives (default is 5)
+suggestions_score_threshold = 5
 
 extra_instructions = """
 ROLE
@@ -95,6 +97,14 @@ HARD LIMITS
 - Focus ONLY on P0 issues (BLOCKERS). If it's not a blocker, do not propose a patch.
 - Prefer minimal diffs. Avoid refactors, renames, formatting-only changes, or "cleanup".
 - Do NOT introduce new dependencies unless strictly necessary to fix the blocker; if you do, justify briefly.
+
+FALSE POSITIVE PREVENTION
+- Do NOT signal "Codacy config parse failure" or config parsing errors unless the diff shows an explicit, verifiable syntax error.
+- NEVER produce empty suggestion blocks (no empty ```suggestion``` content).
+- For configuration files (yaml/toml/json), only suggest changes if they are blocking/critical AND justified by the modified content.
+- CLAUDE.md files are intentionally allowed in this repository - they provide AI context per directory.
+- Testdata files (in **/testdata/**) are sample code for testing linter rules, not production code.
+- Do NOT suggest changes to testdata unless there's a concrete compilation error or the file doesn't match its intended purpose (good.go = 0 errors, bad.go = only the rule being tested).
 
 PROJECT-SPECIFIC CONTEXT (Go 1.25+)
 - math.MaxInt, math.MinInt are available since Go 1.17 - use them directly
