@@ -282,6 +282,8 @@ func Test_checkMakeCalls_nonCallExpr(t *testing.T) {
 
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			pass := &analysis.Pass{
 				Fset:      fset,
@@ -461,6 +463,8 @@ func Test_checkMakeCall_notSlice(t *testing.T) {
 			conf := types.Config{}
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 
@@ -497,7 +501,11 @@ func Test_checkCompositeLit_nonEmptySlice(t *testing.T) {
 			ctx := &litCheckContext{
 				pass: &analysis.Pass{
 					Report:    func(_d analysis.Diagnostic) {},
-					TypesInfo: &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)},
+					TypesInfo: &types.Info{
+						Types: make(map[ast.Expr]types.TypeAndValue),
+						Uses:  make(map[*ast.Ident]types.Object),
+						Defs:  make(map[*ast.Ident]types.Object),
+					},
 				},
 				appendVars: make(map[string]bool),
 			}
@@ -531,7 +539,11 @@ func Test_checkCompositeLit_invalidIndex(t *testing.T) {
 			ctx := &litCheckContext{
 				pass: &analysis.Pass{
 					Report:    func(_d analysis.Diagnostic) {},
-					TypesInfo: &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)},
+					TypesInfo: &types.Info{
+						Types: make(map[ast.Expr]types.TypeAndValue),
+						Uses:  make(map[*ast.Ident]types.Object),
+						Defs:  make(map[*ast.Ident]types.Object),
+					},
 				},
 				appendVars: map[string]bool{"x": true},
 			}
@@ -577,6 +589,8 @@ func Test_checkCompositeLit_notSliceType(t *testing.T) {
 			conf := types.Config{}
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 
@@ -780,6 +794,8 @@ func Test_checkCompositeLit_notIdent(t *testing.T) {
 			conf := types.Config{}
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 
@@ -837,6 +853,8 @@ func Test_checkCompositeLit_notUsedWithAppend(t *testing.T) {
 			conf := types.Config{}
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 
@@ -888,6 +906,8 @@ func Test_checkCompositeLit_inReturnStmt(t *testing.T) {
 			conf := types.Config{}
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 
@@ -946,6 +966,8 @@ func Test_checkCompositeLit_inStructLiteral(t *testing.T) {
 			conf := types.Config{}
 			info := &types.Info{
 				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
 			}
 			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
 

@@ -116,7 +116,11 @@ func checkVar004PackageLevel(
 
 			// Check each variable specification
 			for _, spec := range genDecl.Specs {
-				valueSpec := spec.(*ast.ValueSpec)
+				valueSpec, ok := spec.(*ast.ValueSpec)
+				// Defensive: only handle value specs
+				if !ok {
+					continue
+				}
 				checkVar004Spec(pass, valueSpec, true)
 			}
 		}
@@ -226,7 +230,11 @@ func checkVar004DeclStmt(pass *analysis.Pass, stmt *ast.DeclStmt) {
 
 	// Check each variable specification
 	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
+		valueSpec, ok := spec.(*ast.ValueSpec)
+		// Defensive: only handle value specs
+		if !ok {
+			continue
+		}
 		checkVar004Spec(pass, valueSpec, false)
 	}
 }

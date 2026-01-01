@@ -441,7 +441,13 @@ func analyzeCopyForGrow(exprStmt *ast.ExprStmt, info *growPatternInfo) {
 //   - cfg: configuration
 func reportGrowPattern(pass *analysis.Pass, ifStmt *ast.IfStmt, cfg *config.Config) {
 	// Get the message
-	msg, _ := messages.Get(ruleCodeVar029)
+	msg, ok := messages.Get(ruleCodeVar029)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(ifStmt.Pos(), "%s: utiliser slices.Grow() au lieu du pattern manuel",
+			ruleCodeVar029)
+		return
+	}
 	// Report the issue
 	pass.Reportf(
 		ifStmt.Pos(),

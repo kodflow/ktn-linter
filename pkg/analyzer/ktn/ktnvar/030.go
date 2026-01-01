@@ -105,7 +105,13 @@ func checkAppendNilPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *
 		}
 
 		// Report the issue
-		msg, _ := messages.Get(ruleCodeVar030)
+		msg, ok := messages.Get(ruleCodeVar030)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(call.Pos(), "%s: utiliser slices.Clone() au lieu de %s",
+				ruleCodeVar030, "append([]T(nil), s...)")
+			return
+		}
 		pass.Reportf(
 			call.Pos(),
 			"%s: %s",
@@ -430,7 +436,13 @@ func checkCopyCall(pass *analysis.Pass, exprStmt *ast.ExprStmt, makeInfos map[st
 	}
 
 	// Report the issue
-	msg, _ := messages.Get(ruleCodeVar030)
+	msg, ok := messages.Get(ruleCodeVar030)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: utiliser slices.Clone() au lieu de %s",
+			ruleCodeVar030, "make+copy")
+		return
+	}
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

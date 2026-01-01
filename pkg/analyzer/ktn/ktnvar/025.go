@@ -310,17 +310,17 @@ func isZeroValue(pass *analysis.Pass, expr ast.Expr) bool {
 	switch e := expr.(type) {
 	// Littéral basique
 	case *ast.BasicLit:
-		// Zéro numérique
-		return e.Value == "0" || e.Value == "0.0"
-	// Identifiant (false, nil, "")
+		// Zéro numérique ou chaîne vide
+		return e.Value == "0" || e.Value == "0.0" || e.Value == `""` || e.Value == "``"
+	// Identifiant (false, nil)
 	case *ast.Ident:
-		// nil, false ou string vide
+		// nil ou false
 		return e.Name == "nil" || e.Name == "false"
 	// Littéral composite vide
 	case *ast.CompositeLit:
 		// Struct ou slice vide
 		return len(e.Elts) == 0
-	// Littéral chaîne vide
+	// Conversion de type
 	case *ast.CallExpr:
 		// Conversion vers type basique avec zéro
 		return isZeroConversion(pass, e)
@@ -344,21 +344,7 @@ func isZeroConversion(pass *analysis.Pass, callExpr *ast.CallExpr) bool {
 		return false
 	}
 
-	// Vérification de l'argument
-	arg := callExpr.Args[0]
-	// L'argument doit être une valeur zéro
-	switch a := arg.(type) {
-	// Littéral basique
-	case *ast.BasicLit:
-		// Zéro numérique ou chaîne vide
-		return a.Value == "0" || a.Value == `""` || a.Value == "``"
-	// Identifiant
-	case *ast.Ident:
-		// nil ou false
-		return a.Name == "nil" || a.Name == "false"
-	}
-
-	// Vérification du type de la fonction
+	// Le callee doit être un identifiant (type cible)
 	funIdent, ok := callExpr.Fun.(*ast.Ident)
 	// Doit être un identifiant de type
 	if !ok {
@@ -372,17 +358,21 @@ func isZeroConversion(pass *analysis.Pass, callExpr *ast.CallExpr) bool {
 		return false
 	}
 
-	// Vérification si c'est un type basique
-	if obj := pass.TypesInfo.Uses[funIdent]; obj != nil {
-		// Vérification du type de l'objet
-		if _, isType := obj.(*types.TypeName); isType {
-			// Conversion de type avec argument zéro
-			return isZeroValue(pass, arg)
-		}
+	// Vérifier que c'est bien une conversion de type (et pas un appel de fonction)
+	obj := pass.TypesInfo.Uses[funIdent]
+	// Doit être un type
+	if obj == nil {
+		// Type information missing
+		return false
+	}
+	// Vérification du type de l'objet
+	if _, isType := obj.(*types.TypeName); !isType {
+		// Not a type conversion
+		return false
 	}
 
-	// Pas une conversion vers zéro
-	return false
+	// Maintenant seulement: l'argument doit être une valeur zéro
+	return isZeroValue(pass, callExpr.Args[0])
 }
 
 // getRangeCollectionIdent récupère l'identifiant d'une collection rangée.
@@ -415,7 +405,13 @@ func getRangeCollectionIdent(expr ast.Expr) *ast.Ident {
 //   - node: noeud à signaler
 //   - collectionType: type de collection (map ou slice)
 func reportClearPattern(pass *analysis.Pass, node ast.Node, collectionType string) {
-	msg, _ := messages.Get(ruleCodeVar025)
+	msg, ok := messages.Get(ruleCodeVar025)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(node.Pos(), "%s: utiliser clear() pour vider une %s",
+			ruleCodeVar025, collectionType)
+		return
+	}
 	pass.Reportf(
 		node.Pos(),
 		"%s: %s",

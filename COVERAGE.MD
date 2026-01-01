@@ -15,7 +15,7 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **90.0%** |
+| 🟡 | **TOTAL (Global)** | **89.8%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 86.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 81.3% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 80.9% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
@@ -189,7 +189,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 81.3%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 80.9%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -198,7 +198,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `003.go:runVar003` | 80.0% |
 | 🟡 `003.go:checkVar003Names` | 85.7% |
 | 🟡 `004.go:runVar004` | 85.7% |
-| 🟢 `004.go:checkVar004PackageLevel` | 92.9% |
+| 🟡 `004.go:checkVar004PackageLevel` | 87.5% |
 | 🟡 `004.go:checkVar004LocalVars` | 80.0% |
 | 🔴 `004.go:checkVar004Node` | 66.7% |
 | 🟡 `004.go:checkVar004AssignStmt` | 85.7% |
@@ -288,6 +288,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `025.go:isZeroValue` | 50.0% |
 | ⚫ `025.go:isZeroConversion` | 0.0% |
 | 🔴 `025.go:getRangeCollectionIdent` | 50.0% |
+| 🔴 `025.go:reportClearPattern` | 60.0% |
 | 🟡 `026.go:runVar026` | 83.3% |
 | 🔴 `026.go:checkMathMinMax` | 76.9% |
 | 🔴 `026.go:checkIfMinMaxPattern` | 50.0% |
@@ -309,19 +310,21 @@ Rapport de couverture généré automatiquement.
 | 🔴 `029.go:extractSliceFromCapCall` | 66.7% |
 | 🔴 `029.go:extractSliceFromLenCall` | 66.7% |
 | 🔴 `029.go:extractSliceName` | 75.0% |
+| 🟡 `029.go:hasGrowPatternInBody` | 83.3% |
 | 🟡 `029.go:analyzeAssignForGrow` | 83.3% |
 | 🟡 `029.go:isMakeSliceCall` | 80.0% |
 | 🔴 `029.go:checkSliceReassign` | 75.0% |
 | 🔴 `029.go:analyzeCopyForGrow` | 72.7% |
+| 🔴 `029.go:reportGrowPattern` | 60.0% |
 | 🟡 `030.go:runVar030` | 85.7% |
-| 🟡 `030.go:checkAppendNilPattern` | 81.8% |
+| 🔴 `030.go:checkAppendNilPattern` | 71.4% |
 | 🟡 `030.go:isAppendNilPattern` | 87.5% |
 | 🟡 `030.go:isNilSliceConversion` | 80.0% |
 | 🔴 `030.go:checkMakeCopyPattern` | 75.0% |
 | 🔴 `030.go:processMakeAssignment` | 78.9% |
 | 🔴 `030.go:extractLenSource` | 66.7% |
 | 🔴 `030.go:exprToString` | 40.0% |
-| 🔴 `030.go:checkCopyCall` | 68.2% |
+| 🔴 `030.go:checkCopyCall` | 64.0% |
 | 🔴 `031.go:runVar031` | 75.0% |
 | 🟢 `031.go:extractMakeMapAssign` | 92.9% |
 | 🟡 `031.go:isMakeMapCallExpr` | 85.7% |
@@ -438,4 +441,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-01 22:29:35*
+*Généré le: 2026-01-01 22:57:11*
