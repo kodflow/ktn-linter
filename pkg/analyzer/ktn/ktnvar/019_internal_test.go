@@ -392,6 +392,11 @@ func Test_runVar019_disabled(t *testing.T) {
 
 			pass := &analysis.Pass{
 				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+					Uses:  make(map[*ast.Ident]types.Object),
+					Defs:  make(map[*ast.Ident]types.Object),
+				},
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},
@@ -452,6 +457,11 @@ func Test_runVar019_fileExcluded(t *testing.T) {
 
 			pass := &analysis.Pass{
 				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+					Uses:  make(map[*ast.Ident]types.Object),
+					Defs:  make(map[*ast.Ident]types.Object),
+				},
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},

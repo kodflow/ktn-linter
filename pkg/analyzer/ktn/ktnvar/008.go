@@ -342,7 +342,16 @@ func checkCompositeLit(
 	}
 
 	// Signalement de l'erreur
-	msg, _ := messages.Get(ruleCodeVar008)
+	msg, ok := messages.Get(ruleCodeVar008)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		ctx.pass.Reportf(
+			lit.Pos(),
+			"%s: préallouer la slice avec une capacité quand elle est connue",
+			ruleCodeVar008,
+		)
+		return
+	}
 	ctx.pass.Reportf(
 		lit.Pos(),
 		"%s: %s",

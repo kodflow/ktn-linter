@@ -236,7 +236,17 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 			if hasMutex(pass, recv.Type) {
 				mutexType := getMutexTypeFromType(pass, recv.Type)
 
-				msg, _ := messages.Get(ruleCodeVar019)
+				msg, ok := messages.Get(ruleCodeVar019)
+				// Defensive: avoid panic if message is missing
+				if !ok {
+					pass.Reportf(
+						recv.Pos(),
+						"%s: copie de mutex interdite (%s)",
+						ruleCodeVar019,
+						mutexType,
+					)
+					return
+				}
 				pass.Reportf(
 					recv.Pos(),
 					"%s: %s",

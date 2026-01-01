@@ -15,7 +15,7 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **89.7%** |
+| 🟡 | **TOTAL (Global)** | **89.6%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 86.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 80.7% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 80.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
@@ -189,7 +189,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 80.7%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 80.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -221,7 +221,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `008.go:checkMakeCalls` | 88.9% |
 | 🔴 `008.go:checkMakeCall` | 76.9% |
 | 🟡 `008.go:checkEmptySliceLiterals` | 88.2% |
-| 🟡 `008.go:checkCompositeLit` | 88.2% |
+| 🔴 `008.go:checkCompositeLit` | 75.0% |
 | 🟡 `009.go:checkMakeCallVar008` | 83.3% |
 | 🟡 `009.go:runVar009` | 90.9% |
 | 🟡 `010.go:reportMissingGrow` | 85.7% |
@@ -241,14 +241,14 @@ Rapport de couverture généré automatiquement.
 | 🟡 `015.go:runVar015` | 90.9% |
 | 🟡 `015.go:checkFuncForRepeatedConversions` | 80.0% |
 | 🟡 `016.go:runVar016` | 88.9% |
-| 🟡 `017.go:runVar017` | 88.9% |
+| 🟡 `017.go:runVar017` | 81.0% |
 | 🟢 `018.go:runVar018` | 92.9% |
 | 🟡 `018.go:shouldUseArray` | 90.0% |
 | 🟡 `018.go:getConstantSize` | 83.3% |
 | 🔴 `018.go:isTotalSizeSmall` | 71.4% |
 | 🟢 `019.go:collectTypesWithValueReceivers` | 92.9% |
 | 🔴 `019.go:checkStructsWithMutex` | 75.0% |
-| 🟡 `019.go:checkValueReceivers` | 87.5% |
+| 🔴 `019.go:checkValueReceivers` | 78.9% |
 | 🟡 `019.go:checkValueParams` | 84.6% |
 | 🟡 `019.go:checkAssignments` | 84.6% |
 | 🟡 `019.go:hasMutexInType` | 84.6% |
@@ -442,4 +442,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-01 23:06:38*
+*Généré le: 2026-01-01 23:13:03*

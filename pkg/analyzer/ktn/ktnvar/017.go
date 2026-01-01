@@ -77,7 +77,16 @@ func runVar017(pass *analysis.Pass) (any, error) {
 		}
 
 		// Signaler l'erreur
-		msg, _ := messages.Get(ruleCodeVar017)
+		msg, ok := messages.Get(ruleCodeVar017)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(
+				callExpr.Pos(),
+				"%s: préallouer map avec une capacité quand elle est connue",
+				ruleCodeVar017,
+			)
+			return
+		}
 		pass.Reportf(
 			callExpr.Pos(),
 			"%s: %s",

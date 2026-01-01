@@ -342,6 +342,11 @@ func Test_checkMakeCalls_fileExcluded(t *testing.T) {
 
 			pass := &analysis.Pass{
 				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+					Uses:  make(map[*ast.Ident]types.Object),
+					Defs:  make(map[*ast.Ident]types.Object),
+				},
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
