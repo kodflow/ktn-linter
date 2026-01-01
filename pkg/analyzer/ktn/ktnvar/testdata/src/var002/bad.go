@@ -1,41 +1,18 @@
-// Package var002 contains test cases for KTN rules.
-package var002
+// Package var014 contains test cases for KTN rules.
+package var014
 
-// Bad: Variables without explicit type (violates KTN-VAR-002)
-// Note: Zero-values (type without init) are now valid
-
-const (
-	// MaxRetries defines maximum retries
-	MaxRetries int = 3
-	// PortValue is port value
-	PortValue int = 8080
-	// RatioValue is ratio value
-	RatioValue float64 = 1.5
+// Vars come first (good placement)
+var (
+	// badCounter est un compteur global
+	badCounter int = 0
+	// badStatus stocke le statut actuel
+	badStatus string = "idle"
 )
 
-// Cas: Pas de type explicite = ERREUR
-var (
-	// badRetries has no explicit type
-	badRetries = MaxRetries // want "KTN-VAR-002"
-
-	// badConfig has no explicit type
-	badConfig = "config" // want "KTN-VAR-002"
-
-	// badPort has no explicit type
-	badPort = PortValue // want "KTN-VAR-002"
-
-	// badHost has no explicit type
-	badHost = "localhost" // want "KTN-VAR-002"
-
-	// badEnabled has no explicit type
-	badEnabled = true // want "KTN-VAR-002"
-
-	// badRatio has no explicit type
-	badRatio = RatioValue // want "KTN-VAR-002"
-
-	// badSlice has no explicit type
-	badSlice = []string{"a", "b"} // want "KTN-VAR-002"
-
-	// badMap has no explicit type
-	badMap = map[string]int{"x": 1} // want "KTN-VAR-002"
+// Const block AFTER vars (violates VAR-006 and CONST-002 - inévitable)
+const (
+	// BadMaxAttempts is placed after var
+	BadMaxAttempts int = 5
+	// BadDefaultPort is also after var
+	BadDefaultPort int = 8080
 )

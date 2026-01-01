@@ -17,23 +17,23 @@ func TestVar009(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Large structs (>64 bytes) passed by value",
+			name:           "Make calls with length > 0",
 			analyzer:       ktnvar.Analyzer009,
 			testdataDir:    "var009",
-			expectedErrors: 5,
+			expectedErrors: 8,
 		},
 		{
-			name:           "Valid pointer usage for large structs",
+			name:           "Valid make calls with zero length",
 			analyzer:       ktnvar.Analyzer009,
 			testdataDir:    "var009",
-			expectedErrors: 5,
+			expectedErrors: 8,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 4 grandes structures passées par valeur en paramètres
+			// 8 make calls with length > 0 (VAR-016 cases excluded)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

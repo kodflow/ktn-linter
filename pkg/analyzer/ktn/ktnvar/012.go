@@ -15,30 +15,23 @@ import (
 const (
 	// ruleCodeVar012 is the rule code for this analyzer
 	ruleCodeVar012 string = "KTN-VAR-012"
-	// initialConversionsCap est la capacité initiale pour la map de conversions
-	initialConversionsCap int = 10
-	// defaultMaxAllowedConversions est le nombre maximum de conversions tolérées
-	defaultMaxAllowedConversions int = 2
 )
 
-// Analyzer012 détecte les conversions string() répétées.
-//
-// Les conversions string([]byte) répétées créent des allocations inutiles.
-// Il vaut mieux convertir une seule fois et réutiliser la variable.
+// Analyzer012 checks for slice/map allocations inside loops
 var Analyzer012 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar012",
-	Doc:      "KTN-VAR-012: Vérifie les conversions string() répétées",
+	Doc:      "KTN-VAR-012: Évite les allocations de slices/maps dans les boucles chaudes",
 	Run:      runVar012,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runVar012 exécute l'analyse de détection des conversions répétées.
+// runVar012 exécute l'analyse KTN-VAR-012.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - interface{}: toujours nil
+//   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar012(pass *analysis.Pass) (any, error) {
 	// Récupération de la configuration
@@ -50,228 +43,188 @@ func runVar012(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Récupérer le seuil configuré
-	maxConversions := cfg.GetThreshold(ruleCodeVar012, defaultMaxAllowedConversions)
-
-	// Récupération de l'inspecteur AST
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+		(*ast.ForStmt)(nil),
+		(*ast.RangeStmt)(nil),
 	}
 
-	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar012, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
+		// Récupération du corps de la boucle
+		var body *ast.BlockStmt
+		// Vérification du type de boucle
+		switch loop := n.(type) {
+		// Cas d'une boucle for classique
+		case *ast.ForStmt:
+			// Boucle for classique
+			body = loop.Body
+		// Cas d'une boucle range
+		case *ast.RangeStmt:
+			// Boucle range
+			body = loop.Body
+		// Cas par défaut
+		default:
+			// Type de boucle non supporté
+			return
+		}
 
-		// Vérification des conversions dans la fonction
-		checkFuncForRepeatedConversions(pass, n, maxConversions)
+		// Parcours des instructions du corps
+		checkLoopBodyForAlloc(pass, body)
 	})
 
-	// Traitement
+	// Retour de la fonction
 	return nil, nil
 }
 
-// checkFuncForRepeatedConversions vérifie une fonction entière.
+// checkLoopBodyForAlloc vérifie les allocations dans le corps d'une boucle.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - n: nœud AST à analyser
-//   - maxConversions: nombre max de conversions autorisées
-func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node, maxConversions int) {
-	// Cast en fonction
-	funcDecl, ok := n.(*ast.FuncDecl)
-	// Vérification de la condition
-	if !ok || funcDecl.Body == nil {
-		// Traitement
+//   - body: corps de la boucle à vérifier
+func checkLoopBodyForAlloc(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Vérification du corps de la boucle
+	if body == nil {
+		// Corps de boucle vide
 		return
 	}
 
-	// Analyse des boucles
-	checkLoopsForStringConversion(pass, funcDecl.Body)
-
-	// Analyse des conversions multiples
-	checkMultipleConversions(pass, funcDecl.Body, maxConversions)
+	// Parcours des instructions
+	for _, stmt := range body.List {
+		checkStmtForAlloc(pass, stmt)
+	}
 }
 
-// checkLoopsForStringConversion détecte string() dans les boucles.
+// checkStmtForAlloc vérifie une instruction pour détecter allocations.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkLoopsForStringConversion(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Parcours de tous les statements
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Vérification des boucles
-		loop := extractLoop(n)
-		// Vérification de la condition
-		if loop == nil {
-			// Traitement
-			return true
-		}
+//   - stmt: instruction à vérifier
+func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
+	// Vérification du type d'instruction
+	switch s := stmt.(type) {
+	// Cas d'une affectation
+	case *ast.AssignStmt:
+		// Vérification des affectations
+		checkAssignForAlloc(pass, s)
+	// Cas d'une déclaration
+	case *ast.DeclStmt:
+		// Vérification des déclarations
+		checkDeclForAlloc(pass, s)
+		// Note: les boucles imbriquées sont déjà gérées par Preorder
+	}
+}
 
-		// Vérification des conversions dans la boucle
-		if hasStringConversion(loop) {
-			// Rapport d'erreur
+// checkAssignForAlloc vérifie une affectation pour détecter allocations.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - assign: affectation à vérifier
+func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
+	// Parcours des valeurs affectées
+	for _, rhs := range assign.Rhs {
+		// Vérification si allocation de slice ou map
+		if isSliceOrMapAlloc(rhs) {
+			// Allocation de slice/map détectée
 			msg, _ := messages.Get(ruleCodeVar012)
 			pass.Reportf(
-				loop.Pos(),
+				rhs.Pos(),
 				"%s: %s",
 				ruleCodeVar012,
 				msg.Format(config.Get().Verbose),
 			)
 		}
-
-		// Traitement
-		return true
-	})
-}
-
-// extractLoop extrait le corps d'une boucle.
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - ast.Node: corps de la boucle ou nil
-func extractLoop(n ast.Node) ast.Node {
-	// Switch sur le type de nœud
-	switch loop := n.(type) {
-	// Traitement
-	case *ast.ForStmt:
-		// Traitement
-		return loop.Body
-	// Traitement
-	case *ast.RangeStmt:
-		// Traitement
-		return loop.Body
-	// Traitement
-	default:
-		// Traitement
-		return nil
 	}
 }
 
-// hasStringConversion vérifie si un nœud contient string().
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si conversion trouvée
-func hasStringConversion(n ast.Node) bool {
-	// Recherche de conversions
-	found := false
-
-	ast.Inspect(n, func(node ast.Node) bool {
-		// Vérification des appels de fonction
-		if isStringConversion(node) {
-			found = true
-			// Traitement
-			return false
-		}
-		// Traitement
-		return true
-	})
-
-	// Traitement
-	return found
-}
-
-// isStringConversion vérifie si un nœud est une conversion string().
-//
-// Params:
-//   - n: nœud AST
-//
-// Returns:
-//   - bool: true si c'est une conversion string()
-func isStringConversion(n ast.Node) bool {
-	// Cast en appel
-	call, ok := n.(*ast.CallExpr)
-	// Vérification de la condition
-	if !ok {
-		// Traitement
-		return false
-	}
-
-	// Vérification du type de fonction
-	ident, ok := call.Fun.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Traitement
-		return false
-	}
-
-	// Vérification que c'est "string"
-	if ident.Name != "string" {
-		// Traitement
-		return false
-	}
-
-	// Vérification qu'il y a exactement 1 argument
-	if len(call.Args) != 1 {
-		// Traitement
-		return false
-	}
-
-	// Vérification que l'argument est un []byte
-	return true
-}
-
-// checkMultipleConversions détecte les conversions multiples.
+// checkDeclForAlloc vérifie une déclaration pour détecter allocations.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la fonction
-//   - maxConversions: nombre max de conversions autorisées
-func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt, maxConversions int) {
-	// Map pour compter les conversions par variable
-	conversions := make(map[string]int, initialConversionsCap)
-	var firstPos map[string]ast.Node = make(map[string]ast.Node, initialConversionsCap)
+//   - decl: déclaration à vérifier
+func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
+	genDecl, ok := decl.Decl.(*ast.GenDecl)
+	// Vérification du type de déclaration
+	if !ok {
+		// Pas une déclaration générale
+		return
+	}
 
-	// Parcours pour compter
-	ast.Inspect(body, func(n ast.Node) bool {
-		// Skip les boucles (déjà traité)
-		if extractLoop(n) != nil {
-			// Traitement
-			return false
+	var valueSpec *ast.ValueSpec
+	// Parcours des spécifications
+	for _, spec := range genDecl.Specs {
+		valueSpec, ok = spec.(*ast.ValueSpec)
+		// Vérification de la spécification de valeur
+		if !ok {
+			// Pas une spécification de valeur
+			continue
 		}
 
-		// Vérification des conversions
-		if call, ok := n.(*ast.CallExpr); ok && isStringConversion(call) {
-			// Extraction de la variable convertie
-			varName := utils.ExtractVarName(call.Args[0])
-			// Vérification de la condition
-			if varName != "" {
-				conversions[varName]++
-				// Vérification de la condition
-				if _, exists := firstPos[varName]; !exists {
-					firstPos[varName] = call
-				}
+		// Parcours des valeurs
+		for _, value := range valueSpec.Values {
+			// Vérification si allocation de slice ou map
+			if isSliceOrMapAlloc(value) {
+				// Allocation de slice/map détectée
+				msg, _ := messages.Get(ruleCodeVar012)
+				pass.Reportf(
+					value.Pos(),
+					"%s: %s",
+					ruleCodeVar012,
+					msg.Format(config.Get().Verbose),
+				)
 			}
 		}
+	}
+}
 
-		// Traitement
-		return true
-	})
-
-	// Rapport des conversions multiples
-	for varName, count := range conversions {
-		// Vérification de la condition
-		if count > maxConversions {
-			pos := firstPos[varName]
-			msg, _ := messages.Get(ruleCodeVar012)
-			pass.Reportf(
-				pos.Pos(),
-				"%s: %s",
-				ruleCodeVar012,
-				msg.Format(config.Get().Verbose, count),
-			)
+// isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
+// Exclut les []byte qui sont gérés par VAR-010.
+//
+// Params:
+//   - expr: expression à vérifier
+//
+// Returns:
+//   - bool: true si allocation détectée
+func isSliceOrMapAlloc(expr ast.Expr) bool {
+	// Vérification du type d'expression
+	switch e := expr.(type) {
+	// Cas d'un littéral composite
+	case *ast.CompositeLit:
+		// Vérification du type composite (exclut []byte géré par VAR-010)
+		if utils.IsSliceOrMapType(e.Type) && !utils.IsByteSlice(e.Type) {
+			// Allocation de slice/map sous forme de littéral
+			return true
+		}
+	// Cas d'un appel de fonction
+	case *ast.CallExpr:
+		// Vérification des appels make() (exclut []byte géré par VAR-010)
+		if utils.IsMakeCall(e) && !isByteSliceMake(e) {
+			// Appel à make() détecté
+			return true
 		}
 	}
+	// Pas d'allocation détectée
+	return false
+}
+
+// isByteSliceMake vérifie si make crée un []byte.
+//
+// Params:
+//   - call: expression d'appel make
+//
+// Returns:
+//   - bool: true si make([]byte, ...)
+func isByteSliceMake(call *ast.CallExpr) bool {
+	// Vérification des arguments
+	if len(call.Args) == 0 {
+		// Pas d'arguments
+		return false
+	}
+	// Vérification du type
+	return utils.IsByteSlice(call.Args[0])
 }

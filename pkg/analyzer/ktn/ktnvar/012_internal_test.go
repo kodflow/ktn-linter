@@ -29,26 +29,46 @@ func Test_runVar012(t *testing.T) {
 	}
 }
 
-// Test_extractLoop tests the private extractLoop helper function.
-func Test_extractLoop(t *testing.T) {
+// Test_isSliceOrMapAlloc tests the private isSliceOrMapAlloc helper function.
+func Test_isSliceOrMapAlloc(t *testing.T) {
 	tests := []struct {
 		name     string
-		node     ast.Node
+		expr     ast.Expr
 		expected bool
 	}{
 		{
-			name:     "for stmt",
-			node:     &ast.ForStmt{Body: &ast.BlockStmt{}},
+			name: "slice literal",
+			expr: &ast.CompositeLit{
+				Type: &ast.ArrayType{},
+			},
 			expected: true,
 		},
 		{
-			name:     "range stmt",
-			node:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
+			name: "map literal",
+			expr: &ast.CompositeLit{
+				Type: &ast.MapType{},
+			},
 			expected: true,
 		},
 		{
-			name:     "other node",
-			node:     &ast.IfStmt{},
+			name: "make call",
+			expr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+			},
+			expected: true,
+		},
+		{
+			name: "struct literal",
+			expr: &ast.CompositeLit{
+				Type: &ast.Ident{Name: "MyStruct"},
+			},
+			expected: false,
+		},
+		{
+			name: "other call",
+			expr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "len"},
+			},
 			expected: false,
 		},
 	}
@@ -56,105 +76,69 @@ func Test_extractLoop(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractLoop(tt.node)
-			// Vérification du résultat
-			if (result != nil) != tt.expected {
-				t.Errorf("extractLoop() returned %v, expected non-nil: %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_isStringConversion tests the private isStringConversion helper function.
-func Test_isStringConversion(t *testing.T) {
-	tests := []struct {
-		name     string
-		node     ast.Node
-		expected bool
-	}{
-		{
-			name: "string conversion",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "b"}},
-			},
-			expected: true,
-		},
-		{
-			name: "other function",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "len"},
-				Args: []ast.Expr{&ast.Ident{Name: "s"}},
-			},
-			expected: false,
-		},
-		{
-			name: "no args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{},
-			},
-			expected: false,
-		},
-		{
-			name: "multiple args",
-			node: &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "string"},
-				Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
-			},
-			expected: false,
-		},
-		{
-			name:     "not call expr",
-			node:     &ast.Ident{Name: "x"},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			result := isStringConversion(tt.node)
+			result := isSliceOrMapAlloc(tt.expr)
 			// Vérification du résultat
 			if result != tt.expected {
-				t.Errorf("isStringConversion() = %v, expected %v", result, tt.expected)
+				t.Errorf("isSliceOrMapAlloc() = %v, expected %v", result, tt.expected)
 			}
 		})
 	}
 }
 
-// Test_checkFuncForRepeatedConversions tests the private checkFuncForRepeatedConversions function.
-func Test_checkFuncForRepeatedConversions(t *testing.T) {
+// Test_checkLoopBodyForAlloc_nilBody tests with nil body.
+func Test_checkLoopBodyForAlloc_nilBody(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"error case validation"},
+		{"validation"},
 	}
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for repeated conversions
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with nil body
+			checkLoopBodyForAlloc(pass, nil)
+			// No error expected
+
 		})
 	}
 }
 
-// Test_checkLoopsForStringConversion tests the private checkLoopsForStringConversion function.
-func Test_checkLoopsForStringConversion(t *testing.T) {
+// Test_checkStmtForAlloc_emptyStmt tests with empty stmt.
+func Test_checkStmtForAlloc_emptyStmt(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"error case validation"},
+		{"validation"},
 	}
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks loops for string conversion
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with empty statement (not assign or decl)
+			checkStmtForAlloc(pass, &ast.EmptyStmt{})
+
+			// Test with other statement types
+			checkStmtForAlloc(pass, &ast.ReturnStmt{})
+			checkStmtForAlloc(pass, &ast.IfStmt{})
+			checkStmtForAlloc(pass, &ast.ForStmt{})
+			checkStmtForAlloc(pass, &ast.ExprStmt{})
+			// No error expected for non-assign/decl statements
+
 		})
 	}
 }
 
-// Test_hasStringConversion tests the private hasStringConversion function.
-func Test_hasStringConversion(t *testing.T) {
+// Test_checkAssignForAlloc tests the private checkAssignForAlloc function.
+func Test_checkAssignForAlloc(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -163,22 +147,125 @@ func Test_hasStringConversion(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if has string conversion
+			// Test passthrough - function checks assignments for allocations
 		})
 	}
 }
 
-// Test_checkMultipleConversions tests the private checkMultipleConversions function.
-func Test_checkMultipleConversions(t *testing.T) {
+// Test_checkDeclForAlloc tests the private checkDeclForAlloc function.
+func Test_checkDeclForAlloc(t *testing.T) {
 	tests := []struct {
 		name string
+		decl *ast.DeclStmt
 	}{
-		{"error case validation"},
+		{
+			name: "non-GenDecl",
+			decl: &ast.DeclStmt{
+				Decl: &ast.BadDecl{},
+			},
+		},
+		{
+			name: "GenDecl with non-ValueSpec",
+			decl: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ImportSpec{},
+					},
+				},
+			},
+		},
+		{
+			name: "GenDecl with ValueSpec no values",
+			decl: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "GenDecl with ValueSpec non-alloc value",
+			decl: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{&ast.Ident{Name: "y"}},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks for multiple conversions
+			// Create real pass with no-op reporter
+			pass := &analysis.Pass{
+				Report: func(d analysis.Diagnostic) {},
+			}
+			checkDeclForAlloc(pass, tt.decl)
+			// Test passes if no panic
+		})
+	}
+}
+
+// Test_isByteSliceMake tests the private isByteSliceMake helper function.
+func Test_isByteSliceMake(t *testing.T) {
+	tests := []struct {
+		name     string
+		call     *ast.CallExpr
+		expected bool
+	}{
+		{
+			name: "make with []byte",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "byte"}},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "make with []uint8",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "uint8"}},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "make with []int",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+				},
+			},
+			expected: false,
+		},
+		{
+			name:     "make with no args",
+			call:     &ast.CallExpr{Fun: &ast.Ident{Name: "make"}},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := isByteSliceMake(tt.call)
+			// Vérification du résultat
+			if result != tt.expected {
+				t.Errorf("isByteSliceMake() = %v, expected %v", result, tt.expected)
+			}
 		})
 	}
 }
@@ -296,6 +383,104 @@ func Test_runVar012_fileExcluded(t *testing.T) {
 			if reportCount != 0 {
 				t.Errorf("runVar012() reported %d issues, expected 0 when file excluded", reportCount)
 			}
+
+		})
+	}
+}
+
+// Test_checkLoopBodyForAlloc tests the checkLoopBodyForAlloc private function.
+func Test_checkLoopBodyForAlloc(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via public API
+		})
+	}
+}
+
+// Test_checkStmtForAlloc tests the checkStmtForAlloc private function.
+func Test_checkStmtForAlloc(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Tested via public API
+		})
+	}
+}
+
+// Test_checkStmtForAlloc_assignStmt tests with AssignStmt.
+func Test_checkStmtForAlloc_assignStmt(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with AssignStmt containing slice allocation
+			stmt := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+					},
+				},
+			}
+			checkStmtForAlloc(pass, stmt)
+			// No panic expected
+
+		})
+	}
+}
+
+// Test_checkStmtForAlloc_declStmt tests with DeclStmt.
+func Test_checkStmtForAlloc_declStmt(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Test with DeclStmt containing slice allocation
+			stmt := &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names: []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{
+								&ast.CompositeLit{
+									Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+								},
+							},
+						},
+					},
+				},
+			}
+			checkStmtForAlloc(pass, stmt)
+			// No panic expected
 
 		})
 	}

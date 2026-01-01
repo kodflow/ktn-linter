@@ -17,23 +17,18 @@ func TestVar006(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Builder/Buffer without Grow",
+			name:           "variables shadowing built-in identifiers",
 			analyzer:       ktnvar.Analyzer006,
 			testdataDir:    "var006",
-			expectedErrors: 4,
-		},
-		{
-			name:           "Valid Builder/Buffer with Grow",
-			analyzer:       ktnvar.Analyzer006,
-			testdataDir:    "var006",
-			expectedErrors: 4,
+			expectedErrors: 15,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 4 Builder/Buffer declarations without Grow
+			// good.go: 0 errors (no shadowing of built-ins)
+			// bad.go: 15 errors (variables shadowing built-in identifiers)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

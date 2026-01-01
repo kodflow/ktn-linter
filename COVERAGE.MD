@@ -15,26 +15,26 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **93.8%** |
+| 🟢 | **TOTAL (Global)** | **92.7%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 86.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 93.9% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 98.7% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 94.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 92.8% |
+| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 87.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/utils` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/config` | 98.1% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/formatter` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/messages` | 98.8% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/messages` | 98.9% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/orchestrator` | 82.9% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/prompt` | 91.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/rules` | 96.0% |
@@ -87,12 +87,16 @@ Rapport de couverture généré automatiquement.
 | 🟢 `007.go:hasCommentBefore` | 92.9% |
 | 🟢 `007.go:hasInlineComment` | 93.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 98.7%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` - 94.6%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟢 `001.go:runConst001` | 95.0% |
 | 🟡 `002.go:extractConstTypeName` | 87.5% |
+| 🟡 `002.go:checkConstOrder` | 86.7% |
+| 🟡 `004.go:runConst004` | 85.0% |
+| 🟡 `005.go:runConst005` | 85.0% |
+| 🟡 `006.go:runConst006` | 85.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 96.4%
 
@@ -172,53 +176,67 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 92.8%
+### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 87.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟢 `001.go:runVar001` | 95.2% |
-| 🟡 `002.go:checkVarSpec` | 85.7% |
-| 🟡 `003.go:runVar003` | 84.6% |
-| 🟢 `004.go:collectAppendVariables` | 91.7% |
-| 🟡 `004.go:checkMakeCalls` | 88.9% |
-| 🟡 `004.go:checkMakeCall` | 90.0% |
-| 🟡 `004.go:checkEmptySliceLiterals` | 88.2% |
-| 🟡 `004.go:checkCompositeLit` | 88.2% |
-| 🟡 `005.go:checkMakeCallVar008` | 83.3% |
-| 🟡 `005.go:runVar005` | 90.9% |
-| 🟡 `006.go:reportMissingGrow` | 85.7% |
-| 🟡 `006.go:extractAssignTypeString` | 87.5% |
-| 🟡 `007.go:runVar007` | 90.0% |
-| 🟢 `007.go:checkStringConcatInLoop` | 92.3% |
-| 🟡 `007.go:isStringConcatenation` | 87.5% |
-| 🟡 `008.go:runVar008` | 86.7% |
-| 🟢 `009.go:runVar009` | 94.1% |
-| 🟡 `009.go:checkFuncParams009` | 90.0% |
-| 🔴 `009.go:checkParamType009` | 75.0% |
-| 🟡 `009.go:getStructSize009` | 87.5% |
-| 🟡 `009.go:isExternalType009` | 85.7% |
-| 🟢 `010.go:runVar010` | 91.7% |
-| 🟡 `010.go:checkLoopBodyVar015` | 83.3% |
-| 🟡 `010.go:checkMakeCallForByteSlice` | 83.3% |
+| 🟡 `001.go:checkVarSpec` | 85.7% |
+| 🟢 `002.go:runVar002` | 95.0% |
+| 🟡 `003.go:runVar003` | 80.0% |
+| 🟡 `003.go:checkVar003Names` | 85.7% |
+| 🟡 `004.go:runVar004` | 85.7% |
+| 🟡 `004.go:checkVar004PackageLevel` | 85.7% |
+| 🟡 `004.go:checkVar004LocalVars` | 81.8% |
+| 🔴 `004.go:checkVar004Node` | 66.7% |
+| 🟡 `004.go:checkVar004AssignStmt` | 87.5% |
+| ⚫ `004.go:checkVar004DeclStmt` | 0.0% |
+| 🟡 `004.go:checkVar004Name` | 81.8% |
+| 🟡 `005.go:runVar005` | 85.7% |
+| 🔴 `005.go:checkVar005PackageLevel` | 78.6% |
+| 🔴 `005.go:checkVar005LocalVars` | 20.0% |
+| ⚫ `005.go:checkVar005Node` | 0.0% |
+| ⚫ `005.go:checkVar005AssignStmt` | 0.0% |
+| ⚫ `005.go:checkVar005RangeStmt` | 0.0% |
+| ⚫ `005.go:checkVar005DeclStmt` | 0.0% |
+| 🟡 `005.go:checkVar005Name` | 85.7% |
+| 🟡 `006.go:runVar006` | 85.0% |
+| 🟡 `007.go:runVar007` | 84.6% |
+| 🟢 `008.go:collectAppendVariables` | 91.7% |
+| 🟡 `008.go:checkMakeCalls` | 88.9% |
+| 🟡 `008.go:checkMakeCall` | 90.0% |
+| 🟡 `008.go:checkEmptySliceLiterals` | 88.2% |
+| 🟡 `008.go:checkCompositeLit` | 88.2% |
+| 🟡 `009.go:checkMakeCallVar008` | 83.3% |
+| 🟡 `009.go:runVar009` | 90.9% |
+| 🟡 `010.go:reportMissingGrow` | 85.7% |
+| 🟡 `010.go:extractAssignTypeString` | 87.5% |
 | 🟡 `011.go:runVar011` | 90.0% |
-| 🟡 `011.go:checkShortVarDecl` | 90.0% |
-| 🟡 `011.go:isShadowing` | 81.8% |
-| 🟡 `012.go:runVar012` | 90.9% |
-| 🟡 `012.go:checkFuncForRepeatedConversions` | 80.0% |
-| 🟡 `013.go:runVar013` | 88.9% |
-| 🟢 `014.go:runVar014` | 95.0% |
-| 🟡 `015.go:runVar015` | 88.9% |
-| 🟢 `016.go:runVar016` | 93.3% |
-| 🟡 `016.go:shouldUseArray` | 87.5% |
-| 🟡 `016.go:getConstantSize` | 83.3% |
-| 🟢 `017.go:collectTypesWithValueReceivers` | 92.9% |
-| 🟡 `017.go:checkStructsWithMutex` | 82.4% |
-| 🟡 `017.go:checkValueReceivers` | 87.5% |
-| 🟡 `017.go:checkValueParams` | 84.6% |
-| 🟡 `017.go:checkAssignments` | 84.6% |
-| 🟡 `017.go:hasMutexInType` | 83.3% |
-| 🟡 `017.go:getMutexTypeFromType` | 86.7% |
-| 🟡 `017.go:isMutexCopy` | 85.7% |
+| 🟢 `011.go:checkStringConcatInLoop` | 92.3% |
+| 🟡 `011.go:isStringConcatenation` | 87.5% |
+| 🟡 `012.go:runVar012` | 86.7% |
+| 🟢 `013.go:runVar013` | 94.1% |
+| 🟡 `013.go:checkFuncParams009` | 90.0% |
+| 🔴 `013.go:checkParamType009` | 75.0% |
+| 🔴 `013.go:getStructSize009` | 73.7% |
+| 🟡 `013.go:isExternalType009` | 85.7% |
+| 🟢 `014.go:runVar014` | 91.7% |
+| 🟡 `014.go:checkLoopBodyVar015` | 83.3% |
+| 🟡 `014.go:checkMakeCallForByteSlice` | 83.3% |
+| 🟡 `015.go:runVar015` | 90.9% |
+| 🟡 `015.go:checkFuncForRepeatedConversions` | 80.0% |
+| 🟡 `016.go:runVar016` | 88.9% |
+| 🟡 `017.go:runVar017` | 88.9% |
+| 🟢 `018.go:runVar018` | 93.3% |
+| 🟡 `018.go:shouldUseArray` | 87.5% |
+| 🟡 `018.go:getConstantSize` | 83.3% |
+| 🟢 `019.go:collectTypesWithValueReceivers` | 92.9% |
+| 🟡 `019.go:checkStructsWithMutex` | 82.4% |
+| 🟡 `019.go:checkValueReceivers` | 87.5% |
+| 🟡 `019.go:checkValueParams` | 84.6% |
+| 🟡 `019.go:checkAssignments` | 84.6% |
+| 🟡 `019.go:hasMutexInType` | 83.3% |
+| 🟡 `019.go:getMutexTypeFromType` | 86.7% |
+| 🟡 `019.go:isMutexCopy` | 85.7% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` - 98.0%
 
@@ -241,7 +259,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `loader.go:loadFromDefaultLocations` | 93.8% |
 | 🟡 `loader.go:SaveToFile` | 83.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/messages` - 98.8%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/messages` - 98.9%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -295,4 +313,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2025-12-31 21:51:49*
+*Généré le: 2026-01-01 17:13:15*

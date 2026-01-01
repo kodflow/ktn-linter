@@ -17,23 +17,26 @@ func TestVar008(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Allocations in loops",
+			name:           "Slice initialization without capacity",
 			analyzer:       ktnvar.Analyzer008,
 			testdataDir:    "var008",
-			expectedErrors: 7,
+			expectedErrors: 8,
 		},
 		{
-			name:           "Valid pre-loop allocations",
+			name:           "Valid slice initialization with capacity",
 			analyzer:       ktnvar.Analyzer008,
 			testdataDir:    "var008",
-			expectedErrors: 7,
+			expectedErrors: 8,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 7 allocations dans des boucles (5 assignements + 2 déclarations var)
+			// 8 errors:
+			// - 7 make([]T, 0) calls without capacity
+			// - 1 []T{} literal followed by append (should use make)
+			// []T{} in returns/structs are NOT reported (avoid false positives)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

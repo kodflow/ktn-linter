@@ -1,49 +1,47 @@
-// Package var016 provides good test cases.
-package var016
-
-// Good: Using arrays for small fixed sizes or slices when appropriate
+// Package var013 provides good test cases.
+package var013
 
 const (
-	// ArraySizeSmall is small array size
-	ArraySizeSmall int = 10
-	// BufferSize is buffer size
-	BufferSize int = 64
-	// LargeSize is large allocation size
-	LargeSize int = 2048
-	// CapacityMedium is medium capacity
-	CapacityMedium int = 100
-	// LengthSmall is small length
-	LengthSmall int = 10
-	// CapacitySmall is small capacity
-	CapacitySmall int = 20
+	// MaxRetries defines maximum retries
+	MaxRetries int = 3
+	// DefaultTimeout is the default timeout
+	DefaultTimeout int = 30
+	// ServerPort is the server port number
+	ServerPort int = 8080
+	// MaxConnections is the maximum connections
+	MaxConnections int = 100
 )
 
-// init demonstrates good practices for array and slice allocation
+// All variables grouped in a single block
+var (
+	// defaultRetries defines the default number of retries
+	defaultRetries int = MaxRetries
+
+	// configuration holds the app configuration
+	configuration string = "default"
+
+	// serverPort is the server port number
+	serverPort int = ServerPort
+
+	// serverHost is the server hostname
+	serverHost string = "localhost"
+
+	// isEnabled indicates if feature is enabled
+	isEnabled bool = false
+
+	// maxConnections is the maximum connections
+	maxConnections int = MaxConnections
+)
+
+// init demonstrates correct usage patterns
 func init() {
-	// Array allocated on stack - good for small fixed sizes
-	var items [ArraySizeSmall]int
-	_ = items
-
-	// Fixed size buffer as array
-	var buffer [BufferSize]byte
-	_ = buffer
-
-	// Dynamic size - use slice with capacity
-	dynamicItems := make([]int, 0, CapacitySmall)
-	dynamicItems = append(dynamicItems, LengthSmall)
-	_ = dynamicItems
-
-	// Size > 1024, slice is appropriate
-	large := make([]byte, 0, LargeSize)
-	_ = large
-
-	// Slice will grow, needs heap allocation
-	growingItems := make([]string, 0, CapacityMedium)
-	growingItems = append(growingItems, "test")
-	_ = growingItems
-
-	// Different length and capacity
-	withCapacity := make([]int, 0, CapacitySmall)
-	withCapacity = append(withCapacity, LengthSmall)
-	_ = withCapacity
+	// Local variables are not checked by VAR-016
+	localVar := MaxRetries
+	_ = localVar
+	_ = defaultRetries
+	_ = configuration
+	_ = serverPort
+	_ = serverHost
+	_ = isEnabled
+	_ = maxConnections
 }

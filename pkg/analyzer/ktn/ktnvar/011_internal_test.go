@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -29,88 +30,182 @@ func Test_runVar011(t *testing.T) {
 	}
 }
 
-// Test_extractIdent tests the private extractIdent helper function.
-func Test_extractIdent(t *testing.T) {
+// Test_checkStringConcatInLoop tests the private checkStringConcatInLoop function.
+func Test_checkStringConcatInLoop(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"error case validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Test passthrough - function checks string concatenation in loops
+		})
+	}
+}
+
+// Test_isStringConcatenation tests the private isStringConcatenation function.
+func Test_isStringConcatenation(t *testing.T) {
 	tests := []struct {
 		name     string
-		expr     ast.Expr
-		expected *ast.Ident
+		code     string
+		expected bool
 	}{
 		{
-			name:     "ident",
-			expr:     &ast.Ident{Name: "x"},
-			expected: &ast.Ident{Name: "x"},
+			name: "string concatenation",
+			code: `package test
+func example() {
+	s := "hello"
+	s += " world"
+}`,
+			expected: true,
 		},
 		{
-			name:     "not ident",
-			expr:     &ast.BasicLit{Value: "1"},
-			expected: nil,
+			name: "non-string assignment",
+			code: `package test
+func example() {
+	x := 1
+	x += 2
+}`,
+			expected: false,
+		},
+		{
+			name: "empty lhs",
+			code: `package test
+func example() {
+	_ = 1
+}`,
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractIdent(tt.expr)
-			// Vérification du résultat
-			if tt.expected == nil {
-				// Vérification que result est nil
-				if result != nil {
-					t.Errorf("extractIdent() = %v, expected nil", result)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// Find assignment statement
+			foundAssign := false
+			ast.Inspect(file, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok && assign.Tok == token.ADD_ASSIGN {
+					result := isStringConcatenation(pass, assign)
+					if result != tt.expected {
+						t.Errorf("isStringConcatenation() = %v, expected %v", result, tt.expected)
+					}
+					foundAssign = true
+					return false
 				}
-			} else {
-				// Vérification que result n'est pas nil et a le bon nom
-				if result == nil {
-					t.Errorf("extractIdent() = nil, expected ident with name %s", tt.expected.Name)
-				} else if result.Name != tt.expected.Name {
-					t.Errorf("extractIdent() = %s, expected %s", result.Name, tt.expected.Name)
-				}
+				return true
+			})
+
+			if !foundAssign && tt.expected {
+				t.Error("No assignment found in test code")
 			}
 		})
 	}
 }
 
-// Test_checkShortVarDecl tests the private checkShortVarDecl function.
-func Test_checkShortVarDecl(t *testing.T) {
+// Test_isStringConcatenation_noTypeInfo tests with no TypesInfo.
+func Test_isStringConcatenation_noTypeInfo(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"error case validation"},
+		{"validation"},
 	}
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks short var declarations
+
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// Create assignment with lhs that won't have type info
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			}
+
+			result := isStringConcatenation(pass, assign)
+			// Vérification du résultat
+			if result {
+				t.Errorf("isStringConcatenation() = true, expected false when no type info")
+			}
+
 		})
 	}
 }
 
-// Test_isShadowing tests the private isShadowing function.
-func Test_isShadowing(t *testing.T) {
+// Test_isStringConcatenation_notBasicType tests with non-basic type.
+func Test_isStringConcatenation_notBasicType(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"error case validation"},
+		{"validation"},
 	}
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function checks if shadowing
-		})
-	}
-}
 
-// Test_lookupInParentScope tests the private lookupInParentScope function.
-func Test_lookupInParentScope(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function looks up in parent scope
+			code := `package test
+			type MyString string
+			func example() {
+			var s MyString
+			s += "world"
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// Find assignment statement
+			ast.Inspect(file, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok && assign.Tok == token.ADD_ASSIGN {
+					result := isStringConcatenation(pass, assign)
+					// Should return true because underlying type is string
+					if !result {
+						t.Errorf("isStringConcatenation() = false, expected true for named string type")
+					}
+					return false
+				}
+				return true
+			})
+
 		})
 	}
 }

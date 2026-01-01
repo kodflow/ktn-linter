@@ -1,49 +1,62 @@
-// Package var007 provides good test cases.
-package var007
-
-import "strings"
+// Package var003 provides good test cases.
+package var003
 
 const (
-	// AvgItemLength is the average item length estimate
-	AvgItemLength int = 10
-	// LoopCount is the number of iterations
-	LoopCount int = 10
+	// MaxRetriesValue is the max retries value
+	MaxRetriesValue int = 3
+	// TheAnswer is the answer
+	TheAnswer int = 42
+	// ExampleAge is example age
+	ExampleAge int = 30
+	// XValue is example x value
+	XValue int = 10
+	// YValue is example y value
+	YValue int = 20
+	// Int64Value is int64 example
+	Int64Value int64 = 5
+	// InitialCount is the initial count
+	InitialCount int = 0
 )
 
-// init demonstrates proper string concatenation
+// Package-level variables can use var with explicit type
+var (
+	// GlobalConfig is the global configuration
+	GlobalConfig string = "default"
+	// MaxRetries is the maximum retries
+	MaxRetries int = MaxRetriesValue
+)
+
+// init demonstrates correct usage of short declarations
 func init() {
-	items := []string{"a", "b", "c"}
-
-	// Good: using strings.Builder
-	var sb strings.Builder
-	// Iteration over items to build string
-	for _, item := range items {
-		sb.WriteString(item)
-	}
-	_ = sb.String()
-
-	// Good: using strings.Builder with preallocated size
-	var sb2 strings.Builder
-	sb2.Grow(len(items) * AvgItemLength)
-	// Iteration over items to build string with capacity
-	for _, item := range items {
-		sb2.WriteString(item)
-	}
-	_ = sb2.String()
-
-	// Good: using strings.Join for simple cases
-	joined := strings.Join(items, "")
-	_ = joined
-
-	// Good: single concatenation, not in a loop
-	result := "a" + "b"
+	// Good: Use := for local variables
+	name := "Alice"
+	age := ExampleAge
+	x, y := XValue, YValue
+	_ = name
+	_ = age
+	_ = x
+	_ = y
+	// Good: var with explicit type is OK (11 lines)
+	var x64 int64 = Int64Value
+	var result int
+	result = TheAnswer
+	_ = x64
 	_ = result
-
-	// Good: not string concatenation
-	sum := 0
-	// Iteration to compute sum
-	for i := range LoopCount {
-		sum += i
-	}
-	_ = sum
+	// Good: := for reassign
+	count := InitialCount
+	count = count + 1
+	_ = count
+	// Cases where var is NECESSARY (nil values)
+	var nilSlice []string
+	var nilMap map[string]int
+	var nilPointer *int
+	var nilChan chan int
+	var nilFunc func()
+	var nilInterface any
+	_ = nilSlice
+	_ = nilMap
+	_ = nilPointer
+	_ = nilChan
+	_ = nilFunc
+	_ = nilInterface
 }

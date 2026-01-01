@@ -1,65 +1,19 @@
-// Package var004 provides good test cases.
 package var004
 
-// Good: Slices preallocated with capacity when known
+// Good examples - valid name lengths
 
-const (
-	// MaxItems defines the maximum number of items
-	MaxItems int = 100
-	// CapacityTen is capacity of ten
-	CapacityTen int = 10
-	// ValueOne is value one
-	ValueOne int = 1
-	// ValueTwo is value two
-	ValueTwo int = 2
-	// ValueThree is value three
-	ValueThree int = 3
-)
+var maxSize int = 100           // length >= 2 - OK
+var ok bool = true              // idiomatic short - OK
+var id string = "123"           // length >= 2 - OK
 
-// init demonstrates good slice preallocation patterns
-func init() {
-	// Good: Capacity specified
-	items := make([]int, 0, MaxItems)
-	_ = items
-
-	// Good: Capacity specified based on known size
-	result := make([]string, 0, CapacityTen)
-	// Itération sur les éléments
-	for i := range CapacityTen {
-		result = append(result, "item")
-		// Utilisation de i pour éviter le warning
-		_ = i
+// Good - loop variables in loops
+func goodExample() {
+	for i := 0; i < 10; i++ {
+		// i is allowed in loop
 	}
 
-	// Good: Literal with values is acceptable
-	values := []int{ValueOne, ValueTwo, ValueThree}
-	_ = values
-
-	// Good: Maps don't need capacity
-	m := map[string]int{}
-	_ = m
-
-	// Good: Even when size is unknown, providing a reasonable capacity is better
-	data := []string{"a", "b"}
-	filtered := make([]string, 0, len(data))
-	// Itération sur les données
-	for _, item := range data {
-		// Vérification d'une condition
-		if len(item) > 0 {
-			filtered = append(filtered, item)
-		}
+	items := []int{1, 2, 3}
+	for j, v := range items {
+		_, _ = j, v
 	}
-	_ = filtered
-
-	// Good: []T{} is acceptable when capacity unknown
-	empty := []int{}
-	_ = empty
-
-	// Good: Direct return with []T{} is a common pattern
-	items2 := []string{}
-	_ = items2
-
-	// Good: [][]T{} acceptable when capacity unknown
-	nested := [][]int{}
-	_ = nested
 }

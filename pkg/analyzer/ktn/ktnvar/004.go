@@ -3,8 +3,8 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
@@ -15,19 +15,30 @@ import (
 const (
 	// ruleCodeVar004 is the rule code for this analyzer
 	ruleCodeVar004 string = "KTN-VAR-004"
-	// minMakeArgs is the minimum number of arguments for make call
-	minMakeArgs int = 2
-	// initialAppendVarsCap initial capacity for append variables map
-	initialAppendVarsCap int = 16
+	// minVarNameLength004 is the minimum variable name length
+	minVarNameLength004 int = 2
 )
 
-// Analyzer004 checks that slices are preallocated with capacity when known
-var Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktnvar004",
-	Doc:      "KTN-VAR-004: Vérifie que les slices sont préalloués avec une capacité si elle est connue",
-	Run:      runVar004,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+var (
+	// Analyzer004 checks that variable names are not too short.
+	Analyzer004 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktnvar004",
+		Doc:      "KTN-VAR-004: Les noms de variables doivent avoir au moins 2 caractères",
+		Run:      runVar004,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+
+	// loopVars004 contains single-letter loop variable names that are allowed.
+	loopVars004 map[string]bool = map[string]bool{
+		"i": true, "j": true, "k": true, "n": true,
+		"x": true, "y": true, "z": true, "v": true,
+	}
+
+	// idiomaticShort004 contains short idiomatic Go variable names.
+	idiomaticShort004 map[string]bool = map[string]bool{
+		"ok": true,
+	}
+)
 
 // runVar004 exécute l'analyse KTN-VAR-004.
 //
@@ -49,375 +60,284 @@ func runVar004(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Collecter les variables utilisées avec append
-	appendVars := collectAppendVariables(insp)
+	// Check package-level variables
+	checkVar004PackageLevel(pass, insp, cfg)
 
-	// Vérifier les make() sans capacité
-	checkMakeCalls(pass, insp)
+	// Check local variables in functions
+	checkVar004LocalVars(pass, insp, cfg)
 
-	// Vérifier les []T{} qui devraient être préalloués
-	checkEmptySliceLiterals(pass, insp, appendVars)
-
-	// Retour de la fonction
+	// Return analysis result
 	return nil, nil
 }
 
-// collectAppendVariables collecte les variables utilisées avec append.
-//
-// Params:
-//   - insp: inspecteur AST
-//
-// Returns:
-//   - map[string]bool: map des noms de variables utilisées avec append
-func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
-	appendVars := make(map[string]bool, initialAppendVarsCap)
-
-	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
-	}
-
-	// Parcours des assignations pour trouver les appends
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
-
-		// Vérification de chaque expression à droite
-		for _, rhs := range assign.Rhs {
-			// Vérification si c'est un appel à append
-			if isAppendCall(rhs) {
-				// Récupération des variables à gauche
-				for _, lhs := range assign.Lhs {
-					// Extraction du nom de la variable
-					if ident, isIdent := lhs.(*ast.Ident); isIdent {
-						appendVars[ident.Name] = true
-					}
-				}
-			}
-		}
-	})
-
-	// Retour de la map
-	return appendVars
-}
-
-// isAppendCall vérifie si une expression est un appel à append.
-//
-// Params:
-//   - expr: expression à vérifier
-//
-// Returns:
-//   - bool: true si c'est un appel à append
-func isAppendCall(expr ast.Expr) bool {
-	call, ok := expr.(*ast.CallExpr)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un appel de fonction
-		return false
-	}
-
-	// Vérification du nom de la fonction
-	ident, ok := call.Fun.(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return false
-	}
-
-	// Retour du résultat
-	return ident.Name == "append"
-}
-
-// checkMakeCalls vérifie les appels à make sans capacité.
+// checkVar004PackageLevel vérifie les variables au niveau package.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - insp: inspecteur AST
-func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
-	// Récupération de la configuration
-	cfg := config.Get()
-
-	nodeFilter := []ast.Node{
-		(*ast.CallExpr)(nil),
-	}
-
-	// Parcours des appels de fonction
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call, ok := n.(*ast.CallExpr)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
-
-		// Skip excluded files
-		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
-			// Fichier exclu
-			return
-		}
-
-		// Vérification de l'appel make
-		checkMakeCall(pass, call)
-	})
-}
-
-// checkMakeCall vérifie un appel à make pour les slices sans capacité.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - call: appel de fonction à vérifier
-func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
-	// Vérification que c'est un appel à make
-	if !utils.IsMakeCall(call) {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Vérification du nombre d'arguments (doit être 2: type et length)
-	if len(call.Args) != minMakeArgs {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(pass, call.Args[0]) {
-		// Continue traversing AST nodes
-		return
-	}
-
-	// Skip si VAR-016 s'applique (constante <= 1024, suggère array)
-	if utils.IsSmallConstantSize(pass, call.Args[1]) {
-		// VAR-016 gère ce cas
-		return
-	}
-
-	// Signalement de l'erreur
-	msg, _ := messages.Get(ruleCodeVar004)
-	pass.Reportf(
-		call.Pos(),
-		"%s: %s",
-		ruleCodeVar004,
-		msg.Format(config.Get().Verbose),
-	)
-}
-
-// litCheckContext contains context for slice literal checking.
-type litCheckContext struct {
-	pass       *analysis.Pass
-	appendVars map[string]bool
-}
-
-// checkEmptySliceLiterals vérifie les []T{} qui devraient être préalloués.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - insp: inspecteur AST
-//   - appendVars: variables utilisées avec append
-func checkEmptySliceLiterals(
+//   - cfg: configuration
+func checkVar004PackageLevel(
 	pass *analysis.Pass,
 	insp *inspector.Inspector,
-	appendVars map[string]bool,
+	cfg *config.Config,
 ) {
-	// Récupération de la configuration
-	cfg := config.Get()
-
 	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
+		(*ast.File)(nil),
 	}
 
-	// Créer le contexte de vérification
-	ctx := &litCheckContext{
-		pass:       pass,
-		appendVars: appendVars,
-	}
-
-	// Parcours des assignations
-	insp.WithStack(nodeFilter, func(n ast.Node, push bool, stack []ast.Node) bool {
-		// Ignorer le pop
-		if !push {
-			// Continuer le parcours
-			return true
-		}
-
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continuer le parcours
-			return true
-		}
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		file := n.(*ast.File)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
-			return true
+			return
 		}
 
-		// Vérification de chaque paire lhs/rhs
-		for i, rhs := range assign.Rhs {
-			// Vérification que c'est un composite literal
-			lit, isLit := rhs.(*ast.CompositeLit)
-			// Vérification de la condition
-			if !isLit {
-				// Continuer avec l'élément suivant
+		// Check package-level declarations
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Skip if not a GenDecl
+			if !ok {
+				// Not a general declaration
 				continue
 			}
 
-			// Vérification de la slice vide
-			checkCompositeLit(ctx, assign, i, lit, stack)
-		}
+			// Only check var declarations
+			if genDecl.Tok != token.VAR {
+				// Continue to next declaration
+				continue
+			}
 
-		// Continuer le parcours
-		return true
+			// Check each variable specification
+			for _, spec := range genDecl.Specs {
+				valueSpec := spec.(*ast.ValueSpec)
+				checkVar004Spec(pass, valueSpec, false)
+			}
+		}
 	})
 }
 
-// checkCompositeLit vérifie un composite literal pour les slices vides.
+// checkVar004LocalVars vérifie les variables locales dans les fonctions.
 //
 // Params:
-//   - ctx: contexte de vérification
-//   - assign: assignation contenant le literal
-//   - index: index dans la liste des rhs
-//   - lit: composite literal à vérifier
-//   - stack: pile des nœuds parents
-func checkCompositeLit(
-	ctx *litCheckContext,
-	assign *ast.AssignStmt,
-	index int,
-	lit *ast.CompositeLit,
-	stack []ast.Node,
+//   - pass: contexte d'analyse
+//   - insp: inspecteur AST
+//   - cfg: configuration
+func checkVar004LocalVars(
+	pass *analysis.Pass,
+	insp *inspector.Inspector,
+	cfg *config.Config,
 ) {
-	// Vérification que c'est un slice vide
-	if len(lit.Elts) > 0 {
-		// Le slice n'est pas vide
-		return
+	nodeFilter := []ast.Node{
+		(*ast.FuncDecl)(nil),
 	}
 
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(ctx.pass, lit.Type) {
-		// Ce n'est pas un slice
-		return
-	}
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		funcDecl := n.(*ast.FuncDecl)
 
-	// Vérification si on est dans un return statement
-	if isInReturnStatement(stack) {
-		// Pas de préallocation nécessaire pour un return
-		return
-	}
-
-	// Vérification si on est dans un struct literal
-	if isInStructLiteral(stack) {
-		// Pas de préallocation nécessaire pour init de struct
-		return
-	}
-
-	// Récupération du nom de la variable assignée
-	if index >= len(assign.Lhs) {
-		// Index invalide
-		return
-	}
-
-	ident, ok := assign.Lhs[index].(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return
-	}
-
-	// Vérification si la variable est utilisée avec append
-	if !ctx.appendVars[ident.Name] {
-		// La variable n'est jamais utilisée avec append
-		return
-	}
-
-	// Signalement de l'erreur
-	msg, _ := messages.Get(ruleCodeVar004)
-	ctx.pass.Reportf(
-		lit.Pos(),
-		"%s: %s",
-		ruleCodeVar004,
-		msg.Format(config.Get().Verbose),
-	)
-}
-
-// isInReturnStatement vérifie si le nœud est dans un return statement.
-//
-// Params:
-//   - stack: pile des nœuds parents
-//
-// Returns:
-//   - bool: true si dans un return
-func isInReturnStatement(stack []ast.Node) bool {
-	// Parcours de la pile des parents
-	for _, node := range stack {
-		// Vérification si c'est un return statement
-		if _, ok := node.(*ast.ReturnStmt); ok {
-			// Trouvé un return parent
-			return true
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
 		}
-	}
 
-	// Pas de return parent trouvé
-	return false
+		// Skip functions without body
+		if funcDecl.Body == nil {
+			// No body to analyze
+			return
+		}
+
+		// Track loop init positions to avoid double-processing
+		loopInits := collectLoopInitPositions004(funcDecl.Body)
+
+		// Visit all statements in the function
+		ast.Inspect(funcDecl.Body, func(node ast.Node) bool {
+			// Check the node type
+			checkVar004Node(pass, node, loopInits)
+			// Continue traversal
+			return true
+		})
+	})
 }
 
-// isInStructLiteral vérifie si le nœud est dans un struct literal.
+// collectLoopInitPositions004 collects positions of for/range loop init vars.
 //
 // Params:
-//   - stack: pile des nœuds parents
+//   - body: function body to analyze
 //
 // Returns:
-//   - bool: true si dans un struct literal
-func isInStructLiteral(stack []ast.Node) bool {
-	// Parcours de la pile des parents (en excluant le nœud courant)
-	for i := len(stack) - 1; i >= 0; i-- {
-		node := stack[i]
+//   - map[token.Pos]bool: set of positions that are loop inits
+func collectLoopInitPositions004(body *ast.BlockStmt) map[token.Pos]bool {
+	positions := make(map[token.Pos]bool)
 
-		// Vérification si c'est un composite literal (struct)
-		if lit, ok := node.(*ast.CompositeLit); ok {
-			// Vérification que ce n'est pas un slice/array/map
-			if !isSliceArrayOrMap(lit.Type) {
-				// C'est un struct literal
-				return true
+	// Walk the AST to find loop init positions
+	ast.Inspect(body, func(node ast.Node) bool {
+		// Check for for statements
+		switch stmt := node.(type) {
+		// Handle for statements
+		case *ast.ForStmt:
+			// Add init positions
+			if init, ok := stmt.Init.(*ast.AssignStmt); ok {
+				if init.Tok == token.DEFINE {
+					for _, lhs := range init.Lhs {
+						if ident, ok := lhs.(*ast.Ident); ok {
+							positions[ident.Pos()] = true
+						}
+					}
+				}
+			}
+		// Handle range statements
+		case *ast.RangeStmt:
+			// Add key position
+			if key, ok := stmt.Key.(*ast.Ident); ok {
+				positions[key.Pos()] = true
+			}
+			// Add value position
+			if stmt.Value != nil {
+				if value, ok := stmt.Value.(*ast.Ident); ok {
+					positions[value.Pos()] = true
+				}
 			}
 		}
+		// Continue traversal
+		return true
+	})
 
-		// Vérification si c'est un key-value expression
-		if _, ok := node.(*ast.KeyValueExpr); ok {
-			// Dans une initialisation de champ
-			return true
-		}
-	}
-
-	// Pas de struct parent trouvé
-	return false
+	// Return positions
+	return positions
 }
 
-// isSliceArrayOrMap vérifie si le type est un slice, array ou map.
+// checkVar004Node vérifie un nœud AST pour les variables courtes.
 //
 // Params:
-//   - typeExpr: expression de type
+//   - pass: contexte d'analyse
+//   - node: nœud à vérifier
+//   - loopInits: positions of loop init variables
+func checkVar004Node(pass *analysis.Pass, node ast.Node, loopInits map[token.Pos]bool) {
+	// Switch on node type
+	switch stmt := node.(type) {
+	// Handle assignment statements
+	case *ast.AssignStmt:
+		checkVar004AssignStmt(pass, stmt, loopInits)
+	// Handle var declarations in blocks
+	case *ast.DeclStmt:
+		checkVar004DeclStmt(pass, stmt)
+	}
+	// Note: ForStmt and RangeStmt are handled via collectLoopInitPositions004
+}
+
+// checkVar004AssignStmt vérifie une assignation pour les noms courts.
 //
-// Returns:
-//   - bool: true si slice, array ou map
-func isSliceArrayOrMap(typeExpr ast.Expr) bool {
-	// Vérification du type nil
-	if typeExpr == nil {
-		// Type implicite (peut être struct)
-		return false
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement d'assignation
+//   - loopInits: positions of loop init variables
+func checkVar004AssignStmt(
+	pass *analysis.Pass,
+	stmt *ast.AssignStmt,
+	loopInits map[token.Pos]bool,
+) {
+	// Only check short declarations (:=)
+	if stmt.Tok != token.DEFINE {
+		// Not a short declaration
+		return
 	}
 
-	// Vérification des différents types
-	switch typeExpr.(type) {
-	// Traitement des types slice/array/map
-	case *ast.ArrayType, *ast.MapType:
-		// C'est un slice, array ou map
-		return true
-	// Traitement des autres types
-	default:
-		// Ce n'est pas un slice, array ou map
-		return false
+	// Check each left-hand side identifier
+	for _, lhs := range stmt.Lhs {
+		ident, ok := lhs.(*ast.Ident)
+		// Skip if not an identifier
+		if !ok {
+			continue
+		}
+
+		// Check if this is a loop init variable
+		isLoopVar := loopInits[ident.Pos()]
+
+		// Check if name is too short
+		checkVar004Name(pass, ident, isLoopVar)
 	}
+}
+
+// checkVar004DeclStmt vérifie une déclaration var dans un bloc.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement de déclaration
+func checkVar004DeclStmt(pass *analysis.Pass, stmt *ast.DeclStmt) {
+	genDecl, ok := stmt.Decl.(*ast.GenDecl)
+	// Skip if not a GenDecl
+	if !ok {
+		// Not a general declaration
+		return
+	}
+
+	// Only check var declarations
+	if genDecl.Tok != token.VAR {
+		// Continue
+		return
+	}
+
+	// Check each variable specification
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+		checkVar004Spec(pass, valueSpec, false)
+	}
+}
+
+// checkVar004Spec vérifie une spécification de variable.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - valueSpec: spécification de variable
+//   - isLoop: indique si c'est dans un contexte de boucle
+func checkVar004Spec(pass *analysis.Pass, valueSpec *ast.ValueSpec, isLoop bool) {
+	// Check each variable name
+	for _, name := range valueSpec.Names {
+		checkVar004Name(pass, name, isLoop)
+	}
+}
+
+// checkVar004Name vérifie si un nom de variable est trop court.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - ident: identifiant à vérifier
+//   - isLoop: indique si c'est dans un contexte de boucle
+func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isLoop bool) {
+	varName := ident.Name
+
+	// Skip blank identifier
+	if varName == "_" {
+		// Blank identifier is always allowed
+		return
+	}
+
+	// Check if name is long enough
+	if len(varName) >= minVarNameLength004 {
+		// Name is long enough
+		return
+	}
+
+	// Allow loop variables in loop context
+	if isLoop && loopVars004[varName] {
+		// Loop variable is allowed
+		return
+	}
+
+	// Allow idiomatic short names
+	if idiomaticShort004[varName] {
+		// Idiomatic name is allowed
+		return
+	}
+
+	// Report error
+	msg, _ := messages.Get(ruleCodeVar004)
+	pass.Reportf(
+		ident.Pos(),
+		"%s: %s",
+		ruleCodeVar004,
+		msg.Format(config.Get().Verbose, varName),
+	)
 }

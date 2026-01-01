@@ -17,10 +17,10 @@ const (
 	ruleCodeVar002 string = "KTN-VAR-002"
 )
 
-// Analyzer002 checks that package-level variables have explicit type AND value
+// Analyzer002 checks that package-level variables are declared after constants
 var Analyzer002 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar002",
-	Doc:      "KTN-VAR-002: Les variables de package doivent avoir le format 'var name type = value'",
+	Doc:      "KTN-VAR-002: Vérifie que les variables de package sont déclarées après les constantes",
 	Run:      runVar002,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -45,11 +45,11 @@ func runVar002(pass *analysis.Pass) (any, error) {
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
-	// Filter for File nodes to access package-level declarations
 	nodeFilter := []ast.Node{
 		(*ast.File)(nil),
 	}
 
+	// Process each file
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		file := n.(*ast.File)
 
@@ -58,62 +58,34 @@ func runVar002(pass *analysis.Pass) (any, error) {
 			// Fichier exclu
 			return
 		}
+		varSeen := false
 
-		// Check package-level declarations only
+		// Check declarations in order
 		for _, decl := range file.Decls {
 			genDecl, ok := decl.(*ast.GenDecl)
-			// Skip if not a GenDecl
+			// Skip non-GenDecl (functions, etc.)
 			if !ok {
-				// Not a general declaration
 				continue
 			}
 
-			// Only check var declarations
-			if genDecl.Tok != token.VAR {
-				// Continue traversing AST nodes.
-				continue
+			// Track variable declarations
+			if genDecl.Tok == token.VAR {
+				varSeen = true
 			}
 
-			// Itération sur les spécifications
-			for _, spec := range genDecl.Specs {
-				valueSpec := spec.(*ast.ValueSpec)
-				// Vérifier si le type est explicite ou visible dans la valeur
-				checkVarSpec(pass, valueSpec)
+			// Error: const after var
+			if genDecl.Tok == token.CONST && varSeen {
+				msg, _ := messages.Get(ruleCodeVar002)
+				pass.Reportf(
+					genDecl.Pos(),
+					"%s: %s",
+					ruleCodeVar002,
+					msg.Format(config.Get().Verbose),
+				)
 			}
 		}
 	})
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// checkVarSpec vérifie une spécification de variable.
-// Style requis: var name type (= value optionnel, zéro-value accepté)
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - valueSpec: spécification de variable
-func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
-	hasExplicitType := valueSpec.Type != nil
-
-	// Seule exigence: type explicite obligatoire
-	// L'initialisation est optionnelle (zéro-value idiomatique en Go)
-	if !hasExplicitType {
-		// Parcourir les noms
-		for _, name := range valueSpec.Names {
-			// Ignorer les blank identifiers
-			if name.Name == "_" {
-				continue
-			}
-
-			msg, _ := messages.Get(ruleCodeVar002)
-			pass.Reportf(
-				name.Pos(),
-				"%s: %s",
-				ruleCodeVar002,
-				msg.Format(config.Get().Verbose, name.Name),
-			)
-		}
-	}
-	// Type explicite présent = OK (avec ou sans valeur)
 }

@@ -4,30 +4,15 @@ package messages
 
 // registerVarMessages enregistre les messages VAR.
 func registerVarMessages() {
+	// VAR-001: Types explicites (ex-VAR-002)
 	Register(Message{
 		Code:  "KTN-VAR-001",
-		Short: "variable '%s' utilise SCREAMING_SNAKE. Utiliser camelCase",
-		Verbose: `PROBLÈME: La variable '%s' utilise SCREAMING_SNAKE_CASE.
-
-POURQUOI: Go utilise camelCase pour tout, y compris variables.
-
-EXEMPLE INCORRECT:
-  var MAX_SIZE = 1024
-  var DEFAULT_TIMEOUT = 30
-
-EXEMPLE CORRECT:
-  var maxSize = 1024       // Privée
-  var DefaultTimeout = 30  // Exportée`,
-	})
-
-	Register(Message{
-		Code:  "KTN-VAR-002",
 		Short: "variable '%s' sans type explicite. Format: var name Type = value",
-		Verbose: `PROBLÈME: La variable de package '%s' n'a pas de type.
+		Verbose: `PROBLEME: La variable de package '%s' n'a pas de type.
 
 POURQUOI: Le type explicite:
   - Documente l'intention
-  - Évite les conversions implicites
+  - Evite les conversions implicites
 
 FORMAT ATTENDU:
   var nomVariable Type = valeur
@@ -39,15 +24,111 @@ EXEMPLE CORRECT:
   var timeout time.Duration = 30 * time.Second`,
 	})
 
+	// VAR-002: Ordre declaration (ex-VAR-014)
+	Register(Message{
+		Code:  "KTN-VAR-002",
+		Short: "var avant const. Ordre: const -> var -> type -> func",
+		Verbose: `PROBLEME: bloc var declare avant bloc const.
+
+POURQUOI: L'ordre standard facilite la navigation:
+  1. const
+  2. var
+  3. type
+  4. func`,
+	})
+
+	// VAR-003: CamelCase - no underscores (fusion VAR-001+018)
 	Register(Message{
 		Code:  "KTN-VAR-003",
-		Short: "utiliser := au lieu de var pour variable locale",
-		Verbose: `PROBLÈME: 'var' utilisé pour une variable locale.
+		Short: "variable '%s' contient underscore. Utiliser camelCase",
+		Verbose: `PROBLEME: La variable '%s' contient un underscore.
 
-POURQUOI: En Go, := est préféré pour les variables locales:
+POURQUOI: Go utilise camelCase pour toutes les variables.
+Les underscores (snake_case ou SCREAMING_SNAKE_CASE) ne sont pas idiomatiques.
+
+EXEMPLE INCORRECT:
+  var MAX_SIZE = 1024        // SCREAMING_SNAKE_CASE
+  var user_name string       // snake_case
+  var Api_Key string         // Mixed_Case
+
+EXEMPLE CORRECT:
+  var maxSize = 1024         // camelCase prive
+  var MaxSize = 1024         // PascalCase exporte
+  var userName string
+  var APIKey string`,
+	})
+
+	// VAR-004: Longueur min (NEW)
+	Register(Message{
+		Code:  "KTN-VAR-004",
+		Short: "variable '%s' trop courte (min 2 caracteres)",
+		Verbose: `PROBLEME: La variable '%s' a un nom trop court.
+
+POURQUOI: Les noms a 1 caractere sont difficiles a comprendre
+sauf dans des contextes specifiques (boucles, idiomes).
+
+EXCEPTIONS AUTORISEES:
+  - Boucles: i, j, k, n, x, y, z
+  - Idiomes: ok
+
+EXEMPLE INCORRECT:
+  a := 42
+  b := "hello"
+
+EXEMPLE CORRECT:
+  count := 42
+  message := "hello"
+  for i := 0; i < 10; i++ {}  // i autorise en boucle`,
+	})
+
+	// VAR-005: Longueur max (NEW)
+	Register(Message{
+		Code:  "KTN-VAR-005",
+		Short: "variable '%s' trop longue (max 30 caracteres)",
+		Verbose: `PROBLEME: La variable '%s' depasse 30 caracteres.
+
+POURQUOI: Les noms trop longs nuisent a la lisibilite.
+
+EXEMPLE INCORRECT:
+  thisIsAVeryLongVariableNameThatExceedsLimit := 1
+
+EXEMPLE CORRECT:
+  maxConnPoolSize := 1`,
+	})
+
+	// VAR-006: Shadowing built-in identifiers (ISO avec CONST-006)
+	Register(Message{
+		Code:  "KTN-VAR-006",
+		Short: "variable '%s' masque un identifiant built-in",
+		Verbose: `PROBLEME: La variable '%s' masque un identifiant built-in Go.
+
+POURQUOI: Masquer les built-ins cause des comportements inattendus:
+  - Confusion pour les lecteurs du code
+  - Erreurs subtiles difficiles a deboguer
+  - Le built-in devient inaccessible dans ce scope
+
+BUILT-INS PROTEGES:
+  Types: bool, byte, int, string, error, any, ...
+  Constants: true, false, iota, nil
+  Functions: len, cap, append, make, new, panic, ...
+
+EXEMPLE INCORRECT:
+  var len int = 100  // Masque la fonction len()
+
+EXEMPLE CORRECT:
+  var maxLen int = 100`,
+	})
+
+	// VAR-007: := vs var (ex-VAR-003)
+	Register(Message{
+		Code:  "KTN-VAR-007",
+		Short: "utiliser := au lieu de var pour variable locale",
+		Verbose: `PROBLEME: 'var' utilise pour une variable locale.
+
+POURQUOI: En Go, := est prefere pour les variables locales:
   - Plus concis
   - Idiomatique
-  - Le type est inféré
+  - Le type est infere
 
 EXEMPLE INCORRECT:
   var x int = 42
@@ -58,12 +139,13 @@ EXEMPLE CORRECT:
   var err error  // OK si zero value voulue`,
 	})
 
+	// VAR-008: Slices prealloc (ex-VAR-004)
 	Register(Message{
-		Code:  "KTN-VAR-004",
-		Short: "slice non préallouée. Utiliser make([]T, 0, %d)",
-		Verbose: `PROBLÈME: La slice n'est pas préallouée malgré capacité connue.
+		Code:  "KTN-VAR-008",
+		Short: "slice non preallouee. Utiliser make([]T, 0, %d)",
+		Verbose: `PROBLEME: La slice n'est pas preallouee malgre capacite connue.
 
-POURQUOI: Sans préallocation, append() réalloue à chaque dépassement,
+POURQUOI: Sans preallocation, append() realloue a chaque depassement,
 causant des copies et de la pression GC.
 
 EXEMPLE INCORRECT:
@@ -79,13 +161,14 @@ EXEMPLE CORRECT:
   }`,
 	})
 
+	// VAR-009: make+append (ex-VAR-005)
 	Register(Message{
-		Code:  "KTN-VAR-005",
-		Short: "make([]T, %d) avec append cause réallocation. Utiliser cap",
-		Verbose: `PROBLÈME: make([]T, n) crée n éléments, append en ajoute après.
+		Code:  "KTN-VAR-009",
+		Short: "make([]T, %d) avec append cause reallocation. Utiliser cap",
+		Verbose: `PROBLEME: make([]T, n) cree n elements, append en ajoute apres.
 
-POURQUOI: make([]T, n) initialise à zéro, append ajoute EN PLUS.
-  make([]T, 5) puis append(s, x) → len=6, pas len=5!
+POURQUOI: make([]T, n) initialise a zero, append ajoute EN PLUS.
+  make([]T, 5) puis append(s, x) -> len=6, pas len=5!
 
 EXEMPLE INCORRECT:
   s := make([]int, 10)
@@ -96,12 +179,13 @@ EXEMPLE CORRECT:
   s = append(s, 42)  // len=1, cap=10`,
 	})
 
+	// VAR-010: Buffer.Grow (ex-VAR-006)
 	Register(Message{
-		Code:  "KTN-VAR-006",
-		Short: "Buffer/Builder sans Grow(). Préallouer avec Grow(%d)",
-		Verbose: `PROBLÈME: bytes.Buffer ou strings.Builder sans Grow().
+		Code:  "KTN-VAR-010",
+		Short: "Buffer/Builder sans Grow(). Preallouer avec Grow(%d)",
+		Verbose: `PROBLEME: bytes.Buffer ou strings.Builder sans Grow().
 
-POURQUOI: Sans Grow(), le buffer réalloue à chaque dépassement.
+POURQUOI: Sans Grow(), le buffer realloue a chaque depassement.
 
 EXEMPLE INCORRECT:
   var buf bytes.Buffer
@@ -117,13 +201,14 @@ EXEMPLE CORRECT:
   }`,
 	})
 
+	// VAR-011: strings.Builder (ex-VAR-007)
 	Register(Message{
-		Code:  "KTN-VAR-007",
-		Short: "%d concaténations string. Utiliser strings.Builder",
-		Verbose: `PROBLÈME: %d concaténations de string avec +.
+		Code:  "KTN-VAR-011",
+		Short: "%d concatenations string. Utiliser strings.Builder",
+		Verbose: `PROBLEME: %d concatenations de string avec +.
 
-POURQUOI: Chaque + crée une nouvelle string (immutable).
-strings.Builder évite les allocations.
+POURQUOI: Chaque + cree une nouvelle string (immutable).
+strings.Builder evite les allocations.
 
 EXEMPLE INCORRECT:
   s := ""
@@ -140,15 +225,16 @@ EXEMPLE CORRECT:
   s := b.String()`,
 	})
 
+	// VAR-012: Alloc loops (ex-VAR-008)
 	Register(Message{
-		Code:  "KTN-VAR-008",
+		Code:  "KTN-VAR-012",
 		Short: "allocation dans boucle chaude. Sortir de la boucle",
-		Verbose: `PROBLÈME: Allocation répétée dans une boucle.
+		Verbose: `PROBLEME: Allocation repetee dans une boucle.
 
 POURQUOI: Allouer dans une boucle:
-  - Crée de la pression GC
-  - Ralentit l'exécution
-  - Peut être évité
+  - Cree de la pression GC
+  - Ralentit l'execution
+  - Peut etre evite
 
 EXEMPLE INCORRECT:
   for i := 0; i < 1000; i++ {
@@ -164,15 +250,16 @@ EXEMPLE CORRECT:
   }`,
 	})
 
+	// VAR-013: Struct size (ex-VAR-009)
 	Register(Message{
-		Code:  "KTN-VAR-009",
-		Short: "struct de %d bytes passée par valeur (seuil: %d). Utiliser pointeur",
-		Verbose: `PROBLÈME: Struct de %d bytes passée par valeur (seuil: %d bytes).
+		Code:  "KTN-VAR-013",
+		Short: "struct de %d bytes passee par valeur (seuil: %d). Utiliser pointeur",
+		Verbose: `PROBLEME: Struct de %d bytes passee par valeur (seuil: %d bytes).
 
 POURQUOI: Passer par valeur copie toute la struct.
 Un pointeur copie seulement 8 bytes (64-bit).
 
-SEUIL: >%d bytes → utiliser pointeur
+SEUIL: >%d bytes -> utiliser pointeur
 
 EXEMPLE INCORRECT:
   func Process(data LargeStruct) { ... }
@@ -181,12 +268,13 @@ EXEMPLE CORRECT:
   func Process(data *LargeStruct) { ... }`,
 	})
 
+	// VAR-014: sync.Pool (ex-VAR-010)
 	Register(Message{
-		Code:  "KTN-VAR-010",
-		Short: "buffer répété sans sync.Pool. Utiliser Pool",
-		Verbose: `PROBLÈME: Buffers alloués/libérés en boucle.
+		Code:  "KTN-VAR-014",
+		Short: "buffer repete sans sync.Pool. Utiliser Pool",
+		Verbose: `PROBLEME: Buffers alloues/liberes en boucle.
 
-POURQUOI: sync.Pool réutilise les objets et réduit le GC.
+POURQUOI: sync.Pool reutilise les objets et reduit le GC.
 
 EXEMPLE INCORRECT:
   for req := range requests {
@@ -205,33 +293,11 @@ EXEMPLE CORRECT:
   }`,
 	})
 
+	// VAR-015: string() (ex-VAR-012)
 	Register(Message{
-		Code:  "KTN-VAR-011",
-		Short: "shadowing de '%s' avec :=. Utiliser = pour réassigner",
-		Verbose: `PROBLÈME: La variable '%s' est shadowée avec :=.
-
-POURQUOI: := crée une NOUVELLE variable qui cache l'ancienne.
-C'est souvent un bug subtil.
-
-EXEMPLE INCORRECT:
-  x := 10
-  if cond {
-      x := 20  // Nouvelle variable, shadow!
-  }
-  // x est toujours 10
-
-EXEMPLE CORRECT:
-  x := 10
-  if cond {
-      x = 20  // Réassignation
-  }
-  // x est 20`,
-	})
-
-	Register(Message{
-		Code:  "KTN-VAR-012",
-		Short: "string() appelé %d fois sur même valeur. Stocker le résultat",
-		Verbose: `PROBLÈME: string() appelé plusieurs fois sur même []byte.
+		Code:  "KTN-VAR-015",
+		Short: "string() appele %d fois sur meme valeur. Stocker le resultat",
+		Verbose: `PROBLEME: string() appele plusieurs fois sur meme []byte.
 
 POURQUOI: Chaque string() alloue une nouvelle string.
 
@@ -243,12 +309,13 @@ EXEMPLE CORRECT:
   if s == "foo" || s == "bar" { }`,
 	})
 
+	// VAR-016: Groupement (ex-VAR-013)
 	Register(Message{
-		Code:  "KTN-VAR-013",
-		Short: "variables non groupées. Utiliser un seul bloc var()",
-		Verbose: `PROBLÈME: Plusieurs blocs var séparés.
+		Code:  "KTN-VAR-016",
+		Short: "variables non groupees. Utiliser un seul bloc var()",
+		Verbose: `PROBLEME: Plusieurs blocs var separes.
 
-POURQUOI: Grouper améliore la lisibilité et la cohérence.
+POURQUOI: Grouper ameliore la lisibilite et la coherence.
 
 EXEMPLE INCORRECT:
   var x int = 1
@@ -263,24 +330,13 @@ EXEMPLE CORRECT:
   )`,
 	})
 
+	// VAR-017: Map prealloc (ex-VAR-015)
 	Register(Message{
-		Code:  "KTN-VAR-014",
-		Short: "var avant const. Ordre: const → var → type → func",
-		Verbose: `PROBLÈME: bloc var déclaré avant bloc const.
+		Code:  "KTN-VAR-017",
+		Short: "map sans capacite. Utiliser make(map[K]V, %d)",
+		Verbose: `PROBLEME: Map creee sans capacite initiale connue.
 
-POURQUOI: L'ordre standard facilite la navigation:
-  1. const
-  2. var
-  3. type
-  4. func`,
-	})
-
-	Register(Message{
-		Code:  "KTN-VAR-015",
-		Short: "map sans capacité. Utiliser make(map[K]V, %d)",
-		Verbose: `PROBLÈME: Map créée sans capacité initiale connue.
-
-POURQUOI: Sans capacité, la map réalloue en grandissant.
+POURQUOI: Sans capacite, la map realloue en grandissant.
 
 EXEMPLE INCORRECT:
   m := make(map[string]int)
@@ -292,10 +348,11 @@ EXEMPLE CORRECT:
   m := make(map[string]int, len(items))`,
 	})
 
+	// VAR-018: Array vs slice (ex-VAR-016)
 	Register(Message{
-		Code:  "KTN-VAR-016",
+		Code:  "KTN-VAR-018",
 		Short: "make([]T, %d) pour taille fixe. Utiliser [%d]T",
-		Verbose: `PROBLÈME: make() pour une taille constante connue à la compilation.
+		Verbose: `PROBLEME: make() pour une taille constante connue a la compilation.
 
 POURQUOI: Un array [N]T est sur la stack (pas d'allocation heap).
 
@@ -306,12 +363,13 @@ EXEMPLE CORRECT:
   var buf [32]byte  // Stack allocation`,
 	})
 
+	// VAR-019: Mutex copies (ex-VAR-017)
 	Register(Message{
-		Code:  "KTN-VAR-017",
+		Code:  "KTN-VAR-019",
 		Short: "copie de mutex '%s'. Utiliser pointeur ou embed",
-		Verbose: `PROBLÈME: sync.Mutex/RWMutex copié par valeur.
+		Verbose: `PROBLEME: sync.Mutex/RWMutex copie par valeur.
 
-POURQUOI: Copier un mutex copie son état interne,
+POURQUOI: Copier un mutex copie son etat interne,
 causant des deadlocks ou data races.
 
 EXEMPLE INCORRECT:
@@ -324,21 +382,5 @@ EXEMPLE CORRECT:
       mu sync.Mutex
       data int
   }`,
-	})
-
-	Register(Message{
-		Code:  "KTN-VAR-018",
-		Short: "variable '%s' utilise snake_case. Utiliser camelCase",
-		Verbose: `PROBLÈME: La variable '%s' utilise snake_case.
-
-POURQUOI: Go utilise camelCase pour toutes les variables.
-
-EXEMPLE INCORRECT:
-  var user_name string
-  var max_size int
-
-EXEMPLE CORRECT:
-  var userName string
-  var maxSize int`,
 	})
 }

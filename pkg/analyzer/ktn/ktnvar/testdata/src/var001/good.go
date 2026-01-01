@@ -1,71 +1,76 @@
-// Package var001 provides good test cases.
-package var001
+// Package var002 provides good test cases.
+package var002
 
-// Good: All package-level variables use camelCase or PascalCase (not SCREAMING_SNAKE_CASE)
+// Good: Variables with explicit type AND value (format: var name type = value)
 
 const (
-	// DefaultTimeout is a constant in CamelCase
+	// DefaultTimeout is the default timeout
 	DefaultTimeout int = 30
-	// MaxRetries is a constant
-	MaxRetries int = 3
-	// ServerPort is the server port
-	ServerPort int = 8080
-	// MaxConnections is maximum connections
+	// DefaultPort is the default port
+	DefaultPort int = 8080
+	// MaxConnections is the maximum connections
 	MaxConnections int = 100
-	// MinTimeout is minimum timeout
-	MinTimeout int = 5
-	// TheAnswer is the answer to life
+	// TheAnswer is the answer to everything
 	TheAnswer int = 42
+	// BufferSize is the buffer size
+	BufferSize int = 1024
+	// ByteH is the byte value for H
+	ByteH byte = 72
+	// ByteE is the byte value for e
+	ByteE byte = 101
+	// ByteL is the byte value for l
+	ByteL byte = 108
+	// ByteO is the byte value for o
+	ByteO byte = 111
+	// DefaultRetries is the default retry count
+	DefaultRetries int = 3
+	// DefaultCacheSize is the default cache size
+	DefaultCacheSize int = 10
 )
 
-// All package-level variables grouped in a single block
+// Style requis: var name type (= value optionnel)
 var (
-	// defaultRetries uses camelCase (good for private variables)
+	// ===== Avec type explicite ET valeur =====
+
+	// defaultRetries has explicit type and value
 	defaultRetries int = DefaultTimeout
-
-	// configuration uses camelCase
+	// configuration has explicit type and value
 	configuration string = "default"
-
-	// isEnabled uses camelCase
+	// isEnabled has explicit type and value
 	isEnabled bool = false
-
-	// serverPort uses camelCase
-	serverPort int = ServerPort
-
-	// maxConnections uses camelCase
+	// serverPort has explicit type and value
+	serverPort int = DefaultPort
+	// serverHost has explicit type and value
+	serverHost string = "localhost"
+	// maxConnections has explicit type and value
 	maxConnections int = MaxConnections
+	// endpoints has explicit type and value
+	endpoints []string = []string{"http://localhost:8080", "http://localhost:9090"}
+	// configMap has explicit type and value
+	configMap map[string]int = map[string]int{"timeout": DefaultTimeout, "retries": DefaultRetries}
+	// buffer has explicit type and value
+	buffer []byte = make([]byte, 0, BufferSize)
+	// cache has explicit type and value
+	cache map[string]string = make(map[string]string, DefaultCacheSize)
+	// convertedInt has explicit type and value
+	convertedInt int = int(TheAnswer)
+	// convertedStr has explicit type and value
+	convertedStr string = string([]byte{ByteH, ByteE, ByteL, ByteL, ByteO})
+	// convertedFloat has explicit type and value
+	convertedFloat float64 = float64(TheAnswer)
 
-	// minTimeout uses camelCase
-	minTimeout int = MinTimeout
+	// ===== Zéro-values (type explicite, pas de valeur) =====
 
-	// apiEndpoint uses camelCase
-	apiEndpoint string = "http://localhost"
-
-	// DefaultConfig uses PascalCase (good for exported variables)
-	DefaultConfig string = "production"
-
-	// ServerAddress uses PascalCase
-	ServerAddress string = "0.0.0.0"
-
-	// ===== Acronyms handling (valid Go naming) =====
-
-	// HTTPClient uses PascalCase with acronym (exported, valid Go convention)
-	HTTPClient string = "http-client"
-
-	// httpClient uses camelCase (private, valid Go convention)
-	httpClient string = "http-client-private"
-
-	// XMLParser uses PascalCase with acronym (exported)
-	XMLParser string = "xml-parser"
-
-	// xmlParser uses camelCase (private)
-	xmlParser string = "xml-parser-private"
-
-	// APIEndpoint uses PascalCase with acronym
-	APIEndpoint string = "/api/v1"
-
-	// apiKey uses camelCase (private)
-	apiKey string = "secret-key"
+	// zeroInt uses zero-value (idiomatic Go)
+	zeroInt int
+	// zeroString uses zero-value
+	zeroString string
+	// zeroBool uses zero-value
+	zeroBool bool
+	// zeroSlice uses zero-value (nil slice)
+	zeroSlice []string
+	// zeroMap uses zero-value (nil map)
+	zeroMap map[string]int
 )
 
 // init utilise les variables pour éviter les erreurs de compilation
@@ -75,11 +80,19 @@ func init() {
 	_ = configuration
 	_ = isEnabled
 	_ = serverPort
+	_ = serverHost
 	_ = maxConnections
-	_ = minTimeout
-	_ = apiEndpoint
-	// Utilisation des variables avec acronymes
-	_ = httpClient
-	_ = xmlParser
-	_ = apiKey
+	_ = endpoints
+	_ = configMap
+	_ = buffer
+	_ = cache
+	_ = convertedInt
+	_ = convertedStr
+	_ = convertedFloat
+	// Utilisation des zéro-values
+	_ = zeroInt
+	_ = zeroString
+	_ = zeroBool
+	_ = zeroSlice
+	_ = zeroMap
 }

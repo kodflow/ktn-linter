@@ -1,53 +1,49 @@
-// Package var018 provides good test cases.
-package var018
+// Package var016 provides good test cases.
+package var016
 
-// Constants to avoid magic numbers
+// Good: Using arrays for small fixed sizes or slices when appropriate
+
 const (
-	// PortValue is the port value
-	PortValue int = 8080
-	// MaxValue is the max value
-	MaxValue int = 100
-	// TimeoutValue is the timeout value
-	TimeoutValue int = 30
+	// ArraySizeSmall is small array size
+	ArraySizeSmall int = 10
+	// BufferSize is buffer size
+	BufferSize int = 64
+	// LargeSize is large allocation size
+	LargeSize int = 2048
+	// CapacityMedium is medium capacity
+	CapacityMedium int = 100
+	// LengthSmall is small length
+	LengthSmall int = 10
+	// CapacitySmall is small capacity
+	CapacitySmall int = 20
 )
 
-// Good: Variables using camelCase or PascalCase (no underscores)
-
-var (
-	// httpClient uses camelCase (correct)
-	httpClient string = "client"
-
-	// serverPort uses camelCase (correct)
-	serverPort int = PortValue
-
-	// maxConnections uses camelCase (correct)
-	maxConnections int = MaxValue
-
-	// apiKey uses camelCase (correct)
-	apiKey string = "secret"
-
-	// userName uses camelCase (correct)
-	userName string = "admin"
-
-	// isEnabled uses camelCase (correct)
-	isEnabled bool = true
-
-	// DefaultTimeout uses PascalCase for exported (correct)
-	DefaultTimeout int = TimeoutValue
-
-	// HTTPClient uses PascalCase with acronym (correct)
-	HTTPClient string = "http"
-
-	// XMLParser uses PascalCase with acronym (correct)
-	XMLParser string = "xml"
-)
-
-// init uses the variables to avoid compilation errors
+// init demonstrates good practices for array and slice allocation
 func init() {
-	_ = httpClient
-	_ = serverPort
-	_ = maxConnections
-	_ = apiKey
-	_ = userName
-	_ = isEnabled
+	// Array allocated on stack - good for small fixed sizes
+	var items [ArraySizeSmall]int
+	_ = items
+
+	// Fixed size buffer as array
+	var buffer [BufferSize]byte
+	_ = buffer
+
+	// Dynamic size - use slice with capacity
+	dynamicItems := make([]int, 0, CapacitySmall)
+	dynamicItems = append(dynamicItems, LengthSmall)
+	_ = dynamicItems
+
+	// Size > 1024, slice is appropriate
+	large := make([]byte, 0, LargeSize)
+	_ = large
+
+	// Slice will grow, needs heap allocation
+	growingItems := make([]string, 0, CapacityMedium)
+	growingItems = append(growingItems, "test")
+	_ = growingItems
+
+	// Different length and capacity
+	withCapacity := make([]int, 0, CapacitySmall)
+	withCapacity = append(withCapacity, LengthSmall)
+	_ = withCapacity
 }

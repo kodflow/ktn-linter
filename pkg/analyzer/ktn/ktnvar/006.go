@@ -3,6 +3,7 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/token"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -16,258 +17,156 @@ const (
 	ruleCodeVar006 string = "KTN-VAR-006"
 )
 
-// Analyzer006 checks for strings.Builder/bytes.Buffer without Grow preallocate
+// builtinIdentifiers006 contains all Go built-in identifiers (44 total).
+// Types (22): bool, byte, complex64, complex128, error, float32, float64,
+//
+//	int, int8, int16, int32, int64, rune, string, uint, uint8,
+//	uint16, uint32, uint64, uintptr, any, comparable
+//
+// Constants (3): true, false, iota
+// Zero-value (1): nil
+// Functions (18): append, cap, clear, close, complex, copy, delete, imag,
+//
+//	len, make, max, min, new, panic, print, println, real, recover
+var builtinIdentifiers006 map[string]bool = map[string]bool{
+	// Types (22)
+	"bool":       true,
+	"byte":       true,
+	"complex64":  true,
+	"complex128": true,
+	"error":      true,
+	"float32":    true,
+	"float64":    true,
+	"int":        true,
+	"int8":       true,
+	"int16":      true,
+	"int32":      true,
+	"int64":      true,
+	"rune":       true,
+	"string":     true,
+	"uint":       true,
+	"uint8":      true,
+	"uint16":     true,
+	"uint32":     true,
+	"uint64":     true,
+	"uintptr":    true,
+	"any":        true,
+	"comparable": true,
+	// Constants (3)
+	"true":  true,
+	"false": true,
+	"iota":  true,
+	// Zero-value (1)
+	"nil": true,
+	// Functions (18)
+	"append":  true,
+	"cap":     true,
+	"clear":   true,
+	"close":   true,
+	"complex": true,
+	"copy":    true,
+	"delete":  true,
+	"imag":    true,
+	"len":     true,
+	"make":    true,
+	"max":     true,
+	"min":     true,
+	"new":     true,
+	"panic":   true,
+	"print":   true,
+	"println": true,
+	"real":    true,
+	"recover": true,
+}
+
+// Analyzer006 checks that variables do not shadow built-in identifiers.
 var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar006",
-	Doc:      "KTN-VAR-006: Préallouer bytes.Buffer/strings.Builder avec Grow",
+	Doc:      "KTN-VAR-006: Verifie que les variables ne masquent pas les identifiants built-in",
 	Run:      runVar006,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runVar006 exécute l'analyse KTN-VAR-006.
+// runVar006 executes KTN-VAR-006 analysis.
 //
 // Params:
-//   - pass: contexte d'analyse
+//   - pass: analysis context
 //
 // Returns:
-//   - any: résultat de l'analyse
-//   - error: erreur éventuelle
+//   - any: analysis result
+//   - error: potential error
 func runVar006(pass *analysis.Pass) (any, error) {
-	// Récupération de la configuration
+	// Recuperation de la configuration
 	cfg := config.Get()
 
-	// Vérifier si la règle est activée
+	// Verifier si la regle est activee
 	if !cfg.IsRuleEnabled(ruleCodeVar006) {
-		// Règle désactivée
+		// Regle desactivee
 		return nil, nil
 	}
 
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
-		(*ast.ValueSpec)(nil),
-		(*ast.AssignStmt)(nil),
+		(*ast.GenDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		filename := pass.Fset.Position(n.Pos()).Filename
 		// Skip excluded files
-		if cfg.IsFileExcluded(ruleCodeVar006, pass.Fset.Position(n.Pos()).Filename) {
-			// Fichier exclu
+		if cfg.IsFileExcluded(ruleCodeVar006, filename) {
+			// File is excluded
+			return
+		}
+		genDecl := n.(*ast.GenDecl)
+
+		// Only check var declarations
+		if genDecl.Tok != token.VAR {
+			// Return early
 			return
 		}
 
-		checkBuilderWithoutGrow(pass, n)
+		// Iterate over specs
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+
+			// Iterate over names
+			for _, name := range valueSpec.Names {
+				varName := name.Name
+
+				// Check if name shadows built-in
+				if isBuiltinIdentifier006(varName) {
+					msg, _ := messages.Get(ruleCodeVar006)
+					pass.Reportf(
+						name.Pos(),
+						"%s: %s",
+						ruleCodeVar006,
+						msg.Format(cfg.Verbose, varName),
+					)
+				}
+			}
+		}
 	})
 
-	// Retour de la fonction
+	// Return result
 	return nil, nil
 }
 
-// checkBuilderWithoutGrow checks if Builder/Buffer lacks Grow call.
+// isBuiltinIdentifier006 checks if a name is a Go built-in identifier.
+// Blank identifier (_) is always allowed.
 //
 // Params:
-//   - pass: analysis pass context
-//   - n: AST node to check
-func checkBuilderWithoutGrow(pass *analysis.Pass, n ast.Node) {
-	// Composite literal found
-	var compositeLit *ast.CompositeLit
-	// Position for reporting
-	var pos ast.Node
-
-	// Check type of node
-	switch node := n.(type) {
-	// Case: variable specification
-	case *ast.ValueSpec:
-		compositeLit, pos = checkValueSpec(node)
-	// Case: assignment statement
-	case *ast.AssignStmt:
-		compositeLit, pos = checkAssignStmt(node)
-	}
-
-	// Report if composite literal found
-	if compositeLit != nil && pos != nil {
-		reportMissingGrow(pass, pos)
-	}
-}
-
-// checkValueSpec checks var declaration for Builder/Buffer.
-//
-// Params:
-//   - node: variable specification node
+//   - name: variable name to check
 //
 // Returns:
-//   - *ast.CompositeLit: composite literal if found
-//   - ast.Node: position node for reporting
-func checkValueSpec(node *ast.ValueSpec) (*ast.CompositeLit, ast.Node) {
-	// Only check var sb = strings.Builder{}
-	if len(node.Values) == 0 {
-		// Return nil if no values
-		return nil, nil
+//   - bool: true if the name shadows a built-in
+func isBuiltinIdentifier006(name string) bool {
+	// Blank identifier is always allowed
+	if name == "_" {
+		// Skip blank identifier
+		return false
 	}
 
-	// Check var sb = strings.Builder{}
-	for _, val := range node.Values {
-		// Check if value is composite literal
-		if lit, ok := val.(*ast.CompositeLit); ok {
-			// Check if it's Builder/Buffer type
-			if isBuilderCompositeLit(lit) {
-				// Return found composite literal
-				return lit, node
-			}
-		}
-	}
-
-	// Return nil if not found
-	return nil, nil
-}
-
-// checkAssignStmt checks assignment for Builder/Buffer.
-//
-// Params:
-//   - node: assignment statement node
-//
-// Returns:
-//   - *ast.CompositeLit: composite literal if found
-//   - ast.Node: position node for reporting
-func checkAssignStmt(node *ast.AssignStmt) (*ast.CompositeLit, ast.Node) {
-	// Check short declaration (sb := strings.Builder{})
-	for _, rhs := range node.Rhs {
-		// Check if right-hand side is composite literal
-		if lit, ok := rhs.(*ast.CompositeLit); ok {
-			// Check if it's Builder/Buffer type
-			if isBuilderCompositeLit(lit) {
-				// Return found composite literal
-				return lit, node
-			}
-		}
-	}
-
-	// Return nil if not found
-	return nil, nil
-}
-
-// isBuilderCompositeLit checks if composite is Builder/Buffer.
-//
-// Params:
-//   - lit: composite literal to check
-//
-// Returns:
-//   - bool: true if Builder/Buffer composite literal
-func isBuilderCompositeLit(lit *ast.CompositeLit) bool {
-	// Check if type is selector expression
-	if sel, ok := lit.Type.(*ast.SelectorExpr); ok {
-		var pkg *ast.Ident
-		// Check package and type names
-		if pkg, ok = sel.X.(*ast.Ident); ok {
-			pkgName := pkg.Name
-			typeName := sel.Sel.Name
-			// Check for strings.Builder or bytes.Buffer
-			return (pkgName == "strings" && typeName == "Builder") ||
-				(pkgName == "bytes" && typeName == "Buffer")
-		}
-	}
-	// Return false if not Builder/Buffer
-	return false
-}
-
-// reportMissingGrow reports missing Grow() call.
-//
-// Params:
-//   - pass: analysis pass context
-//   - node: AST node position for reporting
-func reportMissingGrow(pass *analysis.Pass, node ast.Node) {
-	// Get type information
-	var typeStr string
-	// Check type of node
-	switch n := node.(type) {
-	// Case: variable specification
-	case *ast.ValueSpec:
-		typeStr = extractTypeString(n.Type, n.Values)
-	// Case: assignment statement
-	case *ast.AssignStmt:
-		typeStr = extractAssignTypeString(n)
-	}
-
-	// Check if type string is valid
-	if typeStr != "" {
-		msg, _ := messages.Get(ruleCodeVar006)
-		pass.Reportf(
-			node.Pos(),
-			"%s: %s",
-			ruleCodeVar006,
-			msg.Format(config.Get().Verbose),
-		)
-	}
-}
-
-// extractTypeString extracts type name from ValueSpec.
-//
-// Params:
-//   - typeExpr: type expression
-//   - values: initialization values
-//
-// Returns:
-//   - string: type name as string
-func extractTypeString(typeExpr ast.Expr, values []ast.Expr) string {
-	// Check if type expression exists
-	if typeExpr != nil {
-		// Check if selector expression
-		if sel, ok := typeExpr.(*ast.SelectorExpr); ok {
-			var pkg *ast.Ident
-			// Check package name
-			if pkg, ok = sel.X.(*ast.Ident); ok {
-				// Return package.Type format
-				return pkg.Name + "." + sel.Sel.Name
-			}
-		}
-	}
-
-	// Check values for composite literal
-	if len(values) > 0 {
-		// Check first value
-		if lit, ok := values[0].(*ast.CompositeLit); ok {
-			var sel *ast.SelectorExpr
-			// Check if type is selector expression
-			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
-				var pkg *ast.Ident
-				// Check package name
-				if pkg, ok = sel.X.(*ast.Ident); ok {
-					// Return package.Type format
-					return pkg.Name + "." + sel.Sel.Name
-				}
-			}
-		}
-	}
-
-	// Return empty if type cannot be extracted
-	return ""
-}
-
-// extractAssignTypeString extracts type from assignment.
-//
-// Params:
-//   - assign: assignment statement
-//
-// Returns:
-//   - string: type name as string
-func extractAssignTypeString(assign *ast.AssignStmt) string {
-	// Iteration over right-hand side expressions
-	for _, rhs := range assign.Rhs {
-		// Check if composite literal
-		if lit, ok := rhs.(*ast.CompositeLit); ok {
-			var sel *ast.SelectorExpr
-			// Check if type is selector expression
-			if sel, ok = lit.Type.(*ast.SelectorExpr); ok {
-				var pkg *ast.Ident
-				// Check package name
-				if pkg, ok = sel.X.(*ast.Ident); ok {
-					// Return package.Type format
-					return pkg.Name + "." + sel.Sel.Name
-				}
-			}
-		}
-	}
-
-	// Return empty if type cannot be extracted
-	return ""
+	// Check if name is in built-in map
+	return builtinIdentifiers006[name]
 }

@@ -1,52 +1,66 @@
-// Package var018 contains test cases for KTN rules.
-package var018
+// Package var016 contains test cases for KTN rules.
+package var016
 
-// Constants to avoid magic numbers
+// Bad: Using make([]T, N) where N is small constant
+
 const (
-	// BadPortValue is the port value
-	BadPortValue int = 8080
-	// BadMaxValue is the max value
-	BadMaxValue int = 100
-	// BadTimeoutValue is the timeout value
-	BadTimeoutValue int = 30
+	// FixedSize est la taille fixe pour le test
+	FixedSize int = 10
+	// SmallSize est la petite taille pour le test
+	SmallSize int = 64
+	// TinySize est la très petite taille pour le test
+	TinySize int = 5
+	// MediumSize est la taille moyenne pour le test
+	MediumSize int = 256
+	// MaxSize est la taille maximale pour le test
+	MaxSize int = 1024
 )
 
-// Bad: Variables using snake_case (with underscores)
+// badFixedSize uses make with small constant size
+func badFixedSize() {
+	// Small fixed size should use array
+	items := make([]int, FixedSize)
+	_ = items
+}
 
-var (
-	// http_client uses snake_case
-	http_client string = "client" // want "KTN-VAR-018"
+// badSmallBuffer creates slice with constant small size
+func badSmallBuffer() {
+	// Constant size 64 should be array
+	buffer := make([]byte, SmallSize)
+	_ = buffer
+}
 
-	// server_port uses snake_case
-	server_port int = BadPortValue // want "KTN-VAR-018"
+// badTinySlice creates very small slice
+func badTinySlice() {
+	// Very small size should use array
+	data := make([]string, TinySize)
+	_ = data
+}
 
-	// max_connections uses snake_case
-	max_connections int = BadMaxValue // want "KTN-VAR-018"
+// badMediumSlice creates medium-sized slice
+func badMediumSlice() {
+	// Size 256 still small enough for stack
+	values := make([]float64, MediumSize)
+	_ = values
+}
 
-	// api_key uses snake_case
-	api_key string = "secret" // want "KTN-VAR-018"
+// badMaxAllowed creates slice at boundary
+func badMaxAllowed() {
+	// Size 1024 is at the limit
+	large := make([]int32, MaxSize)
+	_ = large
+}
 
-	// user_name uses snake_case
-	user_name string = "admin" // want "KTN-VAR-018"
-
-	// is_enabled uses snake_case
-	is_enabled bool = true // want "KTN-VAR-018"
-
-	// default_timeout uses snake_case
-	default_timeout int = BadTimeoutValue // want "KTN-VAR-018"
-
-	// my_var_name uses snake_case with multiple underscores
-	my_var_name string = "test" // want "KTN-VAR-018"
-)
-
-// init uses the variables to avoid compilation errors
+// init utilise les fonctions privées
 func init() {
-	_ = http_client
-	_ = server_port
-	_ = max_connections
-	_ = api_key
-	_ = user_name
-	_ = is_enabled
-	_ = default_timeout
-	_ = my_var_name
+	// Appel de badFixedSize
+	badFixedSize()
+	// Appel de badSmallBuffer
+	badSmallBuffer()
+	// Appel de badTinySlice
+	badTinySlice()
+	// Appel de badMediumSlice
+	badMediumSlice()
+	// Appel de badMaxAllowed
+	badMaxAllowed()
 }

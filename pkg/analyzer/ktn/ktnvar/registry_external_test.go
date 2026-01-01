@@ -12,7 +12,7 @@ import (
 // Returns:
 //   - (voir code)
 func TestAnalyzers(t *testing.T) {
-	const EXPECTED_COUNT int = 18 // 18 règles VAR (incluant VAR-018 snake_case)
+	const EXPECTED_COUNT int = 19 // 19 règles VAR
 
 	tests := []struct {
 		name  string

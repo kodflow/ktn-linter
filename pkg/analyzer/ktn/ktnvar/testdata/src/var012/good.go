@@ -1,60 +1,60 @@
-// Package var012 provides good test cases.
-package var012
+// Package var008 provides good test cases.
+package var008
 
-import "bytes"
+const (
+	// ValueTwo is constant value 2
+	ValueTwo int = 2
+	// ValueThree is constant value 3
+	ValueThree int = 3
+	// ValueFive is constant value 5
+	ValueFive int = 5
+	// ValueTen is constant value 10
+	ValueTen int = 10
+)
 
-// init demonstrates correct usage patterns
+// init demonstrates good loop allocation patterns
 func init() {
-	// Conversion une seule fois hors de la boucle
-	data := [][]byte{[]byte("hello"), []byte("world")}
-	target := "hello"
-	targetBytes := []byte(target) // OK: Conversion une seule fois
-	count := 0
-	// Parcours des éléments
-	for _, item := range data {
-		// Vérification de la condition
-		if bytes.Equal(item, targetBytes) {
-			count++
+	// Déclaration avant la boucle
+	data := make([]int, 0, ValueTen)
+	// Loop appends values to reused slice
+	for i := range ValueTen {
+		// Append current iteration value
+		data = append(data, i)
+	}
+	_ = data
+
+	// Déclaration avant la boucle avec capacité
+	cache := make(map[string]int, ValueTen)
+	// Loop reuses map
+	for i := range ValueTen {
+		// Store current value
+		cache["key"] = i
+	}
+	_ = cache
+
+	items := []int{1, ValueTwo, ValueThree}
+	// Déclaration avant la boucle avec capacité
+	buffer := make([]byte, 0, ValueThree)
+	// Range loop reuses buffer
+	for _, item := range items {
+		// Convert and append item
+		buffer = append(buffer, byte(item))
+	}
+	_ = buffer
+
+	// Pas de boucle, allocation OK avec array
+	var single [ValueTen]int
+	_ = single
+
+	// Déclaration avant la boucle avec array
+	var temp [ValueTen]int
+	// Outer loop iterates
+	for i := range ValueFive {
+		// Inner loop modifies temp
+		for j := range ValueFive {
+			// Store multiplication result
+			temp[j] = i * j
 		}
 	}
-	_ = count
-
-	// Conversion une seule fois puis réutilisation
-	byteData := []byte("test")
-	str := string(byteData) // OK: Conversion une seule fois
-	// Vérification de la condition
-	if str == "hello" {
-		println("found hello")
-	}
-	// Vérification de la condition
-	if str == "world" {
-		println("found world")
-	}
-	println(str)
-
-	// Utilisation de bytes.Equal au lieu de string()
-	items := [][]byte{[]byte("test")}
-	targetTest := []byte("test")
-	// Parcours des éléments
-	for i := range len(items) {
-		// Vérification de la condition
-		if bytes.Equal(items[i], targetTest) { // OK: Pas de conversion string
-			println("found")
-		}
-	}
-
-	// Une seule utilisation
-	singleData := []byte("unique")
-	// Vérification de la condition
-	if string(singleData) == "unique" { // OK: Une seule utilisation
-		println("found unique")
-	}
-
-	// Chaque variable convertie une seule fois
-	a := []byte("a")
-	b := []byte("b")
-	c := []byte("c")
-	println(string(a))
-	println(string(b))
-	println(string(c))
+	_ = temp
 }

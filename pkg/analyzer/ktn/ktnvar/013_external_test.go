@@ -17,23 +17,23 @@ func TestVar013(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Scattered var declarations",
+			name:           "Large structs (>64 bytes) passed by value",
 			analyzer:       ktnvar.Analyzer013,
 			testdataDir:    "var013",
-			expectedErrors: 4,
+			expectedErrors: 5,
 		},
 		{
-			name:           "Valid grouped var declarations",
+			name:           "Valid pointer usage for large structs",
 			analyzer:       ktnvar.Analyzer013,
 			testdataDir:    "var013",
-			expectedErrors: 4,
+			expectedErrors: 5,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 5 scattered var declarations (2 single + 3 groups after first)
+			// 4 grandes structures passées par valeur en paramètres
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}
