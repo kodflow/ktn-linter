@@ -235,6 +235,12 @@ func extractFromDeclStmt(s *ast.DeclStmt, anyTypeParams map[string]bool, result 
 			continue
 		}
 
+		// Sans type explicite (ex: var x = ...), on ne peut pas inferer
+		if valueSpec.Type == nil {
+			// Skip untyped var specs
+			continue
+		}
+
 		typeName := extractTypeName(valueSpec.Type)
 		// Verifier si le type est un type parameter "any"
 		if anyTypeParams[typeName] {
