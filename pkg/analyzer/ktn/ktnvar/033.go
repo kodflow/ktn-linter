@@ -97,10 +97,6 @@ func checkCmpOrPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *conf
 		case *ast.FuncLit:
 			// Get body from literal
 			body = fn.Body
-		// Default case
-		default:
-			// Unknown function type
-			return
 		}
 
 		// Analyze function body for cmp.Or pattern

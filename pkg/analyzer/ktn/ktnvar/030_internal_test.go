@@ -2,8 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // TestIsAppendNilPattern tests isAppendNilPattern function.
@@ -591,5 +598,419 @@ func TestProcessMakeAssignment(t *testing.T) {
 	// Expected: makeInfos has entry
 	if len(makeInfos) != 1 || makeInfos["clone"] == nil {
 		t.Error("processMakeAssignment should add valid make info")
+	}
+}
+
+// Test_runVar030_ruleDisabled tests runVar030 when rule is disabled.
+func Test_runVar030_ruleDisabled(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with rule disabled
+	newCfg := config.DefaultConfig()
+	falseVal := false
+	newCfg.Rules[ruleCodeVar030] = &config.RuleConfig{Enabled: &falseVal}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Run analyzer with testhelper on bad.go (would have errors if enabled)
+	diags := testhelper.RunAnalyzer(t, Analyzer030, "testdata/src/var030/bad.go")
+
+	// With rule disabled, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when rule disabled, got %d", len(diags))
+	}
+}
+
+// Test_checkAppendNilPattern_fileExcluded tests file exclusion in checkAppendNilPattern.
+func Test_checkAppendNilPattern_fileExcluded(t *testing.T) {
+	// Source with append([]T(nil), s...) pattern
+	src := `package test
+
+func badAppend() []int {
+	original := []int{1, 2, 3}
+	return append([]int(nil), original...)
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded_append.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Create config excluding the file
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar030] = &config.RuleConfig{
+		Exclude: []string{"excluded_append.go"},
+	}
+	config.Set(newCfg)
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer030,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call checkAppendNilPattern directly
+	checkAppendNilPattern(pass, insp, newCfg)
+
+	// With file excluded, should have 0 errors
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics when file excluded, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkMakeCopyPattern_fileExcluded tests file exclusion in checkMakeCopyPattern.
+func Test_checkMakeCopyPattern_fileExcluded(t *testing.T) {
+	// Source with make+copy pattern
+	src := `package test
+
+func badMakeCopy() []int {
+	original := []int{1, 2, 3}
+	clone := make([]int, len(original))
+	copy(clone, original)
+	return clone
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded_makecopy.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Create config excluding the file
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar030] = &config.RuleConfig{
+		Exclude: []string{"excluded_makecopy.go"},
+	}
+	config.Set(newCfg)
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer030,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call checkMakeCopyPattern directly
+	checkMakeCopyPattern(pass, insp, newCfg)
+
+	// With file excluded, should have 0 errors
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics when file excluded, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkCopyCall_matchingMake tests checkCopyCall with matching make info.
+func Test_checkCopyCall_matchingMake(t *testing.T) {
+	// Source with make+copy pattern inside a function
+	src := `package test
+
+func cloneSlice() {
+	original := []int{1, 2, 3}
+	clone := make([]int, len(original))
+	copy(clone, original)
+	_ = clone
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test_copy.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Create default config (rule enabled)
+	newCfg := config.DefaultConfig()
+	config.Set(newCfg)
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer030,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call runVar030 directly
+	_, err = runVar030(pass)
+	// Check run error
+	if err != nil {
+		t.Fatalf("runVar030() error = %v", err)
+	}
+
+	// Should detect the make+copy pattern
+	if len(diagnostics) < 1 {
+		t.Errorf("Expected at least 1 diagnostic for make+copy pattern, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkCopyCall_noMatchingMake tests checkCopyCall when no matching make exists.
+func Test_checkCopyCall_noMatchingMake(t *testing.T) {
+	// Create makeInfos with a different variable name
+	makeInfos := map[string]*makeCloneInfo{
+		"differentVar": {
+			varName:    "differentVar",
+			sourceExpr: "source",
+		},
+	}
+
+	// Create a copy call that doesn't match the make
+	exprStmt := &ast.ExprStmt{
+		X: &ast.CallExpr{
+			Fun:  &ast.Ident{Name: "copy"},
+			Args: []ast.Expr{&ast.Ident{Name: "clone"}, &ast.Ident{Name: "source"}},
+		},
+	}
+
+	// Create minimal pass
+	fset := token.NewFileSet()
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+	}
+
+	// Create config
+	cfg := config.DefaultConfig()
+
+	// Call checkCopyCall - should not report anything
+	checkCopyCall(pass, exprStmt, makeInfos, cfg)
+
+	// Should have 0 diagnostics since dest doesn't match
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics when no matching make, got %d", len(diagnostics))
+	}
+
+	// makeInfos should still have the entry
+	if len(makeInfos) != 1 {
+		t.Errorf("makeInfos should still have 1 entry, got %d", len(makeInfos))
+	}
+}
+
+// Test_checkCopyCall_invalidCall tests checkCopyCall when extractCopyCall030 returns nil.
+func Test_checkCopyCall_invalidCall(t *testing.T) {
+	// Create makeInfos
+	makeInfos := map[string]*makeCloneInfo{
+		"clone": {
+			varName:    "clone",
+			sourceExpr: "source",
+		},
+	}
+
+	// Create an exprStmt with non-copy call (will cause extractCopyCall030 to return nil)
+	exprStmt := &ast.ExprStmt{
+		X: &ast.CallExpr{
+			Fun:  &ast.Ident{Name: "append"},
+			Args: []ast.Expr{&ast.Ident{Name: "a"}, &ast.Ident{Name: "b"}},
+		},
+	}
+
+	// Create minimal pass
+	fset := token.NewFileSet()
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+	}
+
+	// Create config
+	cfg := config.DefaultConfig()
+
+	// Call checkCopyCall - should return early since extractCopyCall030 returns nil
+	checkCopyCall(pass, exprStmt, makeInfos, cfg)
+
+	// Should have 0 diagnostics
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for invalid call, got %d", len(diagnostics))
+	}
+
+	// makeInfos should still have the entry (not deleted)
+	if len(makeInfos) != 1 {
+		t.Errorf("makeInfos should still have 1 entry, got %d", len(makeInfos))
+	}
+}
+
+// Test_analyzeBlockForMakeCopy tests analyzeBlockForMakeCopy with various statements.
+func Test_analyzeBlockForMakeCopy(t *testing.T) {
+	// Source with various statement types in a block
+	src := `package test
+
+func mixedStatements() {
+	original := []int{1, 2, 3}
+	clone := make([]int, len(original))
+	x := 10
+	_ = x
+	copy(clone, original)
+	y := 20
+	_ = y
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test_block.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Create default config
+	newCfg := config.DefaultConfig()
+	config.Set(newCfg)
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer030,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call runVar030 directly
+	_, err = runVar030(pass)
+	// Check run error
+	if err != nil {
+		t.Fatalf("runVar030() error = %v", err)
+	}
+
+	// Should detect the make+copy pattern even with intervening statements
+	if len(diagnostics) < 1 {
+		t.Errorf("Expected at least 1 diagnostic, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkCopyCall_notCopyCall tests checkCopyCall with non-copy expression statement.
+func Test_checkCopyCall_notCopyCall(t *testing.T) {
+	// Create an expression statement that is NOT a copy call (e.g., println)
+	exprStmt := &ast.ExprStmt{
+		X: &ast.CallExpr{
+			Fun:  &ast.Ident{Name: "println"},
+			Args: []ast.Expr{&ast.BasicLit{Value: `"hello"`}},
+		},
+	}
+
+	// Create makeInfos
+	makeInfos := map[string]*makeCloneInfo{
+		"clone": {
+			varName:    "clone",
+			sourceExpr: "source",
+		},
+	}
+
+	// Create minimal pass
+	fset := token.NewFileSet()
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+	}
+
+	// Create config
+	cfg := config.DefaultConfig()
+
+	// Call checkCopyCall - should return early since it's not a copy call
+	checkCopyCall(pass, exprStmt, makeInfos, cfg)
+
+	// Should have 0 diagnostics since it's not a copy call
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for non-copy call, got %d", len(diagnostics))
+	}
+
+	// makeInfos should still have the entry (not deleted)
+	if len(makeInfos) != 1 {
+		t.Errorf("makeInfos should still have 1 entry, got %d", len(makeInfos))
+	}
+}
+
+// Test_reportMakeCopy030 tests reportMakeCopy030 function directly.
+func Test_reportMakeCopy030(t *testing.T) {
+	// Create a simple call expression
+	call := &ast.CallExpr{
+		Fun:  &ast.Ident{Name: "copy"},
+		Args: []ast.Expr{&ast.Ident{Name: "dest"}, &ast.Ident{Name: "src"}},
+	}
+
+	// Create minimal pass with diagnostics capture
+	fset := token.NewFileSet()
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+	}
+
+	// Create config
+	cfg := config.DefaultConfig()
+
+	// Call reportMakeCopy030
+	reportMakeCopy030(pass, call, cfg)
+
+	// Should have 1 diagnostic
+	if len(diagnostics) != 1 {
+		t.Errorf("Expected 1 diagnostic, got %d", len(diagnostics))
 	}
 }

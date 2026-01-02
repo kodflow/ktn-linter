@@ -95,10 +95,6 @@ func checkContainsPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *c
 		case *ast.FuncLit:
 			// Get body from literal
 			body = fn.Body
-		// Default case
-		default:
-			// Unknown function type
-			return
 		}
 
 		// Analyze function body for contains pattern

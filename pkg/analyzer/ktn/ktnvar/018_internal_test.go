@@ -2,9 +2,11 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/token"
 	"go/types"
+	"math/big"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -306,31 +308,45 @@ func Test_runVar018_fileExcluded(t *testing.T) {
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
 					"KTN-VAR-018": {
-						Exclude: []string{"test.go"},
+						Exclude: []string{"excluded.go"},
 					},
 				},
 			})
 			defer config.Reset()
 
-			// Parse simple code
+			// Parse code WITH a make call that would normally trigger
 			code := `package test
-			var x int = 42
-			`
+func foo() {
+	_ = make([]byte, 8)
+}
+`
 			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			file, err := parser.ParseFile(fset, "excluded.go", code, 0)
 			// Check parsing error
 			if err != nil {
 				t.Fatalf("failed to parse: %v", err)
 			}
+
+			// Type check the code
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Defs:  make(map[*ast.Ident]types.Object),
+				Uses:  make(map[*ast.Ident]types.Object),
+			}
+			conf := types.Config{}
+			pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
 
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 
 			pass := &analysis.Pass{
 				Fset: fset,
+				Pkg:  pkg,
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},
+				TypesInfo:  info,
+				TypesSizes: types.SizesFor("gc", "amd64"),
 				Report: func(_d analysis.Diagnostic) {
 					reportCount++
 				},
@@ -868,5 +884,154 @@ func Test_isTotalSizeSmall_smallSize(t *testing.T) {
 	result = isTotalSizeSmall(pass, sliceType, 100)
 	if result {
 		t.Error("isTotalSizeSmall() = true, expected false for large size")
+	}
+}
+
+// Test_getConstantSize_nonIntKind tests getConstantSize with non-int constant kind.
+func Test_getConstantSize_nonIntKind(t *testing.T) {
+	tests := []struct {
+		name  string
+		value constant.Value
+	}{
+		{"string constant", constant.MakeString("hello")},
+		{"float constant", constant.MakeFloat64(3.14)},
+		{"bool constant", constant.MakeBool(true)},
+		{"complex constant", constant.MakeImag(constant.MakeFloat64(1.0))},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
+
+			expr := &ast.BasicLit{Value: "test"}
+			pass.TypesInfo.Types[expr] = types.TypeAndValue{
+				Value: tt.value,
+				Type:  types.Typ[types.UntypedString],
+			}
+			size := getConstantSize(pass, expr)
+			if size != -1 {
+				t.Errorf("getConstantSize() = %d, expected -1 for %s", size, tt.name)
+			}
+		})
+	}
+}
+
+// Test_getConstantSize_largeInt tests getConstantSize with int too large for int64.
+func Test_getConstantSize_largeInt(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+
+	// Create a very large integer that exceeds int64 range
+	// Use big.Int to create a value larger than MaxInt64
+	largeInt := new(big.Int)
+	// Set to 2^64 which exceeds int64 max (2^63-1)
+	largeInt.SetString("18446744073709551616", 10)
+
+	expr := &ast.BasicLit{Value: "18446744073709551616"}
+	pass.TypesInfo.Types[expr] = types.TypeAndValue{
+		Value: constant.Make(largeInt),
+		Type:  types.Typ[types.UntypedInt],
+	}
+
+	size := getConstantSize(pass, expr)
+	if size != -1 {
+		t.Errorf("getConstantSize() = %d, expected -1 for oversized int constant", size)
+	}
+}
+
+// Test_getConstantSize_validIntValues tests various valid int constant cases.
+func Test_getConstantSize_validIntValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    int64
+		expected int64
+	}{
+		{"zero", 0, 0},
+		{"positive small", 42, 42},
+		{"negative", -1, -1},
+		{"max int64", 9223372036854775807, 9223372036854775807},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
+
+			expr := &ast.BasicLit{Value: "0"}
+			pass.TypesInfo.Types[expr] = types.TypeAndValue{
+				Value: constant.MakeInt64(tt.value),
+				Type:  types.Typ[types.Int64],
+			}
+
+			size := getConstantSize(pass, expr)
+			if size != tt.expected {
+				t.Errorf("getConstantSize() = %d, expected %d", size, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isTotalSizeSmall_boundaryCases tests boundary conditions for isTotalSizeSmall.
+func Test_isTotalSizeSmall_boundaryCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		elemType    types.Type
+		elemCount   int64
+		expected    bool
+		description string
+	}{
+		{
+			name:        "exactly 64 bytes",
+			elemType:    types.Typ[types.Int64],
+			elemCount:   8,
+			expected:    true,
+			description: "8 * 8 = 64 bytes should be true (<=64)",
+		},
+		{
+			name:        "65 bytes",
+			elemType:    types.Typ[types.Byte],
+			elemCount:   65,
+			expected:    false,
+			description: "1 * 65 = 65 bytes should be false (>64)",
+		},
+		{
+			name:        "0 elements",
+			elemType:    types.Typ[types.Int64],
+			elemCount:   0,
+			expected:    true,
+			description: "0 elements = 0 bytes should be true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				TypesSizes: types.SizesFor("gc", "amd64"),
+			}
+
+			elemExpr := &ast.Ident{Name: "elem"}
+			pass.TypesInfo.Types[elemExpr] = types.TypeAndValue{
+				Type: tt.elemType,
+			}
+			sliceType := &ast.ArrayType{Elt: elemExpr}
+
+			result := isTotalSizeSmall(pass, sliceType, tt.elemCount)
+			if result != tt.expected {
+				t.Errorf("isTotalSizeSmall() = %v, expected %v: %s", result, tt.expected, tt.description)
+			}
+		})
 	}
 }

@@ -2,8 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/importer"
+	"go/parser"
 	"go/token"
+	"go/types"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // TestIsSecurityName tests the isSecurityName function.
@@ -461,4 +468,178 @@ func TestCheckGenDeclForMathRand(t *testing.T) {
 		},
 	}
 	checkGenDeclForMathRand(nil, genDecl2, aliases)
+}
+
+// TestRunVar023_RuleDisabled tests runVar023 when the rule is disabled.
+func TestRunVar023_RuleDisabled(t *testing.T) {
+	// Save original config
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Create config with rule disabled
+	disabledCfg := config.DefaultConfig()
+	disabled := false
+	disabledCfg.Rules = map[string]*config.RuleConfig{
+		"KTN-VAR-023": {Enabled: &disabled},
+	}
+	config.Set(disabledCfg)
+
+	// Create a minimal pass
+	pass := createTestPass023(t, `package test
+import "math/rand"
+func generateKey() int { return rand.Intn(100) }
+`)
+	// Run the analyzer
+	result, err := runVar023(pass)
+	// Check no error
+	if err != nil {
+		t.Errorf("runVar023() unexpected error: %v", err)
+	}
+	// Check result is nil
+	if result != nil {
+		t.Errorf("runVar023() expected nil result, got %v", result)
+	}
+}
+
+// TestRunVar023_NoMathRandImport tests runVar023 when math/rand is not imported.
+func TestRunVar023_NoMathRandImport(t *testing.T) {
+	// Save original config
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Ensure rule is enabled
+	config.Reset()
+
+	// Create a pass without math/rand import
+	pass := createTestPass023(t, `package test
+import "fmt"
+func generateKey() int { fmt.Println("key"); return 100 }
+`)
+	// Run the analyzer
+	result, err := runVar023(pass)
+	// Check no error
+	if err != nil {
+		t.Errorf("runVar023() unexpected error: %v", err)
+	}
+	// Check result is nil
+	if result != nil {
+		t.Errorf("runVar023() expected nil result, got %v", result)
+	}
+}
+
+// TestCheckMathRandUsage_FileExcluded tests file exclusion path.
+func TestCheckMathRandUsage_FileExcluded(t *testing.T) {
+	// Save original config
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Create config with file exclusion
+	excludedCfg := config.DefaultConfig()
+	excludedCfg.Rules = map[string]*config.RuleConfig{
+		"KTN-VAR-023": {Exclude: []string{"*_test.go", "excluded.go"}},
+	}
+	config.Set(excludedCfg)
+
+	// Create a pass for excluded file
+	pass := createTestPass023WithFilename(t, `package test
+import "math/rand"
+func generateKey() int { return rand.Intn(100) }
+`, "excluded.go")
+
+	var diagnostics int
+	pass.Report = func(d analysis.Diagnostic) {
+		diagnostics++
+	}
+
+	// Run the analyzer
+	result, err := runVar023(pass)
+	// Check no error
+	if err != nil {
+		t.Errorf("runVar023() unexpected error: %v", err)
+	}
+	// Check result is nil
+	if result != nil {
+		t.Errorf("runVar023() expected nil result, got %v", result)
+	}
+	// Check no diagnostics were reported
+	if diagnostics != 0 {
+		t.Errorf("runVar023() expected 0 diagnostics for excluded file, got %d", diagnostics)
+	}
+}
+
+// TestCheckAssignForMathRand_FuncSecurityContext tests with funcIsSecurityContext = true.
+func TestCheckAssignForMathRand_FuncSecurityContext(t *testing.T) {
+	aliases := map[string]bool{"rand": true}
+
+	var reported int
+	mockPass := &analysis.Pass{
+		Fset: token.NewFileSet(),
+		Report: func(d analysis.Diagnostic) {
+			reported++
+		},
+	}
+
+	// Test: funcIsSecurityContext = true, variable name not security-related
+	assign := &ast.AssignStmt{
+		Lhs: []ast.Expr{&ast.Ident{Name: "value"}}, // Not a security name
+		Rhs: []ast.Expr{
+			&ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "rand"},
+					Sel: &ast.Ident{Name: "Intn"},
+				},
+			},
+		},
+	}
+
+	// Call with funcIsSecurityContext = true
+	checkAssignForMathRand(mockPass, assign, aliases, true)
+
+	// Check that diagnostic was reported
+	if reported != 1 {
+		t.Errorf("checkAssignForMathRand() expected 1 diagnostic with funcIsSecurityContext=true, got %d", reported)
+	}
+}
+
+// createTestPass023 creates a test pass for testing runVar023.
+func createTestPass023(t *testing.T, code string) *analysis.Pass {
+	return createTestPass023WithFilename(t, code, "test.go")
+}
+
+// createTestPass023WithFilename creates a test pass with a specific filename.
+func createTestPass023WithFilename(t *testing.T, code string, filename string) *analysis.Pass {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, filename, code, parser.ParseComments)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("failed to parse code: %v", err)
+	}
+
+	// Type check
+	conf := &types.Config{
+		Importer: importer.Default(),
+		Error:    func(err error) {}, // Ignore errors
+	}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	pkg, _ := conf.Check(file.Name.Name, fset, []*ast.File{file}, info)
+
+	pass := &analysis.Pass{
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report:    func(d analysis.Diagnostic) {},
+		ResultOf:  make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect.Analyzer to populate ResultOf
+	inspResult, _ := inspect.Analyzer.Run(pass)
+	pass.ResultOf[inspect.Analyzer] = inspResult
+
+	return pass
 }
