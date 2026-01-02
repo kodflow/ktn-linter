@@ -118,6 +118,12 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-TEST-011": SeverityWarning, // Package correct selon type fichier
 	"KTN-TEST-012": SeverityWarning, // Tests doivent contenir assertions
 	"KTN-TEST-013": SeverityInfo,    // Couverture cas d'erreur
+
+	// GENERIC - Generics (4 règles)
+	"KTN-GENERIC-001": SeverityWarning, // == ou != sans contrainte comparable
+	"KTN-GENERIC-003": SeverityInfo,    // Import obsolete golang.org/x/exp/constraints
+	"KTN-GENERIC-005": SeverityWarning, // Type parameter masque identifiant predeclare
+	"KTN-GENERIC-006": SeverityWarning, // Operateurs ordered/arithmetiques sans cmp.Ordered
 }
 
 // GetSeverity retourne le niveau de sévérité d'une règle.

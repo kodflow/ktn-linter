@@ -15,7 +15,7 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **87.9%** |
+| 🟡 | **TOTAL (Global)** | **88.3%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 86.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
@@ -23,7 +23,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 94.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
-| 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` | 83.3% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` | 98.6% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
@@ -121,17 +121,14 @@ Rapport de couverture généré automatiquement.
 | 🟢 `009.go:checkMagicNumbers` | 92.9% |
 | 🟢 `011.go:runFunc011` | 95.2% |
 
-### 🟡 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` - 83.3%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` - 98.6%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟡 `001.go:runGeneric001` | 83.3% |
-| 🟡 `001.go:analyzeGenericFunc` | 83.3% |
-| 🔴 `001.go:isAnyConstraint` | 75.0% |
-| 🔴 `001.go:checkEqualityUsage` | 78.6% |
-| 🟡 `001.go:collectParamNamesWithAnyType` | 88.9% |
-| 🟡 `001.go:reportIfUsesAnyTypeParam` | 81.8% |
-| 🔴 `001.go:checkOperandUsesAnyType` | 60.0% |
+| 🟢 `001.go:checkEqualityUsage` | 92.9% |
+| 🟡 `002.go:isSingleInterfaceConstraint` | 83.3% |
+| 🟢 `006.go:checkOrderedUsage` | 93.8% |
+| 🟡 `006.go:extractFromRangeStmt` | 83.3% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 98.4%
 
@@ -224,7 +221,9 @@ Rapport de couverture généré automatiquement.
 | 🟡 `008.go:checkMakeCalls` | 88.9% |
 | 🔴 `008.go:checkMakeCall` | 76.9% |
 | 🟡 `008.go:checkEmptySliceLiterals` | 88.2% |
-| 🔴 `008.go:checkCompositeLit` | 75.0% |
+| 🟡 `008.go:getAppendVariableName008` | 87.5% |
+| ⚫ `008.go:reportVar008Error` | 0.0% |
+| 🟡 `008.go:checkCompositeLit` | 80.0% |
 | 🔴 `009.go:checkMakeCallVar008` | 73.3% |
 | 🔴 `009.go:runVar009` | 77.8% |
 | 🟡 `010.go:runVar010` | 86.7% |
@@ -483,4 +482,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-02 00:39:43*
+*Généré le: 2026-01-02 09:24:09*

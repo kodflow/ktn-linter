@@ -283,6 +283,7 @@ func GetCategories() []string {
 		"comment",
 		"const",
 		"func",
+		"generic",
 		"interface",
 		"return",
 		"struct",
