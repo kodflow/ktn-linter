@@ -1,7 +1,15 @@
 package ktnvar
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // TestHasUnderscore003 tests the hasUnderscore003 function.
@@ -60,5 +68,207 @@ func TestHasUnderscore003(t *testing.T) {
 				t.Errorf("hasUnderscore003(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
+	}
+}
+
+// Test_runVar003_disabled tests runVar003 with disabled rule.
+func Test_runVar003_disabled(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-003": {Enabled: config.Bool(false)},
+		},
+	})
+	defer config.Reset()
+
+	code := `package test
+var my_var int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, err = runVar003(pass)
+	if err != nil {
+		t.Fatalf("runVar003() error = %v", err)
+	}
+
+	// Should not report anything when disabled
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 when disabled", reportCount)
+	}
+}
+
+// Test_runVar003_fileExcluded tests runVar003 with excluded file.
+func Test_runVar003_fileExcluded(t *testing.T) {
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-003": {Exclude: []string{"test.go"}},
+		},
+	})
+	defer config.Reset()
+
+	code := `package test
+var my_var int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, err = runVar003(pass)
+	if err != nil {
+		t.Fatalf("runVar003() error = %v", err)
+	}
+
+	// Should not report anything when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 when file excluded", reportCount)
+	}
+}
+
+// Test_runVar003_snakeCase tests runVar003 detecting snake_case.
+func Test_runVar003_snakeCase(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	code := `package test
+var my_var int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar003(pass)
+
+	// Should report one issue
+	if reportCount != 1 {
+		t.Errorf("runVar003() reported %d issues, expected 1", reportCount)
+	}
+}
+
+// Test_checkVar003Names_blankIdent tests checkVar003Names with blank identifier.
+func Test_checkVar003Names_blankIdent(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	code := `package test
+var _ int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar003(pass)
+
+	// Should not report for blank identifier
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 for blank identifier", reportCount)
+	}
+}
+
+// Test_runVar003_nonVarDecl tests skipping non-var declarations.
+func Test_runVar003_nonVarDecl(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with const (not var)
+	code := `package test
+const MY_CONST = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar003(pass)
+
+	// Should not report for const declarations
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 for const", reportCount)
+	}
+}
+
+// Test_runVar003_typeDecl tests skipping type declarations.
+func Test_runVar003_typeDecl(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with type (not var)
+	code := `package test
+type My_Type int
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar003(pass)
+
+	// Should not report for type declarations (VAR-003 checks vars only)
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 for type", reportCount)
 	}
 }

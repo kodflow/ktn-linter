@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 )
 
@@ -794,6 +795,38 @@ func Test_extractConstTypeName(t *testing.T) {
 			genDecl:  &ast.GenDecl{Tok: token.CONST, Specs: []ast.Spec{}},
 			expected: "",
 		},
+		{
+			name: "const with SelectorExpr type (pkg.Type)",
+			genDecl: &ast.GenDecl{
+				Tok: token.CONST,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "StatusOK"}},
+						Type: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "pkg"},
+							Sel: &ast.Ident{Name: "Status"},
+						},
+						Values: []ast.Expr{
+							&ast.BasicLit{Kind: token.INT, Value: "0"},
+						},
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "non-ValueSpec spec is skipped",
+			genDecl: &ast.GenDecl{
+				Tok: token.CONST,
+				Specs: []ast.Spec{
+					&ast.TypeSpec{
+						Name: &ast.Ident{Name: "MyType"},
+						Type: &ast.Ident{Name: "int"},
+					},
+				},
+			},
+			expected: "",
+		},
 	}
 
 	// Iterate over test cases
@@ -1004,6 +1037,54 @@ func Test_runConst002_excludedFile(t *testing.T) {
 				t.Errorf("Expected 0 reports for excluded file, got %d", reportCount)
 			}
 
+		})
+	}
+}
+
+// Test_checkConstOrder_messageNotFound tests checkConstOrder when message is not found.
+func Test_checkConstOrder_messageNotFound(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"message not found fallback"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original message and unregister it
+			originalMsg, _ := messages.Get("KTN-CONST-002")
+			messages.Unregister("KTN-CONST-002")
+			defer messages.Register(originalMsg)
+
+			// Create declarations with a violation
+			decls := &fileDeclarations{
+				constDecls: []token.Pos{token.Pos(500)},
+				varDecls:   []token.Pos{token.Pos(100)},
+				typeNames:  make(map[string]token.Pos),
+				constTypes: make(map[token.Pos]string),
+			}
+
+			// Create pass
+			reportCount := 0
+			var reportedMsg string
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(d analysis.Diagnostic) {
+					reportCount++
+					reportedMsg = d.Message
+				},
+			}
+
+			checkConstOrder(pass, decls)
+
+			// Verify one report was made
+			if reportCount != 1 {
+				t.Errorf("checkConstOrder() reports = %d, want 1", reportCount)
+			}
+			// Verify fallback message (just rule code)
+			if reportedMsg != "KTN-CONST-002" {
+				t.Errorf("checkConstOrder() message = %q, want %q", reportedMsg, "KTN-CONST-002")
+			}
 		})
 	}
 }

@@ -48,15 +48,7 @@ func runVar035(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check for manual contains pattern in functions
 	checkContainsPattern(pass, insp, cfg)
@@ -103,10 +95,6 @@ func checkContainsPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *c
 		case *ast.FuncLit:
 			// Get body from literal
 			body = fn.Body
-		// Default case
-		default:
-			// Unknown function type
-			return
 		}
 
 		// Analyze function body for contains pattern
@@ -354,12 +342,7 @@ func reportContainsPattern(pass *analysis.Pass, rangeStmt *ast.RangeStmt, cfg *c
 	ifStmt := rangeStmt.Body.List[0].(*ast.IfStmt)
 
 	// Report the issue
-	msg, ok := messages.Get(ruleCodeVar035)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(ifStmt.Cond.Pos(), "%s: utiliser slices.Contains() (Go 1.21+)", ruleCodeVar035)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar035)
 	pass.Reportf(
 		ifStmt.Cond.Pos(),
 		"%s: %s",

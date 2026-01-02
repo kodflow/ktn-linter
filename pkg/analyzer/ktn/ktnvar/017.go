@@ -45,26 +45,14 @@ func runVar017(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.CallExpr)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		callExpr, ok := n.(*ast.CallExpr)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		callExpr := n.(*ast.CallExpr)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar017, pass.Fset.Position(n.Pos()).Filename) {
@@ -91,16 +79,7 @@ func runVar017(pass *analysis.Pass) (any, error) {
 		}
 
 		// Signaler l'erreur
-		msg, ok := messages.Get(ruleCodeVar017)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(
-				callExpr.Pos(),
-				"%s: préallouer map avec une capacité quand elle est connue",
-				ruleCodeVar017,
-			)
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar017)
 		pass.Reportf(
 			callExpr.Pos(),
 			"%s: %s",

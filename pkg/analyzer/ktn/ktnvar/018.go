@@ -53,15 +53,7 @@ func runVar018(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
 		return nil, nil
@@ -72,11 +64,7 @@ func runVar018(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call, ok := n.(*ast.CallExpr)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		call := n.(*ast.CallExpr)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar018, pass.Fset.Position(call.Pos()).Filename) {
@@ -168,13 +156,19 @@ func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
 		return -1
 	}
 
+	// Check if it's an integer constant (Int64Val panics on non-int)
+	if tv.Value.Kind() != constant.Int {
+		// Not an int constant
+		return -1
+	}
+
 	// Get int64 value
 	if val, ok := constant.Int64Val(tv.Value); ok {
 		// Return the constant value
 		return val
 	}
 
-	// Not an int constant
+	// Value too large for int64
 	return -1
 }
 
@@ -232,12 +226,7 @@ func isTotalSizeSmall(pass *analysis.Pass, sliceType ast.Expr, elementCount int6
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
 func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
-	msg, ok := messages.Get(ruleCodeVar018)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: utiliser [N]T au lieu de make([]T, N) pour ≤64 bytes", ruleCodeVar018)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar018)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

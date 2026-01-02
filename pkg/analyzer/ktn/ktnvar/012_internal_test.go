@@ -349,10 +349,15 @@ func Test_runVar012_fileExcluded(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Parse simple code
+			// Code with for loop and allocation to trigger Preorder callback
 			code := `package test
-			var x int = 42
-			`
+func example() {
+	for i := 0; i < 10; i++ {
+		x := []int{}
+		_ = x
+	}
+}
+`
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", code, 0)
 			// Check parsing error
@@ -385,6 +390,75 @@ func Test_runVar012_fileExcluded(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+// Test_checkAssignForAlloc_withAllocation tests allocation detection with reporting.
+func Test_checkAssignForAlloc_withAllocation(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	reportCount := 0
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Test with slice allocation
+	assign := &ast.AssignStmt{
+		Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+		Rhs: []ast.Expr{
+			&ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+			},
+		},
+	}
+	checkAssignForAlloc(pass, assign)
+
+	// Should report allocation
+	if reportCount != 1 {
+		t.Errorf("checkAssignForAlloc() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_checkDeclForAlloc_withAllocation tests allocation detection in decl.
+func Test_checkDeclForAlloc_withAllocation(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	reportCount := 0
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Test with slice allocation in var declaration
+	decl := &ast.DeclStmt{
+		Decl: &ast.GenDecl{
+			Tok: token.VAR,
+			Specs: []ast.Spec{
+				&ast.ValueSpec{
+					Names: []*ast.Ident{{Name: "x"}},
+					Values: []ast.Expr{
+						&ast.CompositeLit{
+							Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+						},
+					},
+				},
+			},
+		},
+	}
+	checkDeclForAlloc(pass, decl)
+
+	// Should report allocation
+	if reportCount != 1 {
+		t.Errorf("checkDeclForAlloc() reported %d, expected 1", reportCount)
 	}
 }
 
@@ -484,4 +558,64 @@ func Test_checkStmtForAlloc_declStmt(t *testing.T) {
 
 		})
 	}
+}
+
+// Test_checkAssignForAlloc_multipleRhs tests with multiple rhs allocations.
+func Test_checkAssignForAlloc_multipleRhs(t *testing.T) {
+	t.Run("multiple rhs", func(t *testing.T) {
+		reportCount := 0
+		fset := token.NewFileSet()
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Test with multiple allocations on rhs
+		assign := &ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "x"}, &ast.Ident{Name: "y"}},
+			Rhs: []ast.Expr{
+				&ast.CompositeLit{
+					Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+				},
+				&ast.CompositeLit{
+					Type: &ast.MapType{
+						Key:   &ast.Ident{Name: "string"},
+						Value: &ast.Ident{Name: "int"},
+					},
+				},
+			},
+		}
+		checkAssignForAlloc(pass, assign)
+
+		// Should report both allocations
+		if reportCount != 2 {
+			t.Errorf("checkAssignForAlloc() reported %d, expected 2", reportCount)
+		}
+	})
+}
+
+// Test_checkAssignForAlloc_noAllocation tests with no allocation on rhs.
+func Test_checkAssignForAlloc_noAllocation(t *testing.T) {
+	t.Run("no allocation", func(t *testing.T) {
+		reportCount := 0
+		pass := &analysis.Pass{
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Test with no allocation
+		assign := &ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			Rhs: []ast.Expr{&ast.Ident{Name: "y"}},
+		}
+		checkAssignForAlloc(pass, assign)
+
+		// Should not report
+		if reportCount != 0 {
+			t.Errorf("checkAssignForAlloc() reported %d, expected 0", reportCount)
+		}
+	})
 }

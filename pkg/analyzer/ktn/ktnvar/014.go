@@ -45,15 +45,7 @@ func runVar014(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.ForStmt)(nil),
@@ -138,12 +130,7 @@ func checkMakeCallForByteSlice(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Report the issue
-	msg, ok := messages.Get(ruleCodeVar014)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: utiliser sync.Pool pour les buffers répétés", ruleCodeVar014)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar014)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

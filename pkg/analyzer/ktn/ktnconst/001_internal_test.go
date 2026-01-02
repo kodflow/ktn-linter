@@ -142,3 +142,52 @@ func Test_runConst001(t *testing.T) {
 		})
 	}
 }
+
+// Test_runConst001_nonConstDecl tests that non-const declarations are skipped.
+func Test_runConst001_nonConstDecl(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"var declaration is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config
+			config.Reset()
+
+			// Parse test code with var declaration only
+			src := `package test
+var x = 42
+`
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "test.go", src, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("Failed to parse test code: %v", err)
+			}
+
+			// Create inspector
+			insp := inspector.New([]*ast.File{f})
+
+			// Create pass
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: []*ast.File{f},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(d analysis.Diagnostic) {
+					t.Errorf("Unexpected error for var declaration: %s", d.Message)
+				},
+			}
+
+			// Run the analyzer - should not report anything for var
+			_, err = runConst001(pass)
+			// Check error
+			if err != nil {
+				t.Errorf("runConst001() error = %v", err)
+			}
+		})
+	}
+}

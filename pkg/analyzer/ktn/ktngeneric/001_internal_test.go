@@ -414,6 +414,16 @@ func TestCheckEqualityUsage(t *testing.T) {
 				Body: &ast.BlockStmt{List: nil},
 			},
 		},
+		{
+			name: "nil params list",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+				Type: &ast.FuncType{
+					Params: nil,
+				},
+				Body: &ast.BlockStmt{List: nil},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -422,6 +432,130 @@ func TestCheckEqualityUsage(t *testing.T) {
 			checkEqualityUsage(nil, tt.funcDecl, anyTypeParams)
 		})
 	}
+}
+
+// TestCheckEqualityUsageEmptyParamNames tests when paramNames map is empty.
+func TestCheckEqualityUsageEmptyParamNames(t *testing.T) {
+	emptyAnyTypeParams := map[string]bool{}
+
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "int"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{List: nil},
+	}
+
+	// Should return early when paramNames is empty
+	checkEqualityUsage(nil, funcDecl, emptyAnyTypeParams)
+}
+
+// TestCheckEqualityUsageWithBinaryExprNotAnyType tests checkEqualityUsage with binary expressions
+// that don't use any type (to avoid nil pass panic).
+func TestCheckEqualityUsageWithBinaryExprNotAnyType(t *testing.T) {
+	anyTypeParams := map[string]bool{"T": true}
+
+	// Function with equality comparison but using non-T type variable
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "T"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.BinaryExpr{
+						X:  &ast.Ident{Name: "z"},
+						Op: token.EQL,
+						Y:  &ast.Ident{Name: "w"},
+					},
+				},
+			},
+		},
+	}
+
+	// Test with nil pass - should not panic (no any type used)
+	checkEqualityUsage(nil, funcDecl, anyTypeParams)
+}
+
+// TestCheckEqualityUsageNonEqualityOp tests checkEqualityUsage with non-equality operators.
+func TestCheckEqualityUsageNonEqualityOp(t *testing.T) {
+	anyTypeParams := map[string]bool{"T": true}
+
+	// Function with non-equality comparison (ADD)
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "T"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.BinaryExpr{
+						X:  &ast.Ident{Name: "x"},
+						Op: token.ADD,
+						Y:  &ast.Ident{Name: "x"},
+					},
+				},
+			},
+		},
+	}
+
+	// Test should not report for non-equality operator
+	checkEqualityUsage(nil, funcDecl, anyTypeParams)
+}
+
+// TestCheckEqualityUsageNonBinaryNode tests checkEqualityUsage with non-binary AST nodes.
+func TestCheckEqualityUsageNonBinaryNode(t *testing.T) {
+	anyTypeParams := map[string]bool{"T": true}
+
+	// Function with non-binary statements
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "T"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.CallExpr{
+						Fun: &ast.Ident{Name: "println"},
+					},
+				},
+			},
+		},
+	}
+
+	// Test with nil pass - should not panic (non-binary node)
+	checkEqualityUsage(nil, funcDecl, anyTypeParams)
 }
 
 // Test_runGeneric001_disabled tests behavior when rule is disabled.

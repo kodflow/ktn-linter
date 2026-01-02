@@ -338,14 +338,149 @@ func Test_extractTypeString(t *testing.T) {
 // Test_extractAssignTypeString tests the private extractAssignTypeString function.
 func Test_extractAssignTypeString(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		node     *ast.AssignStmt
+		expected string
 	}{
-		{"error case validation"},
+		{
+			name:     "empty rhs",
+			node:     &ast.AssignStmt{Rhs: []ast.Expr{}},
+			expected: "",
+		},
+		{
+			name: "strings.Builder assignment",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "strings"},
+							Sel: &ast.Ident{Name: "Builder"},
+						},
+					},
+				},
+			},
+			expected: "strings.Builder",
+		},
+		{
+			name: "non-composite literal rhs",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			},
+			expected: "",
+		},
+		{
+			name: "composite without selector type",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.Ident{Name: "MyStruct"},
+					},
+				},
+			},
+			expected: "",
+		},
+		{
+			name: "selector with non-ident X",
+			node: &ast.AssignStmt{
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.SelectorExpr{
+							X:   &ast.CallExpr{Fun: &ast.Ident{Name: "getPackage"}},
+							Sel: &ast.Ident{Name: "Builder"},
+						},
+					},
+				},
+			},
+			expected: "",
+		},
 	}
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function extracts assign type strings
+			result := extractAssignTypeString(tt.node)
+			if result != tt.expected {
+				t.Errorf("extractAssignTypeString() = %q, expected %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_reportMissingGrow_assignStmt tests reportMissingGrow with AssignStmt.
+func Test_reportMissingGrow_assignStmt(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"assign statement"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			reportCount := 0
+			fset := token.NewFileSet()
+			// Add a file to the file set to enable valid positions
+			fset.AddFile("test.go", 1, 100)
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			// Create assignment with Builder type
+			node := &ast.AssignStmt{
+				TokPos: 10,
+				Lhs: []ast.Expr{
+					&ast.Ident{Name: "builder", NamePos: 5},
+				},
+				Rhs: []ast.Expr{
+					&ast.CompositeLit{
+						Type: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "strings"},
+							Sel: &ast.Ident{Name: "Builder"},
+						},
+					},
+				},
+			}
+
+			reportMissingGrow(pass, node)
+			if reportCount != 1 {
+				t.Errorf("reportMissingGrow() reported %d, expected 1", reportCount)
+			}
+		})
+	}
+}
+
+// Test_reportMissingGrow_emptyType tests reportMissingGrow with empty type string.
+func Test_reportMissingGrow_emptyType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"empty type string"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			reportCount := 0
+			fset := token.NewFileSet()
+			pass := &analysis.Pass{
+				Fset: fset,
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			// Create assignment without proper type (needs Lhs for Pos())
+			node := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+				Rhs: []ast.Expr{&ast.Ident{Name: "y"}},
+			}
+
+			reportMissingGrow(pass, node)
+			// Should not report - empty type string
+			if reportCount != 0 {
+				t.Errorf("reportMissingGrow() reported %d, expected 0", reportCount)
+			}
 		})
 	}
 }
@@ -466,4 +601,99 @@ func Test_runVar010_fileExcluded(t *testing.T) {
 
 		})
 	}
+}
+
+// Test_reportMissingGrow_valueSpec tests reportMissingGrow with ValueSpec node.
+func Test_reportMissingGrow_valueSpec(t *testing.T) {
+	t.Run("ValueSpec with strings.Builder type", func(t *testing.T) {
+		config.Reset()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		// Add a file to the FileSet
+		fset.AddFile("test.go", 1, 100)
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Create ValueSpec with strings.Builder type
+		node := &ast.ValueSpec{
+			Names: []*ast.Ident{{Name: "builder", NamePos: 5}},
+			Type: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "strings"},
+				Sel: &ast.Ident{Name: "Builder"},
+			},
+		}
+
+		reportMissingGrow(pass, node)
+
+		// Should report
+		if reportCount != 1 {
+			t.Errorf("reportMissingGrow() reported %d, expected 1", reportCount)
+		}
+	})
+
+	t.Run("ValueSpec with bytes.Buffer type", func(t *testing.T) {
+		config.Reset()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		fset.AddFile("test.go", 1, 100)
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Create ValueSpec with bytes.Buffer type
+		node := &ast.ValueSpec{
+			Names: []*ast.Ident{{Name: "buf", NamePos: 5}},
+			Type: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "bytes"},
+				Sel: &ast.Ident{Name: "Buffer"},
+			},
+		}
+
+		reportMissingGrow(pass, node)
+
+		// Should report
+		if reportCount != 1 {
+			t.Errorf("reportMissingGrow() reported %d, expected 1", reportCount)
+		}
+	})
+
+	t.Run("ValueSpec with no type expression", func(t *testing.T) {
+		config.Reset()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		fset.AddFile("test.go", 1, 100)
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Create ValueSpec without type (will check Values)
+		node := &ast.ValueSpec{
+			Names:  []*ast.Ident{{Name: "builder", NamePos: 5}},
+			Type:   nil,
+			Values: []ast.Expr{},
+		}
+
+		reportMissingGrow(pass, node)
+
+		// Should not report - empty typeStr
+		if reportCount != 0 {
+			t.Errorf("reportMissingGrow() reported %d, expected 0", reportCount)
+		}
+	})
 }

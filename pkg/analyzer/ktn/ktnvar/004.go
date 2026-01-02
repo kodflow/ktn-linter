@@ -65,15 +65,7 @@ func runVar004(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check package-level variables
 	checkVar004PackageLevel(pass, insp, cfg)
@@ -101,11 +93,7 @@ func checkVar004PackageLevel(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file, ok := n.(*ast.File)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		file := n.(*ast.File)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
@@ -157,11 +145,7 @@ func checkVar004LocalVars(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {
@@ -294,17 +278,7 @@ func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isPackageLevel bool)
 	// Package-level: require min 2 chars always
 	if isPackageLevel {
 		// Report error for package-level short names
-		msg, ok := messages.Get(ruleCodeVar004)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(
-				ident.Pos(),
-				"%s: nom de variable trop court: %q",
-				ruleCodeVar004,
-				varName,
-			)
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar004)
 		pass.Reportf(
 			ident.Pos(),
 			"%s: %s",
@@ -327,17 +301,7 @@ func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isPackageLevel bool)
 	}
 
 	// Report error
-	msg, ok := messages.Get(ruleCodeVar004)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(
-			ident.Pos(),
-			"%s: nom de variable trop court: %q",
-			ruleCodeVar004,
-			varName,
-		)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar004)
 	pass.Reportf(
 		ident.Pos(),
 		"%s: %s",

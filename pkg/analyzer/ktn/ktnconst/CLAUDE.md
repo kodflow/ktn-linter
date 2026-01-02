@@ -1,26 +1,27 @@
 # pkg/analyzer/ktn/ktnconst/ - Constant Rules
 
 ## Purpose
-Analyze constant declarations for explicit types, organization, and naming conventions.
+Analyze constant declarations for explicit types, organization, naming conventions, and built-in shadowing.
 
-## Rules (3 total)
-| Rule | Description | Severity | Errors |
-|------|-------------|----------|--------|
-| KTN-CONST-001 | Constants must have explicit types | Error | 47 |
-| KTN-CONST-002 | Constants grouped at top (before var/type/func) | Info | 7 |
-| KTN-CONST-003 | Constants must use CamelCase (no underscores) | Info | 44 |
+## Rules (6 total)
+| Rule | Description | Severity |
+|------|-------------|----------|
+| KTN-CONST-001 | Constants must have explicit types | Error |
+| KTN-CONST-002 | Constants grouped at top (before var/type/func) | Info |
+| KTN-CONST-003 | Constants must use CamelCase (no underscores) | Info |
+| KTN-CONST-004 | Constant names must have at least 2 characters | Warning |
+| KTN-CONST-005 | Constant names must have at most 30 characters | Warning |
+| KTN-CONST-006 | Constants must not shadow built-in identifiers | Error |
 
 ## File Structure
 ```
 ktnconst/
-├── 001.go, 002.go, 003.go      # Rule implementations
-├── 001_internal_test.go         # White-box tests
-├── 001_external_test.go         # Black-box tests
-├── registry.go                  # Analyzers()
+├── 001.go ... 006.go           # Rule implementations
+├── *_internal_test.go          # White-box tests
+├── *_external_test.go          # Black-box tests
+├── registry.go                 # Analyzers()
 └── testdata/src/
-    ├── const001/                # 47 error cases
-    ├── const002/                # 7 error cases
-    └── const003/                # 44 error cases
+    └── const001 ... const006/  # Test fixtures
 ```
 
 ## KTN-CONST-001: Explicit Types

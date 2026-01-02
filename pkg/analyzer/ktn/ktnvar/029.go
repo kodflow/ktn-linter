@@ -62,15 +62,7 @@ func runVar029(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Node types to analyze
 	nodeFilter := []ast.Node{
@@ -79,17 +71,11 @@ func runVar029(pass *analysis.Pass) (any, error) {
 
 	// Traverse all if statements
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		ifStmt := n.(*ast.IfStmt)
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar029, pass.Fset.Position(n.Pos()).Filename) {
 			// File excluded
-			return
-		}
-
-		// Cast to if statement
-		ifStmt, okIf := n.(*ast.IfStmt)
-		// Check if valid
-		if !okIf {
-			// Not an if statement
 			return
 		}
 
@@ -450,13 +436,7 @@ func analyzeCopyForGrow(exprStmt *ast.ExprStmt, info *growPatternInfo) {
 //   - cfg: configuration
 func reportGrowPattern(pass *analysis.Pass, ifStmt *ast.IfStmt, cfg *config.Config) {
 	// Get the message
-	msg, ok := messages.Get(ruleCodeVar029)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(ifStmt.Pos(), "%s: utiliser slices.Grow() au lieu du pattern manuel",
-			ruleCodeVar029)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar029)
 	// Report the issue
 	pass.Reportf(
 		ifStmt.Pos(),

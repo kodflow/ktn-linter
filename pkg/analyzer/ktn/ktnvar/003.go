@@ -47,26 +47,14 @@ func runVar003(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl, ok := n.(*ast.GenDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		genDecl := n.(*ast.GenDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar003, pass.Fset.Position(n.Pos()).Filename) {
@@ -109,12 +97,7 @@ func checkVar003Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 
 		// Check for underscore in name (detects SCREAMING_SNAKE_CASE and snake_case)
 		if hasUnderscore003(varName) {
-			msg, ok := messages.Get(ruleCodeVar003)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(name.Pos(), "%s: utiliser camelCase pour %q", ruleCodeVar003, varName)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar003)
 			pass.Reportf(
 				name.Pos(),
 				"%s: %s",

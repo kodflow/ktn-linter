@@ -49,15 +49,7 @@ func runVar036(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Node types to analyze
 	nodeFilter := []ast.Node{
@@ -73,9 +65,9 @@ func runVar036(pass *analysis.Pass) (any, error) {
 		}
 
 		// Cast to function declaration
-		funcDecl, ok := n.(*ast.FuncDecl)
+		funcDecl := n.(*ast.FuncDecl)
 		// Check if valid
-		if !ok || funcDecl.Body == nil {
+		if funcDecl.Body == nil {
 			// Not a function declaration or no body
 			return
 		}
@@ -419,12 +411,7 @@ func ifBodyReturnsIndex(body *ast.BlockStmt, indexName string) bool {
 //   - cfg: configuration
 func reportIndexPattern(pass *analysis.Pass, pos token.Pos, cfg *config.Config) {
 	// Get the message
-	msg, ok := messages.Get(ruleCodeVar036)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(pos, "%s: utiliser slices.Index() (Go 1.21+)", ruleCodeVar036)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar036)
 	// Report the issue
 	pass.Reportf(
 		pos,

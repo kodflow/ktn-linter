@@ -45,15 +45,7 @@ func runVar012(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.ForStmt)(nil),
@@ -68,7 +60,7 @@ func runVar012(pass *analysis.Pass) (any, error) {
 		}
 		// Récupération du corps de la boucle
 		var body *ast.BlockStmt
-		// Vérification du type de boucle
+		// Vérification du type de boucle (nodeFilter garantit ForStmt ou RangeStmt)
 		switch loop := n.(type) {
 		// Cas d'une boucle for classique
 		case *ast.ForStmt:
@@ -78,10 +70,6 @@ func runVar012(pass *analysis.Pass) (any, error) {
 		case *ast.RangeStmt:
 			// Boucle range
 			body = loop.Body
-		// Cas par défaut
-		default:
-			// Type de boucle non supporté
-			return
 		}
 
 		// Parcours des instructions du corps
@@ -141,12 +129,7 @@ func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
 		// Vérification si allocation de slice ou map
 		if isSliceOrMapAlloc(rhs) {
 			// Allocation de slice/map détectée
-			msg, ok := messages.Get(ruleCodeVar012)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(rhs.Pos(), "%s: éviter allocation dans une boucle", ruleCodeVar012)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar012)
 			pass.Reportf(
 				rhs.Pos(),
 				"%s: %s",
@@ -185,12 +168,7 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 			// Vérification si allocation de slice ou map
 			if isSliceOrMapAlloc(value) {
 				// Allocation de slice/map détectée
-				msg, ok := messages.Get(ruleCodeVar012)
-				// Defensive: avoid panic if message is missing
-				if !ok {
-					pass.Reportf(value.Pos(), "%s: éviter allocation dans une boucle", ruleCodeVar012)
-					continue
-				}
+				msg, _ := messages.Get(ruleCodeVar012)
 				pass.Reportf(
 					value.Pos(),
 					"%s: %s",

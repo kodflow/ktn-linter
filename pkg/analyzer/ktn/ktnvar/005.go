@@ -47,15 +47,7 @@ func runVar005(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check package-level variables
 	checkVar005PackageLevel(pass, insp, cfg)
@@ -83,11 +75,7 @@ func checkVar005PackageLevel(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file, ok := n.(*ast.File)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		file := n.(*ast.File)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar005, pass.Fset.Position(n.Pos()).Filename) {
@@ -135,11 +123,7 @@ func checkVar005LocalVars(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar005, pass.Fset.Position(n.Pos()).Filename) {
@@ -292,12 +276,7 @@ func checkVar005Name(pass *analysis.Pass, ident *ast.Ident) {
 	}
 
 	// Report error
-	msg, ok := messages.Get(ruleCodeVar005)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(ident.Pos(), "%s: nom de variable trop long: %q", ruleCodeVar005, varName)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar005)
 	pass.Reportf(
 		ident.Pos(),
 		"%s: %s",

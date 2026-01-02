@@ -45,15 +45,7 @@ func runVar001(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Filter for File nodes to access package-level declarations
 	nodeFilter := []ast.Node{
@@ -61,11 +53,7 @@ func runVar001(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file, ok := n.(*ast.File)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		file := n.(*ast.File)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar001, pass.Fset.Position(n.Pos()).Filename) {
@@ -120,12 +108,7 @@ func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 				continue
 			}
 
-			msg, ok := messages.Get(ruleCodeVar001)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(name.Pos(), "%s: type explicite requis pour %q", ruleCodeVar001, name.Name)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar001)
 			pass.Reportf(
 				name.Pos(),
 				"%s: %s",

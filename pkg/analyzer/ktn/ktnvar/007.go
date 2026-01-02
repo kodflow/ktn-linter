@@ -45,15 +45,7 @@ func runVar007(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// We need to track function bodies to check local variables only
 	nodeFilter := []ast.Node{
@@ -61,11 +53,7 @@ func runVar007(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar007, pass.Fset.Position(n.Pos()).Filename) {
@@ -296,14 +284,11 @@ func hasInitWithoutType(spec *ast.ValueSpec) bool {
 //   - pass: contexte d'analyse
 //   - spec: spécification de variable
 func reportVarErrors(pass *analysis.Pass, spec *ast.ValueSpec) {
+	// Get message for this rule
+	msg, _ := messages.Get(ruleCodeVar007)
+
 	// Iterate through variable names
 	for _, name := range spec.Names {
-		msg, ok := messages.Get(ruleCodeVar007)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(name.Pos(), "%s: utiliser := au lieu de var pour les valeurs non-zéro", ruleCodeVar007)
-			continue
-		}
 		pass.Reportf(
 			name.Pos(),
 			"%s: %s",

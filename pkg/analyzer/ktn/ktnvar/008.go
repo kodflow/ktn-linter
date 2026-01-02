@@ -49,15 +49,7 @@ func runVar008(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Collecter les variables utilisées avec append
 	appendVars := collectAppendVariables(insp)
@@ -88,12 +80,7 @@ func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
 
 	// Parcours des assignations pour trouver les appends
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
+		assign := n.(*ast.AssignStmt)
 
 		// Vérification de chaque expression à droite
 		for _, rhs := range assign.Rhs {
@@ -156,12 +143,7 @@ func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des appels de fonction
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call, ok := n.(*ast.CallExpr)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
+		call := n.(*ast.CallExpr)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
@@ -205,16 +187,7 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
-	msg, ok := messages.Get(ruleCodeVar008)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(
-			call.Pos(),
-			"%s: préallouer la slice avec une capacité quand elle est connue",
-			ruleCodeVar008,
-		)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar008)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",
@@ -261,12 +234,7 @@ func checkEmptySliceLiterals(
 			return true
 		}
 
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continuer le parcours
-			return true
-		}
+		assign := n.(*ast.AssignStmt)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
@@ -379,17 +347,7 @@ func getAppendVariableName008(
 //   - pass: analysis pass
 //   - lit: composite literal for error position
 func reportVar008Error(pass *analysis.Pass, lit *ast.CompositeLit) {
-	msg, ok := messages.Get(ruleCodeVar008)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(
-			lit.Pos(),
-			"%s: préallouer la slice avec une capacité quand elle est connue",
-			ruleCodeVar008,
-		)
-		// Fallback message reported
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar008)
 	pass.Reportf(
 		lit.Pos(),
 		"%s: %s",

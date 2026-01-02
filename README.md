@@ -179,34 +179,55 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-COMMENT-006](docs/rules/KTN-COMMENT-006.md) | WARNING | Documentation fonction (Params/Returns) |
 | [KTN-COMMENT-007](docs/rules/KTN-COMMENT-007.md) | WARNING | Commentaires sur branches/returns/logique |
 
-### Constantes (3 règles) - WARNING/INFO
+### Constantes (6 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| [KTN-CONST-001](docs/rules/KTN-CONST-001.md) | WARNING | Type explicite obligatoire |
+| [KTN-CONST-001](docs/rules/KTN-CONST-001.md) | ERROR | Type explicite obligatoire |
 | [KTN-CONST-002](docs/rules/KTN-CONST-002.md) | INFO | Groupement et placement avant var |
-| [KTN-CONST-003](docs/rules/KTN-CONST-003.md) | INFO | Nommage SCREAMING_SNAKE_CASE |
+| [KTN-CONST-003](docs/rules/KTN-CONST-003.md) | INFO | Nommage CamelCase (pas d'underscores) |
+| KTN-CONST-004 | WARNING | Constantes non utilisées |
+| KTN-CONST-005 | INFO | Constantes dupliquées |
+| KTN-CONST-006 | INFO | Constantes magiques (préférer nommées) |
 
-### Variables (18 règles) - ERROR/WARNING/INFO
+### Variables (36 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
-| [KTN-VAR-001](docs/rules/KTN-VAR-001.md) | ERROR | Variables package en camelCase (pas SCREAMING_SNAKE) |
-| [KTN-VAR-002](docs/rules/KTN-VAR-002.md) | WARNING | Type explicite obligatoire |
-| [KTN-VAR-003](docs/rules/KTN-VAR-003.md) | WARNING | Utiliser := pour variables locales |
-| [KTN-VAR-004](docs/rules/KTN-VAR-004.md) | WARNING | Préallocation slices avec capacité connue |
-| [KTN-VAR-005](docs/rules/KTN-VAR-005.md) | WARNING | Éviter make([]T, length) avec append |
-| [KTN-VAR-006](docs/rules/KTN-VAR-006.md) | WARNING | Préallocation bytes.Buffer/strings.Builder avec Grow |
-| [KTN-VAR-007](docs/rules/KTN-VAR-007.md) | WARNING | Utiliser strings.Builder pour >2 concaténations |
-| [KTN-VAR-008](docs/rules/KTN-VAR-008.md) | WARNING | Éviter allocations dans boucles chaudes |
-| [KTN-VAR-009](docs/rules/KTN-VAR-009.md) | WARNING | Pointeurs pour structs >64 bytes |
-| [KTN-VAR-010](docs/rules/KTN-VAR-010.md) | WARNING | sync.Pool pour buffers répétés |
-| [KTN-VAR-011](docs/rules/KTN-VAR-011.md) | WARNING | Shadowing de variables |
-| [KTN-VAR-012](docs/rules/KTN-VAR-012.md) | WARNING | Conversions string() répétées |
-| [KTN-VAR-013](docs/rules/KTN-VAR-013.md) | INFO | Groupement dans un seul bloc var() |
-| [KTN-VAR-014](docs/rules/KTN-VAR-014.md) | INFO | Variables après constantes (ordre déclarations) |
-| [KTN-VAR-015](docs/rules/KTN-VAR-015.md) | INFO | Préallocation maps avec capacité connue |
-| [KTN-VAR-016](docs/rules/KTN-VAR-016.md) | INFO | Utiliser [N]T au lieu de make([]T, N) |
-| [KTN-VAR-017](docs/rules/KTN-VAR-017.md) | INFO | Copies de mutex (sync.Mutex, sync.RWMutex) |
-| [KTN-VAR-018](docs/rules/KTN-VAR-018.md) | WARNING | Variables en snake_case (utiliser camelCase) |
+| [KTN-VAR-001](docs/rules/KTN-VAR-001.md) | WARNING | Type explicite obligatoire pour var package |
+| [KTN-VAR-002](docs/rules/KTN-VAR-002.md) | WARNING | Déclarations ordonnées (const avant var) |
+| [KTN-VAR-003](docs/rules/KTN-VAR-003.md) | ERROR | Nommage camelCase obligatoire |
+| [KTN-VAR-004](docs/rules/KTN-VAR-004.md) | WARNING | Longueur min variable (scope-aware) |
+| [KTN-VAR-005](docs/rules/KTN-VAR-005.md) | WARNING | Longueur max 30 caractères |
+| [KTN-VAR-006](docs/rules/KTN-VAR-006.md) | ERROR | Détection shadowing variables |
+| [KTN-VAR-007](docs/rules/KTN-VAR-007.md) | INFO | := vs var (zero-value aware) |
+| [KTN-VAR-008](docs/rules/KTN-VAR-008.md) | INFO | Préallocation slices avec capacité connue |
+| [KTN-VAR-009](docs/rules/KTN-VAR-009.md) | INFO | Éviter make([]T, length) avec append |
+| [KTN-VAR-010](docs/rules/KTN-VAR-010.md) | INFO | Préallocation bytes.Buffer avec Grow |
+| [KTN-VAR-011](docs/rules/KTN-VAR-011.md) | INFO | Utiliser strings.Builder pour concaténations |
+| [KTN-VAR-012](docs/rules/KTN-VAR-012.md) | WARNING | Éviter allocations dans boucles chaudes |
+| [KTN-VAR-013](docs/rules/KTN-VAR-013.md) | INFO | Pointeurs pour structs >64 bytes en paramètre |
+| [KTN-VAR-014](docs/rules/KTN-VAR-014.md) | INFO | sync.Pool pour buffers répétés |
+| [KTN-VAR-015](docs/rules/KTN-VAR-015.md) | INFO | Éviter string() conversions répétées |
+| [KTN-VAR-016](docs/rules/KTN-VAR-016.md) | INFO | Groupement dans un seul bloc var() |
+| [KTN-VAR-017](docs/rules/KTN-VAR-017.md) | INFO | Préallocation maps avec capacité connue |
+| [KTN-VAR-018](docs/rules/KTN-VAR-018.md) | INFO | Utiliser [N]T au lieu de make([]T, N) ≤64 bytes |
+| KTN-VAR-019 | ERROR | Copies de mutex (sync.Mutex, sync.RWMutex) |
+| KTN-VAR-020 | INFO | Préférer nil slice à empty slice |
+| KTN-VAR-021 | WARNING | Consistance receiver (pointer vs value) |
+| KTN-VAR-022 | WARNING | Éviter pointeur vers interface |
+| KTN-VAR-023 | WARNING | crypto/rand pour données sensibles |
+| KTN-VAR-024 | INFO | any vs interface{} (Go 1.18+) |
+| KTN-VAR-025 | INFO | Utiliser clear() built-in (Go 1.21+) |
+| KTN-VAR-026 | INFO | Utiliser min()/max() built-in (Go 1.21+) |
+| KTN-VAR-027 | INFO | range over integer (Go 1.22+) |
+| KTN-VAR-028 | INFO | Loop var copy obsolète (Go 1.22+) |
+| KTN-VAR-029 | INFO | slices.Grow au lieu de make+copy (Go 1.21+) |
+| KTN-VAR-030 | INFO | slices.Clone au lieu de make+copy (Go 1.21+) |
+| KTN-VAR-031 | INFO | maps.Clone au lieu de boucle manuelle (Go 1.21+) |
+| KTN-VAR-033 | INFO | cmp.Or pour valeurs par défaut (Go 1.22+) |
+| KTN-VAR-034 | INFO | WaitGroup.Go (Go 1.25+) |
+| KTN-VAR-035 | INFO | slices.Contains au lieu de boucle (Go 1.21+) |
+| KTN-VAR-036 | INFO | slices.Index au lieu de boucle (Go 1.21+) |
+| KTN-VAR-037 | INFO | maps.Keys/Values iterateurs (Go 1.23+) |
 
 ### Fonctions (12 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
@@ -271,6 +292,15 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 |------|----------|-------------|
 | [KTN-API-001](docs/rules/KTN-API-001.md) | WARNING | Interfaces minimales côté consumer pour dépendances externes |
 
+### Génériques (5 règles) - ERROR/WARNING/INFO (Go 1.18+)
+| Code | Sévérité | Description |
+|------|----------|-------------|
+| KTN-GENERIC-001 | ERROR | Contrainte comparable requise pour == et != |
+| KTN-GENERIC-002 | WARNING | Génériques inutiles sur types interface |
+| KTN-GENERIC-003 | WARNING | golang.org/x/exp/constraints déprécié → cmp |
+| KTN-GENERIC-005 | WARNING | Type params ne doivent pas shadower identifiants prédéclarés |
+| KTN-GENERIC-006 | ERROR | Contrainte cmp.Ordered requise pour <, >, +, -, *, /, % |
+
 ### Modernize (17 règles actives / 18 totales) ✅ golang.org/x/tools
 
 Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fonctionnalités du langage et de la stdlib:
@@ -312,10 +342,10 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 
 ## Statistiques
 
-- **Couverture globale**: 95.0%
-- **Packages 100%**: utils, formatter
+- **Couverture globale**: 96.3%
+- **Packages 100%**: utils, formatter, ktn, ktnconst, ktngeneric, ktninterface, modernize, severity
 - **Go version**: 1.25+
-- **Total règles KTN**: 62 (7 comment + 3 const + 18 var + 12 func + 6 struct + 13 test + 1 interface + 1 return + 1 api)
+- **Total règles KTN**: 80 (7 comment + 6 const + 36 var + 12 func + 6 struct + 6 generic + 11 test + 1 interface + 1 return + 1 api)
 - **Total modernize**: 17 analyseurs actifs / 18 totaux
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 

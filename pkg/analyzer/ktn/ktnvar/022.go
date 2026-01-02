@@ -48,11 +48,7 @@ func runVar022(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving positions
 	if pass.Fset == nil {
 		return nil, nil
@@ -90,11 +86,7 @@ func checkFuncDecls(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Cast en fonction
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar022, pass.Fset.Position(n.Pos()).Filename) {
@@ -131,11 +123,7 @@ func checkVarDecls(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.C
 	// Parcours des déclarations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Cast en déclaration générale
-		genDecl, ok := n.(*ast.GenDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		genDecl := n.(*ast.GenDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar022, pass.Fset.Position(n.Pos()).Filename) {
@@ -183,11 +171,7 @@ func checkStructFields(pass *analysis.Pass, insp *inspector.Inspector, cfg *conf
 	// Parcours des types
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Cast en type spec
-		typeSpec, ok := n.(*ast.TypeSpec)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		typeSpec := n.(*ast.TypeSpec)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar022, pass.Fset.Position(n.Pos()).Filename) {

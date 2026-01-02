@@ -210,6 +210,65 @@ func Test_isStringConcatenation_notBasicType(t *testing.T) {
 	}
 }
 
+// Test_checkStringConcatInLoop_nilBody tests with nil loop body.
+func Test_checkStringConcatInLoop_nilBody(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil body"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// ForStmt with nil body
+			forStmt := &ast.ForStmt{Body: nil}
+			checkStringConcatInLoop(pass, forStmt)
+			// Should return early without panic
+
+			// RangeStmt with nil body
+			rangeStmt := &ast.RangeStmt{Body: nil}
+			checkStringConcatInLoop(pass, rangeStmt)
+			// Should return early without panic
+		})
+	}
+}
+
+// Test_isStringConcatenation_emptyLhs tests with empty Lhs.
+func Test_isStringConcatenation_emptyLhs(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"empty Lhs"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{},
+			}
+
+			result := isStringConcatenation(pass, assign)
+			if result {
+				t.Errorf("isStringConcatenation() = true, expected false for empty Lhs")
+			}
+		})
+	}
+}
+
 // Test_runVar011_disabled tests runVar011 with disabled rule.
 func Test_runVar011_disabled(t *testing.T) {
 	tests := []struct {
@@ -289,10 +348,16 @@ func Test_runVar011_fileExcluded(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Parse simple code
+			// Code with for loop to trigger Preorder callback
 			code := `package test
-			var x int = 42
-			`
+func example() {
+	s := ""
+	for i := 0; i < 10; i++ {
+		s += "x"
+	}
+	_ = s
+}
+`
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", code, 0)
 			// Check parsing error
@@ -300,11 +365,22 @@ func Test_runVar011_fileExcluded(t *testing.T) {
 				t.Fatalf("failed to parse: %v", err)
 			}
 
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 
 			pass := &analysis.Pass{
-				Fset: fset,
+				Fset:      fset,
+				Pkg:       pkg,
+				TypesInfo: info,
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: insp,
 				},

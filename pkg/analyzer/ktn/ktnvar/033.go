@@ -50,15 +50,7 @@ func runVar033(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check for cmp.Or patterns in functions
 	checkCmpOrPattern(pass, insp, cfg)
@@ -105,10 +97,6 @@ func checkCmpOrPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *conf
 		case *ast.FuncLit:
 			// Get body from literal
 			body = fn.Body
-		// Default case
-		default:
-			// Unknown function type
-			return
 		}
 
 		// Analyze function body for cmp.Or pattern
@@ -364,12 +352,7 @@ func returnsVariableFor033(returnStmt *ast.ReturnStmt, varExpr ast.Expr) bool {
 //   - cfg: configuration
 func reportCmpOrPattern(pass *analysis.Pass, ifStmt *ast.IfStmt, cfg *config.Config) {
 	// Report the issue at the if condition position
-	msg, ok := messages.Get(ruleCodeVar033)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(ifStmt.Cond.Pos(), "%s: utiliser cmp.Or() (Go 1.22+)", ruleCodeVar033)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar033)
 	pass.Reportf(
 		ifStmt.Cond.Pos(),
 		"%s: %s",

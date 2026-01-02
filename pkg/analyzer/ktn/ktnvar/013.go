@@ -54,15 +54,7 @@ func runVar013(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
 		return nil, nil
@@ -73,11 +65,7 @@ func runVar013(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename
@@ -159,13 +147,7 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 			displaySize = math.MaxInt
 		}
 		// Grande struct détectée
-		msg, ok := messages.Get(ruleCodeVar013)
-		// Check for missing message and use fallback
-		if !ok {
-			pass.Reportf(pos, "%s: struct size %d bytes exceeds %d bytes; use pointer",
-				ruleCodeVar013, displaySize, maxBytes)
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar013)
 		pass.Reportf(
 			pos,
 			"%s: %s",

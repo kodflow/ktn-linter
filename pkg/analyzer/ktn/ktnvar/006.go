@@ -107,15 +107,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
@@ -128,11 +120,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 			// File is excluded
 			return
 		}
-		genDecl, ok := n.(*ast.GenDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		genDecl := n.(*ast.GenDecl)
 
 		// Only check var declarations
 		if genDecl.Tok != token.VAR {
@@ -150,12 +138,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 
 				// Check if name shadows built-in
 				if isBuiltinIdentifier006(varName) {
-					msg, ok := messages.Get(ruleCodeVar006)
-					// Defensive: avoid panic if message is missing
-					if !ok {
-						pass.Reportf(name.Pos(), "%s: shadowing d'identifiant builtin: %q", ruleCodeVar006, varName)
-						continue
-					}
+					msg, _ := messages.Get(ruleCodeVar006)
 					pass.Reportf(
 						name.Pos(),
 						"%s: %s",

@@ -59,15 +59,7 @@ func runVar030(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check append([]T(nil), s...) pattern
 	checkAppendNilPattern(pass, insp, cfg)
@@ -93,17 +85,11 @@ func checkAppendNilPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *
 
 	// Traverse all call expressions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		call := n.(*ast.CallExpr)
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar030, pass.Fset.Position(n.Pos()).Filename) {
 			// File excluded
-			return
-		}
-
-		// Cast to call expression
-		call, ok := n.(*ast.CallExpr)
-		// Check if valid
-		if !ok {
-			// Not a call expression
 			return
 		}
 
@@ -114,13 +100,7 @@ func checkAppendNilPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *
 		}
 
 		// Report the issue
-		msg, ok := messages.Get(ruleCodeVar030)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(call.Pos(), "%s: utiliser slices.Clone() au lieu de %s",
-				ruleCodeVar030, "append([]T(nil), s...)")
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar030)
 		pass.Reportf(
 			call.Pos(),
 			"%s: %s",
@@ -212,17 +192,11 @@ func checkMakeCopyPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *c
 
 	// Traverse all block statements
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		block := n.(*ast.BlockStmt)
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar030, pass.Fset.Position(n.Pos()).Filename) {
 			// File excluded
-			return
-		}
-
-		// Cast to block statement
-		block, ok := n.(*ast.BlockStmt)
-		// Check if valid
-		if !ok {
-			// Not a block statement
 			return
 		}
 
@@ -536,13 +510,7 @@ func findMatchingMake030(destName, sourceName string, makeInfos map[string]*make
 //   - cfg: configuration
 func reportMakeCopy030(pass *analysis.Pass, call *ast.CallExpr, cfg *config.Config) {
 	// Report the issue
-	msg, ok := messages.Get(ruleCodeVar030)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: utiliser slices.Clone() au lieu de %s",
-			ruleCodeVar030, "make+copy")
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar030)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

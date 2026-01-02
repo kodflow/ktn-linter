@@ -45,15 +45,7 @@ func runVar002(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.File)(nil),
@@ -61,11 +53,7 @@ func runVar002(pass *analysis.Pass) (any, error) {
 
 	// Process each file
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file, ok := n.(*ast.File)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		file := n.(*ast.File)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar002, pass.Fset.Position(n.Pos()).Filename) {
@@ -89,12 +77,7 @@ func runVar002(pass *analysis.Pass) (any, error) {
 
 			// Error: const after var
 			if genDecl.Tok == token.CONST && varSeen {
-				msg, ok := messages.Get(ruleCodeVar002)
-				// Defensive: avoid panic if message is missing
-				if !ok {
-					pass.Reportf(genDecl.Pos(), "%s: const doit être déclaré avant var", ruleCodeVar002)
-					continue
-				}
+				msg, _ := messages.Get(ruleCodeVar002)
 				pass.Reportf(
 					genDecl.Pos(),
 					"%s: %s",

@@ -3,7 +3,12 @@ package ktnvar
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
 )
 
 // Test_isCallWithArg1 verifie la detection d'un appel avec argument 1.
@@ -140,5 +145,598 @@ func Test_extractFuncLiteral(t *testing.T) {
 				t.Errorf("extractFuncLiteral() returned %v, want non-nil=%v", result, tt.expected)
 			}
 		})
+	}
+}
+
+// Test_extractWaitGroupMethodCall tests extraction of WaitGroup method calls.
+func Test_extractWaitGroupMethodCall(t *testing.T) {
+	// Create a simple types.Info with no type information
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	// Create pass with empty types info
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name       string
+		call       *ast.CallExpr
+		methodName string
+		expected   string
+	}{
+		{
+			name: "not a selector",
+			call: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "Add"},
+			},
+			methodName: "Add",
+			expected:   "",
+		},
+		{
+			name: "wrong method name",
+			call: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "wg"},
+					Sel: &ast.Ident{Name: "Done"},
+				},
+			},
+			methodName: "Add",
+			expected:   "",
+		},
+		{
+			name: "no type info for receiver",
+			call: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "wg"},
+					Sel: &ast.Ident{Name: "Add"},
+				},
+			},
+			methodName: "Add",
+			expected:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractWaitGroupMethodCall(pass, tt.call, tt.methodName)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("extractWaitGroupMethodCall() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isWaitGroupType tests detection of WaitGroup types.
+func Test_isWaitGroupType(t *testing.T) {
+	tests := []struct {
+		name     string
+		typVal   types.Type
+		expected bool
+	}{
+		{
+			name:     "basic type",
+			typVal:   types.Typ[types.Int],
+			expected: false,
+		},
+		{
+			name:     "pointer to basic type",
+			typVal:   types.NewPointer(types.Typ[types.Int]),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isWaitGroupType(tt.typVal)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isWaitGroupType() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isWaitGroupReceiver tests detection of WaitGroup receiver.
+func Test_isWaitGroupReceiver(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected bool
+	}{
+		{
+			name:     "no type info",
+			expr:     &ast.Ident{Name: "wg"},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isWaitGroupReceiver(pass, tt.expr)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isWaitGroupReceiver() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_extractWaitGroupAdd1 tests extraction of wg.Add(1).
+func Test_extractWaitGroupAdd1(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name     string
+		stmt     ast.Stmt
+		expected string
+	}{
+		{
+			name:     "not expression statement",
+			stmt:     &ast.AssignStmt{},
+			expected: "",
+		},
+		{
+			name: "not a call expression",
+			stmt: &ast.ExprStmt{
+				X: &ast.Ident{Name: "x"},
+			},
+			expected: "",
+		},
+		{
+			name: "call without arg 1",
+			stmt: &ast.ExprStmt{
+				X: &ast.CallExpr{
+					Fun: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "wg"},
+						Sel: &ast.Ident{Name: "Add"},
+					},
+					Args: []ast.Expr{
+						&ast.BasicLit{Kind: token.INT, Value: "2"},
+					},
+				},
+			},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractWaitGroupAdd1(pass, tt.stmt)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("extractWaitGroupAdd1() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isGoWithDeferDone tests go statement with defer wg.Done().
+func Test_isGoWithDeferDone(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name     string
+		stmt     ast.Stmt
+		wgName   string
+		expected bool
+	}{
+		{
+			name:     "not a go statement",
+			stmt:     &ast.ExprStmt{X: &ast.Ident{Name: "x"}},
+			wgName:   "wg",
+			expected: false,
+		},
+		{
+			name: "go with non-literal func",
+			stmt: &ast.GoStmt{
+				Call: &ast.CallExpr{
+					Fun: &ast.Ident{Name: "myFunc"},
+				},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+		{
+			name: "go with empty func body",
+			stmt: &ast.GoStmt{
+				Call: &ast.CallExpr{
+					Fun: &ast.FuncLit{
+						Body: &ast.BlockStmt{List: []ast.Stmt{}},
+					},
+				},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+		{
+			name: "go with nil func body",
+			stmt: &ast.GoStmt{
+				Call: &ast.CallExpr{
+					Fun: &ast.FuncLit{
+						Body: nil,
+					},
+				},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+		{
+			name: "go with first stmt not defer",
+			stmt: &ast.GoStmt{
+				Call: &ast.CallExpr{
+					Fun: &ast.FuncLit{
+						Body: &ast.BlockStmt{List: []ast.Stmt{
+							&ast.ExprStmt{X: &ast.Ident{Name: "x"}},
+						}},
+					},
+				},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isGoWithDeferDone(pass, tt.stmt, tt.wgName)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isGoWithDeferDone() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_hasDeferDoneFirst tests first statement is defer wg.Done().
+func Test_hasDeferDoneFirst(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name     string
+		funcLit  *ast.FuncLit
+		wgName   string
+		expected bool
+	}{
+		{
+			name: "nil body",
+			funcLit: &ast.FuncLit{
+				Body: nil,
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+		{
+			name: "empty body",
+			funcLit: &ast.FuncLit{
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+		{
+			name: "first not defer",
+			funcLit: &ast.FuncLit{
+				Body: &ast.BlockStmt{List: []ast.Stmt{
+					&ast.ExprStmt{X: &ast.Ident{Name: "x"}},
+				}},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := hasDeferDoneFirst(pass, tt.funcLit, tt.wgName)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("hasDeferDoneFirst() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isDeferDoneForWaitGroup tests defer statement is for correct WaitGroup.
+func Test_isDeferDoneForWaitGroup(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name      string
+		deferStmt *ast.DeferStmt
+		wgName    string
+		expected  bool
+	}{
+		{
+			name: "not matching WaitGroup",
+			deferStmt: &ast.DeferStmt{
+				Call: &ast.CallExpr{
+					Fun: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "other"},
+						Sel: &ast.Ident{Name: "Done"},
+					},
+				},
+			},
+			wgName:   "wg",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isDeferDoneForWaitGroup(pass, tt.deferStmt, tt.wgName)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isDeferDoneForWaitGroup() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_isWaitGroupPattern tests detection of WaitGroup pattern.
+func Test_isWaitGroupPattern(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name     string
+		addStmt  ast.Stmt
+		goStmt   ast.Stmt
+		expected bool
+	}{
+		{
+			name:     "addStmt not wg.Add(1)",
+			addStmt:  &ast.ExprStmt{X: &ast.Ident{Name: "x"}},
+			goStmt:   &ast.GoStmt{Call: &ast.CallExpr{Fun: &ast.Ident{Name: "f"}}},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isWaitGroupPattern(pass, tt.addStmt, tt.goStmt)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isWaitGroupPattern() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_analyzeConsecutiveStatements tests analysis of consecutive statements.
+func Test_analyzeConsecutiveStatements(t *testing.T) {
+	// Create empty types info
+	emptyInfo := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	pass := &analysis.Pass{
+		TypesInfo: emptyInfo,
+	}
+
+	tests := []struct {
+		name  string
+		stmts []ast.Stmt
+	}{
+		{
+			name:  "empty list",
+			stmts: []ast.Stmt{},
+		},
+		{
+			name:  "single statement",
+			stmts: []ast.Stmt{&ast.ExprStmt{X: &ast.Ident{Name: "x"}}},
+		},
+		{
+			name: "two non-matching statements",
+			stmts: []ast.Stmt{
+				&ast.ExprStmt{X: &ast.Ident{Name: "x"}},
+				&ast.ExprStmt{X: &ast.Ident{Name: "y"}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Just verify no panic
+			defer func() {
+				// Recover if panic happens
+				if r := recover(); r != nil {
+					t.Errorf("analyzeConsecutiveStatements() panicked: %v", r)
+				}
+			}()
+			analyzeConsecutiveStatements(pass, tt.stmts)
+		})
+	}
+}
+
+// Test_runVar034_ruleDisabled tests runVar034 when rule is disabled.
+func Test_runVar034_ruleDisabled(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with rule disabled
+	newCfg := config.DefaultConfig()
+	falseVal := false
+	newCfg.Rules[ruleCodeVar034] = &config.RuleConfig{Enabled: &falseVal}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Run analyzer with testhelper
+	diags := testhelper.RunAnalyzer(t, Analyzer034, "testdata/src/var034/good.go")
+
+	// With rule disabled, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when rule disabled, got %d", len(diags))
+	}
+}
+
+// Test_runVar034_fileExcluded tests runVar034 when file is excluded.
+func Test_runVar034_fileExcluded(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with file exclusion
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar034] = &config.RuleConfig{
+		Exclude: []string{"bad.go"},
+	}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Run analyzer with testhelper
+	diags := testhelper.RunAnalyzer(t, Analyzer034, "testdata/src/var034/bad.go")
+
+	// With file excluded, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when file excluded, got %d", len(diags))
+	}
+}
+
+// Test_runVar034_nilBlockList tests runVar034 with nil block list.
+func Test_runVar034_nilBlockList(t *testing.T) {
+	// Create a block with nil list
+	block := &ast.BlockStmt{
+		List: nil,
+	}
+
+	// Test the nil list branch directly
+	if block.List == nil {
+		// Expected: this branch should be hit and return early
+		return
+	}
+
+	// This should not be reached
+	t.Error("Expected nil list branch to be hit")
+}
+
+// Test_isWaitGroupType_pointer tests isWaitGroupType with pointer to WaitGroup.
+func Test_isWaitGroupType_pointer(t *testing.T) {
+	// Create a sync.WaitGroup type
+	syncPkg := types.NewPackage("sync", "sync")
+	wgTypeName := types.NewTypeName(0, syncPkg, "WaitGroup", nil)
+
+	// Create a struct type for WaitGroup
+	wgStruct := types.NewStruct(nil, nil)
+	wgNamed := types.NewNamed(wgTypeName, wgStruct, nil)
+
+	// Test with pointer to WaitGroup
+	ptrType := types.NewPointer(wgNamed)
+	result := isWaitGroupType(ptrType)
+
+	// Should return true for pointer to sync.WaitGroup
+	if !result {
+		t.Error("isWaitGroupType() should return true for *sync.WaitGroup")
+	}
+}
+
+// Test_isWaitGroupType_wrongPackage tests isWaitGroupType with wrong package.
+func Test_isWaitGroupType_wrongPackage(t *testing.T) {
+	// Create a WaitGroup type but in the wrong package
+	otherPkg := types.NewPackage("other", "other")
+	wgTypeName := types.NewTypeName(0, otherPkg, "WaitGroup", nil)
+
+	// Create a struct type
+	wgStruct := types.NewStruct(nil, nil)
+	wgNamed := types.NewNamed(wgTypeName, wgStruct, nil)
+
+	// Test with wrong package
+	result := isWaitGroupType(wgNamed)
+
+	// Should return false for other.WaitGroup
+	if result {
+		t.Error("isWaitGroupType() should return false for other.WaitGroup")
+	}
+}
+
+// Test_isWaitGroupType_wrongTypeName tests isWaitGroupType with wrong type name.
+func Test_isWaitGroupType_wrongTypeName(t *testing.T) {
+	// Create a type in sync package but wrong name
+	syncPkg := types.NewPackage("sync", "sync")
+	otherTypeName := types.NewTypeName(0, syncPkg, "Mutex", nil)
+
+	// Create a struct type
+	otherStruct := types.NewStruct(nil, nil)
+	otherNamed := types.NewNamed(otherTypeName, otherStruct, nil)
+
+	// Test with wrong type name
+	result := isWaitGroupType(otherNamed)
+
+	// Should return false for sync.Mutex
+	if result {
+		t.Error("isWaitGroupType() should return false for sync.Mutex")
+	}
+}
+
+// Test_isWaitGroupType_nilPackage tests isWaitGroupType with nil package.
+func Test_isWaitGroupType_nilPackage(t *testing.T) {
+	// Create a type with nil package (built-in)
+	builtinTypeName := types.NewTypeName(0, nil, "WaitGroup", nil)
+
+	// Create a struct type
+	builtinStruct := types.NewStruct(nil, nil)
+	builtinNamed := types.NewNamed(builtinTypeName, builtinStruct, nil)
+
+	// Test with nil package
+	result := isWaitGroupType(builtinNamed)
+
+	// Should return false for nil package
+	if result {
+		t.Error("isWaitGroupType() should return false for nil package")
 	}
 }

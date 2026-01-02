@@ -146,3 +146,110 @@ func Test_runVar002_fileExcluded(t *testing.T) {
 		})
 	}
 }
+
+// Test_runVar002_constAfterVar tests the main error case.
+func Test_runVar002_constAfterVar(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with const after var (invalid order)
+	code := `package test
+var x int = 42
+const y = 1
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, _ = runVar002(pass)
+
+	// Should report one issue
+	if reportCount != 1 {
+		t.Errorf("runVar002() reported %d issues, expected 1", reportCount)
+	}
+}
+
+// Test_runVar002_nonGenDecl tests skipping non-GenDecl declarations.
+func Test_runVar002_nonGenDecl(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with function declarations (non-GenDecl) mixed with var and const
+	code := `package test
+func foo() {}
+var x int = 42
+func bar() {}
+const y = 1
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, _ = runVar002(pass)
+
+	// Should report one issue (const after var)
+	if reportCount != 1 {
+		t.Errorf("runVar002() reported %d issues, expected 1", reportCount)
+	}
+}
+
+// Test_runVar002_correctOrder tests correct declaration order (no error).
+func Test_runVar002_correctOrder(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with correct order: const before var
+	code := `package test
+const y = 1
+var x int = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, _ = runVar002(pass)
+
+	// Should not report any issues
+	if reportCount != 0 {
+		t.Errorf("runVar002() reported %d issues, expected 0", reportCount)
+	}
+}

@@ -45,16 +45,8 @@ func runVar025(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving types
+	insp := inspAny.(*inspector.Inspector)
+	// Ensure type information is available
 	if pass.TypesInfo == nil {
 		return nil, nil
 	}
@@ -64,11 +56,7 @@ func runVar025(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		rangeStmt, ok := n.(*ast.RangeStmt)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		rangeStmt := n.(*ast.RangeStmt)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar025, pass.Fset.Position(n.Pos()).Filename) {
@@ -484,13 +472,7 @@ func getRangeCollectionIdent(expr ast.Expr) *ast.Ident {
 //   - node: noeud à signaler
 //   - collectionType: type de collection (map ou slice)
 func reportClearPattern(pass *analysis.Pass, node ast.Node, collectionType string) {
-	msg, ok := messages.Get(ruleCodeVar025)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(node.Pos(), "%s: utiliser clear() pour vider une %s",
-			ruleCodeVar025, collectionType)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar025)
 	pass.Reportf(
 		node.Pos(),
 		"%s: %s",

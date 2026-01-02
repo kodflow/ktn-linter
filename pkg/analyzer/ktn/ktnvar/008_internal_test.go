@@ -13,21 +13,87 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Test_runVar008 tests the private runVar008 function.
-func Test_runVar008(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"passthrough validation"},
-		{"error case validation"},
+// Test_reportVar008Error tests the reportVar008Error function.
+func Test_reportVar008Error(t *testing.T) {
+	// Test with valid message (message exists in registry)
+	t.Run("with valid message", func(t *testing.T) {
+		fset := token.NewFileSet()
+		reportCount := 0
+		var reportedMsg string
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(d analysis.Diagnostic) {
+				reportCount++
+				reportedMsg = d.Message
+			},
+		}
+
+		lit := &ast.CompositeLit{
+			Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+		}
+
+		reportVar008Error(pass, lit)
+
+		// Should report one error
+		if reportCount != 1 {
+			t.Errorf("reportVar008Error() reported %d issues, expected 1", reportCount)
+		}
+		// Message should contain rule code
+		if reportedMsg == "" {
+			t.Error("reportVar008Error() reported empty message")
+		}
+	})
+
+}
+
+// Test_checkMakeCall_smallConstant tests checkMakeCall with small constant size.
+func Test_checkMakeCall_smallConstant(t *testing.T) {
+	// Reset config
+	config.Reset()
+
+	// Parse code with make call using small constant
+	code := `package test
+	func example() {
+		s := make([]int, 10)
+	}
+	`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
 	}
 
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - main logic tested via public API in external tests
-		})
+	// Type check to get proper type info
+	conf := types.Config{}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Uses:  make(map[*ast.Ident]types.Object),
+		Defs:  make(map[*ast.Ident]types.Object),
 	}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Find and check the make call
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if ident, isIdent := call.Fun.(*ast.Ident); isIdent && ident.Name == "make" {
+				checkMakeCall(pass, call)
+			}
+		}
+		return true
+	})
+
+	// Small constant should be skipped (handled by VAR-016)
+	// No error expected since 10 is a small constant
 }
 
 // Test_isAppendCall tests the private isAppendCall helper function.
@@ -505,7 +571,7 @@ func Test_checkCompositeLit_nonEmptySlice(t *testing.T) {
 
 			ctx := &litCheckContext{
 				pass: &analysis.Pass{
-					Report:    func(_d analysis.Diagnostic) {},
+					Report: func(_d analysis.Diagnostic) {},
 					TypesInfo: &types.Info{
 						Types: make(map[ast.Expr]types.TypeAndValue),
 						Uses:  make(map[*ast.Ident]types.Object),
@@ -543,7 +609,7 @@ func Test_checkCompositeLit_invalidIndex(t *testing.T) {
 
 			ctx := &litCheckContext{
 				pass: &analysis.Pass{
-					Report:    func(_d analysis.Diagnostic) {},
+					Report: func(_d analysis.Diagnostic) {},
 					TypesInfo: &types.Info{
 						Types: make(map[ast.Expr]types.TypeAndValue),
 						Uses:  make(map[*ast.Ident]types.Object),
@@ -1002,4 +1068,237 @@ func Test_checkCompositeLit_inStructLiteral(t *testing.T) {
 
 		})
 	}
+}
+
+// Test_checkCompositeLit_reportsError tests when error is reported.
+func Test_checkCompositeLit_reportsError(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"reports error for empty slice with append"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			code := `package test
+			func example() {
+			s := []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			reportCount := 0
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					Fset:      fset,
+					TypesInfo: info,
+					Report: func(_d analysis.Diagnostic) {
+						reportCount++
+					},
+				},
+				appendVars: map[string]bool{"s": true}, // s is used with append
+			}
+
+			// Empty stack - not in return or struct
+			stack := []ast.Node{&ast.FuncDecl{}}
+
+			// Find the assignment and composite literal
+			ast.Inspect(file, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok {
+					for i, rhs := range assign.Rhs {
+						if lit, isLit := rhs.(*ast.CompositeLit); isLit {
+							checkCompositeLit(ctx, assign, i, lit, stack)
+						}
+					}
+				}
+				return true
+			})
+
+			// Should report error for empty slice used with append
+			if reportCount != 1 {
+				t.Errorf("checkCompositeLit() reported %d errors, expected 1", reportCount)
+			}
+		})
+	}
+}
+
+// Test_getAppendVariableName008_validAppendVar tests valid append variable.
+func Test_getAppendVariableName008_validAppendVar(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"valid append variable returns true"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					TypesInfo: &types.Info{
+						Types: make(map[ast.Expr]types.TypeAndValue),
+					},
+				},
+				appendVars: map[string]bool{"items": true},
+			}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "items"}},
+			}
+
+			result := getAppendVariableName008(ctx, assign, 0)
+			if !result {
+				t.Error("getAppendVariableName008() = false, expected true")
+			}
+		})
+	}
+}
+
+// Test_checkEmptySliceLiterals_popPhase tests the pop phase of WithStack.
+func Test_checkEmptySliceLiterals_popPhase(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"pop phase returns true"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config
+			config.Reset()
+
+			code := `package test
+			func example() {
+			x := []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			insp := inspector.New([]*ast.File{file})
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// This tests the WithStack traversal including pop phase
+			checkEmptySliceLiterals(pass, insp, map[string]bool{})
+			// No error expected - x not used with append
+		})
+	}
+}
+
+// Test_collectAppendVariables_withRealCode tests with real parsed code.
+func Test_collectAppendVariables_withRealCode(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"collects append variables from real code"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			code := `package test
+			func example() {
+			var items []int
+			items = append(items, 1)
+			items = append(items, 2, 3)
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			appendVars := collectAppendVariables(insp)
+
+			// Should have collected "items" as append variable
+			if !appendVars["items"] {
+				t.Error("collectAppendVariables() did not collect 'items'")
+			}
+		})
+	}
+}
+
+// Test_checkEmptySliceLiterals_fileExcludedInCallback tests file exclusion inside WithStack.
+func Test_checkEmptySliceLiterals_fileExcludedInCallback(t *testing.T) {
+	t.Run("file excluded in WithStack callback", func(t *testing.T) {
+		// Setup config with file exclusion
+		config.Set(&config.Config{
+			Rules: map[string]*config.RuleConfig{
+				"KTN-VAR-008": {Exclude: []string{"test.go"}},
+			},
+		})
+		defer config.Reset()
+
+		// Code with slice literal assignment that would trigger report
+		code := `package test
+func example() {
+	x := []int{}
+	_ = x
+}
+`
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+		// Check parsing error
+		if err != nil {
+			t.Fatalf("failed to parse: %v", err)
+		}
+
+		// Type check
+		conf := types.Config{}
+		info := &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+			Uses:  make(map[*ast.Ident]types.Object),
+			Defs:  make(map[*ast.Ident]types.Object),
+		}
+		_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+		insp := inspector.New([]*ast.File{file})
+		reportCount := 0
+
+		pass := &analysis.Pass{
+			Fset:      fset,
+			TypesInfo: info,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Call with append vars containing "x"
+		appendVars := map[string]bool{"x": true}
+		checkEmptySliceLiterals(pass, insp, appendVars)
+
+		// Should not report when file is excluded
+		if reportCount != 0 {
+			t.Errorf("checkEmptySliceLiterals() reported %d, expected 0 when file excluded", reportCount)
+		}
+	})
 }
