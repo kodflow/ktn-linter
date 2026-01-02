@@ -15,7 +15,7 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟡 | **TOTAL (Global)** | **88.5%** |
+| 🟡 | **TOTAL (Global)** | **88.2%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 86.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 77.8% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 77.3% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
@@ -189,32 +189,32 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 77.8%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 77.3%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟢 `001.go:runVar001` | 95.5% |
+| 🟢 `001.go:runVar001` | 91.7% |
 | 🔴 `001.go:checkVarSpec` | 70.0% |
-| 🟡 `002.go:runVar002` | 84.6% |
-| 🔴 `003.go:runVar003` | 77.8% |
+| 🟡 `002.go:runVar002` | 82.1% |
+| 🔴 `003.go:runVar003` | 75.0% |
 | 🔴 `003.go:checkVar003Names` | 70.0% |
 | 🟡 `004.go:runVar004` | 80.0% |
-| 🟡 `004.go:checkVar004PackageLevel` | 87.5% |
+| 🟡 `004.go:checkVar004PackageLevel` | 83.3% |
 | 🟡 `004.go:checkVar004LocalVars` | 80.0% |
 | 🔴 `004.go:checkVar004Node` | 66.7% |
 | 🟡 `004.go:checkVar004AssignStmt` | 85.7% |
 | ⚫ `004.go:checkVar004DeclStmt` | 0.0% |
 | 🔴 `004.go:checkVar004Name` | 71.4% |
 | 🟡 `005.go:runVar005` | 80.0% |
-| 🔴 `005.go:checkVar005PackageLevel` | 78.6% |
-| 🔴 `005.go:checkVar005LocalVars` | 20.0% |
+| 🔴 `005.go:checkVar005PackageLevel` | 75.0% |
+| 🔴 `005.go:checkVar005LocalVars` | 16.7% |
 | ⚫ `005.go:checkVar005Node` | 0.0% |
 | ⚫ `005.go:checkVar005AssignStmt` | 0.0% |
 | ⚫ `005.go:checkVar005RangeStmt` | 0.0% |
 | ⚫ `005.go:checkVar005DeclStmt` | 0.0% |
 | 🔴 `005.go:checkVar005Name` | 70.0% |
-| 🔴 `006.go:runVar006` | 76.9% |
-| 🟡 `007.go:runVar007` | 81.2% |
+| 🔴 `006.go:runVar006` | 75.0% |
+| 🔴 `007.go:runVar007` | 77.8% |
 | 🟡 `007.go:checkNestedBlocks` | 90.0% |
 | 🔴 `007.go:checkCaseClause` | 50.0% |
 | 🔴 `007.go:checkCommClause` | 50.0% |
@@ -226,7 +226,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `008.go:checkEmptySliceLiterals` | 88.2% |
 | 🔴 `008.go:checkCompositeLit` | 75.0% |
 | 🔴 `009.go:checkMakeCallVar008` | 73.3% |
-| 🟡 `009.go:runVar009` | 85.7% |
+| 🟡 `009.go:runVar009` | 81.2% |
 | 🟢 `010.go:runVar010` | 92.3% |
 | 🔴 `010.go:reportMissingGrow` | 70.0% |
 | 🟡 `010.go:extractAssignTypeString` | 87.5% |
@@ -236,7 +236,7 @@ Rapport de couverture généré automatiquement.
 | 🟡 `012.go:runVar012` | 83.3% |
 | 🔴 `012.go:checkAssignForAlloc` | 71.4% |
 | 🟡 `012.go:checkDeclForAlloc` | 86.7% |
-| 🟡 `013.go:runVar013` | 90.0% |
+| 🟡 `013.go:runVar013` | 86.4% |
 | 🟡 `013.go:checkFuncParams009` | 90.0% |
 | 🔴 `013.go:checkParamType009` | 75.0% |
 | 🔴 `013.go:getStructSize009` | 73.7% |
@@ -250,8 +250,8 @@ Rapport de couverture généré automatiquement.
 | 🟡 `015.go:checkMultipleConversions` | 90.0% |
 | 🟡 `016.go:runVar016` | 88.9% |
 | 🔴 `016.go:checkVarGrouping` | 75.0% |
-| 🔴 `017.go:runVar017` | 79.2% |
-| 🟡 `018.go:runVar018` | 88.2% |
+| 🔴 `017.go:runVar017` | 76.9% |
+| 🟡 `018.go:runVar018` | 84.2% |
 | 🟡 `018.go:shouldUseArray` | 90.0% |
 | 🟡 `018.go:getConstantSize` | 83.3% |
 | 🔴 `018.go:isTotalSizeSmall` | 71.4% |
@@ -275,14 +275,14 @@ Rapport de couverture généré automatiquement.
 | ⚫ `020.go:formatSelectorType` | 0.0% |
 | ⚫ `020.go:formatMapType` | 0.0% |
 | 🟡 `021.go:runVar021` | 80.0% |
-| 🔴 `021.go:collectReceivers` | 78.6% |
+| 🔴 `021.go:collectReceivers` | 75.0% |
 | 🔴 `021.go:extractReceiverType` | 71.4% |
 | 🟡 `021.go:checkReceiverConsistency` | 85.7% |
 | 🔴 `021.go:reportInconsistency` | 75.0% |
 | 🟡 `022.go:runVar022` | 90.9% |
-| 🟡 `022.go:checkFuncDecls` | 88.9% |
-| 🟢 `022.go:checkVarDecls` | 92.3% |
-| 🟡 `022.go:checkStructFields` | 90.0% |
+| 🟡 `022.go:checkFuncDecls` | 81.8% |
+| 🟡 `022.go:checkVarDecls` | 86.7% |
+| 🟡 `022.go:checkStructFields` | 83.3% |
 | 🟡 `022.go:checkPointerToInterface` | 83.3% |
 | 🔴 `023.go:runVar023` | 75.0% |
 | 🟡 `023.go:checkMathRandUsage` | 85.7% |
@@ -295,7 +295,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `024.go:runVar024` | 75.0% |
 | 🔴 `024.go:checkEmptyInterface` | 71.4% |
 | 🔴 `024.go:isEmptyInterface` | 66.7% |
-| 🔴 `025.go:runVar025` | 78.6% |
+| 🔴 `025.go:runVar025` | 75.0% |
 | 🔴 `025.go:checkMapDeletePattern` | 73.3% |
 | 🔴 `025.go:isDeleteCallWithKeyAndMap` | 69.2% |
 | 🔴 `025.go:checkSliceZeroPattern` | 66.7% |
@@ -312,11 +312,11 @@ Rapport de couverture généré automatiquement.
 | 🔴 `026.go:hasReturnInBody` | 75.0% |
 | 🔴 `026.go:hasMatchingReturn` | 66.7% |
 | ⚫ `026.go:hasReturnInElse` | 0.0% |
-| 🔴 `027.go:runVar027` | 73.7% |
+| 🔴 `027.go:runVar027` | 71.4% |
 | 🔴 `027.go:checkInitIsZero` | 68.8% |
 | 🔴 `027.go:checkPostIsIncrement` | 77.8% |
 | 🔴 `027.go:checkConditionIsLessThan` | 77.8% |
-| 🔴 `028.go:runVar028` | 78.6% |
+| 🔴 `028.go:runVar028` | 75.0% |
 | 🔴 `028.go:checkLoopVarCopyPattern` | 71.4% |
 | 🟡 `028.go:checkShortVarDecl` | 85.7% |
 | 🔴 `028.go:checkAssignmentPair` | 76.9% |
@@ -464,4 +464,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-01 23:50:16*
+*Généré le: 2026-01-02 00:00:23*
