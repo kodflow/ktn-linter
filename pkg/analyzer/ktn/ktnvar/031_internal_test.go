@@ -373,12 +373,12 @@ func Test_extractRangeBodyAssign031(t *testing.T) {
 // Test_validateCloneAssignment031 tests validation of clone assignment.
 func Test_validateCloneAssignment031(t *testing.T) {
 	tests := []struct {
-		name      string
-		assign    *ast.AssignStmt
-		keyIdent  *ast.Ident
-		valIdent  *ast.Ident
-		mapMakes  map[string]token.Pos
-		expected  bool
+		name     string
+		assign   *ast.AssignStmt
+		keyIdent *ast.Ident
+		valIdent *ast.Ident
+		mapMakes map[string]token.Pos
+		expected bool
 	}{
 		{
 			name: "LHS not index expression",
@@ -541,4 +541,3 @@ func Test_analyzeBlockForMapClone(t *testing.T) {
 		})
 	}
 }
-

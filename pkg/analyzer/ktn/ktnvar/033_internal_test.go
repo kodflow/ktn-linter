@@ -77,9 +77,9 @@ func Test_isValidIfStructureFor033(t *testing.T) {
 // Test_extractVarFromCondition033 tests variable extraction from condition.
 func Test_extractVarFromCondition033(t *testing.T) {
 	tests := []struct {
-		name     string
-		cond     ast.Expr
-		wantNil  bool
+		name    string
+		cond    ast.Expr
+		wantNil bool
 	}{
 		{
 			name:    "not binary expression",
@@ -547,4 +547,3 @@ func Test_analyzeBodyForCmpOrPattern(t *testing.T) {
 		})
 	}
 }
-

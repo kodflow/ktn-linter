@@ -282,3 +282,103 @@ func Test_runVar016_fileExcluded(t *testing.T) {
 		})
 	}
 }
+
+// Test_runVar016_withMultipleVars tests runVar016 with multiple var declarations.
+func Test_runVar016_withMultipleVars(t *testing.T) {
+	config.Reset()
+
+	code := `package test
+var x int = 1
+var y int = 2
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar016(pass)
+	if err != nil {
+		t.Errorf("runVar016() error = %v", err)
+	}
+
+	// Should report the second var declaration
+	if reportCount != 1 {
+		t.Errorf("runVar016() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_checkVarGrouping_withVerbose tests checkVarGrouping with verbose mode.
+func Test_checkVarGrouping_withVerbose(t *testing.T) {
+	config.Set(&config.Config{
+		Verbose: true,
+	})
+	defer config.Reset()
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Create 3 var groups
+	groups := []shared.DeclGroup{
+		{Decl: &ast.GenDecl{TokPos: token.Pos(1)}, Pos: token.Pos(1)},
+		{Decl: &ast.GenDecl{TokPos: token.Pos(2)}, Pos: token.Pos(2)},
+		{Decl: &ast.GenDecl{TokPos: token.Pos(3)}, Pos: token.Pos(3)},
+	}
+
+	checkVarGrouping(pass, groups)
+
+	// Should report 2 issues (groups 2 and 3)
+	if reportCount != 2 {
+		t.Errorf("checkVarGrouping() with verbose reported %d, expected 2", reportCount)
+	}
+}
+
+// Test_runVar016_withVerbose tests runVar016 with verbose mode.
+func Test_runVar016_withVerbose(t *testing.T) {
+	config.Set(&config.Config{
+		Verbose: true,
+	})
+	defer config.Reset()
+
+	code := `package test
+var x int = 1
+var y int = 2
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar016(pass)
+	if err != nil {
+		t.Errorf("runVar016() error = %v", err)
+	}
+
+	// Should report the second var declaration with verbose
+	if reportCount != 1 {
+		t.Errorf("runVar016() with verbose reported %d, expected 1", reportCount)
+	}
+}

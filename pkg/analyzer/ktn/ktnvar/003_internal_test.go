@@ -209,3 +209,66 @@ var _ int = 42
 	}
 }
 
+// Test_runVar003_nonVarDecl tests skipping non-var declarations.
+func Test_runVar003_nonVarDecl(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with const (not var)
+	code := `package test
+const MY_CONST = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar003(pass)
+
+	// Should not report for const declarations
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 for const", reportCount)
+	}
+}
+
+// Test_runVar003_typeDecl tests skipping type declarations.
+func Test_runVar003_typeDecl(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Code with type (not var)
+	code := `package test
+type My_Type int
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar003(pass)
+
+	// Should not report for type declarations (VAR-003 checks vars only)
+	if reportCount != 0 {
+		t.Errorf("runVar003() reported %d issues, expected 0 for type", reportCount)
+	}
+}

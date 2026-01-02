@@ -619,4 +619,3 @@ func Test_analyzeConsecutiveStatements(t *testing.T) {
 		})
 	}
 }
-

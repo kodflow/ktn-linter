@@ -1035,3 +1035,588 @@ func Test_getMutexTypeFromType_pointerType(t *testing.T) {
 		})
 	}
 }
+
+// Test_runVar019_nilTypesInfo tests runVar019 with nil TypesInfo.
+func Test_runVar019_nilTypesInfo(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil TypesInfo returns early"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Parse simple code
+			code := `package test
+var x int = 42
+`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: nil, // nil TypesInfo
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+			}
+
+			result, err := runVar019(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar019() error = %v", err)
+			}
+
+			// Result should be nil
+			if result != nil {
+				t.Errorf("runVar019() = %v, expected nil", result)
+			}
+		})
+	}
+}
+
+// Test_checkStructsWithMutex_nonStructType tests checkStructsWithMutex with non-struct type.
+func Test_checkStructsWithMutex_nonStructType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"non-struct type is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create a type alias (not a struct)
+			typeSpec := &ast.TypeSpec{
+				Name: &ast.Ident{Name: "MyAlias"},
+				Type: &ast.Ident{Name: "int"}, // Not a struct
+			}
+
+			genDecl := &ast.GenDecl{
+				Tok:   token.TYPE,
+				Specs: []ast.Spec{typeSpec},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{genDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			typesWithValueRecv := map[string]bool{"MyAlias": true}
+
+			checkStructsWithMutex(pass, insp, typesWithValueRecv)
+
+			// Should not report anything - not a struct
+			if reportCount != 0 {
+				t.Errorf("checkStructsWithMutex() reported %d issues, expected 0", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkStructsWithMutex_fileExcluded tests checkStructsWithMutex with excluded file.
+func Test_checkStructsWithMutex_fileExcluded(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"excluded file is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup config with file exclusion
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-019": {
+						Exclude: []string{"excluded.go"},
+					},
+				},
+			})
+			defer config.Reset()
+
+			// Create a struct with mutex field
+			typeSpec := &ast.TypeSpec{
+				Name: &ast.Ident{Name: "MyStruct"},
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "mu"}},
+								Type: &ast.SelectorExpr{
+									X:   &ast.Ident{Name: "sync"},
+									Sel: &ast.Ident{Name: "Mutex"},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			genDecl := &ast.GenDecl{
+				Tok:   token.TYPE,
+				Specs: []ast.Spec{typeSpec},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{genDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("excluded.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			typesWithValueRecv := map[string]bool{"MyStruct": true}
+
+			checkStructsWithMutex(pass, insp, typesWithValueRecv)
+
+			// Should not report - file excluded
+			if reportCount != 0 {
+				t.Errorf("checkStructsWithMutex() reported %d issues, expected 0 (file excluded)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkValueReceivers_fileExcluded tests checkValueReceivers with excluded file.
+func Test_checkValueReceivers_fileExcluded(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"excluded file is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup config with file exclusion
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-019": {
+						Exclude: []string{"excluded.go"},
+					},
+				},
+			})
+			defer config.Reset()
+
+			// Create a method with value receiver
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "s"}},
+							Type:  &ast.Ident{Name: "MyStruct"},
+						},
+					},
+				},
+				Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("excluded.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueReceivers(pass, insp)
+
+			// Should not report - file excluded
+			if reportCount != 0 {
+				t.Errorf("checkValueReceivers() reported %d issues, expected 0 (file excluded)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkValueParams_fileExcluded tests checkValueParams with excluded file.
+func Test_checkValueParams_fileExcluded(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"excluded file is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup config with file exclusion
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-019": {
+						Exclude: []string{"excluded.go"},
+					},
+				},
+			})
+			defer config.Reset()
+
+			// Create a function with mutex param
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Func"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "mu"}},
+								Type: &ast.SelectorExpr{
+									X:   &ast.Ident{Name: "sync"},
+									Sel: &ast.Ident{Name: "Mutex"},
+								},
+							},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("excluded.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueParams(pass, insp)
+
+			// Should not report - file excluded
+			if reportCount != 0 {
+				t.Errorf("checkValueParams() reported %d issues, expected 0 (file excluded)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkValueParams_nilParams tests checkValueParams with nil params.
+func Test_checkValueParams_nilParams(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil params is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create a function with nil params
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Func"},
+				Type: &ast.FuncType{
+					Params: nil, // nil params
+				},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueParams(pass, insp)
+
+			// Should not report - nil params
+			if reportCount != 0 {
+				t.Errorf("checkValueParams() reported %d issues, expected 0 (nil params)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkAssignments_fileExcluded tests checkAssignments with excluded file.
+func Test_checkAssignments_fileExcluded(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"excluded file is skipped"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup config with file exclusion
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-VAR-019": {
+						Exclude: []string{"excluded.go"},
+					},
+				},
+			})
+			defer config.Reset()
+
+			code := `package test
+func f() {
+	var x int
+	x = 42
+}
+`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkAssignments(pass, insp)
+
+			// Should not report - file excluded
+			if reportCount != 0 {
+				t.Errorf("checkAssignments() reported %d issues, expected 0 (file excluded)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_getMutexTypeFromType_pointerToStruct tests getMutexTypeFromType with pointer to struct.
+func Test_getMutexTypeFromType_pointerToStruct(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"pointer to struct without mutex"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			}
+
+			// Create a struct without mutex
+			structType := types.NewStruct([]*types.Var{
+				types.NewField(0, nil, "x", types.Typ[types.Int], false),
+			}, nil)
+
+			// Named type
+			pkg := types.NewPackage("test", "test")
+			named := types.NewNamed(
+				types.NewTypeName(0, pkg, "MyStruct", nil),
+				structType,
+				nil,
+			)
+
+			// Pointer to struct
+			ptrType := types.NewPointer(named)
+
+			expr := &ast.Ident{Name: "x"}
+			pass.TypesInfo.Types[expr] = types.TypeAndValue{
+				Type: ptrType,
+			}
+
+			result := getMutexTypeFromType(pass, expr)
+			// Should be empty
+			if result != "" {
+				t.Errorf("getMutexTypeFromType() = %q, expected empty string", result)
+			}
+		})
+	}
+}
+
+// Test_checkValueReceivers_pointerReceiver tests checkValueReceivers with pointer receiver.
+func Test_checkValueReceivers_pointerReceiver(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"pointer receiver is allowed"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create a method with pointer receiver
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "s"}},
+							Type:  &ast.StarExpr{X: &ast.Ident{Name: "MyStruct"}},
+						},
+					},
+				},
+				Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueReceivers(pass, insp)
+
+			// Should not report - pointer receiver is allowed
+			if reportCount != 0 {
+				t.Errorf("checkValueReceivers() reported %d issues, expected 0 (pointer receiver)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkValueReceivers_valueReceiverNoMutex tests value receiver without mutex.
+func Test_checkValueReceivers_valueReceiverNoMutex(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"value receiver without mutex is allowed"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create a struct without mutex
+			structType := types.NewStruct([]*types.Var{
+				types.NewField(0, nil, "x", types.Typ[types.Int], false),
+			}, nil)
+
+			pkg := types.NewPackage("test", "test")
+			named := types.NewNamed(
+				types.NewTypeName(0, pkg, "MyStruct", nil),
+				structType,
+				nil,
+			)
+
+			// Create AST with value receiver
+			recvIdent := &ast.Ident{Name: "MyStruct"}
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "s"}},
+							Type:  recvIdent,
+						},
+					},
+				},
+				Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						recvIdent: {Type: named},
+					},
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueReceivers(pass, insp)
+
+			// Should not report - no mutex
+			if reportCount != 0 {
+				t.Errorf("checkValueReceivers() reported %d issues, expected 0 (no mutex)", reportCount)
+			}
+		})
+	}
+}

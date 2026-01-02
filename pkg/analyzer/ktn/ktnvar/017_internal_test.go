@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -147,3 +148,188 @@ func Test_runVar017_fileExcluded(t *testing.T) {
 	}
 }
 
+// Test_runVar017_withMakeMap tests runVar017 with make(map) without capacity.
+func Test_runVar017_withMakeMap(t *testing.T) {
+	config.Reset()
+
+	code := `package test
+func foo() {
+	m := make(map[string]int)
+	_ = m
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Pkg:  pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo: info,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar017(pass)
+	if err != nil {
+		t.Errorf("runVar017() error = %v", err)
+	}
+
+	// Should report the map without capacity
+	if reportCount != 1 {
+		t.Errorf("runVar017() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_runVar017_withMapCapacity tests runVar017 with make(map) with capacity.
+func Test_runVar017_withMapCapacity(t *testing.T) {
+	config.Reset()
+
+	code := `package test
+func foo() {
+	m := make(map[string]int, 10)
+	_ = m
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Pkg:  pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo: info,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar017(pass)
+	if err != nil {
+		t.Errorf("runVar017() error = %v", err)
+	}
+
+	// Should not report - map has capacity
+	if reportCount != 0 {
+		t.Errorf("runVar017() with capacity reported %d, expected 0", reportCount)
+	}
+}
+
+// Test_runVar017_withVerbose tests runVar017 with verbose mode.
+func Test_runVar017_withVerbose(t *testing.T) {
+	config.Set(&config.Config{
+		Verbose: true,
+	})
+	defer config.Reset()
+
+	code := `package test
+func foo() {
+	m := make(map[string]int)
+	_ = m
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Pkg:  pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo: info,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar017(pass)
+	if err != nil {
+		t.Errorf("runVar017() error = %v", err)
+	}
+
+	// Should report with verbose mode
+	if reportCount != 1 {
+		t.Errorf("runVar017() with verbose reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_runVar017_notMakeCall tests runVar017 with non-make call.
+func Test_runVar017_notMakeCall(t *testing.T) {
+	config.Reset()
+
+	code := `package test
+func foo() {
+	x := len("hello")
+	_ = x
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		Pkg:  pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo: info,
+		Report:    func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar017(pass)
+	if err != nil {
+		t.Errorf("runVar017() error = %v", err)
+	}
+	if result != nil {
+		t.Errorf("runVar017() result = %v, expected nil", result)
+	}
+}

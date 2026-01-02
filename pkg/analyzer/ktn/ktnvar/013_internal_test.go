@@ -551,7 +551,6 @@ func Test_isExternalType009(t *testing.T) {
 	}
 }
 
-
 // Test_runVar013_nilTypesInfo tests runVar013 with nil TypesInfo.
 func Test_runVar013_nilTypesInfo(t *testing.T) {
 	// Reset config for clean state
@@ -819,4 +818,3 @@ func Test_runVar013_withFuncNoParams(t *testing.T) {
 		t.Errorf("runVar013() reported %d, expected 0", reportCount)
 	}
 }
-

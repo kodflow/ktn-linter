@@ -4,6 +4,9 @@ import (
 	"go/ast"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
+	"github.com/kodflow/ktn-linter/pkg/config"
 )
 
 // TestCheckLoopVarCopyPattern tests checkLoopVarCopyPattern function.
@@ -186,4 +189,55 @@ func TestCheckAssignmentPair(t *testing.T) {
 		Rhs: []ast.Expr{&ast.Ident{Name: "x"}},
 	}
 	checkAssignmentPair(nil, notRangeVar, 0, rangeVars)
+}
+
+// TestRunVar028_RuleDisabled tests runVar028 when rule is disabled.
+func TestRunVar028_RuleDisabled(t *testing.T) {
+	// Save original config
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Create config with rule disabled
+	falseVal := false
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			ruleCodeVar028: {
+				Enabled: &falseVal,
+			},
+		},
+	}
+	config.Set(cfg)
+
+	// Run analyzer - should have 0 diagnostics when disabled
+	diags := testhelper.RunAnalyzer(t, Analyzer028, "testdata/src/var028/bad.go")
+
+	// Verify no diagnostics when rule disabled
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when rule disabled, got %d", len(diags))
+	}
+}
+
+// TestRunVar028_FileExcluded tests runVar028 when file is excluded.
+func TestRunVar028_FileExcluded(t *testing.T) {
+	// Save original config
+	originalCfg := config.Get()
+	defer config.Set(originalCfg)
+
+	// Create config with file exclusion pattern
+	cfg := &config.Config{
+		Rules: map[string]*config.RuleConfig{
+			ruleCodeVar028: {
+				Exclude: []string{"**/bad.go"},
+			},
+		},
+	}
+	config.Set(cfg)
+
+	// Run analyzer - should have 0 diagnostics when file excluded
+	diags := testhelper.RunAnalyzer(t, Analyzer028, "testdata/src/var028/bad.go")
+
+	// Verify no diagnostics when file excluded
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when file excluded, got %d", len(diags))
+	}
 }

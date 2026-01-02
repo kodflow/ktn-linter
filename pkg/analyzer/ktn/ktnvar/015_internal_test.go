@@ -525,3 +525,125 @@ func foo() {
 		t.Errorf("runVar015() reported %d, expected 1", reportCount)
 	}
 }
+
+// Test_checkFuncForRepeatedConversions_validBody tests with valid body.
+func Test_checkFuncForRepeatedConversions_validBody(t *testing.T) {
+	// Parse code with multiple conversions of same variable
+	code := `package test
+func badConversions() {
+	data := []byte("hello")
+	_ = string(data)
+	_ = string(data)
+	_ = string(data)
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Find FuncDecl body and test
+	ast.Inspect(file, func(n ast.Node) bool {
+		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Body != nil {
+			checkFuncForRepeatedConversions(pass, funcDecl, 2)
+		}
+		return true
+	})
+
+	// Should report multiple conversions
+	if reportCount != 1 {
+		t.Errorf("checkFuncForRepeatedConversions() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_runVar015_withVerbose tests runVar015 with verbose mode.
+func Test_runVar015_withVerbose(t *testing.T) {
+	config.Set(&config.Config{
+		Verbose: true,
+	})
+	defer config.Reset()
+
+	code := `package test
+func testVerbose() {
+	data := []byte("hello")
+	for i := 0; i < 10; i++ {
+		_ = string(data)
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar015(pass)
+	if err != nil {
+		t.Errorf("runVar015() error = %v", err)
+	}
+
+	// Should report with verbose mode
+	if reportCount != 1 {
+		t.Errorf("runVar015() with verbose reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_checkMultipleConversions_withMultipleSameVar tests with same variable converted multiple times.
+func Test_checkMultipleConversions_withMultipleSameVar(t *testing.T) {
+	config.Reset()
+
+	// Parse code with multiple conversions of same variable
+	code := `package test
+func multiConv() {
+	data := []byte("hello")
+	_ = string(data)
+	_ = string(data)
+	_ = string(data)
+	_ = string(data)
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Find FuncDecl body and test
+	ast.Inspect(file, func(n ast.Node) bool {
+		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Body != nil {
+			checkMultipleConversions(pass, funcDecl.Body, 2)
+		}
+		return true
+	})
+
+	// Should report (4 conversions > 2 max)
+	if reportCount != 1 {
+		t.Errorf("checkMultipleConversions() reported %d, expected 1", reportCount)
+	}
+}

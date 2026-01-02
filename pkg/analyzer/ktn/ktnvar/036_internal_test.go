@@ -673,4 +673,3 @@ func Test_analyzeFunctionForIndexPattern(t *testing.T) {
 		})
 	}
 }
-

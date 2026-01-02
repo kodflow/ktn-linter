@@ -612,3 +612,261 @@ func Test_reportArraySuggestion_withValidMessage(t *testing.T) {
 		})
 	}
 }
+
+// Test_getConstantSize_withConstant tests getConstantSize with valid int constant.
+func Test_getConstantSize_withConstant(t *testing.T) {
+	code := `package test
+const size = 10
+func foo() {
+	_ = make([]int, size)
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	// Find the constant expression in the make call
+	var constExpr ast.Expr
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "make" {
+				if len(call.Args) >= 2 {
+					constExpr = call.Args[1]
+				}
+			}
+		}
+		return true
+	})
+
+	pass := &analysis.Pass{
+		TypesInfo: info,
+	}
+
+	// Get the constant size
+	if constExpr != nil {
+		size := getConstantSize(pass, constExpr)
+		// Should return the constant value 10
+		if size != 10 {
+			t.Errorf("getConstantSize() = %d, expected 10", size)
+		}
+	}
+}
+
+// Test_shouldUseArray_withConstantSize tests shouldUseArray with constant size.
+func Test_shouldUseArray_withConstantSize(t *testing.T) {
+	code := `package test
+func foo() {
+	_ = make([]byte, 8)
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	pass := &analysis.Pass{
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor("gc", "amd64"),
+	}
+
+	// Find the make call
+	var makeCall *ast.CallExpr
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "make" {
+				makeCall = call
+			}
+		}
+		return true
+	})
+
+	if makeCall != nil {
+		result := shouldUseArray(pass, makeCall)
+		// make([]byte, 8) = 8 bytes <= 64, should suggest array
+		if !result {
+			t.Error("shouldUseArray() = false, expected true for small constant size")
+		}
+	}
+}
+
+// Test_runVar018_withSmallSlice tests runVar018 with small slice.
+func Test_runVar018_withSmallSlice(t *testing.T) {
+	config.Reset()
+
+	code := `package test
+func foo() {
+	_ = make([]byte, 8)
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Pkg:  pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor("gc", "amd64"),
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar018(pass)
+	if err != nil {
+		t.Errorf("runVar018() error = %v", err)
+	}
+
+	// Should report for small slice
+	if reportCount != 1 {
+		t.Errorf("runVar018() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_runVar018_withVerbose tests runVar018 with verbose mode.
+func Test_runVar018_withVerbose(t *testing.T) {
+	config.Set(&config.Config{
+		Verbose: true,
+	})
+	defer config.Reset()
+
+	code := `package test
+func foo() {
+	_ = make([]byte, 8)
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		Pkg:  pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor("gc", "amd64"),
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar018(pass)
+	if err != nil {
+		t.Errorf("runVar018() error = %v", err)
+	}
+
+	// Should report with verbose mode
+	if reportCount != 1 {
+		t.Errorf("runVar018() with verbose reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_shouldUseArray_dynamicSize tests shouldUseArray with dynamic size.
+func Test_shouldUseArray_dynamicSize(t *testing.T) {
+	code := `package test
+func foo(n int) {
+	_ = make([]int, n)
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	pass := &analysis.Pass{
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor("gc", "amd64"),
+	}
+
+	// Find the make call
+	var makeCall *ast.CallExpr
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "make" {
+				makeCall = call
+			}
+		}
+		return true
+	})
+
+	if makeCall != nil {
+		result := shouldUseArray(pass, makeCall)
+		// Dynamic size - should not suggest array
+		if result {
+			t.Error("shouldUseArray() = true, expected false for dynamic size")
+		}
+	}
+}
+
+// Test_isTotalSizeSmall_smallSize tests isTotalSizeSmall with small size.
+func Test_isTotalSizeSmall_smallSize(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+		TypesSizes: types.SizesFor("gc", "amd64"),
+	}
+
+	// Setup byte slice type (1 byte per element)
+	elemExpr := &ast.Ident{Name: "byte"}
+	pass.TypesInfo.Types[elemExpr] = types.TypeAndValue{
+		Type: types.Typ[types.Byte],
+	}
+	sliceType := &ast.ArrayType{Elt: elemExpr}
+
+	// 8 bytes total (1 byte * 8 elements) <= 64
+	result := isTotalSizeSmall(pass, sliceType, 8)
+	if !result {
+		t.Error("isTotalSizeSmall() = false, expected true for small size")
+	}
+
+	// 100 bytes total (1 byte * 100 elements) > 64
+	result = isTotalSizeSmall(pass, sliceType, 100)
+	if result {
+		t.Error("isTotalSizeSmall() = true, expected false for large size")
+	}
+}

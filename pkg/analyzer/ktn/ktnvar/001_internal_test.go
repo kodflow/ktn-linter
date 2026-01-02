@@ -325,4 +325,3 @@ var x, _, y = 1, 2, 3
 		t.Errorf("runVar001() reported %d issues, expected 2", reportCount)
 	}
 }
-

@@ -546,4 +546,3 @@ func Test_analyzeBodyForContainsPattern(t *testing.T) {
 		})
 	}
 }
-

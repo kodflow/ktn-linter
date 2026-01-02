@@ -107,7 +107,6 @@ func example() { var x = 42; _ = x }
 	}
 }
 
-
 // Test_runVar007_fileExcluded tests runVar007 with excluded file.
 func Test_runVar007_fileExcluded(t *testing.T) {
 	// Setup config with file exclusion

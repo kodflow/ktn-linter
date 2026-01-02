@@ -2,8 +2,14 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
 // TestHasReturnInElse tests the hasReturnInElse function.
@@ -355,5 +361,162 @@ func TestHasMatchingReturn(t *testing.T) {
 				t.Errorf("hasMatchingReturn() = %v, want %v", result, tt.expected)
 			}
 		})
+	}
+}
+
+// Test_runVar026_ruleDisabled tests analyzer returns early when disabled.
+func Test_runVar026_ruleDisabled(t *testing.T) {
+	// Save the current config
+	cfg := config.Get()
+	// Initialize rules map if needed
+	if cfg.Rules == nil {
+		cfg.Rules = make(map[string]*config.RuleConfig)
+	}
+	// Save original state
+	originalRule := cfg.Rules[ruleCodeVar026]
+
+	// Disable the rule
+	cfg.Rules[ruleCodeVar026] = &config.RuleConfig{Enabled: config.Bool(false)}
+	// Ensure restoration at the end
+	defer func() {
+		// Restore original state
+		if originalRule == nil {
+			delete(cfg.Rules, ruleCodeVar026)
+		} else {
+			cfg.Rules[ruleCodeVar026] = originalRule
+		}
+	}()
+
+	// Run analyzer with testhelper
+	diags := testhelper.RunAnalyzer(t, Analyzer026, "testdata/src/var026/bad.go")
+
+	// With rule disabled, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when rule disabled, got %d", len(diags))
+	}
+}
+
+// Test_runVar026_fileExcluded tests file exclusion.
+func Test_runVar026_fileExcluded(t *testing.T) {
+	// Test source with math.Min
+	src := `package test
+
+import "math"
+
+func getMin(a, b float64) float64 {
+	return math.Min(a, b)
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded_file.go", src, parser.ParseComments)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse source: %v", err)
+	}
+
+	// Create a mock pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer to populate ResultOf
+	inspResult, err := inspect.Analyzer.Run(pass)
+	// Check for inspector errors
+	if err != nil {
+		t.Fatalf("Failed to run inspect: %v", err)
+	}
+	pass.ResultOf[inspect.Analyzer] = inspResult
+
+	// Get config and add file exclusion
+	cfg := config.Get()
+	// Initialize rules map if needed
+	if cfg.Rules == nil {
+		cfg.Rules = make(map[string]*config.RuleConfig)
+	}
+	// Save original state
+	originalRule := cfg.Rules[ruleCodeVar026]
+
+	// Add the exclusion
+	cfg.Rules[ruleCodeVar026] = &config.RuleConfig{Exclude: []string{"excluded_file.go"}}
+	// Ensure cleanup
+	defer func() {
+		// Restore original state
+		if originalRule == nil {
+			delete(cfg.Rules, ruleCodeVar026)
+		} else {
+			cfg.Rules[ruleCodeVar026] = originalRule
+		}
+	}()
+
+	// Run the actual analyzer
+	_, runErr := runVar026(pass)
+	// Check for analyzer errors
+	if runErr != nil {
+		t.Fatalf("runVar026() returned error: %v", runErr)
+	}
+
+	// Should not detect any issues (file excluded)
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for excluded file, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkIfMinMaxPattern_report tests checkIfMinMaxPattern reporting.
+func Test_checkIfMinMaxPattern_report(t *testing.T) {
+	// Test source with if/else min/max pattern
+	src := `package test
+
+func getMin(a, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, parser.ParseComments)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse source: %v", err)
+	}
+
+	// Create a mock pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer to populate ResultOf
+	inspResult, err := inspect.Analyzer.Run(pass)
+	// Check for inspector errors
+	if err != nil {
+		t.Fatalf("Failed to run inspect: %v", err)
+	}
+	pass.ResultOf[inspect.Analyzer] = inspResult
+
+	// Run the analyzer
+	_, runErr := runVar026(pass)
+	// Check for analyzer errors
+	if runErr != nil {
+		t.Fatalf("runVar026() returned error: %v", runErr)
+	}
+
+	// Should detect the if/else min/max pattern
+	if len(diagnostics) != 1 {
+		t.Errorf("Expected 1 diagnostic, got %d", len(diagnostics))
 	}
 }
