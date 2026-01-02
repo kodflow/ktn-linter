@@ -406,3 +406,102 @@ func Test_checkVar004DeclStmt_nonValueSpec(t *testing.T) {
 		t.Errorf("expected 0 reports for non-ValueSpec, got %d", reportCount)
 	}
 }
+
+// Test_checkVar004PackageLevel_nonValueSpec tests non-ValueSpec in package-level.
+func Test_checkVar004PackageLevel_nonValueSpec(t *testing.T) {
+	config.Reset()
+
+	fset := token.NewFileSet()
+	// Create a fake file with a var GenDecl containing non-ValueSpec
+	file := &ast.File{
+		Name: &ast.Ident{Name: "test"},
+		Decls: []ast.Decl{
+			&ast.GenDecl{
+				Tok: token.VAR,
+				Specs: []ast.Spec{
+					// Import spec in var decl is invalid but tests defensive check
+					&ast.ImportSpec{Path: &ast.BasicLit{Kind: token.STRING, Value: `"fmt"`}},
+				},
+			},
+		},
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	cfg := config.Get()
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	checkVar004PackageLevel(pass, insp, cfg)
+	// Should not crash and should not report for non-ValueSpec
+	if reportCount != 0 {
+		t.Errorf("expected 0 reports for non-ValueSpec at package level, got %d", reportCount)
+	}
+}
+
+// Test_checkVar004Name_packageLevelShort tests short name at package-level.
+func Test_checkVar004Name_packageLevelShort(t *testing.T) {
+	config.Reset()
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:   token.NewFileSet(),
+		Report: func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	// Single character name at package level (should report)
+	ident := &ast.Ident{Name: "a"}
+	checkVar004Name(pass, ident, true)
+
+	if reportCount != 1 {
+		t.Errorf("expected 1 report for short package-level name 'a', got %d", reportCount)
+	}
+}
+
+// Test_checkVar004Name_functionLevelShortNonIdiomatic tests non-idiomatic short name.
+func Test_checkVar004Name_functionLevelShortNonIdiomatic(t *testing.T) {
+	config.Reset()
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:   token.NewFileSet(),
+		Report: func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	// Single character 'x' is not in idiomaticOneChar004
+	ident := &ast.Ident{Name: "x"}
+	checkVar004Name(pass, ident, false)
+
+	if reportCount != 1 {
+		t.Errorf("expected 1 report for non-idiomatic 'x', got %d", reportCount)
+	}
+}
+
+// Test_checkVar004Name_idiomaticShortBranch tests idiomaticShort004 branch.
+func Test_checkVar004Name_idiomaticShortBranch(t *testing.T) {
+	config.Reset()
+
+	// Temporarily add a 1-char name to idiomaticShort004 to test the branch
+	idiomaticShort004["q"] = true
+	defer delete(idiomaticShort004, "q")
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:   token.NewFileSet(),
+		Report: func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	// "q" is now in idiomaticShort004 and len("q") == 1 < 2
+	ident := &ast.Ident{Name: "q"}
+	checkVar004Name(pass, ident, false)
+
+	// Should not report for idiomatic short name
+	if reportCount != 0 {
+		t.Errorf("expected 0 reports for idiomatic 'q', got %d", reportCount)
+	}
+}

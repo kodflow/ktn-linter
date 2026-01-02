@@ -5,9 +5,11 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"strings"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -576,7 +578,7 @@ func Test_checkVarDecls_nonValueSpec(t *testing.T) {
 
 	// Create file with the GenDecl
 	file := &ast.File{
-		Name: &ast.Ident{Name: "test"},
+		Name:  &ast.Ident{Name: "test"},
 		Decls: []ast.Decl{genDecl},
 	}
 
@@ -750,5 +752,76 @@ func Test_checkPointerToInterface_withMessage(t *testing.T) {
 	// Should have reported
 	if reportedMsg == "" {
 		t.Errorf("checkPointerToInterface() did not report")
+	}
+}
+
+// Test_checkPointerToInterface_missingMessage tests fallback when message is not found.
+func Test_checkPointerToInterface_missingMessage(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation with missing message"},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config
+			config.Reset()
+
+			// Get the current message to restore later
+			originalMsg, hadMsg := messages.Get(ruleCodeVar022)
+
+			// Remove the message to trigger fallback
+			messages.Unregister(ruleCodeVar022)
+			defer func() {
+				// Restore the message
+				if hadMsg {
+					messages.Register(originalMsg)
+				}
+			}()
+
+			// Create a star expression with interface type
+			innerExpr := &ast.Ident{Name: "Reader"}
+			expr := &ast.StarExpr{X: innerExpr}
+
+			// Create interface type for testing
+			interfaceType := types.NewInterfaceType(nil, nil)
+
+			// Setup type info with the interface type
+			typesInfo := &types.Info{
+				Types: map[ast.Expr]types.TypeAndValue{
+					innerExpr: {Type: interfaceType},
+				},
+			}
+
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+			// Add line info
+			file.SetLinesForContent([]byte("test content"))
+
+			var reportedMsg string
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: typesInfo,
+				Report: func(d analysis.Diagnostic) {
+					reportedMsg = d.Message
+				},
+			}
+
+			// Call checkPointerToInterface
+			checkPointerToInterface(pass, expr)
+
+			// Should have reported with fallback message
+			if reportedMsg == "" {
+				t.Errorf("checkPointerToInterface() did not report")
+			}
+
+			// Should use fallback message format
+			expectedPrefix := "KTN-VAR-022: éviter pointeur vers interface"
+			if !strings.HasPrefix(reportedMsg, expectedPrefix) {
+				t.Errorf("checkPointerToInterface() message = %q, expected prefix %q", reportedMsg, expectedPrefix)
+			}
+		})
 	}
 }

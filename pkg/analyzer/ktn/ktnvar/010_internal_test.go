@@ -602,3 +602,98 @@ func Test_runVar010_fileExcluded(t *testing.T) {
 		})
 	}
 }
+
+// Test_reportMissingGrow_valueSpec tests reportMissingGrow with ValueSpec node.
+func Test_reportMissingGrow_valueSpec(t *testing.T) {
+	t.Run("ValueSpec with strings.Builder type", func(t *testing.T) {
+		config.Reset()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		// Add a file to the FileSet
+		fset.AddFile("test.go", 1, 100)
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Create ValueSpec with strings.Builder type
+		node := &ast.ValueSpec{
+			Names: []*ast.Ident{{Name: "builder", NamePos: 5}},
+			Type: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "strings"},
+				Sel: &ast.Ident{Name: "Builder"},
+			},
+		}
+
+		reportMissingGrow(pass, node)
+
+		// Should report
+		if reportCount != 1 {
+			t.Errorf("reportMissingGrow() reported %d, expected 1", reportCount)
+		}
+	})
+
+	t.Run("ValueSpec with bytes.Buffer type", func(t *testing.T) {
+		config.Reset()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		fset.AddFile("test.go", 1, 100)
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Create ValueSpec with bytes.Buffer type
+		node := &ast.ValueSpec{
+			Names: []*ast.Ident{{Name: "buf", NamePos: 5}},
+			Type: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "bytes"},
+				Sel: &ast.Ident{Name: "Buffer"},
+			},
+		}
+
+		reportMissingGrow(pass, node)
+
+		// Should report
+		if reportCount != 1 {
+			t.Errorf("reportMissingGrow() reported %d, expected 1", reportCount)
+		}
+	})
+
+	t.Run("ValueSpec with no type expression", func(t *testing.T) {
+		config.Reset()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		fset.AddFile("test.go", 1, 100)
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Create ValueSpec without type (will check Values)
+		node := &ast.ValueSpec{
+			Names:  []*ast.Ident{{Name: "builder", NamePos: 5}},
+			Type:   nil,
+			Values: []ast.Expr{},
+		}
+
+		reportMissingGrow(pass, node)
+
+		// Should not report - empty typeStr
+		if reportCount != 0 {
+			t.Errorf("reportMissingGrow() reported %d, expected 0", reportCount)
+		}
+	})
+}

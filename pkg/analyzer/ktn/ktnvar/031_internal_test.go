@@ -2,10 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_extractRangeKeyValue031 tests extraction of key/value from range.
@@ -539,5 +544,218 @@ func Test_analyzeBlockForMapClone(t *testing.T) {
 			}()
 			analyzeBlockForMapClone(pass, tt.block)
 		})
+	}
+}
+
+// Test_runVar031_ruleDisabled tests runVar031 when rule is disabled.
+func Test_runVar031_ruleDisabled(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with rule disabled
+	newCfg := config.DefaultConfig()
+	falseVal := false
+	newCfg.Rules[ruleCodeVar031] = &config.RuleConfig{Enabled: &falseVal}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Run analyzer with testhelper
+	diags := testhelper.RunAnalyzer(t, Analyzer031, "testdata/src/var031/good.go")
+
+	// With rule disabled, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when rule disabled, got %d", len(diags))
+	}
+}
+
+// Test_runVar031_fileExcluded tests runVar031 when file is excluded.
+func Test_runVar031_fileExcluded(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with file exclusion (use pattern that matches basename)
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar031] = &config.RuleConfig{
+		Exclude: []string{"bad.go"},
+	}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Run analyzer with testhelper
+	diags := testhelper.RunAnalyzer(t, Analyzer031, "testdata/src/var031/bad.go")
+
+	// With file excluded, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when file excluded, got %d", len(diags))
+	}
+}
+
+// Test_runVar031_funcLitAndNilBody tests runVar031 with FuncLit and nil body branches.
+func Test_runVar031_funcLitAndNilBody(t *testing.T) {
+	// Source with function literal and external declaration
+	src := `package test
+
+// External function with no body
+func externalFunc()
+
+// Wrapper function containing a function literal with map clone pattern
+func wrapper() {
+	f := func() {
+		original := map[string]int{"a": 1}
+		clone := make(map[string]int)
+		for k, v := range original {
+			clone[k] = v
+		}
+		_ = clone
+	}
+	f()
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer031,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call runVar031 directly
+	_, err = runVar031(pass)
+	// Check run error
+	if err != nil {
+		t.Fatalf("runVar031() error = %v", err)
+	}
+
+	// Should detect the clone pattern in FuncLit
+	if len(diagnostics) < 1 {
+		t.Errorf("Expected at least 1 diagnostic for FuncLit clone pattern, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar031_nilBodyOnly tests runVar031 with only nil body (external func).
+func Test_runVar031_nilBodyOnly(t *testing.T) {
+	// Source with only external function declaration
+	src := `package test
+
+// External function declaration with no body
+func ExternalFunc()
+
+// Another external function
+func AnotherExternal()
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer031,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call runVar031 directly
+	_, err = runVar031(pass)
+	// Check run error
+	if err != nil {
+		t.Fatalf("runVar031() error = %v", err)
+	}
+
+	// External functions with nil body should produce 0 diagnostics
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for nil body functions, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar031_fileExcludedInPreorder tests file exclusion inside Preorder.
+func Test_runVar031_fileExcludedInPreorder(t *testing.T) {
+	// Source with function that should be detected
+	src := `package test
+
+func badClone() {
+	original := map[string]int{"a": 1}
+	clone := make(map[string]int)
+	for k, v := range original {
+		clone[k] = v
+	}
+	_ = clone
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded_file.go", src, 0)
+	// Check parse error
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Create config excluding the file (pattern matches basename)
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar031] = &config.RuleConfig{
+		Exclude: []string{"excluded_file.go"},
+	}
+	config.Set(newCfg)
+
+	// Create mock pass with diagnostics capture
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer031,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Create inspector and add to ResultOf
+	insp := inspector.New([]*ast.File{file})
+	pass.ResultOf[inspect.Analyzer] = insp
+
+	// Call runVar031 directly
+	_, err = runVar031(pass)
+	// Check run error
+	if err != nil {
+		t.Fatalf("runVar031() error = %v", err)
+	}
+
+	// File is excluded, so should have 0 diagnostics
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics when file excluded, got %d", len(diagnostics))
 	}
 }

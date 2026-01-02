@@ -1157,36 +1157,20 @@ func Test_checkStructsWithMutex_fileExcluded(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Create a struct with mutex field
-			typeSpec := &ast.TypeSpec{
-				Name: &ast.Ident{Name: "MyStruct"},
-				Type: &ast.StructType{
-					Fields: &ast.FieldList{
-						List: []*ast.Field{
-							{
-								Names: []*ast.Ident{{Name: "mu"}},
-								Type: &ast.SelectorExpr{
-									X:   &ast.Ident{Name: "sync"},
-									Sel: &ast.Ident{Name: "Mutex"},
-								},
-							},
-						},
-					},
-				},
-			}
-
-			genDecl := &ast.GenDecl{
-				Tok:   token.TYPE,
-				Specs: []ast.Spec{typeSpec},
-			}
-
-			file := &ast.File{
-				Name:  &ast.Ident{Name: "test"},
-				Decls: []ast.Decl{genDecl},
-			}
-
+			// Parse real source code with struct containing mutex
+			code := `package test
+import "sync"
+type MyStruct struct {
+	mu sync.Mutex
+}
+`
 			fset := token.NewFileSet()
-			fset.AddFile("excluded.go", 1, 100)
+			file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 			pass := &analysis.Pass{
@@ -1231,28 +1215,18 @@ func Test_checkValueReceivers_fileExcluded(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Create a method with value receiver
-			funcDecl := &ast.FuncDecl{
-				Name: &ast.Ident{Name: "Method"},
-				Recv: &ast.FieldList{
-					List: []*ast.Field{
-						{
-							Names: []*ast.Ident{{Name: "s"}},
-							Type:  &ast.Ident{Name: "MyStruct"},
-						},
-					},
-				},
-				Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}},
-				Body: &ast.BlockStmt{List: []ast.Stmt{}},
-			}
-
-			file := &ast.File{
-				Name:  &ast.Ident{Name: "test"},
-				Decls: []ast.Decl{funcDecl},
-			}
-
+			// Parse real source code with method
+			code := `package test
+type MyStruct struct{}
+func (s MyStruct) Method() {}
+`
 			fset := token.NewFileSet()
-			fset.AddFile("excluded.go", 1, 100)
+			file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 			pass := &analysis.Pass{
@@ -1295,32 +1269,18 @@ func Test_checkValueParams_fileExcluded(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Create a function with mutex param
-			funcDecl := &ast.FuncDecl{
-				Name: &ast.Ident{Name: "Func"},
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{
-						List: []*ast.Field{
-							{
-								Names: []*ast.Ident{{Name: "mu"}},
-								Type: &ast.SelectorExpr{
-									X:   &ast.Ident{Name: "sync"},
-									Sel: &ast.Ident{Name: "Mutex"},
-								},
-							},
-						},
-					},
-				},
-				Body: &ast.BlockStmt{List: []ast.Stmt{}},
-			}
-
-			file := &ast.File{
-				Name:  &ast.Ident{Name: "test"},
-				Decls: []ast.Decl{funcDecl},
-			}
-
+			// Parse real source code with function taking mutex param
+			code := `package test
+import "sync"
+func Func(mu sync.Mutex) {}
+`
 			fset := token.NewFileSet()
-			fset.AddFile("excluded.go", 1, 100)
+			file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 			pass := &analysis.Pass{
@@ -1616,6 +1576,236 @@ func Test_checkValueReceivers_valueReceiverNoMutex(t *testing.T) {
 			// Should not report - no mutex
 			if reportCount != 0 {
 				t.Errorf("checkValueReceivers() reported %d issues, expected 0 (no mutex)", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkStructsWithMutex_withMutexField tests checkStructsWithMutex with actual mutex field.
+func Test_checkStructsWithMutex_withMutexField(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"struct with mutex field reports error"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create sync.Mutex type
+			syncPkg := types.NewPackage("sync", "sync")
+			mutexType := types.NewNamed(
+				types.NewTypeName(0, syncPkg, "Mutex", nil),
+				types.NewStruct(nil, nil),
+				nil,
+			)
+
+			// Create a struct with mutex field
+			fieldType := &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "sync"},
+				Sel: &ast.Ident{Name: "Mutex"},
+			}
+
+			typeSpec := &ast.TypeSpec{
+				Name: &ast.Ident{Name: "MyStruct"},
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "mu"}},
+								Type:  fieldType,
+							},
+						},
+					},
+				},
+			}
+
+			genDecl := &ast.GenDecl{
+				Tok:   token.TYPE,
+				Specs: []ast.Spec{typeSpec},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{genDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						fieldType: {Type: mutexType},
+					},
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			typesWithValueRecv := map[string]bool{"MyStruct": true}
+
+			checkStructsWithMutex(pass, insp, typesWithValueRecv)
+
+			// Should report error
+			if reportCount != 1 {
+				t.Errorf("checkStructsWithMutex() reported %d issues, expected 1", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkValueReceivers_valueReceiverWithMutex tests value receiver with mutex.
+func Test_checkValueReceivers_valueReceiverWithMutex(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"value receiver with mutex reports error"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create sync.Mutex type
+			syncPkg := types.NewPackage("sync", "sync")
+			mutexFieldType := types.NewNamed(
+				types.NewTypeName(0, syncPkg, "Mutex", nil),
+				types.NewStruct(nil, nil),
+				nil,
+			)
+
+			// Create a struct with mutex field
+			structType := types.NewStruct([]*types.Var{
+				types.NewField(0, nil, "mu", mutexFieldType, false),
+			}, nil)
+
+			pkg := types.NewPackage("test", "test")
+			namedType := types.NewNamed(
+				types.NewTypeName(0, pkg, "MyStruct", nil),
+				structType,
+				nil,
+			)
+
+			// Create AST with value receiver
+			recvIdent := &ast.Ident{Name: "MyStruct"}
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "s"}},
+							Type:  recvIdent,
+						},
+					},
+				},
+				Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						recvIdent: {Type: namedType},
+					},
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueReceivers(pass, insp)
+
+			// Should report error
+			if reportCount != 1 {
+				t.Errorf("checkValueReceivers() reported %d issues, expected 1", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkValueParams_mutexByValue tests checkValueParams with mutex passed by value.
+func Test_checkValueParams_mutexByValue(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"mutex by value reports error"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create sync.Mutex type
+			syncPkg := types.NewPackage("sync", "sync")
+			mutexType := types.NewNamed(
+				types.NewTypeName(0, syncPkg, "Mutex", nil),
+				types.NewStruct(nil, nil),
+				nil,
+			)
+
+			// Create param type AST
+			paramType := &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "sync"},
+				Sel: &ast.Ident{Name: "Mutex"},
+			}
+
+			// Create a function with mutex param
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Func"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "mu"}},
+								Type:  paramType,
+							},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			fset.AddFile("test.go", 1, 100)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset: fset,
+				TypesInfo: &types.Info{
+					Types: map[ast.Expr]types.TypeAndValue{
+						paramType: {Type: mutexType},
+					},
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			checkValueParams(pass, insp)
+
+			// Should report error
+			if reportCount != 1 {
+				t.Errorf("checkValueParams() reported %d issues, expected 1", reportCount)
 			}
 		})
 	}

@@ -6,6 +6,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"math"
 	"runtime"
 	"testing"
 
@@ -816,5 +817,187 @@ func Test_runVar013_withFuncNoParams(t *testing.T) {
 	// Should not report for function with no params
 	if reportCount != 0 {
 		t.Errorf("runVar013() reported %d, expected 0", reportCount)
+	}
+}
+
+// Test_checkParamType009_displaySizeOverflow tests displaySize overflow guard.
+func Test_checkParamType009_displaySizeOverflow(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	// Create a mock struct type that reports very large size
+	pkg := types.NewPackage("test", "test")
+	structType := types.NewStruct(nil, nil)
+	obj := types.NewTypeName(0, pkg, "HugeStruct", structType)
+	namedType := types.NewNamed(obj, structType, nil)
+
+	typeIdent := &ast.Ident{Name: "HugeStruct"}
+	reportCount := 0
+	var reportedMsg string
+
+	// Create custom TypesSizes that returns a huge size
+	hugeSizes := &mockHugeSizes{}
+
+	pass := &analysis.Pass{
+		Pkg: pkg,
+		TypesInfo: &types.Info{
+			Types: map[ast.Expr]types.TypeAndValue{
+				typeIdent: {Type: namedType},
+			},
+		},
+		TypesSizes: hugeSizes,
+		Report: func(d analysis.Diagnostic) {
+			reportCount++
+			reportedMsg = d.Message
+		},
+	}
+
+	// Should trigger overflow guard path
+	checkParamType009(pass, typeIdent, token.NoPos, 64, false)
+
+	// Should report for struct exceeding threshold
+	if reportCount != 1 {
+		t.Errorf("checkParamType009() reported %d, expected 1", reportCount)
+	}
+	// Verify message was generated (overflow path reached)
+	if reportedMsg == "" {
+		t.Error("checkParamType009() did not generate report message")
+	}
+}
+
+// mockHugeSizes implements types.Sizes interface returning huge sizes.
+type mockHugeSizes struct{}
+
+func (m *mockHugeSizes) Alignof(T types.Type) int64 {
+	return 8
+}
+
+func (m *mockHugeSizes) Offsetsof(fields []*types.Var) []int64 {
+	offsets := make([]int64, len(fields))
+	// Offsets are sequential
+	for i := range fields {
+		offsets[i] = int64(i) * 8
+	}
+	return offsets
+}
+
+func (m *mockHugeSizes) Sizeof(T types.Type) int64 {
+	// Return a very large size to trigger overflow guard
+	// On 64-bit systems math.MaxInt is 9223372036854775807
+	// Return a value larger than 64 bytes but not overflowing
+	return math.MaxInt64
+}
+
+// Test_getStructSize009_sizesNonPositive tests when Sizeof returns 0 for non-empty struct.
+func Test_getStructSize009_sizesNonPositive(t *testing.T) {
+	// Create a struct type with fields
+	pkg := types.NewPackage("test", "test")
+	structType := types.NewStruct(
+		[]*types.Var{
+			types.NewVar(0, pkg, "a", types.Typ[types.Int]),
+			types.NewVar(0, pkg, "b", types.Typ[types.Int]),
+		},
+		nil,
+	)
+	obj := types.NewTypeName(0, pkg, "TestStruct", structType)
+	namedType := types.NewNamed(obj, structType, nil)
+
+	typeIdent := &ast.Ident{Name: "TestStruct"}
+
+	// Create custom TypesSizes that returns 0 size
+	zeroSizes := &mockZeroSizes{}
+
+	pass := &analysis.Pass{
+		Pkg: pkg,
+		TypesInfo: &types.Info{
+			Types: map[ast.Expr]types.TypeAndValue{
+				typeIdent: {Type: namedType},
+			},
+		},
+		TypesSizes: zeroSizes, // Returns 0 for Sizeof
+	}
+
+	size := getStructSize009(pass, typeIdent)
+	// When Sizeof returns 0, fallback is used: 2 fields * 8 bytes = 16
+	if size != 16 {
+		t.Errorf("getStructSize009() = %d, expected 16 (fallback)", size)
+	}
+}
+
+// mockZeroSizes implements types.Sizes returning 0 for Sizeof.
+type mockZeroSizes struct{}
+
+func (m *mockZeroSizes) Alignof(T types.Type) int64 {
+	return 8
+}
+
+func (m *mockZeroSizes) Offsetsof(fields []*types.Var) []int64 {
+	offsets := make([]int64, len(fields))
+	return offsets
+}
+
+func (m *mockZeroSizes) Sizeof(T types.Type) int64 {
+	return 0 // Return 0 to trigger fallback path
+}
+
+// Test_runVar013_fileExcludedWithLargeStruct tests file exclusion with large struct that would trigger.
+func Test_runVar013_fileExcludedWithLargeStruct(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-013": {
+				Exclude: []string{"excluded.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Code that would normally trigger the rule (large struct passed by value)
+	code := `package test
+type LargeStruct struct {
+	a, b, c, d, e, f, g, h, i, j int64
+}
+func foo(s LargeStruct) {}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	// Type check the code
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Pkg:   pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar013(pass)
+	if err != nil {
+		t.Errorf("runVar013() error = %v", err)
+	}
+
+	// Should not report when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar013() reported %d, expected 0 when file excluded", reportCount)
 	}
 }

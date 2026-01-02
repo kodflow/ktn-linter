@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -403,6 +404,156 @@ func Test_collectReceivers_emptyRecvList(t *testing.T) {
 			// Should not have any receivers
 			if len(result) != 0 {
 				t.Errorf("collectReceivers() returned %d types, expected 0", len(result))
+			}
+		})
+	}
+}
+
+// Test_runVar021_nilFset tests runVar021 with nil Fset.
+func Test_runVar021_nilFset(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil fset returns early"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config to default
+			config.Reset()
+
+			// Parse simple code
+			code := `package test
+type MyStruct struct{}
+func (s *MyStruct) Method() {}
+`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			// Pass with nil Fset
+			pass := &analysis.Pass{
+				Fset: nil, // Nil Fset to test early return
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			result, err := runVar021(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar021() error = %v", err)
+			}
+
+			// Should return nil
+			if result != nil {
+				t.Errorf("runVar021() result = %v, expected nil", result)
+			}
+
+			// Should not report anything when Fset is nil
+			if reportCount != 0 {
+				t.Errorf("runVar021() reported %d issues, expected 0 when Fset is nil", reportCount)
+			}
+		})
+	}
+}
+
+// Test_collectReceivers_nonIdentifiableType tests with non-identifiable receiver type.
+func Test_collectReceivers_nonIdentifiableType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"receiver with non-identifiable type"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			// Create a function with a non-identifiable receiver type (selector expr)
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Method"},
+				Recv: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Type: &ast.SelectorExpr{
+								X:   &ast.Ident{Name: "pkg"},
+								Sel: &ast.Ident{Name: "Type"},
+							},
+						},
+					},
+				},
+				Type: &ast.FuncType{Params: &ast.FieldList{List: []*ast.Field{}}},
+				Body: &ast.BlockStmt{List: []ast.Stmt{}},
+			}
+
+			file := &ast.File{
+				Name:  &ast.Ident{Name: "test"},
+				Decls: []ast.Decl{funcDecl},
+			}
+
+			fset := token.NewFileSet()
+			insp := inspector.New([]*ast.File{file})
+			pass := &analysis.Pass{
+				Fset: fset,
+			}
+			cfg := config.Get()
+
+			result := collectReceivers(pass, insp, cfg)
+
+			// Should not have any receivers since type is not identifiable
+			if len(result) != 0 {
+				t.Errorf("collectReceivers() returned %d types, expected 0 for non-identifiable type", len(result))
+			}
+		})
+	}
+}
+
+// Test_reportInconsistency_missingMessage tests with missing message.
+func Test_reportInconsistency_missingMessage(t *testing.T) {
+	tests := []struct {
+		name              string
+		dominantIsPointer bool
+	}{
+		{"fallback message with pointer", true},
+		{"fallback message with value", false},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Unregister the message temporarily
+			messages.Unregister(ruleCodeVar021)
+			defer func() {
+				// Re-register the message
+				messages.Register(messages.Message{
+					Code:    ruleCodeVar021,
+					Short:   "receiver incohérent pour %s, attendu %s",
+					Verbose: "receiver incohérent pour %s, attendu %s",
+				})
+			}()
+
+			reported := false
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {
+					reported = true
+				},
+			}
+
+			pos := &ast.Ident{}
+			reportInconsistency(pass, pos, "MyType", tt.dominantIsPointer)
+
+			// Should report using fallback message
+			if !reported {
+				t.Error("reportInconsistency() did not report with fallback message")
 			}
 		})
 	}

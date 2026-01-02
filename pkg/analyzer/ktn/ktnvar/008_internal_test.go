@@ -1246,3 +1246,59 @@ func Test_collectAppendVariables_withRealCode(t *testing.T) {
 		})
 	}
 }
+
+// Test_checkEmptySliceLiterals_fileExcludedInCallback tests file exclusion inside WithStack.
+func Test_checkEmptySliceLiterals_fileExcludedInCallback(t *testing.T) {
+	t.Run("file excluded in WithStack callback", func(t *testing.T) {
+		// Setup config with file exclusion
+		config.Set(&config.Config{
+			Rules: map[string]*config.RuleConfig{
+				"KTN-VAR-008": {Exclude: []string{"test.go"}},
+			},
+		})
+		defer config.Reset()
+
+		// Code with slice literal assignment that would trigger report
+		code := `package test
+func example() {
+	x := []int{}
+	_ = x
+}
+`
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+		// Check parsing error
+		if err != nil {
+			t.Fatalf("failed to parse: %v", err)
+		}
+
+		// Type check
+		conf := types.Config{}
+		info := &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+			Uses:  make(map[*ast.Ident]types.Object),
+			Defs:  make(map[*ast.Ident]types.Object),
+		}
+		_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+		insp := inspector.New([]*ast.File{file})
+		reportCount := 0
+
+		pass := &analysis.Pass{
+			Fset:      fset,
+			TypesInfo: info,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Call with append vars containing "x"
+		appendVars := map[string]bool{"x": true}
+		checkEmptySliceLiterals(pass, insp, appendVars)
+
+		// Should not report when file is excluded
+		if reportCount != 0 {
+			t.Errorf("checkEmptySliceLiterals() reported %d, expected 0 when file excluded", reportCount)
+		}
+	})
+}

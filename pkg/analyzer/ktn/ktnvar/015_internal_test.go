@@ -647,3 +647,50 @@ func multiConv() {
 		t.Errorf("checkMultipleConversions() reported %d, expected 1", reportCount)
 	}
 }
+
+// Test_runVar015_fileExcludedWithFunc tests file exclusion with FuncDecl that would trigger.
+func Test_runVar015_fileExcludedWithFunc(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-015": {
+				Exclude: []string{"excluded.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Code that would normally trigger the rule
+	code := `package test
+func foo() {
+	data := []byte("hello")
+	for i := 0; i < 10; i++ {
+		_ = string(data)
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "excluded.go", code, 0)
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar015(pass)
+	if err != nil {
+		t.Errorf("runVar015() error = %v", err)
+	}
+
+	// Should not report when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar015() reported %d, expected 0 when file excluded", reportCount)
+	}
+}

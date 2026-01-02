@@ -349,10 +349,15 @@ func Test_runVar012_fileExcluded(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Parse simple code
+			// Code with for loop and allocation to trigger Preorder callback
 			code := `package test
-			var x int = 42
-			`
+func example() {
+	for i := 0; i < 10; i++ {
+		x := []int{}
+		_ = x
+	}
+}
+`
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", code, 0)
 			// Check parsing error

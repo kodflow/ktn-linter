@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -555,6 +556,236 @@ var s = []int{}
 			// Should not report anything when file is excluded
 			if reportCount != 0 {
 				t.Errorf("runVar020() reported %d issues, expected 0 when file excluded", reportCount)
+			}
+		})
+	}
+}
+
+// Test_runVar020_nilFset tests runVar020 with nil Fset.
+func Test_runVar020_nilFset(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil fset returns early"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config to default
+			config.Reset()
+
+			// Parse simple code
+			code := `package test
+var s = []int{}
+`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			// Pass with nil Fset
+			pass := &analysis.Pass{
+				Fset: nil, // Nil Fset to test early return
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			result, err := runVar020(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar020() error = %v", err)
+			}
+
+			// Should return nil
+			if result != nil {
+				t.Errorf("runVar020() result = %v, expected nil", result)
+			}
+
+			// Should not report anything when Fset is nil
+			if reportCount != 0 {
+				t.Errorf("runVar020() reported %d issues, expected 0 when Fset is nil", reportCount)
+			}
+		})
+	}
+}
+
+// Test_checkEmptySliceLiteral_missingMessage tests with missing message.
+func Test_checkEmptySliceLiteral_missingMessage(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"fallback message when not registered"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Unregister the message temporarily
+			messages.Unregister(ruleCodeVar020)
+			defer func() {
+				// Re-register the message
+				messages.Register(messages.Message{
+					Code:    ruleCodeVar020,
+					Short:   "préférer nil slice à %s{}",
+					Verbose: "préférer nil slice à %s{}",
+				})
+			}()
+
+			reported := false
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {
+					reported = true
+				},
+			}
+
+			// Create empty slice literal
+			lit := &ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+				Elts: nil,
+			}
+
+			// Call function
+			checkEmptySliceLiteral(pass, lit)
+
+			// Should report using fallback message
+			if !reported {
+				t.Error("checkEmptySliceLiteral() did not report with fallback message")
+			}
+		})
+	}
+}
+
+// Test_checkMakeSliceZero_missingMessage tests with missing message.
+func Test_checkMakeSliceZero_missingMessage(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"fallback message when not registered"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Unregister the message temporarily
+			messages.Unregister(ruleCodeVar020)
+			defer func() {
+				// Re-register the message
+				messages.Register(messages.Message{
+					Code:    ruleCodeVar020,
+					Short:   "préférer nil slice à %s{}",
+					Verbose: "préférer nil slice à %s{}",
+				})
+			}()
+
+			reported := false
+			pass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {
+					reported = true
+				},
+			}
+
+			// Create make([]int, 0) call
+			call := &ast.CallExpr{
+				Fun: &ast.Ident{Name: "make"},
+				Args: []ast.Expr{
+					&ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+					&ast.BasicLit{Value: "0"},
+				},
+			}
+
+			// Call function
+			checkMakeSliceZero(pass, call)
+
+			// Should report using fallback message
+			if !reported {
+				t.Error("checkMakeSliceZero() did not report with fallback message")
+			}
+		})
+	}
+}
+
+// Test_runVar020_fullExecution tests runVar020 with actual code triggering reports.
+func Test_runVar020_fullExecution(t *testing.T) {
+	tests := []struct {
+		name          string
+		code          string
+		expectedCount int
+	}{
+		{
+			name: "empty slice literal triggers report",
+			code: `package test
+var s = []int{}
+`,
+			expectedCount: 1,
+		},
+		{
+			name: "make slice with zero no capacity triggers report",
+			code: `package test
+var s = make([]int, 0)
+`,
+			expectedCount: 1,
+		},
+		{
+			name: "both patterns trigger reports",
+			code: `package test
+var s1 = []int{}
+var s2 = make([]string, 0)
+`,
+			expectedCount: 2,
+		},
+		{
+			name: "valid code no report",
+			code: `package test
+var s1 = []int{1, 2, 3}
+var s2 = make([]int, 0, 10)
+var s3 []int
+`,
+			expectedCount: 0,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config to default
+			config.Reset()
+
+			// Parse code
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			_, err = runVar020(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar020() error = %v", err)
+			}
+
+			// Check report count
+			if reportCount != tt.expectedCount {
+				t.Errorf("runVar020() reported %d issues, expected %d", reportCount, tt.expectedCount)
 			}
 		})
 	}

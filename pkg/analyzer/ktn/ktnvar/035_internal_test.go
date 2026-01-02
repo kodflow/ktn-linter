@@ -2,8 +2,14 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_isBlankOrNil tests detection of blank identifier or nil.
@@ -545,4 +551,165 @@ func Test_analyzeBodyForContainsPattern(t *testing.T) {
 			analyzeBodyForContainsPattern(nil, tt.body, nil)
 		})
 	}
+}
+
+// Test_runVar035_ruleDisabled tests runVar035 when rule is disabled.
+func Test_runVar035_ruleDisabled(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with rule disabled
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar035] = &config.RuleConfig{Enabled: config.Bool(false)}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Create minimal pass
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Analyzer: Analyzer035,
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: &inspector.Inspector{},
+		},
+	}
+
+	// Run should return early due to disabled rule
+	result, err := runVar035(pass)
+
+	// Verify no error
+	if err != nil {
+		t.Errorf("runVar035() error = %v, want nil", err)
+	}
+
+	// Verify nil result
+	if result != nil {
+		t.Errorf("runVar035() result = %v, want nil", result)
+	}
+}
+
+// Test_checkContainsPattern_fileExcluded tests file exclusion logic directly.
+func Test_checkContainsPattern_fileExcluded(t *testing.T) {
+	// Save and restore config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Configure rule with file exclusion
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar035] = &config.RuleConfig{
+		Enabled: config.Bool(true),
+		Exclude: []string{"excluded.go"},
+	}
+	config.Set(newCfg)
+
+	// Parse a valid source file to create proper AST
+	src := `package test
+
+func testFunc() {
+	slice := []int{1, 2, 3}
+	for i := 0; i < len(slice); i++ {
+		if slice[i] == 2 {
+			return
+		}
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create inspector
+	insp := inspector.New([]*ast.File{file})
+
+	// Create pass with the file
+	pass := &analysis.Pass{
+		Analyzer: Analyzer035,
+		Fset:     fset,
+	}
+
+	cfg := config.Get()
+
+	// Call checkContainsPattern directly - this should trigger file exclusion branch
+	checkContainsPattern(pass, insp, cfg)
+
+	// If we reach here without panic, the file exclusion branch was exercised
+}
+
+// Test_checkContainsPattern_funcLit tests checkContainsPattern with FuncLit.
+func Test_checkContainsPattern_funcLit(t *testing.T) {
+	// Parse source with function literal
+	src := `package test
+
+func wrapper() {
+	fn := func() {
+		slice := []int{1, 2, 3}
+		for i := 0; i < len(slice); i++ {
+			if slice[i] == 2 {
+				return
+			}
+		}
+	}
+	_ = fn
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create inspector
+	insp := inspector.New([]*ast.File{file})
+
+	// Create pass
+	pass := &analysis.Pass{
+		Analyzer: Analyzer035,
+		Fset:     fset,
+	}
+
+	// Create config
+	cfg := config.Get()
+
+	// Run checkContainsPattern - should handle FuncLit branch
+	checkContainsPattern(pass, insp, cfg)
+
+	// No assertion needed - just verifying no panic and FuncLit branch is covered
+}
+
+// Test_checkContainsPattern_funcDeclNilBody tests checkContainsPattern with FuncDecl nil body.
+func Test_checkContainsPattern_funcDeclNilBody(t *testing.T) {
+	// Parse source with external function declaration (no body)
+	src := `package test
+
+// External function declaration (no body)
+func ExternalFunc(x int) int
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create inspector
+	insp := inspector.New([]*ast.File{file})
+
+	// Create pass
+	pass := &analysis.Pass{
+		Analyzer: Analyzer035,
+		Fset:     fset,
+	}
+
+	// Create config
+	cfg := config.Get()
+
+	// Run checkContainsPattern - should handle nil body branch
+	checkContainsPattern(pass, insp, cfg)
+
+	// No assertion needed - just verifying no panic and nil body branch is covered
 }

@@ -2,8 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_isValidIfStructureFor033 tests validation of if structure.
@@ -545,5 +552,194 @@ func Test_analyzeBodyForCmpOrPattern(t *testing.T) {
 			// Pass nil for pass and cfg - function should handle gracefully
 			analyzeBodyForCmpOrPattern(nil, tt.body, nil)
 		})
+	}
+}
+
+// Test_runVar033_ruleDisabled tests that analyzer returns early when rule is disabled.
+func Test_runVar033_ruleDisabled(t *testing.T) {
+	// Save the current config
+	oldCfg := config.Get()
+
+	// Create new config with rule disabled
+	newCfg := config.DefaultConfig()
+	falseVal := false
+	newCfg.Rules[ruleCodeVar033] = &config.RuleConfig{Enabled: &falseVal}
+	config.Set(newCfg)
+	// Ensure restoration at the end
+	defer config.Set(oldCfg)
+
+	// Run analyzer with testhelper
+	diags := testhelper.RunAnalyzer(t, Analyzer033, "testdata/src/var033/bad.go")
+
+	// With rule disabled, should have 0 errors
+	if len(diags) != 0 {
+		t.Errorf("Expected 0 diagnostics when rule disabled, got %d", len(diags))
+	}
+}
+
+// Test_checkCmpOrPattern_funcLit tests function literals are analyzed.
+func Test_checkCmpOrPattern_funcLit(t *testing.T) {
+	// Test file with function literal containing cmp.Or pattern
+	src := `package test
+
+const DefaultVal = 10
+
+func wrapper() func(int) int {
+	return func(x int) int {
+		if x != 0 {
+			return x
+		}
+		return DefaultVal
+	}
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, parser.ParseComments)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse source: %v", err)
+	}
+
+	// Create a mock pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer to populate ResultOf
+	inspResult, err := inspect.Analyzer.Run(pass)
+	// Check for inspector errors
+	if err != nil {
+		t.Fatalf("Failed to run inspect: %v", err)
+	}
+	pass.ResultOf[inspect.Analyzer] = inspResult
+
+	// Get config
+	cfg := config.Get()
+
+	// Get the inspector
+	insp := inspResult.(*inspector.Inspector)
+
+	// Run the checkCmpOrPattern function
+	checkCmpOrPattern(pass, insp, cfg)
+
+	// Should detect the pattern in function literal
+	if len(diagnostics) != 1 {
+		t.Errorf("Expected 1 diagnostic for func literal, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkCmpOrPattern_funcDeclNilBody tests external function declarations.
+func Test_checkCmpOrPattern_funcDeclNilBody(t *testing.T) {
+	// Test file with external function declaration (no body)
+	src := `package test
+
+// External function declaration (no body)
+func ExternalFunc(x int) int
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, parser.ParseComments)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse source: %v", err)
+	}
+
+	// Create a mock pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer to populate ResultOf
+	inspResult, err := inspect.Analyzer.Run(pass)
+	// Check for inspector errors
+	if err != nil {
+		t.Fatalf("Failed to run inspect: %v", err)
+	}
+	pass.ResultOf[inspect.Analyzer] = inspResult
+
+	// Get config
+	cfg := config.Get()
+
+	// Get the inspector
+	insp := inspResult.(*inspector.Inspector)
+
+	// Run the checkCmpOrPattern function - should not panic on nil body
+	checkCmpOrPattern(pass, insp, cfg)
+
+	// Should not detect any issues (no body to analyze)
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for nil body, got %d", len(diagnostics))
+	}
+}
+
+// Test_checkCmpOrPattern_fileExcluded tests file exclusion.
+func Test_checkCmpOrPattern_fileExcluded(t *testing.T) {
+	// Test source
+	src := `package test
+
+const DefaultVal = 10
+
+func getValue(x int) int {
+	if x != 0 {
+		return x
+	}
+	return DefaultVal
+}
+`
+	// Parse the source
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded_test_file.go", src, parser.ParseComments)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse source: %v", err)
+	}
+
+	// Create a mock pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: make(map[*analysis.Analyzer]any),
+	}
+
+	// Run inspect analyzer to populate ResultOf
+	inspResult, err := inspect.Analyzer.Run(pass)
+	// Check for inspector errors
+	if err != nil {
+		t.Fatalf("Failed to run inspect: %v", err)
+	}
+	pass.ResultOf[inspect.Analyzer] = inspResult
+
+	// Create config with file exclusion for this rule
+	cfg := config.DefaultConfig()
+	cfg.Rules[ruleCodeVar033] = &config.RuleConfig{
+		Exclude: []string{"excluded_test_file.go"},
+	}
+
+	// Get the inspector
+	insp := inspResult.(*inspector.Inspector)
+
+	// Run the checkCmpOrPattern function
+	checkCmpOrPattern(pass, insp, cfg)
+
+	// Should not detect any issues (file excluded)
+	if len(diagnostics) != 0 {
+		t.Errorf("Expected 0 diagnostics for excluded file, got %d", len(diagnostics))
 	}
 }

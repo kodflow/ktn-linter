@@ -2,10 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
+	"go/types"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // TestIsCompositeLitZero025 tests the isCompositeLitZero025 function.
@@ -565,5 +570,292 @@ func TestIsMatchingSliceIndex(t *testing.T) {
 	// Expected: true
 	if !result {
 		t.Error("isMatchingSliceIndex should return true for valid match")
+	}
+}
+
+// TestIsZeroValueAllBranches tests all branches of isZeroValue.
+func TestIsZeroValueAllBranches(t *testing.T) {
+	// Create a minimal pass for testing
+	pass := &analysis.Pass{}
+
+	// Test: BasicLit branch (zero)
+	basicLitZero := &ast.BasicLit{Value: "0"}
+	result := isZeroValue(pass, basicLitZero)
+	// Expected: true
+	if !result {
+		t.Error("isZeroValue should return true for BasicLit zero")
+	}
+
+	// Test: Ident branch (nil)
+	identNil := &ast.Ident{Name: "nil"}
+	result = isZeroValue(pass, identNil)
+	// Expected: true
+	if !result {
+		t.Error("isZeroValue should return true for nil identifier")
+	}
+
+	// Test: CompositeLit branch (empty)
+	compositeLitEmpty := &ast.CompositeLit{Elts: []ast.Expr{}}
+	result = isZeroValue(pass, compositeLitEmpty)
+	// Expected: true
+	if !result {
+		t.Error("isZeroValue should return true for empty CompositeLit")
+	}
+
+	// Test: CallExpr branch (early return for wrong args)
+	callExprMultiArgs := &ast.CallExpr{
+		Fun:  &ast.Ident{Name: "string"},
+		Args: []ast.Expr{&ast.BasicLit{}, &ast.BasicLit{}},
+	}
+	result = isZeroValue(pass, callExprMultiArgs)
+	// Expected: false
+	if result {
+		t.Error("isZeroValue should return false for CallExpr with multiple args")
+	}
+}
+
+// TestIsZeroConversionAllBranches tests all branches of isZeroConversion.
+func TestIsZeroConversionAllBranches(t *testing.T) {
+	callExpr := &ast.CallExpr{
+		Fun:  &ast.Ident{Name: "string"},
+		Args: []ast.Expr{&ast.BasicLit{Value: `""`}},
+	}
+
+	// Test: pass with nil TypesInfo
+	passNilTypesInfo := &analysis.Pass{TypesInfo: nil}
+	result := isZeroConversion(passNilTypesInfo, callExpr)
+	// Expected: false (TypesInfo is nil)
+	if result {
+		t.Error("isZeroConversion should return false when TypesInfo is nil")
+	}
+
+	// Test: pass with TypesInfo but nil Uses
+	passNilUses := &analysis.Pass{TypesInfo: &types.Info{Uses: nil}}
+	result = isZeroConversion(passNilUses, callExpr)
+	// Expected: false (Uses is nil)
+	if result {
+		t.Error("isZeroConversion should return false when Uses is nil")
+	}
+
+	// Test: pass with TypesInfo and empty Uses (obj is nil)
+	passEmptyUses := &analysis.Pass{
+		TypesInfo: &types.Info{Uses: make(map[*ast.Ident]types.Object)},
+	}
+	result = isZeroConversion(passEmptyUses, callExpr)
+	// Expected: false (obj is nil - identifier not found in Uses)
+	if result {
+		t.Error("isZeroConversion should return false when obj is nil")
+	}
+}
+
+// TestIsZeroConversionNotTypeName tests isZeroConversion when obj is not a TypeName.
+func TestIsZeroConversionNotTypeName(t *testing.T) {
+	// Create a function identifier
+	funIdent := &ast.Ident{Name: "myFunc"}
+	callExpr := &ast.CallExpr{
+		Fun:  funIdent,
+		Args: []ast.Expr{&ast.BasicLit{Value: "0"}},
+	}
+
+	// Create a Uses map with a function, not a type
+	pkg := types.NewPackage("test", "test")
+	funcObj := types.NewFunc(0, pkg, "myFunc", types.NewSignatureType(
+		nil, nil, nil, nil, nil, false,
+	))
+
+	usesMap := make(map[*ast.Ident]types.Object)
+	usesMap[funIdent] = funcObj
+
+	passWithFunc := &analysis.Pass{
+		TypesInfo: &types.Info{Uses: usesMap},
+	}
+
+	result := isZeroConversion(passWithFunc, callExpr)
+	// Expected: false (obj is Func, not TypeName)
+	if result {
+		t.Error("isZeroConversion should return false when obj is not a TypeName")
+	}
+}
+
+// TestIsZeroConversionWithTypeName tests isZeroConversion with a valid TypeName.
+func TestIsZeroConversionWithTypeName(t *testing.T) {
+	// Create a type identifier
+	typeIdent := &ast.Ident{Name: "MyType"}
+	callExpr := &ast.CallExpr{
+		Fun:  typeIdent,
+		Args: []ast.Expr{&ast.BasicLit{Value: "0"}},
+	}
+
+	// Create a Uses map with a type
+	pkg := types.NewPackage("test", "test")
+	typeObj := types.NewTypeName(0, pkg, "MyType", types.Typ[types.Int])
+
+	usesMap := make(map[*ast.Ident]types.Object)
+	usesMap[typeIdent] = typeObj
+
+	passWithType := &analysis.Pass{
+		TypesInfo: &types.Info{Uses: usesMap},
+	}
+
+	result := isZeroConversion(passWithType, callExpr)
+	// Expected: true (type conversion with zero value)
+	if !result {
+		t.Error("isZeroConversion should return true for valid type conversion with zero")
+	}
+}
+
+// TestRunVar025RuleDisabled tests runVar025 when rule is disabled.
+func TestRunVar025RuleDisabled(t *testing.T) {
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Disable the rule
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar025] = &config.RuleConfig{Enabled: config.Bool(false)}
+	config.Set(newCfg)
+
+	// Parse code with clear pattern
+	src := `package test
+
+func clearMap() {
+	m := make(map[string]int)
+	for k := range m {
+		delete(m, k)
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Analyzer: Analyzer025,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	result, err := runVar025(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar025() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when rule is disabled
+	if reportCount != 0 {
+		t.Errorf("expected 0 reports when rule disabled, got %d", reportCount)
+	}
+}
+
+// TestRunVar025NilTypesInfo tests runVar025 when TypesInfo is nil.
+func TestRunVar025NilTypesInfo(t *testing.T) {
+	// Reset config to enable rule
+	config.Reset()
+	defer config.Reset()
+
+	// Parse code with clear pattern
+	src := `package test
+
+func clearSlice() {
+	s := []int{1, 2, 3}
+	for i := range s {
+		s[i] = 0
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer025,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		TypesInfo: nil, // nil TypesInfo
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	result, err := runVar025(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar025() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when TypesInfo is nil (early return)
+	if reportCount != 0 {
+		t.Errorf("expected 0 reports when TypesInfo is nil, got %d", reportCount)
+	}
+}
+
+// TestRunVar025FileExcluded tests runVar025 when file is excluded.
+func TestRunVar025FileExcluded(t *testing.T) {
+	// Save current config
+	oldCfg := config.Get()
+	defer config.Set(oldCfg)
+
+	// Configure rule with file exclusion
+	newCfg := config.DefaultConfig()
+	newCfg.Rules[ruleCodeVar025] = &config.RuleConfig{
+		Enabled: config.Bool(true),
+		Exclude: []string{"excluded.go"},
+	}
+	config.Set(newCfg)
+
+	// Parse code with clear pattern
+	src := `package test
+
+func clearMap() {
+	m := make(map[string]int)
+	for k := range m {
+		delete(m, k)
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded.go", src, 0)
+	// Check parsing error
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer025,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		TypesInfo: &types.Info{},
+		Report: func(_ analysis.Diagnostic) {
+			reportCount++
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	result, err := runVar025(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar025() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when file is excluded
+	if reportCount != 0 {
+		t.Errorf("expected 0 reports when file excluded, got %d", reportCount)
 	}
 }

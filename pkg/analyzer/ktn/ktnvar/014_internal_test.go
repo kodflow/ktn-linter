@@ -366,3 +366,50 @@ func foo() {
 		t.Errorf("runVar014() reported %d, expected 1", reportCount)
 	}
 }
+
+// Test_runVar014_fileExcludedWithLoop tests file exclusion with loop that would trigger.
+func Test_runVar014_fileExcludedWithLoop(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-014": {
+				Exclude: []string{"excluded.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Code that would normally trigger the rule
+	code := `package test
+func foo() {
+	for i := 0; i < 10; i++ {
+		buf := make([]byte, 1024)
+		_ = buf
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "excluded.go", code, 0)
+	insp := inspector.New([]*ast.File{file})
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err := runVar014(pass)
+	if err != nil {
+		t.Errorf("runVar014() error = %v", err)
+	}
+
+	// Should not report when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar014() reported %d, expected 0 when file excluded", reportCount)
+	}
+}

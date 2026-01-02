@@ -4,10 +4,12 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"strings"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -380,5 +382,102 @@ var y int = 2
 	// Should report the second var declaration with verbose
 	if reportCount != 1 {
 		t.Errorf("runVar016() with verbose reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_runVar016_fileExcludedWithVars tests file exclusion with vars that would trigger.
+func Test_runVar016_fileExcludedWithVars(t *testing.T) {
+	// Setup config with file exclusion
+	config.Set(&config.Config{
+		Rules: map[string]*config.RuleConfig{
+			"KTN-VAR-016": {
+				Exclude: []string{"excluded.go"},
+			},
+		},
+	})
+	defer config.Reset()
+
+	// Code that would normally trigger the rule
+	code := `package test
+var x int = 1
+var y int = 2
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	_, err = runVar016(pass)
+	if err != nil {
+		t.Errorf("runVar016() error = %v", err)
+	}
+
+	// Should not report when file is excluded
+	if reportCount != 0 {
+		t.Errorf("runVar016() reported %d, expected 0 when file excluded", reportCount)
+	}
+}
+
+// Test_checkVarGrouping_missingMessage tests fallback when message is not found.
+func Test_checkVarGrouping_missingMessage(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation with missing message"},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Get the current message to restore later
+			originalMsg, hadMsg := messages.Get(ruleCodeVar016)
+
+			// Remove the message to trigger fallback
+			messages.Unregister(ruleCodeVar016)
+			defer func() {
+				// Restore the message
+				if hadMsg {
+					messages.Register(originalMsg)
+				}
+			}()
+
+			reportCount := 0
+			var reportedMsg string
+			mockPass := &analysis.Pass{
+				Report: func(d analysis.Diagnostic) {
+					reportCount++
+					reportedMsg = d.Message
+				},
+			}
+
+			// Create 2 var groups to trigger reporting
+			groups := []shared.DeclGroup{
+				{Decl: &ast.GenDecl{TokPos: token.Pos(1)}, Pos: token.Pos(1)},
+				{Decl: &ast.GenDecl{TokPos: token.Pos(2)}, Pos: token.Pos(2)},
+			}
+
+			checkVarGrouping(mockPass, groups)
+
+			// Should report 1 issue with fallback message
+			if reportCount != 1 {
+				t.Errorf("checkVarGrouping() reported %d issues, expected 1", reportCount)
+			}
+
+			// Should use fallback message format
+			expectedPrefix := "KTN-VAR-016: regrouper les variables"
+			if !strings.HasPrefix(reportedMsg, expectedPrefix) {
+				t.Errorf("checkVarGrouping() message = %q, expected prefix %q", reportedMsg, expectedPrefix)
+			}
+		})
 	}
 }

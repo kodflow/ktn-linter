@@ -2,8 +2,14 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_functionReturnsInt tests detection of function returning int.
@@ -381,12 +387,28 @@ func Test_checkIfEqualReturnIndex(t *testing.T) {
 			expected:  false,
 		},
 		{
-			name: "valid pattern",
+			name: "valid pattern with value on left",
 			stmt: &ast.IfStmt{
 				Cond: &ast.BinaryExpr{
 					Op: token.EQL,
 					X:  &ast.Ident{Name: "v"},
 					Y:  &ast.Ident{Name: "target"},
+				},
+				Body: &ast.BlockStmt{List: []ast.Stmt{
+					&ast.ReturnStmt{Results: []ast.Expr{&ast.Ident{Name: "i"}}},
+				}},
+			},
+			indexName: "i",
+			valueName: "v",
+			expected:  true,
+		},
+		{
+			name: "valid pattern with value on right",
+			stmt: &ast.IfStmt{
+				Cond: &ast.BinaryExpr{
+					Op: token.EQL,
+					X:  &ast.Ident{Name: "target"},
+					Y:  &ast.Ident{Name: "v"},
 				},
 				Body: &ast.BlockStmt{List: []ast.Stmt{
 					&ast.ReturnStmt{Results: []ast.Expr{&ast.Ident{Name: "i"}}},
@@ -656,6 +678,40 @@ func Test_analyzeFunctionForIndexPattern(t *testing.T) {
 				}},
 			},
 		},
+		{
+			name: "range at last position",
+			funcDecl: &ast.FuncDecl{
+				Type: &ast.FuncType{
+					Results: &ast.FieldList{
+						List: []*ast.Field{{Type: &ast.Ident{Name: "int"}}},
+					},
+				},
+				Body: &ast.BlockStmt{List: []ast.Stmt{
+					&ast.ExprStmt{X: &ast.Ident{Name: "x"}},
+					&ast.RangeStmt{Body: &ast.BlockStmt{}},
+				}},
+			},
+		},
+		{
+			name: "range with valid pattern and return -1",
+			funcDecl: &ast.FuncDecl{
+				Type: &ast.FuncType{
+					Results: &ast.FieldList{
+						List: []*ast.Field{{Type: &ast.Ident{Name: "int"}}},
+					},
+				},
+				Body: &ast.BlockStmt{List: []ast.Stmt{
+					&ast.RangeStmt{
+						Key:   &ast.Ident{Name: "i"},
+						Value: &ast.Ident{Name: "v"},
+						Body:  &ast.BlockStmt{List: []ast.Stmt{}},
+					},
+					&ast.ReturnStmt{Results: []ast.Expr{
+						&ast.UnaryExpr{Op: token.SUB, X: &ast.BasicLit{Kind: token.INT, Value: "1"}},
+					}},
+				}},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -671,5 +727,184 @@ func Test_analyzeFunctionForIndexPattern(t *testing.T) {
 			// Pass nil for pass and cfg - function should handle gracefully
 			analyzeFunctionForIndexPattern(nil, tt.funcDecl, nil)
 		})
+	}
+}
+
+// Test_runVar036_ruleDisabled tests runVar036 when rule is disabled.
+func Test_runVar036_ruleDisabled(t *testing.T) {
+	// Save the current config
+	cfg := config.Get()
+	// Initialize rules map if needed
+	if cfg.Rules == nil {
+		cfg.Rules = make(map[string]*config.RuleConfig)
+	}
+	// Save original state
+	originalRule := cfg.Rules[ruleCodeVar036]
+
+	// Disable the rule
+	cfg.Rules[ruleCodeVar036] = &config.RuleConfig{Enabled: config.Bool(false)}
+	// Ensure restoration at the end
+	defer func() {
+		// Restore original state
+		if originalRule == nil {
+			delete(cfg.Rules, ruleCodeVar036)
+		} else {
+			cfg.Rules[ruleCodeVar036] = originalRule
+		}
+	}()
+
+	// Parse code with index search pattern
+	src := `package test
+
+func findIndex(s []int, target int) int {
+	for i, v := range s {
+		if v == target {
+			return i
+		}
+	}
+	return -1
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer036,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar036(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar036() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when disabled
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics when rule disabled, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar036_fileExcluded tests runVar036 when file is excluded.
+func Test_runVar036_fileExcluded(t *testing.T) {
+	// Save the current config
+	cfg := config.Get()
+	// Initialize rules map if needed
+	if cfg.Rules == nil {
+		cfg.Rules = make(map[string]*config.RuleConfig)
+	}
+	// Save original state
+	originalRule := cfg.Rules[ruleCodeVar036]
+
+	// Set up rule with file exclusion
+	cfg.Rules[ruleCodeVar036] = &config.RuleConfig{
+		Exclude: []string{"excluded.go"},
+	}
+	// Ensure restoration at the end
+	defer func() {
+		// Restore original state
+		if originalRule == nil {
+			delete(cfg.Rules, ruleCodeVar036)
+		} else {
+			cfg.Rules[ruleCodeVar036] = originalRule
+		}
+	}()
+
+	// Parse code with index search pattern
+	src := `package test
+
+func findIndex(s []int, target int) int {
+	for i, v := range s {
+		if v == target {
+			return i
+		}
+	}
+	return -1
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer036,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar036(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar036() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when file excluded
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics when file excluded, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar036_nilBody tests runVar036 with function having nil body.
+func Test_runVar036_nilBody(t *testing.T) {
+	// Parse code with external function declaration (nil body)
+	src := `package test
+
+// External function declaration
+func externalFunc(s []int, target int) int
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer: Analyzer036,
+		Fset:     fset,
+		Files:    []*ast.File{file},
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar036(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar036() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports for nil body
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics for nil body, got %d", len(diagnostics))
 	}
 }

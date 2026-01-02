@@ -2,11 +2,15 @@ package ktnvar
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"go/types"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_isVar037AppendCall tests detection of append calls.
@@ -567,5 +571,488 @@ func Test_isRangingOverMap(t *testing.T) {
 				t.Errorf("isRangingOverMap() = %v, want %v", result, tt.expected)
 			}
 		})
+	}
+}
+
+// Test_isRangingOverMap_withMapType tests isRangingOverMap with actual map type.
+func Test_isRangingOverMap_withMapType(t *testing.T) {
+	// Parse code with map range
+	src := `package test
+
+func foo() {
+	m := map[string]int{"a": 1}
+	for k := range m {
+		_ = k
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:      fset,
+		Pkg:       pkg,
+		TypesInfo: info,
+	}
+
+	// Find the range statement
+	var rangeStmt *ast.RangeStmt
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Look for range statement
+		if rs, ok := n.(*ast.RangeStmt); ok {
+			rangeStmt = rs
+			return false
+		}
+		return true
+	})
+
+	// Check that rangeStmt was found
+	if rangeStmt == nil {
+		t.Fatal("Failed to find range statement")
+	}
+
+	// Test that it detects map type
+	result := isRangingOverMap(pass, rangeStmt)
+	// Verify result
+	if !result {
+		t.Error("isRangingOverMap() = false, want true for map range")
+	}
+}
+
+// Test_isRangingOverMap_withSliceType tests isRangingOverMap with slice type.
+func Test_isRangingOverMap_withSliceType(t *testing.T) {
+	// Parse code with slice range
+	src := `package test
+
+func foo() {
+	s := []int{1, 2, 3}
+	for i := range s {
+		_ = i
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	pass := &analysis.Pass{
+		Fset:      fset,
+		Pkg:       pkg,
+		TypesInfo: info,
+	}
+
+	// Find the range statement
+	var rangeStmt *ast.RangeStmt
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Look for range statement
+		if rs, ok := n.(*ast.RangeStmt); ok {
+			rangeStmt = rs
+			return false
+		}
+		return true
+	})
+
+	// Check that rangeStmt was found
+	if rangeStmt == nil {
+		t.Fatal("Failed to find range statement")
+	}
+
+	// Test that it does not detect slice as map
+	result := isRangingOverMap(pass, rangeStmt)
+	// Verify result
+	if result {
+		t.Error("isRangingOverMap() = true, want false for slice range")
+	}
+}
+
+// Test_runVar037_ruleDisabled tests runVar037 when rule is disabled.
+func Test_runVar037_ruleDisabled(t *testing.T) {
+	// Save the current config
+	cfg := config.Get()
+	// Initialize rules map if needed
+	if cfg.Rules == nil {
+		cfg.Rules = make(map[string]*config.RuleConfig)
+	}
+	// Save original state
+	originalRule := cfg.Rules[ruleCodeVar037]
+
+	// Disable the rule
+	cfg.Rules[ruleCodeVar037] = &config.RuleConfig{Enabled: config.Bool(false)}
+	// Ensure restoration at the end
+	defer func() {
+		// Restore original state
+		if originalRule == nil {
+			delete(cfg.Rules, ruleCodeVar037)
+		} else {
+			cfg.Rules[ruleCodeVar037] = originalRule
+		}
+	}()
+
+	// Parse code with map collection pattern
+	src := `package test
+
+func getKeys(m map[string]int) []string {
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer037,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar037(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar037() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when disabled
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics when rule disabled, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar037_fileExcluded tests runVar037 when file is excluded.
+func Test_runVar037_fileExcluded(t *testing.T) {
+	// Save the current config
+	cfg := config.Get()
+	// Initialize rules map if needed
+	if cfg.Rules == nil {
+		cfg.Rules = make(map[string]*config.RuleConfig)
+	}
+	// Save original state
+	originalRule := cfg.Rules[ruleCodeVar037]
+
+	// Set up rule with file exclusion
+	cfg.Rules[ruleCodeVar037] = &config.RuleConfig{
+		Exclude: []string{"excluded.go"},
+	}
+	// Ensure restoration at the end
+	defer func() {
+		// Restore original state
+		if originalRule == nil {
+			delete(cfg.Rules, ruleCodeVar037)
+		} else {
+			cfg.Rules[ruleCodeVar037] = originalRule
+		}
+	}()
+
+	// Parse code with map collection pattern
+	src := `package test
+
+func getKeys(m map[string]int) []string {
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "excluded.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer037,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar037(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar037() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when file excluded
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics when file excluded, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar037_notRangingOverMap tests runVar037 with range over slice.
+func Test_runVar037_notRangingOverMap(t *testing.T) {
+	// Reset config
+	config.Reset()
+
+	// Parse code with slice range (not map)
+	src := `package test
+
+func foo() {
+	s := []int{1, 2, 3}
+	var result []int
+	for _, v := range s {
+		result = append(result, v)
+	}
+	_ = result
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer037,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar037(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar037() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports for slice range
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics for slice range, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar037_noPattern tests runVar037 with map range but no collection pattern.
+func Test_runVar037_noPattern(t *testing.T) {
+	// Reset config
+	config.Reset()
+
+	// Parse code with map range but not a simple collection pattern
+	src := `package test
+
+func foo() {
+	m := map[string]int{"a": 1, "b": 2}
+	for k, v := range m {
+		// Not a simple collection - uses both k and v
+		println(k, v)
+	}
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer037,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar037(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar037() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check no reports when no collection pattern
+	if len(diagnostics) != 0 {
+		t.Errorf("expected 0 diagnostics when no pattern, got %d", len(diagnostics))
+	}
+}
+
+// Test_runVar037_withReport tests runVar037 detects map collection pattern.
+func Test_runVar037_withReport(t *testing.T) {
+	// Reset config
+	config.Reset()
+
+	// Parse code with map keys collection pattern
+	src := `package test
+
+func getKeys(m map[string]int) []string {
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", src, 0)
+	// Check for parsing errors
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	// Type check the file
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, err := conf.Check("test", fset, []*ast.File{file}, info)
+	// Check for type errors
+	if err != nil {
+		t.Fatalf("Failed to type check: %v", err)
+	}
+
+	// Create pass
+	var diagnostics []analysis.Diagnostic
+	pass := &analysis.Pass{
+		Analyzer:  Analyzer037,
+		Fset:      fset,
+		Files:     []*ast.File{file},
+		Pkg:       pkg,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			diagnostics = append(diagnostics, d)
+		},
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: inspector.New([]*ast.File{file}),
+		},
+	}
+
+	// Run the analyzer
+	result, err := runVar037(pass)
+	// Check result
+	if err != nil || result != nil {
+		t.Errorf("runVar037() = (%v, %v), want (nil, nil)", result, err)
+	}
+	// Check that diagnostic was reported
+	if len(diagnostics) != 1 {
+		t.Errorf("expected 1 diagnostic for map keys collection, got %d", len(diagnostics))
 	}
 }

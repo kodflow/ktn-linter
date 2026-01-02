@@ -156,13 +156,19 @@ func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
 		return -1
 	}
 
+	// Check if it's an integer constant (Int64Val panics on non-int)
+	if tv.Value.Kind() != constant.Int {
+		// Not an int constant
+		return -1
+	}
+
 	// Get int64 value
 	if val, ok := constant.Int64Val(tv.Value); ok {
 		// Return the constant value
 		return val
 	}
 
-	// Not an int constant
+	// Value too large for int64
 	return -1
 }
 
