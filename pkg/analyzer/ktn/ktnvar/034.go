@@ -50,10 +50,7 @@ func runVar034(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Types de noeuds a analyser (blocs de code)
 	nodeFilter := []ast.Node{
@@ -69,9 +66,9 @@ func runVar034(pass *analysis.Pass) (any, error) {
 		}
 
 		// Cast en bloc
-		block, ok := n.(*ast.BlockStmt)
+		block := n.(*ast.BlockStmt)
 		// Verification de la condition
-		if !ok || block.List == nil {
+		if block.List == nil {
 			// Traitement
 			return
 		}

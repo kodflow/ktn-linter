@@ -45,11 +45,7 @@ func runVar031(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Skip if inspector not available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Filter for function declarations and function literals
 	nodeFilter := []ast.Node{

@@ -49,10 +49,7 @@ func runVar008(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Collecter les variables utilisées avec append
 	appendVars := collectAppendVariables(insp)
@@ -83,12 +80,7 @@ func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
 
 	// Parcours des assignations pour trouver les appends
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
+		assign := n.(*ast.AssignStmt)
 
 		// Vérification de chaque expression à droite
 		for _, rhs := range assign.Rhs {
@@ -151,12 +143,7 @@ func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
 
 	// Parcours des appels de fonction
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call, ok := n.(*ast.CallExpr)
-		// Vérification de la condition
-		if !ok {
-			// Continue traversing AST nodes
-			return
-		}
+		call := n.(*ast.CallExpr)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
@@ -247,12 +234,7 @@ func checkEmptySliceLiterals(
 			return true
 		}
 
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Continuer le parcours
-			return true
-		}
+		assign := n.(*ast.AssignStmt)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {

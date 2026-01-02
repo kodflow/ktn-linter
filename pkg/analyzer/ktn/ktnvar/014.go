@@ -45,11 +45,7 @@ func runVar014(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Type assertion failed
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.ForStmt)(nil),

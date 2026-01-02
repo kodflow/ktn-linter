@@ -48,11 +48,7 @@ func runVar035(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Check if valid
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check for manual contains pattern in functions
 	checkContainsPattern(pass, insp, cfg)

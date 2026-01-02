@@ -50,11 +50,7 @@ func runVar026(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Types de noeuds a analyser
 	nodeFilter := []ast.Node{

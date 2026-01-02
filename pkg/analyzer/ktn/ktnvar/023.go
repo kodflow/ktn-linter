@@ -59,10 +59,7 @@ func runVar023(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Collecter les alias pour math/rand
 	mathRandAliases := collectMathRandAliases(pass)

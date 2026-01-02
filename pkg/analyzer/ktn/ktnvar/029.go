@@ -62,11 +62,7 @@ func runVar029(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Verify inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Node types to analyze
 	nodeFilter := []ast.Node{
@@ -75,17 +71,11 @@ func runVar029(pass *analysis.Pass) (any, error) {
 
 	// Traverse all if statements
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		ifStmt := n.(*ast.IfStmt)
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar029, pass.Fset.Position(n.Pos()).Filename) {
 			// File excluded
-			return
-		}
-
-		// Cast to if statement
-		ifStmt, okIf := n.(*ast.IfStmt)
-		// Check if valid
-		if !okIf {
-			// Not an if statement
 			return
 		}
 

@@ -53,11 +53,7 @@ func runVar037(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Check if inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check for manual map key/value collection patterns
 	checkMapCollectionPatterns(pass, insp, cfg)
@@ -87,12 +83,7 @@ func checkMapCollectionPatterns(pass *analysis.Pass, insp *inspector.Inspector, 
 		}
 
 		// Cast to range statement
-		rangeStmt, ok := n.(*ast.RangeStmt)
-		// Check if valid
-		if !ok {
-			// Not a range statement
-			return
-		}
+		rangeStmt := n.(*ast.RangeStmt)
 
 		// Check if ranging over a map
 		if !isRangingOverMap(pass, rangeStmt) {

@@ -15,7 +15,7 @@ Rapport de couverture généré automatiquement.
 
 | Icon | Package | Coverage |
 |:----:|---------|----------|
-| 🟢 | **TOTAL (Global)** | **93.9%** |
+| 🟢 | **TOTAL (Global)** | **94.1%** |
 | 🔵 | `github.com/kodflow/ktn-linter/cmd/ktn-linter` | 100.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd` | 86.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn` | 100.0% |
@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 92.5% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 92.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
@@ -166,45 +166,52 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 92.5%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 92.8%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
-| 🟢 `001.go:runVar001` | 96.2% |
-| 🟢 `002.go:runVar002` | 93.3% |
-| 🟡 `003.go:runVar003` | 90.9% |
+| 🟢 `001.go:runVar001` | 91.7% |
+| 🟡 `002.go:runVar002` | 88.0% |
+| 🟡 `003.go:runVar003` | 85.0% |
+| 🟡 `004.go:runVar004` | 90.0% |
 | 🟡 `004.go:checkVar004PackageLevel` | 88.9% |
 | 🟢 `004.go:checkVar004LocalVars` | 91.7% |
-| 🟢 `004.go:checkVar004Name` | 95.2% |
+| 🟢 `004.go:checkVar004Name` | 93.3% |
+| 🟡 `005.go:runVar005` | 90.0% |
 | 🟢 `005.go:checkVar005PackageLevel` | 93.8% |
 | 🟢 `005.go:checkVar005LocalVars` | 91.7% |
-| 🟢 `006.go:runVar006` | 96.7% |
-| 🟢 `007.go:runVar007` | 95.0% |
+| 🟢 `006.go:runVar006` | 92.0% |
+| 🟡 `007.go:runVar007` | 88.9% |
+| 🟡 `008.go:runVar008` | 90.9% |
 | 🟢 `008.go:collectAppendVariables` | 91.7% |
 | 🟡 `008.go:checkMakeCalls` | 88.9% |
 | 🟡 `008.go:checkEmptySliceLiterals` | 88.2% |
-| 🟡 `009.go:runVar009` | 88.9% |
-| 🟢 `011.go:runVar011` | 94.1% |
-| 🟡 `012.go:runVar012` | 90.0% |
-| 🟢 `013.go:runVar013` | 92.3% |
-| 🟢 `013.go:checkParamType009` | 91.7% |
+| 🟡 `009.go:runVar009` | 81.2% |
+| 🟢 `010.go:runVar010` | 92.3% |
+| 🟡 `010.go:reportMissingGrow` | 85.7% |
+| 🟡 `011.go:runVar011` | 84.6% |
+| 🟡 `012.go:runVar012` | 83.3% |
+| 🟡 `013.go:runVar013` | 87.5% |
+| 🟡 `013.go:checkParamType009` | 88.9% |
 | 🟢 `013.go:getStructSize009` | 94.7% |
-| 🟢 `014.go:runVar014` | 94.1% |
-| 🟢 `015.go:runVar015` | 93.8% |
+| 🟡 `014.go:runVar014` | 86.7% |
+| 🟡 `015.go:runVar015` | 85.7% |
 | 🟡 `016.go:runVar016` | 88.9% |
 | 🔴 `016.go:checkVarGrouping` | 75.0% |
-| 🟡 `017.go:runVar017` | 82.1% |
-| 🟢 `018.go:runVar018` | 91.3% |
+| 🟡 `017.go:runVar017` | 82.6% |
+| 🟡 `018.go:runVar018` | 85.7% |
 | 🟡 `018.go:getConstantSize` | 83.3% |
 | 🟢 `018.go:isTotalSizeSmall` | 92.9% |
-| 🔴 `018.go:reportArraySuggestion` | 60.0% |
-| 🔴 `019.go:checkStructsWithMutex` | 75.0% |
-| 🟡 `019.go:checkValueReceivers` | 84.2% |
-| 🔴 `019.go:checkValueParams` | 75.0% |
-| 🔴 `019.go:checkAssignments` | 75.0% |
+| 🟡 `019.go:runVar019` | 86.7% |
+| 🟡 `019.go:checkStructsWithMutex` | 82.4% |
+| 🟢 `019.go:checkValueReceivers` | 93.8% |
+| 🟡 `019.go:checkValueParams` | 84.6% |
+| 🟡 `019.go:checkAssignments` | 84.6% |
 | 🟢 `019.go:getMutexTypeFromType` | 93.8% |
+| 🟡 `020.go:runVar020` | 88.2% |
 | 🟡 `020.go:checkEmptySliceLiteral` | 80.0% |
 | 🟡 `020.go:checkMakeSliceZero` | 87.5% |
+| 🟡 `021.go:runVar021` | 83.3% |
 | 🟡 `021.go:collectReceivers` | 87.5% |
 | 🔴 `021.go:reportInconsistency` | 75.0% |
 | 🟡 `022.go:runVar022` | 86.7% |
@@ -212,46 +219,33 @@ Rapport de couverture généré automatiquement.
 | 🟡 `022.go:checkVarDecls` | 80.0% |
 | 🟡 `022.go:checkStructFields` | 83.3% |
 | 🟡 `022.go:checkPointerToInterface` | 83.3% |
-| 🔴 `023.go:runVar023` | 71.4% |
+| 🔴 `023.go:runVar023` | 75.0% |
 | 🟡 `023.go:checkMathRandUsage` | 85.7% |
 | 🟡 `023.go:checkAssignForMathRand` | 80.0% |
-| 🔴 `023.go:reportMathRandInSecurity` | 60.0% |
-| 🔴 `024.go:runVar024` | 72.2% |
-| 🔴 `024.go:checkEmptyInterface` | 71.4% |
-| 🔴 `025.go:runVar025` | 70.0% |
+| 🔴 `024.go:runVar024` | 75.0% |
+| 🔴 `025.go:runVar025` | 72.2% |
 | 🔴 `025.go:isZeroValue` | 66.7% |
 | 🔴 `025.go:isZeroConversion` | 38.5% |
-| 🔴 `025.go:reportClearPattern` | 60.0% |
-| 🔴 `026.go:runVar026` | 76.5% |
-| 🟡 `026.go:checkMathMinMax` | 87.5% |
-| 🔴 `026.go:checkIfMinMaxPattern` | 54.5% |
-| 🔴 `027.go:runVar027` | 69.6% |
-| 🔴 `028.go:runVar028` | 72.2% |
-| 🔴 `028.go:reportLoopVarCopy` | 60.0% |
-| 🔴 `029.go:runVar029` | 72.2% |
-| 🔴 `029.go:reportGrowPattern` | 60.0% |
-| 🟢 `030.go:runVar030` | 91.7% |
-| 🔴 `030.go:checkAppendNilPattern` | 71.4% |
+| 🟡 `026.go:runVar026` | 80.0% |
+| 🔴 `026.go:checkIfMinMaxPattern` | 75.0% |
+| 🔴 `027.go:runVar027` | 77.8% |
+| 🔴 `028.go:runVar028` | 75.0% |
+| 🔴 `029.go:runVar029` | 75.0% |
+| 🟡 `030.go:runVar030` | 80.0% |
+| 🟡 `030.go:checkAppendNilPattern` | 81.8% |
 | 🔴 `030.go:checkMakeCopyPattern` | 75.0% |
 | 🔴 `030.go:checkCopyCall` | 75.0% |
-| 🔴 `030.go:reportMakeCopy030` | 60.0% |
-| 🟡 `031.go:runVar031` | 81.0% |
-| 🟡 `031.go:analyzeBlockForMapClone` | 85.7% |
-| 🟡 `033.go:runVar033` | 90.9% |
+| 🔴 `031.go:runVar031` | 73.7% |
+| 🔴 `033.go:runVar033` | 77.8% |
 | 🔴 `033.go:checkCmpOrPattern` | 66.7% |
-| 🔴 `033.go:reportCmpOrPattern` | 60.0% |
-| 🟡 `034.go:runVar034` | 85.0% |
+| 🟡 `034.go:runVar034` | 81.2% |
 | 🟡 `034.go:isWaitGroupType` | 88.9% |
-| 🔴 `034.go:reportVar034` | 60.0% |
-| 🟡 `035.go:runVar035` | 90.9% |
+| 🔴 `035.go:runVar035` | 77.8% |
 | 🔴 `035.go:checkContainsPattern` | 66.7% |
-| 🔴 `035.go:reportContainsPattern` | 66.7% |
-| 🟡 `036.go:runVar036` | 83.3% |
+| 🔴 `036.go:runVar036` | 75.0% |
 | 🟢 `036.go:analyzeFunctionForIndexPattern` | 93.8% |
-| 🔴 `036.go:reportIndexPattern` | 60.0% |
-| 🟡 `037.go:runVar037` | 84.6% |
+| 🔴 `037.go:runVar037` | 77.8% |
 | 🔴 `037.go:checkMapCollectionPatterns` | 76.9% |
-| 🔴 `037.go:reportMapCollectionPattern` | 60.0% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` - 98.0%
 
@@ -331,4 +325,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-02 11:30:32*
+*Généré le: 2026-01-02 12:09:37*

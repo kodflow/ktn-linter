@@ -50,11 +50,7 @@ func runVar019(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
 		return nil, nil
@@ -99,9 +95,9 @@ func collectTypesWithValueReceivers(_pass *analysis.Pass, insp *inspector.Inspec
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Cast en fonction
-		funcDecl, ok := n.(*ast.FuncDecl)
+		funcDecl := n.(*ast.FuncDecl)
 		// Vérification de la condition
-		if !ok || funcDecl.Recv == nil {
+		if funcDecl.Recv == nil {
 			// Traitement
 			return
 		}
@@ -153,12 +149,7 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 		}
 
 		// Cast en type spec
-		typeSpec, ok := n.(*ast.TypeSpec)
-		// Vérification de la condition
-		if !ok {
-			// Traitement
-			return
-		}
+		typeSpec := n.(*ast.TypeSpec)
 
 		// Vérification que c'est une struct
 		structType, ok := typeSpec.Type.(*ast.StructType)
@@ -214,9 +205,9 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 		}
 
 		// Cast en fonction
-		funcDecl, ok := n.(*ast.FuncDecl)
+		funcDecl := n.(*ast.FuncDecl)
 		// Vérification de la condition
-		if !ok || funcDecl.Recv == nil {
+		if funcDecl.Recv == nil {
 			// Traitement
 			return
 		}
@@ -270,9 +261,9 @@ func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
 		}
 
 		// Cast en fonction
-		funcDecl, ok := n.(*ast.FuncDecl)
+		funcDecl := n.(*ast.FuncDecl)
 		// Vérification de la condition
-		if !ok || funcDecl.Type.Params == nil {
+		if funcDecl.Type.Params == nil {
 			// Traitement
 			return
 		}
@@ -319,12 +310,7 @@ func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
 		}
 
 		// Cast en assignation
-		assign, ok := n.(*ast.AssignStmt)
-		// Vérification de la condition
-		if !ok {
-			// Traitement
-			return
-		}
+		assign := n.(*ast.AssignStmt)
 
 		// Vérification de chaque assignation
 		for i, rhs := range assign.Rhs {

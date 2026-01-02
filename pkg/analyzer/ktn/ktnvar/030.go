@@ -59,11 +59,7 @@ func runVar030(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Check append([]T(nil), s...) pattern
 	checkAppendNilPattern(pass, insp, cfg)
@@ -89,17 +85,11 @@ func checkAppendNilPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *
 
 	// Traverse all call expressions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		call := n.(*ast.CallExpr)
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar030, pass.Fset.Position(n.Pos()).Filename) {
 			// File excluded
-			return
-		}
-
-		// Cast to call expression
-		call, ok := n.(*ast.CallExpr)
-		// Check if valid
-		if !ok {
-			// Not a call expression
 			return
 		}
 
@@ -202,17 +192,11 @@ func checkMakeCopyPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *c
 
 	// Traverse all block statements
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		block := n.(*ast.BlockStmt)
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar030, pass.Fset.Position(n.Pos()).Filename) {
 			// File excluded
-			return
-		}
-
-		// Cast to block statement
-		block, ok := n.(*ast.BlockStmt)
-		// Check if valid
-		if !ok {
-			// Not a block statement
 			return
 		}
 

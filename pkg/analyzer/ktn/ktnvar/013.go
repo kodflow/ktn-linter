@@ -54,11 +54,7 @@ func runVar013(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
 		return nil, nil
@@ -69,11 +65,7 @@ func runVar013(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename

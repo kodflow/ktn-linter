@@ -45,10 +45,7 @@ func runVar007(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// We need to track function bodies to check local variables only
 	nodeFilter := []ast.Node{
@@ -56,11 +53,7 @@ func runVar007(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl, ok := n.(*ast.FuncDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		funcDecl := n.(*ast.FuncDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar007, pass.Fset.Position(n.Pos()).Filename) {

@@ -55,11 +55,7 @@ func runVar015(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Types de nœuds à analyser
 	nodeFilter := []ast.Node{
@@ -90,9 +86,9 @@ func runVar015(pass *analysis.Pass) (any, error) {
 //   - maxConversions: nombre max de conversions autorisées
 func checkFuncForRepeatedConversions(pass *analysis.Pass, n ast.Node, maxConversions int) {
 	// Cast en fonction
-	funcDecl, ok := n.(*ast.FuncDecl)
+	funcDecl := n.(*ast.FuncDecl)
 	// Vérification de la condition
-	if !ok || funcDecl.Body == nil {
+	if funcDecl.Body == nil {
 		// Traitement
 		return
 	}

@@ -47,10 +47,7 @@ func runVar024(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Types de noeuds a analyser
 	nodeFilter := []ast.Node{
@@ -66,12 +63,7 @@ func runVar024(pass *analysis.Pass) (any, error) {
 		}
 
 		// Verification du type de noeud
-		interfaceType, ok := n.(*ast.InterfaceType)
-		// Verification de la condition
-		if !ok {
-			// Pas un interface type
-			return
-		}
+		interfaceType := n.(*ast.InterfaceType)
 
 		// Verification si c'est une interface vide
 		checkEmptyInterface(pass, interfaceType)

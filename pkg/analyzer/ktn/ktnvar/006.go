@@ -107,11 +107,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
@@ -124,11 +120,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 			// File is excluded
 			return
 		}
-		genDecl, ok := n.(*ast.GenDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		genDecl := n.(*ast.GenDecl)
 
 		// Only check var declarations
 		if genDecl.Tok != token.VAR {

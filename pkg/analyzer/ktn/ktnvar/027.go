@@ -45,10 +45,7 @@ func runVar027(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Filter for ForStmt nodes
 	nodeFilter := []ast.Node{
@@ -56,11 +53,7 @@ func runVar027(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		forStmt, ok := n.(*ast.ForStmt)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		forStmt := n.(*ast.ForStmt)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar027, pass.Fset.Position(n.Pos()).Filename) {

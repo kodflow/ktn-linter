@@ -47,22 +47,14 @@ func runVar003(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	nodeFilter := []ast.Node{
 		(*ast.GenDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl, ok := n.(*ast.GenDecl)
-		// Defensive: ensure node type matches
-		if !ok {
-			return
-		}
+		genDecl := n.(*ast.GenDecl)
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar003, pass.Fset.Position(n.Pos()).Filename) {

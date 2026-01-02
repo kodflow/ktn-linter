@@ -301,17 +301,6 @@ func Test_runVar015_fileExcluded(t *testing.T) {
 	}
 }
 
-// Test_checkFuncForRepeatedConversions_notFuncDecl tests with non-FuncDecl.
-func Test_checkFuncForRepeatedConversions_notFuncDecl(t *testing.T) {
-	pass := &analysis.Pass{
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	// Test with non-FuncDecl node
-	checkFuncForRepeatedConversions(pass, &ast.Ident{Name: "x"}, 2)
-	// Should not panic
-}
-
 // Test_checkFuncForRepeatedConversions_nilBody tests with nil body.
 func Test_checkFuncForRepeatedConversions_nilBody(t *testing.T) {
 	pass := &analysis.Pass{

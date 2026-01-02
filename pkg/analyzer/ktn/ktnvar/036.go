@@ -49,11 +49,7 @@ func runVar036(pass *analysis.Pass) (any, error) {
 
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
-	insp, ok := inspAny.(*inspector.Inspector)
-	// Verify inspector is available
-	if !ok {
-		return nil, nil
-	}
+	insp := inspAny.(*inspector.Inspector)
 
 	// Node types to analyze
 	nodeFilter := []ast.Node{
@@ -69,9 +65,9 @@ func runVar036(pass *analysis.Pass) (any, error) {
 		}
 
 		// Cast to function declaration
-		funcDecl, ok := n.(*ast.FuncDecl)
+		funcDecl := n.(*ast.FuncDecl)
 		// Check if valid
-		if !ok || funcDecl.Body == nil {
+		if funcDecl.Body == nil {
 			// Not a function declaration or no body
 			return
 		}
