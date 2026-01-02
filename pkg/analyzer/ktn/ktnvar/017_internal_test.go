@@ -146,3 +146,110 @@ func Test_runVar017_fileExcluded(t *testing.T) {
 		})
 	}
 }
+
+// Test_runVar017_nilInspector tests runVar017 with nil inspector.
+func Test_runVar017_nilInspector(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			fset := token.NewFileSet()
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: nil, // nil inspector
+				},
+			}
+
+			result, err := runVar017(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar017() error = %v", err)
+			}
+			// Result should be nil
+			if result != nil {
+				t.Errorf("runVar017() = %v, expected nil", result)
+			}
+		})
+	}
+}
+
+// Test_runVar017_nilFset tests runVar017 with nil Fset.
+func Test_runVar017_nilFset(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			code := `package test`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			pass := &analysis.Pass{
+				Fset: nil, // nil Fset
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+			}
+
+			result, err := runVar017(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar017() error = %v", err)
+			}
+			// Result should be nil
+			if result != nil {
+				t.Errorf("runVar017() = %v, expected nil", result)
+			}
+		})
+	}
+}
+
+// Test_runVar017_wrongInspectorType tests runVar017 with wrong inspector type.
+func Test_runVar017_wrongInspectorType(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"validation"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+
+			fset := token.NewFileSet()
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: "not an inspector", // wrong type
+				},
+			}
+
+			result, err := runVar017(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar017() error = %v", err)
+			}
+			// Result should be nil
+			if result != nil {
+				t.Errorf("runVar017() = %v, expected nil", result)
+			}
+		})
+	}
+}

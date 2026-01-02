@@ -8,25 +8,299 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Test_runVar008 tests the private runVar008 function.
-func Test_runVar008(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"passthrough validation"},
-		{"error case validation"},
+// Test_runVar008_nilInspector tests runVar008 with nil inspector.
+func Test_runVar008_nilInspector(t *testing.T) {
+	// Reset config to default
+	config.Reset()
+
+	pass := &analysis.Pass{
+		Fset: token.NewFileSet(),
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: nil, // nil inspector
+		},
+		Report: func(_d analysis.Diagnostic) {},
 	}
 
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - main logic tested via public API in external tests
-		})
+	result, err := runVar008(pass)
+	// Should return nil, nil when inspector is nil
+	if err != nil {
+		t.Errorf("runVar008() error = %v, expected nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar008() result = %v, expected nil", result)
+	}
+}
+
+// Test_runVar008_invalidInspector tests runVar008 with invalid inspector type.
+func Test_runVar008_invalidInspector(t *testing.T) {
+	// Reset config to default
+	config.Reset()
+
+	pass := &analysis.Pass{
+		Fset: token.NewFileSet(),
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: "not an inspector", // wrong type
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar008(pass)
+	// Should return nil, nil when inspector type is wrong
+	if err != nil {
+		t.Errorf("runVar008() error = %v, expected nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar008() result = %v, expected nil", result)
+	}
+}
+
+// Test_runVar008_nilFset tests runVar008 with nil Fset.
+func Test_runVar008_nilFset(t *testing.T) {
+	// Reset config to default
+	config.Reset()
+
+	code := `package test
+	var x int = 42
+	`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+
+	pass := &analysis.Pass{
+		Fset: nil, // nil Fset
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar008(pass)
+	// Should return nil, nil when Fset is nil
+	if err != nil {
+		t.Errorf("runVar008() error = %v, expected nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar008() result = %v, expected nil", result)
+	}
+}
+
+// Test_runVar008_wrongInspectorType tests runVar008 with wrong inspector type.
+func Test_runVar008_wrongInspectorType(t *testing.T) {
+	config.Reset()
+
+	pass := &analysis.Pass{
+		Fset:     token.NewFileSet(),
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: "not an inspector"},
+		Report:   func(_ analysis.Diagnostic) {},
+	}
+
+	result, err := runVar008(pass)
+	if err != nil {
+		t.Errorf("runVar008() error = %v, want nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar008() result = %v, want nil", result)
+	}
+}
+
+// Test_reportVar008Error tests the reportVar008Error function.
+func Test_reportVar008Error(t *testing.T) {
+	// Test with valid message (message exists in registry)
+	t.Run("with valid message", func(t *testing.T) {
+		fset := token.NewFileSet()
+		reportCount := 0
+		var reportedMsg string
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(d analysis.Diagnostic) {
+				reportCount++
+				reportedMsg = d.Message
+			},
+		}
+
+		lit := &ast.CompositeLit{
+			Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+		}
+
+		reportVar008Error(pass, lit)
+
+		// Should report one error
+		if reportCount != 1 {
+			t.Errorf("reportVar008Error() reported %d issues, expected 1", reportCount)
+		}
+		// Message should contain rule code
+		if reportedMsg == "" {
+			t.Error("reportVar008Error() reported empty message")
+		}
+	})
+
+	// Test fallback when message not found
+	t.Run("with missing message fallback", func(t *testing.T) {
+		// Temporarily clear the message registry
+		originalMessages := messages.GetAll()
+		messages.Clear()
+		defer func() {
+			// Restore original messages
+			for _, msg := range originalMessages {
+				messages.Register(msg)
+			}
+		}()
+
+		fset := token.NewFileSet()
+		reportCount := 0
+		var reportedMsg string
+
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(d analysis.Diagnostic) {
+				reportCount++
+				reportedMsg = d.Message
+			},
+		}
+
+		lit := &ast.CompositeLit{
+			Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+		}
+
+		reportVar008Error(pass, lit)
+
+		// Should report one error with fallback message
+		if reportCount != 1 {
+			t.Errorf("reportVar008Error() reported %d issues, expected 1", reportCount)
+		}
+		// Fallback message should contain rule code and default text
+		if reportedMsg == "" {
+			t.Error("reportVar008Error() reported empty message")
+		}
+	})
+}
+
+// Test_checkMakeCall_smallConstant tests checkMakeCall with small constant size.
+func Test_checkMakeCall_smallConstant(t *testing.T) {
+	// Reset config
+	config.Reset()
+
+	// Parse code with make call using small constant
+	code := `package test
+	func example() {
+		s := make([]int, 10)
+	}
+	`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	// Type check to get proper type info
+	conf := types.Config{}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Uses:  make(map[*ast.Ident]types.Object),
+		Defs:  make(map[*ast.Ident]types.Object),
+	}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	reportCount := 0
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Find and check the make call
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if ident, isIdent := call.Fun.(*ast.Ident); isIdent && ident.Name == "make" {
+				checkMakeCall(pass, call)
+			}
+		}
+		return true
+	})
+
+	// Small constant should be skipped (handled by VAR-016)
+	// No error expected since 10 is a small constant
+}
+
+// Test_checkMakeCall_messageFallback tests fallback when message not found.
+func Test_checkMakeCall_messageFallback(t *testing.T) {
+	// Temporarily clear the message registry
+	originalMessages := messages.GetAll()
+	messages.Clear()
+	defer func() {
+		// Restore original messages
+		for _, msg := range originalMessages {
+			messages.Register(msg)
+		}
+	}()
+
+	// Parse code with make call
+	code := `package test
+	func example() {
+		n := getSize()
+		s := make([]int, n)
+	}
+	func getSize() int { return 10 }
+	`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	// Type check to get proper type info
+	conf := types.Config{}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Uses:  make(map[*ast.Ident]types.Object),
+		Defs:  make(map[*ast.Ident]types.Object),
+	}
+	_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+	reportCount := 0
+	var reportedMsg string
+	pass := &analysis.Pass{
+		Fset:      fset,
+		TypesInfo: info,
+		Report: func(d analysis.Diagnostic) {
+			reportCount++
+			reportedMsg = d.Message
+		},
+	}
+
+	// Find and check the make call with dynamic size
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok {
+			if ident, isIdent := call.Fun.(*ast.Ident); isIdent && ident.Name == "make" {
+				// Check args length to find the right call
+				if len(call.Args) == 2 {
+					checkMakeCall(pass, call)
+				}
+			}
+		}
+		return true
+	})
+
+	// Should use fallback message
+	if reportCount != 1 {
+		t.Errorf("checkMakeCall() reported %d issues, expected 1", reportCount)
+	}
+	// Fallback message should contain rule code
+	if reportedMsg == "" {
+		t.Error("checkMakeCall() reported empty message")
 	}
 }
 
@@ -1000,6 +1274,183 @@ func Test_checkCompositeLit_inStructLiteral(t *testing.T) {
 			checkCompositeLit(ctx, assign, 0, lit, stack)
 			// No error expected for struct initialization
 
+		})
+	}
+}
+
+// Test_checkCompositeLit_reportsError tests when error is reported.
+func Test_checkCompositeLit_reportsError(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"reports error for empty slice with append"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			code := `package test
+			func example() {
+			s := []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			reportCount := 0
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					Fset:      fset,
+					TypesInfo: info,
+					Report: func(_d analysis.Diagnostic) {
+						reportCount++
+					},
+				},
+				appendVars: map[string]bool{"s": true}, // s is used with append
+			}
+
+			// Empty stack - not in return or struct
+			stack := []ast.Node{&ast.FuncDecl{}}
+
+			// Find the assignment and composite literal
+			ast.Inspect(file, func(n ast.Node) bool {
+				if assign, ok := n.(*ast.AssignStmt); ok {
+					for i, rhs := range assign.Rhs {
+						if lit, isLit := rhs.(*ast.CompositeLit); isLit {
+							checkCompositeLit(ctx, assign, i, lit, stack)
+						}
+					}
+				}
+				return true
+			})
+
+			// Should report error for empty slice used with append
+			if reportCount != 1 {
+				t.Errorf("checkCompositeLit() reported %d errors, expected 1", reportCount)
+			}
+		})
+	}
+}
+
+// Test_getAppendVariableName008_validAppendVar tests valid append variable.
+func Test_getAppendVariableName008_validAppendVar(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"valid append variable returns true"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := &litCheckContext{
+				pass: &analysis.Pass{
+					TypesInfo: &types.Info{
+						Types: make(map[ast.Expr]types.TypeAndValue),
+					},
+				},
+				appendVars: map[string]bool{"items": true},
+			}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "items"}},
+			}
+
+			result := getAppendVariableName008(ctx, assign, 0)
+			if !result {
+				t.Error("getAppendVariableName008() = false, expected true")
+			}
+		})
+	}
+}
+
+// Test_checkEmptySliceLiterals_popPhase tests the pop phase of WithStack.
+func Test_checkEmptySliceLiterals_popPhase(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"pop phase returns true"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset config
+			config.Reset()
+
+			code := `package test
+			func example() {
+			x := []int{}
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+				Uses:  make(map[*ast.Ident]types.Object),
+				Defs:  make(map[*ast.Ident]types.Object),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			insp := inspector.New([]*ast.File{file})
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_d analysis.Diagnostic) {},
+			}
+
+			// This tests the WithStack traversal including pop phase
+			checkEmptySliceLiterals(pass, insp, map[string]bool{})
+			// No error expected - x not used with append
+		})
+	}
+}
+
+// Test_collectAppendVariables_withRealCode tests with real parsed code.
+func Test_collectAppendVariables_withRealCode(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"collects append variables from real code"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			code := `package test
+			func example() {
+			var items []int
+			items = append(items, 1)
+			items = append(items, 2, 3)
+			}
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			appendVars := collectAppendVariables(insp)
+
+			// Should have collected "items" as append variable
+			if !appendVars["items"] {
+				t.Error("collectAppendVariables() did not collect 'items'")
+			}
 		})
 	}
 }

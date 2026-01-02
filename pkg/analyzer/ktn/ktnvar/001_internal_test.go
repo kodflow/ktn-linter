@@ -4,9 +4,11 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"strings"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -291,5 +293,183 @@ func Test_runVar001_fileExcluded(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+// Test_runVar001_nilInspector tests runVar001 with nil inspector.
+func Test_runVar001_nilInspector(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	pass := &analysis.Pass{
+		Fset:     token.NewFileSet(),
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: nil},
+	}
+
+	result, err := runVar001(pass)
+	// Should return nil without error
+	if err != nil {
+		t.Errorf("runVar001() error = %v, want nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar001() result = %v, want nil", result)
+	}
+}
+
+// Test_runVar001_nilFset tests runVar001 with nil Fset.
+func Test_runVar001_nilFset(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", "package test", 0)
+	insp := inspector.New([]*ast.File{file})
+
+	pass := &analysis.Pass{
+		Fset:     nil,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+	}
+
+	result, err := runVar001(pass)
+	// Should return nil without error
+	if err != nil {
+		t.Errorf("runVar001() error = %v, want nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar001() result = %v, want nil", result)
+	}
+}
+
+// Test_runVar001_wrongInspectorType tests runVar001 with wrong inspector type.
+func Test_runVar001_wrongInspectorType(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	pass := &analysis.Pass{
+		Fset:     token.NewFileSet(),
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: "not an inspector"},
+	}
+
+	result, err := runVar001(pass)
+	// Should return nil without error
+	if err != nil {
+		t.Errorf("runVar001() error = %v, want nil", err)
+	}
+	if result != nil {
+		t.Errorf("runVar001() result = %v, want nil", result)
+	}
+}
+
+// Test_checkVarSpec_withBlankIdentifier tests checkVarSpec skips blank identifier.
+func Test_checkVarSpec_withBlankIdentifier(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Parse code with multiple vars including blank identifier
+	code := `package test
+var x, _, y = 1, 2, 3
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar001(pass)
+
+	// Should report 2 issues (x and y, not _)
+	if reportCount != 2 {
+		t.Errorf("runVar001() reported %d issues, expected 2", reportCount)
+	}
+}
+
+// Test_checkVarSpec_fallbackMessage tests checkVarSpec with missing message.
+func Test_checkVarSpec_fallbackMessage(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Temporarily remove the message to test fallback
+	msg, _ := messages.Get(ruleCodeVar001)
+	messages.Unregister(ruleCodeVar001)
+	defer messages.Register(msg)
+
+	// Parse code without explicit type
+	code := `package test
+var missingType = 42
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+	var lastMsg string
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report: func(d analysis.Diagnostic) {
+			reportCount++
+			lastMsg = d.Message
+		},
+	}
+
+	_, _ = runVar001(pass)
+
+	// Should report one issue with fallback message
+	if reportCount != 1 {
+		t.Errorf("runVar001() reported %d issues, expected 1", reportCount)
+	}
+	// Message should contain fallback text
+	if !strings.Contains(lastMsg, "type explicite requis") {
+		t.Errorf("expected fallback message, got: %s", lastMsg)
+	}
+}
+
+// Test_checkVarSpec_fallbackMessageMultiple tests fallback with multiple names.
+func Test_checkVarSpec_fallbackMessageMultiple(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	// Temporarily remove the message to test fallback
+	msg, _ := messages.Get(ruleCodeVar001)
+	messages.Unregister(ruleCodeVar001)
+	defer messages.Register(msg)
+
+	// Parse code with multiple names
+	code := `package test
+var x, y = 1, 2
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:     fset,
+		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+		Report:   func(_ analysis.Diagnostic) { reportCount++ },
+	}
+
+	_, _ = runVar001(pass)
+
+	// Should report 2 issues (x and y)
+	if reportCount != 2 {
+		t.Errorf("runVar001() reported %d issues, expected 2", reportCount)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -210,6 +211,186 @@ func Test_isStringConcatenation_notBasicType(t *testing.T) {
 	}
 }
 
+// Test_runVar011_nilInspector tests runVar011 with nil inspector.
+func Test_runVar011_nilInspector(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil inspector"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: nil,
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			result, err := runVar011(pass)
+			// Should return nil without error
+			if err != nil {
+				t.Errorf("runVar011() error = %v", err)
+			}
+			if result != nil {
+				t.Errorf("runVar011() result = %v, expected nil", result)
+			}
+		})
+	}
+}
+
+// Test_runVar011_nilFset tests runVar011 with nil Fset.
+func Test_runVar011_nilFset(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil Fset"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			defer config.Reset()
+
+			code := `package test
+			var x int = 42
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			pass := &analysis.Pass{
+				Fset: nil,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			result, err := runVar011(pass)
+			// Should return nil without error
+			if err != nil {
+				t.Errorf("runVar011() error = %v", err)
+			}
+			if result != nil {
+				t.Errorf("runVar011() result = %v, expected nil", result)
+			}
+		})
+	}
+}
+
+// Test_runVar011_nilTypesInfo tests runVar011 with nil TypesInfo.
+func Test_runVar011_nilTypesInfo(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil TypesInfo"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			defer config.Reset()
+
+			code := `package test
+			var x int = 42
+			`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: nil,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			result, err := runVar011(pass)
+			// Should return nil without error
+			if err != nil {
+				t.Errorf("runVar011() error = %v", err)
+			}
+			if result != nil {
+				t.Errorf("runVar011() result = %v, expected nil", result)
+			}
+		})
+	}
+}
+
+// Test_checkStringConcatInLoop_nilBody tests with nil loop body.
+func Test_checkStringConcatInLoop_nilBody(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"nil body"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			// ForStmt with nil body
+			forStmt := &ast.ForStmt{Body: nil}
+			checkStringConcatInLoop(pass, forStmt)
+			// Should return early without panic
+
+			// RangeStmt with nil body
+			rangeStmt := &ast.RangeStmt{Body: nil}
+			checkStringConcatInLoop(pass, rangeStmt)
+			// Should return early without panic
+		})
+	}
+}
+
+// Test_isStringConcatenation_emptyLhs tests with empty Lhs.
+func Test_isStringConcatenation_emptyLhs(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"empty Lhs"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				Report: func(_d analysis.Diagnostic) {},
+			}
+
+			assign := &ast.AssignStmt{
+				Lhs: []ast.Expr{},
+			}
+
+			result := isStringConcatenation(pass, assign)
+			if result {
+				t.Errorf("isStringConcatenation() = true, expected false for empty Lhs")
+			}
+		})
+	}
+}
+
 // Test_runVar011_disabled tests runVar011 with disabled rule.
 func Test_runVar011_disabled(t *testing.T) {
 	tests := []struct {
@@ -324,6 +505,72 @@ func Test_runVar011_fileExcluded(t *testing.T) {
 				t.Errorf("runVar011() reported %d issues, expected 0 when file excluded", reportCount)
 			}
 
+		})
+	}
+}
+
+// Test_checkStringConcatInLoop_fallbackMessage tests fallback message when message missing.
+func Test_checkStringConcatInLoop_fallbackMessage(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"fallback message"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original message and restore after test
+			originalMsg, hasOriginal := messages.Get("KTN-VAR-011")
+			messages.Unregister("KTN-VAR-011")
+			defer func() {
+				if hasOriginal {
+					messages.Register(originalMsg)
+				}
+			}()
+
+			// Parse code with string concat in loop
+			code := `package test
+func example() {
+	s := ""
+	for i := 0; i < 10; i++ {
+		s += "x"
+	}
+	_ = s
+}`
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			// Type check
+			conf := types.Config{}
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			_, _ = conf.Check("test", fset, []*ast.File{file}, info)
+
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
+
+			// Find ForStmt and test
+			ast.Inspect(file, func(n ast.Node) bool {
+				if forStmt, ok := n.(*ast.ForStmt); ok {
+					checkStringConcatInLoop(pass, forStmt)
+				}
+				return true
+			})
+
+			// Should report with fallback message
+			if reportCount != 1 {
+				t.Errorf("checkStringConcatInLoop() reported %d, expected 1", reportCount)
+			}
 		})
 	}
 }

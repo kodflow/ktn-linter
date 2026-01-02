@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -388,6 +389,161 @@ func Test_runVar012_fileExcluded(t *testing.T) {
 	}
 }
 
+// Test_runVar012_nilInspector tests runVar012 with nil inspector.
+func Test_runVar012_nilInspector(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: nil, // nil inspector
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar012(pass)
+	// Should return nil, nil for nil inspector
+	if err != nil {
+		t.Errorf("runVar012() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar012() = %v, expected nil", result)
+	}
+}
+
+// Test_runVar012_invalidInspector tests runVar012 with invalid inspector type.
+func Test_runVar012_invalidInspector(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: "invalid", // wrong type
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar012(pass)
+	// Should return nil, nil for invalid inspector
+	if err != nil {
+		t.Errorf("runVar012() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar012() = %v, expected nil", result)
+	}
+}
+
+// Test_runVar012_nilFset tests runVar012 with nil Fset.
+func Test_runVar012_nilFset(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	code := `package test
+	func foo() {
+		for i := 0; i < 10; i++ {
+			x := make([]int, 10)
+			_ = x
+		}
+	}
+	`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	insp := inspector.New([]*ast.File{file})
+
+	pass := &analysis.Pass{
+		Fset: nil, // nil Fset
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar012(pass)
+	// Should return nil, nil for nil Fset
+	if err != nil {
+		t.Errorf("runVar012() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar012() = %v, expected nil", result)
+	}
+}
+
+// Test_checkAssignForAlloc_withAllocation tests allocation detection with reporting.
+func Test_checkAssignForAlloc_withAllocation(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	reportCount := 0
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Test with slice allocation
+	assign := &ast.AssignStmt{
+		Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+		Rhs: []ast.Expr{
+			&ast.CompositeLit{
+				Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+			},
+		},
+	}
+	checkAssignForAlloc(pass, assign)
+
+	// Should report allocation
+	if reportCount != 1 {
+		t.Errorf("checkAssignForAlloc() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_checkDeclForAlloc_withAllocation tests allocation detection in decl.
+func Test_checkDeclForAlloc_withAllocation(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	reportCount := 0
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	// Test with slice allocation in var declaration
+	decl := &ast.DeclStmt{
+		Decl: &ast.GenDecl{
+			Tok: token.VAR,
+			Specs: []ast.Spec{
+				&ast.ValueSpec{
+					Names: []*ast.Ident{{Name: "x"}},
+					Values: []ast.Expr{
+						&ast.CompositeLit{
+							Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+						},
+					},
+				},
+			},
+		},
+	}
+	checkDeclForAlloc(pass, decl)
+
+	// Should report allocation
+	if reportCount != 1 {
+		t.Errorf("checkDeclForAlloc() reported %d, expected 1", reportCount)
+	}
+}
+
 // Test_checkLoopBodyForAlloc tests the checkLoopBodyForAlloc private function.
 func Test_checkLoopBodyForAlloc(t *testing.T) {
 	tests := []struct {
@@ -484,4 +640,149 @@ func Test_checkStmtForAlloc_declStmt(t *testing.T) {
 
 		})
 	}
+}
+
+// Test_checkAssignForAlloc_fallbackMessage tests fallback message when message missing.
+func Test_checkAssignForAlloc_fallbackMessage(t *testing.T) {
+	t.Run("fallback message", func(t *testing.T) {
+		// Save original message and restore after test
+		originalMsg, hasOriginal := messages.Get("KTN-VAR-012")
+		messages.Unregister("KTN-VAR-012")
+		defer func() {
+			if hasOriginal {
+				messages.Register(originalMsg)
+			}
+		}()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Test with slice allocation
+		assign := &ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			Rhs: []ast.Expr{
+				&ast.CompositeLit{
+					Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+				},
+			},
+		}
+		checkAssignForAlloc(pass, assign)
+
+		// Should report with fallback message
+		if reportCount != 1 {
+			t.Errorf("checkAssignForAlloc() reported %d, expected 1", reportCount)
+		}
+	})
+}
+
+// Test_checkDeclForAlloc_fallbackMessage tests fallback message when message missing.
+func Test_checkDeclForAlloc_fallbackMessage(t *testing.T) {
+	t.Run("fallback message", func(t *testing.T) {
+		// Save original message and restore after test
+		originalMsg, hasOriginal := messages.Get("KTN-VAR-012")
+		messages.Unregister("KTN-VAR-012")
+		defer func() {
+			if hasOriginal {
+				messages.Register(originalMsg)
+			}
+		}()
+
+		reportCount := 0
+		fset := token.NewFileSet()
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Test with slice allocation in var declaration
+		decl := &ast.DeclStmt{
+			Decl: &ast.GenDecl{
+				Tok: token.VAR,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "x"}},
+						Values: []ast.Expr{
+							&ast.CompositeLit{
+								Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+							},
+						},
+					},
+				},
+			},
+		}
+		checkDeclForAlloc(pass, decl)
+
+		// Should report with fallback message
+		if reportCount != 1 {
+			t.Errorf("checkDeclForAlloc() reported %d, expected 1", reportCount)
+		}
+	})
+}
+
+// Test_checkAssignForAlloc_multipleRhs tests with multiple rhs allocations.
+func Test_checkAssignForAlloc_multipleRhs(t *testing.T) {
+	t.Run("multiple rhs", func(t *testing.T) {
+		reportCount := 0
+		fset := token.NewFileSet()
+		pass := &analysis.Pass{
+			Fset: fset,
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Test with multiple allocations on rhs
+		assign := &ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "x"}, &ast.Ident{Name: "y"}},
+			Rhs: []ast.Expr{
+				&ast.CompositeLit{
+					Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
+				},
+				&ast.CompositeLit{
+					Type: &ast.MapType{
+						Key:   &ast.Ident{Name: "string"},
+						Value: &ast.Ident{Name: "int"},
+					},
+				},
+			},
+		}
+		checkAssignForAlloc(pass, assign)
+
+		// Should report both allocations
+		if reportCount != 2 {
+			t.Errorf("checkAssignForAlloc() reported %d, expected 2", reportCount)
+		}
+	})
+}
+
+// Test_checkAssignForAlloc_noAllocation tests with no allocation on rhs.
+func Test_checkAssignForAlloc_noAllocation(t *testing.T) {
+	t.Run("no allocation", func(t *testing.T) {
+		reportCount := 0
+		pass := &analysis.Pass{
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		// Test with no allocation
+		assign := &ast.AssignStmt{
+			Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+			Rhs: []ast.Expr{&ast.Ident{Name: "y"}},
+		}
+		checkAssignForAlloc(pass, assign)
+
+		// Should not report
+		if reportCount != 0 {
+			t.Errorf("checkAssignForAlloc() reported %d, expected 0", reportCount)
+		}
+	})
 }

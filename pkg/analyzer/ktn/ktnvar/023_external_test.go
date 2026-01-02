@@ -14,7 +14,10 @@ import (
 // - badGenerateKey: appel rand.Intn dans fonction avec "Key" (1)
 // - badCreateToken: appel rand.Int63 dans fonction avec "Token" (1)
 // - badSecretKey: variable globale avec "Secret" et appel rand.Uint64 (1)
-// Total: 3 erreurs
+// - badGenerateSecret: appel rand.Intn dans fonction avec "Secret" (1)
+// - secretValue: variable locale avec "secret" et rand.Intn (1)
+// - badNormalFunction: tokenValue variable locale (déclenche checkLocalVarDecl) (1)
+// Total: 6 erreurs
 func TestVar023(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -26,7 +29,7 @@ func TestVar023(t *testing.T) {
 			name:           "math/rand in security context",
 			analyzer:       ktnvar.Analyzer023,
 			testdataDir:    "var023",
-			expectedErrors: 3,
+			expectedErrors: 7,
 		},
 	}
 

@@ -99,6 +99,36 @@ func Get(code string) (Message, bool) {
 	return msg, ok
 }
 
+// GetAll retourne tous les messages enregistrés.
+// Utilisé principalement pour les tests.
+//
+// Returns:
+//   - []Message: liste de tous les messages
+func GetAll() []Message {
+	result := make([]Message, 0, len(registry))
+	// Parcourir le registre
+	for _, msg := range registry {
+		result = append(result, msg)
+	}
+	// Retour des messages
+	return result
+}
+
+// Clear supprime tous les messages du registre.
+// Utilisé principalement pour les tests.
+func Clear() {
+	registry = make(map[string]Message, initialRegistryCapacity)
+}
+
+// Unregister supprime un message du registre par code.
+// Utilisé principalement pour les tests.
+//
+// Params:
+//   - code: code de la règle à supprimer
+func Unregister(code string) {
+	delete(registry, code)
+}
+
 // init enregistre tous les messages.
 func init() {
 	// Enregistrer tous les messages

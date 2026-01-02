@@ -181,6 +181,23 @@ func TestCheckOrderedUsage(t *testing.T) {
 				Body: &ast.BlockStmt{List: nil},
 			},
 		},
+		{
+			name: "params with non-any type (empty allNames)",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "x"}},
+								Type:  &ast.Ident{Name: "int"},
+							},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{List: nil},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -189,6 +206,130 @@ func TestCheckOrderedUsage(t *testing.T) {
 			checkOrderedUsage(nil, tt.funcDecl, anyTypeParams)
 		})
 	}
+}
+
+// TestCheckOrderedUsageEmptyAllNames tests checkOrderedUsage with empty allNames.
+func TestCheckOrderedUsageEmptyAllNames(t *testing.T) {
+	emptyAnyTypeParams := map[string]bool{}
+
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "int"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{List: nil},
+	}
+
+	// Should return early when allNames is empty
+	checkOrderedUsage(nil, funcDecl, emptyAnyTypeParams)
+}
+
+// TestCheckOrderedUsageWithBinaryExprNotAnyType tests checkOrderedUsage with binary expressions
+// that don't use any type (to avoid nil pass panic).
+func TestCheckOrderedUsageWithBinaryExprNotAnyType(t *testing.T) {
+	anyTypeParams := map[string]bool{"T": true}
+
+	// Function with ordered comparison but using non-T type variable
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "T"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.BinaryExpr{
+						X:  &ast.Ident{Name: "z"},
+						Op: token.LSS,
+						Y:  &ast.Ident{Name: "w"},
+					},
+				},
+			},
+		},
+	}
+
+	// Test with nil pass - should not panic (no any type used)
+	checkOrderedUsage(nil, funcDecl, anyTypeParams)
+}
+
+// TestCheckOrderedUsageNonOrderedOp tests checkOrderedUsage with non-ordered operators.
+func TestCheckOrderedUsageNonOrderedOp(t *testing.T) {
+	anyTypeParams := map[string]bool{"T": true}
+
+	// Function with non-ordered comparison (EQL)
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "T"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.BinaryExpr{
+						X:  &ast.Ident{Name: "x"},
+						Op: token.EQL,
+						Y:  &ast.Ident{Name: "x"},
+					},
+				},
+			},
+		},
+	}
+
+	// Test should not report for non-ordered operator
+	checkOrderedUsage(nil, funcDecl, anyTypeParams)
+}
+
+// TestCheckOrderedUsageNonBinaryNode tests checkOrderedUsage with non-binary AST nodes.
+func TestCheckOrderedUsageNonBinaryNode(t *testing.T) {
+	anyTypeParams := map[string]bool{"T": true}
+
+	// Function with non-binary statements
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "T"},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.CallExpr{
+						Fun: &ast.Ident{Name: "println"},
+					},
+				},
+			},
+		},
+	}
+
+	// Test with nil pass - should not panic (non-binary node)
+	checkOrderedUsage(nil, funcDecl, anyTypeParams)
 }
 
 func TestCollectLocalVarsWithAnyType(t *testing.T) {
@@ -297,6 +438,19 @@ func TestExtractFromDeclStmt(t *testing.T) {
 						&ast.ValueSpec{
 							Names: []*ast.Ident{{Name: "x"}},
 							Type:  &ast.Ident{Name: "int"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "GenDecl with ValueSpec nil type",
+			declStmt: &ast.DeclStmt{
+				Decl: &ast.GenDecl{
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names: []*ast.Ident{{Name: "x"}},
+							Type:  nil,
 						},
 					},
 				},
@@ -531,6 +685,16 @@ func TestReportIfUsesAnyTypeParamOrdered(t *testing.T) {
 			reported:   map[string]bool{"foo": true},
 			expectCall: false,
 		},
+		{
+			name: "operand uses any type with nil pass",
+			binaryExpr: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "x"},
+				Y:  &ast.Ident{Name: "y"},
+				Op: token.ADD,
+			},
+			reported:   make(map[string]bool),
+			expectCall: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -542,6 +706,74 @@ func TestReportIfUsesAnyTypeParamOrdered(t *testing.T) {
 			reportIfUsesAnyTypeParamOrdered(nil, funcDecl, tt.binaryExpr, paramNames, anyTypeParams, tt.reported)
 		})
 	}
+}
+
+// TestReportIfUsesAnyTypeParamOrderedWithMockPass tests with a mock pass to cover more branches.
+func TestReportIfUsesAnyTypeParamOrderedWithMockPass(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	fset := token.NewFileSet()
+
+	// Create a minimal mock pass
+	mockPass := &analysis.Pass{
+		Fset: fset,
+		Report: func(d analysis.Diagnostic) {
+			// Do nothing - just capture the report
+		},
+	}
+
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "testFunc"},
+	}
+
+	// Test: neither operand uses any type (should return early at line 325-327)
+	paramNames := map[string]string{"x": "T"}
+	anyTypeParams := map[string]bool{"T": true}
+	binaryExpr := &ast.BinaryExpr{
+		X:  &ast.Ident{Name: "z"},
+		Y:  &ast.Ident{Name: "w"},
+		Op: token.ADD,
+	}
+	reported := make(map[string]bool)
+
+	reportIfUsesAnyTypeParamOrdered(mockPass, funcDecl, binaryExpr, paramNames, anyTypeParams, reported)
+	// Should not have marked as reported
+	if reported["testFunc"] {
+		t.Error("Should not have reported when neither operand uses any type")
+	}
+}
+
+// TestReportIfUsesAnyTypeParamOrderedAlreadyReportedWithPass tests the deduplication path.
+func TestReportIfUsesAnyTypeParamOrderedAlreadyReportedWithPass(t *testing.T) {
+	config.Reset()
+	defer config.Reset()
+
+	fset := token.NewFileSet()
+
+	// Create a minimal mock pass
+	mockPass := &analysis.Pass{
+		Fset: fset,
+		Report: func(d analysis.Diagnostic) {
+			t.Error("Should not report when already reported")
+		},
+	}
+
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "testFunc"},
+	}
+
+	// Test: already reported (should return early at line 333-335)
+	paramNames := map[string]string{"x": "T"}
+	anyTypeParams := map[string]bool{"T": true}
+	binaryExpr := &ast.BinaryExpr{
+		X:  &ast.Ident{Name: "x"},
+		Y:  &ast.Ident{Name: "y"},
+		Op: token.ADD,
+	}
+	reported := map[string]bool{"testFunc": true}
+
+	reportIfUsesAnyTypeParamOrdered(mockPass, funcDecl, binaryExpr, paramNames, anyTypeParams, reported)
 }
 
 // TestExtractFromRangeStmtWithValue tests extractFromRangeStmt with various scenarios.

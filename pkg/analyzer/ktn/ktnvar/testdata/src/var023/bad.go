@@ -12,3 +12,13 @@ func badCreateToken() int64 {
 }
 
 var badSecretKey = rand.Uint64() // want "KTN-VAR-023"
+
+func badGenerateSecret() int {
+	var secretValue = rand.Intn(100) // want "KTN-VAR-023"
+	return secretValue
+}
+
+func badNormalFunction() int {
+	var tokenValue = rand.Intn(100) // want "KTN-VAR-023" "KTN-VAR-023"
+	return tokenValue
+}

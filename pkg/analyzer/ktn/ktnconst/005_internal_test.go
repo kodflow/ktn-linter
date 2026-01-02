@@ -12,8 +12,8 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-// Test_runConst001_disabled tests that the rule is skipped when disabled.
-func Test_runConst001_disabled(t *testing.T) {
+// Test_runConst005_disabled tests that the rule is skipped when disabled.
+func Test_runConst005_disabled(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -26,15 +26,15 @@ func Test_runConst001_disabled(t *testing.T) {
 			// Setup: disable the rule
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
-					"KTN-CONST-001": {Enabled: config.Bool(false)},
+					"KTN-CONST-005": {Enabled: config.Bool(false)},
 				},
 			})
 			defer config.Reset()
 
-			// Parse test code
+			// Parse test code with very long name (should not be reported)
 			src := `package test
-			const x = 42
-			`
+const ThisIsAnExtremelyLongConstantNameThatExceedsTheLimit = 42
+`
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", src, 0)
 			// Check parse error
@@ -58,18 +58,18 @@ func Test_runConst001_disabled(t *testing.T) {
 			}
 
 			// Run the analyzer - should not report anything
-			_, err = runConst001(pass)
+			_, err = runConst005(pass)
 			// Check error
 			if err != nil {
-				t.Errorf("runConst001() error = %v", err)
+				t.Errorf("runConst005() error = %v", err)
 			}
 
 		})
 	}
 }
 
-// Test_runConst001_excludedFile tests that excluded files are skipped.
-func Test_runConst001_excludedFile(t *testing.T) {
+// Test_runConst005_excludedFile tests that excluded files are skipped.
+func Test_runConst005_excludedFile(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -82,7 +82,7 @@ func Test_runConst001_excludedFile(t *testing.T) {
 			// Setup: exclude test.go files
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
-					"KTN-CONST-001": {
+					"KTN-CONST-005": {
 						Enabled: config.Bool(true),
 						Exclude: []string{"*.go"},
 					},
@@ -90,10 +90,10 @@ func Test_runConst001_excludedFile(t *testing.T) {
 			})
 			defer config.Reset()
 
-			// Parse test code
+			// Parse test code with very long name
 			src := `package test
-			const x = 42
-			`
+const ThisIsAnExtremelyLongConstantNameThatExceedsTheLimit = 42
+`
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", src, 0)
 			// Check parse error
@@ -117,34 +117,44 @@ func Test_runConst001_excludedFile(t *testing.T) {
 			}
 
 			// Run the analyzer - should not report anything for excluded file
-			_, err = runConst001(pass)
+			_, err = runConst005(pass)
 			// Check error
 			if err != nil {
-				t.Errorf("runConst001() error = %v", err)
+				t.Errorf("runConst005() error = %v", err)
 			}
 
 		})
 	}
 }
 
-// Test_runConst001 tests the runConst001 private function.
-func Test_runConst001(t *testing.T) {
+// Test_isConstNameTooLong tests the private isConstNameTooLong function.
+func Test_isConstNameTooLong(t *testing.T) {
 	tests := []struct {
-		name string
+		name     string
+		input    string
+		expected bool
 	}{
-		{"validation"},
-		{"error case validation"},
+		{"blank identifier", "_", false},
+		{"short name", "x", false},
+		{"exactly 30 chars", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcd", false},
+		{"31 chars", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcde", true},
+		{"very long name", "ThisIsAnExtremelyLongConstantNameThatExceedsTheLimit", true},
 	}
+
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// Tested via public API
+			result := isConstNameTooLong(tt.input)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isConstNameTooLong(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
 		})
 	}
 }
 
-// Test_runConst001_nonConstDecl tests that non-const declarations are skipped.
-func Test_runConst001_nonConstDecl(t *testing.T) {
+// Test_runConst005_nonConstDecl tests that non-const declarations are skipped.
+func Test_runConst005_nonConstDecl(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -183,10 +193,10 @@ var x = 42
 			}
 
 			// Run the analyzer - should not report anything for var
-			_, err = runConst001(pass)
+			_, err = runConst005(pass)
 			// Check error
 			if err != nil {
-				t.Errorf("runConst001() error = %v", err)
+				t.Errorf("runConst005() error = %v", err)
 			}
 		})
 	}

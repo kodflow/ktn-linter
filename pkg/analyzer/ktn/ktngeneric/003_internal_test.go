@@ -34,6 +34,12 @@ func TestCheckDeprecatedConstraintsImport(t *testing.T) {
 				Path: &ast.BasicLit{Value: `"cmp"`},
 			},
 		},
+		{
+			name: "deprecated constraints import with nil pass",
+			importSpec: &ast.ImportSpec{
+				Path: &ast.BasicLit{Value: `"golang.org/x/exp/constraints"`},
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
@@ -648,5 +649,47 @@ func TestIsSingleInterfaceConstraint(t *testing.T) {
 				t.Errorf("isSingleInterfaceConstraint() = %v, want %v", result, tt.expected)
 			}
 		})
+	}
+}
+
+// TestIsSingleInterfaceConstraintNilTypesInfo tests when pass.TypesInfo is nil.
+func TestIsSingleInterfaceConstraintNilTypesInfo(t *testing.T) {
+	// Pass with nil TypesInfo
+	pass := &analysis.Pass{
+		TypesInfo: nil,
+	}
+	expr := &ast.Ident{Name: "Reader"}
+
+	result := isSingleInterfaceConstraint(pass, expr)
+	// Should return false when TypesInfo is nil
+	if result != false {
+		t.Errorf("isSingleInterfaceConstraint() = %v, want false when TypesInfo is nil", result)
+	}
+}
+
+// TestReportUnnecessaryGenericNilPass tests reportUnnecessaryGeneric with nil pass.
+func TestReportUnnecessaryGenericNilPass(t *testing.T) {
+	funcDecl := &ast.FuncDecl{
+		Name: &ast.Ident{Name: "foo"},
+	}
+	// Should not panic with nil pass
+	reportUnnecessaryGeneric(nil, funcDecl, "T", &ast.Ident{Name: "Reader"})
+}
+
+// TestIsSingleInterfaceConstraintWithTypesInfo tests when TypesInfo.TypeOf returns nil.
+func TestIsSingleInterfaceConstraintWithTypesInfo(t *testing.T) {
+	// Pass with TypesInfo but TypeOf returns nil for unknown expr
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+	}
+	// Unknown identifier not in Types map
+	expr := &ast.Ident{Name: "UnknownType"}
+
+	result := isSingleInterfaceConstraint(pass, expr)
+	// Should return false when typeInfo is nil
+	if result != false {
+		t.Errorf("isSingleInterfaceConstraint() = %v, want false when typeInfo is nil", result)
 	}
 }

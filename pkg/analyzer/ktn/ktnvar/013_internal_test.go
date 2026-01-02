@@ -1,6 +1,7 @@
 package ktnvar
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -548,4 +550,410 @@ func Test_isExternalType009(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test_runVar013_nilInspector tests runVar013 with nil inspector.
+func Test_runVar013_nilInspector(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: nil, // nil inspector
+		},
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar013(pass)
+	// Should return nil, nil for nil inspector
+	if err != nil {
+		t.Errorf("runVar013() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar013() = %v, expected nil", result)
+	}
+}
+
+// Test_runVar013_invalidInspector tests runVar013 with invalid inspector type.
+func Test_runVar013_invalidInspector(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	fset := token.NewFileSet()
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: "invalid", // wrong type
+		},
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar013(pass)
+	// Should return nil, nil for invalid inspector
+	if err != nil {
+		t.Errorf("runVar013() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar013() = %v, expected nil", result)
+	}
+}
+
+// Test_runVar013_nilFset tests runVar013 with nil Fset.
+func Test_runVar013_nilFset(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	code := `package test
+	type Big struct { a, b, c, d, e, f, g, h, i int }
+	func foo(b Big) {}
+	`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	insp := inspector.New([]*ast.File{file})
+
+	pass := &analysis.Pass{
+		Fset: nil, // nil Fset
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar013(pass)
+	// Should return nil, nil for nil Fset
+	if err != nil {
+		t.Errorf("runVar013() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar013() = %v, expected nil", result)
+	}
+}
+
+// Test_runVar013_nilTypesInfo tests runVar013 with nil TypesInfo.
+func Test_runVar013_nilTypesInfo(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	code := `package test
+	func foo(x int) {}
+	`
+	fset := token.NewFileSet()
+	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	insp := inspector.New([]*ast.File{file})
+
+	pass := &analysis.Pass{
+		Fset: fset,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo: nil, // nil TypesInfo
+		Report:    func(_d analysis.Diagnostic) {},
+	}
+
+	result, err := runVar013(pass)
+	// Should return nil, nil for nil TypesInfo
+	if err != nil {
+		t.Errorf("runVar013() error = %v, expected nil", err)
+	}
+	// Verify result
+	if result != nil {
+		t.Errorf("runVar013() = %v, expected nil", result)
+	}
+}
+
+// Test_checkFuncParams009_negativeMaxBytes tests with maxBytes <= 0.
+func Test_checkFuncParams009_negativeMaxBytes(t *testing.T) {
+	reportCount := 0
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+		TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	params := &ast.FieldList{
+		List: []*ast.Field{
+			{
+				Names: []*ast.Ident{{Name: "x"}},
+				Type:  &ast.Ident{Name: "int"},
+			},
+		},
+	}
+
+	// Test with maxBytes = 0 (should be clamped to default)
+	checkFuncParams009(pass, params, 0, false)
+
+	// Test with maxBytes = -1 (should be clamped to default)
+	checkFuncParams009(pass, params, -1, false)
+
+	// Should not report for basic int type
+	if reportCount != 0 {
+		t.Errorf("checkFuncParams009() reported %d, expected 0", reportCount)
+	}
+}
+
+// Test_getStructSize009_nilTypesSizes tests with nil TypesSizes (fallback path).
+func Test_getStructSize009_nilTypesSizes(t *testing.T) {
+	// Create a struct type
+	pkg := types.NewPackage("test", "test")
+	structType := types.NewStruct(
+		[]*types.Var{
+			types.NewVar(0, pkg, "a", types.Typ[types.Int]),
+			types.NewVar(0, pkg, "b", types.Typ[types.Int]),
+			types.NewVar(0, pkg, "c", types.Typ[types.Int]),
+		},
+		nil,
+	)
+	obj := types.NewTypeName(0, pkg, "TestStruct", structType)
+	namedType := types.NewNamed(obj, structType, nil)
+
+	typeIdent := &ast.Ident{Name: "TestStruct"}
+	pass := &analysis.Pass{
+		Pkg: pkg,
+		TypesInfo: &types.Info{
+			Types: map[ast.Expr]types.TypeAndValue{
+				typeIdent: {Type: namedType},
+			},
+		},
+		TypesSizes: nil, // nil TypesSizes - uses fallback
+	}
+
+	size := getStructSize009(pass, typeIdent)
+	// Fallback: 8 bytes per field * 3 fields = 24 bytes
+	if size != 24 {
+		t.Errorf("getStructSize009() = %d, expected 24", size)
+	}
+}
+
+// Test_isExternalType009_nilObjPkg tests with nil obj.Pkg().
+func Test_isExternalType009_nilObjPkg(t *testing.T) {
+	// Create a named type with nil package (universe scope type)
+	obj := types.NewTypeName(0, nil, "error", nil)
+
+	pass := &analysis.Pass{
+		Pkg: types.NewPackage("test", "test"),
+	}
+
+	// Test with named type that has nil Pkg
+	result := isExternalType009(obj.Type(), pass)
+	// Should return false for nil Pkg
+	if result {
+		t.Errorf("isExternalType009() = true, expected false for nil Pkg")
+	}
+}
+
+// Test_checkParamType009_largeStruct tests with large struct that triggers report.
+func Test_checkParamType009_largeStruct(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	// Create a large struct type (>64 bytes)
+	pkg := types.NewPackage("test", "test")
+	fields := make([]*types.Var, 10)
+	// Create 10 int fields = 80 bytes on 64-bit
+	for i := range 10 {
+		fields[i] = types.NewVar(0, pkg, fmt.Sprintf("f%d", i), types.Typ[types.Int64])
+	}
+	structType := types.NewStruct(fields, nil)
+	obj := types.NewTypeName(0, pkg, "BigStruct", structType)
+	namedType := types.NewNamed(obj, structType, nil)
+
+	typeIdent := &ast.Ident{Name: "BigStruct"}
+	reportCount := 0
+	pass := &analysis.Pass{
+		Pkg: pkg,
+		TypesInfo: &types.Info{
+			Types: map[ast.Expr]types.TypeAndValue{
+				typeIdent: {Type: namedType},
+			},
+		},
+		TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	checkParamType009(pass, typeIdent, token.NoPos, 64, false)
+
+	// Should report for large struct
+	if reportCount != 1 {
+		t.Errorf("checkParamType009() reported %d, expected 1", reportCount)
+	}
+}
+
+// Test_checkParamType009_ellipsisNilElt tests with nil Ellipsis.Elt.
+func Test_checkParamType009_ellipsisNilElt(t *testing.T) {
+	pass := &analysis.Pass{
+		TypesInfo: &types.Info{
+			Types: make(map[ast.Expr]types.TypeAndValue),
+		},
+		Report: func(_d analysis.Diagnostic) {},
+	}
+
+	// Test with Ellipsis that has nil Elt
+	typ := &ast.Ellipsis{Elt: nil}
+	checkParamType009(pass, typ, token.NoPos, 64, false)
+	// Should not panic
+}
+
+// Test_getStructSize009_zeroSizeFallback tests when Sizeof returns 0.
+func Test_getStructSize009_zeroSizeFallback(t *testing.T) {
+	// Create an empty struct (0 fields = 0 bytes)
+	pkg := types.NewPackage("test", "test")
+	structType := types.NewStruct(nil, nil) // Empty struct
+	obj := types.NewTypeName(0, pkg, "EmptyStruct", structType)
+	namedType := types.NewNamed(obj, structType, nil)
+
+	typeIdent := &ast.Ident{Name: "EmptyStruct"}
+	pass := &analysis.Pass{
+		Pkg: pkg,
+		TypesInfo: &types.Info{
+			Types: map[ast.Expr]types.TypeAndValue{
+				typeIdent: {Type: namedType},
+			},
+		},
+		// Use real TypesSizes - empty struct returns 0
+		TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+	}
+
+	size := getStructSize009(pass, typeIdent)
+	// Empty struct should return 0 from Sizeof, triggering fallback (0 fields * 8 = 0)
+	if size != 0 {
+		t.Errorf("getStructSize009() = %d, expected 0 for empty struct", size)
+	}
+}
+
+// Test_isExternalType009_nilObj tests with named type that has nil Obj.
+func Test_isExternalType009_nilObj(t *testing.T) {
+	pass := &analysis.Pass{
+		Pkg: types.NewPackage("test", "test"),
+	}
+
+	// Create a named type with nil obj - use interface type as a workaround
+	// The predeclared error type has pkg = nil
+	errorType := types.Universe.Lookup("error").Type()
+
+	result := isExternalType009(errorType, pass)
+	// Error is a named type but from universe scope (pkg = nil)
+	// Should return false for nil Pkg
+	if result {
+		t.Errorf("isExternalType009() = true, expected false for universe type")
+	}
+}
+
+// Test_runVar013_withFuncNoParams tests with function that has nil Params.
+func Test_runVar013_withFuncNoParams(t *testing.T) {
+	// Reset config for clean state
+	config.Reset()
+
+	code := `package test
+	func foo() {}
+	`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	if err != nil {
+		t.Fatalf("failed to parse: %v", err)
+	}
+
+	// Type check the code
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	conf := types.Config{}
+	pkg, _ := conf.Check("test", fset, []*ast.File{file}, info)
+
+	insp := inspector.New([]*ast.File{file})
+	reportCount := 0
+
+	pass := &analysis.Pass{
+		Fset:  fset,
+		Files: []*ast.File{file},
+		Pkg:   pkg,
+		ResultOf: map[*analysis.Analyzer]any{
+			inspect.Analyzer: insp,
+		},
+		TypesInfo:  info,
+		TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+		Report: func(_d analysis.Diagnostic) {
+			reportCount++
+		},
+	}
+
+	result, err := runVar013(pass)
+	if err != nil {
+		t.Errorf("runVar013() error = %v", err)
+	}
+	if result != nil {
+		t.Errorf("runVar013() result = %v, expected nil", result)
+	}
+	// Should not report for function with no params
+	if reportCount != 0 {
+		t.Errorf("runVar013() reported %d, expected 0", reportCount)
+	}
+}
+
+// Test_checkParamType009_fallbackMessage tests fallback message when message missing.
+func Test_checkParamType009_fallbackMessage(t *testing.T) {
+	t.Run("fallback message", func(t *testing.T) {
+		// Save original message and restore after test
+		originalMsg, hasOriginal := messages.Get("KTN-VAR-013")
+		messages.Unregister("KTN-VAR-013")
+		defer func() {
+			if hasOriginal {
+				messages.Register(originalMsg)
+			}
+		}()
+
+		// Create a large struct type (>64 bytes)
+		pkg := types.NewPackage("test", "test")
+		fields := make([]*types.Var, 10)
+		// Create 10 int64 fields = 80 bytes
+		for i := range 10 {
+			fields[i] = types.NewVar(0, pkg, fmt.Sprintf("f%d", i), types.Typ[types.Int64])
+		}
+		structType := types.NewStruct(fields, nil)
+		obj := types.NewTypeName(0, pkg, "BigStruct", structType)
+		namedType := types.NewNamed(obj, structType, nil)
+
+		typeIdent := &ast.Ident{Name: "BigStruct"}
+		reportCount := 0
+		pass := &analysis.Pass{
+			Pkg: pkg,
+			TypesInfo: &types.Info{
+				Types: map[ast.Expr]types.TypeAndValue{
+					typeIdent: {Type: namedType},
+				},
+			},
+			TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+			Report: func(_d analysis.Diagnostic) {
+				reportCount++
+			},
+		}
+
+		checkParamType009(pass, typeIdent, token.NoPos, 64, false)
+
+		// Should report with fallback message
+		if reportCount != 1 {
+			t.Errorf("checkParamType009() reported %d, expected 1", reportCount)
+		}
+	})
 }

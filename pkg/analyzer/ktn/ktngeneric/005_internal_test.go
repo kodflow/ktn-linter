@@ -226,6 +226,17 @@ func TestCheckTypeParamListUnit(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "predeclared name with nil pass",
+			typeParams: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{{Name: "string"}},
+						Type:  &ast.Ident{Name: "any"},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -234,6 +245,13 @@ func TestCheckTypeParamListUnit(t *testing.T) {
 			checkTypeParamList(nil, tt.typeParams)
 		})
 	}
+}
+
+// TestReportShadowingNilPass tests reportShadowing with nil pass.
+func TestReportShadowingNilPass(t *testing.T) {
+	name := &ast.Ident{Name: "string"}
+	// Should not panic with nil pass
+	reportShadowing(nil, name)
 }
 
 // Test_runGeneric005_disabled tests behavior when rule is disabled.
