@@ -144,6 +144,63 @@ func isRangingOverMap(pass *analysis.Pass, rangeStmt *ast.RangeStmt) bool {
 	return isMap
 }
 
+// validateRangeBody037 checks if range has exactly one statement body.
+//
+// Params:
+//   - rangeStmt: range statement to check
+//
+// Returns:
+//   - ast.Stmt: the body statement if valid, nil otherwise
+func validateRangeBody037(rangeStmt *ast.RangeStmt) ast.Stmt {
+	// Check that body exists with exactly one statement
+	if rangeStmt.Body == nil || len(rangeStmt.Body.List) != 1 {
+		// Invalid body
+		return nil
+	}
+	// Return the single statement
+	return rangeStmt.Body.List[0]
+}
+
+// extractAppendCall037 extracts the append call from an assignment statement.
+//
+// Params:
+//   - stmt: statement to analyze
+//
+// Returns:
+//   - *ast.CallExpr: the append call if valid, nil otherwise
+func extractAppendCall037(stmt ast.Stmt) *ast.CallExpr {
+	// Check for assignment statement (x = append(x, k))
+	assignStmt, ok := stmt.(*ast.AssignStmt)
+	// Check if valid
+	if !ok {
+		// Not an assignment
+		return nil
+	}
+
+	// Check that it's a single assignment
+	if len(assignStmt.Rhs) != 1 || len(assignStmt.Lhs) != 1 {
+		// Not a simple assignment
+		return nil
+	}
+
+	// Check that RHS is a call expression
+	appendCall, ok := assignStmt.Rhs[0].(*ast.CallExpr)
+	// Check if valid
+	if !ok {
+		// Not a function call
+		return nil
+	}
+
+	// Check that it's an append call with 2 arguments
+	if !isVar037AppendCall(appendCall) || len(appendCall.Args) != 2 {
+		// Not a valid append call
+		return nil
+	}
+
+	// Return the append call
+	return appendCall
+}
+
 // detectMapCollectionPattern detects if range is collecting keys or values.
 //
 // Params:
@@ -152,46 +209,19 @@ func isRangingOverMap(pass *analysis.Pass, rangeStmt *ast.RangeStmt) bool {
 // Returns:
 //   - string: "keys", "values", or "" if no pattern detected
 func detectMapCollectionPattern(rangeStmt *ast.RangeStmt) string {
-	// Check that body has exactly one statement
-	if rangeStmt.Body == nil || len(rangeStmt.Body.List) != 1 {
-		// Wrong number of statements
+	// Validate range body has exactly one statement
+	stmt := validateRangeBody037(rangeStmt)
+	// Check if body is valid
+	if stmt == nil {
+		// Invalid body
 		return ""
 	}
 
-	// Get the statement (should be an expression or assignment)
-	stmt := rangeStmt.Body.List[0]
-
-	// Check for assignment statement (x = append(x, k))
-	assignStmt, ok := stmt.(*ast.AssignStmt)
-	// Check if valid
-	if !ok {
-		// Not an assignment, might be expression statement
-		return ""
-	}
-
-	// Check that it's a single assignment
-	if len(assignStmt.Rhs) != 1 || len(assignStmt.Lhs) != 1 {
-		// Not a simple assignment
-		return ""
-	}
-
-	// Check that RHS is an append call
-	appendCall, ok := assignStmt.Rhs[0].(*ast.CallExpr)
-	// Check if valid
-	if !ok {
-		// Not a function call
-		return ""
-	}
-
-	// Check that it's an append call
-	if !isVar037AppendCall(appendCall) {
-		// Not an append call
-		return ""
-	}
-
-	// Check that append has exactly 2 arguments
-	if len(appendCall.Args) != 2 {
-		// Wrong number of arguments
+	// Extract append call from the statement
+	appendCall := extractAppendCall037(stmt)
+	// Check if append call is valid
+	if appendCall == nil {
+		// Not a valid append statement
 		return ""
 	}
 

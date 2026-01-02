@@ -293,6 +293,111 @@ func checkEmptySliceLiterals(
 	})
 }
 
+// shouldSkipCompositeLit008 checks if the composite literal should be skipped.
+//
+// Params:
+//   - ctx: check context
+//   - lit: composite literal to check
+//   - stack: AST node stack
+//
+// Returns:
+//   - bool: true if should skip
+func shouldSkipCompositeLit008(
+	ctx *litCheckContext,
+	lit *ast.CompositeLit,
+	stack []ast.Node,
+) bool {
+	// Skip non-empty slices
+	if len(lit.Elts) > 0 {
+		// Le slice n'est pas vide
+		return true
+	}
+
+	// Skip non-slice types
+	if !utils.IsSliceTypeWithPass(ctx.pass, lit.Type) {
+		// Ce n'est pas un slice
+		return true
+	}
+
+	// Skip return statements
+	if isInReturnStatement(stack) {
+		// Pas de préallocation nécessaire pour un return
+		return true
+	}
+
+	// Skip struct literals
+	if isInStructLiteral(stack) {
+		// Pas de préallocation nécessaire pour init de struct
+		return true
+	}
+
+	// Ne pas ignorer ce literal
+	return false
+}
+
+// getAppendVariableName008 extracts the variable name if used with append.
+//
+// Params:
+//   - ctx: check context
+//   - assign: assignment statement
+//   - index: index in lhs
+//
+// Returns:
+//   - bool: true if valid append variable found
+func getAppendVariableName008(
+	ctx *litCheckContext,
+	assign *ast.AssignStmt,
+	index int,
+) bool {
+	// Check index bounds
+	if index >= len(assign.Lhs) {
+		// Index invalide
+		return false
+	}
+
+	// Extract identifier
+	ident, ok := assign.Lhs[index].(*ast.Ident)
+	// Vérification de la condition
+	if !ok {
+		// Ce n'est pas un identifiant simple
+		return false
+	}
+
+	// Check if used with append
+	if !ctx.appendVars[ident.Name] {
+		// La variable n'est jamais utilisée avec append
+		return false
+	}
+
+	// Variable valide trouvée
+	return true
+}
+
+// reportVar008Error reports the VAR-008 error.
+//
+// Params:
+//   - pass: analysis pass
+//   - lit: composite literal for error position
+func reportVar008Error(pass *analysis.Pass, lit *ast.CompositeLit) {
+	msg, ok := messages.Get(ruleCodeVar008)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(
+			lit.Pos(),
+			"%s: préallouer la slice avec une capacité quand elle est connue",
+			ruleCodeVar008,
+		)
+		// Fallback message reported
+		return
+	}
+	pass.Reportf(
+		lit.Pos(),
+		"%s: %s",
+		ruleCodeVar008,
+		msg.Format(config.Get().Verbose),
+	)
+}
+
 // checkCompositeLit vérifie un composite literal pour les slices vides.
 //
 // Params:
@@ -308,66 +413,20 @@ func checkCompositeLit(
 	lit *ast.CompositeLit,
 	stack []ast.Node,
 ) {
-	// Vérification que c'est un slice vide
-	if len(lit.Elts) > 0 {
-		// Le slice n'est pas vide
+	// Check if should skip this literal
+	if shouldSkipCompositeLit008(ctx, lit, stack) {
+		// Literal ignoré
 		return
 	}
 
-	// Vérification que le type est un slice
-	if !utils.IsSliceTypeWithPass(ctx.pass, lit.Type) {
-		// Ce n'est pas un slice
+	// Check if valid append variable
+	if !getAppendVariableName008(ctx, assign, index) {
+		// Variable non valide pour append
 		return
 	}
 
-	// Vérification si on est dans un return statement
-	if isInReturnStatement(stack) {
-		// Pas de préallocation nécessaire pour un return
-		return
-	}
-
-	// Vérification si on est dans un struct literal
-	if isInStructLiteral(stack) {
-		// Pas de préallocation nécessaire pour init de struct
-		return
-	}
-
-	// Récupération du nom de la variable assignée
-	if index >= len(assign.Lhs) {
-		// Index invalide
-		return
-	}
-
-	ident, ok := assign.Lhs[index].(*ast.Ident)
-	// Vérification de la condition
-	if !ok {
-		// Ce n'est pas un identifiant simple
-		return
-	}
-
-	// Vérification si la variable est utilisée avec append
-	if !ctx.appendVars[ident.Name] {
-		// La variable n'est jamais utilisée avec append
-		return
-	}
-
-	// Signalement de l'erreur
-	msg, ok := messages.Get(ruleCodeVar008)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		ctx.pass.Reportf(
-			lit.Pos(),
-			"%s: préallouer la slice avec une capacité quand elle est connue",
-			ruleCodeVar008,
-		)
-		return
-	}
-	ctx.pass.Reportf(
-		lit.Pos(),
-		"%s: %s",
-		ruleCodeVar008,
-		msg.Format(config.Get().Verbose),
-	)
+	// Report error
+	reportVar008Error(ctx.pass, lit)
 }
 
 // isInReturnStatement vérifie si le nœud est dans un return statement.

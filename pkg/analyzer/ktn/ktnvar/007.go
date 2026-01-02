@@ -136,23 +136,61 @@ func checkStatement(pass *analysis.Pass, stmt ast.Stmt) {
 //   - pass: contexte d'analyse
 //   - stmt: statement à vérifier
 func checkNestedBlocks(pass *analysis.Pass, stmt ast.Stmt) {
-	// Check different types of statements with nested blocks
+	// Try control flow statements first
+	if checkControlFlowStmt(pass, stmt) {
+		// Handled by control flow
+		return
+	}
+
+	// Try block-related statements
+	checkBlockRelatedStmt(pass, stmt)
+}
+
+// checkControlFlowStmt checks if, for, range, and switch statements.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+//
+// Returns:
+//   - bool: true if statement was handled
+func checkControlFlowStmt(pass *analysis.Pass, stmt ast.Stmt) bool {
+	// Check different types of statements
 	switch s := stmt.(type) {
 	// If statement: check body and else
 	case *ast.IfStmt:
 		checkIfStmt(pass, s)
+		return true
 	// For statement: check loop body
 	case *ast.ForStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		return true
 	// Range statement: check loop body
 	case *ast.RangeStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		return true
 	// Switch statement: check switch body
 	case *ast.SwitchStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		return true
 	// Type switch: check switch body
 	case *ast.TypeSwitchStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		return true
+	}
+
+	// Not a control flow statement
+	return false
+}
+
+// checkBlockRelatedStmt checks select, block, case, and comm clauses.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+func checkBlockRelatedStmt(pass *analysis.Pass, stmt ast.Stmt) {
+	// Check different types of statements
+	switch s := stmt.(type) {
 	// Select statement: check select body
 	case *ast.SelectStmt:
 		checkBlockIfNotNil(pass, s.Body)

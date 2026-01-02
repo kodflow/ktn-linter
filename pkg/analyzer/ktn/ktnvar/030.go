@@ -263,10 +263,43 @@ func analyzeBlockForMakeCopy(pass *analysis.Pass, block *ast.BlockStmt, cfg *con
 //   - assignStmt: assignment statement to check
 //   - makeInfos: map to store make info
 func processMakeAssignment(assignStmt *ast.AssignStmt, makeInfos map[string]*makeCloneInfo) {
+	// Extract variable name and make call
+	varName, makeCall := extractMakeAssign030(assignStmt)
+	// Check if valid
+	if varName == "" || makeCall == nil {
+		// Not a valid make assignment
+		return
+	}
+
+	// Validate make call structure
+	sourceExpr := validateMakeCall030(makeCall)
+	// Check if valid
+	if sourceExpr == "" {
+		// Not a valid clone pattern
+		return
+	}
+
+	// Store the make info
+	makeInfos[varName] = &makeCloneInfo{
+		varName:    varName,
+		sourceExpr: sourceExpr,
+		pos:        assignStmt.Pos(),
+	}
+}
+
+// extractMakeAssign030 extracts variable name and make call from assignment.
+//
+// Params:
+//   - assignStmt: assignment statement to check
+//
+// Returns:
+//   - string: variable name or empty
+//   - *ast.CallExpr: make call or nil
+func extractMakeAssign030(assignStmt *ast.AssignStmt) (string, *ast.CallExpr) {
 	// Check that there's exactly one LHS and RHS
 	if len(assignStmt.Lhs) != 1 || len(assignStmt.Rhs) != 1 {
 		// Not matching pattern
-		return
+		return "", nil
 	}
 
 	// Get the variable name
@@ -274,51 +307,51 @@ func processMakeAssignment(assignStmt *ast.AssignStmt, makeInfos map[string]*mak
 	// Check if valid
 	if !ok {
 		// Not an identifier
-		return
+		return "", nil
 	}
 
-	// Check if RHS is a make call
-	makeCall, ok := assignStmt.Rhs[0].(*ast.CallExpr)
+	// Check if RHS is a call expression
+	call, ok := assignStmt.Rhs[0].(*ast.CallExpr)
 	// Verify it's a call
 	if !ok {
 		// Not a call expression
-		return
+		return "", nil
 	}
 
+	// Return variable name and call
+	return varIdent.Name, call
+}
+
+// validateMakeCall030 validates make call for clone pattern.
+//
+// Params:
+//   - call: call expression to check
+//
+// Returns:
+//   - string: source expression from len() or empty if invalid
+func validateMakeCall030(call *ast.CallExpr) string {
 	// Check if it's a make call
-	makeIdent, ok := makeCall.Fun.(*ast.Ident)
+	makeIdent, ok := call.Fun.(*ast.Ident)
 	// Verify it's make
 	if !ok || makeIdent.Name != "make" {
 		// Not a make call
-		return
+		return ""
 	}
 
-	// Check that there are exactly 2 arguments (type and length)
-	if len(makeCall.Args) != 2 {
-		// Not matching pattern (might have capacity)
-		return
+	// Check that there are exactly 2 arguments
+	if len(call.Args) != 2 {
+		// Not matching pattern
+		return ""
 	}
 
 	// Check if first arg is a slice type
-	if _, ok := makeCall.Args[0].(*ast.ArrayType); !ok {
+	if _, ok := call.Args[0].(*ast.ArrayType); !ok {
 		// Not a slice type
-		return
+		return ""
 	}
 
-	// Check if second arg is len(source)
-	sourceExpr := extractLenSource(makeCall.Args[1])
-	// Verify it's valid
-	if sourceExpr == "" {
-		// Not a len() call
-		return
-	}
-
-	// Store the make info
-	makeInfos[varIdent.Name] = &makeCloneInfo{
-		varName:    varIdent.Name,
-		sourceExpr: sourceExpr,
-		pos:        assignStmt.Pos(),
-	}
+	// Extract and return source from len()
+	return extractLenSource(call.Args[1])
 }
 
 // extractLenSource extracts the source from a len(source) call.
@@ -392,58 +425,116 @@ func exprToString(expr ast.Expr) string {
 //   - makeInfos: map of make infos
 //   - cfg: configuration
 func checkCopyCall(pass *analysis.Pass, exprStmt *ast.ExprStmt, makeInfos map[string]*makeCloneInfo, cfg *config.Config) {
+	// Extract and validate copy call
+	call, destName, sourceName := extractCopyCall030(exprStmt)
+	// Check if valid copy call
+	if call == nil {
+		// Not a valid copy call
+		return
+	}
+
+	// Check if there's a matching make
+	makeInfo := findMatchingMake030(destName, sourceName, makeInfos)
+	// Verify it exists
+	if makeInfo == nil {
+		// No matching make
+		return
+	}
+
+	// Report the issue
+	reportMakeCopy030(pass, call, cfg)
+
+	// Remove from map to avoid duplicate reports
+	delete(makeInfos, destName)
+}
+
+// extractCopyCall030 extracts and validates a copy call from expression statement.
+//
+// Params:
+//   - exprStmt: expression statement to check
+//
+// Returns:
+//   - *ast.CallExpr: the copy call or nil
+//   - string: destination variable name
+//   - string: source variable name
+func extractCopyCall030(exprStmt *ast.ExprStmt) (*ast.CallExpr, string, string) {
 	// Get the call expression
 	call, ok := exprStmt.X.(*ast.CallExpr)
 	// Verify it's a call
 	if !ok {
 		// Not a call expression
-		return
+		return nil, "", ""
 	}
 
-	// Check if it's a copy call
-	ident, ok := call.Fun.(*ast.Ident)
-	// Verify it's copy
-	if !ok || ident.Name != "copy" {
-		// Not a copy call
-		return
-	}
-
-	// Check that there are exactly 2 arguments
-	if len(call.Args) != 2 {
-		// Wrong number of arguments
-		return
+	// Validate copy call structure
+	if !isCopyCallWithTwoArgs030(call) {
+		// Not a valid copy call
+		return nil, "", ""
 	}
 
 	// Get the destination variable name
 	destName := exprToString(call.Args[0])
-	// Check if valid
-	if destName == "" {
-		// Invalid destination
-		return
-	}
-
 	// Get the source expression
 	sourceName := exprToString(call.Args[1])
-	// Check if valid
-	if sourceName == "" {
-		// Invalid source
-		return
+	// Check both are valid
+	if destName == "" || sourceName == "" {
+		// Invalid names
+		return nil, "", ""
 	}
 
+	// Return validated call and names
+	return call, destName, sourceName
+}
+
+// isCopyCallWithTwoArgs030 checks if call is copy with 2 arguments.
+//
+// Params:
+//   - call: call expression to check
+//
+// Returns:
+//   - bool: true if valid copy call
+func isCopyCallWithTwoArgs030(call *ast.CallExpr) bool {
+	// Check if it's a copy call
+	ident, ok := call.Fun.(*ast.Ident)
+	// Verify it's copy with 2 args
+	return ok && ident.Name == "copy" && len(call.Args) == 2
+}
+
+// findMatchingMake030 finds a matching make for a copy call.
+//
+// Params:
+//   - destName: destination variable name
+//   - sourceName: source variable name
+//   - makeInfos: map of make infos
+//
+// Returns:
+//   - *makeCloneInfo: matching make info or nil
+func findMatchingMake030(destName, sourceName string, makeInfos map[string]*makeCloneInfo) *makeCloneInfo {
 	// Check if there's a matching make
 	makeInfo, exists := makeInfos[destName]
 	// Verify it exists
 	if !exists {
 		// No matching make
-		return
+		return nil
 	}
 
 	// Check if sources match
 	if makeInfo.sourceExpr != sourceName {
 		// Sources don't match
-		return
+		return nil
 	}
 
+	// Return matching info
+	return makeInfo
+}
+
+// reportMakeCopy030 reports the make+copy pattern issue.
+//
+// Params:
+//   - pass: analysis context
+//   - call: copy call expression
+//   - cfg: configuration
+func reportMakeCopy030(pass *analysis.Pass, call *ast.CallExpr, cfg *config.Config) {
 	// Report the issue
 	msg, ok := messages.Get(ruleCodeVar030)
 	// Defensive: avoid panic if message is missing
@@ -458,7 +549,4 @@ func checkCopyCall(pass *analysis.Pass, exprStmt *ast.ExprStmt, makeInfos map[st
 		ruleCodeVar030,
 		msg.Format(cfg.Verbose, "make+copy"),
 	)
-
-	// Remove from map to avoid duplicate reports
-	delete(makeInfos, destName)
 }

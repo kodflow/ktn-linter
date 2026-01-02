@@ -223,14 +223,22 @@ func isReturnMinusOne(stmt ast.Stmt) bool {
 	return true
 }
 
-// checkRangeForIndexPattern checks if a range statement matches the index search pattern.
+// rangeVariables036 stores extracted key and value identifiers from a range statement.
+type rangeVariables036 struct {
+	// indexName is the name of the loop index variable
+	indexName string
+	// valueName is the name of the loop value variable
+	valueName string
+}
+
+// extractRangeVariables036 extracts index and value identifiers from a range statement.
 //
 // Params:
-//   - rangeStmt: range statement to check
+//   - rangeStmt: range statement to extract from
 //
 // Returns:
-//   - *indexPatternInfo: pattern info if detected, nil otherwise
-func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
+//   - *rangeVariables036: extracted variables if valid, nil otherwise
+func extractRangeVariables036(rangeStmt *ast.RangeStmt) *rangeVariables036 {
 	// Check range has both key and value
 	if rangeStmt.Key == nil || rangeStmt.Value == nil {
 		// Missing key or value
@@ -239,7 +247,7 @@ func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
 
 	// Get the index variable name
 	indexIdent, ok := rangeStmt.Key.(*ast.Ident)
-	// Check if valid
+	// Check if valid identifier
 	if !ok {
 		// Not an identifier
 		return nil
@@ -247,15 +255,29 @@ func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
 
 	// Get the value variable name
 	valueIdent, ok := rangeStmt.Value.(*ast.Ident)
-	// Check if valid
+	// Check if valid identifier
 	if !ok {
 		// Not an identifier
 		return nil
 	}
 
-	// Check the body for if == return i pattern
-	body := rangeStmt.Body
-	// Verify body exists
+	// Return extracted variables
+	return &rangeVariables036{
+		indexName: indexIdent.Name,
+		valueName: valueIdent.Name,
+	}
+}
+
+// findIndexPatternInBody036 looks for the index search pattern in a block statement.
+//
+// Params:
+//   - body: block statement to search
+//   - vars: extracted range variables
+//
+// Returns:
+//   - *indexPatternInfo: pattern info if found, nil otherwise
+func findIndexPatternInBody036(body *ast.BlockStmt, vars *rangeVariables036) *indexPatternInfo {
+	// Verify body exists and has statements
 	if body == nil || len(body.List) == 0 {
 		// No body or empty body
 		return nil
@@ -264,7 +286,7 @@ func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
 	// Look for if statement with equality check and return index
 	for _, stmt := range body.List {
 		// Check if it matches the pattern
-		if checkIfEqualReturnIndex(stmt, indexIdent.Name, valueIdent.Name) {
+		if checkIfEqualReturnIndex(stmt, vars.indexName, vars.valueName) {
 			// Pattern detected - report at the if statement position
 			return &indexPatternInfo{pos: stmt.Pos()}
 		}
@@ -272,6 +294,26 @@ func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
 
 	// No pattern found
 	return nil
+}
+
+// checkRangeForIndexPattern checks if a range statement matches the index search pattern.
+//
+// Params:
+//   - rangeStmt: range statement to check
+//
+// Returns:
+//   - *indexPatternInfo: pattern info if detected, nil otherwise
+func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
+	// Extract key and value variables from range
+	vars := extractRangeVariables036(rangeStmt)
+	// Check if extraction was successful
+	if vars == nil {
+		// Invalid range variables
+		return nil
+	}
+
+	// Find pattern in body
+	return findIndexPatternInBody036(rangeStmt.Body, vars)
 }
 
 // checkIfEqualReturnIndex checks if a statement is if v == target { return i }.

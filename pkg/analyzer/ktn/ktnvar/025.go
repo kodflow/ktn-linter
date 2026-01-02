@@ -329,16 +329,16 @@ func isZeroValue(pass *analysis.Pass, expr ast.Expr) bool {
 	switch e := expr.(type) {
 	// Littéral basique
 	case *ast.BasicLit:
-		// Zéro numérique ou chaîne vide
-		return e.Value == "0" || e.Value == "0.0" || e.Value == `""` || e.Value == "``"
+		// Déléguer au helper
+		return isBasicLitZero025(e)
 	// Identifiant (false, nil)
 	case *ast.Ident:
-		// nil ou false
-		return e.Name == "nil" || e.Name == "false"
+		// Déléguer au helper
+		return isIdentZero025(e)
 	// Littéral composite vide
 	case *ast.CompositeLit:
-		// Struct ou slice vide
-		return len(e.Elts) == 0
+		// Déléguer au helper
+		return isCompositeLitZero025(e)
 	// Conversion de type
 	case *ast.CallExpr:
 		// Conversion vers type basique avec zéro
@@ -346,6 +346,66 @@ func isZeroValue(pass *analysis.Pass, expr ast.Expr) bool {
 	}
 	// Pas une valeur zéro reconnue
 	return false
+}
+
+// isBasicLitZero025 vérifie si un littéral basique est une valeur zéro.
+//
+// Params:
+//   - lit: littéral basique à vérifier
+//
+// Returns:
+//   - bool: true si zéro numérique ou chaîne vide
+func isBasicLitZero025(lit *ast.BasicLit) bool {
+	// Zéro entier
+	if lit.Value == "0" {
+		return true
+	}
+	// Zéro flottant
+	if lit.Value == "0.0" {
+		return true
+	}
+	// Chaîne vide (guillemets doubles)
+	if lit.Value == `""` {
+		return true
+	}
+	// Chaîne vide (backticks)
+	if lit.Value == "``" {
+		return true
+	}
+	// Pas une valeur zéro
+	return false
+}
+
+// isIdentZero025 vérifie si un identifiant représente une valeur zéro.
+//
+// Params:
+//   - ident: identifiant à vérifier
+//
+// Returns:
+//   - bool: true si nil ou false
+func isIdentZero025(ident *ast.Ident) bool {
+	// nil est une valeur zéro
+	if ident.Name == "nil" {
+		return true
+	}
+	// false est une valeur zéro pour les booléens
+	if ident.Name == "false" {
+		return true
+	}
+	// Pas une valeur zéro
+	return false
+}
+
+// isCompositeLitZero025 vérifie si un littéral composite est vide.
+//
+// Params:
+//   - lit: littéral composite à vérifier
+//
+// Returns:
+//   - bool: true si vide (struct{} ou slice vide)
+func isCompositeLitZero025(lit *ast.CompositeLit) bool {
+	// Struct ou slice vide
+	return len(lit.Elts) == 0
 }
 
 // isZeroConversion vérifie si c'est une conversion vers zéro (ex: string("")).

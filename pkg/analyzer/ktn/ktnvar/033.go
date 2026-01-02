@@ -164,31 +164,41 @@ func analyzeBodyForCmpOrPattern(pass *analysis.Pass, body *ast.BlockStmt, cfg *c
 // Returns:
 //   - bool: true if it matches the pattern
 func matchesCmpOrPattern(ifStmt *ast.IfStmt, returnStmt *ast.ReturnStmt) bool {
+	// Check if statement structure is valid
+	if !isValidIfStructureFor033(ifStmt) {
+		// Not valid structure
+		return false
+	}
+
+	// Extract and validate the condition
+	varExpr := extractVarFromCondition033(ifStmt.Cond)
+	// Check if valid
+	if varExpr == nil {
+		// Not a valid pattern
+		return false
+	}
+
+	// Validate if body returns the variable
+	if !validateIfBodyReturns033(ifStmt.Body, varExpr) {
+		// Body doesn't return the variable
+		return false
+	}
+
+	// Check that after-if return has at least one result
+	return len(returnStmt.Results) >= 1
+}
+
+// isValidIfStructureFor033 checks if statement has valid structure.
+//
+// Params:
+//   - ifStmt: if statement to check
+//
+// Returns:
+//   - bool: true if structure is valid
+func isValidIfStructureFor033(ifStmt *ast.IfStmt) bool {
 	// Check that if has no init and no else
 	if ifStmt.Init != nil || ifStmt.Else != nil {
 		// Has init or else, too complex
-		return false
-	}
-
-	// Check the condition is a not-equal comparison
-	binaryExpr, ok := ifStmt.Cond.(*ast.BinaryExpr)
-	// Verify it's a binary expression
-	if !ok {
-		// Not a binary expression
-		return false
-	}
-
-	// Check that operator is !=
-	if binaryExpr.Op != token.NEQ {
-		// Not a not-equal comparison
-		return false
-	}
-
-	// Get the variable being compared
-	varExpr, zeroValue := extractVarAndZeroFor033(binaryExpr)
-	// Check if valid
-	if varExpr == nil || !isSimpleZeroValueFor033(zeroValue) {
-		// Not a valid pattern
 		return false
 	}
 
@@ -198,8 +208,49 @@ func matchesCmpOrPattern(ifStmt *ast.IfStmt, returnStmt *ast.ReturnStmt) bool {
 		return false
 	}
 
+	// Valid structure
+	return true
+}
+
+// extractVarFromCondition033 extracts variable from != zero condition.
+//
+// Params:
+//   - cond: condition expression to check
+//
+// Returns:
+//   - ast.Expr: the variable expression or nil
+func extractVarFromCondition033(cond ast.Expr) ast.Expr {
+	// Check the condition is a not-equal comparison
+	binaryExpr, ok := cond.(*ast.BinaryExpr)
+	// Verify it's a binary expression
+	if !ok || binaryExpr.Op != token.NEQ {
+		// Not a not-equal comparison
+		return nil
+	}
+
+	// Get the variable being compared
+	varExpr, zeroValue := extractVarAndZeroFor033(binaryExpr)
+	// Check if valid
+	if varExpr == nil || !isSimpleZeroValueFor033(zeroValue) {
+		// Not a valid pattern
+		return nil
+	}
+
+	// Return the variable expression
+	return varExpr
+}
+
+// validateIfBodyReturns033 validates if body returns the variable.
+//
+// Params:
+//   - body: if body to check
+//   - varExpr: variable expression to match
+//
+// Returns:
+//   - bool: true if body returns the variable
+func validateIfBodyReturns033(body *ast.BlockStmt, varExpr ast.Expr) bool {
 	// Get the return statement from if body
-	ifReturn, ok := ifStmt.Body.List[0].(*ast.ReturnStmt)
+	ifReturn, ok := body.List[0].(*ast.ReturnStmt)
 	// Check if valid
 	if !ok {
 		// Not a return statement
@@ -207,19 +258,7 @@ func matchesCmpOrPattern(ifStmt *ast.IfStmt, returnStmt *ast.ReturnStmt) bool {
 	}
 
 	// Check that if return returns the same variable
-	if !returnsVariableFor033(ifReturn, varExpr) {
-		// Doesn't return the variable
-		return false
-	}
-
-	// Check that after-if return has at least one result
-	if len(returnStmt.Results) < 1 {
-		// No return value
-		return false
-	}
-
-	// Pattern matches
-	return true
+	return returnsVariableFor033(ifReturn, varExpr)
 }
 
 // extractVarAndZeroFor033 extracts variable and zero value from comparison.

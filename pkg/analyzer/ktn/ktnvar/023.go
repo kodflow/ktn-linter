@@ -267,40 +267,85 @@ func checkLocalVarDecl(
 ) {
 	// Parcours des specs
 	for _, spec := range genDecl.Specs {
-		// Vérification si c'est une ValueSpec
-		valueSpec, ok := spec.(*ast.ValueSpec)
+		// Process each spec
+		processLocalVarSpec(pass, spec, aliases, funcIsSecurityContext)
+	}
+}
+
+// processLocalVarSpec processes a single spec for math/rand usage.
+//
+// Params:
+//   - pass: analysis context
+//   - spec: spec to check
+//   - aliases: math/rand aliases
+//   - funcIsSecurityContext: whether function name is security-related
+func processLocalVarSpec(
+	pass *analysis.Pass,
+	spec ast.Spec,
+	aliases map[string]bool,
+	funcIsSecurityContext bool,
+) {
+	// Vérification si c'est une ValueSpec
+	valueSpec, ok := spec.(*ast.ValueSpec)
+	// Vérification de la condition
+	if !ok {
+		// Pas une ValueSpec
+		return
+	}
+
+	// Vérification des noms de variables
+	varIsSecurityContext := hasSecurityVarName(valueSpec.Names)
+
+	// Vérification des valeurs
+	checkValuesForMathRand(pass, valueSpec.Values, aliases, funcIsSecurityContext || varIsSecurityContext)
+}
+
+// hasSecurityVarName checks if any variable name is security-related.
+//
+// Params:
+//   - names: list of identifiers to check
+//
+// Returns:
+//   - bool: true if any name is security-related
+func hasSecurityVarName(names []*ast.Ident) bool {
+	// Parcours des noms
+	for _, name := range names {
 		// Vérification de la condition
-		if !ok {
-			// Pas une ValueSpec
+		if isSecurityName(name.Name) {
+			// Contexte sécurité détecté
+			return true
+		}
+	}
+	// Pas de contexte sécurité
+	return false
+}
+
+// checkValuesForMathRand checks values for math/rand calls.
+//
+// Params:
+//   - pass: analysis context
+//   - values: values to check
+//   - aliases: math/rand aliases
+//   - isSecurityContext: whether we're in security context
+func checkValuesForMathRand(
+	pass *analysis.Pass,
+	values []ast.Expr,
+	aliases map[string]bool,
+	isSecurityContext bool,
+) {
+	// Vérification des valeurs
+	for _, value := range values {
+		// Vérification si c'est un appel math/rand
+		call, ok := value.(*ast.CallExpr)
+		// Vérification de la condition
+		if !ok || !isMathRandCall(call, aliases) {
+			// Pas un appel math/rand
 			continue
 		}
 
-		// Vérification des noms de variables
-		varIsSecurityContext := false
-		// Parcours des noms
-		for _, name := range valueSpec.Names {
-			// Vérification de la condition
-			if isSecurityName(name.Name) {
-				varIsSecurityContext = true
-				// Sortie de boucle
-				break
-			}
-		}
-
-		// Vérification des valeurs
-		for _, value := range valueSpec.Values {
-			// Vérification si c'est un appel math/rand
-			call, ok := value.(*ast.CallExpr)
-			// Vérification de la condition
-			if !ok || !isMathRandCall(call, aliases) {
-				// Pas un appel math/rand
-				continue
-			}
-
-			// Si contexte sécurité détecté
-			if funcIsSecurityContext || varIsSecurityContext {
-				reportMathRandInSecurity(pass, call.Pos())
-			}
+		// Si contexte sécurité détecté
+		if isSecurityContext {
+			reportMathRandInSecurity(pass, call.Pos())
 		}
 	}
 }
@@ -318,46 +363,41 @@ func checkGenDeclForMathRand(
 ) {
 	// Parcours des specs
 	for _, spec := range genDecl.Specs {
-		// Vérification si c'est une ValueSpec
-		valueSpec, ok := spec.(*ast.ValueSpec)
-		// Vérification de la condition
-		if !ok {
-			// Pas une ValueSpec
-			continue
-		}
-
-		// Vérification des noms de variables
-		isSecurityContext := false
-		// Parcours des noms
-		for _, name := range valueSpec.Names {
-			// Vérification de la condition
-			if isSecurityName(name.Name) {
-				isSecurityContext = true
-				// Sortie de boucle
-				break
-			}
-		}
-
-		// Si pas de contexte sécurité, continuer
-		if !isSecurityContext {
-			// Pas de contexte sécurité
-			continue
-		}
-
-		// Vérification des valeurs
-		for _, value := range valueSpec.Values {
-			// Vérification si c'est un appel math/rand
-			call, ok := value.(*ast.CallExpr)
-			// Vérification de la condition
-			if !ok || !isMathRandCall(call, aliases) {
-				// Pas un appel math/rand
-				continue
-			}
-
-			// Rapport de l'erreur
-			reportMathRandInSecurity(pass, call.Pos())
-		}
+		// Process each spec
+		processGenDeclSpec023(pass, spec, aliases)
 	}
+}
+
+// processGenDeclSpec023 processes a single spec for math/rand in security context.
+//
+// Params:
+//   - pass: analysis context
+//   - spec: spec to check
+//   - aliases: math/rand aliases
+func processGenDeclSpec023(
+	pass *analysis.Pass,
+	spec ast.Spec,
+	aliases map[string]bool,
+) {
+	// Vérification si c'est une ValueSpec
+	valueSpec, ok := spec.(*ast.ValueSpec)
+	// Vérification de la condition
+	if !ok {
+		// Pas une ValueSpec
+		return
+	}
+
+	// Vérification des noms de variables via helper existant
+	isSecurityContext := hasSecurityVarName(valueSpec.Names)
+
+	// Si pas de contexte sécurité, ne rien faire
+	if !isSecurityContext {
+		// Pas de contexte sécurité
+		return
+	}
+
+	// Vérification des valeurs via helper existant
+	checkValuesForMathRand(pass, valueSpec.Values, aliases, true)
 }
 
 // isMathRandCall checks if a call expression is a math/rand call.

@@ -143,25 +143,71 @@ func isConvertibleToRangeInt(forStmt *ast.ForStmt) bool {
 //   - string: the variable name if valid
 //   - bool: true if init is "varname := 0"
 func checkInitIsZero(init ast.Stmt) (string, bool) {
+	// Extract and validate assignment statement
+	assignStmt, ok := extractAssignFromInit027(init)
+	// Not a valid short declaration
+	if !ok {
+		return "", false
+	}
+
+	// Extract variable name from LHS
+	varName, ok := extractVarNameFromAssign027(assignStmt)
+	// LHS not a single identifier
+	if !ok {
+		return "", false
+	}
+
+	// Validate RHS is integer zero
+	if !validateInitZero027(assignStmt) {
+		// RHS not integer zero
+		return "", false
+	}
+
+	// Valid init statement
+	return varName, true
+}
+
+// extractAssignFromInit027 extracts and validates the assignment statement from init.
+//
+// Params:
+//   - init: the init statement to check
+//
+// Returns:
+//   - *ast.AssignStmt: the assignment statement if valid
+//   - bool: true if init is a short variable declaration with single variable
+func extractAssignFromInit027(init ast.Stmt) (*ast.AssignStmt, bool) {
 	// Must be an assignment statement
 	assignStmt, ok := init.(*ast.AssignStmt)
 	// Not an assignment
 	if !ok {
-		return "", false
+		return nil, false
 	}
 
 	// Must be := (define)
 	if assignStmt.Tok != token.DEFINE {
 		// Not a short declaration
-		return "", false
+		return nil, false
 	}
 
-	// Must have exactly one variable
+	// Must have exactly one variable on each side
 	if len(assignStmt.Lhs) != 1 || len(assignStmt.Rhs) != 1 {
 		// Multiple variables not supported
-		return "", false
+		return nil, false
 	}
 
+	// Valid assignment statement
+	return assignStmt, true
+}
+
+// extractVarNameFromAssign027 extracts the variable name from the LHS of an assignment.
+//
+// Params:
+//   - assignStmt: the assignment statement to check
+//
+// Returns:
+//   - string: the variable name if valid
+//   - bool: true if LHS is a single identifier
+func extractVarNameFromAssign027(assignStmt *ast.AssignStmt) (string, bool) {
 	// LHS must be an identifier
 	ident, ok := assignStmt.Lhs[0].(*ast.Ident)
 	// LHS not an identifier
@@ -169,21 +215,27 @@ func checkInitIsZero(init ast.Stmt) (string, bool) {
 		return "", false
 	}
 
-	// RHS must be 0 (basic literal)
+	// Valid identifier
+	return ident.Name, true
+}
+
+// validateInitZero027 validates that the RHS of the assignment is integer zero.
+//
+// Params:
+//   - assignStmt: the assignment statement to check
+//
+// Returns:
+//   - bool: true if RHS is the integer literal 0
+func validateInitZero027(assignStmt *ast.AssignStmt) bool {
+	// RHS must be a basic literal
 	basicLit, ok := assignStmt.Rhs[0].(*ast.BasicLit)
 	// RHS not a literal
 	if !ok {
-		return "", false
+		return false
 	}
 
 	// Must be integer 0
-	if basicLit.Kind != token.INT || basicLit.Value != "0" {
-		// Not integer zero
-		return "", false
-	}
-
-	// Valid init statement
-	return ident.Name, true
+	return basicLit.Kind == token.INT && basicLit.Value == "0"
 }
 
 // checkPostIsIncrement verifies post is "varname++" (exactly).

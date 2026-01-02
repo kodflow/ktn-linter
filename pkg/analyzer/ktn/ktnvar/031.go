@@ -228,60 +228,139 @@ func isMakeMapCallExpr(call *ast.CallExpr) bool {
 // Returns:
 //   - bool: true if it's a simple map clone pattern
 func isSimpleMapClone(rangeStmt *ast.RangeStmt, mapMakes map[string]token.Pos, stmtIndex int, stmts []ast.Stmt) bool {
+	// Validate range has key and value identifiers
+	keyIdent, valIdent := extractRangeKeyValue031(rangeStmt)
+	// Check if valid
+	if keyIdent == nil || valIdent == nil {
+		// Not valid key/value pattern
+		return false
+	}
+
+	// Get assignment from range body
+	assignStmt := extractRangeBodyAssign031(rangeStmt)
+	// Check if valid
+	if assignStmt == nil {
+		// Not a simple assignment body
+		return false
+	}
+
+	// Validate the assignment structure matches clone pattern
+	return validateCloneAssignment031(assignStmt, keyIdent, valIdent, mapMakes)
+}
+
+// extractRangeKeyValue031 extracts key and value identifiers from range.
+//
+// Params:
+//   - rangeStmt: range statement to check
+//
+// Returns:
+//   - *ast.Ident: key identifier or nil
+//   - *ast.Ident: value identifier or nil
+func extractRangeKeyValue031(rangeStmt *ast.RangeStmt) (*ast.Ident, *ast.Ident) {
 	// Range must have key and value
 	if rangeStmt.Key == nil || rangeStmt.Value == nil {
 		// Not a k, v range
-		return false
+		return nil, nil
 	}
 
-	// Get key and value names
+	// Get key identifier
 	keyIdent, keyOk := rangeStmt.Key.(*ast.Ident)
+	// Get value identifier
 	valIdent, valOk := rangeStmt.Value.(*ast.Ident)
 	// Both must be identifiers
 	if !keyOk || !valOk {
-		// Return false
-		return false
+		// Return nil
+		return nil, nil
 	}
 
+	// Return both identifiers
+	return keyIdent, valIdent
+}
+
+// extractRangeBodyAssign031 extracts assignment from range body.
+//
+// Params:
+//   - rangeStmt: range statement to check
+//
+// Returns:
+//   - *ast.AssignStmt: assignment statement or nil
+func extractRangeBodyAssign031(rangeStmt *ast.RangeStmt) *ast.AssignStmt {
 	// Range body must have exactly one statement
 	if rangeStmt.Body == nil || len(rangeStmt.Body.List) != 1 {
 		// Not a simple clone
-		return false
+		return nil
 	}
 
-	// The statement must be an assignment: clone[k] = v
+	// The statement must be an assignment
 	assignStmt, ok := rangeStmt.Body.List[0].(*ast.AssignStmt)
-	// Skip if not assignment
-	if !ok {
-		// Return false
-		return false
-	}
-
-	// Must be simple assignment (=) not define (:=)
-	if assignStmt.Tok != token.ASSIGN {
-		// Return false
-		return false
+	// Check if valid assignment
+	if !ok || assignStmt.Tok != token.ASSIGN {
+		// Not a simple assignment
+		return nil
 	}
 
 	// Must have one LHS and one RHS
 	if len(assignStmt.Lhs) != 1 || len(assignStmt.Rhs) != 1 {
-		// Return false
-		return false
+		// Not matching pattern
+		return nil
 	}
 
+	// Return the assignment
+	return assignStmt
+}
+
+// validateCloneAssignment031 validates assignment matches clone pattern.
+//
+// Params:
+//   - assignStmt: assignment statement to validate
+//   - keyIdent: key identifier from range
+//   - valIdent: value identifier from range
+//   - mapMakes: tracked make(map) assignments
+//
+// Returns:
+//   - bool: true if assignment matches clone pattern
+func validateCloneAssignment031(assignStmt *ast.AssignStmt, keyIdent, valIdent *ast.Ident, mapMakes map[string]token.Pos) bool {
 	// LHS must be index expression: clone[k]
 	indexExpr, ok := assignStmt.Lhs[0].(*ast.IndexExpr)
-	// Skip if not index expression
+	// Check if valid
 	if !ok {
-		// Return false
+		// Not an index expression
 		return false
 	}
 
+	// Validate index expression structure
+	if !validateIndexExpr031(indexExpr, keyIdent.Name, mapMakes) {
+		// Invalid index expression
+		return false
+	}
+
+	// RHS must be the value variable exactly
+	rhsIdent, ok := assignStmt.Rhs[0].(*ast.Ident)
+	// Check if matches value
+	if !ok || rhsIdent.Name != valIdent.Name {
+		// Not a simple clone
+		return false
+	}
+
+	// Pattern matches
+	return true
+}
+
+// validateIndexExpr031 validates index expression matches clone pattern.
+//
+// Params:
+//   - indexExpr: index expression to validate
+//   - keyName: expected key name
+//   - mapMakes: tracked make(map) assignments
+//
+// Returns:
+//   - bool: true if index expression is valid
+func validateIndexExpr031(indexExpr *ast.IndexExpr, keyName string, mapMakes map[string]token.Pos) bool {
 	// X must be identifier (the clone map name)
 	cloneIdent, ok := indexExpr.X.(*ast.Ident)
-	// Skip if not identifier
+	// Check if valid
 	if !ok {
-		// Return false
+		// Not an identifier
 		return false
 	}
 
@@ -293,20 +372,6 @@ func isSimpleMapClone(rangeStmt *ast.RangeStmt, mapMakes map[string]token.Pos, s
 
 	// Index must be the key variable
 	indexIdent, ok := indexExpr.Index.(*ast.Ident)
-	// Skip if not identifier
-	if !ok || indexIdent.Name != keyIdent.Name {
-		// Return false
-		return false
-	}
-
-	// RHS must be the value variable exactly (no transformation)
-	rhsIdent, ok := assignStmt.Rhs[0].(*ast.Ident)
-	// Skip if not identifier
-	if !ok || rhsIdent.Name != valIdent.Name {
-		// This is a transformation, not a simple clone
-		return false
-	}
-
-	// This is a simple map clone pattern
-	return true
+	// Check if matches key
+	return ok && indexIdent.Name == keyName
 }
