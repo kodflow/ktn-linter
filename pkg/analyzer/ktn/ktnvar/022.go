@@ -57,6 +57,10 @@ func runVar022(pass *analysis.Pass) (any, error) {
 	if pass.Fset == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving types
+	if pass.TypesInfo == nil {
+		return nil, nil
+	}
 
 	// Analyse des déclarations de fonctions (paramètres et retours)
 	checkFuncDecls(pass, insp, cfg)

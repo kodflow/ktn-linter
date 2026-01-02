@@ -28,7 +28,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
-| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 76.5% |
+| 🔴 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 76.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/modernize` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/shared` | 99.2% |
@@ -189,7 +189,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `011.go:scanSourceFile` | 94.7% |
 | 🟢 `011.go:analyzeTestFunction` | 92.9% |
 
-### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 76.5%
+### 🔴 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` - 76.4%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -230,13 +230,13 @@ Rapport de couverture généré automatiquement.
 | 🟡 `010.go:runVar010` | 86.7% |
 | 🔴 `010.go:reportMissingGrow` | 70.0% |
 | 🟡 `010.go:extractAssignTypeString` | 87.5% |
-| 🟡 `011.go:runVar011` | 80.0% |
+| 🟡 `011.go:runVar011` | 82.4% |
 | 🟡 `011.go:checkStringConcatInLoop` | 81.2% |
 | 🟡 `011.go:isStringConcatenation` | 87.5% |
 | 🟡 `012.go:runVar012` | 80.0% |
 | 🔴 `012.go:checkAssignForAlloc` | 71.4% |
 | 🟡 `012.go:checkDeclForAlloc` | 86.7% |
-| 🟡 `013.go:runVar013` | 83.3% |
+| 🟡 `013.go:runVar013` | 84.6% |
 | 🟡 `013.go:checkFuncParams009` | 90.0% |
 | 🔴 `013.go:checkParamType009` | 75.0% |
 | 🔴 `013.go:getStructSize009` | 73.7% |
@@ -251,12 +251,12 @@ Rapport de couverture généré automatiquement.
 | 🟡 `016.go:runVar016` | 88.9% |
 | 🔴 `016.go:checkVarGrouping` | 75.0% |
 | 🔴 `017.go:runVar017` | 75.0% |
-| 🟡 `018.go:runVar018` | 81.0% |
+| 🟡 `018.go:runVar018` | 82.6% |
 | 🟡 `018.go:shouldUseArray` | 90.0% |
 | 🟡 `018.go:getConstantSize` | 83.3% |
 | 🔴 `018.go:isTotalSizeSmall` | 71.4% |
 | 🔴 `018.go:reportArraySuggestion` | 60.0% |
-| 🟡 `019.go:runVar019` | 86.7% |
+| 🟡 `019.go:runVar019` | 82.4% |
 | 🟢 `019.go:collectTypesWithValueReceivers` | 92.9% |
 | 🔴 `019.go:checkStructsWithMutex` | 75.0% |
 | 🔴 `019.go:checkValueReceivers` | 78.9% |
@@ -279,9 +279,9 @@ Rapport de couverture généré automatiquement.
 | 🔴 `021.go:extractReceiverType` | 71.4% |
 | 🟡 `021.go:checkReceiverConsistency` | 85.7% |
 | 🔴 `021.go:reportInconsistency` | 75.0% |
-| 🟡 `022.go:runVar022` | 84.6% |
+| 🟡 `022.go:runVar022` | 86.7% |
 | 🟡 `022.go:checkFuncDecls` | 81.8% |
-| 🟡 `022.go:checkVarDecls` | 86.7% |
+| 🟡 `022.go:checkVarDecls` | 80.0% |
 | 🟡 `022.go:checkStructFields` | 83.3% |
 | 🟡 `022.go:checkPointerToInterface` | 83.3% |
 | 🔴 `023.go:runVar023` | 71.4% |
@@ -295,7 +295,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `024.go:runVar024` | 72.2% |
 | 🔴 `024.go:checkEmptyInterface` | 71.4% |
 | 🔴 `024.go:isEmptyInterface` | 66.7% |
-| 🔴 `025.go:runVar025` | 72.2% |
+| 🔴 `025.go:runVar025` | 70.0% |
 | 🔴 `025.go:checkMapDeletePattern` | 73.3% |
 | 🔴 `025.go:isDeleteCallWithKeyAndMap` | 69.2% |
 | 🔴 `025.go:checkSliceZeroPattern` | 66.7% |
@@ -354,7 +354,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `033.go:isSimpleZeroValueFor033` | 75.0% |
 | 🔴 `033.go:returnsVariableFor033` | 77.8% |
 | 🔴 `033.go:reportCmpOrPattern` | 60.0% |
-| 🔴 `034.go:runVar034` | 77.8% |
+| 🔴 `034.go:runVar034` | 75.0% |
 | 🟡 `034.go:extractWaitGroupAdd1` | 88.9% |
 | 🔴 `034.go:extractWaitGroupMethodCall` | 62.5% |
 | 🔴 `034.go:isWaitGroupReceiver` | 75.0% |
@@ -379,7 +379,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `036.go:checkIfEqualReturnIndex` | 77.8% |
 | 🔴 `036.go:ifBodyReturnsIndex` | 66.7% |
 | 🔴 `036.go:reportIndexPattern` | 60.0% |
-| 🔴 `037.go:runVar037` | 72.7% |
+| 🔴 `037.go:runVar037` | 69.2% |
 | 🔴 `037.go:checkMapCollectionPatterns` | 76.9% |
 | 🟡 `037.go:isRangingOverMap` | 80.0% |
 | 🟡 `037.go:detectMapCollectionPattern` | 81.2% |
@@ -464,4 +464,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-02 00:17:56*
+*Généré le: 2026-01-02 00:25:37*

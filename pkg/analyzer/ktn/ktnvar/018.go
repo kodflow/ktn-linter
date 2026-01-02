@@ -62,6 +62,10 @@ func runVar018(pass *analysis.Pass) (any, error) {
 	if pass.Fset == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving types
+	if pass.TypesInfo == nil {
+		return nil, nil
+	}
 
 	nodeFilter := []ast.Node{
 		(*ast.CallExpr)(nil),

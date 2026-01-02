@@ -62,6 +62,10 @@ func runVar037(pass *analysis.Pass) (any, error) {
 	if pass.Fset == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving types
+	if pass.TypesInfo == nil {
+		return nil, nil
+	}
 
 	// Check for manual map key/value collection patterns
 	checkMapCollectionPatterns(pass, insp, cfg)
