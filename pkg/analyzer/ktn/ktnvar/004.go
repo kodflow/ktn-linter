@@ -97,7 +97,11 @@ func checkVar004PackageLevel(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file := n.(*ast.File)
+		file, ok := n.(*ast.File)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar004, pass.Fset.Position(n.Pos()).Filename) {

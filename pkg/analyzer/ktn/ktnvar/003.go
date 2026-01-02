@@ -58,7 +58,11 @@ func runVar003(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
+		genDecl, ok := n.(*ast.GenDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar003, pass.Fset.Position(n.Pos()).Filename) {

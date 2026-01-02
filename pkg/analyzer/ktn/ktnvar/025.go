@@ -56,13 +56,18 @@ func runVar025(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		rangeStmt, ok := n.(*ast.RangeStmt)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar025, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
 
-		rangeStmt := n.(*ast.RangeStmt)
 		// Vérification du pattern clear
 		checkClearPattern(pass, rangeStmt)
 	})

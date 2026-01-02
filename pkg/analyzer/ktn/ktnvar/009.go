@@ -109,7 +109,11 @@ func runVar009(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		call := n.(*ast.CallExpr)
+		call, ok := n.(*ast.CallExpr)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar009, pass.Fset.Position(n.Pos()).Filename) {

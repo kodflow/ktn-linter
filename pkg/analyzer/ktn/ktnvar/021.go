@@ -94,14 +94,18 @@ func collectReceivers(
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en fonction
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar021, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
-
-		// Cast en fonction
-		funcDecl := n.(*ast.FuncDecl)
 
 		// Vérification si c'est une méthode
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {

@@ -79,7 +79,11 @@ func checkVar005PackageLevel(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		file := n.(*ast.File)
+		file, ok := n.(*ast.File)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar005, pass.Fset.Position(n.Pos()).Filename) {
@@ -127,7 +131,11 @@ func checkVar005LocalVars(
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar005, pass.Fset.Position(n.Pos()).Filename) {

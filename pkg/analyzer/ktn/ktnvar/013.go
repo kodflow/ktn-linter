@@ -65,7 +65,11 @@ func runVar013(pass *analysis.Pass) (any, error) {
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		filename := pass.Fset.Position(funcDecl.Pos()).Filename

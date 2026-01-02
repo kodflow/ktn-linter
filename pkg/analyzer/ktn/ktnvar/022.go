@@ -81,14 +81,18 @@ func checkFuncDecls(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.
 
 	// Parcours des fonctions
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en fonction
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar022, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
-
-		// Cast en fonction
-		funcDecl := n.(*ast.FuncDecl)
 
 		// Vérification des paramètres
 		if funcDecl.Type.Params != nil {
@@ -118,14 +122,18 @@ func checkVarDecls(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.C
 
 	// Parcours des déclarations
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en déclaration générale
+		genDecl, ok := n.(*ast.GenDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar022, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
-
-		// Cast en déclaration générale
-		genDecl := n.(*ast.GenDecl)
 
 		// Vérification que c'est une déclaration var
 		if genDecl.Tok.String() != "var" {
@@ -166,14 +174,18 @@ func checkStructFields(pass *analysis.Pass, insp *inspector.Inspector, cfg *conf
 
 	// Parcours des types
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		// Cast en type spec
+		typeSpec, ok := n.(*ast.TypeSpec)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar022, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
-
-		// Cast en type spec
-		typeSpec := n.(*ast.TypeSpec)
 
 		// Vérification que c'est une struct
 		structType, ok := typeSpec.Type.(*ast.StructType)

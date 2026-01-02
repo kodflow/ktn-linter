@@ -124,7 +124,11 @@ func runVar006(pass *analysis.Pass) (any, error) {
 			// File is excluded
 			return
 		}
-		genDecl := n.(*ast.GenDecl)
+		genDecl, ok := n.(*ast.GenDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Only check var declarations
 		if genDecl.Tok != token.VAR {
