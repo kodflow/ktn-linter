@@ -247,47 +247,19 @@ func extractFromDeclStmt(s *ast.DeclStmt, anyTypeParams map[string]bool, result 
 }
 
 // extractFromRangeStmt extrait les variables d'un RangeStmt.
+// Note: Sans acces a pass.TypesInfo, on ne peut pas determiner le type element.
 //
 // Params:
 //   - s: RangeStmt a analyser
 //   - anyTypeParams: map des type parameters
 //   - result: map resultat
 func extractFromRangeStmt(s *ast.RangeStmt, anyTypeParams map[string]bool, result map[string]string) {
-	// Verifier la valeur (Value dans range)
-	if s.Value != nil {
-		ident, ok := s.Value.(*ast.Ident)
-		// Verifier si c'est un identifiant
-		if ok {
-			// Essayer de determiner le type element du slice
-			arrayType := extractArrayElementType(s.X, anyTypeParams)
-			// Verifier si le type element est "any"
-			if arrayType != "" {
-				result[ident.Name] = arrayType
-			}
-		}
-	}
-}
-
-// extractArrayElementType extrait le type element d'une expression tableau.
-//
-// Params:
-//   - expr: expression a analyser
-//   - anyTypeParams: map des type parameters
-//
-// Returns:
-//   - string: nom du type element ou chaine vide
-func extractArrayElementType(expr ast.Expr, anyTypeParams map[string]bool) string {
-	// Verifier si c'est un identifiant de slice avec type "any"
-	ident, ok := expr.(*ast.Ident)
-	// Si c'est un identifiant
-	if ok {
-		// On ne peut pas determiner le type ici facilement
-		// Cette fonction est simplifiee
-		_ = ident
-	}
-
-	// Retour vide par defaut
-	return ""
+	// Note: Implementation complete necessite pass.TypesInfo
+	// Pour l'instant, on ne peut pas determiner le type des variables de range
+	// sans information de type du compilateur
+	_ = s
+	_ = anyTypeParams
+	_ = result
 }
 
 // mergeStringMaps fusionne deux maps string->string.
@@ -332,6 +304,12 @@ func reportIfUsesAnyTypeParamOrdered(
 	anyTypeParams map[string]bool,
 	reported map[string]bool,
 ) {
+	// Guard contre nil (pour tests unitaires)
+	if pass == nil {
+		// Pas de contexte pour reporter
+		return
+	}
+
 	// Verifier l'operande gauche
 	leftUses := checkOperandUsesAnyType(binaryExpr.X, paramNames, anyTypeParams)
 	// Verifier l'operande droit

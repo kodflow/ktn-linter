@@ -112,6 +112,12 @@ func isSingleInterfaceConstraint(pass *analysis.Pass, expr ast.Expr) bool {
 		return false
 	}
 
+	// Guard contre nil (pour tests unitaires)
+	if pass == nil || pass.TypesInfo == nil {
+		// Pas d'info de type disponible
+		return false
+	}
+
 	// Obtenir le type de la contrainte
 	typeInfo := pass.TypesInfo.TypeOf(expr)
 	// Verifier si le type est valide
@@ -173,14 +179,14 @@ func isTypeParamOnlyForSignature(funcDecl *ast.FuncDecl, typeParamName string) b
 	// Verifier si le type est utilise dans le corps
 	usedInBody := isTypeUsedInBody(funcDecl, typeParamName)
 
-	// Si utilise dans return ET dans le corps de maniere significative, c'est justifie
-	if usedInReturn && usedInBody {
+	// Si utilise dans return OU dans le corps, c'est justifie
+	if usedInReturn || usedInBody {
 		// Usage justifie pour preservation de type
 		return false
 	}
 
-	// Si non utilise dans return, c'est potentiellement inutile
-	return !usedInReturn
+	// Si non utilise ni dans return ni dans body, c'est inutile
+	return true
 }
 
 // isTypeInReturnType verifie si le type parameter est dans le type de retour.
@@ -335,6 +341,12 @@ func reportUnnecessaryGeneric(
 	typeParamName string,
 	constraintExpr ast.Expr,
 ) {
+	// Guard contre nil (pour tests unitaires)
+	if pass == nil {
+		// Pas de contexte pour reporter
+		return
+	}
+
 	// Obtenir le nom de la contrainte
 	constraintName := extractConstraintName(constraintExpr)
 	// Construire le message

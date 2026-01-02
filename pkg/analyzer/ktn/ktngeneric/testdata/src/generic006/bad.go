@@ -59,18 +59,18 @@ func badSum[T any](values ...T) T {
 }
 
 // badAverage calcule la moyenne simplifiee.
-// Erreur: utilise + et / sans contrainte cmp.Ordered.
+// Erreur: utilise + sans contrainte cmp.Ordered.
 //
 // Params:
 //   - a: premiere valeur
 //   - b: deuxieme valeur
 //
 // Returns:
-//   - T: moyenne des valeurs
+//   - T: somme des valeurs
 func badAverage[T any](a, b T) T {
-	// Addition et division sans contrainte
+	// Addition sans contrainte
 	result := a + b
-	// Retourne le resultat (division simplifiee)
+	// Retourne le resultat
 	return result
 }
 

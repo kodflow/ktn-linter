@@ -23,7 +23,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 94.6% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` | 98.6% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` | 96.9% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
@@ -121,14 +121,17 @@ Rapport de couverture généré automatiquement.
 | 🟢 `009.go:checkMagicNumbers` | 92.9% |
 | 🟢 `011.go:runFunc011` | 95.2% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` - 98.6%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` - 96.9%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
 | 🟢 `001.go:checkEqualityUsage` | 92.9% |
-| 🟡 `002.go:isSingleInterfaceConstraint` | 83.3% |
+| 🔴 `002.go:isSingleInterfaceConstraint` | 75.0% |
+| 🟡 `002.go:reportUnnecessaryGeneric` | 83.3% |
+| 🟡 `003.go:checkDeprecatedConstraintsImport` | 90.0% |
+| 🟡 `005.go:reportShadowing` | 80.0% |
 | 🟢 `006.go:checkOrderedUsage` | 93.8% |
-| 🟡 `006.go:extractFromRangeStmt` | 83.3% |
+| 🟡 `006.go:reportIfUsesAnyTypeParamOrdered` | 84.6% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 98.4%
 
@@ -482,4 +485,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-02 09:24:09*
+*Généré le: 2026-01-02 09:47:41*

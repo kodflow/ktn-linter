@@ -87,6 +87,12 @@ func checkDeprecatedConstraintsImport(pass *analysis.Pass, importSpec *ast.Impor
 		return
 	}
 
+	// Guard contre nil (pour tests unitaires)
+	if pass == nil {
+		// Pas de contexte pour reporter
+		return
+	}
+
 	// Reporter l'erreur
 	cfg := config.Get()
 	msg, _ := messages.Get(ruleCodeGeneric003)

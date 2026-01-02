@@ -349,39 +349,6 @@ func TestExtractFromRangeStmt(t *testing.T) {
 	}
 }
 
-func TestExtractArrayElementType(t *testing.T) {
-	anyTypeParams := map[string]bool{"T": true}
-
-	tests := []struct {
-		name     string
-		expr     ast.Expr
-		expected string
-	}{
-		{
-			name:     "simple ident",
-			expr:     &ast.Ident{Name: "slice"},
-			expected: "",
-		},
-		{
-			name: "call expression",
-			expr: &ast.CallExpr{
-				Fun: &ast.Ident{Name: "make"},
-			},
-			expected: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := extractArrayElementType(tt.expr, anyTypeParams)
-			// Verify result
-			if result != tt.expected {
-				t.Errorf("extractArrayElementType() = %s, want %s", result, tt.expected)
-			}
-		})
-	}
-}
-
 func TestCheckOperandUsesAnyType006(t *testing.T) {
 	paramNames := map[string]string{
 		"x": "T",

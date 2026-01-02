@@ -159,6 +159,12 @@ func checkTypeParamList(pass *analysis.Pass, typeParams *ast.FieldList) {
 //   - pass: contexte d'analyse
 //   - name: identifiant du type parameter
 func reportShadowing(pass *analysis.Pass, name *ast.Ident) {
+	// Guard contre nil (pour tests unitaires)
+	if pass == nil {
+		// Pas de contexte pour reporter
+		return
+	}
+
 	// Recuperer le message
 	cfg := config.Get()
 	msg, _ := messages.Get(ruleCodeGeneric005)
