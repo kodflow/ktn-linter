@@ -50,6 +50,10 @@ func runVar031(pass *analysis.Pass) (any, error) {
 	if !ok || insp == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
 	// Filter for function declarations and function literals
 	nodeFilter := []ast.Node{

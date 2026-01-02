@@ -55,6 +55,10 @@ func runVar019(pass *analysis.Pass) (any, error) {
 	if !ok || insp == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
 	// Collecte des types avec receivers par valeur
 	typesWithValueRecv := collectTypesWithValueReceivers(pass, insp)

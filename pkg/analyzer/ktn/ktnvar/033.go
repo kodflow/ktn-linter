@@ -55,6 +55,10 @@ func runVar033(pass *analysis.Pass) (any, error) {
 	if !ok || insp == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
 	// Check for cmp.Or patterns in functions
 	checkCmpOrPattern(pass, insp, cfg)

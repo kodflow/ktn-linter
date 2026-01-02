@@ -53,6 +53,10 @@ func runVar035(pass *analysis.Pass) (any, error) {
 	if !ok || insp == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
 	// Check for manual contains pattern in functions
 	checkContainsPattern(pass, insp, cfg)

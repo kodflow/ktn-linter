@@ -64,6 +64,10 @@ func runVar023(pass *analysis.Pass) (any, error) {
 	if !ok || insp == nil {
 		return nil, nil
 	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
 	// Collecter les alias pour math/rand
 	mathRandAliases := collectMathRandAliases(pass)
