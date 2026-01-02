@@ -49,6 +49,7 @@ CATEGORY_MAP["api"]="API"
 CATEGORY_MAP["comment"]="COMMENT"
 CATEGORY_MAP["const"]="CONST"
 CATEGORY_MAP["func"]="FUNC"
+CATEGORY_MAP["generic"]="GENERIC"
 CATEGORY_MAP["interface"]="INTERFACE"
 CATEGORY_MAP["package"]="PACKAGE"
 CATEGORY_MAP["return"]="RETURN"
@@ -62,6 +63,9 @@ CATEGORY_MAP["var"]="VAR"
 # La validation directe (fichier isolé) ne peut pas résoudre ces types.
 declare -A RULES_NEED_TYPE_RESOLUTION
 RULES_NEED_TYPE_RESOLUTION["KTN-API-001"]=1
+# GENERIC rules cause type errors when operators aren't defined on any/comparable
+RULES_NEED_TYPE_RESOLUTION["KTN-GENERIC-001"]=1
+RULES_NEED_TYPE_RESOLUTION["KTN-GENERIC-006"]=1
 
 # Fonction pour extraire le code de règle attendu d'un chemin testdata
 get_expected_code() {

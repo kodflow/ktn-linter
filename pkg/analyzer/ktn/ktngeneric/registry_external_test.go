@@ -42,8 +42,8 @@ func TestAnalyzers(t *testing.T) {
 			name: "returns expected count",
 			testFunc: func(t *testing.T) {
 				analyzers := ktngeneric.Analyzers()
-				expected := 1
-				// Verifier le nombre d'analyseurs
+				expected := 5
+				// Verifier le nombre d'analyseurs (001, 002, 003, 005, 006)
 				if len(analyzers) != expected {
 					t.Errorf("expected %d analyzers, got %d", expected, len(analyzers))
 				}
