@@ -47,16 +47,8 @@ func runVar011(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving types
-	if pass.TypesInfo == nil {
+	// Ensure inspector is available
+	if !ok {
 		return nil, nil
 	}
 
@@ -112,12 +104,7 @@ func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
 			if assign.Tok == token.ADD_ASSIGN {
 				// Check if string concatenation
 				if isStringConcatenation(pass, assign) {
-					msg, ok := messages.Get(ruleCodeVar011)
-					// Defensive: avoid panic if message is missing
-					if !ok {
-						pass.Reportf(assign.Pos(), "%s: utiliser strings.Builder pour concaténation en boucle", ruleCodeVar011)
-						return true
-					}
+					msg, _ := messages.Get(ruleCodeVar011)
 					pass.Reportf(
 						assign.Pos(),
 						"%s: %s",

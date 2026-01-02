@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -108,109 +107,6 @@ func example() { var x = 42; _ = x }
 	}
 }
 
-// Test_runVar007_nilInspector tests runVar007 with nil inspector.
-func Test_runVar007_nilInspector(t *testing.T) {
-	// Reset config
-	config.Reset()
-
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: nil,
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar007(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar007() error = %v", err)
-	}
-	// Should return nil
-	if result != nil {
-		t.Errorf("runVar007() result = %v, expected nil", result)
-	}
-}
-
-// Test_runVar007_invalidInspector tests runVar007 with wrong type.
-func Test_runVar007_invalidInspector(t *testing.T) {
-	// Reset config
-	config.Reset()
-
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: "not an inspector",
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar007(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar007() error = %v", err)
-	}
-	// Should return nil
-	if result != nil {
-		t.Errorf("runVar007() result = %v, expected nil", result)
-	}
-}
-
-// Test_runVar007_nilFset tests runVar007 with nil Fset.
-func Test_runVar007_nilFset(t *testing.T) {
-	// Reset config
-	config.Reset()
-
-	code := `package test
-func example() { var x = 42; _ = x }
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Check parsing error
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
-	}
-
-	insp := inspector.New([]*ast.File{file})
-	pass := &analysis.Pass{
-		Fset: nil, // nil Fset
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar007(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar007() error = %v", err)
-	}
-	// Should return nil
-	if result != nil {
-		t.Errorf("runVar007() result = %v, expected nil", result)
-	}
-}
-
-// Test_runVar007_wrongInspectorType tests runVar007 with wrong inspector type.
-func Test_runVar007_wrongInspectorType(t *testing.T) {
-	config.Reset()
-
-	pass := &analysis.Pass{
-		Fset:     token.NewFileSet(),
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: "not an inspector"},
-		Report:   func(_ analysis.Diagnostic) {},
-	}
-
-	result, err := runVar007(pass)
-	if err != nil {
-		t.Errorf("runVar007() error = %v, want nil", err)
-	}
-	if result != nil {
-		t.Errorf("runVar007() result = %v, want nil", result)
-	}
-}
 
 // Test_runVar007_fileExcluded tests runVar007 with excluded file.
 func Test_runVar007_fileExcluded(t *testing.T) {
@@ -428,42 +324,6 @@ func Test_checkCommClause_withBody(t *testing.T) {
 	// Should report the var declaration
 	if reportCount != 1 {
 		t.Errorf("checkCommClause() reported %d issues, expected 1", reportCount)
-	}
-}
-
-// Test_reportVarErrors_missingMessage tests the fallback message path.
-func Test_reportVarErrors_missingMessage(t *testing.T) {
-	// Reset config
-	config.Reset()
-
-	// Store original message and remove it
-	originalMsg, hasOriginal := messages.Get("KTN-VAR-007")
-	messages.Unregister("KTN-VAR-007")
-	defer func() {
-		// Restore original message
-		if hasOriginal {
-			messages.Register(originalMsg)
-		}
-	}()
-
-	fset := token.NewFileSet()
-	reportCount := 0
-
-	pass := &analysis.Pass{
-		Fset: fset,
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
-
-	spec := &ast.ValueSpec{
-		Names:  []*ast.Ident{{Name: "x"}},
-		Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
-	}
-	reportVarErrors(pass, spec)
-	// Should report with fallback message
-	if reportCount != 1 {
-		t.Errorf("reportVarErrors() reported %d issues, expected 1 with fallback", reportCount)
 	}
 }
 

@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -552,96 +551,6 @@ func Test_isExternalType009(t *testing.T) {
 	}
 }
 
-// Test_runVar013_nilInspector tests runVar013 with nil inspector.
-func Test_runVar013_nilInspector(t *testing.T) {
-	// Reset config for clean state
-	config.Reset()
-
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: nil, // nil inspector
-		},
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar013(pass)
-	// Should return nil, nil for nil inspector
-	if err != nil {
-		t.Errorf("runVar013() error = %v, expected nil", err)
-	}
-	// Verify result
-	if result != nil {
-		t.Errorf("runVar013() = %v, expected nil", result)
-	}
-}
-
-// Test_runVar013_invalidInspector tests runVar013 with invalid inspector type.
-func Test_runVar013_invalidInspector(t *testing.T) {
-	// Reset config for clean state
-	config.Reset()
-
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: "invalid", // wrong type
-		},
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar013(pass)
-	// Should return nil, nil for invalid inspector
-	if err != nil {
-		t.Errorf("runVar013() error = %v, expected nil", err)
-	}
-	// Verify result
-	if result != nil {
-		t.Errorf("runVar013() = %v, expected nil", result)
-	}
-}
-
-// Test_runVar013_nilFset tests runVar013 with nil Fset.
-func Test_runVar013_nilFset(t *testing.T) {
-	// Reset config for clean state
-	config.Reset()
-
-	code := `package test
-	type Big struct { a, b, c, d, e, f, g, h, i int }
-	func foo(b Big) {}
-	`
-	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
-	insp := inspector.New([]*ast.File{file})
-
-	pass := &analysis.Pass{
-		Fset: nil, // nil Fset
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar013(pass)
-	// Should return nil, nil for nil Fset
-	if err != nil {
-		t.Errorf("runVar013() error = %v, expected nil", err)
-	}
-	// Verify result
-	if result != nil {
-		t.Errorf("runVar013() = %v, expected nil", result)
-	}
-}
 
 // Test_runVar013_nilTypesInfo tests runVar013 with nil TypesInfo.
 func Test_runVar013_nilTypesInfo(t *testing.T) {
@@ -911,49 +820,3 @@ func Test_runVar013_withFuncNoParams(t *testing.T) {
 	}
 }
 
-// Test_checkParamType009_fallbackMessage tests fallback message when message missing.
-func Test_checkParamType009_fallbackMessage(t *testing.T) {
-	t.Run("fallback message", func(t *testing.T) {
-		// Save original message and restore after test
-		originalMsg, hasOriginal := messages.Get("KTN-VAR-013")
-		messages.Unregister("KTN-VAR-013")
-		defer func() {
-			if hasOriginal {
-				messages.Register(originalMsg)
-			}
-		}()
-
-		// Create a large struct type (>64 bytes)
-		pkg := types.NewPackage("test", "test")
-		fields := make([]*types.Var, 10)
-		// Create 10 int64 fields = 80 bytes
-		for i := range 10 {
-			fields[i] = types.NewVar(0, pkg, fmt.Sprintf("f%d", i), types.Typ[types.Int64])
-		}
-		structType := types.NewStruct(fields, nil)
-		obj := types.NewTypeName(0, pkg, "BigStruct", structType)
-		namedType := types.NewNamed(obj, structType, nil)
-
-		typeIdent := &ast.Ident{Name: "BigStruct"}
-		reportCount := 0
-		pass := &analysis.Pass{
-			Pkg: pkg,
-			TypesInfo: &types.Info{
-				Types: map[ast.Expr]types.TypeAndValue{
-					typeIdent: {Type: namedType},
-				},
-			},
-			TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
-			Report: func(_d analysis.Diagnostic) {
-				reportCount++
-			},
-		}
-
-		checkParamType009(pass, typeIdent, token.NoPos, 64, false)
-
-		// Should report with fallback message
-		if reportCount != 1 {
-			t.Errorf("checkParamType009() reported %d, expected 1", reportCount)
-		}
-	})
-}

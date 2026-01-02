@@ -45,12 +45,7 @@ func runVar010(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -200,12 +195,7 @@ func reportMissingGrow(pass *analysis.Pass, node ast.Node) {
 
 	// Check if type string is valid
 	if typeStr != "" {
-		msg, ok := messages.Get(ruleCodeVar010)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(node.Pos(), "%s: utiliser bytes.Buffer.Grow() pour préallouer", ruleCodeVar010)
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar010)
 		pass.Reportf(
 			node.Pos(),
 			"%s: %s",

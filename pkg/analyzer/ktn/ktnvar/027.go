@@ -46,12 +46,7 @@ func runVar027(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -75,12 +70,7 @@ func runVar027(pass *analysis.Pass) (any, error) {
 
 		// Check if this is a convertible for loop
 		if isConvertibleToRangeInt(forStmt) {
-			msg, ok := messages.Get(ruleCodeVar027)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(forStmt.Pos(), "%s: utiliser 'for i := range n' (Go 1.22+)", ruleCodeVar027)
-				return
-			}
+			msg, _ := messages.Get(ruleCodeVar027)
 			pass.Reportf(
 				forStmt.Pos(),
 				"%s: %s",

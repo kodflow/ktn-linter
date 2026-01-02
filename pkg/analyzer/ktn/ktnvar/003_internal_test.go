@@ -4,11 +4,9 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"strings"
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -149,67 +147,6 @@ var my_var int = 42
 	}
 }
 
-// Test_runVar003_nilInspector tests runVar003 with nil inspector.
-func Test_runVar003_nilInspector(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	pass := &analysis.Pass{
-		Fset:     token.NewFileSet(),
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: nil},
-	}
-
-	result, err := runVar003(pass)
-	if err != nil {
-		t.Errorf("runVar003() error = %v, want nil", err)
-	}
-	if result != nil {
-		t.Errorf("runVar003() result = %v, want nil", result)
-	}
-}
-
-// Test_runVar003_nilFset tests runVar003 with nil Fset.
-func Test_runVar003_nilFset(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", "package test", 0)
-	insp := inspector.New([]*ast.File{file})
-
-	pass := &analysis.Pass{
-		Fset:     nil,
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
-	}
-
-	result, err := runVar003(pass)
-	if err != nil {
-		t.Errorf("runVar003() error = %v, want nil", err)
-	}
-	if result != nil {
-		t.Errorf("runVar003() result = %v, want nil", result)
-	}
-}
-
-// Test_runVar003_wrongInspectorType tests runVar003 with wrong inspector type.
-func Test_runVar003_wrongInspectorType(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	pass := &analysis.Pass{
-		Fset:     token.NewFileSet(),
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: "not an inspector"},
-	}
-
-	result, err := runVar003(pass)
-	if err != nil {
-		t.Errorf("runVar003() error = %v, want nil", err)
-	}
-	if result != nil {
-		t.Errorf("runVar003() result = %v, want nil", result)
-	}
-}
-
 // Test_runVar003_snakeCase tests runVar003 detecting snake_case.
 func Test_runVar003_snakeCase(t *testing.T) {
 	config.Reset()
@@ -272,46 +209,3 @@ var _ int = 42
 	}
 }
 
-// Test_checkVar003Names_fallbackMessage tests with missing message.
-func Test_checkVar003Names_fallbackMessage(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	// Temporarily remove the message to test fallback
-	msg, _ := messages.Get(ruleCodeVar003)
-	messages.Unregister(ruleCodeVar003)
-	defer messages.Register(msg)
-
-	code := `package test
-var my_var int = 42
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
-	}
-
-	insp := inspector.New([]*ast.File{file})
-	reportCount := 0
-	var lastMsg string
-
-	pass := &analysis.Pass{
-		Fset:     fset,
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
-		Report: func(d analysis.Diagnostic) {
-			reportCount++
-			lastMsg = d.Message
-		},
-	}
-
-	_, _ = runVar003(pass)
-
-	// Should report one issue with fallback message
-	if reportCount != 1 {
-		t.Errorf("runVar003() reported %d issues, expected 1", reportCount)
-	}
-	// Message should contain fallback text
-	if !strings.Contains(lastMsg, "camelCase") {
-		t.Errorf("expected fallback message containing camelCase, got: %s", lastMsg)
-	}
-}

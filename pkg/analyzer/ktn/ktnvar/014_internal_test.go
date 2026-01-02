@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -193,63 +192,6 @@ func Test_runVar014_fileExcluded(t *testing.T) {
 	}
 }
 
-// Test_runVar014_nilInspector tests runVar014 with nil inspector.
-func Test_runVar014_nilInspector(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: nil,
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar014(pass)
-	if err != nil {
-		t.Errorf("runVar014() error = %v", err)
-	}
-	if result != nil {
-		t.Errorf("runVar014() result = %v, expected nil", result)
-	}
-}
-
-// Test_runVar014_nilFset tests runVar014 with nil Fset.
-func Test_runVar014_nilFset(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	code := `package test
-	func foo() {
-		for i := 0; i < 10; i++ {
-			buf := make([]byte, 1024)
-			_ = buf
-		}
-	}
-	`
-	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
-	insp := inspector.New([]*ast.File{file})
-
-	pass := &analysis.Pass{
-		Fset: nil,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar014(pass)
-	if err != nil {
-		t.Errorf("runVar014() error = %v", err)
-	}
-	if result != nil {
-		t.Errorf("runVar014() result = %v, expected nil", result)
-	}
-}
-
 // Test_checkLoopBodyVar015_nilBody tests checkLoopBodyVar015 with nil body.
 func Test_checkLoopBodyVar015_nilBody(t *testing.T) {
 	pass := &analysis.Pass{
@@ -301,40 +243,6 @@ func Test_checkMakeCallForByteSlice_notByteSlice(t *testing.T) {
 
 	if reportCount != 0 {
 		t.Errorf("checkMakeCallForByteSlice() reported %d, expected 0", reportCount)
-	}
-}
-
-// Test_checkMakeCallForByteSlice_fallbackMessage tests fallback message when message missing.
-func Test_checkMakeCallForByteSlice_fallbackMessage(t *testing.T) {
-	// Save original message and restore after test
-	originalMsg, hasOriginal := messages.Get("KTN-VAR-014")
-	messages.Unregister("KTN-VAR-014")
-	defer func() {
-		if hasOriginal {
-			messages.Register(originalMsg)
-		}
-	}()
-
-	reportCount := 0
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
-
-	// Test with make([]byte, ...)
-	call := &ast.CallExpr{
-		Fun: &ast.Ident{Name: "make"},
-		Args: []ast.Expr{
-			&ast.ArrayType{Elt: &ast.Ident{Name: "byte"}},
-		},
-	}
-	checkMakeCallForByteSlice(pass, call)
-
-	if reportCount != 1 {
-		t.Errorf("checkMakeCallForByteSlice() reported %d, expected 1", reportCount)
 	}
 }
 

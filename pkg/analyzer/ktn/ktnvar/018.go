@@ -55,11 +55,7 @@ func runVar018(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 	// Defensive: avoid nil dereference when resolving types
@@ -232,12 +228,7 @@ func isTotalSizeSmall(pass *analysis.Pass, sliceType ast.Expr, elementCount int6
 //   - pass: contexte d'analyse
 //   - call: expression d'appel à make
 func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
-	msg, ok := messages.Get(ruleCodeVar018)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: utiliser [N]T au lieu de make([]T, N) pour ≤64 bytes", ruleCodeVar018)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar018)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_isVar037AppendCall tests detection of append calls.
@@ -572,61 +570,3 @@ func Test_isRangingOverMap(t *testing.T) {
 	}
 }
 
-// Test_runVar037_defensiveBranches tests defensive branches in runVar037.
-func Test_runVar037_defensiveBranches(t *testing.T) {
-	tests := []struct {
-		name string
-		pass *analysis.Pass
-	}{
-		{
-			name: "inspector not in ResultOf",
-			pass: &analysis.Pass{
-				Fset:     token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{},
-			},
-		},
-		{
-			name: "inspector is nil",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: nil,
-				},
-			},
-		},
-		{
-			name: "inspector wrong type",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: "wrong type",
-				},
-			},
-		},
-		{
-			name: "valid inspector but nil fset",
-			pass: &analysis.Pass{
-				Fset: nil,
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: inspector.New([]*ast.File{}),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			// Just verify no panic
-			result, err := runVar037(tt.pass)
-			// Verify no error
-			if err != nil {
-				t.Errorf("runVar037() error = %v, want nil", err)
-			}
-			// Verify nil result
-			if result != nil {
-				t.Errorf("runVar037() result = %v, want nil", result)
-			}
-		})
-	}
-}

@@ -57,11 +57,7 @@ func runVar015(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -127,12 +123,7 @@ func checkLoopsForStringConversion(pass *analysis.Pass, body *ast.BlockStmt) {
 		// Vérification des conversions dans la boucle
 		if hasStringConversion(loop) {
 			// Rapport d'erreur
-			msg, ok := messages.Get(ruleCodeVar015)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(loop.Pos(), "%s: éviter string() répété dans une boucle", ruleCodeVar015)
-				return true
-			}
+			msg, _ := messages.Get(ruleCodeVar015)
 			pass.Reportf(
 				loop.Pos(),
 				"%s: %s",
@@ -279,12 +270,7 @@ func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt, maxConve
 		// Vérification de la condition
 		if count > maxConversions {
 			pos := firstPos[varName]
-			msg, ok := messages.Get(ruleCodeVar015)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(pos.Pos(), "%s: %d conversions string() répétées", ruleCodeVar015, count)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar015)
 			pass.Reportf(
 				pos.Pos(),
 				"%s: %s",

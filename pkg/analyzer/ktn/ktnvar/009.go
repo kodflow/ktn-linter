@@ -64,12 +64,7 @@ func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
-	msg, ok := messages.Get(ruleCodeVar009)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: éviter make+append, utiliser append directement", ruleCodeVar009)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar009)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",
@@ -99,12 +94,8 @@ func runVar009(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	// Ensure inspector is available
+	if !ok {
 		return nil, nil
 	}
 

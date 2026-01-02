@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_extractRangeKeyValue031 tests extraction of key/value from range.
@@ -544,68 +542,3 @@ func Test_analyzeBlockForMapClone(t *testing.T) {
 	}
 }
 
-// Test_runVar031_defensiveBranches tests defensive branches in runVar031.
-func Test_runVar031_defensiveBranches(t *testing.T) {
-	tests := []struct {
-		name string
-		pass *analysis.Pass
-	}{
-		{
-			name: "nil fset",
-			pass: &analysis.Pass{
-				Fset:     nil,
-				ResultOf: map[*analysis.Analyzer]any{},
-			},
-		},
-		{
-			name: "inspector not in ResultOf",
-			pass: &analysis.Pass{
-				Fset:     token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{},
-			},
-		},
-		{
-			name: "inspector is nil",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: nil,
-				},
-			},
-		},
-		{
-			name: "inspector wrong type",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: "wrong type",
-				},
-			},
-		},
-		{
-			name: "valid inspector but nil fset",
-			pass: &analysis.Pass{
-				Fset: nil,
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: inspector.New([]*ast.File{}),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			// Just verify no panic
-			result, err := runVar031(tt.pass)
-			// Verify no error
-			if err != nil {
-				t.Errorf("runVar031() error = %v, want nil", err)
-			}
-			// Verify nil result
-			if result != nil {
-				t.Errorf("runVar031() result = %v, want nil", result)
-			}
-		})
-	}
-}

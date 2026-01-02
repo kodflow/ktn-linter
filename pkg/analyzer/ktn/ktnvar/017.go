@@ -46,12 +46,7 @@ func runVar017(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -91,16 +86,7 @@ func runVar017(pass *analysis.Pass) (any, error) {
 		}
 
 		// Signaler l'erreur
-		msg, ok := messages.Get(ruleCodeVar017)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(
-				callExpr.Pos(),
-				"%s: préallouer map avec une capacité quand elle est connue",
-				ruleCodeVar017,
-			)
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar017)
 		pass.Reportf(
 			callExpr.Pos(),
 			"%s: %s",

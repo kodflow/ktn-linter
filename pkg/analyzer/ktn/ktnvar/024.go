@@ -48,12 +48,7 @@ func runVar024(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -99,12 +94,7 @@ func checkEmptyInterface(pass *analysis.Pass, interfaceType *ast.InterfaceType) 
 	}
 
 	// Report de l'erreur
-	msg, ok := messages.Get(ruleCodeVar024)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(interfaceType.Pos(), "%s: préférer any à interface{}", ruleCodeVar024)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar024)
 	pass.Reportf(
 		interfaceType.Pos(),
 		"%s: %s",

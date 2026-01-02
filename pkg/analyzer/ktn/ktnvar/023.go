@@ -60,12 +60,7 @@ func runVar023(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -460,16 +455,7 @@ func isSecurityName(name string) bool {
 //   - pos: position to report
 func reportMathRandInSecurity(pass *analysis.Pass, pos token.Pos) {
 	// Récupération du message
-	msg, ok := messages.Get(ruleCodeVar023)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(
-			pos,
-			"%s: utiliser crypto/rand au lieu de math/rand en contexte sécurité",
-			ruleCodeVar023,
-		)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar023)
 
 	// Rapport de l'erreur
 	pass.Reportf(

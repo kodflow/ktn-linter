@@ -47,11 +47,7 @@ func runVar002(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -89,12 +85,7 @@ func runVar002(pass *analysis.Pass) (any, error) {
 
 			// Error: const after var
 			if genDecl.Tok == token.CONST && varSeen {
-				msg, ok := messages.Get(ruleCodeVar002)
-				// Defensive: avoid panic if message is missing
-				if !ok {
-					pass.Reportf(genDecl.Pos(), "%s: const doit être déclaré avant var", ruleCodeVar002)
-					continue
-				}
+				msg, _ := messages.Get(ruleCodeVar002)
 				pass.Reportf(
 					genDecl.Pos(),
 					"%s: %s",

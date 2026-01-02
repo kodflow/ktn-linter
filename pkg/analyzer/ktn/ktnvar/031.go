@@ -46,12 +46,8 @@ func runVar031(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	// Skip if inspector not available
+	if !ok {
 		return nil, nil
 	}
 
@@ -124,12 +120,7 @@ func analyzeBlockForMapClone(pass *analysis.Pass, block *ast.BlockStmt) {
 		// Check if this is a simple map clone pattern
 		if isSimpleMapClone(rangeStmt, mapMakes, i, block.List) {
 			// Report the issue
-			msg, ok := messages.Get(ruleCodeVar031)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(rangeStmt.Pos(), "%s: utiliser maps.Clone() (Go 1.21+)", ruleCodeVar031)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar031)
 			pass.Reportf(
 				rangeStmt.Pos(),
 				"%s: %s",

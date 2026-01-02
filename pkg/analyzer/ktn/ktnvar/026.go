@@ -52,11 +52,7 @@ func runVar026(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -129,12 +125,7 @@ func checkMathMinMax(pass *analysis.Pass, call *ast.CallExpr) {
 	builtinName := getBuiltinName(sel.Sel.Name)
 
 	// Report de l'erreur
-	msg, ok := messages.Get(ruleCodeVar026)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: utiliser %s() built-in au lieu de math.%s", ruleCodeVar026, builtinName, sel.Sel.Name)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar026)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",
@@ -185,12 +176,7 @@ func checkIfMinMaxPattern(pass *analysis.Pass, ifStmt *ast.IfStmt) {
 	}
 
 	// Report de l'erreur
-	msg, ok := messages.Get(ruleCodeVar026)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(ifStmt.Pos(), "%s: utiliser min()/max() built-in", ruleCodeVar026)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar026)
 	pass.Reportf(
 		ifStmt.Pos(),
 		"%s: %s",

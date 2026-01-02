@@ -46,12 +46,8 @@ func runVar012(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	// Inspector type assertion
+	if !ok {
 		return nil, nil
 	}
 
@@ -141,12 +137,7 @@ func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
 		// Vérification si allocation de slice ou map
 		if isSliceOrMapAlloc(rhs) {
 			// Allocation de slice/map détectée
-			msg, ok := messages.Get(ruleCodeVar012)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(rhs.Pos(), "%s: éviter allocation dans une boucle", ruleCodeVar012)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar012)
 			pass.Reportf(
 				rhs.Pos(),
 				"%s: %s",
@@ -185,12 +176,7 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 			// Vérification si allocation de slice ou map
 			if isSliceOrMapAlloc(value) {
 				// Allocation de slice/map détectée
-				msg, ok := messages.Get(ruleCodeVar012)
-				// Defensive: avoid panic if message is missing
-				if !ok {
-					pass.Reportf(value.Pos(), "%s: éviter allocation dans une boucle", ruleCodeVar012)
-					continue
-				}
+				msg, _ := messages.Get(ruleCodeVar012)
 				pass.Reportf(
 					value.Pos(),
 					"%s: %s",

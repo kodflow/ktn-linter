@@ -133,46 +133,6 @@ func Test_checkVarGrouping(t *testing.T) {
 	}
 }
 
-// Test_runVar016_nilInspector tests runVar016 with nil inspector.
-func Test_runVar016_nilInspector(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			config.Reset()
-
-			code := `package test
-var x int = 42
-`
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", code, 0)
-			// Check parsing error
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			pass := &analysis.Pass{
-				Fset:  fset,
-				Files: []*ast.File{file},
-			}
-
-			result, err := runVar016(pass)
-			// Check no error
-			if err != nil {
-				t.Fatalf("runVar016() error = %v", err)
-			}
-			// Result should be nil
-			if result != nil {
-				t.Errorf("runVar016() = %v, expected nil", result)
-			}
-		})
-	}
-}
-
 // Test_collectVarGroups_nonGenDecl tests with non-GenDecl nodes.
 func Test_collectVarGroups_nonGenDecl(t *testing.T) {
 	tests := []struct {

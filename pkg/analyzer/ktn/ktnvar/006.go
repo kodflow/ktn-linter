@@ -109,11 +109,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -150,12 +146,7 @@ func runVar006(pass *analysis.Pass) (any, error) {
 
 				// Check if name shadows built-in
 				if isBuiltinIdentifier006(varName) {
-					msg, ok := messages.Get(ruleCodeVar006)
-					// Defensive: avoid panic if message is missing
-					if !ok {
-						pass.Reportf(name.Pos(), "%s: shadowing d'identifiant builtin: %q", ruleCodeVar006, varName)
-						continue
-					}
+					msg, _ := messages.Get(ruleCodeVar006)
 					pass.Reportf(
 						name.Pos(),
 						"%s: %s",

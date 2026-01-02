@@ -51,12 +51,8 @@ func runVar019(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	// Ensure inspector is available
+	if !ok {
 		return nil, nil
 	}
 	// Defensive: avoid nil dereference when resolving types
@@ -183,17 +179,7 @@ func checkStructsWithMutex(pass *analysis.Pass, insp *inspector.Inspector, types
 			// Vérification si le champ est un mutex
 			if mutexType := getMutexType(pass, field.Type); mutexType != "" {
 				// Rapport d'erreur seulement si le type a des receivers par valeur
-				msg, ok := messages.Get(ruleCodeVar019)
-				// Defensive: avoid panic if message is missing
-				if !ok {
-					pass.Reportf(
-						field.Pos(),
-						"%s: copie de mutex interdite (%s)",
-						ruleCodeVar019,
-						mutexType,
-					)
-					continue
-				}
+				msg, _ := messages.Get(ruleCodeVar019)
 				pass.Reportf(
 					field.Pos(),
 					"%s: %s",
@@ -249,17 +235,7 @@ func checkValueReceivers(pass *analysis.Pass, insp *inspector.Inspector) {
 			if hasMutex(pass, recv.Type) {
 				mutexType := getMutexTypeFromType(pass, recv.Type)
 
-				msg, ok := messages.Get(ruleCodeVar019)
-				// Defensive: avoid panic if message is missing
-				if !ok {
-					pass.Reportf(
-						recv.Pos(),
-						"%s: copie de mutex interdite (%s)",
-						ruleCodeVar019,
-						mutexType,
-					)
-					return
-				}
+				msg, _ := messages.Get(ruleCodeVar019)
 				pass.Reportf(
 					recv.Pos(),
 					"%s: %s",
@@ -307,17 +283,7 @@ func checkValueParams(pass *analysis.Pass, insp *inspector.Inspector) {
 			if mutexType := getMutexType(pass, param.Type); mutexType != "" {
 				// Vérification de la condition
 				if !isPointerType(param.Type) {
-					msg, ok := messages.Get(ruleCodeVar019)
-					// Defensive: avoid panic if message is missing
-					if !ok {
-						pass.Reportf(
-							param.Pos(),
-							"%s: copie de mutex interdite (%s)",
-							ruleCodeVar019,
-							mutexType,
-						)
-						continue
-					}
+					msg, _ := messages.Get(ruleCodeVar019)
 					pass.Reportf(
 						param.Pos(),
 						"%s: %s",
@@ -366,17 +332,7 @@ func checkAssignments(pass *analysis.Pass, insp *inspector.Inspector) {
 			if i < len(assign.Lhs) {
 				// Vérification de la condition
 				if mutexType := isMutexCopy(pass, assign.Lhs[i], rhs); mutexType != "" {
-					msg, ok := messages.Get(ruleCodeVar019)
-					// Defensive: avoid panic if message is missing
-					if !ok {
-						pass.Reportf(
-							assign.Pos(),
-							"%s: copie de mutex interdite (%s)",
-							ruleCodeVar019,
-							mutexType,
-						)
-						continue
-					}
+					msg, _ := messages.Get(ruleCodeVar019)
 					pass.Reportf(
 						assign.Pos(),
 						"%s: %s",

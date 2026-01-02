@@ -60,12 +60,8 @@ func runVar030(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	// Ensure inspector is available
+	if !ok {
 		return nil, nil
 	}
 
@@ -114,13 +110,7 @@ func checkAppendNilPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *
 		}
 
 		// Report the issue
-		msg, ok := messages.Get(ruleCodeVar030)
-		// Defensive: avoid panic if message is missing
-		if !ok {
-			pass.Reportf(call.Pos(), "%s: utiliser slices.Clone() au lieu de %s",
-				ruleCodeVar030, "append([]T(nil), s...)")
-			return
-		}
+		msg, _ := messages.Get(ruleCodeVar030)
 		pass.Reportf(
 			call.Pos(),
 			"%s: %s",
@@ -536,13 +526,7 @@ func findMatchingMake030(destName, sourceName string, makeInfos map[string]*make
 //   - cfg: configuration
 func reportMakeCopy030(pass *analysis.Pass, call *ast.CallExpr, cfg *config.Config) {
 	// Report the issue
-	msg, ok := messages.Get(ruleCodeVar030)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(call.Pos(), "%s: utiliser slices.Clone() au lieu de %s",
-			ruleCodeVar030, "make+copy")
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar030)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",

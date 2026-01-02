@@ -49,11 +49,7 @@ func runVar005(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -292,12 +288,7 @@ func checkVar005Name(pass *analysis.Pass, ident *ast.Ident) {
 	}
 
 	// Report error
-	msg, ok := messages.Get(ruleCodeVar005)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(ident.Pos(), "%s: nom de variable trop long: %q", ruleCodeVar005, varName)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar005)
 	pass.Reportf(
 		ident.Pos(),
 		"%s: %s",

@@ -54,16 +54,8 @@ func runVar037(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving types
-	if pass.TypesInfo == nil {
+	// Check if inspector is available
+	if !ok {
 		return nil, nil
 	}
 
@@ -390,12 +382,7 @@ func reportMapCollectionPattern(
 	cfg *config.Config,
 ) {
 	// Get message and format based on collection type
-	msg, ok := messages.Get(ruleCodeVar037)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(rangeStmt.Body.List[0].Pos(), "%s: utiliser slices.Collect(maps.%s()) (Go 1.23+)", ruleCodeVar037, collectionType)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar037)
 
 	// Report the issue on the append statement
 	pass.Reportf(

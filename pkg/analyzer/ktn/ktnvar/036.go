@@ -50,12 +50,8 @@ func runVar036(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	// Verify inspector is available
+	if !ok {
 		return nil, nil
 	}
 
@@ -419,12 +415,7 @@ func ifBodyReturnsIndex(body *ast.BlockStmt, indexName string) bool {
 //   - cfg: configuration
 func reportIndexPattern(pass *analysis.Pass, pos token.Pos, cfg *config.Config) {
 	// Get the message
-	msg, ok := messages.Get(ruleCodeVar036)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(pos, "%s: utiliser slices.Index() (Go 1.21+)", ruleCodeVar036)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar036)
 	// Report the issue
 	pass.Reportf(
 		pos,

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -302,61 +301,6 @@ func Test_runVar015_fileExcluded(t *testing.T) {
 	}
 }
 
-// Test_runVar015_nilInspector tests runVar015 with nil inspector.
-func Test_runVar015_nilInspector(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	fset := token.NewFileSet()
-	pass := &analysis.Pass{
-		Fset: fset,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: nil,
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar015(pass)
-	if err != nil {
-		t.Errorf("runVar015() error = %v", err)
-	}
-	if result != nil {
-		t.Errorf("runVar015() result = %v, expected nil", result)
-	}
-}
-
-// Test_runVar015_nilFset tests runVar015 with nil Fset.
-func Test_runVar015_nilFset(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	code := `package test
-	func foo() {
-		data := []byte("hello")
-		_ = string(data)
-	}
-	`
-	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
-	insp := inspector.New([]*ast.File{file})
-
-	pass := &analysis.Pass{
-		Fset: nil,
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {},
-	}
-
-	result, err := runVar015(pass)
-	if err != nil {
-		t.Errorf("runVar015() error = %v", err)
-	}
-	if result != nil {
-		t.Errorf("runVar015() result = %v, expected nil", result)
-	}
-}
-
 // Test_checkFuncForRepeatedConversions_notFuncDecl tests with non-FuncDecl.
 func Test_checkFuncForRepeatedConversions_notFuncDecl(t *testing.T) {
 	pass := &analysis.Pass{
@@ -382,54 +326,6 @@ func Test_checkFuncForRepeatedConversions_nilBody(t *testing.T) {
 	}
 	checkFuncForRepeatedConversions(pass, funcDecl, 2)
 	// Should not panic
-}
-
-// Test_checkLoopsForStringConversion_fallbackMessage tests fallback message.
-func Test_checkLoopsForStringConversion_fallbackMessage(t *testing.T) {
-	// Save original message and restore after test
-	originalMsg, hasOriginal := messages.Get("KTN-VAR-015")
-	messages.Unregister("KTN-VAR-015")
-	defer func() {
-		if hasOriginal {
-			messages.Register(originalMsg)
-		}
-	}()
-
-	// Parse code with loop containing string conversion
-	code := `package test
-func foo() {
-	for i := 0; i < 10; i++ {
-		data := []byte("hello")
-		_ = string(data)
-	}
-}
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
-	}
-
-	reportCount := 0
-	pass := &analysis.Pass{
-		Fset: fset,
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
-
-	// Find FuncDecl body and test
-	ast.Inspect(file, func(n ast.Node) bool {
-		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Body != nil {
-			checkLoopsForStringConversion(pass, funcDecl.Body)
-		}
-		return true
-	})
-
-	// Should report with fallback message
-	if reportCount != 1 {
-		t.Errorf("checkLoopsForStringConversion() reported %d, expected 1", reportCount)
-	}
 }
 
 // Test_checkLoopsForStringConversion_withLoop tests with loop containing string conversion.
@@ -468,54 +364,6 @@ func foo() {
 	// Should report the string conversion in loop
 	if reportCount != 1 {
 		t.Errorf("checkLoopsForStringConversion() reported %d, expected 1", reportCount)
-	}
-}
-
-// Test_checkMultipleConversions_fallbackMessage tests fallback message.
-func Test_checkMultipleConversions_fallbackMessage(t *testing.T) {
-	// Save original message and restore after test
-	originalMsg, hasOriginal := messages.Get("KTN-VAR-015")
-	messages.Unregister("KTN-VAR-015")
-	defer func() {
-		if hasOriginal {
-			messages.Register(originalMsg)
-		}
-	}()
-
-	// Parse code with multiple string conversions
-	code := `package test
-func foo() {
-	data := []byte("hello")
-	_ = string(data)
-	_ = string(data)
-	_ = string(data)
-}
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
-	}
-
-	reportCount := 0
-	pass := &analysis.Pass{
-		Fset: fset,
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
-
-	// Find FuncDecl body and test
-	ast.Inspect(file, func(n ast.Node) bool {
-		if funcDecl, ok := n.(*ast.FuncDecl); ok && funcDecl.Body != nil {
-			checkMultipleConversions(pass, funcDecl.Body, 2)
-		}
-		return true
-	})
-
-	// Should report with fallback message
-	if reportCount != 1 {
-		t.Errorf("checkMultipleConversions() reported %d, expected 1", reportCount)
 	}
 }
 

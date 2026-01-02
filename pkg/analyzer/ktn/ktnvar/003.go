@@ -49,11 +49,7 @@ func runVar003(pass *analysis.Pass) (any, error) {
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
 	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -109,12 +105,7 @@ func checkVar003Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
 
 		// Check for underscore in name (detects SCREAMING_SNAKE_CASE and snake_case)
 		if hasUnderscore003(varName) {
-			msg, ok := messages.Get(ruleCodeVar003)
-			// Defensive: avoid panic if message is missing
-			if !ok {
-				pass.Reportf(name.Pos(), "%s: utiliser camelCase pour %q", ruleCodeVar003, varName)
-				continue
-			}
+			msg, _ := messages.Get(ruleCodeVar003)
 			pass.Reportf(
 				name.Pos(),
 				"%s: %s",

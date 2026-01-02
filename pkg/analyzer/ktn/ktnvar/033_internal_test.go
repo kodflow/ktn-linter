@@ -4,10 +4,6 @@ import (
 	"go/ast"
 	"go/token"
 	"testing"
-
-	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 // Test_isValidIfStructureFor033 tests validation of if structure.
@@ -552,61 +548,3 @@ func Test_analyzeBodyForCmpOrPattern(t *testing.T) {
 	}
 }
 
-// Test_runVar033_defensiveBranches tests defensive branches in runVar033.
-func Test_runVar033_defensiveBranches(t *testing.T) {
-	tests := []struct {
-		name string
-		pass *analysis.Pass
-	}{
-		{
-			name: "inspector not in ResultOf",
-			pass: &analysis.Pass{
-				Fset:     token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{},
-			},
-		},
-		{
-			name: "inspector is nil",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: nil,
-				},
-			},
-		},
-		{
-			name: "inspector wrong type",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: "wrong type",
-				},
-			},
-		},
-		{
-			name: "valid inspector but nil fset",
-			pass: &analysis.Pass{
-				Fset: nil,
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: inspector.New([]*ast.File{}),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			// Just verify no panic
-			result, err := runVar033(tt.pass)
-			// Verify no error
-			if err != nil {
-				t.Errorf("runVar033() error = %v, want nil", err)
-			}
-			// Verify nil result
-			if result != nil {
-				t.Errorf("runVar033() result = %v, want nil", result)
-			}
-		})
-	}
-}

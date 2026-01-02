@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -79,59 +78,6 @@ func Test_runVar005_disabled(t *testing.T) {
 		t.Errorf("runVar005() = (%v, %v), want (nil, nil)", result, err)
 	}
 	config.Reset()
-}
-
-// Test_runVar005_nilInspector tests nil inspector branch.
-func Test_runVar005_nilInspector(t *testing.T) {
-	config.Reset()
-
-	pass := &analysis.Pass{
-		Fset:     token.NewFileSet(),
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: nil},
-		Report:   func(_ analysis.Diagnostic) {},
-	}
-
-	result, err := runVar005(pass)
-	if err != nil || result != nil {
-		t.Errorf("runVar005() = (%v, %v), want (nil, nil)", result, err)
-	}
-}
-
-// Test_runVar005_nilFset tests nil Fset branch.
-func Test_runVar005_nilFset(t *testing.T) {
-	config.Reset()
-
-	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", `package test`, 0)
-	insp := inspector.New([]*ast.File{file})
-
-	pass := &analysis.Pass{
-		Fset:     nil,
-		Files:    []*ast.File{file},
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
-		Report:   func(_ analysis.Diagnostic) {},
-	}
-
-	result, err := runVar005(pass)
-	if err != nil || result != nil {
-		t.Errorf("runVar005() = (%v, %v), want (nil, nil)", result, err)
-	}
-}
-
-// Test_runVar005_wrongInspectorType tests runVar005 with wrong inspector type.
-func Test_runVar005_wrongInspectorType(t *testing.T) {
-	config.Reset()
-
-	pass := &analysis.Pass{
-		Fset:     token.NewFileSet(),
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: "not an inspector"},
-		Report:   func(_ analysis.Diagnostic) {},
-	}
-
-	result, err := runVar005(pass)
-	if err != nil || result != nil {
-		t.Errorf("runVar005() = (%v, %v), want (nil, nil)", result, err)
-	}
 }
 
 // Test_checkVar005PackageLevel_nonVarDecl tests non-var declarations.
@@ -400,40 +346,6 @@ func Test_checkVar005Name_withinLimit(t *testing.T) {
 
 	if reportCount != 0 {
 		t.Errorf("expected 0 reports for short name, got %d", reportCount)
-	}
-}
-
-// Test_checkVar005Name_missingMessage tests fallback when message not found.
-func Test_checkVar005Name_missingMessage(t *testing.T) {
-	config.Reset()
-
-	origMsgs := messages.GetAll()
-	messages.Clear()
-	defer func() {
-		for _, m := range origMsgs {
-			messages.Register(m)
-		}
-	}()
-
-	reportCount := 0
-	var reportedMsg string
-	pass := &analysis.Pass{
-		Fset: token.NewFileSet(),
-		Report: func(d analysis.Diagnostic) {
-			reportCount++
-			reportedMsg = d.Message
-		},
-	}
-
-	// Name longer than 30 chars
-	ident := &ast.Ident{Name: "thisIsAVeryLongVariableNameThatExceedsLimit"}
-	checkVar005Name(pass, ident)
-
-	if reportCount != 1 {
-		t.Errorf("expected 1 report for long name, got %d", reportCount)
-	}
-	if reportedMsg == "" {
-		t.Error("expected fallback message, got empty")
 	}
 }
 

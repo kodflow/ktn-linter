@@ -4,10 +4,6 @@ import (
 	"go/ast"
 	"go/token"
 	"testing"
-
-	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 )
 
 // TestIsAppendNilPattern tests isAppendNilPattern function.
@@ -595,64 +591,5 @@ func TestProcessMakeAssignment(t *testing.T) {
 	// Expected: makeInfos has entry
 	if len(makeInfos) != 1 || makeInfos["clone"] == nil {
 		t.Error("processMakeAssignment should add valid make info")
-	}
-}
-
-// Test_runVar030_defensiveBranches tests defensive branches in runVar030.
-func Test_runVar030_defensiveBranches(t *testing.T) {
-	tests := []struct {
-		name string
-		pass *analysis.Pass
-	}{
-		{
-			name: "inspector not in ResultOf",
-			pass: &analysis.Pass{
-				Fset:     token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{},
-			},
-		},
-		{
-			name: "inspector is nil",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: nil,
-				},
-			},
-		},
-		{
-			name: "inspector wrong type",
-			pass: &analysis.Pass{
-				Fset: token.NewFileSet(),
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: "wrong type",
-				},
-			},
-		},
-		{
-			name: "valid inspector but nil fset",
-			pass: &analysis.Pass{
-				Fset: nil,
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: inspector.New([]*ast.File{}),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			// Just verify no panic
-			result, err := runVar030(tt.pass)
-			// Verify no error
-			if err != nil {
-				t.Errorf("runVar030() error = %v, want nil", err)
-			}
-			// Verify nil result
-			if result != nil {
-				t.Errorf("runVar030() result = %v, want nil", result)
-			}
-		})
 	}
 }

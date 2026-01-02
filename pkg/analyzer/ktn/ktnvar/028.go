@@ -46,12 +46,7 @@ func runVar028(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -223,12 +218,7 @@ func checkAssignmentPair(
 //   - node: noeud a signaler
 //   - varName: nom de la variable
 func reportLoopVarCopy(pass *analysis.Pass, node ast.Node, varName string) {
-	msg, ok := messages.Get(ruleCodeVar028)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(node.Pos(), "%s: %s := %s est obsolète depuis Go 1.22", ruleCodeVar028, varName, varName)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar028)
 	pass.Reportf(
 		node.Pos(),
 		"%s: %s",

@@ -50,12 +50,7 @@ func runVar008(pass *analysis.Pass) (any, error) {
 	// Get AST inspector
 	inspAny := pass.ResultOf[inspect.Analyzer]
 	insp, ok := inspAny.(*inspector.Inspector)
-	// Defensive: ensure inspector is available
-	if !ok || insp == nil {
-		return nil, nil
-	}
-	// Defensive: avoid nil dereference when resolving positions
-	if pass.Fset == nil {
+	if !ok {
 		return nil, nil
 	}
 
@@ -205,16 +200,7 @@ func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Signalement de l'erreur
-	msg, ok := messages.Get(ruleCodeVar008)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(
-			call.Pos(),
-			"%s: préallouer la slice avec une capacité quand elle est connue",
-			ruleCodeVar008,
-		)
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar008)
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",
@@ -379,17 +365,7 @@ func getAppendVariableName008(
 //   - pass: analysis pass
 //   - lit: composite literal for error position
 func reportVar008Error(pass *analysis.Pass, lit *ast.CompositeLit) {
-	msg, ok := messages.Get(ruleCodeVar008)
-	// Defensive: avoid panic if message is missing
-	if !ok {
-		pass.Reportf(
-			lit.Pos(),
-			"%s: préallouer la slice avec une capacité quand elle est connue",
-			ruleCodeVar008,
-		)
-		// Fallback message reported
-		return
-	}
+	msg, _ := messages.Get(ruleCodeVar008)
 	pass.Reportf(
 		lit.Pos(),
 		"%s: %s",

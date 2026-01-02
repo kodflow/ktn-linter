@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
-	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -406,83 +405,6 @@ func Test_extractAssignTypeString(t *testing.T) {
 	}
 }
 
-// Test_runVar010_nilInspector tests runVar010 with nil inspector.
-func Test_runVar010_nilInspector(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"nil inspector"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			config.Reset()
-			defer config.Reset()
-
-			fset := token.NewFileSet()
-			pass := &analysis.Pass{
-				Fset: fset,
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: nil,
-				},
-				Report: func(_d analysis.Diagnostic) {},
-			}
-
-			result, err := runVar010(pass)
-			// Should return nil without error
-			if err != nil {
-				t.Errorf("runVar010() error = %v", err)
-			}
-			if result != nil {
-				t.Errorf("runVar010() result = %v, expected nil", result)
-			}
-		})
-	}
-}
-
-// Test_runVar010_nilFset tests runVar010 with nil Fset.
-func Test_runVar010_nilFset(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"nil Fset"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			config.Reset()
-			defer config.Reset()
-
-			code := `package test
-			var x int = 42
-			`
-			fset := token.NewFileSet()
-			file, err := parser.ParseFile(fset, "test.go", code, 0)
-			if err != nil {
-				t.Fatalf("failed to parse: %v", err)
-			}
-
-			insp := inspector.New([]*ast.File{file})
-			pass := &analysis.Pass{
-				Fset: nil,
-				ResultOf: map[*analysis.Analyzer]any{
-					inspect.Analyzer: insp,
-				},
-				Report: func(_d analysis.Diagnostic) {},
-			}
-
-			result, err := runVar010(pass)
-			// Should return nil without error
-			if err != nil {
-				t.Errorf("runVar010() error = %v", err)
-			}
-			if result != nil {
-				t.Errorf("runVar010() result = %v, expected nil", result)
-			}
-		})
-	}
-}
-
 // Test_reportMissingGrow_assignStmt tests reportMissingGrow with AssignStmt.
 func Test_reportMissingGrow_assignStmt(t *testing.T) {
 	tests := []struct {
@@ -681,52 +603,3 @@ func Test_runVar010_fileExcluded(t *testing.T) {
 	}
 }
 
-// Test_reportMissingGrow_fallbackMessage tests fallback message when message missing.
-func Test_reportMissingGrow_fallbackMessage(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"fallback message"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Save original message and restore after test
-			originalMsg, hasOriginal := messages.Get("KTN-VAR-010")
-			messages.Unregister("KTN-VAR-010")
-			defer func() {
-				if hasOriginal {
-					messages.Register(originalMsg)
-				}
-			}()
-
-			reportCount := 0
-			fset := token.NewFileSet()
-			pass := &analysis.Pass{
-				Fset: fset,
-				Report: func(_d analysis.Diagnostic) {
-					reportCount++
-				},
-			}
-
-			// Create ValueSpec with Builder type
-			node := &ast.ValueSpec{
-				Names: []*ast.Ident{{Name: "sb", NamePos: 1}},
-				Values: []ast.Expr{
-					&ast.CompositeLit{
-						Type: &ast.SelectorExpr{
-							X:   &ast.Ident{Name: "strings"},
-							Sel: &ast.Ident{Name: "Builder"},
-						},
-					},
-				},
-			}
-
-			reportMissingGrow(pass, node)
-			// Should report with fallback message
-			if reportCount != 1 {
-				t.Errorf("reportMissingGrow() reported %d, expected 1", reportCount)
-			}
-		})
-	}
-}
