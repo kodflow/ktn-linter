@@ -1,52 +1,39 @@
-// Package var018 contains test cases for KTN rules.
+// Package var018 contains test cases for KTN-VAR-018.
 package var018
 
-// Constants to avoid magic numbers
-const (
-	// BadPortValue is the port value
-	BadPortValue int = 8080
-	// BadMaxValue is the max value
-	BadMaxValue int = 100
-	// BadTimeoutValue is the timeout value
-	BadTimeoutValue int = 30
-)
+// Bad: Using make([]T, N) where total size <= 64 bytes
 
-// Bad: Variables using snake_case (with underscores)
+// badByteBuffer creates slice with 32 bytes (≤64)
+func badByteBuffer() {
+	// 32 bytes: should use [32]byte
+	buf := make([]byte, 32) // want "KTN-VAR-018"
+	_ = buf
+}
 
-var (
-	// http_client uses snake_case
-	http_client string = "client" // want "KTN-VAR-018"
+// badIntArray creates slice with 8 ints (64 bytes on 64-bit)
+func badIntArray() {
+	// 8 ints * 8 bytes = 64 bytes
+	arr := make([]int, 8) // want "KTN-VAR-018"
+	_ = arr
+}
 
-	// server_port uses snake_case
-	server_port int = BadPortValue // want "KTN-VAR-018"
+// badSmallExact creates slice exactly 64 bytes
+func badSmallExact() {
+	// Exactly 64 bytes
+	small := make([]byte, 64) // want "KTN-VAR-018"
+	_ = small
+}
 
-	// max_connections uses snake_case
-	max_connections int = BadMaxValue // want "KTN-VAR-018"
+// badTinySlice creates very small slice
+func badTinySlice() {
+	// 4 ints * 8 bytes = 32 bytes
+	tiny := make([]int64, 4) // want "KTN-VAR-018"
+	_ = tiny
+}
 
-	// api_key uses snake_case
-	api_key string = "secret" // want "KTN-VAR-018"
-
-	// user_name uses snake_case
-	user_name string = "admin" // want "KTN-VAR-018"
-
-	// is_enabled uses snake_case
-	is_enabled bool = true // want "KTN-VAR-018"
-
-	// default_timeout uses snake_case
-	default_timeout int = BadTimeoutValue // want "KTN-VAR-018"
-
-	// my_var_name uses snake_case with multiple underscores
-	my_var_name string = "test" // want "KTN-VAR-018"
-)
-
-// init uses the variables to avoid compilation errors
-func init() {
-	_ = http_client
-	_ = server_port
-	_ = max_connections
-	_ = api_key
-	_ = user_name
-	_ = is_enabled
-	_ = default_timeout
-	_ = my_var_name
+// badSingleInt creates single element array
+func badSingleInt() {
+	// 1 int * 8 bytes = 8 bytes
+	single := make([]int, 1) // want "KTN-VAR-018"
+	_ = single
 }

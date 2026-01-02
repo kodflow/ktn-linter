@@ -17,23 +17,23 @@ func TestVar007(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "String concatenation in loops",
+			name:           "Variables using var with initialization",
 			analyzer:       ktnvar.Analyzer007,
 			testdataDir:    "var007",
-			expectedErrors: 6,
+			expectedErrors: 3,
 		},
 		{
-			name:           "Valid string building with Builder",
+			name:           "Valid short declarations with :=",
 			analyzer:       ktnvar.Analyzer007,
 			testdataDir:    "var007",
-			expectedErrors: 6,
+			expectedErrors: 3,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 6 string concatenation errors detected
+			// 3 variables using var with explicit initialization
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

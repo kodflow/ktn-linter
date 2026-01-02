@@ -70,6 +70,9 @@ logs/
 .cursor/
 .windsurf/
 .codacy/
+plans/
+.context.md
+.devcontainer/docs/*.md
 
 # Keep empty directories
 !.gitkeep

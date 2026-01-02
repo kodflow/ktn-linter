@@ -3,9 +3,10 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/token"
-	"strings"
+	"go/constant"
+	"go/types"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
@@ -16,12 +17,18 @@ import (
 const (
 	// ruleCodeVar018 is the rule code for this analyzer
 	ruleCodeVar018 string = "KTN-VAR-018"
+	// minMakeArgsVar016 is minimum arguments for make([]T, N)
+	minMakeArgsVar016 int = 2
+	// minMakeArgsWithCapVar016 is minimum arguments for make with capacity
+	minMakeArgsWithCapVar016 int = 3
+	// maxArraySizeBytes is maximum total bytes for recommending array over slice
+	maxArraySizeBytes int64 = 64
 )
 
-// Analyzer018 checks that variables don't use snake_case naming
+// Analyzer018 checks for make([]T, N) with small constant N
 var Analyzer018 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar018",
-	Doc:      "KTN-VAR-018: Les variables ne doivent pas utiliser snake_case (underscores)",
+	Doc:      "KTN-VAR-018: Vérifie l'utilisation de [N]T au lieu de make([]T, N)",
 	Run:      runVar018,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -44,32 +51,48 @@ func runVar018(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving types
+	if pass.TypesInfo == nil {
+		return nil, nil
+	}
 
 	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
+		(*ast.CallExpr)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
+		call, ok := n.(*ast.CallExpr)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
-		if cfg.IsFileExcluded(ruleCodeVar018, pass.Fset.Position(n.Pos()).Filename) {
+		if cfg.IsFileExcluded(ruleCodeVar018, pass.Fset.Position(call.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
 
-		// Only check var declarations
-		if genDecl.Tok != token.VAR {
-			// Continue traversing AST nodes
+		// Check if it's a make call
+		if !utils.IsIdentCall(call, "make") {
+			// Not a make call
 			return
 		}
 
-		// Iterate over specifications
-		for _, spec := range genDecl.Specs {
-			valueSpec := spec.(*ast.ValueSpec)
-			// Check each variable name
-			checkVar018Names(pass, valueSpec)
+		// Check if it's make([]T, N) with small constant N and ≤64 bytes
+		if shouldUseArray(pass, call) {
+			reportArraySuggestion(pass, call)
 		}
 	})
 
@@ -77,58 +100,148 @@ func runVar018(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// checkVar018Names vérifie les noms de variables pour snake_case.
+// shouldUseArray vérifie si make devrait être remplacé par un array.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - valueSpec: spécification de variable
-func checkVar018Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
-	// Iterate over variable names
-	for _, name := range valueSpec.Names {
-		varName := name.Name
-
-		// Skip blank identifier
-		if varName == "_" {
-			continue
-		}
-
-		// Check for snake_case (lowercase with underscores)
-		if isSnakeCase(varName) {
-			msg, _ := messages.Get(ruleCodeVar018)
-			pass.Reportf(
-				name.Pos(),
-				"%s: %s",
-				ruleCodeVar018,
-				msg.Format(config.Get().Verbose, varName),
-			)
-		}
-	}
-}
-
-// isSnakeCase vérifie si un nom utilise snake_case (minuscules avec underscores).
-// Exclut SCREAMING_SNAKE_CASE qui est déjà géré par VAR-001.
-//
-// Params:
-//   - name: nom à vérifier
+//   - call: expression d'appel à make
 //
 // Returns:
-//   - bool: true si le nom est en snake_case
-func isSnakeCase(name string) bool {
-	// Must contain underscore
-	if !strings.Contains(name, "_") {
-		// Retour de la fonction
+//   - bool: true si un array est préférable
+func shouldUseArray(pass *analysis.Pass, call *ast.CallExpr) bool {
+	// Need at least 2 args: make([]T, size)
+	if len(call.Args) < minMakeArgsVar016 {
+		// Not enough arguments
 		return false
 	}
 
-	// Check if it's NOT all uppercase (SCREAMING_SNAKE_CASE is handled by VAR-001)
-	for _, ch := range name {
-		// If we find a lowercase letter, it's snake_case
-		if ch >= 'a' && ch <= 'z' {
-			// Retour de la fonction
-			return true
-		}
+	// First arg should be a slice type
+	if !utils.IsSliceType(call.Args[0]) {
+		// Not a slice type
+		return false
 	}
 
-	// All uppercase = SCREAMING_SNAKE_CASE, not snake_case
-	return false
+	// Check if has different capacity (3rd arg)
+	if hasDifferentCapacity(call) {
+		// Different capacity, needs slice
+		return false
+	}
+
+	// Second arg should be constant
+	size := getConstantSize(pass, call.Args[1])
+	// Not a constant size
+	if size <= 0 {
+		// Dynamic or invalid size, can't use array
+		return false
+	}
+
+	// Check total size in bytes
+	return isTotalSizeSmall(pass, call.Args[0], size)
+}
+
+// hasDifferentCapacity vérifie si make a une capacité différente.
+//
+// Params:
+//   - call: expression d'appel à make
+//
+// Returns:
+//   - bool: true si capacité différente spécifiée
+func hasDifferentCapacity(call *ast.CallExpr) bool {
+	// Return true if 3rd argument exists
+	return len(call.Args) >= minMakeArgsWithCapVar016
+}
+
+// getConstantSize obtient la taille constante d'une expression.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - expr: expression de taille
+//
+// Returns:
+//   - int64: taille constante ou -1 si non constante
+func getConstantSize(pass *analysis.Pass, expr ast.Expr) int64 {
+	// Try to get constant value
+	tv := pass.TypesInfo.Types[expr]
+	// Check if it's a constant
+	if tv.Value == nil {
+		// Not a constant
+		return -1
+	}
+
+	// Get int64 value
+	if val, ok := constant.Int64Val(tv.Value); ok {
+		// Return the constant value
+		return val
+	}
+
+	// Not an int constant
+	return -1
+}
+
+// isTotalSizeSmall vérifie si la taille totale en bytes est petite.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - sliceType: type de slice
+//   - elementCount: nombre d'éléments
+//
+// Returns:
+//   - bool: true si taille totale <= 64 bytes
+func isTotalSizeSmall(pass *analysis.Pass, sliceType ast.Expr, elementCount int64) bool {
+	// Get element type from []T
+	arrayType, ok := sliceType.(*ast.ArrayType)
+	// Not a valid array type
+	if !ok {
+		// Invalid slice type expression
+		return false
+	}
+
+	// Get element type
+	elemType := pass.TypesInfo.TypeOf(arrayType.Elt)
+	// Could not determine element type
+	if elemType == nil {
+		// Type information not available
+		return false
+	}
+
+	// Get size of element type in bytes using Sizes API
+	sizes := pass.TypesSizes
+	// Use default sizes for amd64 if not available
+	if sizes == nil {
+		sizes = types.SizesFor("gc", "amd64")
+	}
+	// Still no sizes information available
+	if sizes == nil {
+		// Cannot determine type sizes
+		return false
+	}
+
+	// Get element size
+	elemSize := sizes.Sizeof(elemType)
+
+	// Calculate total size
+	totalSize := elemSize * elementCount
+
+	// Check if total size <= 64 bytes
+	return totalSize <= maxArraySizeBytes
+}
+
+// reportArraySuggestion rapporte la suggestion d'utiliser un array.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - call: expression d'appel à make
+func reportArraySuggestion(pass *analysis.Pass, call *ast.CallExpr) {
+	msg, ok := messages.Get(ruleCodeVar018)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: utiliser [N]T au lieu de make([]T, N) pour ≤64 bytes", ruleCodeVar018)
+		return
+	}
+	pass.Reportf(
+		call.Pos(),
+		"%s: %s",
+		ruleCodeVar018,
+		msg.Format(config.Get().Verbose),
+	)
 }

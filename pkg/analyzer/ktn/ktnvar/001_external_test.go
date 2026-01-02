@@ -17,23 +17,23 @@ func TestVar001(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "SCREAMING_SNAKE_CASE naming violations",
+			name:           "Variables without explicit type",
 			analyzer:       ktnvar.Analyzer001,
 			testdataDir:    "var001",
-			expectedErrors: 9,
+			expectedErrors: 8,
 		},
 		{
-			name:           "Valid SCREAMING_SNAKE_CASE naming",
+			name:           "Valid explicit type declarations",
 			analyzer:       ktnvar.Analyzer001,
 			testdataDir:    "var001",
-			expectedErrors: 9,
+			expectedErrors: 8,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 9 variables with SCREAMING_SNAKE_CASE naming (6 original + 3 acronym cases)
+			// 8 variables without explicit type (zero-values are now valid)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

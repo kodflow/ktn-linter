@@ -1,10 +1,9 @@
-// Package ktnvar implements KTN linter rules.
+// Package ktnvar provides analyzers for variable-related lint rules.
 package ktnvar
 
 import (
 	"go/ast"
 	"go/token"
-	"regexp"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -18,18 +17,13 @@ const (
 	ruleCodeVar001 string = "KTN-VAR-001"
 )
 
-var (
-	// Analyzer001 checks package vars use camelCase.
-	Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
-		Name:     "ktnvar001",
-		Doc:      "KTN-VAR-001: Vérifie que les variables de package utilisent camelCase (pas SCREAMING_SNAKE_CASE)",
-		Run:      runVar001,
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
-	}
-
-	// screamingSnakeCasePattern matches SCREAMING_SNAKE_CASE.
-	screamingSnakeCasePattern *regexp.Regexp = regexp.MustCompile(`^[A-Z][A-Z0-9_]*[A-Z0-9]$|^[A-Z][A-Z0-9_]*_[A-Z0-9_]*$`)
-)
+// Analyzer001 checks that package-level variables have explicit type AND value
+var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnvar001",
+	Doc:      "KTN-VAR-001: Les variables de package doivent avoir le format 'var name type = value'",
+	Run:      runVar001,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
 
 // runVar001 exécute l'analyse KTN-VAR-001.
 //
@@ -49,14 +43,29 @@ func runVar001(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
+	// Filter for File nodes to access package-level declarations
 	nodeFilter := []ast.Node{
-		(*ast.GenDecl)(nil),
+		(*ast.File)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		genDecl := n.(*ast.GenDecl)
+		file, ok := n.(*ast.File)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar001, pass.Fset.Position(n.Pos()).Filename) {
@@ -64,35 +73,26 @@ func runVar001(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Only check var declarations
-		if genDecl.Tok != token.VAR {
-			// Continue traversing AST nodes
-			return
-		}
+		// Check package-level declarations only
+		for _, decl := range file.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			// Skip if not a GenDecl
+			if !ok {
+				// Not a general declaration
+				continue
+			}
 
-		// Itération sur les spécifications
-		for _, spec := range genDecl.Specs {
-			valueSpec := spec.(*ast.ValueSpec)
+			// Only check var declarations
+			if genDecl.Tok != token.VAR {
+				// Continue traversing AST nodes.
+				continue
+			}
 
-			// Itération sur les noms de variables
-			for _, name := range valueSpec.Names {
-				varName := name.Name
-
-				// Skip blank identifiers
-				if varName == "_" {
-					continue
-				}
-
-				// Check if the variable name uses SCREAMING_SNAKE_CASE (which is wrong for vars)
-				if isScreamingSnakeCase(varName) {
-					msg, _ := messages.Get(ruleCodeVar001)
-					pass.Reportf(
-						name.Pos(),
-						"%s: %s",
-						ruleCodeVar001,
-						msg.Format(config.Get().Verbose, varName),
-					)
-				}
+			// Itération sur les spécifications
+			for _, spec := range genDecl.Specs {
+				valueSpec := spec.(*ast.ValueSpec)
+				// Vérifier si le type est explicite ou visible dans la valeur
+				checkVarSpec(pass, valueSpec)
 			}
 		}
 	})
@@ -101,32 +101,38 @@ func runVar001(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// isScreamingSnakeCase vérifie si un nom utilise SCREAMING_SNAKE_CASE.
+// checkVarSpec vérifie une spécification de variable.
+// Style requis: var name type (= value optionnel, zéro-value accepté)
 //
 // Params:
-//   - name: nom de la variable à vérifier
-//
-// Returns:
-//   - bool: true si le nom est en SCREAMING_SNAKE_CASE
-func isScreamingSnakeCase(name string) bool {
-	// Must match the pattern: uppercase letters, digits, and underscores only
-	// AND must have at least one underscore OR be all uppercase with length > 1
-	if !screamingSnakeCasePattern.MatchString(name) {
-		// Not SCREAMING_SNAKE_CASE pattern
-		return false
-	}
+//   - pass: contexte d'analyse
+//   - valueSpec: spécification de variable
+func checkVarSpec(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
+	hasExplicitType := valueSpec.Type != nil
 
-	// Check if name contains underscore (main indicator of SCREAMING_SNAKE_CASE)
-	hasUnderscore := false
-	// Itération sur les caractères du nom
-	for _, ch := range name {
-		// Vérification de la présence d'underscore
-		if ch == '_' {
-			hasUnderscore = true
-			break
+	// Seule exigence: type explicite obligatoire
+	// L'initialisation est optionnelle (zéro-value idiomatique en Go)
+	if !hasExplicitType {
+		// Parcourir les noms
+		for _, name := range valueSpec.Names {
+			// Ignorer les blank identifiers
+			if name.Name == "_" {
+				continue
+			}
+
+			msg, ok := messages.Get(ruleCodeVar001)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(name.Pos(), "%s: type explicite requis pour %q", ruleCodeVar001, name.Name)
+				continue
+			}
+			pass.Reportf(
+				name.Pos(),
+				"%s: %s",
+				ruleCodeVar001,
+				msg.Format(config.Get().Verbose, name.Name),
+			)
 		}
 	}
-
-	// Retour de la fonction
-	return hasUnderscore
+	// Type explicite présent = OK (avec ou sans valeur)
 }

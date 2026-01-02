@@ -10,6 +10,7 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct"
@@ -37,6 +38,8 @@ func GetAllRules() []*analysis.Analyzer {
 	all = append(all, ktnconst.GetAnalyzers()...)
 	// Ajoute les analyseurs de fonctions
 	all = append(all, ktnfunc.GetAnalyzers()...)
+	// Ajoute les analyseurs de fonctions generiques
+	all = append(all, ktngeneric.Analyzers()...)
 	// Ajoute les analyseurs de structures
 	all = append(all, ktnstruct.GetAnalyzers()...)
 	// Ajoute les analyseurs de variables
@@ -65,6 +68,7 @@ func categoryAnalyzers() map[string]func() []*analysis.Analyzer {
 		"api":       ktnapi.Analyzers,
 		"const":     ktnconst.GetAnalyzers,
 		"func":      ktnfunc.GetAnalyzers,
+		"generic":   ktngeneric.Analyzers,
 		"struct":    ktnstruct.GetAnalyzers,
 		"var":       ktnvar.Analyzers,
 		"test":      ktntest.Analyzers,

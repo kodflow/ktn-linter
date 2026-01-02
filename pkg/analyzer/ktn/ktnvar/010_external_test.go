@@ -17,23 +17,23 @@ func TestVar010(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Buffers created in loops",
+			name:           "Builder/Buffer without Grow",
 			analyzer:       ktnvar.Analyzer010,
 			testdataDir:    "var010",
-			expectedErrors: 8,
+			expectedErrors: 4,
 		},
 		{
-			name:           "Valid buffer reuse outside loops",
+			name:           "Valid Builder/Buffer with Grow",
 			analyzer:       ktnvar.Analyzer010,
 			testdataDir:    "var010",
-			expectedErrors: 8,
+			expectedErrors: 4,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 8 buffers créés dans des boucles (4 original + 4 nouveaux edge cases)
+			// 4 Builder/Buffer declarations without Grow
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

@@ -1,60 +1,65 @@
-// Package var008 provides good test cases.
-package var008
+// Package var004 provides good test cases.
+package var004
+
+// Good: Slices preallocated with capacity when known
 
 const (
-	// ValueTwo is constant value 2
+	// MaxItems defines the maximum number of items
+	MaxItems int = 100
+	// CapacityTen is capacity of ten
+	CapacityTen int = 10
+	// ValueOne is value one
+	ValueOne int = 1
+	// ValueTwo is value two
 	ValueTwo int = 2
-	// ValueThree is constant value 3
+	// ValueThree is value three
 	ValueThree int = 3
-	// ValueFive is constant value 5
-	ValueFive int = 5
-	// ValueTen is constant value 10
-	ValueTen int = 10
 )
 
-// init demonstrates good loop allocation patterns
+// init demonstrates good slice preallocation patterns
 func init() {
-	// Déclaration avant la boucle
-	data := make([]int, 0, ValueTen)
-	// Loop appends values to reused slice
-	for i := range ValueTen {
-		// Append current iteration value
-		data = append(data, i)
+	// Good: Capacity specified
+	items := make([]int, 0, MaxItems)
+	_ = items
+
+	// Good: Capacity specified based on known size
+	result := make([]string, 0, CapacityTen)
+	// Itération sur les éléments
+	for i := range CapacityTen {
+		result = append(result, "item")
+		// Utilisation de i pour éviter le warning
+		_ = i
 	}
-	_ = data
 
-	// Déclaration avant la boucle avec capacité
-	cache := make(map[string]int, ValueTen)
-	// Loop reuses map
-	for i := range ValueTen {
-		// Store current value
-		cache["key"] = i
-	}
-	_ = cache
+	// Good: Literal with values is acceptable
+	values := []int{ValueOne, ValueTwo, ValueThree}
+	_ = values
 
-	items := []int{1, ValueTwo, ValueThree}
-	// Déclaration avant la boucle avec capacité
-	buffer := make([]byte, 0, ValueThree)
-	// Range loop reuses buffer
-	for _, item := range items {
-		// Convert and append item
-		buffer = append(buffer, byte(item))
-	}
-	_ = buffer
+	// Good: Maps don't need capacity
+	m := map[string]int{}
+	_ = m
 
-	// Pas de boucle, allocation OK avec array
-	var single [ValueTen]int
-	_ = single
-
-	// Déclaration avant la boucle avec array
-	var temp [ValueTen]int
-	// Outer loop iterates
-	for i := range ValueFive {
-		// Inner loop modifies temp
-		for j := range ValueFive {
-			// Store multiplication result
-			temp[j] = i * j
+	// Good: Even when size is unknown, providing a reasonable capacity is better
+	data := []string{"a", "b"}
+	filtered := make([]string, 0, len(data))
+	// Itération sur les données
+	for _, item := range data {
+		// Vérification d'une condition
+		if len(item) > 0 {
+			filtered = append(filtered, item)
 		}
 	}
-	_ = temp
+	_ = filtered
+
+	// Good: []T{} is acceptable when capacity unknown
+	empty := []int{}
+	_ = empty
+
+	// Good: Direct return with []T{} is a common pattern
+	items2 := []string{}
+	_ = items2
+
+	// Good: [][]T{} acceptable when capacity unknown
+	nested := [][]int{}
+	_ = nested
 }

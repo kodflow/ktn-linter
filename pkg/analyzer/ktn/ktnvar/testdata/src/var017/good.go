@@ -1,39 +1,55 @@
-// Package var017 provides good test cases.
-package var017
+// Package var015 provides good test cases.
+package var015
 
-import "sync"
+// Good examples: maps with capacity hints (compliant with KTN-VAR-017)
 
 const (
-	// InitialValue is the initial counter value
-	InitialValue int = 0
+	// ValueTwo is constant value 2
+	ValueTwo int = 2
+	// ValueThree is constant value 3
+	ValueThree int = 3
+	// ValueFive is constant value 5
+	ValueFive int = 5
+	// ValueTen is constant value 10
+	ValueTen int = 10
+	// ValueTwenty is constant value 20
+	ValueTwenty int = 20
+	// ValueFifty is constant value 50
+	ValueFifty int = 50
+	// ValueHundred is constant value 100
+	ValueHundred int = 100
 )
 
-// init demonstrates correct usage of mutex pointers (compliant with KTN-VAR-017)
+// init demonstrates good practices for map initialization with capacity hints
 func init() {
-	// Good: Using mutex pointer - no copy by value
-	mu := &sync.Mutex{}
-	mu.Lock()
-	defer mu.Unlock()
+	// Map with capacity hint - good practice
+	users := make(map[string]int, ValueTen)
+	users["alice"] = 1
+	users["bob"] = ValueTwo
 
-	// Good: Struct with mutex pointer field
-	type counter struct {
-		mu    *sync.Mutex // OK: Pointer to mutex
-		value int
+	// Map with capacity hint in var declaration
+	config := make(map[string]string, ValueFive)
+	config["host"] = "localhost"
+	_ = config
+
+	// Multiple maps with capacity hints
+	data := make(map[int]string, ValueHundred)
+	cache := make(map[string]bool, ValueFifty)
+	index := make(map[int][]string, ValueTwenty)
+	data[1] = "test"
+	cache["key"] = true
+	index[0] = []string{"a", "b"}
+
+	// Map of maps with capacity hint
+	nested := make(map[string]map[int]string, ValueTen)
+	nested["key"] = make(map[int]string, ValueFive)
+	_ = nested
+
+	// Map literal - not checked by this rule
+	literal := map[string]int{
+		"one":   1,
+		"two":   ValueTwo,
+		"three": ValueThree,
 	}
-
-	// Good: Initialize with mutex pointer
-	c := &counter{
-		mu:    &sync.Mutex{},
-		value: InitialValue,
-	}
-
-	// Good: Use with pointer receiver (no copy)
-	c.mu.Lock()
-	c.value++
-	c.mu.Unlock()
-
-	// Good: RWMutex pointer
-	rwMu := &sync.RWMutex{}
-	rwMu.RLock()
-	defer rwMu.RUnlock()
+	_ = literal
 }

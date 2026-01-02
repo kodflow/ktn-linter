@@ -18,40 +18,21 @@ const (
 	ruleCodeVar011 string = "KTN-VAR-011"
 )
 
-var (
-	// Analyzer011 détecte le shadowing de variables avec := au lieu de =.
-	//
-	// Le shadowing se produit quand on redéclare une variable avec := alors
-	// qu'elle existe déjà dans un scope parent, créant une nouvelle variable
-	// locale qui masque l'originale.
-	//
-	// Exceptions (patterns idiomatiques Go):
-	// - "err" : réutilisation courante dans le chaînage d'erreurs
-	// - "ok" : pattern idiomatique (_, ok := m[k] ou v, ok := x.(T))
-	// - "ctx" : context souvent redéfini dans les sous-scopes
-	Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
-		Name:     "ktnvar011",
-		Doc:      "KTN-VAR-011: Vérifie le shadowing de variables avec := au lieu de =",
-		Run:      runVar011,
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
-	}
+// Analyzer011 checks for string concatenation in loops
+var Analyzer011 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnvar011",
+	Doc:      "KTN-VAR-011: Utiliser strings.Builder pour >2 concaténations",
+	Run:      runVar011,
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
 
-	// allowedShadowing contains variable names that are allowed to shadow.
-	// These are idiomatic Go patterns where shadowing is expected.
-	allowedShadowing map[string]bool = map[string]bool{
-		"err": true, // Error chaining pattern
-		"ok":  true, // Map/type assertion pattern
-		"ctx": true, // Context redefinition in sub-scopes
-	}
-)
-
-// runVar011 exécute l'analyse de détection du shadowing.
+// runVar011 exécute l'analyse KTN-VAR-011.
 //
 // Params:
 //   - pass: contexte d'analyse
 //
 // Returns:
-//   - interface{}: toujours nil
+//   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runVar011(pass *analysis.Pass) (any, error) {
 	// Récupération de la configuration
@@ -63,15 +44,27 @@ func runVar011(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Récupération de l'inspecteur AST
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	// Types de nœuds à analyser
-	nodeFilter := []ast.Node{
-		(*ast.AssignStmt)(nil),
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving types
+	if pass.TypesInfo == nil {
+		return nil, nil
 	}
 
-	// Parcours des assignations
+	nodeFilter := []ast.Node{
+		(*ast.ForStmt)(nil),
+		(*ast.RangeStmt)(nil),
+	}
+
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar011, pass.Fset.Position(n.Pos()).Filename) {
@@ -79,130 +72,94 @@ func runVar011(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Vérification de l'assignation courte
-		checkShortVarDecl(pass, n)
+		checkStringConcatInLoop(pass, n)
 	})
 
-	// Traitement
+	// Retour de la fonction
 	return nil, nil
 }
 
-// checkShortVarDecl vérifie si une assignation courte fait du shadowing.
+// checkStringConcatInLoop checks for string += in loops.
 //
 // Params:
-//   - pass: contexte d'analyse
-//   - n: nœud AST à analyser
-func checkShortVarDecl(pass *analysis.Pass, n ast.Node) {
-	// Cast en assignation
-	assign, ok := n.(*ast.AssignStmt)
-	// Vérification de la condition
-	if !ok || assign.Tok != token.DEFINE {
-		return // Pas une assignation courte (:=)
+//   - pass: analysis pass context
+//   - n: AST node (ForStmt or RangeStmt)
+func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
+	// Body of the loop
+	var loopBody *ast.BlockStmt
+
+	// Check type of loop
+	switch node := n.(type) {
+	// Case: for loop
+	case *ast.ForStmt:
+		loopBody = node.Body
+	// Case: range loop
+	case *ast.RangeStmt:
+		loopBody = node.Body
 	}
 
-	// Pour chaque variable assignée
-	for _, lhs := range assign.Lhs {
-		// Récupération de l'identifiant
-		ident := extractIdent(lhs)
-		// Vérification de la condition
-		if ident == nil {
-			continue
+	// Check if loop body exists
+	if loopBody == nil {
+		// Return early if no body
+		return
+	}
+
+	// Traverse statements in loop body
+	ast.Inspect(loopBody, func(child ast.Node) bool {
+		// Check if assignment statement
+		if assign, ok := child.(*ast.AssignStmt); ok {
+			// Check if += operator
+			if assign.Tok == token.ADD_ASSIGN {
+				// Check if string concatenation
+				if isStringConcatenation(pass, assign) {
+					msg, ok := messages.Get(ruleCodeVar011)
+					// Defensive: avoid panic if message is missing
+					if !ok {
+						pass.Reportf(assign.Pos(), "%s: utiliser strings.Builder pour concaténation en boucle", ruleCodeVar011)
+						return true
+					}
+					pass.Reportf(
+						assign.Pos(),
+						"%s: %s",
+						ruleCodeVar011,
+						msg.Format(config.Get().Verbose),
+					)
+				}
+			}
 		}
-
-		// Vérification du shadowing
-		if isShadowing(pass, ident) {
-			// Rapport d'erreur
-			msg, _ := messages.Get(ruleCodeVar011)
-			pass.Reportf(
-				assign.Pos(),
-				"%s: %s",
-				ruleCodeVar011,
-				msg.Format(config.Get().Verbose, ident.Name),
-			)
-		}
-	}
-}
-
-// extractIdent extrait l'identifiant d'une expression.
-//
-// Params:
-//   - expr: expression à analyser
-//
-// Returns:
-//   - *ast.Ident: identifiant extrait ou nil
-func extractIdent(expr ast.Expr) *ast.Ident {
-	// Si c'est directement un identifiant
-	if ident, ok := expr.(*ast.Ident); ok {
-		// Traitement
-		return ident
-	}
-	// Traitement
-	return nil
-}
-
-// isShadowing vérifie si un identifiant fait du shadowing.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - ident: identifiant à vérifier
-//
-// Returns:
-//   - bool: true si shadowing détecté (et non exempté)
-func isShadowing(pass *analysis.Pass, ident *ast.Ident) bool {
-	// Ignorer les blank identifiers
-	if ident.Name == "_" {
-		// Traitement
-		return false
-	}
-
-	// Vérifier si c'est une variable exemptée (patterns idiomatiques)
-	if allowedShadowing[ident.Name] {
-		// Shadowing autorisé pour cette variable
-		return false
-	}
-
-	// Récupération de l'objet défini (nouvelle définition avec :=)
-	obj := pass.TypesInfo.Defs[ident]
-	// Vérification de la condition
-	if obj == nil {
-		return false // Pas une nouvelle définition
-	}
-
-	// Récupération du scope de l'objet
-	scope := obj.Parent()
-	// Vérification de la condition
-	if scope == nil {
-		// Traitement
-		return false
-	}
-
-	// Vérification dans le scope parent
-	return lookupInParentScope(scope.Parent(), ident.Name)
-}
-
-// lookupInParentScope cherche une variable dans le scope parent.
-//
-// Params:
-//   - scope: scope parent à vérifier
-//   - name: nom de la variable
-//
-// Returns:
-//   - bool: true si la variable existe dans le scope parent
-func lookupInParentScope(scope *types.Scope, name string) bool {
-	// Vérification de nil
-	if scope == nil {
-		// Traitement
-		return false
-	}
-
-	// Recherche de la variable dans le scope courant
-	obj := scope.Lookup(name)
-	// Vérification de la condition
-	if obj != nil {
-		// Traitement
+		// Continue traversing
 		return true
+	})
+}
+
+// isStringConcatenation checks if += operates on string.
+//
+// Params:
+//   - pass: analysis pass context
+//   - assign: assignment statement to check
+//
+// Returns:
+//   - bool: true if string concatenation
+func isStringConcatenation(pass *analysis.Pass, assign *ast.AssignStmt) bool {
+	// Check if left-hand side exists
+	if len(assign.Lhs) == 0 {
+		// Return false if no left-hand side
+		return false
 	}
 
-	// Recherche récursive dans le scope parent
-	return lookupInParentScope(scope.Parent(), name)
+	// Get first left-hand side expression
+	lhs := assign.Lhs[0]
+
+	// Get type information
+	if tv, ok := pass.TypesInfo.Types[lhs]; ok {
+		var basic *types.Basic
+		// Check if type is string
+		if basic, ok = tv.Type.Underlying().(*types.Basic); ok {
+			// Return true if string type
+			return basic.Kind() == types.String
+		}
+	}
+
+	// Return false if not string
+	return false
 }

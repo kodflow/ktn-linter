@@ -4,6 +4,7 @@ package ktnvar
 import (
 	"go/ast"
 	"go/token"
+	"strings"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -17,10 +18,11 @@ const (
 	ruleCodeVar003 string = "KTN-VAR-003"
 )
 
-// Analyzer003 checks that local variables use := instead of var
+// Analyzer003 checks that variables use camelCase (no underscores).
+// This rule detects both SCREAMING_SNAKE_CASE and snake_case naming.
 var Analyzer003 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar003",
-	Doc:      "KTN-VAR-003: Vérifie que les variables locales utilisent ':=' au lieu de 'var'",
+	Doc:      "KTN-VAR-003: Les variables doivent utiliser camelCase (pas de underscores)",
 	Run:      runVar003,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -43,15 +45,28 @@ func runVar003(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
-	// We need to track function bodies to check local variables only
 	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+		(*ast.GenDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+		genDecl, ok := n.(*ast.GenDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar003, pass.Fset.Position(n.Pos()).Filename) {
@@ -59,202 +74,71 @@ func runVar003(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		// Check if function has a body
-		if funcDecl.Body == nil {
-			// Continue to next node
+		// Only check var declarations
+		if genDecl.Tok != token.VAR {
+			// Continue traversing AST nodes
 			return
 		}
 
-		// Inspect all statements in the function body
-		checkFunctionBody(pass, funcDecl.Body)
+		// Iterate over specifications
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+			// Check each variable name
+			checkVar003Names(pass, valueSpec)
+		}
 	})
 
 	// Return analysis result
 	return nil, nil
 }
 
-// checkFunctionBody parcourt le corps d'une fonction pour détecter les var.
+// checkVar003Names vérifie les noms de variables pour les underscores.
 //
 // Params:
 //   - pass: contexte d'analyse
-//   - body: corps de la fonction
-func checkFunctionBody(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Iterate through all statements
-	for _, stmt := range body.List {
-		checkStatement(pass, stmt)
-	}
-}
+//   - valueSpec: spécification de variable
+func checkVar003Names(pass *analysis.Pass, valueSpec *ast.ValueSpec) {
+	// Iterate over variable names
+	for _, name := range valueSpec.Names {
+		varName := name.Name
 
-// checkStatement vérifie si un statement contient un var avec initialisation.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - stmt: statement à vérifier
-func checkStatement(pass *analysis.Pass, stmt ast.Stmt) {
-	declStmt, ok := stmt.(*ast.DeclStmt)
-	// If not a declaration, check for nested blocks
-	if !ok {
-		checkNestedBlocks(pass, stmt)
-		// Early return for non-declarations
-		return
-	}
+		// Skip blank identifier
+		if varName == "_" {
+			continue
+		}
 
-	genDecl, ok := declStmt.Decl.(*ast.GenDecl)
-	// If not a GenDecl, return early
-	if !ok {
-		// Not a GenDecl, skip
-		return
-	}
-
-	// Only check var declarations, skip others
-	if genDecl.Tok != token.VAR {
-		// Not a var declaration, skip
-		return
-	}
-
-	// Check each variable specification
-	checkVarSpecs(pass, genDecl)
-}
-
-// checkNestedBlocks vérifie les blocs imbriqués (if, for, switch, etc.).
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - stmt: statement à vérifier
-func checkNestedBlocks(pass *analysis.Pass, stmt ast.Stmt) {
-	// Check different types of statements with nested blocks
-	switch s := stmt.(type) {
-	// If statement: check body and else
-	case *ast.IfStmt:
-		checkIfStmt(pass, s)
-	// For statement: check loop body
-	case *ast.ForStmt:
-		checkBlockIfNotNil(pass, s.Body)
-	// Range statement: check loop body
-	case *ast.RangeStmt:
-		checkBlockIfNotNil(pass, s.Body)
-	// Switch statement: check switch body
-	case *ast.SwitchStmt:
-		checkBlockIfNotNil(pass, s.Body)
-	// Type switch: check switch body
-	case *ast.TypeSwitchStmt:
-		checkBlockIfNotNil(pass, s.Body)
-	// Select statement: check select body
-	case *ast.SelectStmt:
-		checkBlockIfNotNil(pass, s.Body)
-	// Nested block: check directly
-	case *ast.BlockStmt:
-		checkFunctionBody(pass, s)
-	// Case clause: iterate through statements
-	case *ast.CaseClause:
-		checkCaseClause(pass, s)
-	// Comm clause: iterate through statements
-	case *ast.CommClause:
-		checkCommClause(pass, s)
-	}
-}
-
-// checkIfStmt vérifie un if statement.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - stmt: if statement
-func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
-	// Check if body exists
-	if stmt.Body != nil {
-		checkFunctionBody(pass, stmt.Body)
-	}
-	// Check else clause if exists
-	if stmt.Else != nil {
-		checkStatement(pass, stmt.Else)
-	}
-}
-
-// checkBlockIfNotNil vérifie un bloc s'il n'est pas nil.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - block: bloc à vérifier
-func checkBlockIfNotNil(pass *analysis.Pass, block *ast.BlockStmt) {
-	// Check if block exists
-	if block != nil {
-		checkFunctionBody(pass, block)
-	}
-}
-
-// checkCaseClause vérifie une case clause.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - clause: case clause
-func checkCaseClause(pass *analysis.Pass, clause *ast.CaseClause) {
-	// Iterate through case statements
-	for _, caseStmt := range clause.Body {
-		checkStatement(pass, caseStmt)
-	}
-}
-
-// checkCommClause vérifie une comm clause.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - clause: comm clause
-func checkCommClause(pass *analysis.Pass, clause *ast.CommClause) {
-	// Iterate through comm statements
-	for _, commStmt := range clause.Body {
-		checkStatement(pass, commStmt)
-	}
-}
-
-// checkVarSpecs vérifie les spécifications de variables.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - genDecl: déclaration générale
-func checkVarSpecs(pass *analysis.Pass, genDecl *ast.GenDecl) {
-	// Iterate through specifications
-	for _, spec := range genDecl.Specs {
-		valueSpec := spec.(*ast.ValueSpec)
-
-		// Check if variable has initialization without explicit type
-		if hasInitWithoutType(valueSpec) {
-			// Report error for each variable
-			reportVarErrors(pass, valueSpec)
+		// Check for underscore in name (detects SCREAMING_SNAKE_CASE and snake_case)
+		if hasUnderscore003(varName) {
+			msg, ok := messages.Get(ruleCodeVar003)
+			// Defensive: avoid panic if message is missing
+			if !ok {
+				pass.Reportf(name.Pos(), "%s: utiliser camelCase pour %q", ruleCodeVar003, varName)
+				continue
+			}
+			pass.Reportf(
+				name.Pos(),
+				"%s: %s",
+				ruleCodeVar003,
+				msg.Format(config.Get().Verbose, varName),
+			)
 		}
 	}
 }
 
-// hasInitWithoutType vérifie si une variable a une initialisation sans type.
+// hasUnderscore003 vérifie si un nom contient un underscore.
 //
 // Params:
-//   - spec: spécification de variable
+//   - name: nom à vérifier
 //
 // Returns:
-//   - bool: true si initialisation sans type
-func hasInitWithoutType(spec *ast.ValueSpec) bool {
-	// Has values (initialization)
-	hasValues := len(spec.Values) > 0
-	// No explicit type
-	noType := spec.Type == nil
-
-	// Return true if both conditions are met
-	return hasValues && noType
-}
-
-// reportVarErrors rapporte les erreurs pour chaque variable.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - spec: spécification de variable
-func reportVarErrors(pass *analysis.Pass, spec *ast.ValueSpec) {
-	// Iterate through variable names
-	for _, name := range spec.Names {
-		msg, _ := messages.Get(ruleCodeVar003)
-		pass.Reportf(
-			name.Pos(),
-			"%s: %s",
-			ruleCodeVar003,
-			msg.Format(config.Get().Verbose),
-		)
+//   - bool: true si le nom contient un underscore
+func hasUnderscore003(name string) bool {
+	// Blank identifier is allowed
+	if name == "_" {
+		// Retour de la fonction
+		return false
 	}
+
+	// Check for underscore in name
+	return strings.Contains(name, "_")
 }

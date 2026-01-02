@@ -9,6 +9,7 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestVar014 vérifie que les variables de package sont déclarées après les constantes.
 func TestVar002(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -17,23 +18,22 @@ func TestVar002(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Variables without explicit type",
+			name:           "Vars declared before consts",
 			analyzer:       ktnvar.Analyzer002,
 			testdataDir:    "var002",
-			expectedErrors: 8,
+			expectedErrors: 1,
 		},
 		{
-			name:           "Valid explicit type declarations",
+			name:           "Valid vars after consts",
 			analyzer:       ktnvar.Analyzer002,
 			testdataDir:    "var002",
-			expectedErrors: 8,
+			expectedErrors: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 8 variables without explicit type (zero-values are now valid)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

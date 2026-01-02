@@ -1,50 +1,60 @@
-// Package var009 provides good test cases for KTN-VAR-009.
-package var009
+// Package var005 provides good test cases.
+package var005
 
-// SmallStruct a exactement 64 bytes (8 * 8 = 64 bytes, seuil OK).
-type SmallStruct struct {
-	A int64
-	B int64
-	C int64
-	D int64
-	E int64
-	F int64
-	G int64
-	H int64
-}
+// Good: Proper use of make with capacity or without length
 
-// goodSmallByValue prend une struct ≤64 bytes par valeur (OK).
-func goodSmallByValue(data SmallStruct) {
-	// Struct ≤64 bytes, pas de problème
-	_ = data.A
-}
+const (
+	// BufferSize defines the buffer size
+	BufferSize int = 100
+	// LoopCount is the loop count
+	LoopCount int = 10
+	// ValueOne is value one
+	ValueOne int = 1
+	// ValueTwo is value two
+	ValueTwo int = 2
+	// ValueThree is value three
+	ValueThree int = 3
+	// CapacityFifty is capacity of 50
+	CapacityFifty int = 50
+)
 
-// goodLargeByPointer prend une grande struct par pointeur (correct).
-func goodLargeByPointer(data *LargeStruct) {
-	// Pointeur, pas de copie
-	_ = data.Field1
-}
+// init demonstrates proper make usage
+func init() {
+	// Good: Capacity specified, length is 0
+	items := make([]int, 0, BufferSize)
+	// Itération sur les éléments
+	for i := range LoopCount {
+		items = append(items, i)
+	}
+	_ = items
 
-// goodMultiplePointers prend plusieurs pointeurs.
-func goodMultiplePointers(a *LargeStruct, b *LargeStruct) {
-	// Tous les pointeurs
-	_, _ = a.Field1, b.Field1
-}
+	// Good: Using make([]T, 0, cap) with append is the proper way
+	items2 := make([]string, 0, BufferSize)
+	// Itération sur les éléments
+	for i := range BufferSize {
+		items2 = append(items2, "value")
+		// Utilisation de i pour éviter le warning
+		_ = i
+	}
+	_ = items2
 
-// goodMixedSmall mélange petite struct et pointeur.
-func goodMixedSmall(small SmallStruct, large *LargeStruct) {
-	// Petite par valeur OK, grande par pointeur OK
-	_ = small.A + large.Field1
-}
+	// Good: Literal with values
+	values := []int{ValueOne, ValueTwo, ValueThree}
+	_ = values
 
-// goodPrimitives utilise des types primitifs.
-func goodPrimitives(a int, b string, c bool) {
-	// Primitifs par valeur, pas de problème
-	_, _, _ = a, b, c
-}
+	// Good: Use make with capacity based on input length
+	data := []string{"a", "b"}
+	result := make([]string, 0, len(data))
+	// Itération sur les données
+	for _, item := range data {
+		// Vérification d'une condition
+		if len(item) > 0 {
+			result = append(result, item)
+		}
+	}
+	_ = result
 
-// goodMethodReceiver utilise receiver par pointeur.
-func (s *LargeStruct) goodMethodReceiver() int64 {
-	// Pointeur, pas de copie
-	return s.Field1
+	// Good: Length is 0, capacity is specified
+	slice := make([]int, 0, CapacityFifty)
+	_ = slice
 }

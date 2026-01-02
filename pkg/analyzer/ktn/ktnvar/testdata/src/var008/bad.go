@@ -1,105 +1,154 @@
-// Package var008 contains test cases for KTN rules.
-package var008
+// Package var004 contains test cases for KTN rules.
+package var004
+
+// Bad: Slices created without capacity when it could be known
 
 // Constantes pour les tests
 const (
-	LoopCountTen    int = 10
-	LoopCountFive   int = 5
-	SliceValueOne   int = 1
-	SliceValueTwo   int = 2
-	SliceValueThree int = 3
-	NestedSliceSize int = 10
+	MaxSize        int = 50
+	SmallLoopCount int = 20
 )
 
-// badLoopSliceAlloc crée un slice à l'intérieur d'une boucle for.
-func badLoopSliceAlloc() {
-	// Allocation dans boucle for
-	for index := 0; index < LoopCountTen; index++ {
-		dataSlice := make([]int, 0, LoopCountTen)
-		_ = dataSlice
-	}
+// badMakeStringSlice creates a string slice without capacity
+//
+// Returns:
+//   - []string: slice without preallocated capacity
+func badMakeStringSlice() []string {
+	// Bad: make without capacity argument
+	items := make([]string, 0)
+	// Retour de la fonction
+	return items
 }
 
-// badLoopMapAlloc crée une map à l'intérieur d'une boucle for.
-func badLoopMapAlloc() {
-	// Allocation dans boucle for
-	for loopIndex := 0; loopIndex < LoopCountTen; loopIndex++ {
-		cacheMap := make(map[string]int, LoopCountTen)
-		_ = cacheMap
-	}
+// badMakeWithoutCapacity creates a slice using make without capacity
+//
+// Returns:
+//   - []string: slice without preallocated capacity
+func badMakeWithoutCapacity() []string {
+	// Bad: make without capacity argument
+	result := make([]string, 0)
+	// Retour de la fonction
+	return result
 }
 
-// badRangeSliceAlloc crée un slice à l'intérieur d'une boucle range.
-func badRangeSliceAlloc() {
-	items := []int{SliceValueOne, SliceValueTwo, SliceValueThree}
-	// Allocation dans boucle range
-	for _, itemValue := range items {
-		stringBuffer := make([]string, 0, LoopCountTen)
-		_ = itemValue
-		_ = stringBuffer
+// badMakeInLoop creates a slice without capacity in loop
+//
+// Returns:
+//   - []int: slice without preallocated capacity
+func badMakeInLoop() []int {
+	// Bad: Known size but no capacity
+	numbers := make([]int, 0)
+	// Itération sur les éléments
+	for i := range MaxSize {
+		numbers = append(numbers, i)
 	}
+	// Retour de la fonction
+	return numbers
 }
 
-// badRangeMapAlloc crée une map à l'intérieur d'une boucle range.
-func badRangeMapAlloc() {
-	items := []string{"a", "b", "c"}
-	// Allocation dans boucle range
-	for _, stringItem := range items {
-		boolMap := make(map[string]bool, LoopCountTen)
-		_ = stringItem
-		_ = boolMap
-	}
+// badMakeFloatSlice creates a float slice without capacity
+//
+// Returns:
+//   - []float64: slice without preallocated capacity
+func badMakeFloatSlice() []float64 {
+	// Bad: make for float64 without capacity
+	values := make([]float64, 0)
+	// Retour de la fonction
+	return values
 }
 
-// badNestedLoopAlloc crée un slice dans une boucle imbriquée.
-func badNestedLoopAlloc() {
-	// Allocation dans boucle imbriquée
-	for outerIndex := 0; outerIndex < LoopCountFive; outerIndex++ {
-		// Boucle interne avec allocation
-		for innerIndex := 0; innerIndex < LoopCountFive; innerIndex++ {
-			tempSlice := make([]int, 0, NestedSliceSize)
-			_ = tempSlice
-			_ = innerIndex
-		}
-		_ = outerIndex
-	}
+// badMakeInterfaceSlice creates an interface slice without capacity
+//
+// Returns:
+//   - []any: interface slice without capacity
+func badMakeInterfaceSlice() []any {
+	// Bad: make for any without capacity
+	items := make([]any, 0)
+	// Retour de la fonction
+	return items
 }
 
-// badVarDeclInLoop crée un slice avec var dans une boucle.
-func badVarDeclInLoop() {
-	// Allocation avec var dans boucle
-	for varIndex := 0; varIndex < LoopCountTen; varIndex++ {
-		dataArray := make([]int, 0, SliceValueThree)
-		dataArray = append(dataArray, SliceValueOne, SliceValueTwo, SliceValueThree)
-		_ = dataArray
-		_ = varIndex
-	}
+// Item represents a test item with a single value field.
+// This struct is used for testing slice allocation patterns.
+type Item struct {
+	value int
 }
 
-// badVarMapDeclInLoop crée une map avec var dans une boucle.
-func badVarMapDeclInLoop() {
-	// Allocation avec var dans boucle
-	for mapIndex := 0; mapIndex < LoopCountTen; mapIndex++ {
-		stringCache := make(map[string]int, LoopCountTen)
-		_ = stringCache
-		_ = mapIndex
-	}
+// ItemInterface définit les méthodes de Item.
+type ItemInterface interface {
+	Value() int
+}
+
+// NewItem crée une nouvelle instance de Item.
+//
+// Returns:
+//   - *Item: nouvelle instance
+func NewItem() *Item {
+	// Retourne une nouvelle instance
+	return &Item{}
+}
+
+// Value retourne la valeur.
+//
+// Returns:
+//   - int: valeur du champ
+func (i *Item) Value() int {
+	// Retourne le champ value
+	return i.value
+}
+
+// badMakeStructSlice creates a slice of structs without capacity
+//
+// Returns:
+//   - []Item: slice of structs without capacity
+func badMakeStructSlice() []Item {
+	// Bad: make for struct slice without capacity
+	items := make([]Item, 0)
+	// Retour de la fonction
+	return items
+}
+
+// badMakeByteSlice creates a byte slice without capacity
+//
+// Returns:
+//   - []byte: byte slice without capacity
+func badMakeByteSlice() []byte {
+	// Bad: Byte slice without capacity
+	buffer := make([]byte, 0)
+	// Retour de la fonction
+	return buffer
+}
+
+// badEmptyLiteralWithAppend creates empty literal then appends
+//
+// Returns:
+//   - []int: slice that should use make with capacity
+func badEmptyLiteralWithAppend() []int {
+	// Bad: make([]T, 0) without capacity when size could be known
+	numbers := make([]int, 0)
+	// Ajout d'éléments
+	numbers = append(numbers, SmallLoopCount)
+	numbers = append(numbers, MaxSize)
+	// Retour de la fonction
+	return numbers
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badLoopSliceAlloc
-	badLoopSliceAlloc()
-	// Appel de badLoopMapAlloc
-	badLoopMapAlloc()
-	// Appel de badRangeSliceAlloc
-	badRangeSliceAlloc()
-	// Appel de badRangeMapAlloc
-	badRangeMapAlloc()
-	// Appel de badNestedLoopAlloc
-	badNestedLoopAlloc()
-	// Appel de badVarDeclInLoop
-	badVarDeclInLoop()
-	// Appel de badVarMapDeclInLoop
-	badVarMapDeclInLoop()
+	// Appel de badMakeStringSlice
+	badMakeStringSlice()
+	// Appel de badMakeWithoutCapacity
+	badMakeWithoutCapacity()
+	// Appel de badMakeInLoop
+	badMakeInLoop()
+	// Appel de badMakeFloatSlice
+	badMakeFloatSlice()
+	// Appel de badMakeInterfaceSlice
+	badMakeInterfaceSlice()
+	// Appel de badMakeStructSlice
+	badMakeStructSlice()
+	// Appel de badMakeByteSlice
+	badMakeByteSlice()
+	// Appel de badEmptyLiteralWithAppend
+	badEmptyLiteralWithAppend()
 }

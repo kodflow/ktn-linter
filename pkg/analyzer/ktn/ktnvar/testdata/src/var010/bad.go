@@ -1,136 +1,93 @@
-// Package var010 contains test cases for KTN rules.
-package var010
+// Package var006 contains test cases for KTN rules.
+package var006
 
-// Bad: Creating []byte buffers repeatedly in loops without sync.Pool
-
-const (
-	// LoopIterations est le nombre d'itérations de boucle
-	LoopIterations int = 100
-	// BufferSize est la taille du buffer
-	BufferSize int = 1024
-	// SmallBufferSize est la taille du petit buffer
-	SmallBufferSize int = 512
-	// TinyBufferSize est la taille du très petit buffer
-	TinyBufferSize int = 128
-	// MediumBufferSize est la taille moyenne du buffer
-	MediumBufferSize int = 256
-	// ConstBufferSize est la taille constante du buffer
-	ConstBufferSize int = 2048
-	// OuterIterations est le nombre d'itérations externes
-	OuterIterations int = 10
-	// InnerIterations est le nombre d'itérations internes
-	InnerIterations int = 10
-	// NestedBufferSize est la taille du buffer imbriqué
-	NestedBufferSize int = 64
-	// LargeBufferSize est la taille du grand buffer
-	LargeBufferSize int = 512
-	// LargeBufferCapacity est la capacité du grand buffer
-	LargeBufferCapacity int = 1024
-	// ItemsCount est le nombre d'éléments
-	ItemsCount int = 3
-	// CounterLimit est la limite du compteur
-	CounterLimit int = 100
-	// RangeIterations est le nombre d'itérations de range
-	RangeIterations int = 50
+import (
+	"bytes"
+	"strings"
 )
 
-// badProcessInLoop creates buffer in loop without sync.Pool
-func badProcessInLoop() {
-	items := make([]int, 0, LoopIterations)
-	// Loop processes items
-	for range LoopIterations {
-		// Buffer created repeatedly in loop
-		buffer := make([]byte, 0, BufferSize)
-		items = append(items, len(buffer))
+// Constantes pour les tests
+const (
+	BadLoopCountLarge int = 100
+	BadLoopCountSmall int = 50
+)
+
+// badStringsBuilderNoGrow creates a strings.Builder without Grow.
+//
+// Returns:
+//   - string: concatenated result
+func badStringsBuilderNoGrow() string {
+	// Bad: composite literal without Grow() call
+	sb := strings.Builder{}
+
+	// Iteration over data to append
+	for i := 0; i < BadLoopCountLarge; i++ {
+		sb.WriteString("item")
 	}
+
+	// Return the result
+	return sb.String()
 }
 
-// badRangeLoop creates buffer in range loop without sync.Pool
-func badRangeLoop() {
-	items := [ItemsCount]string{"a", "b", "c"}
-	results := make([]int, 0, ItemsCount)
-	// Loop processes items
-	for _, item := range items {
-		// Buffer created in each iteration
-		buf := make([]byte, 0, SmallBufferSize)
-		_ = item
-		results = append(results, len(buf))
+// badBytesBufferNoGrow creates a bytes.Buffer without Grow.
+//
+// Returns:
+//   - []byte: concatenated result
+func badBytesBufferNoGrow() []byte {
+	// Bad: composite literal without Grow() call
+	buf := bytes.Buffer{}
+
+	// Iteration over data to append
+	for i := 0; i < BadLoopCountLarge; i++ {
+		buf.WriteString("item")
 	}
+
+	// Return the result
+	return buf.Bytes()
 }
 
-// badInfiniteLoop creates buffer in infinite loop
-func badInfiniteLoop() {
-	// Infinite loop processing
-	for {
-		// Buffer allocated every iteration
-		b := make([]byte, 0, TinyBufferSize)
-		_ = b
-		break
+// badShortFormBuilder uses short form without Grow.
+//
+// Returns:
+//   - string: concatenated result
+func badShortFormBuilder() string {
+	// Bad: short declaration without Grow
+	sb := strings.Builder{}
+
+	// Iteration over data to append
+	for i := 0; i < BadLoopCountSmall; i++ {
+		sb.WriteString("x")
 	}
+
+	// Return the result
+	return sb.String()
 }
 
-// badWhileStyle creates buffer in while-style loop
-func badWhileStyle() {
-	counter := 0
-	results := make([]int, 0, CounterLimit)
-	// While-style loop
-	for counter < CounterLimit {
-		// Buffer created each iteration
-		data := make([]byte, 0, MediumBufferSize)
-		results = append(results, len(data))
-		counter++
-	}
-}
+// badShortFormBuffer uses short form bytes.Buffer without Grow.
+//
+// Returns:
+//   - []byte: concatenated result
+func badShortFormBuffer() []byte {
+	// Bad: short declaration without Grow
+	buf := bytes.Buffer{}
 
-// badConstSizeBuffer creates buffer with const size in loop
-func badConstSizeBuffer() {
-	results := make([]int, 0, RangeIterations)
-	// Loop processes items
-	for range RangeIterations {
-		// Buffer with const size
-		buf := make([]byte, 0, ConstBufferSize)
-		results = append(results, len(buf))
+	// Iteration over data to append
+	for i := 0; i < BadLoopCountSmall; i++ {
+		buf.Write([]byte("x"))
 	}
-}
 
-// badNestedLoop creates buffer in nested loop
-func badNestedLoop() {
-	// Outer loop
-	for range OuterIterations {
-		// Inner loop
-		for range InnerIterations {
-			// Buffer allocated in nested loop
-			temp := make([]byte, 0, NestedBufferSize)
-			_ = temp
-		}
-	}
-}
-
-// badMakeWithCapacity creates buffer with capacity in loop
-func badMakeWithCapacity() {
-	results := make([]int, 0, LoopIterations)
-	// Loop processes items
-	for range LoopIterations {
-		// Buffer with capacity allocated in loop
-		buffer := make([]byte, 0, LargeBufferCapacity)
-		results = append(results, len(buffer))
-	}
+	// Return the result
+	return buf.Bytes()
 }
 
 // init utilise les fonctions privées
 func init() {
-	// Appel de badProcessInLoop
-	badProcessInLoop()
-	// Appel de badRangeLoop
-	badRangeLoop()
-	// Appel de badInfiniteLoop
-	badInfiniteLoop()
-	// Appel de badWhileStyle
-	badWhileStyle()
-	// Appel de badConstSizeBuffer
-	badConstSizeBuffer()
-	// Appel de badNestedLoop
-	badNestedLoop()
-	// Appel de badMakeWithCapacity
-	badMakeWithCapacity()
+	// Appel de badStringsBuilderNoGrow
+	badStringsBuilderNoGrow()
+	// Appel de badBytesBufferNoGrow
+	badBytesBufferNoGrow()
+	// Appel de badShortFormBuilder
+	badShortFormBuilder()
+	// Appel de badShortFormBuffer
+	badShortFormBuffer()
 }

@@ -1,53 +1,48 @@
 // Package var018 provides good test cases.
 package var018
 
-// Constants to avoid magic numbers
-const (
-	// PortValue is the port value
-	PortValue int = 8080
-	// MaxValue is the max value
-	MaxValue int = 100
-	// TimeoutValue is the timeout value
-	TimeoutValue int = 30
-)
+// Good: Using arrays for ≤64 bytes or slices when appropriate
 
-// Good: Variables using camelCase or PascalCase (no underscores)
+// goodLargeBuffer creates slice >64 bytes
+func goodLargeBuffer() {
+	// 128 bytes: heap acceptable (>64 bytes)
+	buf := make([]byte, 128)
+	_ = buf
+}
 
-var (
-	// httpClient uses camelCase (correct)
-	httpClient string = "client"
+// goodAlreadyArray uses array correctly
+func goodAlreadyArray() {
+	// Already using array syntax
+	var small [32]byte
+	_ = small
+}
 
-	// serverPort uses camelCase (correct)
-	serverPort int = PortValue
+// goodDynamicSize uses dynamic size
+func goodDynamicSize() {
+	n := 32
+	// Dynamic size: must use slice
+	dynamic := make([]byte, n)
+	_ = dynamic
+}
 
-	// maxConnections uses camelCase (correct)
-	maxConnections int = MaxValue
+// goodLargeIntArray creates slice >64 bytes
+func goodLargeIntArray() {
+	// 100 ints * 8 bytes = 800 bytes (>64 bytes)
+	large := make([]int, 100)
+	_ = large
+}
 
-	// apiKey uses camelCase (correct)
-	apiKey string = "secret"
+// goodWithCapacity uses different length and capacity
+func goodWithCapacity() {
+	// Different capacity: needs slice semantics
+	withCap := make([]byte, 32, 64)
+	_ = withCap
+}
 
-	// userName uses camelCase (correct)
-	userName string = "admin"
-
-	// isEnabled uses camelCase (correct)
-	isEnabled bool = true
-
-	// DefaultTimeout uses PascalCase for exported (correct)
-	DefaultTimeout int = TimeoutValue
-
-	// HTTPClient uses PascalCase with acronym (correct)
-	HTTPClient string = "http"
-
-	// XMLParser uses PascalCase with acronym (correct)
-	XMLParser string = "xml"
-)
-
-// init uses the variables to avoid compilation errors
-func init() {
-	_ = httpClient
-	_ = serverPort
-	_ = maxConnections
-	_ = apiKey
-	_ = userName
-	_ = isEnabled
+// goodGrowingSlice creates slice that will grow
+func goodGrowingSlice() {
+	// Slice will grow: needs heap allocation
+	growing := make([]string, 0, 10)
+	growing = append(growing, "test")
+	_ = growing
 }

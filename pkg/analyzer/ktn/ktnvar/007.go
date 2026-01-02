@@ -4,7 +4,6 @@ package ktnvar
 import (
 	"go/ast"
 	"go/token"
-	"go/types"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -18,10 +17,10 @@ const (
 	ruleCodeVar007 string = "KTN-VAR-007"
 )
 
-// Analyzer007 checks for string concatenation in loops
+// Analyzer007 checks that local variables use := instead of var
 var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar007",
-	Doc:      "KTN-VAR-007: Utiliser strings.Builder pour >2 concaténations",
+	Doc:      "KTN-VAR-007: Vérifie que les variables locales utilisent ':=' au lieu de 'var'",
 	Run:      runVar007,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -44,103 +43,272 @@ func runVar007(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
+	// We need to track function bodies to check local variables only
 	nodeFilter := []ast.Node{
-		(*ast.ForStmt)(nil),
-		(*ast.RangeStmt)(nil),
+		(*ast.FuncDecl)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
+		funcDecl, ok := n.(*ast.FuncDecl)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
+
 		// Skip excluded files
 		if cfg.IsFileExcluded(ruleCodeVar007, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
 
-		checkStringConcatInLoop(pass, n)
+		// Check if function has a body
+		if funcDecl.Body == nil {
+			// Continue to next node
+			return
+		}
+
+		// Inspect all statements in the function body
+		checkFunctionBody(pass, funcDecl.Body)
 	})
 
-	// Retour de la fonction
+	// Return analysis result
 	return nil, nil
 }
 
-// checkStringConcatInLoop checks for string += in loops.
+// checkFunctionBody parcourt le corps d'une fonction pour détecter les var.
 //
 // Params:
-//   - pass: analysis pass context
-//   - n: AST node (ForStmt or RangeStmt)
-func checkStringConcatInLoop(pass *analysis.Pass, n ast.Node) {
-	// Body of the loop
-	var loopBody *ast.BlockStmt
-
-	// Check type of loop
-	switch node := n.(type) {
-	// Case: for loop
-	case *ast.ForStmt:
-		loopBody = node.Body
-	// Case: range loop
-	case *ast.RangeStmt:
-		loopBody = node.Body
+//   - pass: contexte d'analyse
+//   - body: corps de la fonction
+func checkFunctionBody(pass *analysis.Pass, body *ast.BlockStmt) {
+	// Iterate through all statements
+	for _, stmt := range body.List {
+		checkStatement(pass, stmt)
 	}
+}
 
-	// Check if loop body exists
-	if loopBody == nil {
-		// Return early if no body
+// checkStatement vérifie si un statement contient un var avec initialisation.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+func checkStatement(pass *analysis.Pass, stmt ast.Stmt) {
+	declStmt, ok := stmt.(*ast.DeclStmt)
+	// If not a declaration, check for nested blocks
+	if !ok {
+		checkNestedBlocks(pass, stmt)
+		// Early return for non-declarations
 		return
 	}
 
-	// Traverse statements in loop body
-	ast.Inspect(loopBody, func(child ast.Node) bool {
-		// Check if assignment statement
-		if assign, ok := child.(*ast.AssignStmt); ok {
-			// Check if += operator
-			if assign.Tok == token.ADD_ASSIGN {
-				// Check if string concatenation
-				if isStringConcatenation(pass, assign) {
-					msg, _ := messages.Get(ruleCodeVar007)
-					pass.Reportf(
-						assign.Pos(),
-						"%s: %s",
-						ruleCodeVar007,
-						msg.Format(config.Get().Verbose),
-					)
-				}
-			}
-		}
-		// Continue traversing
-		return true
-	})
+	genDecl, ok := declStmt.Decl.(*ast.GenDecl)
+	// If not a GenDecl, return early
+	if !ok {
+		// Not a GenDecl, skip
+		return
+	}
+
+	// Only check var declarations, skip others
+	if genDecl.Tok != token.VAR {
+		// Not a var declaration, skip
+		return
+	}
+
+	// Check each variable specification
+	checkVarSpecs(pass, genDecl)
 }
 
-// isStringConcatenation checks if += operates on string.
+// checkNestedBlocks vérifie les blocs imbriqués (if, for, switch, etc.).
 //
 // Params:
-//   - pass: analysis pass context
-//   - assign: assignment statement to check
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+func checkNestedBlocks(pass *analysis.Pass, stmt ast.Stmt) {
+	// Try control flow statements first
+	if checkControlFlowStmt(pass, stmt) {
+		// Handled by control flow
+		return
+	}
+
+	// Try block-related statements
+	checkBlockRelatedStmt(pass, stmt)
+}
+
+// checkControlFlowStmt checks if, for, range, and switch statements.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
 //
 // Returns:
-//   - bool: true if string concatenation
-func isStringConcatenation(pass *analysis.Pass, assign *ast.AssignStmt) bool {
-	// Check if left-hand side exists
-	if len(assign.Lhs) == 0 {
-		// Return false if no left-hand side
-		return false
+//   - bool: true if statement was handled
+func checkControlFlowStmt(pass *analysis.Pass, stmt ast.Stmt) bool {
+	// Check different types of statements
+	switch s := stmt.(type) {
+	// If statement: check body and else
+	case *ast.IfStmt:
+		checkIfStmt(pass, s)
+		return true
+	// For statement: check loop body
+	case *ast.ForStmt:
+		checkBlockIfNotNil(pass, s.Body)
+		return true
+	// Range statement: check loop body
+	case *ast.RangeStmt:
+		checkBlockIfNotNil(pass, s.Body)
+		return true
+	// Switch statement: check switch body
+	case *ast.SwitchStmt:
+		checkBlockIfNotNil(pass, s.Body)
+		return true
+	// Type switch: check switch body
+	case *ast.TypeSwitchStmt:
+		checkBlockIfNotNil(pass, s.Body)
+		return true
 	}
 
-	// Get first left-hand side expression
-	lhs := assign.Lhs[0]
+	// Not a control flow statement
+	return false
+}
 
-	// Get type information
-	if tv, ok := pass.TypesInfo.Types[lhs]; ok {
-		var basic *types.Basic
-		// Check if type is string
-		if basic, ok = tv.Type.Underlying().(*types.Basic); ok {
-			// Return true if string type
-			return basic.Kind() == types.String
+// checkBlockRelatedStmt checks select, block, case, and comm clauses.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: statement à vérifier
+func checkBlockRelatedStmt(pass *analysis.Pass, stmt ast.Stmt) {
+	// Check different types of statements
+	switch s := stmt.(type) {
+	// Select statement: check select body
+	case *ast.SelectStmt:
+		checkBlockIfNotNil(pass, s.Body)
+	// Nested block: check directly
+	case *ast.BlockStmt:
+		checkFunctionBody(pass, s)
+	// Case clause: iterate through statements
+	case *ast.CaseClause:
+		checkCaseClause(pass, s)
+	// Comm clause: iterate through statements
+	case *ast.CommClause:
+		checkCommClause(pass, s)
+	}
+}
+
+// checkIfStmt vérifie un if statement.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - stmt: if statement
+func checkIfStmt(pass *analysis.Pass, stmt *ast.IfStmt) {
+	// Check if body exists
+	if stmt.Body != nil {
+		checkFunctionBody(pass, stmt.Body)
+	}
+	// Check else clause if exists
+	if stmt.Else != nil {
+		checkStatement(pass, stmt.Else)
+	}
+}
+
+// checkBlockIfNotNil vérifie un bloc s'il n'est pas nil.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - block: bloc à vérifier
+func checkBlockIfNotNil(pass *analysis.Pass, block *ast.BlockStmt) {
+	// Check if block exists
+	if block != nil {
+		checkFunctionBody(pass, block)
+	}
+}
+
+// checkCaseClause vérifie une case clause.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - clause: case clause
+func checkCaseClause(pass *analysis.Pass, clause *ast.CaseClause) {
+	// Iterate through case statements
+	for _, caseStmt := range clause.Body {
+		checkStatement(pass, caseStmt)
+	}
+}
+
+// checkCommClause vérifie une comm clause.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - clause: comm clause
+func checkCommClause(pass *analysis.Pass, clause *ast.CommClause) {
+	// Iterate through comm statements
+	for _, commStmt := range clause.Body {
+		checkStatement(pass, commStmt)
+	}
+}
+
+// checkVarSpecs vérifie les spécifications de variables.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - genDecl: déclaration générale
+func checkVarSpecs(pass *analysis.Pass, genDecl *ast.GenDecl) {
+	// Iterate through specifications
+	for _, spec := range genDecl.Specs {
+		valueSpec := spec.(*ast.ValueSpec)
+
+		// Check if variable has initialization without explicit type
+		if hasInitWithoutType(valueSpec) {
+			// Report error for each variable
+			reportVarErrors(pass, valueSpec)
 		}
 	}
+}
 
-	// Return false if not string
-	return false
+// hasInitWithoutType vérifie si une variable a une initialisation explicite.
+//
+// Params:
+//   - spec: spécification de variable
+//
+// Returns:
+//   - bool: true si initialisation explicite présente
+func hasInitWithoutType(spec *ast.ValueSpec) bool {
+	// Return true if variable has explicit initialization
+	// We want to report both "var x = value" and "var x Type = value"
+	// But NOT "var x Type" (zero value declaration)
+	return len(spec.Values) > 0
+}
+
+// reportVarErrors rapporte les erreurs pour chaque variable.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - spec: spécification de variable
+func reportVarErrors(pass *analysis.Pass, spec *ast.ValueSpec) {
+	// Iterate through variable names
+	for _, name := range spec.Names {
+		msg, ok := messages.Get(ruleCodeVar007)
+		// Defensive: avoid panic if message is missing
+		if !ok {
+			pass.Reportf(name.Pos(), "%s: utiliser := au lieu de var pour les valeurs non-zéro", ruleCodeVar007)
+			continue
+		}
+		pass.Reportf(
+			name.Pos(),
+			"%s: %s",
+			ruleCodeVar007,
+			msg.Format(config.Get().Verbose),
+		)
+	}
 }

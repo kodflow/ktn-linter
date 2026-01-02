@@ -1,55 +1,60 @@
-// Package var015 provides good test cases.
-package var015
+// Package var012 provides good test cases.
+package var012
 
-// Good examples: maps with capacity hints (compliant with KTN-VAR-015)
+import "bytes"
 
-const (
-	// ValueTwo is constant value 2
-	ValueTwo int = 2
-	// ValueThree is constant value 3
-	ValueThree int = 3
-	// ValueFive is constant value 5
-	ValueFive int = 5
-	// ValueTen is constant value 10
-	ValueTen int = 10
-	// ValueTwenty is constant value 20
-	ValueTwenty int = 20
-	// ValueFifty is constant value 50
-	ValueFifty int = 50
-	// ValueHundred is constant value 100
-	ValueHundred int = 100
-)
-
-// init demonstrates good practices for map initialization with capacity hints
+// init demonstrates correct usage patterns
 func init() {
-	// Map with capacity hint - good practice
-	users := make(map[string]int, ValueTen)
-	users["alice"] = 1
-	users["bob"] = ValueTwo
-
-	// Map with capacity hint in var declaration
-	config := make(map[string]string, ValueFive)
-	config["host"] = "localhost"
-	_ = config
-
-	// Multiple maps with capacity hints
-	data := make(map[int]string, ValueHundred)
-	cache := make(map[string]bool, ValueFifty)
-	index := make(map[int][]string, ValueTwenty)
-	data[1] = "test"
-	cache["key"] = true
-	index[0] = []string{"a", "b"}
-
-	// Map of maps with capacity hint
-	nested := make(map[string]map[int]string, ValueTen)
-	nested["key"] = make(map[int]string, ValueFive)
-	_ = nested
-
-	// Map literal - not checked by this rule
-	literal := map[string]int{
-		"one":   1,
-		"two":   ValueTwo,
-		"three": ValueThree,
+	// Conversion une seule fois hors de la boucle
+	data := [][]byte{[]byte("hello"), []byte("world")}
+	target := "hello"
+	targetBytes := []byte(target) // OK: Conversion une seule fois
+	count := 0
+	// Parcours des éléments
+	for _, item := range data {
+		// Vérification de la condition
+		if bytes.Equal(item, targetBytes) {
+			count++
+		}
 	}
-	_ = literal
+	_ = count
+
+	// Conversion une seule fois puis réutilisation
+	byteData := []byte("test")
+	str := string(byteData) // OK: Conversion une seule fois
+	// Vérification de la condition
+	if str == "hello" {
+		println("found hello")
+	}
+	// Vérification de la condition
+	if str == "world" {
+		println("found world")
+	}
+	println(str)
+
+	// Utilisation de bytes.Equal au lieu de string()
+	items := [][]byte{[]byte("test")}
+	targetTest := []byte("test")
+	// Parcours des éléments
+	for i := range len(items) {
+		// Vérification de la condition
+		if bytes.Equal(items[i], targetTest) { // OK: Pas de conversion string
+			println("found")
+		}
+	}
+
+	// Une seule utilisation
+	singleData := []byte("unique")
+	// Vérification de la condition
+	if string(singleData) == "unique" { // OK: Une seule utilisation
+		println("found unique")
+	}
+
+	// Chaque variable convertie une seule fois
+	a := []byte("a")
+	b := []byte("b")
+	c := []byte("c")
+	println(string(a))
+	println(string(b))
+	println(string(c))
 }

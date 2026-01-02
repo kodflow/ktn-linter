@@ -3,10 +3,8 @@ package ktnvar
 
 import (
 	"go/ast"
-	"go/token"
-	"go/types"
-	"math"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/utils"
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
 	"golang.org/x/tools/go/analysis"
@@ -17,16 +15,67 @@ import (
 const (
 	// ruleCodeVar009 is the rule code for this analyzer
 	ruleCodeVar009 string = "KTN-VAR-009"
-	// defaultMaxStructBytes max bytes for struct without pointer
-	defaultMaxStructBytes int = 64
+	// minMakeArgsVar008 is the minimum number of arguments for make call
+	minMakeArgsVar008 int = 2
 )
 
-// Analyzer009 checks for large struct passed by value in function parameters
+// Analyzer009 checks that make with length > 0 is avoided when append is used
 var Analyzer009 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar009",
-	Doc:      "KTN-VAR-009: Utilise des pointeurs pour les structs >64 bytes",
+	Doc:      "KTN-VAR-009: Vérifie d'éviter make([]T, length) si utilisation avec append",
 	Run:      runVar009,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
+}
+
+// checkMakeCallVar008 vérifie un appel à make avec length > 0.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - call: appel de fonction à vérifier
+func checkMakeCallVar008(pass *analysis.Pass, call *ast.CallExpr) {
+	// Vérification que c'est un appel à make
+	if !utils.IsMakeCall(call) {
+		// Continue traversing AST nodes.
+		return
+	}
+
+	// Vérification du nombre d'arguments (2 ou 3: type, length, [capacity])
+	if len(call.Args) < minMakeArgsVar008 {
+		// Continue traversing AST nodes.
+		return
+	}
+
+	// Vérification que le type est un slice
+	if !utils.IsSliceTypeWithPass(pass, call.Args[0]) {
+		// Continue traversing AST nodes.
+		return
+	}
+
+	// Vérification que la longueur est > 0
+	if !utils.HasPositiveLength(pass, call.Args[1]) {
+		// Continue traversing AST nodes.
+		return
+	}
+
+	// Skip si VAR-016 s'applique (constante <= 1024 sans capacité)
+	if len(call.Args) == minMakeArgsVar008 && utils.IsSmallConstantSize(pass, call.Args[1]) {
+		// VAR-016 gère ce cas
+		return
+	}
+
+	// Signalement de l'erreur
+	msg, ok := messages.Get(ruleCodeVar009)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(call.Pos(), "%s: éviter make+append, utiliser append directement", ruleCodeVar009)
+		return
+	}
+	pass.Reportf(
+		call.Pos(),
+		"%s: %s",
+		ruleCodeVar009,
+		msg.Format(config.Get().Verbose),
+	)
 }
 
 // runVar009 exécute l'analyse KTN-VAR-009.
@@ -47,197 +96,38 @@ func runVar009(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	// Récupérer le seuil configuré en bytes
-	maxBytes := cfg.GetThreshold(ruleCodeVar009, defaultMaxStructBytes)
-	// Get verbose setting to pass down (avoid global dependency in helpers)
-	verbose := cfg.Verbose
-
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
+	}
 
 	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+		(*ast.CallExpr)(nil),
 	}
 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
+		call, ok := n.(*ast.CallExpr)
+		// Defensive: ensure node type matches
+		if !ok {
+			return
+		}
 
 		// Skip excluded files
-		filename := pass.Fset.Position(funcDecl.Pos()).Filename
-		// Vérification de l'exclusion
-		if cfg.IsFileExcluded(ruleCodeVar009, filename) {
+		if cfg.IsFileExcluded(ruleCodeVar009, pass.Fset.Position(n.Pos()).Filename) {
 			// Fichier exclu
 			return
 		}
 
-		// Vérifier les receivers (méthodes)
-		if funcDecl.Recv != nil {
-			// Analyse des receivers
-			checkFuncParams009(pass, funcDecl.Recv, maxBytes, verbose)
-		}
-
-		// Vérifier les paramètres de la fonction
-		if funcDecl.Type.Params != nil {
-			// Analyse des paramètres
-			checkFuncParams009(pass, funcDecl.Type.Params, maxBytes, verbose)
-		}
+		checkMakeCallVar008(pass, call)
 	})
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// checkFuncParams009 vérifie les paramètres d'une fonction.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - params: liste des paramètres
-//   - maxBytes: taille max en bytes
-//   - verbose: mode verbose pour les messages
-func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int, verbose bool) {
-	// Handle nil params gracefully
-	if params == nil {
-		return
-	}
-	// Clamp invalid threshold to default
-	if maxBytes <= 0 {
-		maxBytes = defaultMaxStructBytes
-	}
-	// Parcours des paramètres
-	for _, param := range params.List {
-		// Si le paramètre a des noms (ex: a, b T), vérifier chaque nom
-		if len(param.Names) > 0 {
-			// Pour (a, b T), ne reporter qu'une seule fois pour éviter les doublons
-			pos := param.Names[0].NamePos
-			checkParamType009(pass, param.Type, pos, maxBytes, verbose)
-			continue
-		}
-		// Paramètre sans nom (ex: func f(T)), utiliser la position du type
-		checkParamType009(pass, param.Type, param.Pos(), maxBytes, verbose)
-	}
-}
-
-// checkParamType009 vérifie le type d'un paramètre.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - typ: type du paramètre
-//   - pos: position du paramètre
-//   - maxBytes: taille max en bytes
-//   - verbose: mode verbose pour les messages
-func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxBytes int, verbose bool) {
-	// Handle variadic params: `...T` should be checked as `T`
-	if ell, ok := typ.(*ast.Ellipsis); ok && ell.Elt != nil {
-		typ = ell.Elt
-	}
-
-	// Get struct size if applicable
-	sizeBytes := getStructSize009(pass, typ)
-	// Check if size exceeds threshold
-	if sizeBytes > int64(maxBytes) {
-		// Guard against int64 to int overflow
-		displaySize := sizeBytes
-		// Cap displaySize to math.MaxInt for safe int cast
-		if displaySize > math.MaxInt {
-			displaySize = math.MaxInt
-		}
-		// Grande struct détectée
-		msg, ok := messages.Get(ruleCodeVar009)
-		// Check for missing message and use fallback
-		if !ok {
-			pass.Reportf(pos, "%s: struct size %d bytes exceeds %d bytes; use pointer",
-				ruleCodeVar009, displaySize, maxBytes)
-			return
-		}
-		pass.Reportf(
-			pos,
-			"%s: %s",
-			ruleCodeVar009,
-			msg.Format(verbose, int(displaySize), maxBytes, maxBytes),
-		)
-	}
-}
-
-// getStructSize009 returns the size of a struct type, or -1 if not applicable.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - typ: type expression
-//
-// Returns:
-//   - int64: size in bytes, or -1 if not a local struct or can't determine
-func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
-	// Ignorer les pointeurs (déjà passés par référence)
-	if _, isPointer := typ.(*ast.StarExpr); isPointer {
-		// C'est un pointeur, OK
-		return -1
-	}
-
-	// Récupération du type réel
-	typeInfo := pass.TypesInfo.TypeOf(typ)
-	// Vérification du type
-	if typeInfo == nil {
-		// Type inconnu
-		return -1
-	}
-
-	// Ignorer les types externes (frameworks comme Terraform)
-	if isExternalType009(typeInfo, pass) {
-		// Retour de la fonction
-		return -1
-	}
-
-	// Vérification que c'est une struct
-	if _, ok := typeInfo.Underlying().(*types.Struct); !ok {
-		// Pas une struct
-		return -1
-	}
-
-	// Calcul de la taille en bytes
-	// pass.TypesSizes is the only reliable source for the analysis target;
-	// if unavailable, skip size-based reporting to avoid false positives.
-	sizes := pass.TypesSizes
-	// Vérifier si les informations de taille sont disponibles
-	if sizes == nil {
-		// Retour anticipé si taille indisponible
-		return -1
-	}
-
-	// Calcul de la taille
-	sz := sizes.Sizeof(typeInfo)
-	// Skip reporting on unknown/invalid sizes
-	if sz <= 0 {
-		return -1
-	}
-
-	// Retour de la taille
-	return sz
-}
-
-// isExternalType009 checks if type is from external package.
-//
-// Params:
-//   - typeInfo: Type to check
-//   - pass: Analysis pass
-//
-// Returns:
-//   - bool: true if type is from external package
-func isExternalType009(typeInfo types.Type, pass *analysis.Pass) bool {
-	// Check if it's a named type
-	named, ok := typeInfo.(*types.Named)
-	// Verification de la condition
-	if !ok {
-		// Retour de la fonction
-		return false
-	}
-
-	// Get package of the type
-	obj := named.Obj()
-	// Verification de la condition
-	if obj == nil || obj.Pkg() == nil {
-		// Retour de la fonction
-		return false
-	}
-
-	// Check if type is from current package
-	return obj.Pkg().Path() != pass.Pkg.Path()
 }

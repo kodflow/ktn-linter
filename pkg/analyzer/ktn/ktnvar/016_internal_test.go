@@ -4,9 +4,9 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"go/types"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -30,235 +30,105 @@ func Test_runVar016(t *testing.T) {
 	}
 }
 
-// Test_hasDifferentCapacity tests the private hasDifferentCapacity helper function.
-func Test_hasDifferentCapacity(t *testing.T) {
+// Test_collectVarGroups tests the private collectVarGroups helper function.
+func Test_collectVarGroups(t *testing.T) {
 	tests := []struct {
 		name     string
-		call     *ast.CallExpr
-		expected bool
+		code     string
+		expected int
 	}{
 		{
-			name: "two args - no capacity",
-			call: &ast.CallExpr{
-				Args: []ast.Expr{
-					&ast.Ident{Name: "T"},
-					&ast.BasicLit{Value: "10"},
-				},
-			},
-			expected: false,
+			name: "single var group",
+			code: `package test
+var (
+	x int
+	y string
+)`,
+			expected: 1,
 		},
 		{
-			name: "three args - has capacity",
-			call: &ast.CallExpr{
-				Args: []ast.Expr{
-					&ast.Ident{Name: "T"},
-					&ast.BasicLit{Value: "10"},
-					&ast.BasicLit{Value: "20"},
-				},
-			},
-			expected: true,
+			name: "multiple var groups",
+			code: `package test
+var x int
+var y string`,
+			expected: 2,
 		},
 		{
-			name: "one arg - no capacity",
-			call: &ast.CallExpr{
-				Args: []ast.Expr{
-					&ast.Ident{Name: "T"},
-				},
-			},
-			expected: false,
+			name: "no vars",
+			code: `package test
+const x = 1`,
+			expected: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			result := hasDifferentCapacity(tt.call)
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("hasDifferentCapacity() = %v, expected %v", result, tt.expected)
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérification de l'erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse code: %v", err)
+			}
+
+			groups := collectVarGroups(file)
+			// Vérification du nombre de groupes
+			if len(groups) != tt.expected {
+				t.Errorf("collectVarGroups() returned %d groups, expected %d", len(groups), tt.expected)
 			}
 		})
 	}
 }
 
-// Test_isSmallConstant tests the private isSmallConstant helper function.
-func Test_isSmallConstant(t *testing.T) {
+// Test_checkVarGrouping tests the private checkVarGrouping helper function.
+func Test_checkVarGrouping(t *testing.T) {
 	tests := []struct {
-		name     string
-		size     int64
-		expected bool
+		name          string
+		groupCount    int
+		expectReports int
 	}{
 		{
-			name:     "negative",
-			size:     -1,
-			expected: false,
+			name:          "no groups",
+			groupCount:    0,
+			expectReports: 0,
 		},
 		{
-			name:     "zero",
-			size:     0,
-			expected: false,
+			name:          "one group",
+			groupCount:    1,
+			expectReports: 0,
 		},
 		{
-			name:     "small positive",
-			size:     10,
-			expected: true,
-		},
-		{
-			name:     "max allowed",
-			size:     int64(defaultMaxArraySize),
-			expected: true,
-		},
-		{
-			name:     "too large",
-			size:     int64(defaultMaxArraySize + 1),
-			expected: false,
+			name:          "multiple groups",
+			groupCount:    3,
+			expectReports: 2,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			result := isSmallConstant(tt.size, int64(defaultMaxArraySize))
-			// Vérification du résultat
-			if result != tt.expected {
-				t.Errorf("isSmallConstant(%d) = %v, expected %v", tt.size, result, tt.expected)
-			}
-		})
-	}
-}
-
-// Test_shouldUseArray_tooFewArgs tests with insufficient args.
-func Test_shouldUseArray_tooFewArgs(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-
-			pass := &analysis.Pass{}
-
-			// Test with only 1 arg
-			call := &ast.CallExpr{
-				Fun:  &ast.Ident{Name: "make"},
-				Args: []ast.Expr{&ast.Ident{Name: "T"}},
-			}
-			result := shouldUseArray(pass, call, 1024)
-			// Vérification du résultat
-			if result {
-				t.Errorf("shouldUseArray() = true, expected false with too few args")
-			}
-
-		})
-	}
-}
-
-// Test_shouldUseArray_withCapacity tests with different capacity.
-func Test_shouldUseArray_withCapacity(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-
-			pass := &analysis.Pass{}
-
-			// Test with 3 args (has different capacity)
-			call := &ast.CallExpr{
-				Fun: &ast.Ident{Name: "make"},
-				Args: []ast.Expr{
-					&ast.ArrayType{Elt: &ast.Ident{Name: "int"}},
-					&ast.BasicLit{Value: "10"},
-					&ast.BasicLit{Value: "20"}, // Different capacity
-				},
-			}
-			result := shouldUseArray(pass, call, 1024)
-			// Vérification du résultat
-			if result {
-				t.Errorf("shouldUseArray() = true, expected false with different capacity")
-			}
-
-		})
-	}
-}
-
-// Test_getConstantSize_nilValue tests with nil constant value.
-func Test_getConstantSize_nilValue(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-
-			pass := &analysis.Pass{
-				TypesInfo: &types.Info{
-					Types: make(map[ast.Expr]types.TypeAndValue),
+			reports := 0
+			mockPass := &analysis.Pass{
+				Report: func(_d analysis.Diagnostic) {
+					reports++
 				},
 			}
 
-			// Test with expression not in TypesInfo
-			expr := &ast.Ident{Name: "x"}
-			result := getConstantSize(pass, expr)
-			// Vérification du résultat
-			if result != -1 {
-				t.Errorf("getConstantSize() = %d, expected -1 for nil value", result)
+			// Create fake groups
+			var groups []shared.DeclGroup
+			for i := 0; i < tt.groupCount; i++ {
+				groups = append(groups, shared.DeclGroup{
+					Decl: &ast.GenDecl{TokPos: token.Pos(i + 1)},
+					Pos:  token.Pos(i + 1),
+				})
 			}
 
-		})
-	}
-}
+			checkVarGrouping(mockPass, groups)
 
-// Test_getConstantSize_nonInt tests with non-int constant.
-func Test_getConstantSize_nonInt(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-
-			pass := &analysis.Pass{
-				TypesInfo: &types.Info{
-					Types: make(map[ast.Expr]types.TypeAndValue),
-				},
+			// Vérification du nombre de rapports
+			if reports != tt.expectReports {
+				t.Errorf("checkVarGrouping() reported %d issues, expected %d", reports, tt.expectReports)
 			}
-
-			// Add a string constant to TypesInfo
-			expr := &ast.BasicLit{Value: `"hello"`}
-			pass.TypesInfo.Types[expr] = types.TypeAndValue{
-				Value: nil, // Not a constant
-			}
-			result := getConstantSize(pass, expr)
-			// Vérification du résultat
-			if result != -1 {
-				t.Errorf("getConstantSize() = %d, expected -1 for non-constant", result)
-			}
-
-		})
-	}
-}
-
-// Test_reportArraySuggestion tests the private reportArraySuggestion function.
-func Test_reportArraySuggestion(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"error case validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Test passthrough - function reports array suggestions
 		})
 	}
 }
@@ -377,36 +247,6 @@ func Test_runVar016_fileExcluded(t *testing.T) {
 				t.Errorf("runVar016() reported %d issues, expected 0 when file excluded", reportCount)
 			}
 
-		})
-	}
-}
-
-// Test_shouldUseArray tests the shouldUseArray private function.
-func Test_shouldUseArray(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Tested via public API
-		})
-	}
-}
-
-// Test_getConstantSize tests the getConstantSize private function.
-func Test_getConstantSize(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{"validation"},
-	}
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			// Tested via public API
 		})
 	}
 }

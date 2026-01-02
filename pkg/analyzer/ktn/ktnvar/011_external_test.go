@@ -9,7 +9,6 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestVar011 vérifie la détection du shadowing de variables.
 func TestVar011(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -18,23 +17,23 @@ func TestVar011(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Variable shadowing detected",
+			name:           "String concatenation in loops",
 			analyzer:       ktnvar.Analyzer011,
 			testdataDir:    "var011",
-			expectedErrors: 5,
+			expectedErrors: 6,
 		},
 		{
-			name:           "No variable shadowing",
+			name:           "Valid string building with Builder",
 			analyzer:       ktnvar.Analyzer011,
 			testdataDir:    "var011",
-			expectedErrors: 5,
+			expectedErrors: 6,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 5 cas de shadowing attendus
+			// 6 string concatenation errors detected
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

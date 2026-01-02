@@ -9,6 +9,7 @@ import (
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
+// TestVar012 vérifie la détection des conversions string() répétées.
 func TestVar015(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -17,23 +18,23 @@ func TestVar015(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Maps without capacity hints",
+			name:           "Repeated string() conversions",
 			analyzer:       ktnvar.Analyzer015,
 			testdataDir:    "var015",
-			expectedErrors: 7,
+			expectedErrors: 12,
 		},
 		{
-			name:           "Valid maps with capacity",
+			name:           "Valid cached string conversions",
 			analyzer:       ktnvar.Analyzer015,
 			testdataDir:    "var015",
-			expectedErrors: 7,
+			expectedErrors: 12,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 7 maps without capacity hints
+			// 12 conversions répétées détectées (5 original + 7 nouveaux edge cases)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

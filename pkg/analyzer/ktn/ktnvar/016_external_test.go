@@ -17,22 +17,23 @@ func TestVar016(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Slice literal with initial capacity",
+			name:           "Scattered var declarations",
 			analyzer:       ktnvar.Analyzer016,
 			testdataDir:    "var016",
-			expectedErrors: 5,
+			expectedErrors: 4,
 		},
 		{
-			name:           "Valid make for empty slices",
+			name:           "Valid grouped var declarations",
 			analyzer:       ktnvar.Analyzer016,
 			testdataDir:    "var016",
-			expectedErrors: 5,
+			expectedErrors: 4,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
+			// 5 scattered var declarations (2 single + 3 groups after first)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

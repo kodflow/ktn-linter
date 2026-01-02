@@ -1,66 +1,41 @@
-// Package var016 contains test cases for KTN rules.
-package var016
+// Package var013 contains test cases for KTN rules.
+package var013
 
-// Bad: Using make([]T, N) where N is small constant
+// Bad: Multiple separate var declarations (violates KTN-VAR-016)
+// But respects: VAR-001 (explicit types), VAR-003 (camelCase), VAR-004 (comments), VAR-006 (const before var)
 
 const (
-	// FixedSize est la taille fixe pour le test
-	FixedSize int = 10
-	// SmallSize est la petite taille pour le test
-	SmallSize int = 64
-	// TinySize est la très petite taille pour le test
-	TinySize int = 5
-	// MediumSize est la taille moyenne pour le test
-	MediumSize int = 256
-	// MaxSize est la taille maximale pour le test
-	MaxSize int = 1024
+	// BadMaxRetries defines maximum retries
+	BadMaxRetries int = 3
+	// PortValue is port value
+	PortValue int = 8080
+	// RatioValue is ratio value
+	RatioValue float64 = 1.5
 )
 
-// badFixedSize uses make with small constant size
-func badFixedSize() {
-	// Small fixed size should use array
-	items := make([]int, FixedSize)
-	_ = items
-}
+// badRetries is the first var declaration
+var badRetries int = BadMaxRetries
 
-// badSmallBuffer creates slice with constant small size
-func badSmallBuffer() {
-	// Constant size 64 should be array
-	buffer := make([]byte, SmallSize)
-	_ = buffer
-}
+// badConfig is a separate var declaration
+var badConfig string = "config"
 
-// badTinySlice creates very small slice
-func badTinySlice() {
-	// Very small size should use array
-	data := make([]string, TinySize)
-	_ = data
-}
+// Multiple variables in a group (still separate from other vars)
+var (
+	// badPort is the server port
+	badPort int = PortValue
 
-// badMediumSlice creates medium-sized slice
-func badMediumSlice() {
-	// Size 256 still small enough for stack
-	values := make([]float64, MediumSize)
-	_ = values
-}
+	// badHost is the server hostname
+	badHost string = "localhost"
+)
 
-// badMaxAllowed creates slice at boundary
-func badMaxAllowed() {
-	// Size 1024 is at the limit
-	large := make([]int32, MaxSize)
-	_ = large
-}
+// Another separate var declaration
+var badEnabled bool = true
 
-// init utilise les fonctions privées
-func init() {
-	// Appel de badFixedSize
-	badFixedSize()
-	// Appel de badSmallBuffer
-	badSmallBuffer()
-	// Appel de badTinySlice
-	badTinySlice()
-	// Appel de badMediumSlice
-	badMediumSlice()
-	// Appel de badMaxAllowed
-	badMaxAllowed()
-}
+// Yet another separate var block
+var (
+	// badRatio is a ratio value
+	badRatio float64 = RatioValue
+
+	// badCount is a counter
+	badCount int = 0
+)

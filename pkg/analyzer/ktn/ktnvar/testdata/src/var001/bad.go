@@ -1,47 +1,41 @@
-// Package var001 contains test cases for KTN rules.
-package var001
+// Package var002 contains test cases for KTN rules.
+package var002
 
-// Bad: Package-level variables using SCREAMING_SNAKE_CASE (violates KTN-VAR-001)
+// Bad: Variables without explicit type (violates KTN-VAR-001)
+// Note: Zero-values (type without init) are now valid
 
 const (
-	// ApiKey is a constant in CamelCase
-	ApiKey string = "secret"
-	// TimeoutValue is timeout value
-	TimeoutValue int = 30
+	// MaxRetries defines maximum retries
+	MaxRetries int = 3
 	// PortValue is port value
 	PortValue int = 8080
-	// MaxConnValue is max connections value
-	MaxConnValue int = 100
+	// RatioValue is ratio value
+	RatioValue float64 = 1.5
 )
 
-// Variables with SCREAMING_SNAKE_CASE (violates KTN-VAR-001)
+// Cas: Pas de type explicite = ERREUR
 var (
-	// BAD_TIMEOUT uses SCREAMING_SNAKE_CASE (reserved for constants)
-	BAD_TIMEOUT int = TimeoutValue // want "KTN-VAR-001"
+	// badRetries has no explicit type
+	badRetries = MaxRetries // want "KTN-VAR-001"
 
-	// WRONG_CONFIG uses SCREAMING_SNAKE_CASE (should be camelCase)
-	WRONG_CONFIG string = "config" // want "KTN-VAR-001"
+	// badConfig has no explicit type
+	badConfig = "config" // want "KTN-VAR-001"
 
-	// SERVER_PORT uses SCREAMING_SNAKE_CASE
-	SERVER_PORT int = PortValue // want "KTN-VAR-001"
+	// badPort has no explicit type
+	badPort = PortValue // want "KTN-VAR-001"
 
-	// SERVER_HOST uses SCREAMING_SNAKE_CASE
-	SERVER_HOST string = "localhost" // want "KTN-VAR-001"
+	// badHost has no explicit type
+	badHost = "localhost" // want "KTN-VAR-001"
 
-	// MAX_CONNECTIONS uses SCREAMING_SNAKE_CASE
-	MAX_CONNECTIONS int = MaxConnValue // want "KTN-VAR-001"
+	// badEnabled has no explicit type
+	badEnabled = true // want "KTN-VAR-001"
 
-	// IS_ENABLED uses SCREAMING_SNAKE_CASE
-	IS_ENABLED bool = false // want "KTN-VAR-001"
+	// badRatio has no explicit type
+	badRatio = RatioValue // want "KTN-VAR-001"
 
-	// ===== Acronyms with SCREAMING_SNAKE_CASE (should be flagged) =====
+	// badSlice has no explicit type
+	badSlice = []string{"a", "b"} // want "KTN-VAR-001"
 
-	// HTTP_CLIENT uses SCREAMING_SNAKE_CASE with acronym
-	HTTP_CLIENT string = "bad" // want "KTN-VAR-001"
-
-	// XML_PARSER uses SCREAMING_SNAKE_CASE with acronym
-	XML_PARSER string = "bad" // want "KTN-VAR-001"
-
-	// API_KEY uses SCREAMING_SNAKE_CASE with acronym
-	API_KEY string = "bad" // want "KTN-VAR-001"
+	// badMap has no explicit type
+	badMap = map[string]int{"x": 1} // want "KTN-VAR-001"
 )

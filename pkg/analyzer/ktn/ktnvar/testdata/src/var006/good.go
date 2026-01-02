@@ -1,69 +1,126 @@
-// Package var006 provides good test cases.
+// Package var006 contains test cases for KTN-VAR-006.
+// This file contains ALL cases that MUST NOT trigger KTN-VAR-006 errors.
 package var006
 
-import (
-	"bytes"
-	"strings"
+// =============================================================================
+// SECTION 1: Valid variable names (not built-ins)
+// =============================================================================
+
+var (
+	// MaxSize is a valid variable name
+	MaxSize int = 1024
+
+	// MinSize is a valid variable name
+	MinSize int = 64
+
+	// DefaultTimeout is a valid variable name
+	DefaultTimeout int = 30
+
+	// BufferSize is a valid variable name
+	BufferSize int = 4096
 )
 
-const (
-	// GrowSizeLarge is large grow size
-	GrowSizeLarge int = 400
-	// LoopCountLarge is large loop count
-	LoopCountLarge int = 100
-	// LoopCountSmall is small loop count
-	LoopCountSmall int = 10
-	// GrowSizeSmall is small grow size
-	GrowSizeSmall int = 50
+// =============================================================================
+// SECTION 2: Names similar to but not shadowing built-ins
+// =============================================================================
+
+var (
+	// IsTrue is similar to true but not shadowing
+	IsTrue bool = true
+
+	// IsFalse is similar to false but not shadowing
+	IsFalse bool = false
+
+	// MyInt is similar to int but not shadowing
+	MyInt int = 42
+
+	// MyString is similar to string but not shadowing
+	MyString string = "test"
+
+	// MaxLen is similar to len but not shadowing
+	MaxLen int = 100
+
+	// NewValue is similar to new but not shadowing
+	NewValue int = 0
+
+	// AppendMode is similar to append but not shadowing
+	AppendMode int = 1
+
+	// MakeConfig is similar to make but not shadowing
+	MakeConfig int = 2
 )
 
-// init demonstrates proper Builder usage
-func init() {
-	// Good: var declaration without composite literal is allowed
-	var sb strings.Builder
-	sb.Grow(GrowSizeLarge)
-	// Iteration over data to append
-	for i := range LoopCountLarge {
-		sb.WriteString("item")
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-	_ = sb.String()
+// =============================================================================
+// SECTION 3: CamelCase versions of built-ins (valid)
+// =============================================================================
 
-	// Good: var declaration without composite literal is allowed
-	var buf bytes.Buffer
-	buf.Grow(GrowSizeLarge)
-	// Iteration over data to append
-	for i := range LoopCountLarge {
-		buf.WriteString("item")
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-	_ = buf.Bytes()
+var (
+	// BoolValue is valid (not bool)
+	BoolValue bool = true
 
-	// Good: pointer type is allowed (different use case)
-	sb2 := &strings.Builder{}
-	// Iteration over data to append
-	for i := range LoopCountSmall {
-		sb2.WriteString("x")
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-	_ = sb2.String()
+	// IntValue is valid (not int)
+	IntValue int = 42
 
-	// Good: var declaration without composite literal
-	var sb3 strings.Builder
-	sb3.WriteString("single")
-	_ = sb3.String()
+	// StringValue is valid (not string)
+	StringValue string = "valid"
 
-	// Good: using new() instead of composite literal
-	sb4 := new(strings.Builder)
-	sb4.Grow(GrowSizeSmall)
-	// Iteration over data to append
-	for i := range GrowSizeSmall {
-		sb4.WriteString("x")
-		// Utilisation de i pour éviter le warning
-		_ = i
-	}
-	_ = sb4.String()
-}
+	// ErrorCode is valid (not error)
+	ErrorCode int = 1
+
+	// LenValue is valid (not len)
+	LenValue int = 10
+
+	// CapValue is valid (not cap)
+	CapValue int = 20
+)
+
+// =============================================================================
+// SECTION 4: Uppercase versions of built-ins (valid in Go)
+// =============================================================================
+
+var (
+	// INT is valid (Go is case-sensitive, int != INT)
+	INT int = 1
+
+	// STRING is valid (string != STRING)
+	STRING string = "valid"
+
+	// BOOL is valid (bool != BOOL)
+	BOOL bool = true
+
+	// LEN is valid (len != LEN)
+	LEN int = 5
+
+	// NIL is valid (nil != NIL)
+	NIL int = 0
+)
+
+// =============================================================================
+// SECTION 5: Blank identifier (always allowed)
+// =============================================================================
+
+var (
+	// Blank identifier is allowed
+	_ int = 0
+
+	// Another blank
+	_ string = "ignored"
+)
+
+// =============================================================================
+// SECTION 6: Common valid variable patterns
+// =============================================================================
+
+var (
+	// StatusOK is a valid status variable
+	StatusOK int = 200
+
+	// StatusError is a valid status variable
+	StatusError int = 500
+
+	// DefaultPort is a valid network variable
+	DefaultPort int = 8080
+
+	// APIVersion is a valid version variable
+	APIVersion string = "v1"
+)

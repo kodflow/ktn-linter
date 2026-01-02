@@ -1,49 +1,31 @@
-// Package var007 provides good test cases.
 package var007
 
-import "strings"
-
-const (
-	// AvgItemLength is the average item length estimate
-	AvgItemLength int = 10
-	// LoopCount is the number of iterations
-	LoopCount int = 10
+import (
+	"bytes"
+	"sync"
 )
 
-// init demonstrates proper string concatenation
+// goodExample demonstrates correct usage of variable declarations.
+// Zero value declarations with var are idiomatic and acceptable.
+func goodExample() {
+	// OK - zero value intentional (no initialization)
+	var err error
+	// OK - zero value usable
+	var buf bytes.Buffer
+	// OK - zero value
+	var wg sync.WaitGroup
+	// OK - short syntax for initialization
+	x := 42
+
+	// Using variables to avoid unused warnings
+	_ = err
+	_ = buf
+	_ = wg
+	_ = x
+}
+
+// init ensures functions are used to avoid unused warnings
 func init() {
-	items := []string{"a", "b", "c"}
-
-	// Good: using strings.Builder
-	var sb strings.Builder
-	// Iteration over items to build string
-	for _, item := range items {
-		sb.WriteString(item)
-	}
-	_ = sb.String()
-
-	// Good: using strings.Builder with preallocated size
-	var sb2 strings.Builder
-	sb2.Grow(len(items) * AvgItemLength)
-	// Iteration over items to build string with capacity
-	for _, item := range items {
-		sb2.WriteString(item)
-	}
-	_ = sb2.String()
-
-	// Good: using strings.Join for simple cases
-	joined := strings.Join(items, "")
-	_ = joined
-
-	// Good: single concatenation, not in a loop
-	result := "a" + "b"
-	_ = result
-
-	// Good: not string concatenation
-	sum := 0
-	// Iteration to compute sum
-	for i := range LoopCount {
-		sum += i
-	}
-	_ = sum
+	// Call goodExample
+	goodExample()
 }

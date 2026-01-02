@@ -1,43 +1,49 @@
-// Package var011 provides good test cases.
-package var011
+// Package var007 provides good test cases.
+package var007
 
-import (
-	"context"
-	"fmt"
-)
+import "strings"
 
 const (
-	// KeyValue is a constant test value
-	KeyValue int = 42
+	// AvgItemLength is the average item length estimate
+	AvgItemLength int = 10
+	// LoopCount is the number of iterations
+	LoopCount int = 10
 )
 
-// init demonstrates correct usage patterns
+// init demonstrates proper string concatenation
 func init() {
-	// Shadowing de err est autorisé (pattern idiomatique Go)
-	var err error
-	// Vérification de la condition
-	if err != nil {
-		err := fmt.Errorf("wrapped: %w", err) // OK: 'err' est exemptée
-		_ = err
-	}
+	items := []string{"a", "b", "c"}
 
-	// Shadowing de ok est autorisé (map access/type assertion)
-	m := map[string]int{"key": KeyValue}
-	v, ok := m["key"]
-	// Vérification de la condition
-	if ok {
-		_, ok := m["other"] // OK: 'ok' est exemptée
-		_ = ok
+	// Good: using strings.Builder
+	var sb strings.Builder
+	// Iteration over items to build string
+	for _, item := range items {
+		sb.WriteString(item)
 	}
-	_ = v
+	_ = sb.String()
 
-	// Shadowing de ctx est autorisé (redéfinition de context)
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	// Bloc imbriqué
-	{
-		ctx := context.WithValue(ctx, "key", "value") // OK: 'ctx' est exemptée
-		_ = ctx
+	// Good: using strings.Builder with preallocated size
+	var sb2 strings.Builder
+	sb2.Grow(len(items) * AvgItemLength)
+	// Iteration over items to build string with capacity
+	for _, item := range items {
+		sb2.WriteString(item)
 	}
+	_ = sb2.String()
+
+	// Good: using strings.Join for simple cases
+	joined := strings.Join(items, "")
+	_ = joined
+
+	// Good: single concatenation, not in a loop
+	result := "a" + "b"
+	_ = result
+
+	// Good: not string concatenation
+	sum := 0
+	// Iteration to compute sum
+	for i := range LoopCount {
+		sum += i
+	}
+	_ = sum
 }

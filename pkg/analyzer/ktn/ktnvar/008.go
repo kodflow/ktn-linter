@@ -15,12 +15,16 @@ import (
 const (
 	// ruleCodeVar008 is the rule code for this analyzer
 	ruleCodeVar008 string = "KTN-VAR-008"
+	// minMakeArgs is the minimum number of arguments for make call
+	minMakeArgs int = 2
+	// initialAppendVarsCap initial capacity for append variables map
+	initialAppendVarsCap int = 16
 )
 
-// Analyzer008 checks for slice/map allocations inside loops
+// Analyzer008 checks that slices are preallocated with capacity when known
 var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Name:     "ktnvar008",
-	Doc:      "KTN-VAR-008: Évite les allocations de slices/maps dans les boucles chaudes",
+	Doc:      "KTN-VAR-008: Vérifie que les slices sont préalloués avec une capacité si elle est connue",
 	Run:      runVar008,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
@@ -43,188 +47,464 @@ func runVar008(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	nodeFilter := []ast.Node{
-		(*ast.ForStmt)(nil),
-		(*ast.RangeStmt)(nil),
+	// Get AST inspector
+	inspAny := pass.ResultOf[inspect.Analyzer]
+	insp, ok := inspAny.(*inspector.Inspector)
+	// Defensive: ensure inspector is available
+	if !ok || insp == nil {
+		return nil, nil
+	}
+	// Defensive: avoid nil dereference when resolving positions
+	if pass.Fset == nil {
+		return nil, nil
 	}
 
-	insp.Preorder(nodeFilter, func(n ast.Node) {
-		// Skip excluded files
-		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
-			// Fichier exclu
-			return
-		}
-		// Récupération du corps de la boucle
-		var body *ast.BlockStmt
-		// Vérification du type de boucle
-		switch loop := n.(type) {
-		// Cas d'une boucle for classique
-		case *ast.ForStmt:
-			// Boucle for classique
-			body = loop.Body
-		// Cas d'une boucle range
-		case *ast.RangeStmt:
-			// Boucle range
-			body = loop.Body
-		// Cas par défaut
-		default:
-			// Type de boucle non supporté
-			return
-		}
+	// Collecter les variables utilisées avec append
+	appendVars := collectAppendVariables(insp)
 
-		// Parcours des instructions du corps
-		checkLoopBodyForAlloc(pass, body)
-	})
+	// Vérifier les make() sans capacité
+	checkMakeCalls(pass, insp)
+
+	// Vérifier les []T{} qui devraient être préalloués
+	checkEmptySliceLiterals(pass, insp, appendVars)
 
 	// Retour de la fonction
 	return nil, nil
 }
 
-// checkLoopBodyForAlloc vérifie les allocations dans le corps d'une boucle.
+// collectAppendVariables collecte les variables utilisées avec append.
 //
 // Params:
-//   - pass: contexte d'analyse
-//   - body: corps de la boucle à vérifier
-func checkLoopBodyForAlloc(pass *analysis.Pass, body *ast.BlockStmt) {
-	// Vérification du corps de la boucle
-	if body == nil {
-		// Corps de boucle vide
-		return
-	}
-
-	// Parcours des instructions
-	for _, stmt := range body.List {
-		checkStmtForAlloc(pass, stmt)
-	}
-}
-
-// checkStmtForAlloc vérifie une instruction pour détecter allocations.
+//   - insp: inspecteur AST
 //
-// Params:
-//   - pass: contexte d'analyse
-//   - stmt: instruction à vérifier
-func checkStmtForAlloc(pass *analysis.Pass, stmt ast.Stmt) {
-	// Vérification du type d'instruction
-	switch s := stmt.(type) {
-	// Cas d'une affectation
-	case *ast.AssignStmt:
-		// Vérification des affectations
-		checkAssignForAlloc(pass, s)
-	// Cas d'une déclaration
-	case *ast.DeclStmt:
-		// Vérification des déclarations
-		checkDeclForAlloc(pass, s)
-		// Note: les boucles imbriquées sont déjà gérées par Preorder
-	}
-}
+// Returns:
+//   - map[string]bool: map des noms de variables utilisées avec append
+func collectAppendVariables(insp *inspector.Inspector) map[string]bool {
+	appendVars := make(map[string]bool, initialAppendVarsCap)
 
-// checkAssignForAlloc vérifie une affectation pour détecter allocations.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - assign: affectation à vérifier
-func checkAssignForAlloc(pass *analysis.Pass, assign *ast.AssignStmt) {
-	// Parcours des valeurs affectées
-	for _, rhs := range assign.Rhs {
-		// Vérification si allocation de slice ou map
-		if isSliceOrMapAlloc(rhs) {
-			// Allocation de slice/map détectée
-			msg, _ := messages.Get(ruleCodeVar008)
-			pass.Reportf(
-				rhs.Pos(),
-				"%s: %s",
-				ruleCodeVar008,
-				msg.Format(config.Get().Verbose),
-			)
-		}
-	}
-}
-
-// checkDeclForAlloc vérifie une déclaration pour détecter allocations.
-//
-// Params:
-//   - pass: contexte d'analyse
-//   - decl: déclaration à vérifier
-func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
-	genDecl, ok := decl.Decl.(*ast.GenDecl)
-	// Vérification du type de déclaration
-	if !ok {
-		// Pas une déclaration générale
-		return
+	nodeFilter := []ast.Node{
+		(*ast.AssignStmt)(nil),
 	}
 
-	var valueSpec *ast.ValueSpec
-	// Parcours des spécifications
-	for _, spec := range genDecl.Specs {
-		valueSpec, ok = spec.(*ast.ValueSpec)
-		// Vérification de la spécification de valeur
+	// Parcours des assignations pour trouver les appends
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		assign, ok := n.(*ast.AssignStmt)
+		// Vérification de la condition
 		if !ok {
-			// Pas une spécification de valeur
-			continue
+			// Continue traversing AST nodes
+			return
 		}
 
-		// Parcours des valeurs
-		for _, value := range valueSpec.Values {
-			// Vérification si allocation de slice ou map
-			if isSliceOrMapAlloc(value) {
-				// Allocation de slice/map détectée
-				msg, _ := messages.Get(ruleCodeVar008)
-				pass.Reportf(
-					value.Pos(),
-					"%s: %s",
-					ruleCodeVar008,
-					msg.Format(config.Get().Verbose),
-				)
+		// Vérification de chaque expression à droite
+		for _, rhs := range assign.Rhs {
+			// Vérification si c'est un appel à append
+			if isAppendCall(rhs) {
+				// Récupération des variables à gauche
+				for _, lhs := range assign.Lhs {
+					// Extraction du nom de la variable
+					if ident, isIdent := lhs.(*ast.Ident); isIdent {
+						appendVars[ident.Name] = true
+					}
+				}
 			}
 		}
-	}
+	})
+
+	// Retour de la map
+	return appendVars
 }
 
-// isSliceOrMapAlloc vérifie si une expression est une allocation de slice/map.
-// Exclut les []byte qui sont gérés par VAR-010.
+// isAppendCall vérifie si une expression est un appel à append.
 //
 // Params:
 //   - expr: expression à vérifier
 //
 // Returns:
-//   - bool: true si allocation détectée
-func isSliceOrMapAlloc(expr ast.Expr) bool {
-	// Vérification du type d'expression
-	switch e := expr.(type) {
-	// Cas d'un littéral composite
-	case *ast.CompositeLit:
-		// Vérification du type composite (exclut []byte géré par VAR-010)
-		if utils.IsSliceOrMapType(e.Type) && !utils.IsByteSlice(e.Type) {
-			// Allocation de slice/map sous forme de littéral
-			return true
-		}
-	// Cas d'un appel de fonction
-	case *ast.CallExpr:
-		// Vérification des appels make() (exclut []byte géré par VAR-010)
-		if utils.IsMakeCall(e) && !isByteSliceMake(e) {
-			// Appel à make() détecté
-			return true
-		}
+//   - bool: true si c'est un appel à append
+func isAppendCall(expr ast.Expr) bool {
+	call, ok := expr.(*ast.CallExpr)
+	// Vérification de la condition
+	if !ok {
+		// Ce n'est pas un appel de fonction
+		return false
 	}
-	// Pas d'allocation détectée
+
+	// Vérification du nom de la fonction
+	ident, ok := call.Fun.(*ast.Ident)
+	// Vérification de la condition
+	if !ok {
+		// Ce n'est pas un identifiant simple
+		return false
+	}
+
+	// Retour du résultat
+	return ident.Name == "append"
+}
+
+// checkMakeCalls vérifie les appels à make sans capacité.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - insp: inspecteur AST
+func checkMakeCalls(pass *analysis.Pass, insp *inspector.Inspector) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	nodeFilter := []ast.Node{
+		(*ast.CallExpr)(nil),
+	}
+
+	// Parcours des appels de fonction
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		call, ok := n.(*ast.CallExpr)
+		// Vérification de la condition
+		if !ok {
+			// Continue traversing AST nodes
+			return
+		}
+
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return
+		}
+
+		// Vérification de l'appel make
+		checkMakeCall(pass, call)
+	})
+}
+
+// checkMakeCall vérifie un appel à make pour les slices sans capacité.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - call: appel de fonction à vérifier
+func checkMakeCall(pass *analysis.Pass, call *ast.CallExpr) {
+	// Vérification que c'est un appel à make
+	if !utils.IsMakeCall(call) {
+		// Continue traversing AST nodes
+		return
+	}
+
+	// Vérification du nombre d'arguments (doit être 2: type et length)
+	if len(call.Args) != minMakeArgs {
+		// Continue traversing AST nodes
+		return
+	}
+
+	// Vérification que le type est un slice
+	if !utils.IsSliceTypeWithPass(pass, call.Args[0]) {
+		// Continue traversing AST nodes
+		return
+	}
+
+	// Skip si VAR-016 s'applique (constante <= 1024, suggère array)
+	if utils.IsSmallConstantSize(pass, call.Args[1]) {
+		// VAR-016 gère ce cas
+		return
+	}
+
+	// Signalement de l'erreur
+	msg, ok := messages.Get(ruleCodeVar008)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(
+			call.Pos(),
+			"%s: préallouer la slice avec une capacité quand elle est connue",
+			ruleCodeVar008,
+		)
+		return
+	}
+	pass.Reportf(
+		call.Pos(),
+		"%s: %s",
+		ruleCodeVar008,
+		msg.Format(config.Get().Verbose),
+	)
+}
+
+// litCheckContext contains context for slice literal checking.
+type litCheckContext struct {
+	pass       *analysis.Pass
+	appendVars map[string]bool
+}
+
+// checkEmptySliceLiterals vérifie les []T{} qui devraient être préalloués.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - insp: inspecteur AST
+//   - appendVars: variables utilisées avec append
+func checkEmptySliceLiterals(
+	pass *analysis.Pass,
+	insp *inspector.Inspector,
+	appendVars map[string]bool,
+) {
+	// Récupération de la configuration
+	cfg := config.Get()
+
+	nodeFilter := []ast.Node{
+		(*ast.AssignStmt)(nil),
+	}
+
+	// Créer le contexte de vérification
+	ctx := &litCheckContext{
+		pass:       pass,
+		appendVars: appendVars,
+	}
+
+	// Parcours des assignations
+	insp.WithStack(nodeFilter, func(n ast.Node, push bool, stack []ast.Node) bool {
+		// Ignorer le pop
+		if !push {
+			// Continuer le parcours
+			return true
+		}
+
+		assign, ok := n.(*ast.AssignStmt)
+		// Vérification de la condition
+		if !ok {
+			// Continuer le parcours
+			return true
+		}
+
+		// Skip excluded files
+		if cfg.IsFileExcluded(ruleCodeVar008, pass.Fset.Position(n.Pos()).Filename) {
+			// Fichier exclu
+			return true
+		}
+
+		// Vérification de chaque paire lhs/rhs
+		for i, rhs := range assign.Rhs {
+			// Vérification que c'est un composite literal
+			lit, isLit := rhs.(*ast.CompositeLit)
+			// Vérification de la condition
+			if !isLit {
+				// Continuer avec l'élément suivant
+				continue
+			}
+
+			// Vérification de la slice vide
+			checkCompositeLit(ctx, assign, i, lit, stack)
+		}
+
+		// Continuer le parcours
+		return true
+	})
+}
+
+// shouldSkipCompositeLit008 checks if the composite literal should be skipped.
+//
+// Params:
+//   - ctx: check context
+//   - lit: composite literal to check
+//   - stack: AST node stack
+//
+// Returns:
+//   - bool: true if should skip
+func shouldSkipCompositeLit008(
+	ctx *litCheckContext,
+	lit *ast.CompositeLit,
+	stack []ast.Node,
+) bool {
+	// Skip non-empty slices
+	if len(lit.Elts) > 0 {
+		// Le slice n'est pas vide
+		return true
+	}
+
+	// Skip non-slice types
+	if !utils.IsSliceTypeWithPass(ctx.pass, lit.Type) {
+		// Ce n'est pas un slice
+		return true
+	}
+
+	// Skip return statements
+	if isInReturnStatement(stack) {
+		// Pas de préallocation nécessaire pour un return
+		return true
+	}
+
+	// Skip struct literals
+	if isInStructLiteral(stack) {
+		// Pas de préallocation nécessaire pour init de struct
+		return true
+	}
+
+	// Ne pas ignorer ce literal
 	return false
 }
 
-// isByteSliceMake vérifie si make crée un []byte.
+// getAppendVariableName008 extracts the variable name if used with append.
 //
 // Params:
-//   - call: expression d'appel make
+//   - ctx: check context
+//   - assign: assignment statement
+//   - index: index in lhs
 //
 // Returns:
-//   - bool: true si make([]byte, ...)
-func isByteSliceMake(call *ast.CallExpr) bool {
-	// Vérification des arguments
-	if len(call.Args) == 0 {
-		// Pas d'arguments
+//   - bool: true if valid append variable found
+func getAppendVariableName008(
+	ctx *litCheckContext,
+	assign *ast.AssignStmt,
+	index int,
+) bool {
+	// Check index bounds
+	if index >= len(assign.Lhs) {
+		// Index invalide
 		return false
 	}
-	// Vérification du type
-	return utils.IsByteSlice(call.Args[0])
+
+	// Extract identifier
+	ident, ok := assign.Lhs[index].(*ast.Ident)
+	// Vérification de la condition
+	if !ok {
+		// Ce n'est pas un identifiant simple
+		return false
+	}
+
+	// Check if used with append
+	if !ctx.appendVars[ident.Name] {
+		// La variable n'est jamais utilisée avec append
+		return false
+	}
+
+	// Variable valide trouvée
+	return true
+}
+
+// reportVar008Error reports the VAR-008 error.
+//
+// Params:
+//   - pass: analysis pass
+//   - lit: composite literal for error position
+func reportVar008Error(pass *analysis.Pass, lit *ast.CompositeLit) {
+	msg, ok := messages.Get(ruleCodeVar008)
+	// Defensive: avoid panic if message is missing
+	if !ok {
+		pass.Reportf(
+			lit.Pos(),
+			"%s: préallouer la slice avec une capacité quand elle est connue",
+			ruleCodeVar008,
+		)
+		// Fallback message reported
+		return
+	}
+	pass.Reportf(
+		lit.Pos(),
+		"%s: %s",
+		ruleCodeVar008,
+		msg.Format(config.Get().Verbose),
+	)
+}
+
+// checkCompositeLit vérifie un composite literal pour les slices vides.
+//
+// Params:
+//   - ctx: contexte de vérification
+//   - assign: assignation contenant le literal
+//   - index: index dans la liste des rhs
+//   - lit: composite literal à vérifier
+//   - stack: pile des nœuds parents
+func checkCompositeLit(
+	ctx *litCheckContext,
+	assign *ast.AssignStmt,
+	index int,
+	lit *ast.CompositeLit,
+	stack []ast.Node,
+) {
+	// Check if should skip this literal
+	if shouldSkipCompositeLit008(ctx, lit, stack) {
+		// Literal ignoré
+		return
+	}
+
+	// Check if valid append variable
+	if !getAppendVariableName008(ctx, assign, index) {
+		// Variable non valide pour append
+		return
+	}
+
+	// Report error
+	reportVar008Error(ctx.pass, lit)
+}
+
+// isInReturnStatement vérifie si le nœud est dans un return statement.
+//
+// Params:
+//   - stack: pile des nœuds parents
+//
+// Returns:
+//   - bool: true si dans un return
+func isInReturnStatement(stack []ast.Node) bool {
+	// Parcours de la pile des parents
+	for _, node := range stack {
+		// Vérification si c'est un return statement
+		if _, ok := node.(*ast.ReturnStmt); ok {
+			// Trouvé un return parent
+			return true
+		}
+	}
+
+	// Pas de return parent trouvé
+	return false
+}
+
+// isInStructLiteral vérifie si le nœud est dans un struct literal.
+//
+// Params:
+//   - stack: pile des nœuds parents
+//
+// Returns:
+//   - bool: true si dans un struct literal
+func isInStructLiteral(stack []ast.Node) bool {
+	// Parcours de la pile des parents (en excluant le nœud courant)
+	for i := len(stack) - 1; i >= 0; i-- {
+		node := stack[i]
+
+		// Vérification si c'est un composite literal (struct)
+		if lit, ok := node.(*ast.CompositeLit); ok {
+			// Vérification que ce n'est pas un slice/array/map
+			if !isSliceArrayOrMap(lit.Type) {
+				// C'est un struct literal
+				return true
+			}
+		}
+
+		// Vérification si c'est un key-value expression
+		if _, ok := node.(*ast.KeyValueExpr); ok {
+			// Dans une initialisation de champ
+			return true
+		}
+	}
+
+	// Pas de struct parent trouvé
+	return false
+}
+
+// isSliceArrayOrMap vérifie si le type est un slice, array ou map.
+//
+// Params:
+//   - typeExpr: expression de type
+//
+// Returns:
+//   - bool: true si slice, array ou map
+func isSliceArrayOrMap(typeExpr ast.Expr) bool {
+	// Vérification du type nil
+	if typeExpr == nil {
+		// Type implicite (peut être struct)
+		return false
+	}
+
+	// Vérification des différents types
+	switch typeExpr.(type) {
+	// Traitement des types slice/array/map
+	case *ast.ArrayType, *ast.MapType:
+		// C'est un slice, array ou map
+		return true
+	// Traitement des autres types
+	default:
+		// Ce n'est pas un slice, array ou map
+		return false
+	}
 }

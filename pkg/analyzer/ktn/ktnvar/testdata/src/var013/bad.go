@@ -1,41 +1,39 @@
-// Package var013 contains test cases for KTN rules.
+// Package var013 contains test cases for KTN-VAR-013.
 package var013
 
-// Bad: Multiple separate var declarations (violates KTN-VAR-013)
-// But respects: VAR-001 (explicit types), VAR-003 (camelCase), VAR-004 (comments), VAR-006 (const before var)
+// LargeStruct est une structure avec >64 bytes (9 * 8 = 72 bytes).
+type LargeStruct struct {
+	Field1 int64
+	Field2 int64
+	Field3 int64
+	Field4 int64
+	Field5 int64
+	Field6 int64
+	Field7 int64
+	Field8 int64
+	Field9 int64
+}
 
-const (
-	// BadMaxRetries defines maximum retries
-	BadMaxRetries int = 3
-	// PortValue is port value
-	PortValue int = 8080
-	// RatioValue is ratio value
-	RatioValue float64 = 1.5
-)
+// badProcessByValue prend une grande struct par valeur.
+func badProcessByValue(data LargeStruct) { // want "KTN-VAR-013"
+	// Utilise la structure
+	_ = data.Field1
+}
 
-// badRetries is the first var declaration
-var badRetries int = BadMaxRetries
+// badMultipleParams prend plusieurs grandes structs par valeur.
+func badMultipleParams(a LargeStruct, b LargeStruct) { // want "KTN-VAR-013" "KTN-VAR-013"
+	// Utilise les structures
+	_, _ = a.Field1, b.Field1
+}
 
-// badConfig is a separate var declaration
-var badConfig string = "config"
+// badMixedParams mélange pointeur et valeur.
+func badMixedParams(good *LargeStruct, bad LargeStruct) { // want "KTN-VAR-013"
+	// Le pointeur est OK, la valeur non
+	_ = good.Field1 + bad.Field1
+}
 
-// Multiple variables in a group (still separate from other vars)
-var (
-	// badPort is the server port
-	badPort int = PortValue
-
-	// badHost is the server hostname
-	badHost string = "localhost"
-)
-
-// Another separate var declaration
-var badEnabled bool = true
-
-// Yet another separate var block
-var (
-	// badRatio is a ratio value
-	badRatio float64 = RatioValue
-
-	// badCount is a counter
-	badCount int = 0
-)
+// badMethodReceiver utilise receiver par valeur sur grande struct.
+func (s LargeStruct) badMethodReceiver() int64 { // want "KTN-VAR-013"
+	// Le receiver est copié
+	return s.Field1
+}

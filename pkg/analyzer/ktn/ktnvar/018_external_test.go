@@ -17,23 +17,16 @@ func TestVar018(t *testing.T) {
 		expectedErrors int
 	}{
 		{
-			name:           "Variables with snake_case naming",
+			name:           "Make with constant size ≤64 bytes should use array",
 			analyzer:       ktnvar.Analyzer018,
 			testdataDir:    "var018",
-			expectedErrors: 8,
-		},
-		{
-			name:           "Valid camelCase variable naming",
-			analyzer:       ktnvar.Analyzer018,
-			testdataDir:    "var018",
-			expectedErrors: 8,
+			expectedErrors: 5,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
-			// 8 variables using snake_case (with underscores)
 			testhelper.TestGoodBad(t, tt.analyzer, tt.testdataDir, tt.expectedErrors)
 		})
 	}

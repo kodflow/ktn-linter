@@ -73,4 +73,65 @@ NOTE: Constantes privées = camelCase (minuscule initiale).
   const maxBufferSize = 1024  // Privée
   const MaxBufferSize = 1024  // Exportée`,
 	})
+
+	Register(Message{
+		Code:  "KTN-CONST-004",
+		Short: "constante '%s' trop courte (min %d caractères)",
+		Verbose: `PROBLÈME: La constante '%s' a un nom trop court.
+
+POURQUOI: Les noms courts manquent de contexte et de clarté.
+Un minimum de %d caractères assure une meilleure lisibilité.
+
+EXCEPTION: Le blank identifier (_) est toujours autorisé.
+
+EXEMPLE INCORRECT:
+  const A int = 1
+  const B int = 2
+
+EXEMPLE CORRECT:
+  const MaxRetries int = 1
+  const MinSize int = 2
+  const ID int = 1  // 2 caractères OK`,
+	})
+
+	Register(Message{
+		Code:  "KTN-CONST-005",
+		Short: "constante '%s' trop longue (%d chars, max %d)",
+		Verbose: `PROBLÈME: La constante '%s' a un nom trop long (%d caractères).
+
+POURQUOI: Les noms trop longs réduisent la lisibilité.
+Maximum recommandé: %d caractères.
+
+EXEMPLE INCORRECT:
+  const DefaultHTTPConnectionTimeoutInSeconds = 30
+
+EXEMPLE CORRECT:
+  const HTTPTimeout = 30
+  const DefaultConnTimeout = 30`,
+	})
+
+	Register(Message{
+		Code:  "KTN-CONST-006",
+		Short: "constante '%s' masque un identifiant built-in",
+		Verbose: `PROBLÈME: La constante '%s' masque un identifiant built-in Go.
+
+POURQUOI: Masquer les built-ins cause des comportements inattendus:
+  - Confusion pour les lecteurs du code
+  - Erreurs subtiles difficiles à déboguer
+  - Le built-in devient inaccessible dans ce scope
+
+BUILT-INS PROTÉGÉS:
+  Types: bool, byte, int, string, error, any, ...
+  Constantes: true, false, iota
+  Fonctions: len, cap, make, new, append, panic, ...
+  Zero-value: nil
+
+EXEMPLE INCORRECT:
+  const len int = 100   // Masque len()
+  const nil int = 0     // Masque nil
+
+EXEMPLE CORRECT:
+  const MaxLen int = 100
+  const NilValue int = 0`,
+	})
 }
