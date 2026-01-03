@@ -92,17 +92,21 @@ var rulesSeverity map[string]Level = map[string]Level{
 	"KTN-FUNC-011": SeverityInfo,    // Complexité cyclomatique ≤10 (ex-013)
 	"KTN-FUNC-012": SeverityInfo,    // Named returns si >3 valeurs retour (ex-014)
 
-	// INTERFACE - Interfaces (1 règle)
+	// INTERFACE - Interfaces (3 règles)
 	"KTN-INTERFACE-001": SeverityWarning, // Interface privée non utilisée
+	"KTN-INTERFACE-003": SeverityInfo,    // Naming convention -er
+	"KTN-INTERFACE-004": SeverityInfo,    // Empty interface overuse
 
-	// STRUCT - Structures (7 règles, ex-002 déplacé vers COMMENT-005)
+	// STRUCT - Structures (9 règles, ex-002 déplacé vers COMMENT-005)
 	"KTN-STRUCT-001": SeverityWarning, // Interface pour chaque struct
 	"KTN-STRUCT-002": SeverityWarning, // Constructeur NewX() requis (ex-003)
 	"KTN-STRUCT-003": SeverityWarning, // Pas de préfixe Get pour getters (ex-004)
 	"KTN-STRUCT-004": SeverityInfo,    // Une struct par fichier (ex-005)
 	"KTN-STRUCT-005": SeverityInfo,    // Champs exportés avant privés (ex-006)
 	"KTN-STRUCT-006": SeverityInfo,    // Pas de tags sur champs privés
-	"KTN-STRUCT-007": SeverityInfo,    // Convention getters/setters
+	"KTN-STRUCT-007": SeverityInfo,    // Tags sérialisation requis pour DTO exportés
+	"KTN-STRUCT-008": SeverityWarning, // Cohérence type receiver (pointer/value)
+	"KTN-STRUCT-009": SeverityWarning, // Cohérence nom de receiver
 
 	// TEST - Tests (13 règles)
 	"KTN-TEST-001": SeverityError,   // Fichier doit finir par _internal/_external_test.go

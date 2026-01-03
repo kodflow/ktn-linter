@@ -4,16 +4,27 @@
 
 ## Description
 
-Les interfaces déclarées doivent être utilisées.
+Les interfaces privées (minuscule) déclarées doivent être utilisées dans le package.
+
+Les interfaces exportées (majuscule) sont ignorées car elles font partie de l'API publique.
+
+## Exemple non-conforme
+
+```go
+type unusedInterface interface { // want "KTN-INTERFACE-001"
+    Method()
+}
+// Interface privée jamais utilisée
+```
 
 ## Exemple conforme
 
 ```go
-type Reader interface {
-    Read() []byte
+type usedInterface interface {
+    Method()
 }
 
-func Process(r Reader) {
-    data := r.Read()
+func Process(i usedInterface) {
+    i.Method()
 }
 ```

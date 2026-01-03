@@ -33,9 +33,11 @@ func TestAnalyzers(t *testing.T) {
 				}
 			}
 
-			// Vérifier que Analyzer001 est présent
+			// Vérifier que les analyseurs sont présents
 			expectedNames := map[string]bool{
 				"ktninterface001": true,
+				"ktninterface003": true,
+				"ktninterface004": true,
 			}
 
 			// Vérification noms attendus

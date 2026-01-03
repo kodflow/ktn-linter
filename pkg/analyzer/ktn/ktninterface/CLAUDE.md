@@ -1,20 +1,19 @@
 # pkg/analyzer/ktn/ktninterface/ - Interface Rules
 
 ## Purpose
-Analyze interface declarations for size, design, and Go idioms.
+Analyze interface declarations for usage, design, naming, and Go idioms.
 
-## Rules (1 total)
+## Rules (3 total)
 | Rule | Description | Severity |
 |------|-------------|----------|
-| KTN-INTERFACE-001 | Interface too large (max 5 methods) | Warning |
+| KTN-INTERFACE-001 | Interface privée non utilisée | Warning |
+| KTN-INTERFACE-003 | Single-method interfaces should follow -er naming | Info |
+| KTN-INTERFACE-004 | Overuse of empty interface (interface{}/any) | Info |
 
 ## Go Interface Philosophy
 "The bigger the interface, the weaker the abstraction." - Rob Pike
 
-Small interfaces are preferred in Go:
-- `io.Reader` has 1 method
-- `io.Writer` has 1 method
-- `io.Closer` has 1 method
+Interfaces belong in the consumer package, not the producer.
 
 ## File Structure
 ```
@@ -27,37 +26,34 @@ ktninterface/
     └── bad.go
 ```
 
-## Implementation
-```go
-func runInterface001(pass *analysis.Pass) (any, error) {
-    inspect.Preorder([]ast.Node{(*ast.InterfaceType)(nil)}, func(n ast.Node) {
-        iface := n.(*ast.InterfaceType)
-        methodCount := len(iface.Methods.List)
+## KTN-INTERFACE-001: Unused Private Interface
 
-        if methodCount > 5 {
-            pass.Reportf(n.Pos(), "KTN-INTERFACE-001: ...")
-        }
-    })
-    return nil, nil
-}
-```
+Détecte les interfaces privées (minuscule) qui ne sont jamais utilisées dans le package.
+
+**Comportement:**
+- Interfaces exportées (majuscule): ignorées (API publique)
+- Interfaces privées (minuscule): reportées si non utilisées
+
+**Usage considéré:**
+- Champ de struct
+- Paramètre de fonction/méthode
+- Retour de fonction/méthode
+- Déclaration de variable
+- Compile-time check (`var _ MyInterface = (*S)(nil)`)
 
 ## Testdata Example
 ```go
 // bad.go
-type badLargeInterface interface { // want "KTN-INTERFACE-001"
-    Method1()
-    Method2()
-    Method3()
-    Method4()
-    Method5()
-    Method6()
+type unusedInterface interface { // want "KTN-INTERFACE-001"
+    Method()
 }
+// Interface privée jamais utilisée
 
 // good.go
-type Reader interface {
-    Read(p []byte) (n int, err error)
+type usedInterface interface {
+    Method()
 }
+func process(i usedInterface) { ... }
 ```
 
 ## Composition Over Large Interfaces

@@ -17,7 +17,7 @@ Central registry aggregating all KTN rule categories. Provides:
 | ktncomment | KTN-COMMENT | 7 | Comment format, placement |
 | ktntest | KTN-TEST | 11 | Test naming, file conventions |
 | ktnapi | KTN-API | 1 | API field access patterns |
-| ktninterface | KTN-INTERFACE | 1 | Interface size limits |
+| ktninterface | KTN-INTERFACE | 1 | Unused private interfaces |
 | testhelper | - | 0 | Test utilities (not rules) |
 
 ## Registry Pattern

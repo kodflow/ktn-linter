@@ -131,4 +131,76 @@ EXEMPLE CORRECT (garder privé):
   }`,
 	})
 
+	Register(Message{
+		Code:  "KTN-STRUCT-007",
+		Short: "champ exporté '%s' sans tag json/xml dans struct DTO",
+		Verbose: `PROBLÈME: Le champ exporté '%s' n'a pas de tag de sérialisation.
+
+POURQUOI: Les structs DTO doivent avoir des tags explicites:
+  - Garantit un contrat de sérialisation stable
+  - Évite les changements accidentels lors de refactoring
+  - Documente le format de l'API
+
+EXEMPLE INCORRECT:
+  type UserDTO struct {
+      Name  string  // Pas de tag
+      Email string
+  }
+
+EXEMPLE CORRECT:
+  type UserDTO struct {
+      Name  string ` + "`json:\"name\"`" + `
+      Email string ` + "`json:\"email\"`" + `
+  }`,
+	})
+
+	Register(Message{
+		Code:  "KTN-STRUCT-008",
+		Short: "receiver '%s' est %s mais '%s' utilise %s sur type '%s'",
+		Verbose: `PROBLÈME: Méthode '%s' utilise %s receiver, mais '%s' utilise %s (type '%s').
+
+POURQUOI: Cohérence requise:
+  - Si une méthode a un pointer receiver, toutes devraient l'avoir
+  - Évite les copies accidentelles
+  - Simplifie le raisonnement sur les mutations
+
+EXCEPTION: Types immuables (time.Time), maps, funcs, chans.
+
+EXEMPLE INCORRECT:
+  func (u User) Name() string     // value
+  func (u *User) SetName(n string) // pointer
+  func (u User) Validate() error  // value - incohérent!
+
+EXEMPLE CORRECT:
+  func (u *User) Name() string
+  func (u *User) SetName(n string)
+  func (u *User) Validate() error`,
+	})
+
+	Register(Message{
+		Code:  "KTN-STRUCT-009",
+		Short: "receiver '%s' devrait être '%s' (cohérence sur type '%s')",
+		Verbose: `PROBLÈME: Nom de receiver '%s' devrait être '%s' (type '%s').
+
+CONVENTION GO:
+  - 1-2 lettres, abréviation du type
+  - Cohérent sur toutes les méthodes
+  - Éviter: me, this, self
+
+Go Code Review Comments:
+"The name of a method's receiver should be a reflection
+of its identity; often a one or two letter abbreviation
+of its type suffices."
+
+EXEMPLE INCORRECT:
+  func (u User) Method1() {}
+  func (user User) Method2() {}  // Différent!
+  func (this User) Method3() {}  // Générique!
+
+EXEMPLE CORRECT:
+  func (u User) Method1() {}
+  func (u User) Method2() {}
+  func (u User) Method3() {}`,
+	})
+
 }
