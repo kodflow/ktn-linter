@@ -17,75 +17,77 @@ const (
 	ruleCodeConst006 string = "KTN-CONST-006"
 )
 
-// builtinIdentifiers contains all Go built-in identifiers (44 total).
-// Types (22): bool, byte, complex64, complex128, error, float32, float64,
-//
-//	int, int8, int16, int32, int64, rune, string, uint, uint8,
-//	uint16, uint32, uint64, uintptr, any, comparable
-//
-// Constants (3): true, false, iota
-// Zero-value (1): nil
-// Functions (18): append, cap, clear, close, complex, copy, delete, imag,
-//
-//	len, make, max, min, new, panic, print, println, real, recover
-var builtinIdentifiers map[string]bool = map[string]bool{
-	// Types (22)
-	"bool":       true,
-	"byte":       true,
-	"complex64":  true,
-	"complex128": true,
-	"error":      true,
-	"float32":    true,
-	"float64":    true,
-	"int":        true,
-	"int8":       true,
-	"int16":      true,
-	"int32":      true,
-	"int64":      true,
-	"rune":       true,
-	"string":     true,
-	"uint":       true,
-	"uint8":      true,
-	"uint16":     true,
-	"uint32":     true,
-	"uint64":     true,
-	"uintptr":    true,
-	"any":        true,
-	"comparable": true,
-	// Constants (3)
-	"true":  true,
-	"false": true,
-	"iota":  true,
-	// Zero-value (1)
-	"nil": true,
-	// Functions (18)
-	"append":  true,
-	"cap":     true,
-	"clear":   true,
-	"close":   true,
-	"complex": true,
-	"copy":    true,
-	"delete":  true,
-	"imag":    true,
-	"len":     true,
-	"make":    true,
-	"max":     true,
-	"min":     true,
-	"new":     true,
-	"panic":   true,
-	"print":   true,
-	"println": true,
-	"real":    true,
-	"recover": true,
-}
+var (
+	// builtinIdentifiers contains all Go built-in identifiers (44 total).
+	// Types (22): bool, byte, complex64, complex128, error, float32, float64,
+	//
+	//	int, int8, int16, int32, int64, rune, string, uint, uint8,
+	//	uint16, uint32, uint64, uintptr, any, comparable
+	//
+	// Constants (3): true, false, iota
+	// Zero-value (1): nil
+	// Functions (18): append, cap, clear, close, complex, copy, delete, imag,
+	//
+	//	len, make, max, min, new, panic, print, println, real, recover
+	builtinIdentifiers map[string]bool = map[string]bool{
+		// Types (22)
+		"bool":       true,
+		"byte":       true,
+		"complex64":  true,
+		"complex128": true,
+		"error":      true,
+		"float32":    true,
+		"float64":    true,
+		"int":        true,
+		"int8":       true,
+		"int16":      true,
+		"int32":      true,
+		"int64":      true,
+		"rune":       true,
+		"string":     true,
+		"uint":       true,
+		"uint8":      true,
+		"uint16":     true,
+		"uint32":     true,
+		"uint64":     true,
+		"uintptr":    true,
+		"any":        true,
+		"comparable": true,
+		// Constants (3)
+		"true":  true,
+		"false": true,
+		"iota":  true,
+		// Zero-value (1)
+		"nil": true,
+		// Functions (18)
+		"append":  true,
+		"cap":     true,
+		"clear":   true,
+		"close":   true,
+		"complex": true,
+		"copy":    true,
+		"delete":  true,
+		"imag":    true,
+		"len":     true,
+		"make":    true,
+		"max":     true,
+		"min":     true,
+		"new":     true,
+		"panic":   true,
+		"print":   true,
+		"println": true,
+		"real":    true,
+		"recover": true,
+	}
 
-// Analyzer006 checks that constants do not shadow built-in identifiers.
-var Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktnconst006",
-	Doc:      "KTN-CONST-006: Verifie que les constantes ne masquent pas les identifiants built-in",
-	Run:      runConst006,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+	// Analyzer006 checks that constants do not shadow built-in identifiers.
+	Analyzer006 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktnconst006",
+		Doc:      "KTN-CONST-006: Verifie que les constantes ne masquent pas les identifiants built-in",
+		Run:      runConst006,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+)
 
 // runConst006 executes KTN-CONST-006 analysis.
 //

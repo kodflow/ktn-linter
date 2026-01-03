@@ -4,11 +4,269 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/cmd/ktn-linter/cmd"
 	"github.com/kodflow/ktn-linter/pkg/rules"
 )
+
+// TestNewRulesFormatter tests the NewRulesFormatter factory function.
+func TestNewRulesFormatter(t *testing.T) {
+	tests := []struct {
+		name         string
+		format       string
+		expectNotNil bool
+	}{
+		{
+			name:         "text format returns formatter",
+			format:       "text",
+			expectNotNil: true,
+		},
+		{
+			name:         "markdown format returns formatter",
+			format:       "markdown",
+			expectNotNil: true,
+		},
+		{
+			name:         "md alias returns markdown formatter",
+			format:       "md",
+			expectNotNil: true,
+		},
+		{
+			name:         "json format returns formatter",
+			format:       "json",
+			expectNotNil: true,
+		},
+		{
+			name:         "unknown format defaults to text",
+			format:       "unknown",
+			expectNotNil: true,
+		},
+		{
+			name:         "empty format defaults to text",
+			format:       "",
+			expectNotNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			formatter := cmd.NewRulesFormatter(tt.format)
+			// Verify formatter is not nil
+			if tt.expectNotNil && formatter == nil {
+				t.Error("NewRulesFormatter returned nil")
+			}
+		})
+	}
+}
+
+// TestRulesFormatterOutput tests formatter output.
+func TestRulesFormatterOutput(t *testing.T) {
+	tests := []struct {
+		name         string
+		format       string
+		categories   []string
+		expectOutput bool
+	}{
+		{
+			name:         "text formatter displays categories",
+			format:       "text",
+			categories:   []string{"func", "var"},
+			expectOutput: true,
+		},
+		{
+			name:         "markdown formatter displays categories",
+			format:       "markdown",
+			categories:   []string{"func", "var"},
+			expectOutput: true,
+		},
+		{
+			name:         "json formatter displays categories",
+			format:       "json",
+			categories:   []string{"func", "var"},
+			expectOutput: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Capture stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			// Create and invoke formatter
+			formatter := cmd.NewRulesFormatter(tt.format)
+			formatter.DisplayCategories(tt.categories)
+
+			w.Close()
+			var stdout bytes.Buffer
+			stdout.ReadFrom(r)
+			os.Stdout = oldStdout
+
+			// Verify output is not empty
+			if tt.expectOutput && stdout.Len() == 0 {
+				t.Error("expected non-empty output")
+			}
+		})
+	}
+}
+
+// TestRulesFormatter_DisplayCategoryRules tests DisplayCategoryRules method.
+func TestRulesFormatter_DisplayCategoryRules(t *testing.T) {
+	tests := []struct {
+		name         string
+		format       string
+		category     string
+		rules        []rules.RuleInfo
+		expectOutput bool
+	}{
+		{
+			name:     "text formatter displays category rules",
+			format:   "text",
+			category: "func",
+			rules: []rules.RuleInfo{
+				{Code: "KTN-FUNC-001", Description: "Test rule"},
+			},
+			expectOutput: true,
+		},
+		{
+			name:     "markdown formatter displays category rules",
+			format:   "markdown",
+			category: "func",
+			rules: []rules.RuleInfo{
+				{Code: "KTN-FUNC-001", Description: "Test rule"},
+			},
+			expectOutput: true,
+		},
+		{
+			name:     "json formatter displays category rules",
+			format:   "json",
+			category: "func",
+			rules: []rules.RuleInfo{
+				{Code: "KTN-FUNC-001", Description: "Test rule"},
+			},
+			expectOutput: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Capture stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			// Create and invoke formatter
+			formatter := cmd.NewRulesFormatter(tt.format)
+			formatter.DisplayCategoryRules(tt.category, tt.rules)
+
+			w.Close()
+			var stdout bytes.Buffer
+			stdout.ReadFrom(r)
+			os.Stdout = oldStdout
+
+			// Verify output is not empty
+			if tt.expectOutput && stdout.Len() == 0 {
+				t.Error("expected non-empty output")
+			}
+		})
+	}
+}
+
+// TestRulesFormatter_DisplayRuleDetails tests DisplayRuleDetails method.
+func TestRulesFormatter_DisplayRuleDetails(t *testing.T) {
+	tests := []struct {
+		name         string
+		format       string
+		info         rules.RuleInfo
+		expectOutput bool
+	}{
+		{
+			name:   "text formatter displays rule details",
+			format: "text",
+			info: rules.RuleInfo{
+				Code:        "KTN-FUNC-001",
+				Category:    "func",
+				Description: "Test rule",
+				GoodExample: "func example() {}",
+			},
+			expectOutput: true,
+		},
+		{
+			name:   "markdown formatter displays rule details",
+			format: "markdown",
+			info: rules.RuleInfo{
+				Code:        "KTN-FUNC-001",
+				Category:    "func",
+				Description: "Test rule",
+				GoodExample: "func example() {}",
+			},
+			expectOutput: true,
+		},
+		{
+			name:   "json formatter displays rule details",
+			format: "json",
+			info: rules.RuleInfo{
+				Code:        "KTN-FUNC-001",
+				Category:    "func",
+				Description: "Test rule",
+			},
+			expectOutput: true,
+		},
+		{
+			name:   "text formatter without example",
+			format: "text",
+			info: rules.RuleInfo{
+				Code:        "KTN-FUNC-001",
+				Category:    "func",
+				Description: "Test rule",
+				GoodExample: "",
+			},
+			expectOutput: true,
+		},
+		{
+			name:   "markdown formatter without example",
+			format: "markdown",
+			info: rules.RuleInfo{
+				Code:        "KTN-FUNC-001",
+				Category:    "func",
+				Description: "Test rule",
+				GoodExample: "",
+			},
+			expectOutput: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Capture stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			// Create and invoke formatter
+			formatter := cmd.NewRulesFormatter(tt.format)
+			formatter.DisplayRuleDetails(tt.info)
+
+			w.Close()
+			var stdout bytes.Buffer
+			stdout.ReadFrom(r)
+			os.Stdout = oldStdout
+
+			// Verify output is not empty
+			if tt.expectOutput && stdout.Len() == 0 {
+				t.Error("expected non-empty output")
+			}
+		})
+	}
+}
 
 // TestRulesOutput_Formatting tests the RulesOutput formatting for different formats.
 func TestRulesOutput_Formatting(t *testing.T) {

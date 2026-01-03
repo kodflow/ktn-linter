@@ -12,6 +12,398 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Test_runVar004 tests the runVar004 function.
+func Test_runVar004(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		ruleEnabled bool
+		expectCount int
+	}{
+		{
+			name:        "enabled with violation",
+			code:        `package test; var a = 1`,
+			ruleEnabled: true,
+			expectCount: 1,
+		},
+		{
+			name:        "enabled without violation",
+			code:        `package test; var ok = 1`,
+			ruleEnabled: true,
+			expectCount: 0,
+		},
+		{
+			name:        "disabled",
+			code:        `package test; var a = 1`,
+			ruleEnabled: false,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ruleEnabled {
+				config.Reset()
+			} else {
+				config.Set(&config.Config{
+					Rules: map[string]*config.RuleConfig{
+						ruleCodeVar004: {Enabled: config.Bool(false)},
+					},
+				})
+			}
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, _ := parser.ParseFile(fset, "test.go", tt.code, 0)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			_, _ = runVar004(pass)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("runVar004() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004PackageLevel tests the checkVar004PackageLevel function.
+func Test_checkVar004PackageLevel(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		expectCount int
+	}{
+		{
+			name:        "short name violation",
+			code:        `package test; var a = 1`,
+			expectCount: 1,
+		},
+		{
+			name:        "valid name",
+			code:        `package test; var ok = 1`,
+			expectCount: 0,
+		},
+		{
+			name:        "const not var",
+			code:        `package test; const a = 1`,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			fset := token.NewFileSet()
+			file, _ := parser.ParseFile(fset, "test.go", tt.code, 0)
+			insp := inspector.New([]*ast.File{file})
+			cfg := config.Get()
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004PackageLevel(pass, insp, cfg)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004PackageLevel() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004LocalVars tests the checkVar004LocalVars function.
+func Test_checkVar004LocalVars(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		expectCount int
+	}{
+		{
+			name:        "short name violation",
+			code:        `package test; func f() { x := 1; _ = x }`,
+			expectCount: 1,
+		},
+		{
+			name:        "idiomatic name",
+			code:        `package test; func f() { i := 1; _ = i }`,
+			expectCount: 0,
+		},
+		{
+			name:        "nil body",
+			code:        `package test; func f()`,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			fset := token.NewFileSet()
+			file, _ := parser.ParseFile(fset, "test.go", tt.code, 0)
+			insp := inspector.New([]*ast.File{file})
+			cfg := config.Get()
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004LocalVars(pass, insp, cfg)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004LocalVars() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004Node tests the checkVar004Node function.
+func Test_checkVar004Node(t *testing.T) {
+	tests := []struct {
+		name        string
+		node        ast.Node
+		expectCount int
+	}{
+		{
+			name:        "nil node",
+			node:        nil,
+			expectCount: 0,
+		},
+		{
+			name:        "return statement",
+			node:        &ast.ReturnStmt{},
+			expectCount: 0,
+		},
+		{
+			name:        "assign with short name",
+			node:        &ast.AssignStmt{Tok: token.DEFINE, Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004Node(pass, tt.node)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004Node() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004AssignStmt tests the checkVar004AssignStmt function.
+func Test_checkVar004AssignStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        *ast.AssignStmt
+		expectCount int
+	}{
+		{
+			name:        "regular assign",
+			stmt:        &ast.AssignStmt{Tok: token.ASSIGN, Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			expectCount: 0,
+		},
+		{
+			name:        "define with short name",
+			stmt:        &ast.AssignStmt{Tok: token.DEFINE, Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			expectCount: 1,
+		},
+		{
+			name:        "define with idiomatic name",
+			stmt:        &ast.AssignStmt{Tok: token.DEFINE, Lhs: []ast.Expr{&ast.Ident{Name: "i"}}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004AssignStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004AssignStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004DeclStmt tests the checkVar004DeclStmt function.
+func Test_checkVar004DeclStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        *ast.DeclStmt
+		expectCount int
+	}{
+		{
+			name:        "func decl",
+			stmt:        &ast.DeclStmt{Decl: &ast.FuncDecl{Name: &ast.Ident{Name: "f"}}},
+			expectCount: 0,
+		},
+		{
+			name:        "const decl",
+			stmt:        &ast.DeclStmt{Decl: &ast.GenDecl{Tok: token.CONST}},
+			expectCount: 0,
+		},
+		{
+			name:        "var decl short name",
+			stmt:        &ast.DeclStmt{Decl: &ast.GenDecl{Tok: token.VAR, Specs: []ast.Spec{&ast.ValueSpec{Names: []*ast.Ident{{Name: "x"}}}}}},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004DeclStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004DeclStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004Spec tests the checkVar004Spec function.
+func Test_checkVar004Spec(t *testing.T) {
+	tests := []struct {
+		name           string
+		spec           *ast.ValueSpec
+		isPackageLevel bool
+		expectCount    int
+	}{
+		{
+			name:           "short name package level",
+			spec:           &ast.ValueSpec{Names: []*ast.Ident{{Name: "a"}}},
+			isPackageLevel: true,
+			expectCount:    1,
+		},
+		{
+			name:           "short name func level",
+			spec:           &ast.ValueSpec{Names: []*ast.Ident{{Name: "x"}}},
+			isPackageLevel: false,
+			expectCount:    1,
+		},
+		{
+			name:           "valid name",
+			spec:           &ast.ValueSpec{Names: []*ast.Ident{{Name: "ok"}}},
+			isPackageLevel: false,
+			expectCount:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004Spec(pass, tt.spec, tt.isPackageLevel)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004Spec() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar004Name tests the checkVar004Name function.
+func Test_checkVar004Name(t *testing.T) {
+	tests := []struct {
+		name           string
+		ident          *ast.Ident
+		isPackageLevel bool
+		expectCount    int
+	}{
+		{
+			name:           "blank identifier",
+			ident:          &ast.Ident{Name: "_"},
+			isPackageLevel: false,
+			expectCount:    0,
+		},
+		{
+			name:           "long enough name",
+			ident:          &ast.Ident{Name: "ok"},
+			isPackageLevel: false,
+			expectCount:    0,
+		},
+		{
+			name:           "short package level",
+			ident:          &ast.Ident{Name: "a"},
+			isPackageLevel: true,
+			expectCount:    1,
+		},
+		{
+			name:           "idiomatic func level",
+			ident:          &ast.Ident{Name: "i"},
+			isPackageLevel: false,
+			expectCount:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar004Name(pass, tt.ident, tt.isPackageLevel)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar004Name() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
 // TestIdiomaticOneChar004 tests the idiomaticOneChar004 map.
 func TestIdiomaticOneChar004(t *testing.T) {
 	expectedOneChar := []string{"i", "j", "k", "n", "b", "c", "f", "m", "r", "s", "t", "w", "_"}

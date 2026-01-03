@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar031 is the rule code for this analyzer
 	ruleCodeVar031 string = "KTN-VAR-031"
+	// mapMakesInitCap is the initial capacity for mapMakes map.
+	mapMakesInitCap int = 8
 )
 
 // Analyzer031 detects manual map cloning that can be replaced with maps.Clone
@@ -93,10 +95,10 @@ func runVar031(pass *analysis.Pass) (any, error) {
 //   - block: block statement to analyze
 func analyzeBlockForMapClone(pass *analysis.Pass, block *ast.BlockStmt) {
 	// Track make(map) assignments: varName -> position
-	mapMakes := make(map[string]token.Pos)
+	mapMakes := make(map[string]token.Pos, mapMakesInitCap)
 
 	// Iterate through statements
-	for i, stmt := range block.List {
+	for _, stmt := range block.List {
 		// Check for make(map) assignment
 		if varName, pos := extractMakeMapAssign(stmt); varName != "" {
 			// Store the make position
@@ -114,7 +116,7 @@ func analyzeBlockForMapClone(pass *analysis.Pass, block *ast.BlockStmt) {
 		}
 
 		// Check if this is a simple map clone pattern
-		if isSimpleMapClone(rangeStmt, mapMakes, i, block.List) {
+		if isSimpleMapClone(rangeStmt, mapMakes) {
 			// Report the issue
 			msg, _ := messages.Get(ruleCodeVar031)
 			pass.Reportf(
@@ -209,12 +211,10 @@ func isMakeMapCallExpr(call *ast.CallExpr) bool {
 // Params:
 //   - rangeStmt: range statement to check
 //   - mapMakes: tracked make(map) assignments
-//   - stmtIndex: index of current statement
-//   - stmts: list of statements in the block
 //
 // Returns:
 //   - bool: true if it's a simple map clone pattern
-func isSimpleMapClone(rangeStmt *ast.RangeStmt, mapMakes map[string]token.Pos, stmtIndex int, stmts []ast.Stmt) bool {
+func isSimpleMapClone(rangeStmt *ast.RangeStmt, mapMakes map[string]token.Pos) bool {
 	// Validate range has key and value identifiers
 	keyIdent, valIdent := extractRangeKeyValue031(rangeStmt)
 	// Check if valid

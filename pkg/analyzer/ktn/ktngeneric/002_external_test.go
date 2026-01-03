@@ -25,7 +25,7 @@ func TestGeneric002(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors (generics used correctly or interfaces used directly)
 			// bad.go: 3 errors (unnecessary generics on interface constraints)

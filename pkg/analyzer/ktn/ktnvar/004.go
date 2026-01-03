@@ -285,6 +285,8 @@ func checkVar004Name(pass *analysis.Pass, ident *ast.Ident, isPackageLevel bool)
 			ruleCodeVar004,
 			msg.Format(config.Get().Verbose, varName),
 		)
+
+		// Stop processing after reporting error
 		return
 	}
 

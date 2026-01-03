@@ -11,11 +11,52 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// TestJSONFormatter tests the JSON formatter functionality.
+// TestNewJSONFormatter tests the NewJSONFormatter constructor.
 //
 // Params:
 //   - t: testing object for running test cases
-func TestJSONFormatter(t *testing.T) {
+func TestNewJSONFormatter(t *testing.T) {
+	// Define test cases
+	tests := []struct {
+		name    string
+		verbose bool
+	}{
+		{
+			// Test creating formatter with verbose disabled
+			name:    "create JSON formatter with verbose disabled",
+			verbose: false,
+		},
+		{
+			// Test creating formatter with verbose enabled
+			name:    "create JSON formatter with verbose enabled",
+			verbose: true,
+		},
+	}
+
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
+
+			// Create JSON formatter
+			fmtr := formatter.NewJSONFormatter(&buf, tt.verbose)
+
+			// Verify formatter is not nil
+			if fmtr == nil {
+				t.Error("NewJSONFormatter returned nil")
+			}
+		})
+	}
+}
+
+// TestJSONFormatter_Format tests the Format method of the JSON formatter.
+//
+// Params:
+//   - t: testing object for running test cases
+func TestJSONFormatter_Format(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name             string

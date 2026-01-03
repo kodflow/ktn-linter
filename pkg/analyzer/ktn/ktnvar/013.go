@@ -19,6 +19,8 @@ const (
 	ruleCodeVar013 string = "KTN-VAR-013"
 	// defaultMaxStructBytes max bytes for struct without pointer
 	defaultMaxStructBytes int = 64
+	// estimatedBytesPerField is the estimated bytes per struct field (64-bit)
+	estimatedBytesPerField int64 = 8
 )
 
 // Analyzer013 checks for large struct passed by value in function parameters
@@ -57,6 +59,7 @@ func runVar013(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
+		// Cannot analyze without type information
 		return nil, nil
 	}
 
@@ -102,10 +105,12 @@ func runVar013(pass *analysis.Pass) (any, error) {
 func checkFuncParams009(pass *analysis.Pass, params *ast.FieldList, maxBytes int, verbose bool) {
 	// Handle nil params gracefully
 	if params == nil {
+		// Nothing to check
 		return
 	}
 	// Clamp invalid threshold to default
 	if maxBytes <= 0 {
+		// Use default value for invalid threshold
 		maxBytes = defaultMaxStructBytes
 	}
 	// Parcours des paramètres
@@ -140,12 +145,8 @@ func checkParamType009(pass *analysis.Pass, typ ast.Expr, pos token.Pos, maxByte
 	sizeBytes := getStructSize009(pass, typ)
 	// Check if size exceeds threshold
 	if sizeBytes > int64(maxBytes) {
-		// Guard against int64 to int overflow
-		displaySize := sizeBytes
-		// Cap displaySize to math.MaxInt for safe int cast
-		if displaySize > math.MaxInt {
-			displaySize = math.MaxInt
-		}
+		// Guard against int64 to int overflow using min for safe capping
+		displaySize := min(sizeBytes, math.MaxInt)
 		// Grande struct détectée
 		msg, _ := messages.Get(ruleCodeVar013)
 		pass.Reportf(
@@ -200,6 +201,7 @@ func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
 		sz := sizes.Sizeof(typeInfo)
 		// Skip reporting on unknown/invalid sizes
 		if sz > 0 {
+			// Return valid size
 			return sz
 		}
 	}
@@ -209,11 +211,12 @@ func getStructSize009(pass *analysis.Pass, typ ast.Expr) int64 {
 	structType, ok := typeInfo.Underlying().(*types.Struct)
 	// Vérification de la conversion
 	if !ok {
+		// Cannot determine size
 		return -1
 	}
 
-	// Estimation: 8 bytes par champ (approximation pour 64-bit)
-	estimatedSize := int64(structType.NumFields()) * 8
+	// Estimation basee sur le nombre de champs (approximation pour 64-bit)
+	estimatedSize := int64(structType.NumFields()) * estimatedBytesPerField
 	// Retour de l'estimation
 	return estimatedSize
 }

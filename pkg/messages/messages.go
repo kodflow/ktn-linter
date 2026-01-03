@@ -4,6 +4,8 @@ package messages
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -16,6 +18,24 @@ type Message struct {
 	Code    string
 	Short   string
 	Verbose string
+}
+
+// NewMessage creates a new Message instance.
+//
+// Params:
+//   - code: rule code (e.g., "KTN-FUNC-001")
+//   - short: short message format
+//   - verbose: verbose message format
+//
+// Returns:
+//   - Message: initialized message
+func NewMessage(code, short, verbose string) Message {
+	// Return initialized message
+	return Message{
+		Code:    code,
+		Short:   short,
+		Verbose: verbose,
+	}
 }
 
 // Format retourne toujours le message verbose (détaillé).
@@ -105,13 +125,8 @@ func Get(code string) (Message, bool) {
 // Returns:
 //   - []Message: liste de tous les messages
 func GetAll() []Message {
-	result := make([]Message, 0, len(registry))
-	// Parcourir le registre
-	for _, msg := range registry {
-		result = append(result, msg)
-	}
-	// Retour des messages
-	return result
+	// Collect all messages using maps.Values and slices.Collect
+	return slices.Collect(maps.Values(registry))
 }
 
 // Clear supprime tous les messages du registre.

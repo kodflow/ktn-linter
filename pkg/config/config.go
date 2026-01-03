@@ -34,9 +34,9 @@ type Config struct {
 	// Set to true to run all rules on test files (useful for debugging).
 	ForceAllRulesOnTests bool `yaml:"force_all_rules_on_tests,omitempty"`
 
-	// SerializationTags defines recognized serialization tags for KTN-STRUCT-007.
+	// ConfigSerializationTags defines recognized serialization tags for KTN-STRUCT-007.
 	// Default: json, xml, yaml, toml, tlv, protobuf, flatbuffer
-	SerializationTags []string `yaml:"serialization_tags,omitempty"`
+	ConfigSerializationTags []string `yaml:"serialization_tags,omitempty"`
 
 	// Verbose enables verbose message output with examples
 	Verbose bool `yaml:"-"`
@@ -68,7 +68,7 @@ func DefaultConfig() *Config {
 	// Return default config
 	return &Config{
 		Version: 1,
-		Exclude: []string{},
+		Exclude: nil,
 		Rules:   make(map[string]*RuleConfig, defaultRulesMapCapacity),
 	}
 }
@@ -78,6 +78,16 @@ var (
 	globalConfig     *Config
 	globalConfigOnce *sync.Once = &sync.Once{}
 	globalConfigMu   sync.RWMutex
+	// defaultSerializationTags contains the default serialization tag prefixes.
+	defaultSerializationTags []string = []string{
+		"json:",
+		"xml:",
+		"yaml:",
+		"toml:",
+		"tlv:",
+		"protobuf:",
+		"flatbuffer:",
+	}
 )
 
 // Get returns the global configuration instance.
@@ -184,36 +194,31 @@ func (c *Config) GetThreshold(ruleCode string, defaultValue int) int {
 	return *ruleCfg.Threshold
 }
 
-// defaultSerializationTags contains the default serialization tag prefixes.
-var defaultSerializationTags = []string{
-	"json:",
-	"xml:",
-	"yaml:",
-	"toml:",
-	"tlv:",
-	"protobuf:",
-	"flatbuffer:",
-}
-
-// GetSerializationTags returns the configured serialization tags or defaults.
+// SerializationTags returns the configured serialization tags or defaults.
 //
 // Returns:
 //   - []string: list of serialization tag prefixes (e.g., "json:", "xml:")
-func (c *Config) GetSerializationTags() []string {
-	if c == nil || len(c.SerializationTags) == 0 {
+func (c *Config) SerializationTags() []string {
+	// Check nil config or empty tags
+	if c == nil || len(c.ConfigSerializationTags) == 0 {
+		// Return default tags
 		return defaultSerializationTags
 	}
 
 	// Add ":" suffix to each tag if not present
-	tags := make([]string, len(c.SerializationTags))
-	for i, tag := range c.SerializationTags {
+	tags := make([]string, 0, len(c.ConfigSerializationTags))
+	// Iterate configured tags
+	for _, tag := range c.ConfigSerializationTags {
+		// Check if tag already has colon suffix
 		if strings.HasSuffix(tag, ":") {
-			tags[i] = tag
+			tags = append(tags, tag)
 		} else {
-			tags[i] = tag + ":"
+			// Add colon suffix
+			tags = append(tags, tag+":")
 		}
 	}
 
+	// Return processed tags
 	return tags
 }
 
@@ -402,15 +407,24 @@ func (c *Config) matchPrefixSuffix(parts []string, filename string) bool {
 		}
 	}
 
-	// Handle suffix matching
+	// Handle suffix matching with glob support
 	if suffix != "" {
-		// Check for path component match
+		// Try filepath.Match for glob patterns (handles *, ?, [...])
+		base := filepath.Base(filename)
+		// Check if base matches glob pattern
+		if matched, _ := filepath.Match(suffix, base); matched {
+			// Return matched
+			return true
+		}
+		// Check for path component match (exact suffix)
 		suffixWithSlash := "/" + suffix
 		// Check suffix presence
-		if !strings.HasSuffix(filename, suffixWithSlash) && !strings.Contains(filename, suffixWithSlash+"/") {
-			// Return no match
-			return false
+		if strings.HasSuffix(filename, suffixWithSlash) || strings.Contains(filename, suffixWithSlash+"/") {
+			// Return matched
+			return true
 		}
+		// Return no match
+		return false
 	}
 
 	// Return matched

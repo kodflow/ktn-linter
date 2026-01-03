@@ -49,6 +49,76 @@ func TestNewSARIFFormatter(t *testing.T) {
 	}
 }
 
+// TestSARIFFormatter_Format tests the Format method of the SARIF formatter.
+//
+// Params:
+//   - t: testing object for running test cases
+func TestSARIFFormatter_Format(t *testing.T) {
+	// Define test cases
+	tests := []struct {
+		name            string
+		verbose         bool
+		diagnostics     []analysis.Diagnostic
+		expectNonEmpty  bool
+		expectedVersion string
+	}{
+		{
+			// Test formatting with diagnostics
+			name:            "format with diagnostics produces valid SARIF",
+			verbose:         false,
+			expectedVersion: "2.1.0",
+			expectNonEmpty:  true,
+		},
+	}
+
+	// Run all test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		// Run individual test case
+		t.Run(tt.name, func(t *testing.T) {
+			// Create buffer for output
+			var buf bytes.Buffer
+
+			// Create SARIF formatter
+			fmtr := formatter.NewSARIFFormatter(&buf, tt.verbose)
+
+			// Create fileset and diagnostic
+			fset := token.NewFileSet()
+			file := fset.AddFile("test.go", -1, 100)
+			diags := []analysis.Diagnostic{
+				{
+					Pos:     file.Pos(10),
+					Message: "KTN-VAR-001: test message",
+				},
+			}
+
+			// Format diagnostics
+			fmtr.Format(fset, diags)
+
+			// Verify output is not empty
+			if tt.expectNonEmpty && buf.Len() == 0 {
+				t.Error("expected non-empty output from Format")
+			}
+
+			// Parse and verify SARIF structure
+			var report map[string]interface{}
+			err := json.Unmarshal(buf.Bytes(), &report)
+			// Verify JSON is valid
+			if err != nil {
+				t.Errorf("invalid SARIF output: %v", err)
+				return
+			}
+
+			// Verify SARIF version
+			version, ok := report["version"].(string)
+			// Check version matches
+			if !ok || version != tt.expectedVersion {
+				t.Errorf("expected SARIF version %s, got %v", tt.expectedVersion, version)
+			}
+		})
+	}
+}
+
 // TestSARIFFormatterEmptyDiagnostics tests SARIF output with no diagnostics.
 //
 // Params:

@@ -178,7 +178,7 @@ func isGetter(name string) bool {
 //   - bool: true si effet de bord détecté
 func hasSideEffect(expr ast.Expr) bool {
 	// Sélection selon la valeur
-	switch e := expr.(type) {
+	switch typedExpr := expr.(type) {
 	// Traitement
 	case *ast.SelectorExpr:
 		// Modifying a field is a side effect
@@ -187,7 +187,7 @@ func hasSideEffect(expr ast.Expr) bool {
 	case *ast.IndexExpr:
 		// Modifying an index (array/map/slice element) could be a side effect
 		// Check if the base is a selector
-		if _, ok := e.X.(*ast.SelectorExpr); ok {
+		if _, ok := typedExpr.X.(*ast.SelectorExpr); ok {
 			// Retour de la fonction
 			return true
 		}

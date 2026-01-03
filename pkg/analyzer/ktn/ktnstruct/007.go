@@ -37,7 +37,9 @@ var Analyzer007 *analysis.Analyzer = &analysis.Analyzer{
 //   - error: erreur éventuelle
 func runStruct007(pass *analysis.Pass) (any, error) {
 	cfg := config.Get()
+	// Vérifier si la règle est activée
 	if !cfg.IsRuleEnabled(ruleCodeStruct007) {
+		// Règle désactivée
 		return nil, nil
 	}
 
@@ -48,6 +50,7 @@ func runStruct007(pass *analysis.Pass) (any, error) {
 		analyzeTypeSpec007(pass, cfg, n)
 	})
 
+	// Fin de l'analyse
 	return nil, nil
 }
 
@@ -61,16 +64,23 @@ func analyzeTypeSpec007(pass *analysis.Pass, cfg *config.Config, n ast.Node) {
 	typeSpec := n.(*ast.TypeSpec)
 	filename := pass.Fset.Position(n.Pos()).Filename
 
+	// Vérifier si le fichier est exclu
 	if cfg.IsFileExcluded(ruleCodeStruct007, filename) {
+		// Fichier exclu
 		return
 	}
 
+	// Vérifier si c'est une struct
 	structType, ok := typeSpec.Type.(*ast.StructType)
+	// Si pas une struct, ignorer
 	if !ok {
+		// Retour anticipé
 		return
 	}
 
+	// Vérifier si la struct est sérialisable (DTO)
 	if !shared.IsSerializableStruct(structType, typeSpec.Name.Name) {
+		// Pas un DTO
 		return
 	}
 
@@ -88,18 +98,24 @@ func checkExportedFieldsWithoutTags(
 	cfg *config.Config,
 	structType *ast.StructType,
 ) {
+	// Vérifier si la struct a des champs
 	if structType.Fields == nil {
+		// Pas de champs
 		return
 	}
 
-	tags := cfg.GetSerializationTags()
+	tags := cfg.SerializationTags()
 
+	// Parcourir les champs de la struct
 	for _, field := range structType.Fields.List {
+		// Parcourir les noms du champ
 		for _, name := range field.Names {
+			// Ignorer les champs non exportés
 			if !isExportedField(name.Name) {
 				continue
 			}
 
+			// Vérifier si le champ a un tag de sérialisation
 			if !hasSerializationTag(field, tags) {
 				msg, _ := messages.Get(ruleCodeStruct007)
 				pass.Reportf(
@@ -121,10 +137,13 @@ func checkExportedFieldsWithoutTags(
 // Returns:
 //   - bool: true si le champ est exporté
 func isExportedField(name string) bool {
+	// Vérifier si le nom est vide
 	if len(name) == 0 {
+		// Nom vide
 		return false
 	}
 
+	// Champ exporté si commence par une majuscule
 	return unicode.IsUpper(rune(name[0]))
 }
 
@@ -137,17 +156,23 @@ func isExportedField(name string) bool {
 // Returns:
 //   - bool: true si le champ a un tag de sérialisation reconnu
 func hasSerializationTag(field *ast.Field, tags []string) bool {
+	// Vérifier si le champ a un tag
 	if field.Tag == nil || field.Tag.Value == "" {
+		// Pas de tag
 		return false
 	}
 
 	tagValue := field.Tag.Value
 
+	// Parcourir les tags de sérialisation reconnus
 	for _, tag := range tags {
+		// Vérifier si le tag contient un tag de sérialisation
 		if strings.Contains(tagValue, tag) {
+			// Tag trouvé
 			return true
 		}
 	}
 
+	// Aucun tag de sérialisation trouvé
 	return false
 }

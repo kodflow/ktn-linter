@@ -29,8 +29,8 @@ func TestNewModuleDiscovery(t *testing.T) {
 	}
 }
 
-// TestFindModules tests the FindModules method with various inputs.
-func TestFindModules(t *testing.T) {
+// TestModuleDiscovery_FindModules tests the FindModules method with various inputs.
+func TestModuleDiscovery_FindModules(t *testing.T) {
 	tests := []struct {
 		name           string
 		paths          []string
@@ -200,8 +200,8 @@ func TestFindModulesSkipsDirectories(t *testing.T) {
 	}
 }
 
-// TestResolvePatterns tests pattern resolution.
-func TestResolvePatterns(t *testing.T) {
+// TestModuleDiscovery_ResolvePatterns tests pattern resolution.
+func TestModuleDiscovery_ResolvePatterns(t *testing.T) {
 	tests := []struct {
 		name     string
 		patterns []string

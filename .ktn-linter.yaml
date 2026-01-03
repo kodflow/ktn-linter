@@ -6,30 +6,5 @@ version: 1
 # Exclusions globales
 exclude:
   - "**/*_test.go"
-
 # Note: testdata est automatiquement exclu par go list ./...
 # Pour valider testdata, utiliser --only-rule ou --config .ktn-linter.testdata.yaml
-
-# Rules configuration
-rules:
-  # KTN-TEST-008 disabled: rule has strict behavior flagging internal test files
-  # as "superfluous" for public-only files, even when tests exist and are valid
-  KTN-TEST-008:
-    enabled: false
-  # KTN-API-001 disabled: rule flags internal functions using external library types
-  # This is overly strict for internal code that must interface with libraries
-  KTN-API-001:
-    enabled: false
-  # KTN-STRUCT-004 exclusions: types.go files contain related type definitions
-  KTN-STRUCT-004:
-    exclude:
-      - "**/types.go"
-      - "**/pkg/updater/**"
-  # KTN-TEST-004 exclusions: updater package has limited testability (network/filesystem)
-  KTN-TEST-004:
-    exclude:
-      - "**/pkg/updater/**"
-  # KTN-COMMENT-007 exclusions: updater package has all comments but rule has detection issues
-  KTN-COMMENT-007:
-    exclude:
-      - "**/pkg/updater/**"

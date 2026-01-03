@@ -86,16 +86,18 @@ func (g *Generator) runLinter(patterns []string, opts orchestrator.Options) ([]o
 	pkgs, err := g.orch.LoadPackages(patterns)
 	// Check for error
 	if err != nil {
+		var emptyDiags []orchestrator.DiagnosticResult
 		// Return empty slice for load error
-		return []orchestrator.DiagnosticResult{}, err
+		return emptyDiags, err
 	}
 
 	// Select all analyzers (ignore filters for prompt)
 	analyzers, err := g.orch.SelectAnalyzers(opts)
 	// Check for error
 	if err != nil {
+		var emptyDiags []orchestrator.DiagnosticResult
 		// Return empty slice for analyzer selection error
-		return []orchestrator.DiagnosticResult{}, err
+		return emptyDiags, err
 	}
 
 	// Run analyzers
@@ -137,9 +139,10 @@ func (g *Generator) collectViolations(diagnostics []orchestrator.DiagnosticResul
 		rv, exists := result[code]
 		// Initialize if not exists
 		if !exists {
+			var emptyViolations []Violation
 			rv = &RuleViolations{
 				Code:       code,
-				Violations: []Violation{},
+				Violations: emptyViolations,
 			}
 			result[code] = rv
 		}

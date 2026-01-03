@@ -900,6 +900,7 @@ func Test_getConstantSize_nonIntKind(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -960,6 +961,7 @@ func Test_getConstantSize_validIntValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{
@@ -1014,6 +1016,7 @@ func Test_isTotalSizeSmall_boundaryCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			pass := &analysis.Pass{
 				TypesInfo: &types.Info{

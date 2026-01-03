@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar025 is the rule code for this analyzer
 	ruleCodeVar025 string = "KTN-VAR-025"
+	// deleteArgsCount is the expected number of arguments for the delete builtin
+	deleteArgsCount int = 2
 )
 
 // Analyzer025 checks for patterns that can be replaced with clear() built-in (Go 1.21+)
@@ -48,6 +50,7 @@ func runVar025(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Ensure type information is available
 	if pass.TypesInfo == nil {
+		// Cannot analyze without type information
 		return nil, nil
 	}
 
@@ -165,8 +168,8 @@ func isDeleteCallWithKeyAndMap(
 		return false
 	}
 
-	// delete doit avoir 2 arguments
-	if len(callExpr.Args) != 2 {
+	// delete doit avoir le nombre d'arguments attendu
+	if len(callExpr.Args) != deleteArgsCount {
 		// Nombre d'arguments incorrect
 		return false
 	}
@@ -314,23 +317,23 @@ func isMatchingSliceIndex(indexExpr *ast.IndexExpr, indexIdent, sliceIdent *ast.
 //   - bool: true si valeur zéro
 func isZeroValue(pass *analysis.Pass, expr ast.Expr) bool {
 	// Vérification du type d'expression
-	switch e := expr.(type) {
+	switch typedExpr := expr.(type) {
 	// Littéral basique
 	case *ast.BasicLit:
 		// Déléguer au helper
-		return isBasicLitZero025(e)
+		return isBasicLitZero025(typedExpr)
 	// Identifiant (false, nil)
 	case *ast.Ident:
 		// Déléguer au helper
-		return isIdentZero025(e)
+		return isIdentZero025(typedExpr)
 	// Littéral composite vide
 	case *ast.CompositeLit:
 		// Déléguer au helper
-		return isCompositeLitZero025(e)
+		return isCompositeLitZero025(typedExpr)
 	// Conversion de type
 	case *ast.CallExpr:
 		// Conversion vers type basique avec zéro
-		return isZeroConversion(pass, e)
+		return isZeroConversion(pass, typedExpr)
 	}
 	// Pas une valeur zéro reconnue
 	return false
@@ -346,20 +349,25 @@ func isZeroValue(pass *analysis.Pass, expr ast.Expr) bool {
 func isBasicLitZero025(lit *ast.BasicLit) bool {
 	// Zéro entier
 	if lit.Value == "0" {
+		// Valeur zéro détectée
 		return true
 	}
 	// Zéro flottant
 	if lit.Value == "0.0" {
+		// Valeur zéro détectée
 		return true
 	}
 	// Chaîne vide (guillemets doubles)
 	if lit.Value == `""` {
+		// Valeur zéro détectée
 		return true
 	}
 	// Chaîne vide (backticks)
 	if lit.Value == "``" {
+		// Valeur zéro détectée
 		return true
 	}
+
 	// Pas une valeur zéro
 	return false
 }
@@ -374,12 +382,15 @@ func isBasicLitZero025(lit *ast.BasicLit) bool {
 func isIdentZero025(ident *ast.Ident) bool {
 	// nil est une valeur zéro
 	if ident.Name == "nil" {
+		// Valeur zéro détectée
 		return true
 	}
 	// false est une valeur zéro pour les booléens
 	if ident.Name == "false" {
+		// Valeur zéro détectée
 		return true
 	}
+
 	// Pas une valeur zéro
 	return false
 }
@@ -451,15 +462,15 @@ func isZeroConversion(pass *analysis.Pass, callExpr *ast.CallExpr) bool {
 //   - *ast.Ident: identifiant ou nil
 func getRangeCollectionIdent(expr ast.Expr) *ast.Ident {
 	// Vérification du type d'expression
-	switch e := expr.(type) {
+	switch typedExpr := expr.(type) {
 	// Identifiant direct
 	case *ast.Ident:
 		// Retourne l'identifiant
-		return e
+		return typedExpr
 	// Expression parenthésée
 	case *ast.ParenExpr:
 		// Récursion sur l'expression interne
-		return getRangeCollectionIdent(e.X)
+		return getRangeCollectionIdent(typedExpr.X)
 	}
 	// Pas un identifiant simple
 	return nil

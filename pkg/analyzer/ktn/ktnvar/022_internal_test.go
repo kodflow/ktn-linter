@@ -317,95 +317,115 @@ func Test_runVar022_fileExcluded(t *testing.T) {
 
 // Test_runVar022_nilFset tests runVar022 with nil Fset.
 func Test_runVar022_nilFset(t *testing.T) {
-	// Ensure rule is enabled
-	config.Reset()
+	tests := []struct {
+		name string
+	}{
+		{"nil fset returns early"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Ensure rule is enabled
+			config.Reset()
 
-	// Parse simple code
-	code := `package test
+			// Parse simple code
+			code := `package test
 var x int = 42
 `
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Check parsing error
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
 
-	insp := inspector.New([]*ast.File{file})
-	reportCount := 0
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
 
-	// Create pass with nil Fset
-	pass := &analysis.Pass{
-		Fset: nil, // nil Fset
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
-		},
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
+			// Create pass with nil Fset
+			pass := &analysis.Pass{
+				Fset: nil, // nil Fset
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
 
-	result, err := runVar022(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar022() error = %v", err)
-	}
-	// Check result is nil
-	if result != nil {
-		t.Errorf("runVar022() result = %v, expected nil", result)
-	}
-	// Should not report anything when Fset is nil
-	if reportCount != 0 {
-		t.Errorf("runVar022() reported %d issues, expected 0 with nil Fset", reportCount)
+			result, err := runVar022(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar022() error = %v", err)
+			}
+			// Check result is nil
+			if result != nil {
+				t.Errorf("runVar022() result = %v, expected nil", result)
+			}
+			// Should not report anything when Fset is nil
+			if reportCount != 0 {
+				t.Errorf("runVar022() reported %d issues, expected 0 with nil Fset", reportCount)
+			}
+		})
 	}
 }
 
 // Test_runVar022_nilTypesInfo tests runVar022 with nil TypesInfo.
 func Test_runVar022_nilTypesInfo(t *testing.T) {
-	// Ensure rule is enabled
-	config.Reset()
+	tests := []struct {
+		name string
+	}{
+		{"nil TypesInfo returns early"},
+	}
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Ensure rule is enabled
+			config.Reset()
 
-	// Parse simple code
-	code := `package test
+			// Parse simple code
+			code := `package test
 var x int = 42
 `
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	// Check parsing error
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", code, 0)
+			// Check parsing error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
 
-	insp := inspector.New([]*ast.File{file})
-	reportCount := 0
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
 
-	// Create pass with nil TypesInfo
-	pass := &analysis.Pass{
-		Fset:      fset,
-		TypesInfo: nil, // nil TypesInfo
-		ResultOf: map[*analysis.Analyzer]any{
-			inspect.Analyzer: insp,
-		},
-		Report: func(_d analysis.Diagnostic) {
-			reportCount++
-		},
-	}
+			// Create pass with nil TypesInfo
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: nil, // nil TypesInfo
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: insp,
+				},
+				Report: func(_d analysis.Diagnostic) {
+					reportCount++
+				},
+			}
 
-	result, err := runVar022(pass)
-	// Check no error
-	if err != nil {
-		t.Fatalf("runVar022() error = %v", err)
-	}
-	// Check result is nil
-	if result != nil {
-		t.Errorf("runVar022() result = %v, expected nil", result)
-	}
-	// Should not report anything when TypesInfo is nil
-	if reportCount != 0 {
-		t.Errorf("runVar022() reported %d issues, expected 0 with nil TypesInfo", reportCount)
+			result, err := runVar022(pass)
+			// Check no error
+			if err != nil {
+				t.Fatalf("runVar022() error = %v", err)
+			}
+			// Check result is nil
+			if result != nil {
+				t.Errorf("runVar022() result = %v, expected nil", result)
+			}
+			// Should not report anything when TypesInfo is nil
+			if reportCount != 0 {
+				t.Errorf("runVar022() reported %d issues, expected 0 with nil TypesInfo", reportCount)
+			}
+		})
 	}
 }
 

@@ -69,8 +69,9 @@ func (s *AnalyzerSelector) selectSingleRule(code string) ([]*analysis.Analyzer, 
 	analyzer := ktn.GetRuleByCode(code)
 	// Check if rule exists
 	if analyzer == nil {
+		var emptyAnalyzers []*analysis.Analyzer
 		// Return error
-		return []*analysis.Analyzer{}, fmt.Errorf("unknown rule code: %s", code)
+		return emptyAnalyzers, fmt.Errorf("unknown rule code: %s", code)
 	}
 
 	// Log if verbose
@@ -94,8 +95,9 @@ func (s *AnalyzerSelector) selectByCategory(category string) ([]*analysis.Analyz
 	analyzers := ktn.GetRulesByCategory(category)
 	// Check if category exists
 	if len(analyzers) == 0 {
+		var emptyAnalyzers []*analysis.Analyzer
 		// Return error
-		return []*analysis.Analyzer{}, fmt.Errorf("unknown category: %s", category)
+		return emptyAnalyzers, fmt.Errorf("unknown category: %s", category)
 	}
 
 	// Log if verbose

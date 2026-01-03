@@ -12,6 +12,72 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Test_runVar006 tests the runVar006 function.
+func Test_runVar006(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		ruleEnabled bool
+		expectCount int
+	}{
+		{
+			name:        "enabled with violation",
+			code:        `package test; var string = "test"`,
+			ruleEnabled: true,
+			expectCount: 1,
+		},
+		{
+			name:        "enabled without violation",
+			code:        `package test; var myVar = "test"`,
+			ruleEnabled: true,
+			expectCount: 0,
+		},
+		{
+			name:        "disabled",
+			code:        `package test; var string = "test"`,
+			ruleEnabled: false,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ruleEnabled {
+				config.Reset()
+			} else {
+				config.Set(&config.Config{
+					Rules: map[string]*config.RuleConfig{
+						"KTN-VAR-006": {Enabled: config.Bool(false)},
+					},
+				})
+			}
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			_, _ = runVar006(pass)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("runVar006() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
 // Test_runVar006_disabled tests runVar006 with disabled rule.
 func Test_runVar006_disabled(t *testing.T) {
 	// Setup config with rule disabled
@@ -164,6 +230,7 @@ func Test_isBuiltinIdentifier006(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := isBuiltinIdentifier006(tt.input)
 			// Check result

@@ -233,7 +233,7 @@ func isStringConversion(n ast.Node) bool {
 func checkMultipleConversions(pass *analysis.Pass, body *ast.BlockStmt, maxConversions int) {
 	// Map pour compter les conversions par variable
 	conversions := make(map[string]int, initialConversionsCap)
-	var firstPos map[string]ast.Node = make(map[string]ast.Node, initialConversionsCap)
+	firstPos := make(map[string]ast.Node, initialConversionsCap)
 
 	// Parcours pour compter
 	ast.Inspect(body, func(n ast.Node) bool {

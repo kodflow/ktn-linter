@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar029 is the rule code for this analyzer.
 	ruleCodeVar029 string = "KTN-VAR-029"
+	// copyArgsCount is the expected number of arguments for the copy function.
+	copyArgsCount int = 2
 )
 
 // Analyzer029 detects manual slice grow patterns that can use slices.Grow (Go 1.21+).
@@ -264,6 +266,7 @@ func extractSliceName(expr ast.Expr) string {
 func hasGrowPatternInBody(body *ast.BlockStmt, sliceName string) bool {
 	// Defensive: malformed ASTs may have a nil body
 	if body == nil {
+		// Cannot analyze nil body
 		return false
 	}
 
@@ -413,8 +416,8 @@ func analyzeCopyForGrow(exprStmt *ast.ExprStmt, info *growPatternInfo) {
 		return
 	}
 
-	// Check that there are 2 arguments
-	if len(call.Args) != 2 {
+	// Check that there are the expected number of arguments for copy
+	if len(call.Args) != copyArgsCount {
 		// Wrong number of arguments
 		return
 	}

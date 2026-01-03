@@ -14,6 +14,10 @@ import (
 const (
 	// ruleCodeVar020 is the rule code for this analyzer
 	ruleCodeVar020 string = "KTN-VAR-020"
+	// makeMinArgs020 is the minimum number of arguments for make(slice)
+	makeMinArgs020 int = 2
+	// makeArgsWithCap020 is the number of arguments when capacity is specified
+	makeArgsWithCap020 int = 3
 )
 
 // Analyzer020 detects empty slice literals and make([]T, 0) without capacity.
@@ -50,6 +54,7 @@ func runVar020(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving positions
 	if pass.Fset == nil {
+		// Cannot analyze without file set
 		return nil, nil
 	}
 
@@ -109,7 +114,10 @@ func checkEmptySliceLiteral(pass *analysis.Pass, lit *ast.CompositeLit) {
 	msg, ok := messages.Get(ruleCodeVar020)
 	// Defensive: avoid panic if message is missing
 	if !ok {
+		// Fallback message
 		pass.Reportf(lit.Pos(), "%s: préférer nil slice à %s{}", ruleCodeVar020, typeStr)
+
+		// Stop after reporting
 		return
 	}
 	pass.Reportf(
@@ -132,8 +140,8 @@ func checkMakeSliceZero(pass *analysis.Pass, call *ast.CallExpr) {
 		return
 	}
 
-	// Verifier qu'il y a au moins 2 arguments (type et length)
-	if len(call.Args) < 2 {
+	// Verifier qu'il y a au moins le minimum d'arguments (type et length)
+	if len(call.Args) < makeMinArgs020 {
 		// Pas assez d'arguments
 		return
 	}
@@ -151,7 +159,7 @@ func checkMakeSliceZero(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	// Verifier qu'il n'y a pas de capacite specifiee
-	if len(call.Args) >= 3 {
+	if len(call.Args) >= makeArgsWithCap020 {
 		// Capacite specifiee, OK
 		return
 	}
@@ -163,9 +171,13 @@ func checkMakeSliceZero(pass *analysis.Pass, call *ast.CallExpr) {
 	msg, ok := messages.Get(ruleCodeVar020)
 	// Defensive: avoid panic if message is missing
 	if !ok {
+		// Fallback message
 		pass.Reportf(call.Pos(), "%s: préférer nil slice à %s", ruleCodeVar020, typeStr)
+
+		// Stop after reporting
 		return
 	}
+	// Report avec message formatte
 	pass.Reportf(
 		call.Pos(),
 		"%s: %s",
@@ -257,27 +269,27 @@ func formatSliceType(expr ast.Expr) string {
 //   - string: formatted type string
 func formatElementType(expr ast.Expr) string {
 	// Verification du type de noeud
-	switch e := expr.(type) {
+	switch typedExpr := expr.(type) {
 	// Identifiant simple
 	case *ast.Ident:
 		// Retour du nom
-		return e.Name
+		return typedExpr.Name
 	// Selector expression (pkg.Type)
 	case *ast.SelectorExpr:
 		// Formatage avec package
-		return formatSelectorType(e)
+		return formatSelectorType(typedExpr)
 	// Pointer type
 	case *ast.StarExpr:
 		// Formatage avec asterisque
-		return "*" + formatElementType(e.X)
+		return "*" + formatElementType(typedExpr.X)
 	// Array type
 	case *ast.ArrayType:
 		// Formatage du slice
-		return formatSliceType(e)
+		return formatSliceType(typedExpr)
 	// Map type
 	case *ast.MapType:
 		// Formatage de la map
-		return formatMapType(e)
+		return formatMapType(typedExpr)
 	// Interface type
 	case *ast.InterfaceType:
 		// Interface vide

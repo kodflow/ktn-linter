@@ -22,8 +22,8 @@ type FormatterOptions struct {
 //   - opts: formatter options
 //
 // Returns:
-//   - Formatter: appropriate formatter for the format
-func NewFormatterByFormat(format OutputFormat, w io.Writer, opts FormatterOptions) Formatter {
+//   - Formater: appropriate formatter for the format
+func NewFormatterByFormat(format OutputFormat, w io.Writer, opts FormatterOptions) Formater {
 	// Select formatter based on format
 	switch format {
 	// JSON format case

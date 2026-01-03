@@ -2,7 +2,6 @@
 package formatter
 
 import (
-	"bytes"
 	"go/token"
 	"testing"
 
@@ -83,8 +82,11 @@ func Test_sarifFormatter_addRule(t *testing.T) {
 			// Create a new run
 			run := sarif.NewRunWithInformationURI("test", "http://test.com")
 
+			// Create adapter for interface compliance
+			adapter := &sarifRunAdapter{run: run}
+
 			// Add a rule
-			f.addRule(run, tt.ruleID)
+			f.addRule(adapter, tt.ruleID)
 
 			// Verify rule was added
 			if len(run.Tool.Driver.Rules) != tt.expectedRules {
@@ -152,8 +154,11 @@ func Test_sarifFormatter_addResults(t *testing.T) {
 				},
 			}
 
+			// Create adapter for interface compliance
+			adapter := &sarifRunAdapter{run: run}
+
 			// Add results
-			f.addResults(run, fset, diags)
+			f.addResults(adapter, fset, diags)
 
 			// Verify results were added
 			if len(run.Results) != tt.expectedResults {
@@ -163,64 +168,6 @@ func Test_sarifFormatter_addResults(t *testing.T) {
 			// Verify rules were added
 			if len(run.Tool.Driver.Rules) != tt.expectedRules {
 				t.Errorf("expected %d rule, got %d", tt.expectedRules, len(run.Tool.Driver.Rules))
-			}
-		})
-	}
-}
-
-// Test_sarifFormatter_Format tests the Format method.
-//
-// Params:
-//   - t: testing object for running test cases
-func Test_sarifFormatter_Format(t *testing.T) {
-	// Define test cases for Format method
-	tests := []struct {
-		name          string
-		verbose       bool
-		message       string
-		expectOutput  bool
-	}{
-		{
-			// Test formatting produces non-empty output
-			name:         "format produces non-empty output",
-			verbose:      false,
-			message:      "KTN-VAR-001: test message",
-			expectOutput: true,
-		},
-	}
-
-	// Run all test cases
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		// Run individual test case
-		t.Run(tt.name, func(t *testing.T) {
-			// Create buffer for output
-			var buf bytes.Buffer
-
-			// Create formatter
-			f := &sarifFormatter{
-				writer:  &buf,
-				verbose: tt.verbose,
-			}
-
-			// Create fileset
-			fset := token.NewFileSet()
-			file := fset.AddFile("test.go", -1, 100)
-
-			// Create test diagnostics
-			diags := []analysis.Diagnostic{
-				{
-					Pos:     file.Pos(10),
-					Message: tt.message,
-				},
-			}
-
-			// Format diagnostics
-			f.Format(fset, diags)
-
-			// Verify output
-			if tt.expectOutput && buf.Len() == 0 {
-				t.Error("expected non-empty output")
 			}
 		})
 	}
@@ -277,8 +224,11 @@ func Test_sarifFormatter_RuleDeduplication(t *testing.T) {
 				}
 			}
 
+			// Create adapter for interface compliance
+			adapter := &sarifRunAdapter{run: run}
+
 			// Add results
-			f.addResults(run, fset, diags)
+			f.addResults(adapter, fset, diags)
 
 			// Verify only one rule was added
 			if len(run.Tool.Driver.Rules) != tt.expectedRules {

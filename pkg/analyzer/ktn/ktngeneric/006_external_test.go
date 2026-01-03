@@ -25,7 +25,7 @@ func TestGeneric006(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors (proper cmp.Ordered constraint)
 			// bad.go: 4 errors (badMin, badMax, badSum, badAverage using ordered ops without constraint)

@@ -77,3 +77,52 @@ func TestPackageLoader_Load(t *testing.T) {
 		})
 	}
 }
+
+// TestPackageLoader_LoadFromDir tests the LoadFromDir method.
+func TestPackageLoader_LoadFromDir(t *testing.T) {
+	tests := []struct {
+		name        string
+		dir         string
+		patterns    []string
+		expectError bool
+		minPackages int
+	}{
+		{
+			name:        "load from current directory",
+			dir:         "",
+			patterns:    []string{"../../pkg/formatter"},
+			expectError: false,
+			minPackages: 1,
+		},
+		{
+			name:        "load from invalid directory",
+			dir:         "/nonexistent/directory",
+			patterns:    []string{"./..."},
+			expectError: true,
+			minPackages: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			loader := orchestrator.NewPackageLoader(&buf)
+
+			pkgs, err := loader.LoadFromDir(tt.dir, tt.patterns)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			// Verify package count
+			if !tt.expectError && len(pkgs) < tt.minPackages {
+				t.Errorf("expected at least %d packages, got %d", tt.minPackages, len(pkgs))
+			}
+		})
+	}
+}

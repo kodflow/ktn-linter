@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar036 is the rule code for this analyzer.
 	ruleCodeVar036 string = "KTN-VAR-036"
+	// minStmtsForIndex is the minimum statements for index pattern detection.
+	minStmtsForIndex int = 2
 )
 
 // Analyzer036 detects manual index search patterns that can use slices.Index (Go 1.21+).
@@ -95,8 +97,8 @@ func analyzeFunctionForIndexPattern(pass *analysis.Pass, funcDecl *ast.FuncDecl,
 
 	// Check if body has the pattern: for range + if == return i + return -1
 	body := funcDecl.Body.List
-	// Need at least 2 statements (for loop and return -1)
-	if len(body) < 2 {
+	// Need at least minStmtsForIndex statements (for loop and return -1)
+	if len(body) < minStmtsForIndex {
 		// Not enough statements
 		return
 	}
@@ -124,19 +126,13 @@ func analyzeFunctionForIndexPattern(pass *analysis.Pass, funcDecl *ast.FuncDecl,
 		}
 
 		// Check if range has index and value variables
-		indexPattern := checkRangeForIndexPattern(rangeStmt)
+		patternPos, found := checkRangeForIndexPattern(rangeStmt)
 		// Report if pattern detected
-		if indexPattern != nil {
+		if found {
 			// Report the issue
-			reportIndexPattern(pass, indexPattern.pos, cfg)
+			reportIndexPattern(pass, patternPos, cfg)
 		}
 	}
-}
-
-// indexPatternInfo stores information about a detected index pattern.
-type indexPatternInfo struct {
-	// pos is the position where to report the issue
-	pos token.Pos
 }
 
 // functionReturnsInt checks if a function returns a single int.
@@ -267,12 +263,13 @@ func extractRangeVariables036(rangeStmt *ast.RangeStmt) *rangeVariables036 {
 //   - vars: extracted range variables
 //
 // Returns:
-//   - *indexPatternInfo: pattern info if found, nil otherwise
-func findIndexPatternInBody036(body *ast.BlockStmt, vars *rangeVariables036) *indexPatternInfo {
+//   - token.Pos: position of the pattern if found
+//   - bool: true if pattern was found
+func findIndexPatternInBody036(body *ast.BlockStmt, vars *rangeVariables036) (token.Pos, bool) {
 	// Verify body exists and has statements
 	if body == nil || len(body.List) == 0 {
 		// No body or empty body
-		return nil
+		return token.NoPos, false
 	}
 
 	// Look for if statement with equality check and return index
@@ -280,12 +277,12 @@ func findIndexPatternInBody036(body *ast.BlockStmt, vars *rangeVariables036) *in
 		// Check if it matches the pattern
 		if checkIfEqualReturnIndex(stmt, vars.indexName, vars.valueName) {
 			// Pattern detected - report at the if statement position
-			return &indexPatternInfo{pos: stmt.Pos()}
+			return stmt.Pos(), true
 		}
 	}
 
 	// No pattern found
-	return nil
+	return token.NoPos, false
 }
 
 // checkRangeForIndexPattern checks if a range statement matches the index search pattern.
@@ -294,14 +291,15 @@ func findIndexPatternInBody036(body *ast.BlockStmt, vars *rangeVariables036) *in
 //   - rangeStmt: range statement to check
 //
 // Returns:
-//   - *indexPatternInfo: pattern info if detected, nil otherwise
-func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) *indexPatternInfo {
+//   - token.Pos: position of the pattern if detected
+//   - bool: true if pattern was found
+func checkRangeForIndexPattern(rangeStmt *ast.RangeStmt) (token.Pos, bool) {
 	// Extract key and value variables from range
 	vars := extractRangeVariables036(rangeStmt)
 	// Check if extraction was successful
 	if vars == nil {
 		// Invalid range variables
-		return nil
+		return token.NoPos, false
 	}
 
 	// Find pattern in body

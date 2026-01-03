@@ -43,6 +43,7 @@ func TestFormatSelectorType(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := formatSelectorType(tt.sel)
@@ -84,6 +85,7 @@ func TestFormatMapType(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := formatMapType(tt.m)
@@ -120,6 +122,7 @@ func TestIsSliceType(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isSliceType(tt.expr)
@@ -165,6 +168,7 @@ func TestIsMakeCall(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isMakeCall(tt.call)
@@ -201,6 +205,7 @@ func TestIsZeroLiteral(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isZeroLiteral(tt.expr)
@@ -237,6 +242,7 @@ func TestFormatSliceType(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := formatSliceType(tt.expr)
@@ -299,6 +305,7 @@ func TestFormatElementType(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := formatElementType(tt.expr)
@@ -380,6 +387,7 @@ func TestCheckMakeSliceZero(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			reported := false
 			pass := &analysis.Pass{
@@ -430,6 +438,7 @@ func TestCheckEmptySliceLiteral(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			reported := false
 			pass := &analysis.Pass{

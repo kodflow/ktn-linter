@@ -2,8 +2,11 @@
 package orchestrator
 
 import (
+	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -37,8 +40,9 @@ func (d *ModuleDiscovery) FindModules(paths []string) ([]string, error) {
 		found, err := d.findInPath(p)
 		// Check for error
 		if err != nil {
+			var emptySlice []string
 			// Return error with empty slice
-			return []string{}, err
+			return emptySlice, err
 		}
 		// Add found modules
 		for _, m := range found {
@@ -46,12 +50,8 @@ func (d *ModuleDiscovery) FindModules(paths []string) ([]string, error) {
 		}
 	}
 
-	// Convert to slice
-	result := make([]string, 0, len(modules))
-	// Add all modules
-	for m := range modules {
-		result = append(result, m)
-	}
+	// Convert to slice using modern Go 1.23 approach
+	result := slices.Collect(maps.Keys(modules))
 
 	// Return found modules
 	return result, nil
@@ -70,16 +70,18 @@ func (d *ModuleDiscovery) findInPath(path string) ([]string, error) {
 	absPath, err := filepath.Abs(path)
 	// Check for error
 	if err != nil {
+		var emptySlice []string
 		// Return error with empty slice
-		return []string{}, err
+		return emptySlice, err
 	}
 
 	// Check if path exists
 	info, err := os.Stat(absPath)
 	// Check for error
 	if err != nil {
+		var emptySlice []string
 		// Return empty if not exists
-		return []string{}, nil
+		return emptySlice, nil
 	}
 
 	// Check if file
@@ -113,8 +115,9 @@ func (d *ModuleDiscovery) findModuleForFile(filePath string) ([]string, error) {
 		// Move up
 		dir = filepath.Dir(dir)
 	}
+	var emptySlice []string
 	// No module found - return empty slice
-	return []string{}, nil
+	return emptySlice, nil
 }
 
 // searchDirectory searches for go.mod files recursively.
@@ -126,13 +129,35 @@ func (d *ModuleDiscovery) findModuleForFile(filePath string) ([]string, error) {
 //   - []string: module roots found
 //   - error: search error if any
 func (d *ModuleDiscovery) searchDirectory(dir string) ([]string, error) {
-	modules := []string{}
+	var modules []string
 
-	// Walk directory tree
-	err := filepath.WalkDir(dir, func(path string, entry os.DirEntry, walkErr error) error {
+	// Walk directory tree with callback
+	err := filepath.WalkDir(dir, d.createWalkCallback(&modules))
+
+	// Check for walk error
+	if err != nil {
+		var emptySlice []string
+		// Return error with empty slice
+		return emptySlice, err
+	}
+
+	// Return found modules
+	return modules, nil
+}
+
+// createWalkCallback creates a WalkDir callback that populates modules slice.
+//
+// Params:
+//   - modules: pointer to slice to populate with found modules
+//
+// Returns:
+//   - fs.WalkDirFunc: callback function for WalkDir
+func (d *ModuleDiscovery) createWalkCallback(modules *[]string) fs.WalkDirFunc {
+	// Return callback that processes each entry
+	return func(path string, entry os.DirEntry, walkErr error) error {
 		// Skip inaccessible directories
 		if walkErr != nil {
-			// Continue walking
+			// Continue walking - error handled by returning nil
 			return nil
 		}
 
@@ -156,21 +181,12 @@ func (d *ModuleDiscovery) searchDirectory(dir string) ([]string, error) {
 
 		// Check for go.mod file
 		if entry.Name() == "go.mod" {
-			modules = append(modules, filepath.Dir(path))
+			*modules = append(*modules, filepath.Dir(path))
 		}
 
-		// Continue walking
+		// Continue walking - success indicated by nil error
 		return nil
-	})
-
-	// Check for walk error
-	if err != nil {
-		// Return error with empty slice
-		return []string{}, err
 	}
-
-	// Return found modules
-	return modules, nil
 }
 
 // ResolvePatterns resolves patterns for a module.

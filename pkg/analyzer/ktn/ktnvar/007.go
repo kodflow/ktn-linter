@@ -148,22 +148,27 @@ func checkControlFlowStmt(pass *analysis.Pass, stmt ast.Stmt) bool {
 	// If statement: check body and else
 	case *ast.IfStmt:
 		checkIfStmt(pass, s)
+		// Statement handled
 		return true
 	// For statement: check loop body
 	case *ast.ForStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		// Statement handled
 		return true
 	// Range statement: check loop body
 	case *ast.RangeStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		// Statement handled
 		return true
 	// Switch statement: check switch body
 	case *ast.SwitchStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		// Statement handled
 		return true
 	// Type switch: check switch body
 	case *ast.TypeSwitchStmt:
 		checkBlockIfNotNil(pass, s.Body)
+		// Statement handled
 		return true
 	}
 

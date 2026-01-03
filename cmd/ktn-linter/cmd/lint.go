@@ -15,6 +15,23 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+// Flag names for lint command.
+const (
+	// flagSarif is the flag name for SARIF output.
+	flagSarif string = "sarif"
+	// flagJSON is the flag name for JSON output.
+	flagJSON string = "json"
+)
+
+// lintCmd represents the lint command.
+var lintCmd *cobra.Command = &cobra.Command{
+	Use:   "lint [packages...]",
+	Short: "Lint Go packages using KTN rules",
+	Long:  `Lint analyzes Go packages and reports issues based on KTN conventions.`,
+	Args:  cobra.MinimumNArgs(1),
+	Run:   runLint,
+}
+
 // lintOrchestrator defines the interface for linting orchestration.
 // Abstracts the orchestrator for testability.
 type lintOrchestrator interface {
@@ -26,23 +43,6 @@ type lintOrchestrator interface {
 	DiscoverModules(paths []string) ([]string, error)
 	RunMultiModule(paths []string, opts orchestrator.Options) ([]orchestrator.DiagnosticResult, error)
 }
-
-// lintCmd represents the lint command.
-var lintCmd *cobra.Command = &cobra.Command{
-	Use:   "lint [packages...]",
-	Short: "Lint Go packages using KTN rules",
-	Long:  `Lint analyzes Go packages and reports issues based on KTN conventions.`,
-	Args:  cobra.MinimumNArgs(1),
-	Run:   runLint,
-}
-
-// Flag names for lint command.
-const (
-	// flagSarif is the flag name for SARIF output.
-	flagSarif string = "sarif"
-	// flagJSON is the flag name for JSON output.
-	flagJSON string = "json"
-)
 
 // init registers the lint command with root.
 //
@@ -56,7 +56,7 @@ func init() {
 	lintCmd.Flags().Bool(flagJSON, false, "Output in JSON format")
 }
 
-// runLint executes the linting analysis.
+// runLint executes the linting analysis (Cobra callback).
 //
 // Params:
 //   - cmd: Cobra command (used to get flags)
@@ -64,7 +64,19 @@ func init() {
 //
 // Returns: none
 func runLint(cmd *cobra.Command, args []string) {
-	opts := parseOptions(cmd)
+	// Delegate to testable function with interfaces
+	runLintWithFlags(cmd.Flags(), args)
+}
+
+// runLintWithFlags executes the linting analysis with injected dependencies.
+//
+// Params:
+//   - flags: flag getter for command flags
+//   - args: command line arguments
+//
+// Returns: none
+func runLintWithFlags(flags flagGetter, args []string) {
+	opts := parseOptions(flags)
 
 	// Load configuration
 	loadConfiguration(opts.Options)
@@ -103,11 +115,11 @@ type lintOptions struct {
 // parseOptions extracts options from Cobra flags.
 //
 // Params:
-//   - cmd: Cobra command with flags
+//   - cmdFlags: flag getter for command-specific flags
 //
 // Returns:
 //   - lintOptions: extracted options including format and output
-func parseOptions(cmd *cobra.Command) lintOptions {
+func parseOptions(cmdFlags flagGetter) lintOptions {
 	flags := rootCmd.PersistentFlags()
 
 	verbose, _ := flags.GetBool(flagVerbose)
@@ -117,16 +129,18 @@ func parseOptions(cmd *cobra.Command) lintOptions {
 	outputPath, _ := flags.GetString(flagOutput)
 
 	// Check lint-specific format flags (--sarif, --json)
-	sarifMode, _ := cmd.Flags().GetBool(flagSarif)
-	jsonMode, _ := cmd.Flags().GetBool(flagJSON)
+	sarifMode, _ := cmdFlags.GetBool(flagSarif)
+	jsonMode, _ := cmdFlags.GetBool(flagJSON)
 
-	// Determine output format
+	// Determine output format based on flags
 	outputFormat := formatter.FormatText
-	// Check for SARIF format
+	// Check for SARIF format flag
 	if sarifMode {
+		// SARIF format requested for IDE integration
 		outputFormat = formatter.FormatSARIF
+		// Check for JSON format flag
 	} else if jsonMode {
-		// Check for JSON format
+		// JSON format requested for machine parsing
 		outputFormat = formatter.FormatJSON
 	}
 
@@ -240,10 +254,11 @@ func needsModuleDiscovery(args []string) bool {
 func runMultiModulePipeline(orch lintOrchestrator, args []string, opts orchestrator.Options) ([]analysis.Diagnostic, *token.FileSet, error) {
 	// Run multi-module analysis
 	rawDiags, err := orch.RunMultiModule(args, opts)
-	// Check for error
+	// Check for error from multi-module analysis
 	if err != nil {
-		// Return error from multi-module analysis
-		return []analysis.Diagnostic{}, nil, err
+		var empty []analysis.Diagnostic
+		// Return error with empty diagnostics
+		return empty, nil, err
 	}
 
 	// Filter diagnostics
@@ -275,20 +290,22 @@ func runMultiModulePipeline(orch lintOrchestrator, args []string, opts orchestra
 //   - *token.FileSet: first fileset for formatting
 //   - error: pipeline error if any
 func runSingleModulePipeline(orch lintOrchestrator, args []string, opts orchestrator.Options) ([]analysis.Diagnostic, *token.FileSet, error) {
-	// Load packages
+	// Load packages from args
 	pkgs, err := orch.LoadPackages(args)
-	// Check for error
+	// Check for package loading error
 	if err != nil {
-		// Return error
-		return []analysis.Diagnostic{}, nil, err
+		var empty []analysis.Diagnostic
+		// Return error with empty diagnostics
+		return empty, nil, err
 	}
 
-	// Select analyzers
+	// Select analyzers based on options
 	analyzers, err := orch.SelectAnalyzers(opts)
-	// Check for error
+	// Check for analyzer selection error
 	if err != nil {
-		// Return error
-		return []analysis.Diagnostic{}, nil, err
+		var empty []analysis.Diagnostic
+		// Return error with empty diagnostics
+		return empty, nil, err
 	}
 
 	// Run analyzers

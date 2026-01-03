@@ -106,55 +106,84 @@ func TestIsSecurityName(t *testing.T) {
 
 // TestCheckAssignForMathRand tests checkAssignForMathRand function.
 func TestCheckAssignForMathRand(t *testing.T) {
-	// Test with non-call expression in RHS
 	aliases := map[string]bool{"rand": true}
 
-	// Test: RHS is not a call expression
-	assign := &ast.AssignStmt{
-		Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
-		Rhs: []ast.Expr{&ast.Ident{Name: "y"}}, // Not a call
-	}
-	// Should not panic, just skip
-	checkAssignForMathRand(nil, assign, aliases, false)
-
-	// Test: RHS is a call but not math/rand
-	callNotRand := &ast.CallExpr{
-		Fun: &ast.Ident{Name: "someFunc"},
-	}
-	assign2 := &ast.AssignStmt{
-		Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
-		Rhs: []ast.Expr{callNotRand},
-	}
-	checkAssignForMathRand(nil, assign2, aliases, false)
-
-	// Test: LHS index exceeds available
-	assign3 := &ast.AssignStmt{
-		Lhs: []ast.Expr{}, // Empty LHS
-		Rhs: []ast.Expr{
-			&ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "rand"},
-					Sel: &ast.Ident{Name: "Int"},
+	tests := []struct {
+		name         string
+		assign       *ast.AssignStmt
+		secContext   bool
+		expectReport bool
+	}{
+		{
+			name: "RHS is not a call expression",
+			assign: &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+				Rhs: []ast.Expr{&ast.Ident{Name: "y"}},
+			},
+			secContext:   false,
+			expectReport: false,
+		},
+		{
+			name: "RHS is a call but not math/rand",
+			assign: &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.Ident{Name: "x"}},
+				Rhs: []ast.Expr{&ast.CallExpr{Fun: &ast.Ident{Name: "someFunc"}}},
+			},
+			secContext:   false,
+			expectReport: false,
+		},
+		{
+			name: "LHS is empty",
+			assign: &ast.AssignStmt{
+				Lhs: []ast.Expr{},
+				Rhs: []ast.Expr{
+					&ast.CallExpr{
+						Fun: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "rand"},
+							Sel: &ast.Ident{Name: "Int"},
+						},
+					},
 				},
 			},
+			secContext:   false,
+			expectReport: false,
 		},
-	}
-	// LHS is empty, should handle gracefully
-	checkAssignForMathRand(nil, assign3, aliases, false)
-
-	// Test: LHS is not an ident
-	assign4 := &ast.AssignStmt{
-		Lhs: []ast.Expr{&ast.IndexExpr{X: &ast.Ident{Name: "arr"}}},
-		Rhs: []ast.Expr{
-			&ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "rand"},
-					Sel: &ast.Ident{Name: "Int"},
+		{
+			name: "LHS is not an ident",
+			assign: &ast.AssignStmt{
+				Lhs: []ast.Expr{&ast.IndexExpr{X: &ast.Ident{Name: "arr"}}},
+				Rhs: []ast.Expr{
+					&ast.CallExpr{
+						Fun: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "rand"},
+							Sel: &ast.Ident{Name: "Int"},
+						},
+					},
 				},
 			},
+			secContext:   false,
+			expectReport: false,
 		},
 	}
-	checkAssignForMathRand(nil, assign4, aliases, false)
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			reported := false
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reported = true
+				},
+			}
+			// Call function
+			checkAssignForMathRand(pass, tt.assign, aliases, tt.secContext)
+			// Check result
+			if reported != tt.expectReport {
+				t.Errorf("checkAssignForMathRand() reported = %v, want %v", reported, tt.expectReport)
+			}
+		})
+	}
 }
 
 // TestProcessLocalVarSpec tests processLocalVarSpec function.

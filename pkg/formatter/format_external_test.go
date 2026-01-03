@@ -72,11 +72,11 @@ func TestParseOutputFormat(t *testing.T) {
 	}
 }
 
-// TestOutputFormatIsValid tests the IsValid method on OutputFormat.
+// TestOutputFormat_IsValid tests the IsValid method on OutputFormat.
 //
 // Params:
 //   - t: testing object for running test cases
-func TestOutputFormatIsValid(t *testing.T) {
+func TestOutputFormat_IsValid(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name     string

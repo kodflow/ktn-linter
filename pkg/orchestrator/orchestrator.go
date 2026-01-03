@@ -3,6 +3,7 @@ package orchestrator
 
 import (
 	"fmt"
+	"go/token"
 	"io"
 
 	"golang.org/x/tools/go/analysis"
@@ -119,16 +120,18 @@ func (o *Orchestrator) Run(patterns []string, opts Options) ([]analysis.Diagnost
 	pkgs, err := o.LoadPackages(patterns)
 	// Check for error
 	if err != nil {
+		var emptyDiags []analysis.Diagnostic
 		// Return error
-		return []analysis.Diagnostic{}, err
+		return emptyDiags, err
 	}
 
 	// Select analyzers
 	analyzers, err := o.SelectAnalyzers(opts)
 	// Check for error
 	if err != nil {
+		var emptyDiags []analysis.Diagnostic
 		// Return error
-		return []analysis.Diagnostic{}, err
+		return emptyDiags, err
 	}
 
 	// Run analyzers
@@ -150,8 +153,8 @@ func (o *Orchestrator) Run(patterns []string, opts Options) ([]analysis.Diagnost
 //   - diagnostics: diagnostics with fsets
 //
 // Returns:
-//   - any: first fset or nil
-func GetFirstFset(diagnostics []DiagnosticResult) any {
+//   - *token.FileSet: first fset or nil
+func GetFirstFset(diagnostics []DiagnosticResult) *token.FileSet {
 	// Check if empty
 	if len(diagnostics) == 0 {
 		// Return nil for empty slice
@@ -202,8 +205,9 @@ func (o *Orchestrator) RunMultiModule(paths []string, opts Options) ([]Diagnosti
 	modules, err := o.DiscoverModules(paths)
 	// Check for error
 	if err != nil {
+		var emptyResults []DiagnosticResult
 		// Return empty slice on error
-		return []DiagnosticResult{}, fmt.Errorf("discovering modules: %w", err)
+		return emptyResults, fmt.Errorf("discovering modules: %w", err)
 	}
 
 	// Check if no modules found
@@ -221,8 +225,9 @@ func (o *Orchestrator) RunMultiModule(paths []string, opts Options) ([]Diagnosti
 	analyzers, err := o.SelectAnalyzers(opts)
 	// Check for error
 	if err != nil {
+		var emptyResults []DiagnosticResult
 		// Return empty slice on error
-		return []DiagnosticResult{}, err
+		return emptyResults, err
 	}
 
 	// Aggregate results
@@ -273,16 +278,18 @@ func (o *Orchestrator) runSingleModule(dir string, patterns []string, opts Optio
 	pkgs, err := o.LoadPackagesFromDir(dir, patterns)
 	// Check for error
 	if err != nil {
+		var emptyResults []DiagnosticResult
 		// Return empty slice on error
-		return []DiagnosticResult{}, err
+		return emptyResults, err
 	}
 
 	// Select analyzers
 	analyzers, err := o.SelectAnalyzers(opts)
 	// Check for error
 	if err != nil {
+		var emptyResults []DiagnosticResult
 		// Return empty slice on error
-		return []DiagnosticResult{}, err
+		return emptyResults, err
 	}
 
 	// Run analyzers and return results

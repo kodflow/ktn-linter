@@ -59,15 +59,15 @@ func GetIdentName(expr ast.Expr) string {
 //   - string: nom de la variable ou représentation
 func ExtractVarName(expr ast.Expr) string {
 	// Switch on expression type
-	switch e := expr.(type) {
+	switch exprType := expr.(type) {
 	// Simple identifier
 	case *ast.Ident:
 		// Return name
-		return e.Name
+		return exprType.Name
 	// Array/slice index: items[i]
 	case *ast.IndexExpr:
 		// Get base name and add index indicator
-		if base := ExtractVarName(e.X); base != "" {
+		if base := ExtractVarName(exprType.X); base != "" {
 			// Return with index notation
 			return base + "[...]"
 		}
@@ -76,16 +76,16 @@ func ExtractVarName(expr ast.Expr) string {
 	// Struct field: obj.field
 	case *ast.SelectorExpr:
 		// Get base and field
-		if base := ExtractVarName(e.X); base != "" {
+		if base := ExtractVarName(exprType.X); base != "" {
 			// Return with field
-			return base + "." + e.Sel.Name
+			return base + "." + exprType.Sel.Name
 		}
 		// Just field name
-		return e.Sel.Name
+		return exprType.Sel.Name
 	// Star expression: *ptr
 	case *ast.StarExpr:
 		// Get pointed expression
-		if base := ExtractVarName(e.X); base != "" {
+		if base := ExtractVarName(exprType.X); base != "" {
 			// Return with dereference
 			return "*" + base
 		}
@@ -94,7 +94,7 @@ func ExtractVarName(expr ast.Expr) string {
 	// Parenthesized expression
 	case *ast.ParenExpr:
 		// Extract from inner
-		return ExtractVarName(e.X)
+		return ExtractVarName(exprType.X)
 	// Default case
 	default:
 		// Cannot extract variable name

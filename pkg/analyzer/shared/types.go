@@ -14,11 +14,10 @@ type DeclGroup struct {
 }
 
 // IsSerializableStruct vérifie si une struct est un DTO/serializable.
-// Une struct est considérée comme DTO uniquement si:
-//   - Elle a AU MOINS UN champ avec un tag de sérialisation (json, yaml, xml, etc.)
-//
-// Le nom seul (suffixe DTO) ne suffit pas pour éviter les faux positifs
-// sur des structs internes qui ne sont jamais sérialisées.
+// Une struct est considérée comme DTO uniquement si Elle a AU MOINS UN champ
+// avec un tag de sérialisation (json, yaml, xml, etc.). Le nom seul (suffixe DTO)
+// ne suffit pas pour éviter les faux positifs sur des structs internes qui ne sont
+// jamais sérialisées.
 //
 // Params:
 //   - structType: type de la struct à vérifier
@@ -27,6 +26,7 @@ type DeclGroup struct {
 // Returns:
 //   - bool: true si c'est un DTO/serializable
 func IsSerializableStruct(structType *ast.StructType, _ string) bool {
+	// Check if struct has serialization tags
 	return hasSerializationTags(structType)
 }
 

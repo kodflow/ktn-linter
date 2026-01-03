@@ -567,3 +567,73 @@ func TestInt(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_SerializationTags(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   *config.Config
+		expected []string
+	}{
+		{
+			name:   "nil config returns defaults",
+			config: nil,
+			expected: []string{
+				"json:",
+				"xml:",
+				"yaml:",
+				"toml:",
+				"tlv:",
+				"protobuf:",
+				"flatbuffer:",
+			},
+		},
+		{
+			name:   "empty ConfigSerializationTags returns defaults",
+			config: &config.Config{ConfigSerializationTags: []string{}},
+			expected: []string{
+				"json:",
+				"xml:",
+				"yaml:",
+				"toml:",
+				"tlv:",
+				"protobuf:",
+				"flatbuffer:",
+			},
+		},
+		{
+			name:     "custom tags without colon",
+			config:   &config.Config{ConfigSerializationTags: []string{"custom", "mytag"}},
+			expected: []string{"custom:", "mytag:"},
+		},
+		{
+			name:     "custom tags with colon suffix",
+			config:   &config.Config{ConfigSerializationTags: []string{"custom:", "mytag:"}},
+			expected: []string{"custom:", "mytag:"},
+		},
+		{
+			name:     "mixed tags with and without colon",
+			config:   &config.Config{ConfigSerializationTags: []string{"json", "xml:"}},
+			expected: []string{"json:", "xml:"},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.config.SerializationTags()
+
+			// Check length
+			if len(result) != len(tt.expected) {
+				t.Errorf("expected %d tags, got %d", len(tt.expected), len(result))
+				return
+			}
+
+			// Check each tag
+			for i, tag := range result {
+				if tag != tt.expected[i] {
+					t.Errorf("tag[%d]: expected %q, got %q", i, tt.expected[i], tag)
+				}
+			}
+		})
+	}
+}

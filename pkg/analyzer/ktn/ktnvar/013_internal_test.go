@@ -618,6 +618,101 @@ func Test_checkFuncParams009_negativeMaxBytes(t *testing.T) {
 	}
 }
 
+// Test_getStructSize009 tests the private getStructSize009 function.
+func Test_getStructSize009(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupPass    func() (*analysis.Pass, ast.Expr)
+		expectedSize int64
+	}{
+		{
+			name: "pointer type returns -1",
+			setupPass: func() (*analysis.Pass, ast.Expr) {
+				pkg := types.NewPackage("test", "test")
+				pass := &analysis.Pass{
+					Pkg: pkg,
+					TypesInfo: &types.Info{
+						Types: make(map[ast.Expr]types.TypeAndValue),
+					},
+				}
+				// Pointer type
+				return pass, &ast.StarExpr{X: &ast.Ident{Name: "int"}}
+			},
+			expectedSize: -1,
+		},
+		{
+			name: "nil type info returns -1",
+			setupPass: func() (*analysis.Pass, ast.Expr) {
+				pkg := types.NewPackage("test", "test")
+				pass := &analysis.Pass{
+					Pkg: pkg,
+					TypesInfo: &types.Info{
+						Types: make(map[ast.Expr]types.TypeAndValue),
+					},
+				}
+				// Unknown type
+				return pass, &ast.Ident{Name: "UnknownType"}
+			},
+			expectedSize: -1,
+		},
+		{
+			name: "non-struct type returns -1",
+			setupPass: func() (*analysis.Pass, ast.Expr) {
+				pkg := types.NewPackage("test", "test")
+				typeIdent := &ast.Ident{Name: "int"}
+				pass := &analysis.Pass{
+					Pkg: pkg,
+					TypesInfo: &types.Info{
+						Types: map[ast.Expr]types.TypeAndValue{
+							typeIdent: {Type: types.Typ[types.Int]},
+						},
+					},
+				}
+				return pass, typeIdent
+			},
+			expectedSize: -1,
+		},
+		{
+			name: "struct with valid size",
+			setupPass: func() (*analysis.Pass, ast.Expr) {
+				pkg := types.NewPackage("test", "test")
+				structType := types.NewStruct(
+					[]*types.Var{
+						types.NewVar(0, pkg, "a", types.Typ[types.Int64]),
+					},
+					nil,
+				)
+				obj := types.NewTypeName(0, pkg, "TestStruct", structType)
+				namedType := types.NewNamed(obj, structType, nil)
+				typeIdent := &ast.Ident{Name: "TestStruct"}
+				pass := &analysis.Pass{
+					Pkg: pkg,
+					TypesInfo: &types.Info{
+						Types: map[ast.Expr]types.TypeAndValue{
+							typeIdent: {Type: namedType},
+						},
+					},
+					TypesSizes: types.SizesFor(runtime.Compiler, runtime.GOARCH),
+				}
+				return pass, typeIdent
+			},
+			expectedSize: 8,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			pass, expr := tt.setupPass()
+			size := getStructSize009(pass, expr)
+			// Verify expected size
+			if size != tt.expectedSize {
+				t.Errorf("getStructSize009() = %d, expected %d", size, tt.expectedSize)
+			}
+		})
+	}
+}
+
 // Test_getStructSize009_nilTypesSizes tests with nil TypesSizes (fallback path).
 func Test_getStructSize009_nilTypesSizes(t *testing.T) {
 	// Create a struct type

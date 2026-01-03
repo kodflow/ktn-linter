@@ -25,7 +25,7 @@ func TestGeneric001(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors (proper comparable constraint)
 			// bad.go: 2 errors (badContains and badIndex using == without comparable)

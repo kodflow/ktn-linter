@@ -4,6 +4,7 @@ package ktngeneric
 import (
 	"go/ast"
 	"go/token"
+	"maps"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -99,16 +100,19 @@ func analyzeGenericFuncOrdered(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 // Returns:
 //   - bool: true si l'operateur est ordered ou arithmetique
 func isOrderedOp(op token.Token) bool {
-	// Verifier les operateurs de comparaison ordered
+	// Verifier si l'operateur necessite cmp.Ordered
 	switch op {
+	// Operateur de comparaison ordered
 	case token.LSS, token.LEQ, token.GTR, token.GEQ:
-		// Operateur de comparaison ordered
+		// Necessite cmp.Ordered
 		return true
+	// Operateur arithmetique
 	case token.ADD, token.SUB, token.MUL, token.QUO, token.REM:
-		// Operateur arithmetique
+		// Necessite cmp.Ordered
 		return true
+	// Autre operateur
 	default:
-		// Autre operateur
+		// Ne necessite pas cmp.Ordered
 		return false
 	}
 }
@@ -141,8 +145,12 @@ func checkOrderedUsage(pass *analysis.Pass, funcDecl *ast.FuncDecl, anyTypeParam
 		return
 	}
 
-	// Tracker les erreurs deja reportees pour eviter les doublons
-	reported := make(map[string]bool)
+	// Creer le contexte pour le checking
+	ctx := &orderedTypeContext{
+		paramNames:    allNames,
+		anyTypeParams: anyTypeParams,
+		reported:      make(map[string]bool, 1),
+	}
 
 	// Parcourir les statements pour trouver les operateurs ordered
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
@@ -160,7 +168,7 @@ func checkOrderedUsage(pass *analysis.Pass, funcDecl *ast.FuncDecl, anyTypeParam
 		}
 
 		// Verifier si un des operandes utilise un type parameter "any"
-		reportIfUsesAnyTypeParamOrdered(pass, funcDecl, binaryExpr, allNames, anyTypeParams, reported)
+		reportIfUsesAnyTypeParamOrdered(pass, funcDecl, binaryExpr, ctx)
 
 		// Continuer le parcours
 		return true
@@ -176,7 +184,8 @@ func checkOrderedUsage(pass *analysis.Pass, funcDecl *ast.FuncDecl, anyTypeParam
 // Returns:
 //   - map[string]string: map des noms de variables vers leur type parameter
 func collectLocalVarsWithAnyType(funcDecl *ast.FuncDecl, anyTypeParams map[string]bool) map[string]string {
-	result := make(map[string]string)
+	// Initialiser avec capacite estimee
+	result := make(map[string]string, len(anyTypeParams))
 
 	// Verifier le corps de la fonction
 	if funcDecl.Body == nil {
@@ -201,13 +210,13 @@ func collectLocalVarsWithAnyType(funcDecl *ast.FuncDecl, anyTypeParams map[strin
 //   - anyTypeParams: map des type parameters avec contrainte "any"
 //   - result: map resultat a remplir
 func extractVarDeclsFromStmt(stmt ast.Stmt, anyTypeParams map[string]bool, result map[string]string) {
-	// Switch sur le type de statement
+	// Determiner le type de statement
 	switch s := stmt.(type) {
+	// Declaration statement
 	case *ast.DeclStmt:
-		// Declaration statement
 		extractFromDeclStmt(s, anyTypeParams, result)
+	// Range statement (for _, v := range ...)
 	case *ast.RangeStmt:
-		// Range statement (for _, v := range ...)
 		extractFromRangeStmt(s, anyTypeParams, result)
 	}
 }
@@ -256,16 +265,13 @@ func extractFromDeclStmt(s *ast.DeclStmt, anyTypeParams map[string]bool, result 
 // Note: Sans acces a pass.TypesInfo, on ne peut pas determiner le type element.
 //
 // Params:
-//   - s: RangeStmt a analyser
-//   - anyTypeParams: map des type parameters
-//   - result: map resultat
-func extractFromRangeStmt(s *ast.RangeStmt, anyTypeParams map[string]bool, result map[string]string) {
+//   - _s: RangeStmt a analyser (non utilise - necessite TypesInfo)
+//   - _anyTypeParams: map des type parameters (non utilise - necessite TypesInfo)
+//   - _result: map resultat (non utilise - necessite TypesInfo)
+func extractFromRangeStmt(_s *ast.RangeStmt, _anyTypeParams map[string]bool, _result map[string]string) {
 	// Note: Implementation complete necessite pass.TypesInfo
 	// Pour l'instant, on ne peut pas determiner le type des variables de range
 	// sans information de type du compilateur
-	_ = s
-	_ = anyTypeParams
-	_ = result
 }
 
 // mergeStringMaps fusionne deux maps string->string.
@@ -277,20 +283,24 @@ func extractFromRangeStmt(s *ast.RangeStmt, anyTypeParams map[string]bool, resul
 // Returns:
 //   - map[string]string: map fusionnee
 func mergeStringMaps(m1, m2 map[string]string) map[string]string {
-	result := make(map[string]string)
+	// Cloner m1 comme base
+	result := maps.Clone(m1)
 
-	// Copier m1
-	for k, v := range m1 {
-		result[k] = v
-	}
-
-	// Copier m2
-	for k, v := range m2 {
-		result[k] = v
-	}
+	// Ajouter m2 au resultat
+	maps.Copy(result, m2)
 
 	// Retour de la map
 	return result
+}
+
+// orderedTypeContext holds context for ordered type parameter checking.
+type orderedTypeContext struct {
+	// paramNames maps parameter names to their type parameter
+	paramNames map[string]string
+	// anyTypeParams maps type parameters with "any" constraint
+	anyTypeParams map[string]bool
+	// reported tracks already reported errors
+	reported map[string]bool
 }
 
 // reportIfUsesAnyTypeParamOrdered reporte une erreur si un operande utilise un type "any".
@@ -299,16 +309,12 @@ func mergeStringMaps(m1, m2 map[string]string) map[string]string {
 //   - pass: contexte d'analyse
 //   - funcDecl: declaration de fonction
 //   - binaryExpr: expression binaire
-//   - paramNames: map des noms de parametres vers leur type parameter
-//   - anyTypeParams: map des type parameters avec contrainte "any"
-//   - reported: map des erreurs deja reportees
+//   - ctx: context for ordered type checking
 func reportIfUsesAnyTypeParamOrdered(
 	pass *analysis.Pass,
 	funcDecl *ast.FuncDecl,
 	binaryExpr *ast.BinaryExpr,
-	paramNames map[string]string,
-	anyTypeParams map[string]bool,
-	reported map[string]bool,
+	ctx *orderedTypeContext,
 ) {
 	// Guard contre nil (pour tests unitaires)
 	if pass == nil {
@@ -317,9 +323,9 @@ func reportIfUsesAnyTypeParamOrdered(
 	}
 
 	// Verifier l'operande gauche
-	leftUses := checkOperandUsesAnyType(binaryExpr.X, paramNames, anyTypeParams)
+	leftUses := checkOperandUsesAnyType(binaryExpr.X, ctx.paramNames, ctx.anyTypeParams)
 	// Verifier l'operande droit
-	rightUses := checkOperandUsesAnyType(binaryExpr.Y, paramNames, anyTypeParams)
+	rightUses := checkOperandUsesAnyType(binaryExpr.Y, ctx.paramNames, ctx.anyTypeParams)
 
 	// Si aucun operande n'utilise un type "any"
 	if !leftUses && !rightUses {
@@ -330,13 +336,13 @@ func reportIfUsesAnyTypeParamOrdered(
 	// Creer la cle de deduplication
 	funcName := funcDecl.Name.Name
 	// Verifier si deja reporte
-	if reported[funcName] {
+	if ctx.reported[funcName] {
 		// Deja reporte
 		return
 	}
 
 	// Marquer comme reporte
-	reported[funcName] = true
+	ctx.reported[funcName] = true
 
 	// Reporter l'erreur
 	cfg := config.Get()

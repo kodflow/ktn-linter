@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar035 is the rule code for this analyzer.
 	ruleCodeVar035 string = "KTN-VAR-035"
+	// minStmtsForContains is the minimum number of statements for contains pattern
+	minStmtsForContains int = 2
 )
 
 // Analyzer035 detects manual contains patterns that can use slices.Contains (Go 1.21+).
@@ -109,14 +111,14 @@ func checkContainsPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *c
 //   - body: function body to analyze
 //   - cfg: configuration
 func analyzeBodyForContainsPattern(pass *analysis.Pass, body *ast.BlockStmt, cfg *config.Config) {
-	// Check that body has at least 2 statements
-	if len(body.List) < 2 {
+	// Check that body has at least the minimum statements for pattern
+	if len(body.List) < minStmtsForContains {
 		// Not enough statements for pattern
 		return
 	}
 
 	// Check each pair of consecutive statements
-	for idx := 0; idx < len(body.List)-1; idx++ {
+	for idx := range len(body.List) - 1 {
 		// Get the range statement
 		rangeStmt, ok := body.List[idx].(*ast.RangeStmt)
 		// Check if valid range

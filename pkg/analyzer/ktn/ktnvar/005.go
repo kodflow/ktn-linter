@@ -211,6 +211,7 @@ func checkVar005RangeStmt(pass *analysis.Pass, stmt *ast.RangeStmt) {
 
 	// Check value variable
 	if stmt.Value != nil {
+		// Extract and check value identifier
 		if value, ok := stmt.Value.(*ast.Ident); ok {
 			checkVar005Name(pass, value)
 		}

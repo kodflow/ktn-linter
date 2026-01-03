@@ -12,8 +12,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Formatter définit l'interface pour formater et afficher les diagnostics.
-type Formatter interface {
+// Formater définit l'interface pour formater et afficher les diagnostics.
+type Formater interface {
 	// Format affiche les diagnostics de manière lisible
 	//
 	// Params:
@@ -22,7 +22,7 @@ type Formatter interface {
 	Format(fset *token.FileSet, diagnostics []analysis.Diagnostic)
 }
 
-// formatterImpl implémente l'interface Formatter
+// formatterImpl implémente l'interface Formater
 type formatterImpl struct {
 	writer      io.Writer
 	aiMode      bool
@@ -41,8 +41,8 @@ type formatterImpl struct {
 //   - verboseMode: true pour afficher les messages détaillés
 //
 // Returns:
-//   - Formatter: un formatter prêt à utiliser
-func NewFormatter(w io.Writer, aiMode, noColor, simpleMode, verboseMode bool) Formatter {
+//   - Formater: un formatter prêt à utiliser
+func NewFormatter(w io.Writer, aiMode, noColor, simpleMode, verboseMode bool) Formater {
 	// Early return from function.
 	return &formatterImpl{
 		writer:      w,

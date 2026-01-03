@@ -39,6 +39,13 @@ const (
 	executablePerm os.FileMode = 0755
 )
 
+// Updater handles self-update logic for the ktn-linter binary.
+// It manages version checking via GitHub API and binary replacement.
+type Updater struct {
+	version string
+	client  *http.Client
+}
+
 // NewUpdater creates a new updater instance.
 //
 // Params:

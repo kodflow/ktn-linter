@@ -190,18 +190,18 @@ func checkDeclForAlloc(pass *analysis.Pass, decl *ast.DeclStmt) {
 //   - bool: true si allocation détectée
 func isSliceOrMapAlloc(expr ast.Expr) bool {
 	// Vérification du type d'expression
-	switch e := expr.(type) {
+	switch typedExpr := expr.(type) {
 	// Cas d'un littéral composite
 	case *ast.CompositeLit:
 		// Vérification du type composite (exclut []byte géré par VAR-010)
-		if utils.IsSliceOrMapType(e.Type) && !utils.IsByteSlice(e.Type) {
+		if utils.IsSliceOrMapType(typedExpr.Type) && !utils.IsByteSlice(typedExpr.Type) {
 			// Allocation de slice/map sous forme de littéral
 			return true
 		}
 	// Cas d'un appel de fonction
 	case *ast.CallExpr:
 		// Vérification des appels make() (exclut []byte géré par VAR-010)
-		if utils.IsMakeCall(e) && !isByteSliceMake(e) {
+		if utils.IsMakeCall(typedExpr) && !isByteSliceMake(typedExpr) {
 			// Appel à make() détecté
 			return true
 		}

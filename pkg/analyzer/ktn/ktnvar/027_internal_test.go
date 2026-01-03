@@ -11,40 +11,50 @@ import (
 
 // TestIsConvertibleToRangeInt tests isConvertibleToRangeInt function.
 func TestIsConvertibleToRangeInt(t *testing.T) {
-	// Test: missing init
-	forNoInit := &ast.ForStmt{
-		Init: nil,
-		Cond: &ast.BinaryExpr{Op: token.LSS},
-		Post: &ast.IncDecStmt{Tok: token.INC},
-	}
-	result := isConvertibleToRangeInt(forNoInit)
-	// Expected: false
-	if result {
-		t.Error("isConvertibleToRangeInt should return false when init is nil")
+	tests := []struct {
+		name     string
+		forStmt  *ast.ForStmt
+		expected bool
+	}{
+		{
+			name: "missing init",
+			forStmt: &ast.ForStmt{
+				Init: nil,
+				Cond: &ast.BinaryExpr{Op: token.LSS},
+				Post: &ast.IncDecStmt{Tok: token.INC},
+			},
+			expected: false,
+		},
+		{
+			name: "missing cond",
+			forStmt: &ast.ForStmt{
+				Init: &ast.AssignStmt{Tok: token.DEFINE},
+				Cond: nil,
+				Post: &ast.IncDecStmt{Tok: token.INC},
+			},
+			expected: false,
+		},
+		{
+			name: "missing post",
+			forStmt: &ast.ForStmt{
+				Init: &ast.AssignStmt{Tok: token.DEFINE},
+				Cond: &ast.BinaryExpr{Op: token.LSS},
+				Post: nil,
+			},
+			expected: false,
+		},
 	}
 
-	// Test: missing cond
-	forNoCond := &ast.ForStmt{
-		Init: &ast.AssignStmt{Tok: token.DEFINE},
-		Cond: nil,
-		Post: &ast.IncDecStmt{Tok: token.INC},
-	}
-	result = isConvertibleToRangeInt(forNoCond)
-	// Expected: false
-	if result {
-		t.Error("isConvertibleToRangeInt should return false when cond is nil")
-	}
-
-	// Test: missing post
-	forNoPost := &ast.ForStmt{
-		Init: &ast.AssignStmt{Tok: token.DEFINE},
-		Cond: &ast.BinaryExpr{Op: token.LSS},
-		Post: nil,
-	}
-	result = isConvertibleToRangeInt(forNoPost)
-	// Expected: false
-	if result {
-		t.Error("isConvertibleToRangeInt should return false when post is nil")
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Call function
+			result := isConvertibleToRangeInt(tt.forStmt)
+			// Check result
+			if result != tt.expected {
+				t.Errorf("isConvertibleToRangeInt() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }
 

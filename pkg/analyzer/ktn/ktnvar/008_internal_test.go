@@ -13,6 +13,184 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Test_runVar008 tests the runVar008 function.
+func Test_runVar008(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		ruleEnabled bool
+		expectMin   int
+	}{
+		{
+			name:        "disabled rule",
+			code:        `package test; func f() { s := []int{}; s = append(s, 1) }`,
+			ruleEnabled: false,
+			expectMin:   0,
+		},
+		{
+			name:        "enabled rule",
+			code:        `package test; func f() { var s []int; s = append(s, 1) }`,
+			ruleEnabled: true,
+			expectMin:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ruleEnabled {
+				config.Reset()
+			} else {
+				config.Set(&config.Config{
+					Rules: map[string]*config.RuleConfig{
+						"KTN-VAR-008": {Enabled: config.Bool(false)},
+					},
+				})
+			}
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			_, _ = runVar008(pass)
+
+			if reportCount < tt.expectMin {
+				t.Errorf("runVar008() reported %d issues, expected at least %d", reportCount, tt.expectMin)
+			}
+		})
+	}
+}
+
+// Test_shouldSkipCompositeLit008 tests the shouldSkipCompositeLit008 function.
+func Test_shouldSkipCompositeLit008(t *testing.T) {
+	tests := []struct {
+		name     string
+		lit      *ast.CompositeLit
+		stack    []ast.Node
+		expected bool
+	}{
+		{
+			name:     "non-empty slice",
+			lit:      &ast.CompositeLit{Elts: []ast.Expr{&ast.BasicLit{Value: "1"}}},
+			stack:    []ast.Node{},
+			expected: true,
+		},
+		{
+			name:     "in return statement",
+			lit:      &ast.CompositeLit{Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}}, Elts: []ast.Expr{}},
+			stack:    []ast.Node{&ast.ReturnStmt{}},
+			expected: true,
+		},
+		{
+			name:     "in struct literal",
+			lit:      &ast.CompositeLit{Type: &ast.ArrayType{Elt: &ast.Ident{Name: "int"}}, Elts: []ast.Expr{}},
+			stack:    []ast.Node{&ast.KeyValueExpr{}},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			info := &types.Info{
+				Types: make(map[ast.Expr]types.TypeAndValue),
+			}
+			pass := &analysis.Pass{
+				Fset:      fset,
+				TypesInfo: info,
+				Report:    func(_ analysis.Diagnostic) {},
+			}
+
+			ctx := &litCheckContext{
+				pass:       pass,
+				appendVars: make(map[string]bool),
+			}
+
+			result := shouldSkipCompositeLit008(ctx, tt.lit, tt.stack)
+
+			if result != tt.expected {
+				t.Errorf("shouldSkipCompositeLit008() = %v, expected %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_getAppendVariableName008 tests the getAppendVariableName008 function.
+func Test_getAppendVariableName008(t *testing.T) {
+	tests := []struct {
+		name       string
+		assign     *ast.AssignStmt
+		index      int
+		appendVars map[string]bool
+		expected   bool
+	}{
+		{
+			name:       "index out of bounds",
+			assign:     &ast.AssignStmt{Lhs: []ast.Expr{}},
+			index:      0,
+			appendVars: map[string]bool{},
+			expected:   false,
+		},
+		{
+			name:       "non-identifier lhs",
+			assign:     &ast.AssignStmt{Lhs: []ast.Expr{&ast.IndexExpr{}}},
+			index:      0,
+			appendVars: map[string]bool{},
+			expected:   false,
+		},
+		{
+			name:       "not in append vars",
+			assign:     &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			index:      0,
+			appendVars: map[string]bool{},
+			expected:   false,
+		},
+		{
+			name:       "in append vars",
+			assign:     &ast.AssignStmt{Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			index:      0,
+			appendVars: map[string]bool{"x": true},
+			expected:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			pass := &analysis.Pass{
+				Fset:   fset,
+				Report: func(_ analysis.Diagnostic) {},
+			}
+
+			ctx := &litCheckContext{
+				pass:       pass,
+				appendVars: tt.appendVars,
+			}
+
+			result := getAppendVariableName008(ctx, tt.assign, tt.index)
+
+			if result != tt.expected {
+				t.Errorf("getAppendVariableName008() = %v, expected %v", result, tt.expected)
+			}
+		})
+	}
+}
+
 // Test_reportVar008Error tests the reportVar008Error function.
 func Test_reportVar008Error(t *testing.T) {
 	// Test with valid message (message exists in registry)

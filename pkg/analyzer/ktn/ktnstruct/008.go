@@ -16,6 +16,8 @@ const (
 	ruleCodeStruct008 string = "KTN-STRUCT-008"
 	// methodsMapCap008 capacité initiale pour la map des méthodes
 	methodsMapCap008 int = 16
+	// minMethodsForConsistency nombre minimum de méthodes pour vérifier la cohérence
+	minMethodsForConsistency int = 2
 )
 
 // Analyzer008 checks receiver type consistency (pointer vs value).
@@ -24,13 +26,6 @@ var Analyzer008 *analysis.Analyzer = &analysis.Analyzer{
 	Doc:      "KTN-STRUCT-008: Le type de receiver doit être cohérent (pointer ou value)",
 	Run:      runStruct008,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
-
-// methodReceiverInfo contient les informations sur le receiver d'une méthode.
-type methodReceiverInfo struct {
-	name      string
-	isPointer bool
-	funcDecl  *ast.FuncDecl
 }
 
 // runStruct008 exécute l'analyse KTN-STRUCT-008.
@@ -43,7 +38,9 @@ type methodReceiverInfo struct {
 //   - error: erreur éventuelle
 func runStruct008(pass *analysis.Pass) (any, error) {
 	cfg := config.Get()
+	// Vérifier si la règle est activée
 	if !cfg.IsRuleEnabled(ruleCodeStruct008) {
+		// Règle désactivée
 		return nil, nil
 	}
 
@@ -51,6 +48,7 @@ func runStruct008(pass *analysis.Pass) (any, error) {
 	methodsByType := collectMethodReceiverTypes(pass, insp, cfg)
 	checkReceiverTypeConsistency(pass, methodsByType)
 
+	// Fin de l'analyse
 	return nil, nil
 }
 
@@ -70,22 +68,20 @@ func collectMethodReceiverTypes(pass *analysis.Pass, insp *inspector.Inspector, 
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		funcDecl := n.(*ast.FuncDecl)
 		filename := pass.Fset.Position(n.Pos()).Filename
+		// Vérifier si le fichier est exclu
 		if cfg.IsFileExcluded(ruleCodeStruct008, filename) {
+			// Fichier exclu
 			return
 		}
 		info := extractMethodInfo(funcDecl)
+		// Ajouter la méthode si info extraite
 		if info != nil {
 			result[info.typeName] = append(result[info.typeName], info.receiver)
 		}
 	})
 
+	// Retour de la map des méthodes
 	return result
-}
-
-// methodInfoResult contient le résultat de l'extraction des infos d'une méthode.
-type methodInfoResult struct {
-	typeName string
-	receiver methodReceiverInfo
 }
 
 // extractMethodInfo extrait les informations d'une méthode.
@@ -96,16 +92,21 @@ type methodInfoResult struct {
 // Returns:
 //   - *methodInfoResult: informations extraites ou nil si pas une méthode valide
 func extractMethodInfo(funcDecl *ast.FuncDecl) *methodInfoResult {
+	// Vérifier si c'est une méthode
 	if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
+		// Pas une méthode
 		return nil
 	}
 
 	recv := funcDecl.Recv.List[0]
 	typeName, isPointer := extractReceiverTypeInfo(recv.Type)
+	// Vérifier si le type est valide
 	if typeName == "" {
+		// Type invalide
 		return nil
 	}
 
+	// Retour des informations extraites
 	return &methodInfoResult{
 		typeName: typeName,
 		receiver: methodReceiverInfo{
@@ -126,15 +127,19 @@ func extractMethodInfo(funcDecl *ast.FuncDecl) *methodInfoResult {
 //   - bool: true si pointer receiver
 func extractReceiverTypeInfo(expr ast.Expr) (string, bool) {
 	isPointer := false
+	// Gérer le cas *Type
 	if star, ok := expr.(*ast.StarExpr); ok {
 		isPointer = true
 		expr = star.X
 	}
 
+	// Extraire l'identifiant
 	if ident, ok := expr.(*ast.Ident); ok {
+		// Retour du nom du type
 		return ident.Name, isPointer
 	}
 
+	// Type invalide
 	return "", false
 }
 
@@ -144,12 +149,15 @@ func extractReceiverTypeInfo(expr ast.Expr) (string, bool) {
 //   - pass: contexte d'analyse
 //   - methodsByType: map des méthodes par type
 func checkReceiverTypeConsistency(pass *analysis.Pass, methodsByType map[string][]methodReceiverInfo) {
+	// Parcourir les types
 	for typeName, methods := range methodsByType {
-		if len(methods) < 2 {
+		// Ignorer si moins de minMethodsForConsistency méthodes
+		if len(methods) < minMethodsForConsistency {
 			continue
 		}
 
 		pointerCount, valueCount := countReceiverTypes(methods)
+		// Vérifier s'il y a un mélange pointer/value
 		if pointerCount > 0 && valueCount > 0 {
 			reportInconsistentReceivers(pass, typeName, methods, pointerCount, valueCount)
 		}
@@ -166,14 +174,18 @@ func checkReceiverTypeConsistency(pass *analysis.Pass, methodsByType map[string]
 //   - int: nombre de value receivers
 func countReceiverTypes(methods []methodReceiverInfo) (int, int) {
 	pointerCount, valueCount := 0, 0
+	// Parcourir les méthodes
 	for _, m := range methods {
+		// Compter pointer vs value
 		if m.isPointer {
 			pointerCount++
 		} else {
+			// Value receiver
 			valueCount++
 		}
 	}
 
+	// Retour des compteurs
 	return pointerCount, valueCount
 }
 
@@ -188,16 +200,25 @@ func countReceiverTypes(methods []methodReceiverInfo) (int, int) {
 func reportInconsistentReceivers(pass *analysis.Pass, typeName string, methods []methodReceiverInfo, pointerCount, valueCount int) {
 	majorityIsPointer := pointerCount >= valueCount
 	majorityType, minorityType := "pointer", "value"
+	// Inverser si value est majoritaire
 	if !majorityIsPointer {
 		majorityType, minorityType = "value", "pointer"
 	}
 
 	exampleMethod := findMajorityMethod(methods, majorityIsPointer)
+	report := inconsistencyReport{
+		typeName:      typeName,
+		minorityType:  minorityType,
+		majorityType:  majorityType,
+		exampleMethod: exampleMethod,
+	}
+	// Parcourir et signaler les méthodes minoritaires
 	for _, m := range methods {
+		// Ignorer les méthodes du type majoritaire
 		if m.isPointer == majorityIsPointer {
 			continue
 		}
-		reportReceiverInconsistency(pass, m, minorityType, exampleMethod, majorityType, typeName)
+		reportReceiverInconsistency(pass, m, report)
 	}
 }
 
@@ -210,12 +231,16 @@ func reportInconsistentReceivers(pass *analysis.Pass, typeName string, methods [
 // Returns:
 //   - string: nom de la méthode exemple
 func findMajorityMethod(methods []methodReceiverInfo, majorityIsPointer bool) string {
+	// Chercher une méthode du type majoritaire
 	for _, m := range methods {
+		// Trouver la première méthode correspondante
 		if m.isPointer == majorityIsPointer {
+			// Retour du nom de la méthode
 			return m.name
 		}
 	}
 
+	// Aucune méthode trouvée
 	return ""
 }
 
@@ -224,16 +249,13 @@ func findMajorityMethod(methods []methodReceiverInfo, majorityIsPointer bool) st
 // Params:
 //   - pass: contexte d'analyse
 //   - m: méthode incohérente
-//   - minorityType: type minoritaire
-//   - exampleMethod: méthode exemple
-//   - majorityType: type majoritaire
-//   - typeName: nom du type
-func reportReceiverInconsistency(pass *analysis.Pass, m methodReceiverInfo, minorityType, exampleMethod, majorityType, typeName string) {
+//   - report: informations du rapport
+func reportReceiverInconsistency(pass *analysis.Pass, m methodReceiverInfo, report inconsistencyReport) {
 	msg, _ := messages.Get(ruleCodeStruct008)
 	pass.Reportf(
 		m.funcDecl.Recv.List[0].Pos(),
 		"%s: %s",
 		ruleCodeStruct008,
-		msg.Format(config.Get().Verbose, m.name, minorityType, exampleMethod, majorityType, typeName),
+		msg.Format(config.Get().Verbose, m.name, report.minorityType, report.exampleMethod, report.majorityType, report.typeName),
 	)
 }

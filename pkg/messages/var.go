@@ -4,6 +4,14 @@ package messages
 
 // registerVarMessages enregistre les messages VAR.
 func registerVarMessages() {
+	// Register first batch of messages
+	registerVarMessages001To018()
+	// Register second batch of messages
+	registerVarMessages019To037()
+}
+
+// registerVarMessages001To018 registers VAR messages 001-018.
+func registerVarMessages001To018() {
 	// VAR-001: Types explicites (ex-VAR-002)
 	Register(Message{
 		Code:  "KTN-VAR-001",
@@ -362,7 +370,10 @@ EXEMPLE INCORRECT:
 EXEMPLE CORRECT:
   var buf [32]byte  // Stack allocation`,
 	})
+}
 
+// registerVarMessages019To037 registers VAR messages 019-037.
+func registerVarMessages019To037() {
 	// VAR-019: Mutex copies (ex-VAR-017)
 	Register(Message{
 		Code:  "KTN-VAR-019",

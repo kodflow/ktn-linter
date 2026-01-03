@@ -39,13 +39,23 @@ func init() {
 //
 // Params:
 //   - cmd: cobra command
-//   - args: command arguments
-func runUpgrade(cmd *cobra.Command, args []string) {
+//   - _args: command arguments (unused - upgrade takes no args)
+func runUpgrade(cmd *cobra.Command, _args []string) {
 	// Create updater with current version
 	upd := updater.NewUpdater(version)
 
+	// Delegate to internal function with interfaces
+	runUpgradeWithDeps(cmd.Flags(), upd)
+}
+
+// runUpgradeWithDeps executes the upgrade with injected dependencies.
+//
+// Params:
+//   - flags: flag getter for command flags
+//   - upd: updater service
+func runUpgradeWithDeps(flags flagGetter, upd updaterService) {
 	// Check if check-only mode
-	checkOnly, _ := cmd.Flags().GetBool(flagCheck)
+	checkOnly, _ := flags.GetBool(flagCheck)
 
 	// Handle check-only mode
 	if checkOnly {
@@ -61,8 +71,8 @@ func runUpgrade(cmd *cobra.Command, args []string) {
 // handleCheckOnly checks for updates without upgrading.
 //
 // Params:
-//   - upd: updater instance
-func handleCheckOnly(upd *updater.Updater) {
+//   - upd: updater service
+func handleCheckOnly(upd updaterService) {
 	fmt.Println("Checking for updates...")
 
 	info, err := upd.CheckForUpdate()
@@ -88,8 +98,8 @@ func handleCheckOnly(upd *updater.Updater) {
 // handleUpgrade performs the actual upgrade.
 //
 // Params:
-//   - upd: updater instance
-func handleUpgrade(upd *updater.Updater) {
+//   - upd: updater service
+func handleUpgrade(upd updaterService) {
 	fmt.Println("Checking for updates...")
 
 	info, err := upd.Upgrade()

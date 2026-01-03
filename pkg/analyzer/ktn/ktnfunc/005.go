@@ -190,20 +190,21 @@ func countIfStmt(s *ast.IfStmt) int {
 	// Traitement du else si présent
 	if s.Else != nil {
 		// Vérification type du else
-		switch e := s.Else.(type) {
+		switch elseStmt := s.Else.(type) {
 		// Bloc else simple
 		case *ast.BlockStmt:
 			// Ajout des statements du else
-			count += countStatements(e)
+			count += countStatements(elseStmt)
 		// Else if
 		case *ast.IfStmt:
 			// Récursion sur le else if
-			count += countIfStmt(e)
+			count += countIfStmt(elseStmt)
 		}
 	}
 	// Retour du compte
 	return count
 }
+// Fin de countIfStmt
 
 // countSwitchStmt compte la complexité d'un switch/select statement.
 //
@@ -233,6 +234,7 @@ func countSwitchStmt(body *ast.BlockStmt) int {
 			count += 1 + len(cc.Body)
 		}
 	}
-	// Retour du compte
+	// Retour du compte total
 	return count
 }
+// Fin de countSwitchStmt

@@ -16,6 +16,8 @@ const (
 	ruleCodeVar021 string = "KTN-VAR-021"
 	// initialMethodsCap initial capacity for methods map
 	initialMethodsCap int = 10
+	// minReceiversForConsistency is the minimum number of receivers to check consistency
+	minReceiversForConsistency int = 2
 )
 
 // receiverInfo stocke les informations sur un receiver.
@@ -57,6 +59,7 @@ func runVar021(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving positions
 	if pass.Fset == nil {
+		// Cannot analyze without file set
 		return nil, nil
 	}
 
@@ -168,8 +171,8 @@ func extractReceiverType(expr ast.Expr) (string, bool) {
 func checkReceiverConsistency(pass *analysis.Pass, typeReceivers map[string][]receiverInfo) {
 	// Parcours des types
 	for typeName, receivers := range typeReceivers {
-		// Vérification si le type a au moins 2 méthodes
-		if len(receivers) < 2 {
+		// Vérification si le type a au moins le minimum de méthodes
+		if len(receivers) < minReceiversForConsistency {
 			// Pas assez de méthodes pour détecter une incohérence
 			continue
 		}
@@ -207,7 +210,10 @@ func reportInconsistency(pass *analysis.Pass, pos ast.Node, typeName string, dom
 	msg, ok := messages.Get(ruleCodeVar021)
 	// Defensive: avoid panic if message is missing
 	if !ok {
+		// Fallback message
 		pass.Reportf(pos.Pos(), "%s: receiver incohérent pour %s, attendu %s", ruleCodeVar021, typeName, expected)
+
+		// Stop after reporting
 		return
 	}
 
