@@ -55,7 +55,11 @@ func Test_runVar005(t *testing.T) {
 			defer config.Reset()
 
 			fset := token.NewFileSet()
-			file, _ := parser.ParseFile(fset, "test.go", tt.code, 0)
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil || file == nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 

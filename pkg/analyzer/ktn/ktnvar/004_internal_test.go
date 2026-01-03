@@ -142,11 +142,6 @@ func Test_checkVar004LocalVars(t *testing.T) {
 			code:        `package test; func f() { i := 1; _ = i }`,
 			expectCount: 0,
 		},
-		{
-			name:        "nil body",
-			code:        `package test; func f()`,
-			expectCount: 0,
-		},
 	}
 
 	for _, tt := range tests {
@@ -154,7 +149,11 @@ func Test_checkVar004LocalVars(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config.Reset()
 			fset := token.NewFileSet()
-			file, _ := parser.ParseFile(fset, "test.go", tt.code, 0)
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
 			insp := inspector.New([]*ast.File{file})
 			cfg := config.Get()
 			reportCount := 0
@@ -173,6 +172,43 @@ func Test_checkVar004LocalVars(t *testing.T) {
 			}
 		})
 	}
+
+	// Test nil body avec AST manuel (car `func f()` ne parse pas)
+	t.Run("nil body", func(t *testing.T) {
+		config.Reset()
+		fset := token.NewFileSet()
+
+		// Construire AST manuellement pour fonction sans body
+		file := &ast.File{
+			Name: &ast.Ident{Name: "test"},
+			Decls: []ast.Decl{
+				&ast.FuncDecl{
+					Name: &ast.Ident{Name: "f"},
+					Type: &ast.FuncType{
+						Params: &ast.FieldList{},
+					},
+					Body: nil,
+				},
+			},
+		}
+
+		insp := inspector.New([]*ast.File{file})
+		cfg := config.Get()
+		reportCount := 0
+
+		pass := &analysis.Pass{
+			Fset:     fset,
+			Files:    []*ast.File{file},
+			ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+			Report:   func(_ analysis.Diagnostic) { reportCount++ },
+		}
+
+		checkVar004LocalVars(pass, insp, cfg)
+
+		if reportCount != 0 {
+			t.Errorf("checkVar004LocalVars() reported %d issues, expected 0", reportCount)
+		}
+	})
 }
 
 // Test_checkVar004Node tests the checkVar004Node function.

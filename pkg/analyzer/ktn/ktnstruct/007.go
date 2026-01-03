@@ -179,10 +179,16 @@ func hasSerializationTag(field *ast.Field, tags []string) bool {
 		// Enlever le ":" si présent (config peut avoir "json:" ou "json")
 		tagKey := trimTagColon(tag)
 
+		// Tag key vide: ignorer (défensif)
+		if tagKey == "" {
+			// Skip les tags vides
+			continue
+		}
+
 		// Lookup exact du tag (pas de substring matching)
-		// Note: "-" est accepté car il documente explicitement l'exclusion
-		if tagValue, hasTag := st.Lookup(tagKey); hasTag && tagValue != "" {
-			// Tag trouvé avec valeur valide (y compris "-")
+		// Note: "-" et noms vides (ex: ",omitempty") sont valides
+		if _, hasTag := st.Lookup(tagKey); hasTag {
+			// Tag trouvé (toute valeur est acceptée)
 			return true
 		}
 	}
