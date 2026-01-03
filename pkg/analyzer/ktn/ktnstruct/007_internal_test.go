@@ -147,7 +147,11 @@ type myStruct struct {
 				Report:   func(d analysis.Diagnostic) {},
 				ResultOf: make(map[*analysis.Analyzer]any),
 			}
-			inspectResult, _ := inspect.Analyzer.Run(inspectPass)
+			inspectResult, inspErr := inspect.Analyzer.Run(inspectPass)
+			// Vérifier l'erreur d'inspect
+			if inspErr != nil || inspectResult == nil {
+				t.Fatalf("failed to run inspect analyzer: %v", inspErr)
+			}
 
 			pass := &analysis.Pass{
 				Fset:  fset,

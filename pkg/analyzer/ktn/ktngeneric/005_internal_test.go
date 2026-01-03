@@ -283,13 +283,18 @@ func foo[string any](s string) {}
 
 			// Create inspector
 			files := []*ast.File{file}
-			inspectResult, _ := inspect.Analyzer.Run(&analysis.Pass{
+			inspectResult, inspErr := inspect.Analyzer.Run(&analysis.Pass{
 				Fset:  fset,
 				Files: files,
 			})
+			// Vérifier l'erreur d'inspect
+			if inspErr != nil || inspectResult == nil {
+				t.Fatalf("failed to run inspect analyzer: %v", inspErr)
+			}
 
 			pass := &analysis.Pass{
-				Fset: fset,
+				Fset:  fset,
+				Files: files,
 				ResultOf: map[*analysis.Analyzer]any{
 					inspect.Analyzer: inspectResult,
 				},
