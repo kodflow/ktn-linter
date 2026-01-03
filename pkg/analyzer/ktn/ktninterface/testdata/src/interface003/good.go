@@ -21,6 +21,16 @@ type Handler interface {
 	Handle()
 }
 
+// Validator follows the -or convention for -ate verbs.
+type Validator interface {
+	Validate() error
+}
+
+// Generator follows the -or convention for -ate verbs.
+type Generator interface {
+	Generate()
+}
+
 // ReadWriter is a multi-method interface (no -er check needed).
 type ReadWriter interface {
 	Read()

@@ -3,6 +3,8 @@ package ktnstruct
 
 import (
 	"go/ast"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/kodflow/ktn-linter/pkg/config"
 	"github.com/kodflow/ktn-linter/pkg/messages"
@@ -48,27 +50,14 @@ type receiverInfo struct {
 //   - any: résultat de l'analyse
 //   - error: erreur éventuelle
 func runStruct009(pass *analysis.Pass) (any, error) {
-	// Récupération de la configuration
 	cfg := config.Get()
-
-	// Vérifier si la règle est activée
 	if !cfg.IsRuleEnabled(ruleCodeStruct009) {
-		// Règle désactivée
 		return nil, nil
 	}
-
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	// Collecter les receivers par type
 	receiversByType := collectReceivers(pass, insp, cfg)
-
-	// Vérifier la cohérence des noms
 	checkReceiverConsistency(pass, receiversByType)
-
-	// Vérifier les noms génériques
 	checkGenericReceiverNames(pass, receiversByType)
-
-	// Retour de la fonction
 	return nil, nil
 }
 
@@ -83,56 +72,45 @@ func runStruct009(pass *analysis.Pass) (any, error) {
 //   - map[string][]receiverInfo: map type -> liste de receivers
 func collectReceivers(pass *analysis.Pass, insp *inspector.Inspector, cfg *config.Config) map[string][]receiverInfo {
 	result := make(map[string][]receiverInfo, receiverMapCap)
-
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
-	}
-
+	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
-		funcDecl := n.(*ast.FuncDecl)
-
-		filename := pass.Fset.Position(n.Pos()).Filename
-		// Skip excluded files
-		if cfg.IsFileExcluded(ruleCodeStruct009, filename) {
-			// Fichier exclu
-			return
-		}
-
-		// Vérifier si c'est une méthode
-		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
-			// Pas une méthode
-			return
-		}
-
-		// Extraire le nom du type receiver
-		recv := funcDecl.Recv.List[0]
-		typeName := extractReceiverTypeName(recv.Type)
-		// Si pas de type valide, ignorer
-		if typeName == "" {
-			// Retour anticipé
-			return
-		}
-
-		// Extraire le nom du receiver
-		receiverName := extractReceiverName(recv)
-		// Si pas de nom, ignorer
-		if receiverName == "" {
-			// Retour anticipé
-			return
-		}
-
-		// Ajouter à la map
-		result[typeName] = append(result[typeName], receiverInfo{
-			name:     receiverName,
-			funcDecl: funcDecl,
-		})
+		processMethodDecl009(pass, cfg, n.(*ast.FuncDecl), result)
 	})
-
-	// Retour de la map
 	return result
 }
 
+// processMethodDecl009 traite une déclaration de méthode pour collecte des receivers.
+//
+// Params:
+//   - pass: contexte d'analyse
+//   - cfg: configuration
+//   - funcDecl: déclaration de fonction
+//   - result: map à remplir
+func processMethodDecl009(pass *analysis.Pass, cfg *config.Config, funcDecl *ast.FuncDecl, result map[string][]receiverInfo) {
+	filename := pass.Fset.Position(funcDecl.Pos()).Filename
+	if cfg.IsFileExcluded(ruleCodeStruct009, filename) {
+		return
+	}
+	if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
+		return
+	}
+	recv := funcDecl.Recv.List[0]
+	typeName := extractReceiverTypeName(recv.Type)
+	if typeName == "" {
+		return
+	}
+	receiverName := extractReceiverName(recv)
+	if receiverName == "" {
+		return
+	}
+	result[typeName] = append(result[typeName], receiverInfo{
+		name:     receiverName,
+		funcDecl: funcDecl,
+	})
+}
+
 // extractReceiverTypeName extrait le nom du type du receiver.
+// Gère les pointeurs (*Type) et les types simples (Type).
 //
 // Params:
 //   - expr: expression du type
@@ -140,18 +118,12 @@ func collectReceivers(pass *analysis.Pass, insp *inspector.Inspector, cfg *confi
 // Returns:
 //   - string: nom du type
 func extractReceiverTypeName(expr ast.Expr) string {
-	// Gérer le cas *Type
 	if star, ok := expr.(*ast.StarExpr); ok {
 		expr = star.X
 	}
-
-	// Gérer le cas Type
 	if ident, ok := expr.(*ast.Ident); ok {
-		// Retourner le nom
 		return ident.Name
 	}
-
-	// Type non reconnu
 	return ""
 }
 
@@ -163,37 +135,26 @@ func extractReceiverTypeName(expr ast.Expr) string {
 // Returns:
 //   - string: nom du receiver
 func extractReceiverName(field *ast.Field) string {
-	// Vérifier si le receiver a un nom
 	if len(field.Names) == 0 {
-		// Pas de nom explicite
 		return ""
 	}
-
-	// Retourner le premier nom
 	return field.Names[0].Name
 }
 
 // checkReceiverConsistency vérifie la cohérence des noms de receiver.
+// Reporte si différents noms sont utilisés pour le même type.
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - receiversByType: map des receivers par type
 func checkReceiverConsistency(pass *analysis.Pass, receiversByType map[string][]receiverInfo) {
-	// Parcourir les types
 	for typeName, receivers := range receiversByType {
-		// Si moins de 2 receivers, pas de vérification
 		if len(receivers) < 2 {
-			// Continuer au type suivant
 			continue
 		}
-
-		// Trouver le nom le plus courant
 		firstName := receivers[0].name
-
-		// Vérifier la cohérence
 		for i := 1; i < len(receivers); i++ {
 			recv := receivers[i]
-			// Si nom différent, reporter
 			if recv.name != firstName {
 				msg, _ := messages.Get(ruleCodeStruct009)
 				pass.Reportf(
@@ -207,17 +168,14 @@ func checkReceiverConsistency(pass *analysis.Pass, receiversByType map[string][]
 	}
 }
 
-// checkGenericReceiverNames vérifie les noms de receiver génériques.
+// checkGenericReceiverNames vérifie les noms de receiver génériques (this, self, me).
 //
 // Params:
 //   - pass: contexte d'analyse
 //   - receiversByType: map des receivers par type
 func checkGenericReceiverNames(pass *analysis.Pass, receiversByType map[string][]receiverInfo) {
-	// Parcourir les types
 	for typeName, receivers := range receiversByType {
-		// Parcourir les receivers
 		for _, recv := range receivers {
-			// Vérifier si nom générique
 			if badReceiverNames[recv.name] {
 				msg, _ := messages.Get(ruleCodeStruct009)
 				pass.Reportf(
@@ -231,7 +189,7 @@ func checkGenericReceiverNames(pass *analysis.Pass, receiversByType map[string][
 	}
 }
 
-// suggestReceiverName suggère un nom de receiver basé sur le type.
+// suggestReceiverName suggère un nom de receiver basé sur le type (UTF-8 safe).
 //
 // Params:
 //   - typeName: nom du type
@@ -239,19 +197,9 @@ func checkGenericReceiverNames(pass *analysis.Pass, receiversByType map[string][
 // Returns:
 //   - string: nom suggéré (1-2 lettres)
 func suggestReceiverName(typeName string) string {
-	// Vérifier si le type est vide
-	if len(typeName) == 0 {
-		// Retourner valeur par défaut
+	if typeName == "" {
 		return "v"
 	}
-
-	// Retourner la première lettre en minuscule
-	first := typeName[0]
-	// Convertir en minuscule si nécessaire
-	if first >= 'A' && first <= 'Z' {
-		first = first + 32
-	}
-
-	// Retourner le nom suggéré
-	return string(first)
+	r, _ := utf8.DecodeRuneInString(typeName)
+	return string(unicode.ToLower(r))
 }
