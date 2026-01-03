@@ -288,7 +288,8 @@ func mergeStringMaps(m1, m2 map[string]string) map[string]string {
 
 	// maps.Copy panic si result est nil
 	if result == nil {
-		result = make(map[string]string)
+		// Creer une map avec capacite de m2
+		result = make(map[string]string, len(m2))
 	}
 
 	// Ajouter m2 au resultat

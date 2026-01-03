@@ -167,6 +167,7 @@ func hasSerializationTag(field *ast.Field, tags []string) bool {
 	unquoted, err := strconv.Unquote(field.Tag.Value)
 	// Tag invalide traité comme absent
 	if err != nil {
+		// Retour anticipé si tag malformé
 		return false
 	}
 
@@ -179,8 +180,9 @@ func hasSerializationTag(field *ast.Field, tags []string) bool {
 		tagKey := trimTagColon(tag)
 
 		// Lookup exact du tag (pas de substring matching)
-		if v, ok := st.Lookup(tagKey); ok && v != "" && v != "-" {
-			// Tag trouvé avec valeur valide
+		// Note: "-" est accepté car il documente explicitement l'exclusion
+		if tagValue, hasTag := st.Lookup(tagKey); hasTag && tagValue != "" {
+			// Tag trouvé avec valeur valide (y compris "-")
 			return true
 		}
 	}
@@ -199,8 +201,10 @@ func hasSerializationTag(field *ast.Field, tags []string) bool {
 func trimTagColon(tag string) string {
 	// Enlever le ":" final si présent
 	if len(tag) > 0 && tag[len(tag)-1] == ':' {
+		// Tag avec suffixe ":"
 		return tag[:len(tag)-1]
 	}
+
 	// Retourner tel quel
 	return tag
 }

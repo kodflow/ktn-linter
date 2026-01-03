@@ -173,6 +173,7 @@ func isAnalysisPassType(expr ast.Expr) bool {
 	starExpr, ok := expr.(*ast.StarExpr)
 	// Type non pointeur
 	if !ok {
+		// Pas un type pointeur
 		return false
 	}
 
@@ -180,6 +181,7 @@ func isAnalysisPassType(expr ast.Expr) bool {
 	selExpr, ok := starExpr.X.(*ast.SelectorExpr)
 	// Type non qualifié
 	if !ok {
+		// Pas un sélecteur de type
 		return false
 	}
 

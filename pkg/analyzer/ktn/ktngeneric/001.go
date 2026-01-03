@@ -101,6 +101,7 @@ func analyzeGenericFunc(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 func collectAnyTypeParams(typeParams *ast.FieldList) map[string]bool {
 	// Retourner map vide si aucun type parameter
 	if typeParams == nil || len(typeParams.List) == 0 {
+		// Pas de parametres de type
 		return map[string]bool{}
 	}
 

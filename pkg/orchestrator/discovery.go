@@ -187,6 +187,7 @@ func (d *ModuleDiscovery) createWalkCallback(modules *[]string) fs.WalkDirFunc {
 func shouldSkipDirectory(entry os.DirEntry) bool {
 	// Only check directories
 	if !entry.IsDir() {
+		// Pas un répertoire
 		return false
 	}
 
@@ -194,6 +195,7 @@ func shouldSkipDirectory(entry os.DirEntry) bool {
 
 	// Skip hidden directories (start with dot)
 	if strings.HasPrefix(name, ".") {
+		// Répertoire caché
 		return true
 	}
 
