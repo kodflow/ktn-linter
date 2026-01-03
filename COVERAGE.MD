@@ -25,7 +25,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.6% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` | 100.0% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 92.7% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 93.8% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 94.0% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 99.9% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper` | 98.0% |
@@ -126,7 +126,7 @@ Rapport de couverture généré automatiquement.
 | 🔴 `004.go:buildParamName` | 66.7% |
 | 🔴 `004.go:buildReturnName` | 60.0% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 93.8%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 94.0%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -137,7 +137,6 @@ Rapport de couverture généré automatiquement.
 | 🟢 `003.go:isSimpleGetter` | 93.3% |
 | 🟢 `004.go:collectStructs` | 92.9% |
 | 🟢 `005.go:runStruct005` | 94.4% |
-| 🟢 `006.go:runStruct006` | 94.1% |
 | 🟡 `007.go:runStruct007` | 87.5% |
 | 🟡 `007.go:analyzeTypeSpec007` | 80.0% |
 | 🟡 `007.go:checkExportedFieldsWithoutTags` | 90.0% |
@@ -279,4 +278,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-03 15:12:05*
+*Généré le: 2026-01-03 15:23:27*

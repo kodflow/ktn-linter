@@ -37,7 +37,7 @@ type Admin struct { Role string }`,
 			name: "multiple serializable structs",
 			code: `package test
 type UserDTO struct { Name string ` + "`json:\"name\"`" + ` }
-type AdminConfig struct { Role string }`,
+type AdminConfig struct { Role string ` + "`yaml:\"role\"`" + ` }`,
 			filename:    "dto.go",
 			expectError: false,
 		},
@@ -207,14 +207,14 @@ func Test_allStructsAreSerializable(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "all DTOs by suffix",
+			name: "all DTOs with yaml tags",
 			src: `package test
-type UserConfig struct { Name string }
-type AppSettings struct { Port int }`,
+type UserConfig struct { Name string ` + "`yaml:\"name\"`" + ` }
+type AppSettings struct { Port int ` + "`yaml:\"port\"`" + ` }`,
 			expected: true,
 		},
 		{
-			name: "all DTOs by tag",
+			name: "all DTOs with mixed tags",
 			src: `package test
 type User struct { Name string ` + "`json:\"name\"`" + ` }
 type Admin struct { Role string ` + "`yaml:\"role\"`" + ` }`,

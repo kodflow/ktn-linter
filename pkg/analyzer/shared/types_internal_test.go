@@ -8,34 +8,6 @@ import (
 	"testing"
 )
 
-// Test_hasSerializableSuffix tests the hasSerializableSuffix function.
-func Test_hasSerializableSuffix(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected bool
-	}{
-		{"Config suffix", "AppConfig", true},
-		{"Request suffix", "UserRequest", true},
-		{"Response suffix", "APIResponse", true},
-		{"DTO suffix", "UserDTO", true},
-		{"No suffix", "User", false},
-		{"Empty", "", false},
-	}
-
-	// Parcourir les cas de test
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			result := hasSerializableSuffix(tt.input)
-			// Vérification résultat
-			if result != tt.expected {
-				t.Errorf("hasSerializableSuffix(%q) = %v, want %v", tt.input, result, tt.expected)
-			}
-		})
-	}
-}
-
 // Test_hasSerializationTags tests the hasSerializationTags function.
 func Test_hasSerializationTags(t *testing.T) {
 	tests := []struct {
