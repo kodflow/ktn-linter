@@ -55,7 +55,11 @@ func Test_runVar004(t *testing.T) {
 			defer config.Reset()
 
 			fset := token.NewFileSet()
-			file, _ := parser.ParseFile(fset, "test.go", tt.code, 0)
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil || file == nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
 			insp := inspector.New([]*ast.File{file})
 			reportCount := 0
 
@@ -483,7 +487,11 @@ func Test_runVar004_disabled(t *testing.T) {
 	}
 
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", `package test; var a = 1`, 0)
+	file, parseErr := parser.ParseFile(fset, "test.go", `package test; var a = 1`, 0)
+	// Vérifier l'erreur de parsing
+	if parseErr != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", parseErr)
+	}
 
 	insp := inspector.New([]*ast.File{file})
 	pass := &analysis.Pass{
@@ -510,7 +518,11 @@ func Test_checkVar004PackageLevel_nonVarDecl(t *testing.T) {
 const x = 1
 func foo() {}
 `
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 	cfg := config.Get()
 
@@ -761,7 +773,11 @@ func Test_checkVar004PackageLevel_excluded(t *testing.T) {
 	code := `package test
 var a = 1
 `
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0
@@ -795,7 +811,11 @@ func foo() {
 	_ = x
 }
 `
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0

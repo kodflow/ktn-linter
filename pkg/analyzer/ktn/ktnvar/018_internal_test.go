@@ -638,7 +638,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -683,7 +687,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -728,7 +736,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -754,9 +766,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar018(pass)
-	if err != nil {
-		t.Errorf("runVar018() error = %v", err)
+	_, runErr := runVar018(pass)
+	if runErr != nil {
+		t.Errorf("runVar018() error = %v", runErr)
 	}
 
 	// Should report for small slice
@@ -778,7 +790,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -804,9 +820,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar018(pass)
-	if err != nil {
-		t.Errorf("runVar018() error = %v", err)
+	_, runErr := runVar018(pass)
+	if runErr != nil {
+		t.Errorf("runVar018() error = %v", runErr)
 	}
 
 	// Should report with verbose mode
@@ -823,7 +839,11 @@ func foo(n int) {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),

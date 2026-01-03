@@ -561,7 +561,11 @@ func Test_runVar013_nilTypesInfo(t *testing.T) {
 	func foo(x int) {}
 	`
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	pass := &analysis.Pass{
