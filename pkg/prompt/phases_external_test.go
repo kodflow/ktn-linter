@@ -108,7 +108,7 @@ func TestClassifyRule(t *testing.T) {
 			{name: "var-002", code: "KTN-VAR-002", want: prompt.PhaseLocal},
 			{name: "struct-001", code: "KTN-STRUCT-001", want: prompt.PhaseLocal},
 			{name: "const-001", code: "KTN-CONST-001", want: prompt.PhaseLocal},
-			{name: "return-001", code: "KTN-RETURN-001", want: prompt.PhaseLocal},
+			{name: "func-013", code: "KTN-FUNC-013", want: prompt.PhaseLocal},
 			{name: "interface-001", code: "KTN-INTERFACE-001", want: prompt.PhaseLocal},
 		}
 

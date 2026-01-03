@@ -1,5 +1,5 @@
-// Internal tests for analyzer 001 in ktnreturn package.
-package ktnreturn
+// Internal tests for analyzer 013 in ktnfunc package.
+package ktnfunc
 
 import (
 	"go/ast"
@@ -14,8 +14,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Test_runReturn001 tests the private runReturn001 function
-func Test_runReturn001(t *testing.T) {
+// Test_runFunc013 tests the private runFunc013 function
+func Test_runFunc013(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -109,10 +109,10 @@ func GetError() error {
 			}
 
 			// Run analyzer
-			_, err = runReturn001(pass)
+			_, err = runFunc013(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runReturn001 failed: %v", err)
+				t.Fatalf("runFunc013 failed: %v", err)
 			}
 
 			// Check error count matches expectation
@@ -123,8 +123,8 @@ func GetError() error {
 	}
 }
 
-// Test_isSliceOrMapType tests the isSliceOrMapType function
-func Test_isSliceOrMapType(t *testing.T) {
+// Test_isSliceOrMapTypeFunc013 tests the isSliceOrMapTypeFunc013 function
+func Test_isSliceOrMapTypeFunc013(t *testing.T) {
 	code := `package test
 type MySlice []int
 type MyMap map[string]int
@@ -188,17 +188,17 @@ type MyInt int
 				t.Fatalf("could not find type %s", tt.typeName)
 			}
 
-			got := isSliceOrMapType(pass, expr)
+			got := isSliceOrMapTypeFunc013(pass, expr)
 			// Check result matches expectation
 			if got != tt.want {
-				t.Errorf("isSliceOrMapType(%s) = %v, want %v", tt.typeName, got, tt.want)
+				t.Errorf("isSliceOrMapTypeFunc013(%s) = %v, want %v", tt.typeName, got, tt.want)
 			}
 		})
 	}
 }
 
-// Test_isNilIdent tests the isNilIdent function
-func Test_isNilIdent(t *testing.T) {
+// Test_isNilIdentFunc013 tests the isNilIdentFunc013 function
+func Test_isNilIdentFunc013(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
@@ -221,17 +221,17 @@ func Test_isNilIdent(t *testing.T) {
 			}
 
 			_ = fset // unused but kept for consistency
-			got := isNilIdent(expr)
+			got := isNilIdentFunc013(expr)
 			// Check result matches expectation
 			if got != tt.want {
-				t.Errorf("isNilIdent(%q) = %v, want %v", tt.code, got, tt.want)
+				t.Errorf("isNilIdentFunc013(%q) = %v, want %v", tt.code, got, tt.want)
 			}
 		})
 	}
 }
 
-// Test_checkNilReturns tests the checkNilReturns private function.
-func Test_checkNilReturns(t *testing.T) {
+// Test_checkNilReturnsFunc013 tests the checkNilReturnsFunc013 private function.
+func Test_checkNilReturnsFunc013(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -289,7 +289,7 @@ func GetSlice() []int {
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check for function declaration
 				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					checkNilReturns(pass, funcDecl)
+					checkNilReturnsFunc013(pass, funcDecl)
 				}
 				// Continue traversal
 				return true
@@ -303,8 +303,8 @@ func GetSlice() []int {
 	}
 }
 
-// Test_collectSliceMapReturnTypes tests the collectSliceMapReturnTypes private function.
-func Test_collectSliceMapReturnTypes(t *testing.T) {
+// Test_collectSliceMapReturnTypesFunc013 tests the collectSliceMapReturnTypesFunc013 private function.
+func Test_collectSliceMapReturnTypesFunc013(t *testing.T) {
 	tests := []struct {
 		name     string
 		code     string
@@ -386,7 +386,7 @@ func UnnamedReturn() []string {
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check if function declaration
 				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					result := collectSliceMapReturnTypes(pass, funcDecl)
+					result := collectSliceMapReturnTypesFunc013(pass, funcDecl)
 					// Verify length
 					if len(result) != tt.wantLen {
 						t.Errorf("expected %d return types, got %d", tt.wantLen, len(result))
@@ -405,8 +405,8 @@ func UnnamedReturn() []string {
 	}
 }
 
-// Test_getSuggestionForType tests the getSuggestionForType private function.
-func Test_getSuggestionForType(t *testing.T) {
+// Test_getSuggestionForTypeFunc013 tests the getSuggestionForTypeFunc013 private function.
+func Test_getSuggestionForTypeFunc013(t *testing.T) {
 	tests := []struct {
 		name string
 		code string
@@ -462,10 +462,10 @@ type MyStruct struct{}`,
 				// Check for type spec
 				if ts, ok := n.(*ast.TypeSpec); ok {
 					if tv, ok := info.Types[ts.Type]; ok {
-						got := getSuggestionForType(tv.Type)
+						got := getSuggestionForTypeFunc013(tv.Type)
 						// Check result matches expectation
 						if got != tt.want {
-							t.Errorf("getSuggestionForType() = %q, want %q", got, tt.want)
+							t.Errorf("getSuggestionForTypeFunc013() = %q, want %q", got, tt.want)
 						}
 					}
 				}
@@ -476,8 +476,8 @@ type MyStruct struct{}`,
 	}
 }
 
-// Test_isSliceOrMapTypeWithNilTypeInfo tests isSliceOrMapType with nil type info.
-func Test_isSliceOrMapTypeWithNilTypeInfo(t *testing.T) {
+// Test_isSliceOrMapTypeFunc013WithNilTypeInfo tests isSliceOrMapTypeFunc013 with nil type info.
+func Test_isSliceOrMapTypeFunc013WithNilTypeInfo(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -510,10 +510,10 @@ func Test_isSliceOrMapTypeWithNilTypeInfo(t *testing.T) {
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check for type spec
 				if ts, ok := n.(*ast.TypeSpec); ok {
-					got := isSliceOrMapType(pass, ts.Type)
+					got := isSliceOrMapTypeFunc013(pass, ts.Type)
 					// Should return false when type info is nil
 					if got != false {
-						t.Errorf("isSliceOrMapType with nil type info = %v, want false", got)
+						t.Errorf("isSliceOrMapTypeFunc013 with nil type info = %v, want false", got)
 					}
 				}
 				// Continue traversal
@@ -524,8 +524,8 @@ func Test_isSliceOrMapTypeWithNilTypeInfo(t *testing.T) {
 	}
 }
 
-// Test_runReturn001WithDisabledRule tests runReturn001 when rule is disabled.
-func Test_runReturn001WithDisabledRule(t *testing.T) {
+// Test_runFunc013WithDisabledRule tests runFunc013 when rule is disabled.
+func Test_runFunc013WithDisabledRule(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -538,7 +538,7 @@ func Test_runReturn001WithDisabledRule(t *testing.T) {
 			// Set configuration to disable rule
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
-					ruleCodeReturn001: {Enabled: config.Bool(false)},
+					ruleCodeFunc013: {Enabled: config.Bool(false)},
 				},
 			})
 			// Reset config after test
@@ -591,10 +591,10 @@ func Test_runReturn001WithDisabledRule(t *testing.T) {
 			}
 
 			// Run analyzer
-			_, err = runReturn001(pass)
+			_, err = runFunc013(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runReturn001 failed: %v", err)
+				t.Fatalf("runFunc013 failed: %v", err)
 			}
 
 			// Should report 0 errors when rule is disabled
@@ -606,8 +606,8 @@ func Test_runReturn001WithDisabledRule(t *testing.T) {
 	}
 }
 
-// Test_runReturn001WithFileExclusion tests runReturn001 with excluded files.
-func Test_runReturn001WithFileExclusion(t *testing.T) {
+// Test_runFunc013WithFileExclusion tests runFunc013 with excluded files.
+func Test_runFunc013WithFileExclusion(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -620,7 +620,7 @@ func Test_runReturn001WithFileExclusion(t *testing.T) {
 			// Set configuration to exclude specific file
 			config.Set(&config.Config{
 				Rules: map[string]*config.RuleConfig{
-					ruleCodeReturn001: {
+					ruleCodeFunc013: {
 						Enabled: config.Bool(true),
 						Exclude: []string{"test.go"},
 					},
@@ -676,10 +676,10 @@ func Test_runReturn001WithFileExclusion(t *testing.T) {
 			}
 
 			// Run analyzer
-			_, err = runReturn001(pass)
+			_, err = runFunc013(pass)
 			// Check for execution errors
 			if err != nil {
-				t.Fatalf("runReturn001 failed: %v", err)
+				t.Fatalf("runFunc013 failed: %v", err)
 			}
 
 			// Should report 0 errors when file is excluded
@@ -691,8 +691,8 @@ func Test_runReturn001WithFileExclusion(t *testing.T) {
 	}
 }
 
-// Test_collectSliceMapReturnTypesWithNilTypeInfo tests edge cases.
-func Test_collectSliceMapReturnTypesWithNilTypeInfo(t *testing.T) {
+// Test_collectSliceMapReturnTypesFunc013WithNilTypeInfo tests edge cases.
+func Test_collectSliceMapReturnTypesFunc013WithNilTypeInfo(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -729,7 +729,7 @@ func Test_collectSliceMapReturnTypesWithNilTypeInfo(t *testing.T) {
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check if function declaration
 				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					result := collectSliceMapReturnTypes(pass, funcDecl)
+					result := collectSliceMapReturnTypesFunc013(pass, funcDecl)
 					// Should return empty string when type info is missing
 					if len(result) != 1 || result[0] != "" {
 						t.Errorf("expected [\"\"], got %v", result)
@@ -743,8 +743,8 @@ func Test_collectSliceMapReturnTypesWithNilTypeInfo(t *testing.T) {
 	}
 }
 
-// Test_checkNilReturnsWithEmptyTypeInfo tests checkNilReturns with empty type info.
-func Test_checkNilReturnsWithEmptyTypeInfo(t *testing.T) {
+// Test_checkNilReturnsFunc013WithEmptyTypeInfo tests checkNilReturnsFunc013 with empty type info.
+func Test_checkNilReturnsFunc013WithEmptyTypeInfo(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -783,11 +783,11 @@ func Test_checkNilReturnsWithEmptyTypeInfo(t *testing.T) {
 				errorCount++
 			}
 
-			// Find function declaration and test checkNilReturns
+			// Find function declaration and test checkNilReturnsFunc013
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check for function declaration
 				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					checkNilReturns(pass, funcDecl)
+					checkNilReturnsFunc013(pass, funcDecl)
 				}
 				// Continue traversal
 				return true
@@ -803,8 +803,8 @@ func Test_checkNilReturnsWithEmptyTypeInfo(t *testing.T) {
 	}
 }
 
-// Test_checkNilReturnsNonReturnStatement tests that non-return statements are skipped.
-func Test_checkNilReturnsNonReturnStatement(t *testing.T) {
+// Test_checkNilReturnsFunc013NonReturnStatement tests that non-return statements are skipped.
+func Test_checkNilReturnsFunc013NonReturnStatement(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -849,11 +849,11 @@ func Test_checkNilReturnsNonReturnStatement(t *testing.T) {
 				errorCount++
 			}
 
-			// Find function declaration and test checkNilReturns
+			// Find function declaration and test checkNilReturnsFunc013
 			ast.Inspect(file, func(n ast.Node) bool {
 				// Check for function declaration
 				if funcDecl, ok := n.(*ast.FuncDecl); ok {
-					checkNilReturns(pass, funcDecl)
+					checkNilReturnsFunc013(pass, funcDecl)
 				}
 				// Continue traversal
 				return true

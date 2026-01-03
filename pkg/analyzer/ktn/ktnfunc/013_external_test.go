@@ -1,17 +1,17 @@
-// External tests for ktnreturn Analyzer001.
-package ktnreturn_test
+// External tests for ktnfunc Analyzer013.
+package ktnfunc_test
 
 import (
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
 
-	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn"
+	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc"
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 )
 
-// TestReturn001 tests the Analyzer001 for nil returns in slice/map types.
-func TestReturn001(t *testing.T) {
+// TestFunc013 tests the Analyzer013 for nil returns in slice/map types.
+func TestFunc013(t *testing.T) {
 	tests := []struct {
 		name             string
 		analyzer         *analysis.Analyzer
@@ -20,14 +20,14 @@ func TestReturn001(t *testing.T) {
 	}{
 		{
 			name:             "nil slice returns detection",
-			analyzer:         ktnreturn.Analyzer001,
-			testDataDir:      "return001",
+			analyzer:         ktnfunc.Analyzer013,
+			testDataDir:      "func013",
 			expectedBadCount: 6,
 		},
 		{
 			name:             "nil map returns validation",
-			analyzer:         ktnreturn.Analyzer001,
-			testDataDir:      "return001",
+			analyzer:         ktnfunc.Analyzer013,
+			testDataDir:      "func013",
 			expectedBadCount: 6,
 		},
 	}

@@ -3,7 +3,7 @@
 ## Purpose
 Analyze function declarations for style, complexity, and documentation.
 
-## Rules (12 total)
+## Rules (13 total)
 | Rule | Description | Severity |
 |------|-------------|----------|
 | KTN-FUNC-001 | Function too long (max 35 lines) | Error |
@@ -18,11 +18,12 @@ Analyze function declarations for style, complexity, and documentation.
 | KTN-FUNC-010 | Empty function body | Warning |
 | KTN-FUNC-011 | Missing comments on if/switch/return | Info |
 | KTN-FUNC-012 | Else after return (simplify) | Warning |
+| KTN-FUNC-013 | Prefer empty slice/map over nil | Warning |
 
 ## File Structure
 ```
 ktnfunc/
-├── 001.go ... 012.go       # Rule implementations
+├── 001.go ... 013.go       # Rule implementations
 ├── 001_external_test.go    # Black-box tests
 ├── registry.go             # GetAnalyzers()
 └── testdata/src/

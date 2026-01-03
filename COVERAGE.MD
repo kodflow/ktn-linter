@@ -22,10 +22,9 @@ Rapport de couverture généré automatiquement.
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnapi` | 93.9% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktncomment` | 98.1% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnconst` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.4% |
+| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` | 96.6% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktngeneric` | 100.0% |
 | 🔵 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktninterface` | 100.0% |
-| 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` | 98.4% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` | 97.5% |
 | 🟡 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktntest` | 90.8% |
 | 🟢 | `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnvar` | 99.9% |
@@ -88,7 +87,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `007.go:hasCommentBefore` | 92.9% |
 | 🟢 `007.go:hasInlineComment` | 93.3% |
 
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 96.4%
+### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnfunc` - 96.6%
 
 | Fichier:Fonction | Couverture |
 |------------------|------------|
@@ -109,12 +108,7 @@ Rapport de couverture généré automatiquement.
 | 🟢 `008.go:findParentAssignToBlank008` | 95.0% |
 | 🟢 `009.go:checkMagicNumbers` | 92.9% |
 | 🟢 `011.go:runFunc011` | 95.2% |
-
-### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnreturn` - 98.4%
-
-| Fichier:Fonction | Couverture |
-|------------------|------------|
-| 🟢 `001.go:checkNilReturns` | 92.9% |
+| 🟢 `013.go:checkNilReturnsFunc013` | 92.9% |
 
 ### 🟢 `github.com/kodflow/ktn-linter/pkg/analyzer/ktn/ktnstruct` - 97.5%
 
@@ -252,4 +246,4 @@ Rapport de couverture généré automatiquement.
 
 ---
 
-*Généré le: 2026-01-02 13:28:44*
+*Généré le: 2026-01-03 00:23:38*

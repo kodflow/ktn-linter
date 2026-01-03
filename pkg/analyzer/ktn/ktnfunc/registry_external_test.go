@@ -8,7 +8,7 @@ import (
 
 // TestGetAnalyzers tests GetAnalyzers returns all analyzers
 func TestGetAnalyzers(t *testing.T) {
-	const MIN_EXPECTED_COUNT int = 12 // FUNC-007 et FUNC-009 déplacés vers COMMENT
+	const MIN_EXPECTED_COUNT int = 13 // Includes FUNC-013 (prefer empty slice/map over nil)
 	expectedNames := map[string]bool{
 		"ktnfunc001": true, // Error last
 		"ktnfunc002": true, // Context first
@@ -22,6 +22,7 @@ func TestGetAnalyzers(t *testing.T) {
 		"ktnfunc010": true, // No naked returns (ex-012)
 		"ktnfunc011": true, // Max cyclomatic complexity (ex-013)
 		"ktnfunc012": true, // Named returns >3 values (ex-014)
+		"ktnfunc013": true, // Prefer empty slice/map over nil (ex-RETURN-001)
 	}
 
 	tests := []struct {

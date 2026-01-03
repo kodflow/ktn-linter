@@ -3,17 +3,17 @@
 ## Structure
 ```
 analyzer/
-├── ktn/              # KTN rules (62 rules across 10 categories)
+├── ktn/              # KTN rules (80 rules across 10 categories)
 │   ├── registry.go   # Master registry: GetAllRules(), GetRuleByCode()
-│   ├── ktnfunc/      # Function rules (12): length, params, docs
-│   ├── ktnvar/       # Variable rules (18): naming, shadowing
-│   ├── ktnstruct/    # Struct rules (7): field count, embedding
-│   ├── ktnconst/     # Const rules (3): naming, grouping
+│   ├── ktnfunc/      # Function rules (13): length, params, docs, nil returns
+│   ├── ktnvar/       # Variable rules (36): naming, shadowing
+│   ├── ktnstruct/    # Struct rules (6): field count, embedding
+│   ├── ktnconst/     # Const rules (6): naming, grouping
+│   ├── ktngeneric/   # Generic rules (5): type constraints
 │   ├── ktncomment/   # Comment rules (7): format, placement
-│   ├── ktntest/      # Test rules (13): naming, assertions
+│   ├── ktntest/      # Test rules (11): naming, assertions
 │   ├── ktnapi/       # API rules (1): field access
 │   ├── ktninterface/ # Interface rules (1): size limits
-│   ├── ktnreturn/    # Return rules (1): naked returns
 │   └── testhelper/   # Test utilities for analyzers
 ├── modernize/        # Wrapper for golang.org/x/tools/go/analysis/passes/modernize
 ├── utils/            # AST utilities (100% coverage)

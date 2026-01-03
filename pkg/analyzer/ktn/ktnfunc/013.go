@@ -1,5 +1,5 @@
-// Package ktnreturn provides analyzers for return statement lint rules.
-package ktnreturn
+// Package ktnfunc provides analyzers for function-related lint rules.
+package ktnfunc
 
 import (
 	"go/ast"
@@ -13,31 +13,31 @@ import (
 )
 
 const (
-	// ruleCodeReturn001 rule code for RETURN-001
-	ruleCodeReturn001 string = "KTN-RETURN-001"
+	// ruleCodeFunc013 rule code for FUNC-013
+	ruleCodeFunc013 string = "KTN-FUNC-013"
 )
 
-// Analyzer001 detects nil returns for slice and map types.
-var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktnreturn001",
-	Doc:      "KTN-RETURN-001: préférer slice/map vide à nil",
-	Run:      runReturn001,
+// Analyzer013 detects nil returns for slice and map types.
+var Analyzer013 *analysis.Analyzer = &analysis.Analyzer{
+	Name:     "ktnfunc013",
+	Doc:      "KTN-FUNC-013: préférer slice/map vide à nil",
+	Run:      runFunc013,
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// runReturn001 analyzes return statements for nil slice/map returns.
+// runFunc013 analyzes return statements for nil slice/map returns.
 // Params:
 //   - pass: Analysis pass containing type information
 //
 // Returns:
 //   - any: always nil
 //   - error: analysis error if any
-func runReturn001(pass *analysis.Pass) (any, error) {
+func runFunc013(pass *analysis.Pass) (any, error) {
 	// Récupération de la configuration
 	cfg := config.Get()
 
 	// Vérifier si la règle est activée
-	if !cfg.IsRuleEnabled(ruleCodeReturn001) {
+	if !cfg.IsRuleEnabled(ruleCodeFunc013) {
 		// Règle désactivée
 		return nil, nil
 	}
@@ -52,7 +52,7 @@ func runReturn001(pass *analysis.Pass) (any, error) {
 		// Vérifier si le fichier est exclu
 		filename := pass.Fset.Position(n.Pos()).Filename
 		// Vérification si le fichier courant est exclu par la configuration de la règle
-		if cfg.IsFileExcluded(ruleCodeReturn001, filename) {
+		if cfg.IsFileExcluded(ruleCodeFunc013, filename) {
 			// Fichier exclu
 			return
 		}
@@ -68,9 +68,9 @@ func runReturn001(pass *analysis.Pass) (any, error) {
 		// Check all return types
 		for _, result := range funcDecl.Type.Results.List {
 			// Verification de la condition
-			if isSliceOrMapType(pass, result.Type) {
+			if isSliceOrMapTypeFunc013(pass, result.Type) {
 				// Analyze function body for nil returns
-				checkNilReturns(pass, funcDecl)
+				checkNilReturnsFunc013(pass, funcDecl)
 				break
 			}
 		}
@@ -80,7 +80,7 @@ func runReturn001(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// isSliceOrMapType checks if expression is slice or map type.
+// isSliceOrMapTypeFunc013 checks if expression is slice or map type.
 //
 // Params:
 //   - pass: Analysis pass
@@ -88,7 +88,7 @@ func runReturn001(pass *analysis.Pass) (any, error) {
 //
 // Returns:
 //   - bool: true if expression is slice or map type
-func isSliceOrMapType(pass *analysis.Pass, expr ast.Expr) bool {
+func isSliceOrMapTypeFunc013(pass *analysis.Pass, expr ast.Expr) bool {
 	typeInfo := pass.TypesInfo.TypeOf(expr)
 	// Return false if type information is unavailable
 	if typeInfo == nil {
@@ -107,11 +107,11 @@ func isSliceOrMapType(pass *analysis.Pass, expr ast.Expr) bool {
 	return false
 }
 
-// checkNilReturns analyzes function body for nil returns.
+// checkNilReturnsFunc013 analyzes function body for nil returns.
 // Params:
 //   - pass: Analysis pass
 //   - funcDecl: Function declaration to analyze
-func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
+func checkNilReturnsFunc013(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	// Skip if function has no body
 	if funcDecl.Body == nil {
 		// Retour anticipé si pas de corps de fonction
@@ -119,7 +119,7 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	}
 
 	// Collect slice/map return types for better messages
-	returnTypes := collectSliceMapReturnTypes(pass, funcDecl)
+	returnTypes := collectSliceMapReturnTypesFunc013(pass, funcDecl)
 
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		retStmt, ok := n.(*ast.ReturnStmt)
@@ -132,15 +132,15 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 		// Check each return value
 		for i, result := range retStmt.Results {
 			// Verification de la condition
-			if isNilIdent(result) && i < len(returnTypes) {
+			if isNilIdentFunc013(result) && i < len(returnTypes) {
 				typeInfo := returnTypes[i]
 				// Report avec message adapté au type
 				if typeInfo != "" {
-					msg, _ := messages.Get(ruleCodeReturn001)
+					msg, _ := messages.Get(ruleCodeFunc013)
 					pass.Reportf(
 						retStmt.Pos(),
 						"%s: %s",
-						ruleCodeReturn001,
+						ruleCodeFunc013,
 						msg.Format(config.Get().Verbose, typeInfo, typeInfo),
 					)
 				}
@@ -152,7 +152,7 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 	})
 }
 
-// collectSliceMapReturnTypes collecte les types slice/map pour chaque position de retour.
+// collectSliceMapReturnTypesFunc013 collecte les types slice/map pour chaque position de retour.
 //
 // Params:
 //   - pass: Analysis pass
@@ -160,7 +160,7 @@ func checkNilReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 //
 // Returns:
 //   - []string: suggestion de syntaxe pour chaque position de retour
-func collectSliceMapReturnTypes(pass *analysis.Pass, funcDecl *ast.FuncDecl) []string {
+func collectSliceMapReturnTypesFunc013(pass *analysis.Pass, funcDecl *ast.FuncDecl) []string {
 	// Vérification des résultats
 	if funcDecl.Type.Results == nil {
 		// Retour d'une slice vide si pas de résultats
@@ -179,7 +179,7 @@ func collectSliceMapReturnTypes(pass *analysis.Pass, funcDecl *ast.FuncDecl) []s
 		}
 
 		// Génération de la suggestion
-		suggestion := getSuggestionForType(typeInfo)
+		suggestion := getSuggestionForTypeFunc013(typeInfo)
 
 		// Si plusieurs noms dans le champ, répéter la suggestion
 		count := len(field.Names)
@@ -197,14 +197,14 @@ func collectSliceMapReturnTypes(pass *analysis.Pass, funcDecl *ast.FuncDecl) []s
 	return result
 }
 
-// getSuggestionForType retourne la suggestion de syntaxe pour un type.
+// getSuggestionForTypeFunc013 retourne la suggestion de syntaxe pour un type.
 //
 // Params:
 //   - t: type à analyser
 //
 // Returns:
 //   - string: suggestion de syntaxe ou chaîne vide
-func getSuggestionForType(t types.Type) string {
+func getSuggestionForTypeFunc013(t types.Type) string {
 	// Vérification du type sous-jacent
 	switch underlying := t.Underlying().(type) {
 	// Cas slice
@@ -223,14 +223,14 @@ func getSuggestionForType(t types.Type) string {
 	return ""
 }
 
-// isNilIdent checks if expression is nil identifier.
+// isNilIdentFunc013 checks if expression is nil identifier.
 //
 // Params:
 //   - expr: Expression to check
 //
 // Returns:
 //   - bool: true if expression is nil identifier
-func isNilIdent(expr ast.Expr) bool {
+func isNilIdentFunc013(expr ast.Expr) bool {
 	ident, ok := expr.(*ast.Ident)
 	// Return false if not identifier
 	if !ok {
