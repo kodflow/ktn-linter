@@ -14,7 +14,9 @@ type DeclGroup struct {
 	Pos  token.Pos
 }
 
-// dtoSuffixes contient les suffixes typiques des DTOs.
+// dtoSuffixes contient les suffixes typiques des DTOs sérialisables.
+// Exclut volontairement les suffixes trop génériques (Info, Data, Status, State,
+// Result, Details, Metadata, Context) qui causent des faux positifs.
 var dtoSuffixes []string = []string{
 	"Config",
 	"Settings",
@@ -31,14 +33,6 @@ var dtoSuffixes []string = []string{
 	"Input",
 	"Output",
 	"Args",
-	"Result",
-	"Data",
-	"Info",
-	"Details",
-	"State",
-	"Status",
-	"Metadata",
-	"Context",
 	"Event",
 	"Message",
 	"Command",
