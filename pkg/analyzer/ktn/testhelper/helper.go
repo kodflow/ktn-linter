@@ -89,10 +89,11 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 	file, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
 	// Vérification d'erreur de parsing
 	if err != nil {
+		var emptyDiags []analysis.Diagnostic
 		// Retour de la fonction avec erreur fatale
 		t.Fatalf("failed to parse %s: %v", filename, err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return []analysis.Diagnostic{}
+		return emptyDiags
 	}
 
 	// Création de la configuration de type checking
@@ -113,10 +114,11 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 		result, err = req.Run(pass)
 		// Vérification d'erreur de l'analyzer requis
 		if err != nil {
+			var emptyDiags []analysis.Diagnostic
 			// Retour de la fonction avec erreur fatale
 			t.Fatalf("required analyzer %s failed: %v", req.Name, err)
 			// Retour anticipé pour les mocks qui ne terminent pas le test
-			return []analysis.Diagnostic{}
+			return emptyDiags
 		}
 		pass.ResultOf[req] = result
 	}
@@ -124,10 +126,11 @@ func RunAnalyzer(t TestingT, analyzer *analysis.Analyzer, filename string) []ana
 	_, err = analyzer.Run(pass)
 	// Vérification d'erreur de l'analyzer principal
 	if err != nil {
+		var emptyDiags []analysis.Diagnostic
 		// Retour de la fonction avec erreur fatale
 		t.Fatalf("analyzer failed: %v", err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return []analysis.Diagnostic{}
+		return emptyDiags
 	}
 
 	// Retour de la fonction avec les diagnostics
@@ -194,9 +197,10 @@ func parsePackageFiles(t TestingT, dir string, fset *token.FileSet) []*ast.File 
 	entries, err := os.ReadDir(dir)
 	// Vérification d'erreur de lecture du répertoire
 	if err != nil {
+		var emptyFiles []*ast.File
 		t.Fatalf("failed to read directory %s: %v", dir, err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return []*ast.File{}
+		return emptyFiles
 	}
 
 	var files []*ast.File
@@ -212,18 +216,20 @@ func parsePackageFiles(t TestingT, dir string, fset *token.FileSet) []*ast.File 
 		file, parseErr := parser.ParseFile(fset, filepath, nil, parser.ParseComments)
 		// Vérification d'erreur de parsing
 		if parseErr != nil {
+			var emptyFiles []*ast.File
 			t.Fatalf("failed to parse %s: %v", filepath, parseErr)
 			// Retour anticipé pour les mocks qui ne terminent pas le test
-			return []*ast.File{}
+			return emptyFiles
 		}
 		files = append(files, file)
 	}
 
 	// Vérification qu'au moins un fichier a été trouvé
 	if len(files) == 0 {
+		var emptyFiles []*ast.File
 		t.Fatalf("no .go files found in %s", dir)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return []*ast.File{}
+		return emptyFiles
 	}
 
 	// Retour de la liste des fichiers parsés
@@ -294,9 +300,10 @@ func RunAnalyzerOnPackage(t TestingT, analyzer *analysis.Analyzer, dir string) [
 		result, err = req.Run(pass)
 		// Vérification d'erreur de l'analyzer requis
 		if err != nil {
+			var emptyDiags []analysis.Diagnostic
 			t.Fatalf("required analyzer %s failed: %v", req.Name, err)
 			// Retour anticipé pour les mocks qui ne terminent pas le test
-			return []analysis.Diagnostic{}
+			return emptyDiags
 		}
 		pass.ResultOf[req] = result
 	}
@@ -304,9 +311,10 @@ func RunAnalyzerOnPackage(t TestingT, analyzer *analysis.Analyzer, dir string) [
 	_, err := analyzer.Run(pass)
 	// Vérification d'erreur de l'analyzer principal
 	if err != nil {
+		var emptyDiags []analysis.Diagnostic
 		t.Fatalf("analyzer failed: %v", err)
 		// Retour anticipé pour les mocks qui ne terminent pas le test
-		return []analysis.Diagnostic{}
+		return emptyDiags
 	}
 
 	// Retour de la liste des diagnostics

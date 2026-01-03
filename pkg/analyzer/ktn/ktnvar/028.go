@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar028 is the rule code for this analyzer
 	ruleCodeVar028 string = "KTN-VAR-028"
+	// rangeVarsCap is the capacity for range variables map (key and value)
+	rangeVarsCap int = 2
 )
 
 // Analyzer028 checks for obsolete loop variable copying pattern (Go 1.22+)
@@ -103,7 +105,8 @@ func checkLoopVarCopyPattern(pass *analysis.Pass, rangeStmt *ast.RangeStmt) {
 // Returns:
 //   - map[string]bool: ensemble des noms de variables
 func getRangeVariableNames(rangeStmt *ast.RangeStmt) map[string]bool {
-	vars := make(map[string]bool)
+	// Capacite pour key et value
+	vars := make(map[string]bool, rangeVarsCap)
 
 	// Ajouter la cle si presente
 	if rangeStmt.Key != nil {

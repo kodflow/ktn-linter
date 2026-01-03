@@ -24,8 +24,8 @@ type jsonFormatter struct {
 //   - verbose: enable verbose messages
 //
 // Returns:
-//   - Formatter: JSON formatter instance
-func NewJSONFormatter(w io.Writer, verbose bool) Formatter {
+//   - Formater: JSON formatter instance
+func NewJSONFormatter(w io.Writer, verbose bool) Formater {
 	// Return new JSON formatter
 	return &jsonFormatter{
 		writer:  w,

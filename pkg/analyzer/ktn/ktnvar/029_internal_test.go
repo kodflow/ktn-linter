@@ -11,24 +11,37 @@ import (
 
 // TestExtractSliceFromCapLenCondition tests extractSliceFromCapLenCondition function.
 func TestExtractSliceFromCapLenCondition(t *testing.T) {
-	// Test: not a binary expression
-	notBinary := &ast.Ident{Name: "x"}
-	result := extractSliceFromCapLenCondition(notBinary)
-	// Expected: empty
-	if result != "" {
-		t.Error("extractSliceFromCapLenCondition should return empty for non-binary")
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected string
+	}{
+		{
+			name:     "not a binary expression",
+			expr:     &ast.Ident{Name: "x"},
+			expected: "",
+		},
+		{
+			name: "not LSS operator",
+			expr: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "x"},
+				Op: token.GTR,
+				Y:  &ast.Ident{Name: "n"},
+			},
+			expected: "",
+		},
 	}
 
-	// Test: not LSS operator
-	notLss := &ast.BinaryExpr{
-		X:  &ast.Ident{Name: "x"},
-		Op: token.GTR,
-		Y:  &ast.Ident{Name: "n"},
-	}
-	result = extractSliceFromCapLenCondition(notLss)
-	// Expected: empty
-	if result != "" {
-		t.Error("extractSliceFromCapLenCondition should return empty for non-LSS")
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Call function
+			result := extractSliceFromCapLenCondition(tt.expr)
+			// Check result
+			if result != tt.expected {
+				t.Errorf("extractSliceFromCapLenCondition() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }
 

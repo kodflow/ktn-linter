@@ -406,3 +406,109 @@ func TestOptionsDefaults(t *testing.T) {
 		})
 	}
 }
+
+// TestOrchestrator_DiscoverModules tests the DiscoverModules method.
+func TestOrchestrator_DiscoverModules(t *testing.T) {
+	tests := []struct {
+		name        string
+		paths       []string
+		expectError bool
+	}{
+		{
+			name:        "discover in empty path list",
+			paths:       []string{},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			orch := orchestrator.NewOrchestrator(&buf, false)
+
+			_, err := orch.DiscoverModules(tt.paths)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+// TestOrchestrator_LoadPackagesFromDir tests the LoadPackagesFromDir method.
+func TestOrchestrator_LoadPackagesFromDir(t *testing.T) {
+	tests := []struct {
+		name        string
+		dir         string
+		patterns    []string
+		expectError bool
+	}{
+		{
+			name:        "load from invalid directory",
+			dir:         "/nonexistent/directory",
+			patterns:    []string{"./..."},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			orch := orchestrator.NewOrchestrator(&buf, false)
+
+			_, err := orch.LoadPackagesFromDir(tt.dir, tt.patterns)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+// TestOrchestrator_RunMultiModule tests the RunMultiModule method.
+func TestOrchestrator_RunMultiModule(t *testing.T) {
+	tests := []struct {
+		name        string
+		paths       []string
+		opts        orchestrator.Options
+		expectError bool
+	}{
+		{
+			name:        "run on empty path list",
+			paths:       []string{},
+			opts:        orchestrator.Options{},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			orch := orchestrator.NewOrchestrator(&buf, false)
+
+			_, err := orch.RunMultiModule(tt.paths, tt.opts)
+
+			// Verify error expectation
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			// Verify no error expectation
+			if !tt.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}

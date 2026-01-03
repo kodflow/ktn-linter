@@ -9,7 +9,7 @@ const (
 // UserServiceConfig gère les utilisateurs du système.
 // Encapsule la logique métier liée aux utilisateurs.
 type UserServiceConfig struct {
-	users map[int]string
+	users map[int]string `yaml:"-"`
 }
 
 // NewUserService crée un nouveau service utilisateur.
@@ -70,7 +70,7 @@ type internalCacheData struct {
 // RepositoryConfig gère la persistance des données.
 // Service avec dépendances.
 type RepositoryConfig struct {
-	db     Database
+	db     Database `yaml:"-"`
 	logger Logger
 }
 
@@ -105,7 +105,7 @@ func (r *RepositoryConfig) Save(_entity any) error {
 // EmailServiceSettings gère l'envoi d'emails.
 // Service avec configuration complexe.
 type EmailServiceSettings struct {
-	host     string
+	host     string `yaml:"host"`
 	port     int
 	username string
 	password string
@@ -202,7 +202,7 @@ func (e *EmailServiceSettings) Send(_to, _subject, _body string) error {
 // ValidatorConfig valide des données.
 // Service retournant valeur directe (pas pointeur).
 type ValidatorConfig struct {
-	rules map[string]func(string) bool
+	rules map[string]func(string) bool `yaml:"-"`
 }
 
 // NewValidator crée un validateur - RETOURNE VALEUR

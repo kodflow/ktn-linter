@@ -259,30 +259,30 @@ func Test_findIndexPatternInBody036(t *testing.T) {
 	vars := &rangeVariables036{indexName: "i", valueName: "v"}
 
 	tests := []struct {
-		name    string
-		body    *ast.BlockStmt
-		vars    *rangeVariables036
-		wantNil bool
+		name      string
+		body      *ast.BlockStmt
+		vars      *rangeVariables036
+		wantFound bool
 	}{
 		{
-			name:    "nil body",
-			body:    nil,
-			vars:    vars,
-			wantNil: true,
+			name:      "nil body",
+			body:      nil,
+			vars:      vars,
+			wantFound: false,
 		},
 		{
-			name:    "empty body",
-			body:    &ast.BlockStmt{List: []ast.Stmt{}},
-			vars:    vars,
-			wantNil: true,
+			name:      "empty body",
+			body:      &ast.BlockStmt{List: []ast.Stmt{}},
+			vars:      vars,
+			wantFound: false,
 		},
 		{
 			name: "no matching statement",
 			body: &ast.BlockStmt{List: []ast.Stmt{
 				&ast.ExprStmt{X: &ast.Ident{Name: "x"}},
 			}},
-			vars:    vars,
-			wantNil: true,
+			vars:      vars,
+			wantFound: false,
 		},
 		{
 			name: "matching if statement",
@@ -298,19 +298,18 @@ func Test_findIndexPatternInBody036(t *testing.T) {
 					}},
 				},
 			}},
-			vars:    vars,
-			wantNil: false,
+			vars:      vars,
+			wantFound: true,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			result := findIndexPatternInBody036(tt.body, tt.vars)
-			gotNil := result == nil
+			_, found := findIndexPatternInBody036(tt.body, tt.vars)
 			// Verify result
-			if gotNil != tt.wantNil {
-				t.Errorf("findIndexPatternInBody036() = nil? %v, want nil? %v", gotNil, tt.wantNil)
+			if found != tt.wantFound {
+				t.Errorf("findIndexPatternInBody036() found = %v, want %v", found, tt.wantFound)
 			}
 		})
 	}
@@ -579,7 +578,7 @@ func Test_checkRangeForIndexPattern(t *testing.T) {
 	tests := []struct {
 		name      string
 		rangeStmt *ast.RangeStmt
-		wantNil   bool
+		wantFound bool
 	}{
 		{
 			name: "invalid range variables",
@@ -587,7 +586,7 @@ func Test_checkRangeForIndexPattern(t *testing.T) {
 				Key:   nil,
 				Value: &ast.Ident{Name: "v"},
 			},
-			wantNil: true,
+			wantFound: false,
 		},
 		{
 			name: "valid with pattern",
@@ -607,18 +606,17 @@ func Test_checkRangeForIndexPattern(t *testing.T) {
 					},
 				}},
 			},
-			wantNil: false,
+			wantFound: true,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			result := checkRangeForIndexPattern(tt.rangeStmt)
-			gotNil := result == nil
+			_, found := checkRangeForIndexPattern(tt.rangeStmt)
 			// Verify result
-			if gotNil != tt.wantNil {
-				t.Errorf("checkRangeForIndexPattern() = nil? %v, want nil? %v", gotNil, tt.wantNil)
+			if found != tt.wantFound {
+				t.Errorf("checkRangeForIndexPattern() found = %v, want %v", found, tt.wantFound)
 			}
 		})
 	}

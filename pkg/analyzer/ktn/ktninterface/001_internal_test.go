@@ -605,8 +605,12 @@ func Test_runInterface001_disabled(t *testing.T) {
 			defer config.Reset()
 
 			fset := token.NewFileSet()
-			file, _ := parser.ParseFile(fset, "test.go", `package test
+			file, err := parser.ParseFile(fset, "test.go", `package test
 type unusedInterface interface { Method() }`, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil || file == nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
 
 			reportCount := 0
 			pass := &analysis.Pass{

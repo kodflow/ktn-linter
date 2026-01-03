@@ -238,3 +238,167 @@ func TestRegister(t *testing.T) {
 		})
 	}
 }
+
+// TestNewMessage tests the NewMessage function.
+func TestNewMessage(t *testing.T) {
+	tests := []struct {
+		name    string
+		code    string
+		short   string
+		verbose string
+	}{
+		{
+			name:    "simple message",
+			code:    "KTN-TEST-001",
+			short:   "short message",
+			verbose: "verbose message",
+		},
+		{
+			name:    "message with empty verbose",
+			code:    "KTN-TEST-002",
+			short:   "short only",
+			verbose: "",
+		},
+		{
+			name:    "message with format verbs",
+			code:    "KTN-TEST-003",
+			short:   "value is %d",
+			verbose: "The value %d exceeds %d",
+		},
+	}
+
+	// Iterate over test cases
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			msg := messages.NewMessage(tt.code, tt.short, tt.verbose)
+			// Verify code matches
+			if msg.Code != tt.code {
+				t.Errorf("NewMessage() Code = %q, want %q", msg.Code, tt.code)
+			}
+			// Verify short matches
+			if msg.Short != tt.short {
+				t.Errorf("NewMessage() Short = %q, want %q", msg.Short, tt.short)
+			}
+			// Verify verbose matches
+			if msg.Verbose != tt.verbose {
+				t.Errorf("NewMessage() Verbose = %q, want %q", msg.Verbose, tt.verbose)
+			}
+		})
+	}
+}
+
+// TestGetAll tests the GetAll function.
+func TestGetAll(t *testing.T) {
+	tests := []struct {
+		name        string
+		wantMinLen  int
+		wantNonEmpty bool
+	}{
+		{name: "returns_messages", wantMinLen: 1, wantNonEmpty: true},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			allMsgs := messages.GetAll()
+			// Verify we have messages
+			if len(allMsgs) < tt.wantMinLen {
+				t.Fatalf("GetAll() returned %d messages, want >= %d", len(allMsgs), tt.wantMinLen)
+			}
+			// Verify all messages have codes if required
+			if tt.wantNonEmpty {
+				for _, msg := range allMsgs {
+					// Check code is not empty
+					if msg.Code == "" {
+						t.Error("GetAll() contains message with empty Code")
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestClear tests the Clear function.
+func TestClear(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
+		short    string
+		verbose  string
+		wantEmpty bool
+	}{
+		{
+			name:     "clears_registry",
+			code:     "KTN-CLEAR-TEST-001",
+			short:    "test short",
+			verbose:  "test verbose",
+			wantEmpty: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Register a test message first
+			testMsg := messages.Message{Code: tt.code, Short: tt.short, Verbose: tt.verbose}
+			messages.Register(testMsg)
+			// Verify it exists
+			_, found := messages.Get(testMsg.Code)
+			// Check registration
+			if !found {
+				t.Fatal("Message not registered before Clear test")
+			}
+			// Clear and verify registry is empty
+			messages.Clear()
+			allMsgs := messages.GetAll()
+			// Verify clear worked
+			if tt.wantEmpty && len(allMsgs) != 0 {
+				t.Errorf("Clear() did not empty registry, got %d messages", len(allMsgs))
+			}
+			// Re-register essential messages for other tests (reinit)
+			messages.Register(messages.Message{Code: "KTN-FUNC-001", Short: "test", Verbose: "test"})
+			messages.Register(messages.Message{Code: "KTN-VAR-001", Short: "test", Verbose: "test"})
+		})
+	}
+}
+
+// TestUnregister tests the Unregister function.
+func TestUnregister(t *testing.T) {
+	tests := []struct {
+		name    string
+		code    string
+		short   string
+		verbose string
+	}{
+		{
+			name:    "unregisters_message",
+			code:    "KTN-UNREG-TEST-001",
+			short:   "test short",
+			verbose: "test verbose",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Register a test message first
+			testMsg := messages.Message{Code: tt.code, Short: tt.short, Verbose: tt.verbose}
+			messages.Register(testMsg)
+			// Verify it exists
+			_, found := messages.Get(testMsg.Code)
+			// Check registration succeeded
+			if !found {
+				t.Fatal("Message not registered before Unregister test")
+			}
+			// Unregister it
+			messages.Unregister(testMsg.Code)
+			// Verify it no longer exists
+			_, found = messages.Get(testMsg.Code)
+			// Check unregistration succeeded
+			if found {
+				t.Error("Unregister() did not remove message")
+			}
+		})
+	}
+}

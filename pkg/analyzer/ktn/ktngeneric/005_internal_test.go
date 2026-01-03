@@ -65,7 +65,7 @@ func TestPredeclaredIdentifiers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Verification de l'identifiant predeclare
 			if predeclaredIdentifiers[tt.identifier] != tt.expected {
@@ -104,7 +104,7 @@ func TestCheckTypeParamList(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			fset := token.NewFileSet()
 			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
@@ -168,6 +168,7 @@ func TestCheckFuncTypeParams(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			checkFuncTypeParams(nil, tt.funcDecl)
@@ -197,6 +198,7 @@ func TestCheckTypeSpecTypeParams(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			checkTypeSpecTypeParams(nil, tt.typeSpec)
@@ -240,6 +242,7 @@ func TestCheckTypeParamListUnit(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic - pass is nil so no reporting
 			checkTypeParamList(nil, tt.typeParams)
@@ -247,11 +250,117 @@ func TestCheckTypeParamListUnit(t *testing.T) {
 	}
 }
 
-// TestReportShadowingNilPass tests reportShadowing with nil pass.
-func TestReportShadowingNilPass(t *testing.T) {
-	name := &ast.Ident{Name: "string"}
-	// Should not panic with nil pass
-	reportShadowing(nil, name)
+// Test_runGeneric005 tests the main runGeneric005 function.
+func Test_runGeneric005(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "type param shadows predeclared",
+			code: `package test
+func foo[string any](s string) {}
+`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Configure rule as enabled
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-GENERIC-005": {Enabled: config.Bool(true)},
+				},
+			})
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Verification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Create inspector
+			files := []*ast.File{file}
+			inspectResult, inspErr := inspect.Analyzer.Run(&analysis.Pass{
+				Fset:  fset,
+				Files: files,
+			})
+			// Vérifier l'erreur d'inspect
+			if inspErr != nil || inspectResult == nil {
+				t.Fatalf("failed to run inspect analyzer: %v", inspErr)
+			}
+
+			pass := &analysis.Pass{
+				Fset:  fset,
+				Files: files,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) {
+					// Expected to report
+				},
+			}
+
+			// Execute analyzer
+			result, err := runGeneric005(pass)
+			// Verification erreur
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+			// Verification resultat nil
+			if result != nil {
+				t.Errorf("Expected nil result, got %v", result)
+			}
+		})
+	}
+}
+
+// Test_reportShadowing tests the reportShadowing function.
+func Test_reportShadowing(t *testing.T) {
+	tests := []struct {
+		name  string
+		ident *ast.Ident
+	}{
+		{
+			name:  "predeclared identifier",
+			ident: &ast.Ident{Name: "string"},
+		},
+		{
+			name:  "another predeclared",
+			ident: &ast.Ident{Name: "int"},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic with nil pass
+			reportShadowing(nil, tt.ident)
+		})
+	}
+}
+
+// TestReportShadowingEdgeCases tests edge cases for reportShadowing.
+func TestReportShadowingEdgeCases(t *testing.T) {
+	tests := []struct {
+		name  string
+		ident *ast.Ident
+	}{
+		{
+			name:  "nil pass should not panic",
+			ident: &ast.Ident{Name: "string"},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic with nil pass
+			reportShadowing(nil, tt.ident)
+		})
+	}
 }
 
 // Test_runGeneric005_disabled tests behavior when rule is disabled.
@@ -262,7 +371,7 @@ func Test_runGeneric005_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec regle desactivee
 			config.Set(&config.Config{
@@ -295,7 +404,7 @@ func Test_runGeneric005_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec fichier exclu
 			config.Set(&config.Config{

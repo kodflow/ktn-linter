@@ -55,6 +55,7 @@ func TestIsEmptyInterface(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isEmptyInterface(tt.interfaceType)
@@ -68,18 +69,50 @@ func TestIsEmptyInterface(t *testing.T) {
 
 // TestCheckEmptyInterface tests the checkEmptyInterface function.
 func TestCheckEmptyInterface(t *testing.T) {
-	// Test: non-empty interface
-	interfaceType := &ast.InterfaceType{
-		Methods: &ast.FieldList{
-			List: []*ast.Field{
-				{
-					Names: []*ast.Ident{{Name: "Method"}},
+	tests := []struct {
+		name          string
+		interfaceType *ast.InterfaceType
+		expectReport  bool
+	}{
+		{
+			name: "non-empty interface does not report",
+			interfaceType: &ast.InterfaceType{
+				Methods: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{{Name: "Method"}},
+						},
+					},
 				},
 			},
+			expectReport: false,
+		},
+		{
+			name: "empty interface reports",
+			interfaceType: &ast.InterfaceType{
+				Methods: nil,
+			},
+			expectReport: true,
 		},
 	}
-	// Should not panic
-	checkEmptyInterface(nil, interfaceType)
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			reported := false
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reported = true
+				},
+			}
+			// Call function
+			checkEmptyInterface(pass, tt.interfaceType)
+			// Check result
+			if reported != tt.expectReport {
+				t.Errorf("checkEmptyInterface() reported = %v, want %v", reported, tt.expectReport)
+			}
+		})
+	}
 }
 
 // Test_runVar024_ruleDisabled tests analyzer returns early when disabled.

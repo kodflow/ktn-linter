@@ -25,7 +25,7 @@ func TestGeneric003(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors (uses cmp package or no constraints)
 			// bad.go: 1 error (uses deprecated x/exp/constraints)

@@ -6,7 +6,8 @@ package ktnapi
 import (
 	"go/ast"
 	"go/types"
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -33,12 +34,15 @@ var (
 	// - go/ast, go/token, go/types: Go toolchain AST packages - fundamental for any Go analyzer
 	// - golang.org/x/tools/go/analysis: Official Go analysis framework - all analyzers depend on *analysis.Pass
 	// - golang.org/x/tools/go/ast/inspector: Official AST traversal - performance-critical for linters
+	// - github.com/spf13/cobra: CLI framework - callbacks require *cobra.Command signature (framework constraint)
+	// - github.com/spf13/pflag: Flag parsing - used by Cobra callbacks
 	// - ktn-linter/pkg/config: Internal config - self-reference would be circular
 	//
 	// These packages are exempt because:
 	// 1. They are part of Go's official toolchain for building analyzers
 	// 2. Creating interfaces for them would add complexity without benefit
 	// 3. They are not "external dependencies" in the typical sense
+	// 4. Framework callbacks have mandatory signatures (Cobra, HTTP handlers, etc.)
 	//
 	// TODO: Make configurable via .ktn-linter.yaml if needed
 	defaultAllowedPackages map[string]bool = map[string]bool{
@@ -51,6 +55,8 @@ var (
 		"go/types":                            true,
 		"golang.org/x/tools/go/analysis":      true,
 		"golang.org/x/tools/go/ast/inspector": true,
+		"github.com/spf13/cobra":              true,
+		"github.com/spf13/pflag":              true,
 		"github.com/kodflow/ktn-linter/pkg/config": true,
 	}
 
@@ -489,11 +495,11 @@ func formatTupleTypes(tuple *types.Tuple) string {
 	parts := make([]string, 0, tupleLen)
 	// Parcourir les éléments (range over int - Go 1.22+)
 	for i := range tupleLen {
-		v := tuple.At(i)
-		typeName := types.TypeString(v.Type(), shortQualifier)
+		variable := tuple.At(i)
+		typeName := types.TypeString(variable.Type(), shortQualifier)
 		// Vérifier si le paramètre a un nom
-		if v.Name() != "" {
-			parts = append(parts, v.Name()+" "+typeName)
+		if variable.Name() != "" {
+			parts = append(parts, variable.Name()+" "+typeName)
 		} else {
 			// Paramètre anonyme
 			parts = append(parts, typeName)
@@ -532,17 +538,17 @@ func getBaseIdent(expr ast.Expr) *ast.Ident {
 	// Boucle d'extraction
 	for {
 		// Switch sur le type d'expression
-		switch e := expr.(type) {
+		switch exprNode := expr.(type) {
 		// Identifiant simple
 		case *ast.Ident:
 			// Retour de l'identifiant
-			return e
+			return exprNode
 		// Expression parenthésée
 		case *ast.ParenExpr:
-			expr = e.X
+			expr = exprNode.X
 		// Déréférencement
 		case *ast.StarExpr:
-			expr = e.X
+			expr = exprNode.X
 		// Sélecteur (x.Field.Method())
 		case *ast.SelectorExpr:
 			// x.Field.Method() - we don't count this
@@ -710,12 +716,10 @@ func lowerFirst(s string) string {
 // Returns:
 //   - []string: sorted method names
 func getSortedMethods(methods map[string]bool) []string {
-	result := make([]string, 0, len(methods))
-	// Parcourir les méthodes
-	for method := range methods {
-		result = append(result, method)
-	}
-	sort.Strings(result)
+	// Collecter les clés de la map avec slices.Collect et maps.Keys
+	result := slices.Collect(maps.Keys(methods))
+	// Trier les méthodes
+	slices.Sort(result)
 	// Retour du résultat trié
 	return result
 }

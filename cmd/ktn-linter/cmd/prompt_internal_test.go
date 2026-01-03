@@ -24,10 +24,10 @@ func Test_runPrompt(t *testing.T) {
 		checkStderr string
 	}{
 		{
-			name:       "valid formatter package with test issues",
+			name:       "valid formatter package without issues",
 			packages:   []string{"github.com/kodflow/ktn-linter/pkg/formatter"},
 			expectExit: true,
-			exitCode:   1, // Exit 1 because KTN-TEST-005/009 now correctly detect test issues
+			exitCode:   0, // Exit 0 because formatter package is now compliant
 		},
 		{
 			name:        "testdata with potential issues",
@@ -432,19 +432,36 @@ func Test_getPromptOutputWriter(t *testing.T) {
 // Params:
 //   - t: testing object
 func TestPromptCommand_Registered(t *testing.T) {
-	// Search for prompt command in rootCmd's subcommands
-	found := false
-	for _, c := range rootCmd.Commands() {
-		// Check if command name matches
-		if c.Name() == "prompt" {
-			found = true
-			break
-		}
+	tests := []struct {
+		name        string
+		cmdName     string
+		expectFound bool
+	}{
+		{
+			name:        "prompt command is registered",
+			cmdName:     "prompt",
+			expectFound: true,
+		},
 	}
 
-	// Verify command is registered
-	if !found {
-		t.Fatalf("expected %q command to be registered", "prompt")
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Search for command in rootCmd's subcommands
+			found := false
+			for _, c := range rootCmd.Commands() {
+				// Check if command name matches
+				if c.Name() == tt.cmdName {
+					found = true
+					break
+				}
+			}
+
+			// Verify command is registered
+			if tt.expectFound && !found {
+				t.Fatalf("expected %q command to be registered", tt.cmdName)
+			}
+		})
 	}
 }
 

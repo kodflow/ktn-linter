@@ -43,9 +43,73 @@ func TestCheckDeprecatedConstraintsImport(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic - pass is nil so no reporting
 			checkDeprecatedConstraintsImport(nil, tt.importSpec)
+		})
+	}
+}
+
+// Test_runGeneric003 tests the main runGeneric003 function.
+func Test_runGeneric003(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "deprecated constraints import",
+			code: `package test
+import "golang.org/x/exp/constraints"
+var _ = constraints.Ordered
+`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Configure rule as enabled
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-GENERIC-003": {Enabled: config.Bool(true)},
+				},
+			})
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Verification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Create inspector
+			files := []*ast.File{file}
+			inspectResult, _ := inspect.Analyzer.Run(&analysis.Pass{
+				Fset:  fset,
+				Files: files,
+			})
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) {
+					// Expected to report
+				},
+			}
+
+			// Execute analyzer
+			result, err := runGeneric003(pass)
+			// Verification erreur
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+			// Verification resultat nil
+			if result != nil {
+				t.Errorf("Expected nil result, got %v", result)
+			}
 		})
 	}
 }
@@ -58,7 +122,7 @@ func Test_runGeneric003_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec regle desactivee
 			config.Set(&config.Config{
@@ -91,7 +155,7 @@ func Test_runGeneric003_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec fichier exclu
 			config.Set(&config.Config{

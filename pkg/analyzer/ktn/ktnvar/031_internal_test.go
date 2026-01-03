@@ -458,8 +458,6 @@ func Test_isSimpleMapClone(t *testing.T) {
 		name      string
 		rangeStmt *ast.RangeStmt
 		mapMakes  map[string]token.Pos
-		stmtIndex int
-		stmts     []ast.Stmt
 		expected  bool
 	}{
 		{
@@ -468,10 +466,8 @@ func Test_isSimpleMapClone(t *testing.T) {
 				Key:   nil,
 				Value: &ast.Ident{Name: "v"},
 			},
-			mapMakes:  map[string]token.Pos{},
-			stmtIndex: 0,
-			stmts:     []ast.Stmt{},
-			expected:  false,
+			mapMakes: map[string]token.Pos{},
+			expected: false,
 		},
 		{
 			name: "nil body",
@@ -480,17 +476,15 @@ func Test_isSimpleMapClone(t *testing.T) {
 				Value: &ast.Ident{Name: "v"},
 				Body:  nil,
 			},
-			mapMakes:  map[string]token.Pos{},
-			stmtIndex: 0,
-			stmts:     []ast.Stmt{},
-			expected:  false,
+			mapMakes: map[string]token.Pos{},
+			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			result := isSimpleMapClone(tt.rangeStmt, tt.mapMakes, tt.stmtIndex, tt.stmts)
+			result := isSimpleMapClone(tt.rangeStmt, tt.mapMakes)
 			// Verify result
 			if result != tt.expected {
 				t.Errorf("isSimpleMapClone() = %v, want %v", result, tt.expected)

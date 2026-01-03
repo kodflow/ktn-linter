@@ -19,6 +19,8 @@ const (
 	collectionTypeKeys string = "keys"
 	// collectionTypeValues indicates map values collection.
 	collectionTypeValues string = "values"
+	// appendArgsCount037 is the expected number of arguments for append
+	appendArgsCount037 int = 2
 )
 
 // Analyzer037 detects manual map key/value collection patterns.
@@ -174,8 +176,8 @@ func extractAppendCall037(stmt ast.Stmt) *ast.CallExpr {
 		return nil
 	}
 
-	// Check that it's an append call with 2 arguments
-	if !isVar037AppendCall(appendCall) || len(appendCall.Args) != 2 {
+	// Check that it's an append call with expected arguments
+	if !isVar037AppendCall(appendCall) || len(appendCall.Args) != appendArgsCount037 {
 		// Not a valid append call
 		return nil
 	}

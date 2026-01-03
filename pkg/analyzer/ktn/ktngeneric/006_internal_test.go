@@ -41,6 +41,7 @@ func TestIsOrderedOp(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := isOrderedOp(tt.op)
 			// Verify result matches expected
@@ -91,6 +92,7 @@ func TestMergeStringMaps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := mergeStringMaps(tt.m1, tt.m2)
 			// Check length
@@ -140,6 +142,7 @@ func TestAnalyzeGenericFuncOrdered(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			analyzeGenericFuncOrdered(nil, tt.funcDecl)
@@ -201,6 +204,7 @@ func TestCheckOrderedUsage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			checkOrderedUsage(nil, tt.funcDecl, anyTypeParams)
@@ -208,128 +212,122 @@ func TestCheckOrderedUsage(t *testing.T) {
 	}
 }
 
-// TestCheckOrderedUsageEmptyAllNames tests checkOrderedUsage with empty allNames.
-func TestCheckOrderedUsageEmptyAllNames(t *testing.T) {
-	emptyAnyTypeParams := map[string]bool{}
-
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "foo"},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Names: []*ast.Ident{{Name: "x"}},
-						Type:  &ast.Ident{Name: "int"},
+// TestCheckOrderedUsageEdgeCases tests edge cases for checkOrderedUsage.
+func TestCheckOrderedUsageEdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		anyTypeParams map[string]bool
+		funcDecl      *ast.FuncDecl
+	}{
+		{
+			name:          "empty allNames should return early",
+			anyTypeParams: map[string]bool{},
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "x"}},
+								Type:  &ast.Ident{Name: "int"},
+							},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{List: nil},
+			},
+		},
+		{
+			name:          "binary expr not using any type",
+			anyTypeParams: map[string]bool{"T": true},
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "x"}},
+								Type:  &ast.Ident{Name: "T"},
+							},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ExprStmt{
+							X: &ast.BinaryExpr{
+								X:  &ast.Ident{Name: "z"},
+								Op: token.LSS,
+								Y:  &ast.Ident{Name: "w"},
+							},
+						},
 					},
 				},
 			},
 		},
-		Body: &ast.BlockStmt{List: nil},
-	}
-
-	// Should return early when allNames is empty
-	checkOrderedUsage(nil, funcDecl, emptyAnyTypeParams)
-}
-
-// TestCheckOrderedUsageWithBinaryExprNotAnyType tests checkOrderedUsage with binary expressions
-// that don't use any type (to avoid nil pass panic).
-func TestCheckOrderedUsageWithBinaryExprNotAnyType(t *testing.T) {
-	anyTypeParams := map[string]bool{"T": true}
-
-	// Function with ordered comparison but using non-T type variable
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "foo"},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Names: []*ast.Ident{{Name: "x"}},
-						Type:  &ast.Ident{Name: "T"},
+		{
+			name:          "non-ordered operator EQL",
+			anyTypeParams: map[string]bool{"T": true},
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "x"}},
+								Type:  &ast.Ident{Name: "T"},
+							},
+						},
+					},
+				},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ExprStmt{
+							X: &ast.BinaryExpr{
+								X:  &ast.Ident{Name: "x"},
+								Op: token.EQL,
+								Y:  &ast.Ident{Name: "x"},
+							},
+						},
 					},
 				},
 			},
 		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ExprStmt{
-					X: &ast.BinaryExpr{
-						X:  &ast.Ident{Name: "z"},
-						Op: token.LSS,
-						Y:  &ast.Ident{Name: "w"},
+		{
+			name:          "non-binary node call expr",
+			anyTypeParams: map[string]bool{"T": true},
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+				Type: &ast.FuncType{
+					Params: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{{Name: "x"}},
+								Type:  &ast.Ident{Name: "T"},
+							},
+						},
 					},
 				},
-			},
-		},
-	}
-
-	// Test with nil pass - should not panic (no any type used)
-	checkOrderedUsage(nil, funcDecl, anyTypeParams)
-}
-
-// TestCheckOrderedUsageNonOrderedOp tests checkOrderedUsage with non-ordered operators.
-func TestCheckOrderedUsageNonOrderedOp(t *testing.T) {
-	anyTypeParams := map[string]bool{"T": true}
-
-	// Function with non-ordered comparison (EQL)
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "foo"},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Names: []*ast.Ident{{Name: "x"}},
-						Type:  &ast.Ident{Name: "T"},
-					},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ExprStmt{
-					X: &ast.BinaryExpr{
-						X:  &ast.Ident{Name: "x"},
-						Op: token.EQL,
-						Y:  &ast.Ident{Name: "x"},
-					},
-				},
-			},
-		},
-	}
-
-	// Test should not report for non-ordered operator
-	checkOrderedUsage(nil, funcDecl, anyTypeParams)
-}
-
-// TestCheckOrderedUsageNonBinaryNode tests checkOrderedUsage with non-binary AST nodes.
-func TestCheckOrderedUsageNonBinaryNode(t *testing.T) {
-	anyTypeParams := map[string]bool{"T": true}
-
-	// Function with non-binary statements
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "foo"},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{
-				List: []*ast.Field{
-					{
-						Names: []*ast.Ident{{Name: "x"}},
-						Type:  &ast.Ident{Name: "T"},
-					},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ExprStmt{
-					X: &ast.CallExpr{
-						Fun: &ast.Ident{Name: "println"},
+				Body: &ast.BlockStmt{
+					List: []ast.Stmt{
+						&ast.ExprStmt{
+							X: &ast.CallExpr{
+								Fun: &ast.Ident{Name: "println"},
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	// Test with nil pass - should not panic (non-binary node)
-	checkOrderedUsage(nil, funcDecl, anyTypeParams)
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic with nil pass
+			checkOrderedUsage(nil, tt.funcDecl, tt.anyTypeParams)
+		})
+	}
 }
 
 func TestCollectLocalVarsWithAnyType(t *testing.T) {
@@ -361,6 +359,7 @@ func TestCollectLocalVarsWithAnyType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := collectLocalVarsWithAnyType(tt.funcDecl, anyTypeParams)
 			// Check length
@@ -395,6 +394,7 @@ func TestExtractVarDeclsFromStmt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			extractVarDeclsFromStmt(tt.stmt, anyTypeParams, result)
@@ -459,6 +459,7 @@ func TestExtractFromDeclStmt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			extractFromDeclStmt(tt.declStmt, anyTypeParams, result)
@@ -496,6 +497,7 @@ func TestExtractFromRangeStmt(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			extractFromRangeStmt(tt.rangeStmt, anyTypeParams, result)
@@ -544,11 +546,78 @@ func TestCheckOperandUsesAnyType006(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := checkOperandUsesAnyType(tt.expr, paramNames, anyTypeParams)
 			// Verify result
 			if result != tt.expected {
 				t.Errorf("checkOperandUsesAnyType() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_runGeneric006 tests the main runGeneric006 function.
+func Test_runGeneric006(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "ordered operation on any",
+			code: `package test
+func foo[T any](a, b T) T { return a + b }
+`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Configure rule as enabled
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-GENERIC-006": {Enabled: config.Bool(true)},
+				},
+			})
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Verification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Create inspector
+			files := []*ast.File{file}
+			inspectResult, inspErr := inspect.Analyzer.Run(&analysis.Pass{
+				Fset:  fset,
+				Files: files,
+			})
+			// Vérifier l'erreur d'inspect
+			if inspErr != nil || inspectResult == nil {
+				t.Fatalf("failed to run inspect analyzer: %v", inspErr)
+			}
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) {
+					// Expected to report
+				},
+			}
+
+			// Execute analyzer
+			result, err := runGeneric006(pass)
+			// Verification erreur
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+			// Verification resultat nil
+			if result != nil {
+				t.Errorf("Expected nil result, got %v", result)
 			}
 		})
 	}
@@ -562,7 +631,7 @@ func Test_runGeneric006_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec regle desactivee
 			config.Set(&config.Config{
@@ -595,7 +664,7 @@ func Test_runGeneric006_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec fichier exclu
 			config.Set(&config.Config{
@@ -698,82 +767,130 @@ func TestReportIfUsesAnyTypeParamOrdered(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			funcDecl := &ast.FuncDecl{
 				Name: &ast.Ident{Name: "foo"},
 			}
+			// Construct context for the new signature
+			ctx := &orderedTypeContext{
+				paramNames:    paramNames,
+				anyTypeParams: anyTypeParams,
+				reported:      tt.reported,
+			}
 			// Just verify no panic
-			reportIfUsesAnyTypeParamOrdered(nil, funcDecl, tt.binaryExpr, paramNames, anyTypeParams, tt.reported)
+			reportIfUsesAnyTypeParamOrdered(nil, funcDecl, tt.binaryExpr, ctx)
 		})
 	}
 }
 
 // TestReportIfUsesAnyTypeParamOrderedWithMockPass tests with a mock pass to cover more branches.
 func TestReportIfUsesAnyTypeParamOrderedWithMockPass(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	fset := token.NewFileSet()
-
-	// Create a minimal mock pass
-	mockPass := &analysis.Pass{
-		Fset: fset,
-		Report: func(d analysis.Diagnostic) {
-			// Do nothing - just capture the report
+	tests := []struct {
+		name           string
+		binaryExpr     *ast.BinaryExpr
+		expectReported bool
+	}{
+		{
+			name: "neither operand uses any type",
+			binaryExpr: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "z"},
+				Y:  &ast.Ident{Name: "w"},
+				Op: token.ADD,
+			},
+			expectReported: false,
 		},
 	}
 
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "testFunc"},
-	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			defer config.Reset()
 
-	// Test: neither operand uses any type (should return early at line 325-327)
-	paramNames := map[string]string{"x": "T"}
-	anyTypeParams := map[string]bool{"T": true}
-	binaryExpr := &ast.BinaryExpr{
-		X:  &ast.Ident{Name: "z"},
-		Y:  &ast.Ident{Name: "w"},
-		Op: token.ADD,
-	}
-	reported := make(map[string]bool)
+			fset := token.NewFileSet()
 
-	reportIfUsesAnyTypeParamOrdered(mockPass, funcDecl, binaryExpr, paramNames, anyTypeParams, reported)
-	// Should not have marked as reported
-	if reported["testFunc"] {
-		t.Error("Should not have reported when neither operand uses any type")
+			// Create a minimal mock pass
+			mockPass := &analysis.Pass{
+				Fset: fset,
+				Report: func(d analysis.Diagnostic) {
+					// Do nothing - just capture the report
+				},
+			}
+
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "testFunc"},
+			}
+
+			paramNames := map[string]string{"x": "T"}
+			anyTypeParams := map[string]bool{"T": true}
+			reported := make(map[string]bool)
+
+			// Construct context for the new signature
+			ctx := &orderedTypeContext{
+				paramNames:    paramNames,
+				anyTypeParams: anyTypeParams,
+				reported:      reported,
+			}
+			reportIfUsesAnyTypeParamOrdered(mockPass, funcDecl, tt.binaryExpr, ctx)
+			// Verify reported status
+			if ctx.reported["testFunc"] != tt.expectReported {
+				t.Errorf("reported[testFunc] = %v, want %v", reported["testFunc"], tt.expectReported)
+			}
+		})
 	}
 }
 
 // TestReportIfUsesAnyTypeParamOrderedAlreadyReportedWithPass tests the deduplication path.
 func TestReportIfUsesAnyTypeParamOrderedAlreadyReportedWithPass(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	fset := token.NewFileSet()
-
-	// Create a minimal mock pass
-	mockPass := &analysis.Pass{
-		Fset: fset,
-		Report: func(d analysis.Diagnostic) {
-			t.Error("Should not report when already reported")
+	tests := []struct {
+		name       string
+		reported   map[string]bool
+		binaryExpr *ast.BinaryExpr
+	}{
+		{
+			name:     "already reported should return early",
+			reported: map[string]bool{"testFunc": true},
+			binaryExpr: &ast.BinaryExpr{
+				X:  &ast.Ident{Name: "x"},
+				Y:  &ast.Ident{Name: "y"},
+				Op: token.ADD,
+			},
 		},
 	}
 
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "testFunc"},
-	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			defer config.Reset()
 
-	// Test: already reported (should return early at line 333-335)
-	paramNames := map[string]string{"x": "T"}
-	anyTypeParams := map[string]bool{"T": true}
-	binaryExpr := &ast.BinaryExpr{
-		X:  &ast.Ident{Name: "x"},
-		Y:  &ast.Ident{Name: "y"},
-		Op: token.ADD,
-	}
-	reported := map[string]bool{"testFunc": true}
+			fset := token.NewFileSet()
 
-	reportIfUsesAnyTypeParamOrdered(mockPass, funcDecl, binaryExpr, paramNames, anyTypeParams, reported)
+			// Create a minimal mock pass
+			mockPass := &analysis.Pass{
+				Fset: fset,
+				Report: func(d analysis.Diagnostic) {
+					t.Error("Should not report when already reported")
+				},
+			}
+
+			funcDecl := &ast.FuncDecl{
+				Name: &ast.Ident{Name: "testFunc"},
+			}
+
+			paramNames := map[string]string{"x": "T"}
+			anyTypeParams := map[string]bool{"T": true}
+
+			// Construct context for the new signature
+			ctx := &orderedTypeContext{
+				paramNames:    paramNames,
+				anyTypeParams: anyTypeParams,
+				reported:      tt.reported,
+			}
+			reportIfUsesAnyTypeParamOrdered(mockPass, funcDecl, tt.binaryExpr, ctx)
+		})
+	}
 }
 
 // TestExtractFromRangeStmtWithValue tests extractFromRangeStmt with various scenarios.
@@ -798,6 +915,7 @@ func TestExtractFromRangeStmtWithValue(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			extractFromRangeStmt(tt.rangeStmt, anyTypeParams, result)

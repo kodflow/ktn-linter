@@ -12,6 +12,404 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Test_runVar005 tests the runVar005 function.
+func Test_runVar005(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		ruleEnabled bool
+		expectCount int
+	}{
+		{
+			name:        "enabled with violation",
+			code:        `package test; var veryLongVariableNameThatExceedsLimitOf30CharactersTotal = 1`,
+			ruleEnabled: true,
+			expectCount: 1,
+		},
+		{
+			name:        "enabled without violation",
+			code:        `package test; var shortName = 1`,
+			ruleEnabled: true,
+			expectCount: 0,
+		},
+		{
+			name:        "disabled",
+			code:        `package test; var veryLongVariableNameThatExceedsLimitOf30CharactersTotal = 1`,
+			ruleEnabled: false,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ruleEnabled {
+				config.Reset()
+			} else {
+				config.Set(&config.Config{
+					Rules: map[string]*config.RuleConfig{
+						ruleCodeVar005: {Enabled: config.Bool(false)},
+					},
+				})
+			}
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil || file == nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			_, _ = runVar005(pass)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("runVar005() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005PackageLevel tests the checkVar005PackageLevel function.
+func Test_checkVar005PackageLevel(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		expectCount int
+	}{
+		{
+			name:        "long name violation",
+			code:        `package test; var veryLongVariableNameThatExceedsLimitOf30CharactersTotal = 1`,
+			expectCount: 1,
+		},
+		{
+			name:        "valid name",
+			code:        `package test; var shortName = 1`,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil || file == nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
+			insp := inspector.New([]*ast.File{file})
+			cfg := config.Get()
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005PackageLevel(pass, insp, cfg)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005PackageLevel() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005LocalVars tests the checkVar005LocalVars function.
+func Test_checkVar005LocalVars(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		expectCount int
+	}{
+		{
+			name:        "long name violation",
+			code:        `package test; func f() { veryLongVariableNameThatExceedsLimitOf30 := 1; _ = veryLongVariableNameThatExceedsLimitOf30 }`,
+			expectCount: 1,
+		},
+		{
+			name:        "valid name",
+			code:        `package test; func f() { shortName := 1; _ = shortName }`,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Vérifier l'erreur de parsing
+			if err != nil || file == nil {
+				t.Fatalf("failed to parse test code: %v", err)
+			}
+			insp := inspector.New([]*ast.File{file})
+			cfg := config.Get()
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				Files:    []*ast.File{file},
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005LocalVars(pass, insp, cfg)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005LocalVars() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005Node tests the checkVar005Node function.
+func Test_checkVar005Node(t *testing.T) {
+	tests := []struct {
+		name        string
+		node        ast.Node
+		expectCount int
+	}{
+		{
+			name:        "nil node",
+			node:        nil,
+			expectCount: 0,
+		},
+		{
+			name:        "unhandled node",
+			node:        &ast.ReturnStmt{},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005Node(pass, tt.node)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005Node() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005AssignStmt tests the checkVar005AssignStmt function.
+func Test_checkVar005AssignStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        *ast.AssignStmt
+		expectCount int
+	}{
+		{
+			name:        "regular assign",
+			stmt:        &ast.AssignStmt{Tok: token.ASSIGN, Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			expectCount: 0,
+		},
+		{
+			name:        "define short name",
+			stmt:        &ast.AssignStmt{Tok: token.DEFINE, Lhs: []ast.Expr{&ast.Ident{Name: "x"}}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005AssignStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005AssignStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005RangeStmt tests the checkVar005RangeStmt function.
+func Test_checkVar005RangeStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        *ast.RangeStmt
+		expectCount int
+	}{
+		{
+			name:        "regular assign",
+			stmt:        &ast.RangeStmt{Tok: token.ASSIGN, Key: &ast.Ident{Name: "i"}},
+			expectCount: 0,
+		},
+		{
+			name:        "define short name",
+			stmt:        &ast.RangeStmt{Tok: token.DEFINE, Key: &ast.Ident{Name: "i"}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005RangeStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005RangeStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005DeclStmt tests the checkVar005DeclStmt function.
+func Test_checkVar005DeclStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        *ast.DeclStmt
+		expectCount int
+	}{
+		{
+			name:        "func decl",
+			stmt:        &ast.DeclStmt{Decl: &ast.FuncDecl{Name: &ast.Ident{Name: "f"}}},
+			expectCount: 0,
+		},
+		{
+			name:        "const decl",
+			stmt:        &ast.DeclStmt{Decl: &ast.GenDecl{Tok: token.CONST}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005DeclStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005DeclStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005Spec tests the checkVar005Spec function.
+func Test_checkVar005Spec(t *testing.T) {
+	tests := []struct {
+		name        string
+		spec        *ast.ValueSpec
+		expectCount int
+	}{
+		{
+			name:        "short name",
+			spec:        &ast.ValueSpec{Names: []*ast.Ident{{Name: "ok"}}},
+			expectCount: 0,
+		},
+		{
+			name:        "long name",
+			spec:        &ast.ValueSpec{Names: []*ast.Ident{{Name: "veryLongVariableNameExceeds30Chars"}}},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005Spec(pass, tt.spec)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005Spec() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVar005Name tests the checkVar005Name function.
+func Test_checkVar005Name(t *testing.T) {
+	tests := []struct {
+		name        string
+		ident       *ast.Ident
+		expectCount int
+	}{
+		{
+			name:        "blank identifier",
+			ident:       &ast.Ident{Name: "_"},
+			expectCount: 0,
+		},
+		{
+			name:        "short name",
+			ident:       &ast.Ident{Name: "ok"},
+			expectCount: 0,
+		},
+		{
+			name:        "long name",
+			ident:       &ast.Ident{Name: "veryLongVariableNameExceeds30Chars"},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVar005Name(pass, tt.ident)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVar005Name() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
 // TestMaxVarNameLength005 tests the maximum name length constant.
 func TestMaxVarNameLength005(t *testing.T) {
 	if maxVarNameLength005 != 30 {
@@ -44,6 +442,7 @@ func TestNameLengthLimits005(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := len(tt.varName) > maxVarNameLength005
 			if result != tt.tooLong {
@@ -63,7 +462,11 @@ func Test_runVar005_disabled(t *testing.T) {
 	}
 
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", `package test; var a = 1`, 0)
+	file, parseErr := parser.ParseFile(fset, "test.go", `package test; var a = 1`, 0)
+	// Vérifier l'erreur de parsing
+	if parseErr != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", parseErr)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	pass := &analysis.Pass{
@@ -89,7 +492,11 @@ func Test_checkVar005PackageLevel_nonVarDecl(t *testing.T) {
 const x = 1
 func foo() {}
 `
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 	cfg := config.Get()
 
@@ -397,7 +804,11 @@ func Test_checkVar005PackageLevel_excluded(t *testing.T) {
 	code := `package test
 var veryLongVariableNameThatExceedsLimitOf30Chars = 1
 `
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0
@@ -431,7 +842,11 @@ func foo() {
 	_ = veryLongVariableNameThatExceedsLimitOf30Chars
 }
 `
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0

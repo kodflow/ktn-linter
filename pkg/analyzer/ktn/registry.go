@@ -90,8 +90,9 @@ func GetRulesByCategory(category string) []*analysis.Analyzer {
 	analyzerFunc, exists := categories[category]
 	// Vérification de la condition
 	if !exists {
+		var emptyAnalyzers []*analysis.Analyzer
 		// Catégorie inconnue - retourner slice vide
-		return []*analysis.Analyzer{}
+		return emptyAnalyzers
 	}
 
 	// Retour des analyseurs de la catégorie

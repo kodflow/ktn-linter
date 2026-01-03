@@ -10,10 +10,10 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// sarifFormatter implements SARIF output formatting.
-type sarifFormatter struct {
-	writer  io.Writer
-	verbose bool
+// sarifRunWriter defines methods for adding results and rules to a SARIF run.
+type sarifRunWriter interface {
+	AddResult(result *sarif.Result) *sarif.Run
+	GetTool() *sarif.Tool
 }
 
 // NewSARIFFormatter creates a new SARIF formatter.
@@ -23,8 +23,8 @@ type sarifFormatter struct {
 //   - verbose: enable verbose messages
 //
 // Returns:
-//   - Formatter: SARIF formatter instance
-func NewSARIFFormatter(w io.Writer, verbose bool) Formatter {
+//   - Formater: SARIF formatter instance
+func NewSARIFFormatter(w io.Writer, verbose bool) Formater {
 	// Return new SARIF formatter
 	return &sarifFormatter{
 		writer:  w,
@@ -44,8 +44,11 @@ func (f *sarifFormatter) Format(fset *token.FileSet, diagnostics []analysis.Diag
 	// Create run with tool information
 	run := sarif.NewRunWithInformationURI("ktn-linter", "https://github.com/kodflow/ktn-linter")
 
+	// Create adapter for interface compliance
+	adapter := &sarifRunAdapter{run: run}
+
 	// Add rules and results
-	f.addResults(run, fset, diagnostics)
+	f.addResults(adapter, fset, diagnostics)
 
 	// Add run to report
 	report.AddRun(run)
@@ -60,7 +63,7 @@ func (f *sarifFormatter) Format(fset *token.FileSet, diagnostics []analysis.Diag
 //   - run: SARIF run to add results to
 //   - fset: fileset for position information
 //   - diagnostics: list of diagnostics
-func (f *sarifFormatter) addResults(run *sarif.Run, fset *token.FileSet, diagnostics []analysis.Diagnostic) {
+func (f *sarifFormatter) addResults(run sarifRunWriter, fset *token.FileSet, diagnostics []analysis.Diagnostic) {
 	// Track seen rules for deduplication
 	seenRules := make(map[string]bool, len(diagnostics))
 
@@ -111,7 +114,7 @@ func (f *sarifFormatter) addResults(run *sarif.Run, fset *token.FileSet, diagnos
 // Params:
 //   - run: SARIF run to add rule to
 //   - code: rule code (e.g., "KTN-FUNC-001")
-func (f *sarifFormatter) addRule(run *sarif.Run, code string) {
+func (f *sarifFormatter) addRule(run sarifRunWriter, code string) {
 	// Get severity for rule
 	level := severity.GetSeverity(code)
 
@@ -123,7 +126,8 @@ func (f *sarifFormatter) addRule(run *sarif.Run, code string) {
 	rule.DefaultConfiguration.Level = f.severityToSARIF(level)
 
 	// Add rule to driver
-	run.Tool.Driver.Rules = append(run.Tool.Driver.Rules, rule)
+	tool := run.GetTool()
+	tool.Driver.Rules = append(tool.Driver.Rules, rule)
 }
 
 // severityToSARIF converts severity level to SARIF level.

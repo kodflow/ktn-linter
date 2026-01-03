@@ -51,10 +51,12 @@ func runVar022(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving positions
 	if pass.Fset == nil {
+		// Cannot analyze without file set
 		return nil, nil
 	}
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
+		// Cannot analyze without type information
 		return nil, nil
 	}
 
@@ -236,9 +238,13 @@ func checkPointerToInterface(pass *analysis.Pass, expr ast.Expr) {
 		msg, ok := messages.Get(ruleCodeVar022)
 		// Defensive: avoid panic if message is missing
 		if !ok {
+			// Fallback message
 			pass.Reportf(expr.Pos(), "%s: éviter pointeur vers interface %s", ruleCodeVar022, underlyingType.String())
+
+			// Stop after reporting
 			return
 		}
+		// Report avec message formatte
 		pass.Reportf(
 			expr.Pos(),
 			"%s: %s",

@@ -56,6 +56,7 @@ func runVar018(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
+		// Cannot analyze without type information
 		return nil, nil
 	}
 

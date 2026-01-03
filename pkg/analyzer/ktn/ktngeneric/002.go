@@ -157,6 +157,11 @@ func isGenericBuiltinConstraint(expr ast.Expr) bool {
 // Returns:
 //   - bool: true si c'est une interface
 func isInterfaceType(t types.Type) bool {
+	// Check nil type
+	if t == nil {
+		// Return false for nil type
+		return false
+	}
 	// Dereference le type nomme si necessaire
 	underlying := t.Underlying()
 	// Verifier si c'est une interface
@@ -369,15 +374,19 @@ func reportUnnecessaryGeneric(
 // Returns:
 //   - string: nom de la contrainte
 func extractConstraintName(expr ast.Expr) string {
-	switch e := expr.(type) {
+	// Analyser le type d'expression pour extraire le nom
+	switch typedExpr := expr.(type) {
+	// Identifiant simple
 	case *ast.Ident:
-		// Identifiant simple
-		return e.Name
+		// Retourner le nom de l'identifiant
+		return typedExpr.Name
+	// Expression qualifiee (ex: io.Reader)
 	case *ast.SelectorExpr:
-		// Expression qualifiee (ex: io.Reader)
-		return extractSelectorName(e)
+		// Extraire le nom qualifie complet
+		return extractSelectorName(typedExpr)
+	// Type non supporte
 	default:
-		// Type non supporte
+		// Retourner nom generique
 		return "interface"
 	}
 }

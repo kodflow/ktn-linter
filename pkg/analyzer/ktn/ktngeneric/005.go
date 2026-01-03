@@ -16,41 +16,40 @@ const (
 	ruleCodeGeneric005 string = "KTN-GENERIC-005"
 )
 
-// predeclaredIdentifiers contient tous les identifiants predeclares de Go.
-// Types (22): bool, byte, complex64, complex128, error, float32, float64,
-//
-//	int, int8, int16, int32, int64, rune, string, uint, uint8, uint16,
-//	uint32, uint64, uintptr, any, comparable
-//
-// Constantes (4): true, false, iota, nil
-// Fonctions (18): append, cap, clear, close, complex, copy, delete, imag,
-//
-//	len, make, max, min, new, panic, print, println, real, recover
-var predeclaredIdentifiers map[string]bool = map[string]bool{
-	// Types
-	"bool": true, "byte": true, "complex64": true, "complex128": true,
-	"error": true, "float32": true, "float64": true, "int": true,
-	"int8": true, "int16": true, "int32": true, "int64": true,
-	"rune": true, "string": true, "uint": true, "uint8": true,
-	"uint16": true, "uint32": true, "uint64": true, "uintptr": true,
-	"any": true, "comparable": true,
-	// Constants
-	"true": true, "false": true, "iota": true, "nil": true,
-	// Functions
-	"append": true, "cap": true, "clear": true, "close": true,
-	"complex": true, "copy": true, "delete": true, "imag": true,
-	"len": true, "make": true, "max": true, "min": true,
-	"new": true, "panic": true, "print": true, "println": true,
-	"real": true, "recover": true,
-}
+var (
+	// predeclaredIdentifiers contient tous les identifiants predeclares de Go.
+	// Types (22): bool, byte, complex64, complex128, error, float32, float64,
+	// int, int8, int16, int32, int64, rune, string, uint, uint8, uint16,
+	// uint32, uint64, uintptr, any, comparable
+	// Constantes (4): true, false, iota, nil
+	// Fonctions (18): append, cap, clear, close, complex, copy, delete, imag,
+	// len, make, max, min, new, panic, print, println, real, recover
+	predeclaredIdentifiers map[string]bool = map[string]bool{
+		// Types
+		"bool": true, "byte": true, "complex64": true, "complex128": true,
+		"error": true, "float32": true, "float64": true, "int": true,
+		"int8": true, "int16": true, "int32": true, "int64": true,
+		"rune": true, "string": true, "uint": true, "uint8": true,
+		"uint16": true, "uint32": true, "uint64": true, "uintptr": true,
+		"any": true, "comparable": true,
+		// Constants
+		"true": true, "false": true, "iota": true, "nil": true,
+		// Functions
+		"append": true, "cap": true, "clear": true, "close": true,
+		"complex": true, "copy": true, "delete": true, "imag": true,
+		"len": true, "make": true, "max": true, "min": true,
+		"new": true, "panic": true, "print": true, "println": true,
+		"real": true, "recover": true,
+	}
 
-// Analyzer005 checks that type parameters do not shadow predeclared identifiers.
-var Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
-	Name:     "ktngeneric005",
-	Doc:      "KTN-GENERIC-005: Type parameters must not shadow predeclared identifiers",
-	Run:      runGeneric005,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-}
+	// Analyzer005 checks that type parameters do not shadow predeclared identifiers.
+	Analyzer005 *analysis.Analyzer = &analysis.Analyzer{
+		Name:     "ktngeneric005",
+		Doc:      "KTN-GENERIC-005: Type parameters must not shadow predeclared identifiers",
+		Run:      runGeneric005,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+)
 
 // runGeneric005 execute l'analyse KTN-GENERIC-005.
 //
@@ -87,13 +86,11 @@ func runGeneric005(pass *analysis.Pass) (any, error) {
 
 		// Verifier les type parameters selon le type de noeud
 		switch node := n.(type) {
-		// Cas d'une declaration de fonction
+		// Analyser les type parameters de la fonction
 		case *ast.FuncDecl:
-			// Analyser les type parameters de la fonction
 			checkFuncTypeParams(pass, node)
-		// Cas d'une specification de type
+		// Analyser les type parameters du type
 		case *ast.TypeSpec:
-			// Analyser les type parameters du type
 			checkTypeSpecTypeParams(pass, node)
 		}
 	})

@@ -20,8 +20,8 @@ import (
 // diagChannelBufferMultiplier is the buffer multiplier for diagnostic channels.
 const diagChannelBufferMultiplier int = 10
 
-// waitGroup defines the interface for wait group operations.
-type waitGroup interface {
+// Doner defines the interface for wait group Done operation.
+type Doner interface {
 	Done()
 }
 
@@ -110,16 +110,19 @@ func (r *AnalysisRunner) worker(
 	analyzers []*analysis.Analyzer,
 	pkgChan <-chan *packages.Package,
 	diagChan chan<- DiagnosticResult,
-	wg waitGroup,
+	wg Doner,
 	resultsMapSize int,
 ) {
 	defer wg.Done()
 
+	// Pre-allocate results map once, clear between packages
+	// This avoids repeated allocation in loop while still avoiding cache corruption
+	results := make(map[*analysis.Analyzer]any, resultsMapSize)
+
 	// Process packages from channel
 	for pkg := range pkgChan {
-		// Create fresh results map for each package to avoid cache corruption
-		// between packages (inspect.Analyzer caches AST data that is package-specific)
-		results := make(map[*analysis.Analyzer]any, resultsMapSize)
+		// Clear results map between packages to avoid inspect.Analyzer cache corruption
+		clear(results)
 		r.analyzePackageParallel(pkg, analyzers, results, diagChan)
 	}
 }
@@ -164,9 +167,7 @@ func (r *AnalysisRunner) analyzePackageParallel(
 	r.runAnalyzerGroup(pkg, pkgFset, nonTestAnalyzers, results, diagChan)
 
 	// Clear results before running test analyzers (different file set)
-	for k := range results {
-		delete(results, k)
-	}
+	clear(results)
 
 	// Run test analyzers (all files including *_test.go)
 	r.runAnalyzerGroup(pkg, pkgFset, testAnalyzers, results, diagChan)
@@ -289,6 +290,7 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 	cfg := config.Get()
 	// Check if filtering should be skipped
 	if !r.shouldFilterExcluded(cfg, fset) {
+		// Return all files without filtering
 		return files
 	}
 
@@ -315,9 +317,11 @@ func (r *AnalysisRunner) filterExcludedFiles(files []*ast.File, fset *token.File
 func (r *AnalysisRunner) shouldFilterExcluded(cfg *config.Config, fset *token.FileSet) bool {
 	// Check if no exclusions configured
 	if cfg == nil || len(cfg.Exclude) == 0 {
+		// No filtering needed
 		return false
 	}
 	// Check if fileset is available
+	// Return true if fset is available for position lookup
 	return fset != nil
 }
 
@@ -334,6 +338,7 @@ func (r *AnalysisRunner) shouldIncludeFile(file *ast.File, fset *token.FileSet, 
 	pos := fset.Position(file.Pos())
 	// Include files with empty filename (synthetic/unknown position)
 	if pos.Filename == "" {
+		// Return true for synthetic files
 		return true
 	}
 
@@ -346,6 +351,7 @@ func (r *AnalysisRunner) shouldIncludeFile(file *ast.File, fset *token.FileSet, 
 	if cfg.IsFileExcludedGlobally(filename) || cfg.IsFileExcludedGlobally(base) {
 		// Log excluded file when verbose mode is enabled
 		r.logExcludedFile(filename)
+		// File is excluded
 		return false
 	}
 	// File should be included

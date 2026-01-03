@@ -53,6 +53,7 @@ func runVar019(pass *analysis.Pass) (any, error) {
 	insp := inspAny.(*inspector.Inspector)
 	// Defensive: avoid nil dereference when resolving types
 	if pass.TypesInfo == nil {
+		// Cannot analyze without type information
 		return nil, nil
 	}
 
@@ -461,8 +462,7 @@ func hasMutexInType(t types.Type) bool {
 	}
 
 	// Parcours des champs avec itérateur standard
-	for i := 0; i < st.NumFields(); i++ {
-		field := st.Field(i)
+	for field := range st.Fields() {
 		// Vérification de la condition
 		if getMutexTypeName(field.Type()) != "" {
 			// Traitement
@@ -509,8 +509,7 @@ func getMutexTypeFromType(pass *analysis.Pass, expr ast.Expr) string {
 	}
 
 	// Parcours des champs avec itérateur standard
-	for i := 0; i < st.NumFields(); i++ {
-		field := st.Field(i)
+	for field := range st.Fields() {
 		// Vérification de la condition
 		if mutexType := getMutexTypeName(field.Type()); mutexType != "" {
 			// Traitement
@@ -566,15 +565,17 @@ func isMutexCopy(pass *analysis.Pass, _lhs, rhs ast.Expr) string {
 
 	// Vérification si c'est un mutex
 	mutexType := getMutexTypeName(tv.Type)
+	// Return mutex type if found and not a pointer
 	if mutexType != "" {
 		// Vérification que ce n'est pas un pointeur
 		_, isPointer := tv.Type.(*types.Pointer)
-		// Retourne le type si pas pointeur
+		// Retourne le type si pas pointeur (copie dangereuse)
 		if !isPointer {
+			// Mutex copie par valeur detectee
 			return mutexType
 		}
 	}
 
-	// Traitement
+	// Pas de mutex trouve
 	return ""
 }

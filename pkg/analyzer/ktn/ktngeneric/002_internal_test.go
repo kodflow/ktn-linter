@@ -39,6 +39,7 @@ func TestExtractConstraintName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractConstraintName(tt.expr)
 			// Verify result matches expected
@@ -77,6 +78,7 @@ func TestExtractSelectorName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractSelectorName(tt.sel)
 			// Verify result matches expected
@@ -119,6 +121,7 @@ func TestIsGenericBuiltinConstraint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := isGenericBuiltinConstraint(tt.expr)
 			// Verify result matches expected
@@ -159,6 +162,7 @@ func TestContainsTypeParam(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := containsTypeParam(tt.expr, tt.typeParamName)
 			// Verify result matches expected
@@ -203,6 +207,7 @@ func TestCheckTypeAssertionUsage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := checkTypeAssertionUsage(tt.node, tt.typeParamName)
 			// Verify result
@@ -258,6 +263,7 @@ func TestCheckTypeConversionUsage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := checkTypeConversionUsage(tt.node, tt.typeParamName)
 			// Verify result
@@ -319,6 +325,7 @@ func TestIsTypeInReturnType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := isTypeInReturnType(tt.funcDecl, tt.typeParamName)
 			// Verify result
@@ -397,6 +404,7 @@ func TestIsTypeUsedInBody(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := isTypeUsedInBody(tt.funcDecl, tt.typeParamName)
 			// Verify result
@@ -474,6 +482,7 @@ func TestIsTypeParamOnlyForSignature(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := isTypeParamOnlyForSignature(tt.funcDecl, tt.typeParamName)
 			// Verify result
@@ -517,9 +526,151 @@ func TestAnalyzeUnnecessaryGeneric(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Just verify no panic
 			analyzeUnnecessaryGeneric(nil, tt.funcDecl)
+		})
+	}
+}
+
+// Test_runGeneric002 tests the main runGeneric002 function.
+func Test_runGeneric002(t *testing.T) {
+	tests := []struct {
+		name string
+		code string
+	}{
+		{
+			name: "generic function with interface constraint",
+			code: `package test
+import "io"
+func foo[T io.Reader](r T) { r.Read(nil) }
+`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Configure rule as enabled
+			config.Set(&config.Config{
+				Rules: map[string]*config.RuleConfig{
+					"KTN-GENERIC-002": {Enabled: config.Bool(true)},
+				},
+			})
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Verification erreur parsing
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+
+			// Create inspector
+			files := []*ast.File{file}
+			inspectResult, inspErr := inspect.Analyzer.Run(&analysis.Pass{
+				Fset:  fset,
+				Files: files,
+			})
+			// Vérifier l'erreur d'inspect
+			if inspErr != nil || inspectResult == nil {
+				t.Fatalf("failed to run inspect analyzer: %v", inspErr)
+			}
+
+			pass := &analysis.Pass{
+				Fset: fset,
+				ResultOf: map[*analysis.Analyzer]any{
+					inspect.Analyzer: inspectResult,
+				},
+				Report: func(d analysis.Diagnostic) {
+					// Expected to report
+				},
+			}
+
+			// Execute analyzer
+			result, err := runGeneric002(pass)
+			// Verification erreur
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+			// Verification resultat nil
+			if result != nil {
+				t.Errorf("Expected nil result, got %v", result)
+			}
+		})
+	}
+}
+
+// Test_isInterfaceType tests the isInterfaceType function.
+func Test_isInterfaceType(t *testing.T) {
+	tests := []struct {
+		name     string
+		typ      types.Type
+		expected bool
+	}{
+		{
+			name:     "nil type",
+			typ:      nil,
+			expected: false,
+		},
+		{
+			name:     "basic int type",
+			typ:      types.Typ[types.Int],
+			expected: false,
+		},
+		{
+			name:     "basic string type",
+			typ:      types.Typ[types.String],
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isInterfaceType(tt.typ)
+			// Verification resultat
+			if result != tt.expected {
+				t.Errorf("isInterfaceType() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_reportUnnecessaryGeneric tests the reportUnnecessaryGeneric function.
+func Test_reportUnnecessaryGeneric(t *testing.T) {
+	tests := []struct {
+		name       string
+		funcDecl   *ast.FuncDecl
+		typeParam  string
+		constraint ast.Expr
+	}{
+		{
+			name: "simple case with nil pass",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Process"},
+			},
+			typeParam:  "T",
+			constraint: &ast.Ident{Name: "Reader"},
+		},
+		{
+			name: "selector constraint",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "Process"},
+			},
+			typeParam: "T",
+			constraint: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "io"},
+				Sel: &ast.Ident{Name: "Reader"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic with nil pass
+			reportUnnecessaryGeneric(nil, tt.funcDecl, tt.typeParam, tt.constraint)
 		})
 	}
 }
@@ -532,7 +683,7 @@ func Test_runGeneric002_disabled(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec regle desactivee
 			config.Set(&config.Config{
@@ -565,7 +716,7 @@ func Test_runGeneric002_excludedFile(t *testing.T) {
 		{"validation"},
 	}
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Configuration avec fichier exclu
 			config.Set(&config.Config{
@@ -641,6 +792,7 @@ func TestIsSingleInterfaceConstraint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Pass nil for pass - function will return false for nil typeInfo
 			result := isSingleInterfaceConstraint(nil, tt.expr)
@@ -652,44 +804,69 @@ func TestIsSingleInterfaceConstraint(t *testing.T) {
 	}
 }
 
-// TestIsSingleInterfaceConstraintNilTypesInfo tests when pass.TypesInfo is nil.
-func TestIsSingleInterfaceConstraintNilTypesInfo(t *testing.T) {
-	// Pass with nil TypesInfo
-	pass := &analysis.Pass{
-		TypesInfo: nil,
-	}
-	expr := &ast.Ident{Name: "Reader"}
-
-	result := isSingleInterfaceConstraint(pass, expr)
-	// Should return false when TypesInfo is nil
-	if result != false {
-		t.Errorf("isSingleInterfaceConstraint() = %v, want false when TypesInfo is nil", result)
-	}
-}
-
-// TestReportUnnecessaryGenericNilPass tests reportUnnecessaryGeneric with nil pass.
-func TestReportUnnecessaryGenericNilPass(t *testing.T) {
-	funcDecl := &ast.FuncDecl{
-		Name: &ast.Ident{Name: "foo"},
-	}
-	// Should not panic with nil pass
-	reportUnnecessaryGeneric(nil, funcDecl, "T", &ast.Ident{Name: "Reader"})
-}
-
-// TestIsSingleInterfaceConstraintWithTypesInfo tests when TypesInfo.TypeOf returns nil.
-func TestIsSingleInterfaceConstraintWithTypesInfo(t *testing.T) {
-	// Pass with TypesInfo but TypeOf returns nil for unknown expr
-	pass := &analysis.Pass{
-		TypesInfo: &types.Info{
-			Types: make(map[ast.Expr]types.TypeAndValue),
+// TestIsSingleInterfaceConstraintEdgeCases tests edge cases for isSingleInterfaceConstraint.
+func TestIsSingleInterfaceConstraintEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		pass     *analysis.Pass
+		expr     ast.Expr
+		expected bool
+	}{
+		{
+			name: "nil TypesInfo",
+			pass: &analysis.Pass{
+				TypesInfo: nil,
+			},
+			expr:     &ast.Ident{Name: "Reader"},
+			expected: false,
+		},
+		{
+			name: "TypesInfo with empty Types map",
+			pass: &analysis.Pass{
+				TypesInfo: &types.Info{
+					Types: make(map[ast.Expr]types.TypeAndValue),
+				},
+			},
+			expr:     &ast.Ident{Name: "UnknownType"},
+			expected: false,
 		},
 	}
-	// Unknown identifier not in Types map
-	expr := &ast.Ident{Name: "UnknownType"}
 
-	result := isSingleInterfaceConstraint(pass, expr)
-	// Should return false when typeInfo is nil
-	if result != false {
-		t.Errorf("isSingleInterfaceConstraint() = %v, want false when typeInfo is nil", result)
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			result := isSingleInterfaceConstraint(tt.pass, tt.expr)
+			// Verify result
+			if result != tt.expected {
+				t.Errorf("isSingleInterfaceConstraint() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestReportUnnecessaryGenericEdgeCases tests edge cases for reportUnnecessaryGeneric.
+func TestReportUnnecessaryGenericEdgeCases(t *testing.T) {
+	tests := []struct {
+		name       string
+		funcDecl   *ast.FuncDecl
+		typeParam  string
+		constraint ast.Expr
+	}{
+		{
+			name: "nil pass",
+			funcDecl: &ast.FuncDecl{
+				Name: &ast.Ident{Name: "foo"},
+			},
+			typeParam:  "T",
+			constraint: &ast.Ident{Name: "Reader"},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic with nil pass
+			reportUnnecessaryGeneric(nil, tt.funcDecl, tt.typeParam, tt.constraint)
+		})
 	}
 }

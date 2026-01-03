@@ -61,6 +61,7 @@ func TestHasReturnInElse(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := hasReturnInElse(tt.elseStmt)
@@ -74,38 +75,68 @@ func TestHasReturnInElse(t *testing.T) {
 
 // TestCheckMathMinMax tests checkMathMinMax function.
 func TestCheckMathMinMax(t *testing.T) {
-	// Test: not a selector
-	callNotSelector := &ast.CallExpr{
-		Fun: &ast.Ident{Name: "Min"},
-	}
-	checkMathMinMax(nil, callNotSelector)
-
-	// Test: X is not an identifier
-	callNonIdentX := &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   &ast.CallExpr{Fun: &ast.Ident{Name: "getMath"}},
-			Sel: &ast.Ident{Name: "Min"},
+	tests := []struct {
+		name         string
+		callExpr     *ast.CallExpr
+		expectReport bool
+	}{
+		{
+			name: "not a selector",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.Ident{Name: "Min"},
+			},
+			expectReport: false,
+		},
+		{
+			name: "X is not an identifier",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.CallExpr{Fun: &ast.Ident{Name: "getMath"}},
+					Sel: &ast.Ident{Name: "Min"},
+				},
+			},
+			expectReport: false,
+		},
+		{
+			name: "not the math package",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "other"},
+					Sel: &ast.Ident{Name: "Min"},
+				},
+			},
+			expectReport: false,
+		},
+		{
+			name: "not Min or Max",
+			callExpr: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   &ast.Ident{Name: "math"},
+					Sel: &ast.Ident{Name: "Abs"},
+				},
+			},
+			expectReport: false,
 		},
 	}
-	checkMathMinMax(nil, callNonIdentX)
 
-	// Test: not the math package
-	callNotMath := &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: "other"},
-			Sel: &ast.Ident{Name: "Min"},
-		},
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			reported := false
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reported = true
+				},
+			}
+			// Call function
+			checkMathMinMax(pass, tt.callExpr)
+			// Check result
+			if reported != tt.expectReport {
+				t.Errorf("checkMathMinMax() reported = %v, want %v", reported, tt.expectReport)
+			}
+		})
 	}
-	checkMathMinMax(nil, callNotMath)
-
-	// Test: not Min or Max
-	callNotMinMax := &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   &ast.Ident{Name: "math"},
-			Sel: &ast.Ident{Name: "Abs"},
-		},
-	}
-	checkMathMinMax(nil, callNotMinMax)
 }
 
 // TestGetBuiltinName tests getBuiltinName function.
@@ -134,6 +165,7 @@ func TestGetBuiltinName(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := getBuiltinName(tt.input)
@@ -249,6 +281,7 @@ func TestIsMinMaxCondition(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isMinMaxCondition(tt.cond)
@@ -300,6 +333,7 @@ func TestHasReturnInBody(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := hasReturnInBody(tt.body)
@@ -353,6 +387,7 @@ func TestHasMatchingReturn(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := hasMatchingReturn(tt.ifStmt)

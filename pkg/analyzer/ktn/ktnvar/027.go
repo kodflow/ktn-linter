@@ -96,6 +96,7 @@ func isConvertibleToRangeInt(forStmt *ast.ForStmt) bool {
 	varName, initOK := checkInitIsZero(forStmt.Init)
 	// Init not matching pattern
 	if !initOK {
+		// Not a valid for-range replacement
 		return false
 	}
 
@@ -103,6 +104,7 @@ func isConvertibleToRangeInt(forStmt *ast.ForStmt) bool {
 	postOK := checkPostIsIncrement(forStmt.Post, varName)
 	// Post not matching pattern
 	if !postOK {
+		// Not a valid for-range replacement
 		return false
 	}
 
@@ -110,6 +112,7 @@ func isConvertibleToRangeInt(forStmt *ast.ForStmt) bool {
 	condOK := checkConditionIsLessThan(forStmt.Cond, varName)
 	// Condition not matching pattern
 	if !condOK {
+		// Not a valid for-range replacement
 		return false
 	}
 
@@ -130,6 +133,7 @@ func checkInitIsZero(init ast.Stmt) (string, bool) {
 	assignStmt, ok := extractAssignFromInit027(init)
 	// Not a valid short declaration
 	if !ok {
+		// Cannot extract assignment
 		return "", false
 	}
 
@@ -137,6 +141,7 @@ func checkInitIsZero(init ast.Stmt) (string, bool) {
 	varName, ok := extractVarNameFromAssign027(assignStmt)
 	// LHS not a single identifier
 	if !ok {
+		// Cannot extract variable name
 		return "", false
 	}
 
@@ -163,6 +168,7 @@ func extractAssignFromInit027(init ast.Stmt) (*ast.AssignStmt, bool) {
 	assignStmt, ok := init.(*ast.AssignStmt)
 	// Not an assignment
 	if !ok {
+		// Cannot cast to assignment statement
 		return nil, false
 	}
 
@@ -195,6 +201,7 @@ func extractVarNameFromAssign027(assignStmt *ast.AssignStmt) (string, bool) {
 	ident, ok := assignStmt.Lhs[0].(*ast.Ident)
 	// LHS not an identifier
 	if !ok {
+		// Cannot extract variable name
 		return "", false
 	}
 
@@ -214,6 +221,7 @@ func validateInitZero027(assignStmt *ast.AssignStmt) bool {
 	basicLit, ok := assignStmt.Rhs[0].(*ast.BasicLit)
 	// RHS not a literal
 	if !ok {
+		// Not a basic literal
 		return false
 	}
 
@@ -234,12 +242,13 @@ func checkPostIsIncrement(post ast.Stmt, varName string) bool {
 	incStmt, ok := post.(*ast.IncDecStmt)
 	// Not an inc/dec statement
 	if !ok {
+		// Cannot cast to inc/dec statement
 		return false
 	}
 
 	// Must be increment (not decrement)
 	if incStmt.Tok != token.INC {
-		// Not increment
+		// Not increment operator
 		return false
 	}
 
@@ -247,6 +256,7 @@ func checkPostIsIncrement(post ast.Stmt, varName string) bool {
 	ident, ok := incStmt.X.(*ast.Ident)
 	// X not an identifier
 	if !ok {
+		// Cannot extract identifier
 		return false
 	}
 
@@ -267,6 +277,7 @@ func checkConditionIsLessThan(cond ast.Expr, varName string) bool {
 	binExpr, ok := cond.(*ast.BinaryExpr)
 	// Not a binary expression
 	if !ok {
+		// Cannot cast to binary expression
 		return false
 	}
 
@@ -280,6 +291,7 @@ func checkConditionIsLessThan(cond ast.Expr, varName string) bool {
 	ident, ok := binExpr.X.(*ast.Ident)
 	// LHS not an identifier
 	if !ok {
+		// Cannot extract identifier
 		return false
 	}
 

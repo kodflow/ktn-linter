@@ -43,6 +43,7 @@ func TestIsCompositeLitZero025(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isCompositeLitZero025(tt.lit)
@@ -84,6 +85,7 @@ func TestIsZeroConversion(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// These tests return early before accessing pass
 			result := isZeroConversion(nil, tt.callExpr)
@@ -100,12 +102,38 @@ func TestIsZeroValue(t *testing.T) {
 	// Create a minimal pass for testing
 	pass := &analysis.Pass{}
 
-	// Test: unrecognized expression type
-	unrecognized := &ast.StarExpr{X: &ast.Ident{Name: "foo"}}
-	result := isZeroValue(pass, unrecognized)
-	// Expected: false
-	if result {
-		t.Error("isZeroValue with unrecognized type should return false")
+	tests := []struct {
+		name     string
+		expr     ast.Expr
+		expected bool
+	}{
+		{
+			name:     "unrecognized expression type",
+			expr:     &ast.StarExpr{X: &ast.Ident{Name: "foo"}},
+			expected: false,
+		},
+		{
+			name:     "zero basic literal",
+			expr:     &ast.BasicLit{Value: "0"},
+			expected: true,
+		},
+		{
+			name:     "nil identifier",
+			expr:     &ast.Ident{Name: "nil"},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Call function
+			result := isZeroValue(pass, tt.expr)
+			// Check result
+			if result != tt.expected {
+				t.Errorf("isZeroValue() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }
 
@@ -155,6 +183,7 @@ func TestIsBasicLitZero025(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isBasicLitZero025(tt.lit)
@@ -197,6 +226,7 @@ func TestIsIdentZero025(t *testing.T) {
 	}
 	// Run tests
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Call function
 			result := isIdentZero025(tt.ident)

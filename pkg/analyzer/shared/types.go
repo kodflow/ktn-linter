@@ -4,7 +4,6 @@ package shared
 import (
 	"go/ast"
 	"go/token"
-	"strings"
 )
 
 // DeclGroup représente un groupe de déclarations (const ou var).
@@ -14,78 +13,21 @@ type DeclGroup struct {
 	Pos  token.Pos
 }
 
-// dtoSuffixes contient les suffixes typiques des DTOs.
-var dtoSuffixes []string = []string{
-	"Config",
-	"Settings",
-	"Options",
-	"Params",
-	"Request",
-	"Response",
-	"DTO",
-	"Model",
-	"Entity",
-	"Spec",
-	"Schema",
-	"Payload",
-	"Input",
-	"Output",
-	"Args",
-	"Result",
-	"Data",
-	"Info",
-	"Details",
-	"State",
-	"Status",
-	"Metadata",
-	"Context",
-	"Event",
-	"Message",
-	"Command",
-	"Query",
-}
-
 // IsSerializableStruct vérifie si une struct est un DTO/serializable.
-// Une struct est considérée comme DTO si:
-//   - Elle a des champs avec des tags de sérialisation (json, yaml, xml, etc.)
-//   - Ou son nom se termine par un suffixe DTO typique (Config, Request, etc.)
+// Une struct est considérée comme DTO uniquement si Elle a AU MOINS UN champ
+// avec un tag de sérialisation (json, yaml, xml, etc.). Le nom seul (suffixe DTO)
+// ne suffit pas pour éviter les faux positifs sur des structs internes qui ne sont
+// jamais sérialisées.
 //
 // Params:
 //   - structType: type de la struct à vérifier
-//   - structName: nom de la struct
+//   - structName: nom de la struct (ignoré, conservé pour compatibilité)
 //
 // Returns:
 //   - bool: true si c'est un DTO/serializable
-func IsSerializableStruct(structType *ast.StructType, structName string) bool {
-	// Vérifier par le nom de la struct
-	if hasSerializableSuffix(structName) {
-		// Retour si suffixe DTO trouvé
-		return true
-	}
-
-	// Vérifier par les tags des champs
-	// Retour résultat de la vérification par tags
+func IsSerializableStruct(structType *ast.StructType, _ string) bool {
+	// Check if struct has serialization tags
 	return hasSerializationTags(structType)
-}
-
-// hasSerializableSuffix vérifie si le nom a un suffixe DTO.
-//
-// Params:
-//   - name: nom de la struct
-//
-// Returns:
-//   - bool: true si suffixe DTO trouvé
-func hasSerializableSuffix(name string) bool {
-	// Parcourir les suffixes
-	for _, suffix := range dtoSuffixes {
-		// Vérifier le suffixe
-		if strings.HasSuffix(name, suffix) {
-			// Retour si suffixe DTO trouvé
-			return true
-		}
-	}
-	// Pas de suffixe DTO
-	return false
 }
 
 // hasSerializationTags vérifie si la struct a des tags (backticks).

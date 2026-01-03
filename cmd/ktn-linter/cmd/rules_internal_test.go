@@ -49,7 +49,7 @@ func Test_parseRulesOptions(t *testing.T) {
 				t.Fatalf("failed to set %s: %v", flagRulesNoExamples, err)
 			}
 
-			opts := parseRulesOptions(rulesCmd)
+			opts := parseRulesOptions(rulesCmd.Flags())
 			// Verify format
 			if opts.Format != tt.wantFormat {
 				t.Errorf("parseRulesOptions().Format = %q, want %q", opts.Format, tt.wantFormat)
@@ -57,71 +57,6 @@ func Test_parseRulesOptions(t *testing.T) {
 			// Verify noExamples
 			if opts.NoExamples != tt.noExamples {
 				t.Errorf("parseRulesOptions().NoExamples = %v, want %v", opts.NoExamples, tt.noExamples)
-			}
-		})
-	}
-}
-
-func Test_NewRulesFormatter(t *testing.T) {
-	tests := []struct {
-		name         string
-		format       string
-		expectedType string
-	}{
-		{
-			name:         "text format",
-			format:       "text",
-			expectedType: "*cmd.textRulesFormatter",
-		},
-		{
-			name:         "markdown format",
-			format:       "markdown",
-			expectedType: "*cmd.markdownRulesFormatter",
-		},
-		{
-			name:         "md alias for markdown",
-			format:       "md",
-			expectedType: "*cmd.markdownRulesFormatter",
-		},
-		{
-			name:         "json format",
-			format:       "json",
-			expectedType: "*cmd.jsonRulesFormatter",
-		},
-		{
-			name:         "unknown format defaults to text",
-			format:       "unknown",
-			expectedType: "*cmd.textRulesFormatter",
-		},
-		{
-			name:         "empty format defaults to text",
-			format:       "",
-			expectedType: "*cmd.textRulesFormatter",
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt // Capture range variable
-		t.Run(tt.name, func(t *testing.T) {
-			formatter := NewRulesFormatter(tt.format)
-			// Verify formatter is not nil
-			if formatter == nil {
-				t.Fatal("NewRulesFormatter returned nil")
-			}
-			// Verify type by checking interface implementation
-			switch tt.expectedType {
-			case "*cmd.textRulesFormatter":
-				if _, ok := formatter.(*textRulesFormatter); !ok {
-					t.Errorf("expected *textRulesFormatter, got %T", formatter)
-				}
-			case "*cmd.markdownRulesFormatter":
-				if _, ok := formatter.(*markdownRulesFormatter); !ok {
-					t.Errorf("expected *markdownRulesFormatter, got %T", formatter)
-				}
-			case "*cmd.jsonRulesFormatter":
-				if _, ok := formatter.(*jsonRulesFormatter); !ok {
-					t.Errorf("expected *jsonRulesFormatter, got %T", formatter)
-				}
 			}
 		})
 	}

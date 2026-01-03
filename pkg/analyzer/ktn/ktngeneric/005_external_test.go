@@ -25,7 +25,7 @@ func TestGeneric005(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// good.go: 0 errors (proper type parameter names like T, E, K, V)
 			// bad.go: 10 errors (string, int, error, bool, etc. as type params)

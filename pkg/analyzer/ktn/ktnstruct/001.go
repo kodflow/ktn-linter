@@ -29,14 +29,6 @@ var Analyzer001 *analysis.Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-// methodInfo contient les informations sur une méthode.
-type methodInfo struct {
-	name       string
-	funcDecl   *ast.FuncDecl
-	receiverTy string
-	returnType string
-}
-
 // runStruct001 exécute l'analyse KTN-STRUCT-001.
 //
 // Params:
@@ -68,13 +60,6 @@ func runStruct001(pass *analysis.Pass) (any, error) {
 
 	// Retour de la fonction
 	return nil, nil
-}
-
-// structFieldsInfo contient les infos sur les champs d'une struct.
-type structFieldsInfo struct {
-	name          string
-	privateFields map[string]bool
-	pos           ast.Node
 }
 
 // collectStructPrivateFields collecte les champs privés des structs exportées.

@@ -164,7 +164,7 @@ func collectSliceMapReturnTypesFunc013(pass *analysis.Pass, funcDecl *ast.FuncDe
 	// Vérification des résultats
 	if funcDecl.Type.Results == nil {
 		// Retour d'une slice vide si pas de résultats
-		return []string{}
+		return make([]string, 0, 1)
 	}
 
 	// Collecte des types avec expansion des noms multiples
@@ -241,3 +241,4 @@ func isNilIdentFunc013(expr ast.Expr) bool {
 	// Retour du résultat de la comparaison
 	return ident.Name == "nil"
 }
+// Fin de isNilIdentFunc013

@@ -52,7 +52,7 @@ func TestAnalyzers(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
+		tt := tt
 		t.Run(tt.name, tt.testFunc)
 	}
 }

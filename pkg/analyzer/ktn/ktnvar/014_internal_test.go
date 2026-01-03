@@ -302,7 +302,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0
@@ -316,9 +320,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar014(pass)
-	if err != nil {
-		t.Errorf("runVar014() error = %v", err)
+	_, runErr := runVar014(pass)
+	if runErr != nil {
+		t.Errorf("runVar014() error = %v", runErr)
 	}
 
 	// Should report the buffer allocation in loop
@@ -342,7 +346,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0
@@ -356,9 +364,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar014(pass)
-	if err != nil {
-		t.Errorf("runVar014() error = %v", err)
+	_, runErr2 := runVar014(pass)
+	if runErr2 != nil {
+		t.Errorf("runVar014() error = %v", runErr2)
 	}
 
 	// Should report the buffer allocation in loop
@@ -389,7 +397,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "excluded.go", code, 0)
+	file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 	insp := inspector.New([]*ast.File{file})
 
 	reportCount := 0
@@ -403,9 +415,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar014(pass)
-	if err != nil {
-		t.Errorf("runVar014() error = %v", err)
+	_, runErr := runVar014(pass)
+	if runErr != nil {
+		t.Errorf("runVar014() error = %v", runErr)
 	}
 
 	// Should not report when file is excluded

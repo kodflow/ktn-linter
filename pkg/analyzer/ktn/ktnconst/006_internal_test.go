@@ -12,6 +12,32 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Test_runConst006 tests the runConst006 function.
+func Test_runConst006(t *testing.T) {
+	tests := []struct {
+		name      string
+		fn        func(*testing.T)
+		expectErr bool
+	}{
+		{"disabled", Test_runConst006_disabled, false},
+		{"excludedFile", Test_runConst006_excludedFile, false},
+		{"nonConstDecl", Test_runConst006_nonConstDecl, false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Call the sub-test function
+			// Sub-tests handle their own error checking
+			tt.fn(t)
+			// Verify no unexpected errors occurred
+			if t.Failed() && !tt.expectErr {
+				// Test failed unexpectedly
+				t.Errorf("Test failed when no error was expected")
+			}
+		})
+	}
+}
+
 // Test_runConst006_disabled tests that the rule is skipped when disabled.
 func Test_runConst006_disabled(t *testing.T) {
 	tests := []struct {

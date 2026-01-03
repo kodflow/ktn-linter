@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	// initialCap capacité initiale des maps
+	// initialCap définit la capacité initiale des maps pour optimiser les allocations
 	initialCap int = 16
-	// ruleCode code de la règle
+	// ruleCode définit le code de la règle KTN-INTERFACE-001
 	ruleCode string = "KTN-INTERFACE-001"
 )
 
@@ -53,7 +53,7 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 
 	// Vérifier si la règle est activée
 	if !cfg.IsRuleEnabled(ruleCode) {
-		// Règle désactivée
+		// Règle désactivée - retour immédiat
 		return nil, nil
 	}
 
@@ -66,7 +66,7 @@ func runInterface001(pass *analysis.Pass) (any, error) {
 	// Report: Interfaces privées non utilisées
 	reportUnused(pass, interfaces, usedInterfaces)
 
-	// Retour succès
+	// Retour succès - analyse terminée
 	return nil, nil
 }
 
@@ -86,9 +86,9 @@ func collectInterfaces(pass *analysis.Pass, cfg *config.Config) map[string]*ast.
 		// Vérifier exclusion fichier
 		filename := pass.Fset.Position(file.Pos()).Filename
 
-		// Fichier exclu
+		// Fichier exclu - skip si dans la liste d'exclusion
 		if cfg.IsFileExcluded(ruleCode, filename) {
-			// Passer au suivant
+			// Passer au fichier suivant
 			continue
 		}
 
@@ -123,7 +123,7 @@ func collectInterfacesFromFile(file *ast.File, interfaces map[string]*ast.TypeSp
 			interfaces[typeSpec.Name.Name] = typeSpec
 		}
 
-		// Continuer l'inspection
+		// Continuer l'inspection des nœuds suivants
 		return true
 	})
 }
@@ -170,7 +170,7 @@ func findUsagesInFile(file *ast.File, interfaces map[string]*ast.TypeSpec, used 
 			}
 		}
 
-		// Continuer l'inspection
+		// Continuer l'inspection des nœuds suivants
 		return true
 	})
 }
@@ -217,8 +217,10 @@ func extractTypesFromNode(n ast.Node) []string {
 		return extractEmbeddedTypes(node)
 	}
 
-	// Nœud sans types
-	return []string{}
+	// Nœud sans types - retour liste vide
+	var types []string
+	// Retourner la liste vide
+	return types
 }
 
 // extractCaseClauseTypes extrait les types d'un case clause.
@@ -251,8 +253,10 @@ func extractCaseClauseTypes(node *ast.CaseClause) []string {
 func extractEmbeddedTypes(node *ast.InterfaceType) []string {
 	// Vérifier si méthodes présentes
 	if node.Methods == nil {
-		// Pas de méthodes
-		return []string{}
+		// Pas de méthodes - retour liste vide
+		var types []string
+		// Retourner la liste vide
+		return types
 	}
 
 	var types []string
@@ -281,30 +285,34 @@ func extractEmbeddedTypes(node *ast.InterfaceType) []string {
 func extractTypeIdents(expr ast.Expr) []string {
 	// Vérifier nil
 	if expr == nil {
-		// Expression nulle
-		return []string{}
+		// Expression nulle - retour liste vide
+		var types []string
+		// Retourner la liste vide
+		return types
 	}
 
 	// Essayer extraction simple (ident, selector)
 	if result := extractSimpleType(expr); len(result) > 0 {
-		// Type simple extrait
+		// Type simple extrait - retour du résultat
 		return result
 	}
 
 	// Essayer extraction récursive (pointer, array, chan, ellipsis, paren)
 	if result := extractRecursiveType(expr); len(result) > 0 {
-		// Type récursif extrait
+		// Type récursif extrait - retour du résultat
 		return result
 	}
 
 	// Essayer extraction composite (map, func, generics)
 	if result := extractCompositeType(expr); len(result) > 0 {
-		// Type composite extrait
+		// Type composite extrait - retour du résultat
 		return result
 	}
 
-	// Type non reconnu
-	return []string{}
+	// Type non reconnu - retour liste vide
+	var types []string
+	// Retourner la liste vide
+	return types
 }
 
 // extractSimpleType extrait les types simples (ident, selector).
@@ -319,17 +327,19 @@ func extractSimpleType(expr ast.Expr) []string {
 	switch t := expr.(type) {
 	// Identifiant simple: MyInterface
 	case *ast.Ident:
-		// Retourner le nom
+		// Retourner le nom de l'identifiant
 		return []string{t.Name}
 
 	// Sélecteur: pkg.MyInterface
 	case *ast.SelectorExpr:
-		// Retourner le sélecteur
+		// Retourner le nom du sélecteur
 		return []string{t.Sel.Name}
 	}
 
-	// Pas un type simple
-	return []string{}
+	// Pas un type simple - retour liste vide
+	var types []string
+	// Retourner la liste vide
+	return types
 }
 
 // extractRecursiveType extrait les types récursifs (pointer, array, etc).
@@ -344,32 +354,34 @@ func extractRecursiveType(expr ast.Expr) []string {
 	switch t := expr.(type) {
 	// Pointeur: *T
 	case *ast.StarExpr:
-		// Extraire le type pointé
+		// Extraire le type pointé récursivement
 		return extractTypeIdents(t.X)
 
 	// Slice/Array: []T ou [N]T
 	case *ast.ArrayType:
-		// Extraire le type élément
+		// Extraire le type élément récursivement
 		return extractTypeIdents(t.Elt)
 
 	// Channel: chan T
 	case *ast.ChanType:
-		// Extraire le type du channel
+		// Extraire le type du channel récursivement
 		return extractTypeIdents(t.Value)
 
 	// Ellipsis: ...T
 	case *ast.Ellipsis:
-		// Extraire le type variadique
+		// Extraire le type variadique récursivement
 		return extractTypeIdents(t.Elt)
 
 	// Parenthèses: (T)
 	case *ast.ParenExpr:
-		// Extraire le contenu
+		// Extraire le contenu récursivement
 		return extractTypeIdents(t.X)
 	}
 
-	// Pas un type récursif
-	return []string{}
+	// Pas un type récursif - retour liste vide
+	var types []string
+	// Retourner la liste vide
+	return types
 }
 
 // extractCompositeType extrait les types composites (map, func, generics).
@@ -384,12 +396,12 @@ func extractCompositeType(expr ast.Expr) []string {
 	switch t := expr.(type) {
 	// Map: map[K]V
 	case *ast.MapType:
-		// Extraire clé et valeur
+		// Extraire clé et valeur de la map
 		return extractMapTypes(t)
 
 	// Function type: func(T) R
 	case *ast.FuncType:
-		// Extraire params et retours
+		// Extraire params et retours de la fonction
 		return extractFuncTypes(t)
 
 	// Generic: Foo[T]
@@ -403,8 +415,10 @@ func extractCompositeType(expr ast.Expr) []string {
 		return extractIndexListTypes(t)
 	}
 
-	// Pas un type composite
-	return []string{}
+	// Pas un type composite - retour liste vide
+	var types []string
+	// Retourner la liste vide
+	return types
 }
 
 // extractMapTypes extrait les types d'une expression map.
@@ -423,7 +437,7 @@ func extractMapTypes(t *ast.MapType) []string {
 	// Extraire type valeur
 	result = append(result, extractTypeIdents(t.Value)...)
 
-	// Retourner résultat
+	// Retourner résultat avec clé et valeur
 	return result
 }
 
@@ -455,7 +469,7 @@ func extractFuncTypes(t *ast.FuncType) []string {
 		}
 	}
 
-	// Retourner résultat
+	// Retourner résultat avec params et retours
 	return result
 }
 
@@ -475,7 +489,7 @@ func extractIndexTypes(t *ast.IndexExpr) []string {
 	// Extraire type paramètre
 	result = append(result, extractTypeIdents(t.Index)...)
 
-	// Retourner résultat
+	// Retourner résultat avec type et paramètre
 	return result
 }
 
@@ -498,7 +512,7 @@ func extractIndexListTypes(t *ast.IndexListExpr) []string {
 		result = append(result, extractTypeIdents(idx)...)
 	}
 
-	// Retourner résultat
+	// Retourner résultat avec tous les types
 	return result
 }
 
@@ -509,17 +523,17 @@ func extractIndexListTypes(t *ast.IndexListExpr) []string {
 //   - interfaces: toutes les interfaces
 //   - used: interfaces utilisées
 func reportUnused(pass *analysis.Pass, interfaces map[string]*ast.TypeSpec, used map[string]bool) {
-	// Parcourir les interfaces
+	// Parcourir les interfaces pour reporter les non-utilisées
 	for name, typeSpec := range interfaces {
 		// Skip interfaces exportées (API publique)
 		if ast.IsExported(name) {
-			// Interface publique
+			// Interface publique - utilisée via export
 			continue
 		}
 
-		// Skip interfaces utilisées
+		// Skip interfaces utilisées dans le code
 		if used[name] {
-			// Interface utilisée
+			// Interface utilisée - pas d'erreur
 			continue
 		}
 

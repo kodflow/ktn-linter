@@ -7,46 +7,78 @@ import (
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/ktn/testhelper"
 	"github.com/kodflow/ktn-linter/pkg/config"
+	"golang.org/x/tools/go/analysis"
 )
 
 // TestCheckLoopVarCopyPattern tests checkLoopVarCopyPattern function.
 func TestCheckLoopVarCopyPattern(t *testing.T) {
-	// Test: no range variables
-	rangeNoVars := &ast.RangeStmt{
-		Key:   nil,
-		Value: nil,
-		Body:  &ast.BlockStmt{},
+	tests := []struct {
+		name         string
+		rangeStmt    *ast.RangeStmt
+		expectReport bool
+	}{
+		{
+			name: "no range variables",
+			rangeStmt: &ast.RangeStmt{
+				Key:   nil,
+				Value: nil,
+				Body:  &ast.BlockStmt{},
+			},
+			expectReport: false,
+		},
+		{
+			name: "nil body",
+			rangeStmt: &ast.RangeStmt{
+				Key:  &ast.Ident{Name: "i"},
+				Body: nil,
+			},
+			expectReport: false,
+		},
+		{
+			name: "empty body",
+			rangeStmt: &ast.RangeStmt{
+				Key:  &ast.Ident{Name: "i"},
+				Body: &ast.BlockStmt{List: nil},
+			},
+			expectReport: false,
+		},
+		{
+			name: "key is blank identifier",
+			rangeStmt: &ast.RangeStmt{
+				Key:  &ast.Ident{Name: "_"},
+				Body: &ast.BlockStmt{},
+			},
+			expectReport: false,
+		},
+		{
+			name: "value is blank identifier",
+			rangeStmt: &ast.RangeStmt{
+				Key:   &ast.Ident{Name: "i"},
+				Value: &ast.Ident{Name: "_"},
+				Body:  &ast.BlockStmt{},
+			},
+			expectReport: false,
+		},
 	}
-	checkLoopVarCopyPattern(nil, rangeNoVars)
 
-	// Test: nil body
-	rangeNilBody := &ast.RangeStmt{
-		Key:  &ast.Ident{Name: "i"},
-		Body: nil,
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			reported := false
+			pass := &analysis.Pass{
+				Fset: token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {
+					reported = true
+				},
+			}
+			// Call function
+			checkLoopVarCopyPattern(pass, tt.rangeStmt)
+			// Check result
+			if reported != tt.expectReport {
+				t.Errorf("checkLoopVarCopyPattern() reported = %v, want %v", reported, tt.expectReport)
+			}
+		})
 	}
-	checkLoopVarCopyPattern(nil, rangeNilBody)
-
-	// Test: empty body
-	rangeEmptyBody := &ast.RangeStmt{
-		Key:  &ast.Ident{Name: "i"},
-		Body: &ast.BlockStmt{List: nil},
-	}
-	checkLoopVarCopyPattern(nil, rangeEmptyBody)
-
-	// Test: key is blank identifier
-	rangeBlankKey := &ast.RangeStmt{
-		Key:  &ast.Ident{Name: "_"},
-		Body: &ast.BlockStmt{},
-	}
-	checkLoopVarCopyPattern(nil, rangeBlankKey)
-
-	// Test: value is blank identifier
-	rangeBlankValue := &ast.RangeStmt{
-		Key:   &ast.Ident{Name: "i"},
-		Value: &ast.Ident{Name: "_"},
-		Body:  &ast.BlockStmt{},
-	}
-	checkLoopVarCopyPattern(nil, rangeBlankValue)
 }
 
 // TestGetRangeVariableNames tests getRangeVariableNames function.

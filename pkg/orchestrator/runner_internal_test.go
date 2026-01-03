@@ -567,3 +567,195 @@ func TestAnalysisRunner_filterExcludedFiles(t *testing.T) {
 		})
 	}
 }
+
+// TestAnalysisRunner_runAnalyzerGroup tests the runAnalyzerGroup method.
+func TestAnalysisRunner_runAnalyzerGroup(t *testing.T) {
+	tests := []struct {
+		name      string
+		analyzers []*analysis.Analyzer
+	}{
+		{
+			name:      "run with empty analyzers",
+			analyzers: []*analysis.Analyzer{},
+		},
+		{
+			name: "run with simple analyzer",
+			analyzers: []*analysis.Analyzer{
+				{
+					Name: "test",
+					Run:  func(*analysis.Pass) (any, error) { return nil, nil },
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, false)
+
+			fset := token.NewFileSet()
+			pkg := &packages.Package{
+				PkgPath: "test/pkg",
+				Fset:    fset,
+				Syntax:  []*ast.File{},
+			}
+
+			results := make(map[*analysis.Analyzer]any)
+			diagChan := make(chan DiagnosticResult, 10)
+
+			// Should not panic
+			runner.runAnalyzerGroup(pkg, fset, tt.analyzers, results, diagChan)
+			close(diagChan)
+		})
+	}
+}
+
+// TestAnalysisRunner_shouldFilterExcluded tests the shouldFilterExcluded method.
+func TestAnalysisRunner_shouldFilterExcluded(t *testing.T) {
+	tests := []struct {
+		name    string
+		cfg     *config.Config
+		fset    *token.FileSet
+		want    bool
+	}{
+		{
+			name: "nil config returns false",
+			cfg:  nil,
+			fset: token.NewFileSet(),
+			want: false,
+		},
+		{
+			name: "empty exclusions returns false",
+			cfg:  &config.Config{Exclude: []string{}},
+			fset: token.NewFileSet(),
+			want: false,
+		},
+		{
+			name: "nil fset returns false",
+			cfg:  &config.Config{Exclude: []string{"*.pb.go"}},
+			fset: nil,
+			want: false,
+		},
+		{
+			name: "with exclusions and fset returns true",
+			cfg:  &config.Config{Exclude: []string{"*.pb.go"}},
+			fset: token.NewFileSet(),
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, false)
+
+			got := runner.shouldFilterExcluded(tt.cfg, tt.fset)
+
+			// Verify result
+			if got != tt.want {
+				t.Errorf("shouldFilterExcluded() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestAnalysisRunner_shouldIncludeFile tests the shouldIncludeFile method.
+func TestAnalysisRunner_shouldIncludeFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		exclude  []string
+		want     bool
+	}{
+		{
+			name:     "include regular file",
+			filename: "main.go",
+			exclude:  []string{},
+			want:     true,
+		},
+		{
+			name:     "exclude pb.go file",
+			filename: "service.pb.go",
+			exclude:  []string{"*.pb.go"},
+			want:     false,
+		},
+		{
+			name:     "include non-matching file",
+			filename: "main.go",
+			exclude:  []string{"*.pb.go"},
+			want:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup config
+			cfg := &config.Config{Exclude: tt.exclude}
+			config.Set(cfg)
+			defer config.Reset()
+
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, false)
+
+			fset := token.NewFileSet()
+			f := fset.AddFile(tt.filename, -1, 100)
+			file := &ast.File{Package: f.Pos(0)}
+
+			got := runner.shouldIncludeFile(file, fset, cfg)
+
+			// Verify result
+			if got != tt.want {
+				t.Errorf("shouldIncludeFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestAnalysisRunner_logExcludedFile tests the logExcludedFile method.
+func TestAnalysisRunner_logExcludedFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		verbose  bool
+		filename string
+		wantLog  bool
+	}{
+		{
+			name:     "verbose logs file",
+			verbose:  true,
+			filename: "test.go",
+			wantLog:  true,
+		},
+		{
+			name:     "non-verbose does not log",
+			verbose:  false,
+			filename: "test.go",
+			wantLog:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			runner := NewAnalysisRunner(&buf, tt.verbose)
+
+			runner.logExcludedFile(tt.filename)
+
+			output := buf.String()
+			hasLog := strings.Contains(output, "Excluding file")
+
+			// Verify log expectation
+			if tt.wantLog && !hasLog {
+				t.Error("expected log output but got none")
+			}
+			// Verify no log expectation
+			if !tt.wantLog && hasLog {
+				t.Error("expected no log output but got some")
+			}
+		})
+	}
+}

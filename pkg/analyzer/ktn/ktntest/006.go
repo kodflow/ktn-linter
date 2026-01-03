@@ -293,9 +293,9 @@ func checkVariables(genDecl *ast.GenDecl, result *fileAnalysisResult) {
 	}
 }
 
-// checkTypes checks for public types that require external testing.
+// checkTypes checks for public/private types that require testing.
 // Public types (exported, like MyStruct) require external tests.
-// Private types don't require specific tests.
+// Private types require internal tests to access them.
 //
 // Params:
 //   - genDecl: déclaration générique
@@ -326,6 +326,9 @@ func checkTypes(genDecl *ast.GenDecl, result *fileAnalysisResult) {
 		if ast.IsExported(typeSpec.Name.Name) {
 			// Mark as having public element
 			result.hasPublic = true
+		} else {
+			// Private types require internal tests
+			result.hasPrivate = true
 		}
 	}
 }
@@ -385,12 +388,16 @@ func checkTestFilesExist(filename string) testFilesStatus {
 	// Retirer extension .go
 	fileBase := strings.TrimSuffix(baseName, ".go")
 
+	// Construire les chemins
+	internalPath := filepath.Join(dir, fileBase+"_internal_test.go")
+	externalPath := filepath.Join(dir, fileBase+"_external_test.go")
+
 	// Retour de l'état des fichiers de test
 	return testFilesStatus{
 		baseName:    baseName,
 		fileBase:    fileBase,
-		hasInternal: fileExistsOnDisk(filepath.Join(dir, fileBase+"_internal_test.go")),
-		hasExternal: fileExistsOnDisk(filepath.Join(dir, fileBase+"_external_test.go")),
+		hasInternal: fileExistsOnDisk(internalPath),
+		hasExternal: fileExistsOnDisk(externalPath),
 	}
 }
 

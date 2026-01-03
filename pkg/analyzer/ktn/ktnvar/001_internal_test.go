@@ -296,32 +296,48 @@ func Test_runVar001_fileExcluded(t *testing.T) {
 
 // Test_checkVarSpec_withBlankIdentifier tests checkVarSpec skips blank identifier.
 func Test_checkVarSpec_withBlankIdentifier(t *testing.T) {
-	config.Reset()
-	defer config.Reset()
-
-	// Parse code with multiple vars including blank identifier
-	code := `package test
+	tests := []struct {
+		name          string
+		code          string
+		expectedCount int
+	}{
+		{
+			name: "blank identifier should be skipped",
+			code: `package test
 var x, _, y = 1, 2, 3
-`
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "test.go", code, 0)
-	if err != nil {
-		t.Fatalf("failed to parse: %v", err)
+`,
+			expectedCount: 2,
+		},
 	}
 
-	insp := inspector.New([]*ast.File{file})
-	reportCount := 0
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			defer config.Reset()
 
-	pass := &analysis.Pass{
-		Fset:     fset,
-		ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
-		Report:   func(_ analysis.Diagnostic) { reportCount++ },
-	}
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			// Check parse error
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
 
-	_, _ = runVar001(pass)
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
 
-	// Should report 2 issues (x and y, not _)
-	if reportCount != 2 {
-		t.Errorf("runVar001() reported %d issues, expected 2", reportCount)
+			pass := &analysis.Pass{
+				Fset:     fset,
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			_, _ = runVar001(pass)
+
+			// Verify report count
+			if reportCount != tt.expectedCount {
+				t.Errorf("runVar001() reported %d issues, expected %d", reportCount, tt.expectedCount)
+			}
+		})
 	}
 }

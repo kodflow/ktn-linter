@@ -60,14 +60,16 @@ func (l *PackageLoader) LoadFromDir(dir string, patterns []string) ([]*packages.
 	pkgs, err := packages.Load(cfg, patterns...)
 	// Check for load error
 	if err != nil {
+		var emptyPackages []*packages.Package
 		// Return error
-		return []*packages.Package{}, fmt.Errorf("loading packages: %w", err)
+		return emptyPackages, fmt.Errorf("loading packages: %w", err)
 	}
 
 	// Check for package errors
 	if err := l.checkErrors(pkgs); err != nil {
+		var emptyPackages []*packages.Package
 		// Return error
-		return []*packages.Package{}, err
+		return emptyPackages, err
 	}
 
 	// Return loaded packages

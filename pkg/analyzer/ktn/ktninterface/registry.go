@@ -11,5 +11,7 @@ func Analyzers() []*analysis.Analyzer {
 	// Verification de la condition
 	return []*analysis.Analyzer{
 		Analyzer001,
+		Analyzer003,
+		Analyzer004,
 	}
 }

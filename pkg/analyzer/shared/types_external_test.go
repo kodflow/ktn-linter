@@ -19,16 +19,16 @@ func TestIsSerializableStruct(t *testing.T) {
 		expected   bool
 	}{
 		{
-			name: "DTO by suffix",
+			name: "DTO with yaml tag",
 			code: `package test
 type UserConfig struct {
-	Name string
+	Name string ` + "`yaml:\"name\"`" + `
 }`,
 			structName: "UserConfig",
 			expected:   true,
 		},
 		{
-			name: "DTO by tag",
+			name: "DTO with json tag",
 			code: `package test
 type User struct {
 	Name string ` + "`json:\"name\"`" + `

@@ -15,6 +15,8 @@ import (
 const (
 	// ruleCodeVar033 is the rule code for this analyzer.
 	ruleCodeVar033 string = "KTN-VAR-033"
+	// minStmtsForCmpOr is the minimum number of statements for cmp.Or pattern
+	minStmtsForCmpOr int = 2
 )
 
 // Analyzer033 detects patterns that can use cmp.Or (Go 1.22+).
@@ -111,14 +113,14 @@ func checkCmpOrPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *conf
 //   - body: function body to analyze
 //   - cfg: configuration
 func analyzeBodyForCmpOrPattern(pass *analysis.Pass, body *ast.BlockStmt, cfg *config.Config) {
-	// Check that body has at least 2 statements
-	if len(body.List) < 2 {
+	// Check that body has at least the minimum statements for pattern
+	if len(body.List) < minStmtsForCmpOr {
 		// Not enough statements for pattern
 		return
 	}
 
 	// Check each pair of consecutive statements
-	for idx := 0; idx < len(body.List)-1; idx++ {
+	for idx := range len(body.List) - 1 {
 		// Get the if statement
 		ifStmt, ok := body.List[idx].(*ast.IfStmt)
 		// Check if valid if statement

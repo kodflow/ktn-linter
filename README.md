@@ -246,7 +246,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-FUNC-012](docs/rules/KTN-FUNC-012.md) | INFO | Named returns pour >3 valeurs de retour |
 | KTN-FUNC-013 | WARNING | Préférer slice/map vide à nil |
 
-### Structures (6 règles) - WARNING/INFO
+### Structures (9 règles) - WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-STRUCT-001](docs/rules/KTN-STRUCT-001.md) | INFO | Convention getters/setters: `Field()` et `SetField()` |
@@ -255,6 +255,9 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-STRUCT-004](docs/rules/KTN-STRUCT-004.md) | INFO | Un fichier Go par struct (DTOs peuvent être groupés) |
 | [KTN-STRUCT-005](docs/rules/KTN-STRUCT-005.md) | INFO | Ordre des champs (exportés avant privés) |
 | [KTN-STRUCT-006](docs/rules/KTN-STRUCT-006.md) | INFO | Pas de tags de sérialisation sur champs privés |
+| KTN-STRUCT-007 | INFO | Champs exportés DTO sans tags json/xml |
+| KTN-STRUCT-008 | WARNING | Cohérence type receiver (pointer vs value) |
+| KTN-STRUCT-009 | WARNING | Cohérence nom receiver (1-2 lettres, pas this/self) |
 
 **Convention Getters/Setters (STRUCT-001)**:
 - Getters/setters sont **OPTIONNELS**
@@ -278,10 +281,13 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-TEST-012](docs/rules/KTN-TEST-012.md) | WARNING | Tests doivent contenir des assertions |
 | [KTN-TEST-013](docs/rules/KTN-TEST-013.md) | INFO | Coverage cas d'erreur |
 
-### Interfaces (1 règle) - WARNING
+### Interfaces (3 règles) - WARNING/INFO
+
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-INTERFACE-001](docs/rules/KTN-INTERFACE-001.md) | WARNING | Interface non utilisée |
+| KTN-INTERFACE-003 | INFO | Convention -er pour interfaces à une méthode |
+| KTN-INTERFACE-004 | INFO | Utilisation excessive de interface{}/any |
 
 ### API (1 règle) - WARNING
 | Code | Sévérité | Description |

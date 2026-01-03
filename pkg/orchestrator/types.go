@@ -16,6 +16,24 @@ type DiagnosticResult struct {
 	cachedPos    *token.Position // Cached position to avoid repeated lookups
 }
 
+// NewDiagnosticResult creates a new DiagnosticResult.
+//
+// Params:
+//   - diag: the diagnostic
+//   - fset: the fileset for position lookup
+//   - analyzerName: name of the analyzer that reported the diagnostic
+//
+// Returns:
+//   - DiagnosticResult: new diagnostic result
+func NewDiagnosticResult(diag analysis.Diagnostic, fset *token.FileSet, analyzerName string) DiagnosticResult {
+	// Return new diagnostic result
+	return DiagnosticResult{
+		Diag:         diag,
+		Fset:         fset,
+		AnalyzerName: analyzerName,
+	}
+}
+
 // Position returns the token.Position for this diagnostic.
 // Caches the result to avoid repeated Fset.Position() calls.
 //

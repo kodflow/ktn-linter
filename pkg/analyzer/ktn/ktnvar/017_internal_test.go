@@ -159,7 +159,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -184,9 +188,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	_, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 
 	// Should report the map without capacity
@@ -206,7 +210,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -231,9 +239,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	_, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 
 	// Should not report - map has capacity
@@ -256,7 +264,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -281,9 +293,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	_, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 
 	// Should report with verbose mode
@@ -303,7 +315,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -325,9 +341,9 @@ func foo() {
 		Report:    func(_d analysis.Diagnostic) {},
 	}
 
-	result, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	result, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 	if result != nil {
 		t.Errorf("runVar017() result = %v, expected nil", result)
@@ -354,7 +370,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "excluded.go", code, 0)
+	file, err := parser.ParseFile(fset, "excluded.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -379,9 +399,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	_, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 
 	// Should not report when file is excluded
@@ -401,7 +421,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -426,9 +450,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	_, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 
 	// Should not report - slice is not a map
@@ -448,7 +472,11 @@ func foo() {
 }
 `
 	fset := token.NewFileSet()
-	file, _ := parser.ParseFile(fset, "test.go", code, 0)
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	// Vérifier l'erreur de parsing
+	if err != nil || file == nil {
+		t.Fatalf("failed to parse test code: %v", err)
+	}
 
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
@@ -473,9 +501,9 @@ func foo() {
 		},
 	}
 
-	_, err := runVar017(pass)
-	if err != nil {
-		t.Errorf("runVar017() error = %v", err)
+	_, runErr := runVar017(pass)
+	if runErr != nil {
+		t.Errorf("runVar017() error = %v", runErr)
 	}
 
 	// Should not report - channel is not a map

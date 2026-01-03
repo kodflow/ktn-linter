@@ -15,6 +15,14 @@ import (
 const (
 	// ruleCodeVar030 is the rule code for this analyzer.
 	ruleCodeVar030 string = "KTN-VAR-030"
+	// makeInfosInitCap is the initial capacity for makeInfos map.
+	makeInfosInitCap int = 8
+	// appendArgsCount is the expected number of arguments for append in clone pattern.
+	appendArgsCount030 int = 2
+	// makeArgsCount030 is the expected number of arguments for make in clone pattern.
+	makeArgsCount030 int = 2
+	// copyArgsCount030 is the expected number of arguments for copy builtin.
+	copyArgsCount030 int = 2
 )
 
 // Analyzer030 detects slice cloning patterns that can use slices.Clone (Go 1.21+).
@@ -126,8 +134,8 @@ func isAppendNilPattern(call *ast.CallExpr) bool {
 		return false
 	}
 
-	// Check that there are exactly 2 arguments
-	if len(call.Args) != 2 {
+	// Check that there are exactly the expected number of arguments
+	if len(call.Args) != appendArgsCount030 {
 		// Not matching pattern
 		return false
 	}
@@ -213,7 +221,7 @@ func checkMakeCopyPattern(pass *analysis.Pass, insp *inspector.Inspector, cfg *c
 //   - cfg: configuration
 func analyzeBlockForMakeCopy(pass *analysis.Pass, block *ast.BlockStmt, cfg *config.Config) {
 	// Map to track make calls that could be clone patterns
-	makeInfos := make(map[string]*makeCloneInfo)
+	makeInfos := make(map[string]*makeCloneInfo, makeInfosInitCap)
 
 	// Iterate through statements
 	for _, stmt := range block.List {
@@ -308,12 +316,12 @@ func validateMakeCall030(call *ast.CallExpr) string {
 	makeIdent, ok := call.Fun.(*ast.Ident)
 	// Verify it's make
 	if !ok || makeIdent.Name != "make" {
-		// Not a make call
+		// Cannot validate non-make call
 		return ""
 	}
 
-	// Check that there are exactly 2 arguments
-	if len(call.Args) != 2 {
+	// Check that there are exactly the expected number of arguments
+	if len(call.Args) != makeArgsCount030 {
 		// Not matching pattern
 		return ""
 	}
@@ -371,19 +379,19 @@ func extractLenSource(expr ast.Expr) string {
 //   - string: string representation
 func exprToString(expr ast.Expr) string {
 	// Handle different expression types
-	switch e := expr.(type) {
+	switch typedExpr := expr.(type) {
 	// Identifier case
 	case *ast.Ident:
 		// Return identifier name
-		return e.Name
+		return typedExpr.Name
 	// Selector case (e.g., obj.field)
 	case *ast.SelectorExpr:
 		// Build selector string
-		return exprToString(e.X) + "." + e.Sel.Name
+		return exprToString(typedExpr.X) + "." + typedExpr.Sel.Name
 	// Index case (e.g., arr[i])
 	case *ast.IndexExpr:
 		// Build index string
-		return exprToString(e.X) + "[" + exprToString(e.Index) + "]"
+		return exprToString(typedExpr.X) + "[" + exprToString(typedExpr.Index) + "]"
 	// Default case
 	default:
 		// Unknown expression type
@@ -470,8 +478,8 @@ func extractCopyCall030(exprStmt *ast.ExprStmt) (*ast.CallExpr, string, string) 
 func isCopyCallWithTwoArgs030(call *ast.CallExpr) bool {
 	// Check if it's a copy call
 	ident, ok := call.Fun.(*ast.Ident)
-	// Verify it's copy with 2 args
-	return ok && ident.Name == "copy" && len(call.Args) == 2
+	// Verify it's copy with expected args count
+	return ok && ident.Name == "copy" && len(call.Args) == copyArgsCount030
 }
 
 // findMatchingMake030 finds a matching make for a copy call.

@@ -3,8 +3,10 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 
+	"github.com/kodflow/ktn-linter/pkg/updater"
 	"github.com/spf13/cobra"
 )
 
@@ -161,6 +163,228 @@ func TestRunUpgradeDevBuild(t *testing.T) {
 			// Check exit code
 			if exitCode != tt.expectedExit {
 				t.Errorf("runUpgrade() exit code = %d, want %d", exitCode, tt.expectedExit)
+			}
+		})
+	}
+}
+
+// TestRunUpgradeWithDeps tests the testable upgrade function with mocks.
+func TestRunUpgradeWithDeps(t *testing.T) {
+	tests := []struct {
+		name         string
+		checkOnly    bool
+		checkInfo    updater.UpdateInfo
+		checkErr     error
+		upgradeInfo  updater.UpdateInfo
+		upgradeErr   error
+		expectedExit int
+	}{
+		{
+			name:      "check only with update available",
+			checkOnly: true,
+			checkInfo: updater.UpdateInfo{
+				Available:      true,
+				CurrentVersion: "1.0.0",
+				LatestVersion:  "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name:      "check only already up to date",
+			checkOnly: true,
+			checkInfo: updater.UpdateInfo{
+				Available:      false,
+				CurrentVersion: "2.0.0",
+				LatestVersion:  "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name:         "check only with error",
+			checkOnly:    true,
+			checkErr:     errors.New("network error"),
+			expectedExit: 1,
+		},
+		{
+			name:      "upgrade successful",
+			checkOnly: false,
+			upgradeInfo: updater.UpdateInfo{
+				Available:      true,
+				CurrentVersion: "1.0.0",
+				LatestVersion:  "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name:      "upgrade already up to date",
+			checkOnly: false,
+			upgradeInfo: updater.UpdateInfo{
+				Available:      false,
+				CurrentVersion: "2.0.0",
+				LatestVersion:  "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name:         "upgrade with error",
+			checkOnly:    false,
+			upgradeErr:   errors.New("download failed"),
+			expectedExit: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Save and restore OsExit
+			origExit := OsExit
+			defer func() { OsExit = origExit }()
+
+			var exitCode int
+			exitCalled := false
+			OsExit = func(code int) {
+				exitCode = code
+				exitCalled = true
+			}
+
+			// Create mock flags
+			flags := newMockFlagGetter()
+			flags.boolValues[flagCheck] = tt.checkOnly
+
+			// Create mock updater
+			mockUpd := &mockUpdaterService{
+				checkInfo:   tt.checkInfo,
+				checkErr:    tt.checkErr,
+				upgradeInfo: tt.upgradeInfo,
+				upgradeErr:  tt.upgradeErr,
+			}
+
+			// Run testable function
+			runUpgradeWithDeps(flags, mockUpd)
+
+			// Check exit code
+			if exitCalled && exitCode != tt.expectedExit {
+				t.Errorf("exit code = %d, want %d", exitCode, tt.expectedExit)
+			}
+		})
+	}
+}
+
+// TestHandleCheckOnly tests the check only handler with mock.
+func TestHandleCheckOnly(t *testing.T) {
+	tests := []struct {
+		name         string
+		info         updater.UpdateInfo
+		err          error
+		expectedExit int
+	}{
+		{
+			name: "update available",
+			info: updater.UpdateInfo{
+				Available:      true,
+				CurrentVersion: "1.0.0",
+				LatestVersion:  "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name: "already up to date",
+			info: updater.UpdateInfo{
+				Available:      false,
+				CurrentVersion: "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name:         "error checking",
+			err:          errors.New("network error"),
+			expectedExit: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			origExit := OsExit
+			defer func() { OsExit = origExit }()
+
+			var exitCode int
+			exitCalled := false
+			OsExit = func(code int) {
+				exitCode = code
+				exitCalled = true
+			}
+
+			mockUpd := &mockUpdaterService{
+				checkInfo: tt.info,
+				checkErr:  tt.err,
+			}
+
+			handleCheckOnly(mockUpd)
+
+			// Only check exit code if OsExit was called
+			if exitCalled && exitCode != tt.expectedExit {
+				t.Errorf("exit code = %d, want %d", exitCode, tt.expectedExit)
+			}
+		})
+	}
+}
+
+// TestHandleUpgrade tests the upgrade handler with mock.
+func TestHandleUpgrade(t *testing.T) {
+	tests := []struct {
+		name         string
+		info         updater.UpdateInfo
+		err          error
+		expectedExit int
+	}{
+		{
+			name: "upgrade successful",
+			info: updater.UpdateInfo{
+				Available:      true,
+				CurrentVersion: "1.0.0",
+				LatestVersion:  "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name: "already up to date",
+			info: updater.UpdateInfo{
+				Available:      false,
+				CurrentVersion: "2.0.0",
+			},
+			expectedExit: 0,
+		},
+		{
+			name:         "error upgrading",
+			err:          errors.New("download failed"),
+			expectedExit: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			origExit := OsExit
+			defer func() { OsExit = origExit }()
+
+			var exitCode int
+			exitCalled := false
+			OsExit = func(code int) {
+				exitCode = code
+				exitCalled = true
+			}
+
+			mockUpd := &mockUpdaterService{
+				upgradeInfo: tt.info,
+				upgradeErr:  tt.err,
+			}
+
+			handleUpgrade(mockUpd)
+
+			// Only check exit code if OsExit was called
+			if exitCalled && exitCode != tt.expectedExit {
+				t.Errorf("exit code = %d, want %d", exitCode, tt.expectedExit)
 			}
 		})
 	}

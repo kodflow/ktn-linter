@@ -99,7 +99,14 @@ func analyzeGenericFunc(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 // Returns:
 //   - map[string]bool: map des noms de type parameters avec contrainte "any"
 func collectAnyTypeParams(typeParams *ast.FieldList) map[string]bool {
-	result := make(map[string]bool)
+	// Retourner map vide si aucun type parameter
+	if typeParams == nil || len(typeParams.List) == 0 {
+		// Pas de parametres de type
+		return map[string]bool{}
+	}
+
+	// Initialiser la map avec capacite estimee
+	result := make(map[string]bool, len(typeParams.List))
 
 	// Parcourir les type parameters
 	for _, field := range typeParams.List {
@@ -158,8 +165,12 @@ func checkEqualityUsage(pass *analysis.Pass, funcDecl *ast.FuncDecl, anyTypePara
 		return
 	}
 
-	// Tracker les erreurs deja reportees pour eviter les doublons
-	reported := make(map[string]bool)
+	// Creer le contexte pour le checking
+	ctx := &anyTypeContext{
+		paramNames:    paramNames,
+		anyTypeParams: anyTypeParams,
+		reported:      make(map[string]bool, 1),
+	}
 
 	// Parcourir les statements pour trouver == ou !=
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
@@ -177,7 +188,7 @@ func checkEqualityUsage(pass *analysis.Pass, funcDecl *ast.FuncDecl, anyTypePara
 		}
 
 		// Verifier si un des operandes utilise un type parameter "any"
-		reportIfUsesAnyTypeParam(pass, funcDecl, binaryExpr, paramNames, anyTypeParams, reported)
+		reportIfUsesAnyTypeParam(pass, funcDecl, binaryExpr, ctx)
 
 		// Continuer le parcours
 		return true
@@ -193,7 +204,8 @@ func checkEqualityUsage(pass *analysis.Pass, funcDecl *ast.FuncDecl, anyTypePara
 // Returns:
 //   - map[string]string: map des noms de parametres vers leur type parameter
 func collectParamNamesWithAnyType(funcDecl *ast.FuncDecl, anyTypeParams map[string]bool) map[string]string {
-	result := make(map[string]string)
+	// Initialiser avec capacite estimee
+	result := make(map[string]string, len(anyTypeParams))
 
 	// Verifier la liste des parametres
 	if funcDecl.Type.Params == nil {
@@ -225,17 +237,31 @@ func collectParamNamesWithAnyType(funcDecl *ast.FuncDecl, anyTypeParams map[stri
 // Returns:
 //   - string: nom du type ou chaine vide
 func extractTypeName(expr ast.Expr) string {
+	// Determiner le type de l'expression
 	switch t := expr.(type) {
+	// Type simple
 	case *ast.Ident:
-		// Type simple
+		// Retourner le nom du type
 		return t.Name
+	// Type tableau - extraire le type element
 	case *ast.ArrayType:
-		// Type tableau - extraire le type element
+		// Recursion pour extraire le type de base
 		return extractTypeName(t.Elt)
+	// Type non supporte
 	default:
-		// Type non supporte
+		// Retourner chaine vide
 		return ""
 	}
+}
+
+// anyTypeContext holds context for any type parameter checking.
+type anyTypeContext struct {
+	// paramNames maps parameter names to their type parameter
+	paramNames map[string]string
+	// anyTypeParams maps type parameters with "any" constraint
+	anyTypeParams map[string]bool
+	// reported tracks already reported errors
+	reported map[string]bool
 }
 
 // reportIfUsesAnyTypeParam reporte une erreur si un operande utilise un type "any".
@@ -244,21 +270,17 @@ func extractTypeName(expr ast.Expr) string {
 //   - pass: contexte d'analyse
 //   - funcDecl: declaration de fonction
 //   - binaryExpr: expression binaire
-//   - paramNames: map des noms de parametres vers leur type parameter
-//   - anyTypeParams: map des type parameters avec contrainte "any"
-//   - reported: map des erreurs deja reportees
+//   - ctx: context for any type checking
 func reportIfUsesAnyTypeParam(
 	pass *analysis.Pass,
 	funcDecl *ast.FuncDecl,
 	binaryExpr *ast.BinaryExpr,
-	paramNames map[string]string,
-	anyTypeParams map[string]bool,
-	reported map[string]bool,
+	ctx *anyTypeContext,
 ) {
 	// Verifier l'operande gauche
-	leftUses := checkOperandUsesAnyType(binaryExpr.X, paramNames, anyTypeParams)
+	leftUses := checkOperandUsesAnyType(binaryExpr.X, ctx.paramNames, ctx.anyTypeParams)
 	// Verifier l'operande droit
-	rightUses := checkOperandUsesAnyType(binaryExpr.Y, paramNames, anyTypeParams)
+	rightUses := checkOperandUsesAnyType(binaryExpr.Y, ctx.paramNames, ctx.anyTypeParams)
 
 	// Si aucun operande n'utilise un type "any"
 	if !leftUses && !rightUses {
@@ -269,13 +291,13 @@ func reportIfUsesAnyTypeParam(
 	// Creer la cle de deduplication
 	funcName := funcDecl.Name.Name
 	// Verifier si deja reporte
-	if reported[funcName] {
+	if ctx.reported[funcName] {
 		// Deja reporte
 		return
 	}
 
 	// Marquer comme reporte
-	reported[funcName] = true
+	ctx.reported[funcName] = true
 
 	// Reporter l'erreur
 	cfg := config.Get()
@@ -298,17 +320,20 @@ func reportIfUsesAnyTypeParam(
 // Returns:
 //   - bool: true si l'operande utilise un type "any"
 func checkOperandUsesAnyType(expr ast.Expr, paramNames map[string]string, anyTypeParams map[string]bool) bool {
-	switch e := expr.(type) {
+	// Analyser le type d'expression
+	switch typedExpr := expr.(type) {
+	// Verifier si c'est un parametre avec type "any"
 	case *ast.Ident:
-		// Verifier si c'est un parametre avec type "any"
-		_, usesAny := paramNames[e.Name]
+		_, usesAny := paramNames[typedExpr.Name]
 		// Retour du resultat
 		return usesAny
+	// Expression d'indexation (ex: s[i])
 	case *ast.IndexExpr:
-		// Expression d'indexation (ex: s[i])
-		return checkOperandUsesAnyType(e.X, paramNames, anyTypeParams)
+		// Recursion sur l'expression indexee
+		return checkOperandUsesAnyType(typedExpr.X, paramNames, anyTypeParams)
+	// Type non supporte
 	default:
-		// Type non supporte
+		// Pas d'utilisation de type any
 		return false
 	}
 }

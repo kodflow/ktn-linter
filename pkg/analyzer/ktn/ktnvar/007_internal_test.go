@@ -12,6 +12,575 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Test_runVar007 tests the runVar007 function.
+func Test_runVar007(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        string
+		ruleEnabled bool
+		expectCount int
+	}{
+		{
+			name:        "enabled with violation",
+			code:        `package test; func f() { var x = 1; _ = x }`,
+			ruleEnabled: true,
+			expectCount: 1,
+		},
+		{
+			name:        "enabled without violation",
+			code:        `package test; func f() { x := 1; _ = x }`,
+			ruleEnabled: true,
+			expectCount: 0,
+		},
+		{
+			name:        "disabled",
+			code:        `package test; func f() { var x = 1; _ = x }`,
+			ruleEnabled: false,
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ruleEnabled {
+				config.Reset()
+			} else {
+				config.Set(&config.Config{
+					Rules: map[string]*config.RuleConfig{
+						"KTN-VAR-007": {Enabled: config.Bool(false)},
+					},
+				})
+			}
+			defer config.Reset()
+
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "test.go", tt.code, 0)
+			if err != nil {
+				t.Fatalf("failed to parse: %v", err)
+			}
+
+			insp := inspector.New([]*ast.File{file})
+			reportCount := 0
+
+			pass := &analysis.Pass{
+				Fset:     fset,
+				ResultOf: map[*analysis.Analyzer]any{inspect.Analyzer: insp},
+				Report:   func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			_, _ = runVar007(pass)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("runVar007() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkFunctionBody tests the checkFunctionBody function.
+func Test_checkFunctionBody(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmts       []ast.Stmt
+		expectCount int
+	}{
+		{
+			name:        "empty body",
+			stmts:       []ast.Stmt{},
+			expectCount: 0,
+		},
+		{
+			name: "var with init",
+			stmts: []ast.Stmt{
+				&ast.DeclStmt{Decl: &ast.GenDecl{
+					Tok: token.VAR,
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
+						},
+					},
+				}},
+			},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			body := &ast.BlockStmt{List: tt.stmts}
+			checkFunctionBody(pass, body)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkFunctionBody() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkStatement tests the checkStatement function.
+func Test_checkStatement(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        ast.Stmt
+		expectCount int
+	}{
+		{
+			name:        "empty statement",
+			stmt:        &ast.EmptyStmt{},
+			expectCount: 0,
+		},
+		{
+			name:        "non decl statement",
+			stmt:        &ast.ReturnStmt{},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkStatement(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkStatement() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkNestedBlocks tests the checkNestedBlocks function.
+func Test_checkNestedBlocks(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        ast.Stmt
+		expectCount int
+	}{
+		{
+			name:        "if statement",
+			stmt:        &ast.IfStmt{Body: &ast.BlockStmt{}},
+			expectCount: 0,
+		},
+		{
+			name:        "for statement",
+			stmt:        &ast.ForStmt{Body: &ast.BlockStmt{}},
+			expectCount: 0,
+		},
+		{
+			name:        "select statement",
+			stmt:        &ast.SelectStmt{Body: &ast.BlockStmt{}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkNestedBlocks(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkNestedBlocks() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkControlFlowStmt tests the checkControlFlowStmt function.
+func Test_checkControlFlowStmt(t *testing.T) {
+	tests := []struct {
+		name     string
+		stmt     ast.Stmt
+		expected bool
+	}{
+		{
+			name:     "if statement",
+			stmt:     &ast.IfStmt{Body: &ast.BlockStmt{}},
+			expected: true,
+		},
+		{
+			name:     "for statement",
+			stmt:     &ast.ForStmt{Body: &ast.BlockStmt{}},
+			expected: true,
+		},
+		{
+			name:     "range statement",
+			stmt:     &ast.RangeStmt{Body: &ast.BlockStmt{}},
+			expected: true,
+		},
+		{
+			name:     "switch statement",
+			stmt:     &ast.SwitchStmt{Body: &ast.BlockStmt{}},
+			expected: true,
+		},
+		{
+			name:     "type switch statement",
+			stmt:     &ast.TypeSwitchStmt{Body: &ast.BlockStmt{}},
+			expected: true,
+		},
+		{
+			name:     "return statement",
+			stmt:     &ast.ReturnStmt{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) {},
+			}
+
+			result := checkControlFlowStmt(pass, tt.stmt)
+
+			if result != tt.expected {
+				t.Errorf("checkControlFlowStmt() = %v, expected %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// Test_checkBlockRelatedStmt tests the checkBlockRelatedStmt function.
+func Test_checkBlockRelatedStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        ast.Stmt
+		expectCount int
+	}{
+		{
+			name:        "select statement",
+			stmt:        &ast.SelectStmt{Body: &ast.BlockStmt{}},
+			expectCount: 0,
+		},
+		{
+			name:        "block statement",
+			stmt:        &ast.BlockStmt{List: []ast.Stmt{}},
+			expectCount: 0,
+		},
+		{
+			name:        "case clause",
+			stmt:        &ast.CaseClause{Body: []ast.Stmt{}},
+			expectCount: 0,
+		},
+		{
+			name:        "comm clause",
+			stmt:        &ast.CommClause{Body: []ast.Stmt{}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkBlockRelatedStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkBlockRelatedStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkIfStmt tests the checkIfStmt function.
+func Test_checkIfStmt(t *testing.T) {
+	tests := []struct {
+		name        string
+		stmt        *ast.IfStmt
+		expectCount int
+	}{
+		{
+			name:        "nil body",
+			stmt:        &ast.IfStmt{Body: nil, Else: nil},
+			expectCount: 0,
+		},
+		{
+			name:        "with body",
+			stmt:        &ast.IfStmt{Body: &ast.BlockStmt{}, Else: nil},
+			expectCount: 0,
+		},
+		{
+			name:        "with else",
+			stmt:        &ast.IfStmt{Body: &ast.BlockStmt{}, Else: &ast.BlockStmt{}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkIfStmt(pass, tt.stmt)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkIfStmt() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkBlockIfNotNil tests the checkBlockIfNotNil function.
+func Test_checkBlockIfNotNil(t *testing.T) {
+	tests := []struct {
+		name        string
+		block       *ast.BlockStmt
+		expectCount int
+	}{
+		{
+			name:        "nil block",
+			block:       nil,
+			expectCount: 0,
+		},
+		{
+			name:        "empty block",
+			block:       &ast.BlockStmt{List: []ast.Stmt{}},
+			expectCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkBlockIfNotNil(pass, tt.block)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkBlockIfNotNil() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkCaseClause tests the checkCaseClause function.
+func Test_checkCaseClause(t *testing.T) {
+	tests := []struct {
+		name        string
+		clause      *ast.CaseClause
+		expectCount int
+	}{
+		{
+			name:        "empty clause",
+			clause:      &ast.CaseClause{Body: []ast.Stmt{}},
+			expectCount: 0,
+		},
+		{
+			name: "with var decl",
+			clause: &ast.CaseClause{Body: []ast.Stmt{
+				&ast.DeclStmt{Decl: &ast.GenDecl{
+					Tok: token.VAR,
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
+						},
+					},
+				}},
+			}},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkCaseClause(pass, tt.clause)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkCaseClause() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkCommClause tests the checkCommClause function.
+func Test_checkCommClause(t *testing.T) {
+	tests := []struct {
+		name        string
+		clause      *ast.CommClause
+		expectCount int
+	}{
+		{
+			name:        "empty clause",
+			clause:      &ast.CommClause{Body: []ast.Stmt{}},
+			expectCount: 0,
+		},
+		{
+			name: "with var decl",
+			clause: &ast.CommClause{Body: []ast.Stmt{
+				&ast.DeclStmt{Decl: &ast.GenDecl{
+					Tok: token.VAR,
+					Specs: []ast.Spec{
+						&ast.ValueSpec{
+							Names:  []*ast.Ident{{Name: "x"}},
+							Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
+						},
+					},
+				}},
+			}},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkCommClause(pass, tt.clause)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkCommClause() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_checkVarSpecs tests the checkVarSpecs function.
+func Test_checkVarSpecs(t *testing.T) {
+	tests := []struct {
+		name        string
+		genDecl     *ast.GenDecl
+		expectCount int
+	}{
+		{
+			name: "no init",
+			genDecl: &ast.GenDecl{
+				Tok: token.VAR,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{{Name: "x"}},
+						Type:  &ast.Ident{Name: "int"},
+					},
+				},
+			},
+			expectCount: 0,
+		},
+		{
+			name: "with init",
+			genDecl: &ast.GenDecl{
+				Tok: token.VAR,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names:  []*ast.Ident{{Name: "x"}},
+						Values: []ast.Expr{&ast.BasicLit{Value: "1"}},
+					},
+				},
+			},
+			expectCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			checkVarSpecs(pass, tt.genDecl)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("checkVarSpecs() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
+// Test_reportVarErrors tests the reportVarErrors function.
+func Test_reportVarErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		spec        *ast.ValueSpec
+		expectCount int
+	}{
+		{
+			name:        "single name",
+			spec:        &ast.ValueSpec{Names: []*ast.Ident{{Name: "x"}}},
+			expectCount: 1,
+		},
+		{
+			name:        "multiple names",
+			spec:        &ast.ValueSpec{Names: []*ast.Ident{{Name: "x"}, {Name: "y"}}},
+			expectCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			config.Reset()
+			reportCount := 0
+			pass := &analysis.Pass{
+				Fset:   token.NewFileSet(),
+				Report: func(_ analysis.Diagnostic) { reportCount++ },
+			}
+
+			reportVarErrors(pass, tt.spec)
+
+			if reportCount != tt.expectCount {
+				t.Errorf("reportVarErrors() reported %d issues, expected %d", reportCount, tt.expectCount)
+			}
+		})
+	}
+}
+
 // Test_hasInitWithoutType tests the hasInitWithoutType helper function.
 func Test_hasInitWithoutType(t *testing.T) {
 	tests := []struct {
@@ -49,6 +618,7 @@ func Test_hasInitWithoutType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			result := hasInitWithoutType(tt.spec)
 			// Check result

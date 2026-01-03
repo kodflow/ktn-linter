@@ -14,43 +14,43 @@ import (
 //   - string: la représentation textuelle (gère identifiants, sélecteurs, tableaux, maps, pointeurs, etc.)
 func GetExprAsString(expr ast.Expr) string {
 	// Sélection selon la valeur
-	switch e := expr.(type) {
+	switch exprType := expr.(type) {
 	// Traitement
 	case *ast.Ident:
 		// Early return from function.
-		return e.Name
+		return exprType.Name
 	// Traitement
 	case *ast.SelectorExpr:
 		// Early return from function.
-		return GetExprAsString(e.X) + "." + e.Sel.Name
+		return GetExprAsString(exprType.X) + "." + exprType.Sel.Name
 	// Traitement
 	case *ast.ArrayType:
 		// Early return from function.
-		return "[]" + GetExprAsString(e.Elt)
+		return "[]" + GetExprAsString(exprType.Elt)
 	// Traitement
 	case *ast.MapType:
 		// Early return from function.
-		return "map[" + GetExprAsString(e.Key) + "]" + GetExprAsString(e.Value)
+		return "map[" + GetExprAsString(exprType.Key) + "]" + GetExprAsString(exprType.Value)
 	// Traitement
 	case *ast.StarExpr:
 		// Early return from function.
-		return "*" + GetExprAsString(e.X)
+		return "*" + GetExprAsString(exprType.X)
 	// Traitement
 	case *ast.ChanType:
 		// Sélection selon la valeur
-		switch e.Dir {
+		switch exprType.Dir {
 		// Traitement
 		case ast.SEND:
 			// Early return from function.
-			return "chan<- " + GetExprAsString(e.Value)
+			return "chan<- " + GetExprAsString(exprType.Value)
 		// Traitement
 		case ast.RECV:
 			// Early return from function.
-			return "<-chan " + GetExprAsString(e.Value)
+			return "<-chan " + GetExprAsString(exprType.Value)
 		// Traitement
 		default:
 			// Early return from function.
-			return "chan " + GetExprAsString(e.Value)
+			return "chan " + GetExprAsString(exprType.Value)
 		}
 	// Traitement
 	default:

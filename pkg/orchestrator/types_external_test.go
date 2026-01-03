@@ -9,6 +9,49 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// TestNewDiagnosticResult tests the NewDiagnosticResult function.
+func TestNewDiagnosticResult(t *testing.T) {
+	tests := []struct {
+		name         string
+		analyzerName string
+		message      string
+	}{
+		{
+			name:         "create diagnostic result",
+			analyzerName: "testanalyzer",
+			message:      "test message",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // Capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			f := fset.AddFile("test.go", -1, 100)
+
+			diag := analysis.Diagnostic{
+				Pos:     f.Pos(10),
+				Message: tt.message,
+			}
+
+			result := orchestrator.NewDiagnosticResult(diag, fset, tt.analyzerName)
+
+			// Verify fields
+			if result.AnalyzerName != tt.analyzerName {
+				t.Errorf("expected analyzer name %s, got %s", tt.analyzerName, result.AnalyzerName)
+			}
+			// Verify diagnostic
+			if result.Diag.Message != tt.message {
+				t.Errorf("expected message %s, got %s", tt.message, result.Diag.Message)
+			}
+			// Verify fset
+			if result.Fset != fset {
+				t.Error("expected fset to be set")
+			}
+		})
+	}
+}
+
 // TestDiagnosticResult_Position tests the Position method.
 func TestDiagnosticResult_Position(t *testing.T) {
 	tests := []struct {
