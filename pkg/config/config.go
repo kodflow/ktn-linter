@@ -34,6 +34,10 @@ type Config struct {
 	// Set to true to run all rules on test files (useful for debugging).
 	ForceAllRulesOnTests bool `yaml:"force_all_rules_on_tests,omitempty"`
 
+	// SerializationTags defines recognized serialization tags for KTN-STRUCT-007.
+	// Default: json, xml, yaml, toml, tlv, protobuf, flatbuffer
+	SerializationTags []string `yaml:"serialization_tags,omitempty"`
+
 	// Verbose enables verbose message output with examples
 	Verbose bool `yaml:"-"`
 
@@ -178,6 +182,39 @@ func (c *Config) GetThreshold(ruleCode string, defaultValue int) int {
 
 	// Return configured threshold
 	return *ruleCfg.Threshold
+}
+
+// defaultSerializationTags contains the default serialization tag prefixes.
+var defaultSerializationTags = []string{
+	"json:",
+	"xml:",
+	"yaml:",
+	"toml:",
+	"tlv:",
+	"protobuf:",
+	"flatbuffer:",
+}
+
+// GetSerializationTags returns the configured serialization tags or defaults.
+//
+// Returns:
+//   - []string: list of serialization tag prefixes (e.g., "json:", "xml:")
+func (c *Config) GetSerializationTags() []string {
+	if c == nil || len(c.SerializationTags) == 0 {
+		return defaultSerializationTags
+	}
+
+	// Add ":" suffix to each tag if not present
+	tags := make([]string, len(c.SerializationTags))
+	for i, tag := range c.SerializationTags {
+		if strings.HasSuffix(tag, ":") {
+			tags[i] = tag
+		} else {
+			tags[i] = tag + ":"
+		}
+	}
+
+	return tags
 }
 
 // IsFileExcluded checks if a file should be excluded for a specific rule.

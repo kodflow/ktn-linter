@@ -133,7 +133,7 @@ EXEMPLE CORRECT (garder privé):
 
 	Register(Message{
 		Code:  "KTN-STRUCT-007",
-		Short: "champ exporté '%s' sans tag json/xml dans struct DTO",
+		Short: "champ exporté '%s' sans tag de sérialisation dans struct DTO",
 		Verbose: `PROBLÈME: Le champ exporté '%s' n'a pas de tag de sérialisation.
 
 POURQUOI: Les structs DTO doivent avoir des tags explicites:

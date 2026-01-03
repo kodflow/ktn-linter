@@ -74,18 +74,25 @@ func analyzeTypeSpec007(pass *analysis.Pass, cfg *config.Config, n ast.Node) {
 		return
 	}
 
-	checkExportedFieldsWithoutTags(pass, structType)
+	checkExportedFieldsWithoutTags(pass, cfg, structType)
 }
 
 // checkExportedFieldsWithoutTags vérifie les champs exportés sans tags.
 //
 // Params:
 //   - pass: contexte d'analyse
+//   - cfg: configuration
 //   - structType: type de la struct
-func checkExportedFieldsWithoutTags(pass *analysis.Pass, structType *ast.StructType) {
+func checkExportedFieldsWithoutTags(
+	pass *analysis.Pass,
+	cfg *config.Config,
+	structType *ast.StructType,
+) {
 	if structType.Fields == nil {
 		return
 	}
+
+	tags := cfg.GetSerializationTags()
 
 	for _, field := range structType.Fields.List {
 		for _, name := range field.Names {
@@ -93,13 +100,13 @@ func checkExportedFieldsWithoutTags(pass *analysis.Pass, structType *ast.StructT
 				continue
 			}
 
-			if !hasSerializationTag(field) {
+			if !hasSerializationTag(field, tags) {
 				msg, _ := messages.Get(ruleCodeStruct007)
 				pass.Reportf(
 					field.Pos(),
 					"%s: %s",
 					ruleCodeStruct007,
-					msg.Format(config.Get().Verbose, name.Name),
+					msg.Format(cfg.Verbose, name.Name),
 				)
 			}
 		}
@@ -125,15 +132,22 @@ func isExportedField(name string) bool {
 //
 // Params:
 //   - field: champ à vérifier
+//   - tags: liste des tags de sérialisation reconnus
 //
 // Returns:
-//   - bool: true si le champ a un tag json ou xml
-func hasSerializationTag(field *ast.Field) bool {
+//   - bool: true si le champ a un tag de sérialisation reconnu
+func hasSerializationTag(field *ast.Field, tags []string) bool {
 	if field.Tag == nil || field.Tag.Value == "" {
 		return false
 	}
 
 	tagValue := field.Tag.Value
 
-	return strings.Contains(tagValue, "json:") || strings.Contains(tagValue, "xml:")
+	for _, tag := range tags {
+		if strings.Contains(tagValue, tag) {
+			return true
+		}
+	}
+
+	return false
 }
