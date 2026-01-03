@@ -161,21 +161,9 @@ func (d *ModuleDiscovery) createWalkCallback(modules *[]string) fs.WalkDirFunc {
 			return nil
 		}
 
-		// Skip hidden directories
-		if entry.IsDir() && strings.HasPrefix(entry.Name(), ".") {
-			// Skip hidden directory
-			return filepath.SkipDir
-		}
-
-		// Skip vendor directories
-		if entry.IsDir() && entry.Name() == "vendor" {
-			// Skip vendor directory
-			return filepath.SkipDir
-		}
-
-		// Skip testdata directories (not part of Go package hierarchy)
-		if entry.IsDir() && entry.Name() == "testdata" {
-			// Skip testdata directory
+		// Check if directory should be skipped
+		if shouldSkipDirectory(entry) {
+			// Skip this directory
 			return filepath.SkipDir
 		}
 
@@ -187,6 +175,30 @@ func (d *ModuleDiscovery) createWalkCallback(modules *[]string) fs.WalkDirFunc {
 		// Continue walking - success indicated by nil error
 		return nil
 	}
+}
+
+// shouldSkipDirectory checks if a directory entry should be skipped during walk.
+//
+// Params:
+//   - entry: directory entry to check
+//
+// Returns:
+//   - bool: true if directory should be skipped
+func shouldSkipDirectory(entry os.DirEntry) bool {
+	// Only check directories
+	if !entry.IsDir() {
+		return false
+	}
+
+	name := entry.Name()
+
+	// Skip hidden directories (start with dot)
+	if strings.HasPrefix(name, ".") {
+		return true
+	}
+
+	// Skip vendor and testdata directories
+	return name == "vendor" || name == "testdata"
 }
 
 // ResolvePatterns resolves patterns for a module.

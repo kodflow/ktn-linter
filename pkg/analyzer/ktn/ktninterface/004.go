@@ -133,63 +133,97 @@ func checkFuncReturns(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 // Returns:
 //   - bool: true si c'est une fonction analysis.Analyzer.Run
 func isAnalyzerRunFunction(funcDecl *ast.FuncDecl) bool {
-	// Vérifier le nombre de paramètres (1 seul: *analysis.Pass)
+	// Vérifier le paramètre unique *analysis.Pass
+	if !hasAnalysisPassParam(funcDecl) {
+		// Pas le bon paramètre
+		return false
+	}
+
+	// Vérifier les retours (any, error)
+	return hasAnyErrorReturns(funcDecl)
+}
+
+// hasAnalysisPassParam vérifie si la fonction a un unique paramètre *analysis.Pass.
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - bool: true si le paramètre est *analysis.Pass
+func hasAnalysisPassParam(funcDecl *ast.FuncDecl) bool {
+	// Vérifier le nombre de paramètres (1 seul)
 	if funcDecl.Type.Params == nil || len(funcDecl.Type.Params.List) != 1 {
 		// Pas le bon nombre de paramètres
 		return false
 	}
 
-	// Vérifier le type du paramètre (doit être *analysis.Pass)
-	param := funcDecl.Type.Params.List[0]
-	starExpr, ok := param.Type.(*ast.StarExpr)
-	// Type non pointeur - pas une fonction analyzer.Run
+	// Vérifier le type du paramètre
+	return isAnalysisPassType(funcDecl.Type.Params.List[0].Type)
+}
+
+// isAnalysisPassType vérifie si le type est *analysis.Pass.
+//
+// Params:
+//   - expr: expression de type
+//
+// Returns:
+//   - bool: true si c'est *analysis.Pass
+func isAnalysisPassType(expr ast.Expr) bool {
+	// Vérifier si c'est un pointeur
+	starExpr, ok := expr.(*ast.StarExpr)
+	// Type non pointeur
 	if !ok {
-		// Pas un pointeur
 		return false
 	}
 
-	// Vérifier si c'est analysis.Pass
+	// Vérifier si c'est un selector (package.Type)
 	selExpr, ok := starExpr.X.(*ast.SelectorExpr)
-	// Type non qualifié - pas une fonction analyzer.Run
+	// Type non qualifié
 	if !ok {
-		// Pas un selector (package.Type)
 		return false
 	}
 
-	// Vérifier le nom du package et du type
+	// Vérifier package et type
 	pkgIdent, ok := selExpr.X.(*ast.Ident)
-	// Package ou type incorrect - pas analysis.Pass
-	if !ok || pkgIdent.Name != "analysis" || selExpr.Sel.Name != "Pass" {
-		// Pas analysis.Pass
-		return false
-	}
+	// Retourne true si c'est analysis.Pass
+	return ok && pkgIdent.Name == "analysis" && selExpr.Sel.Name == "Pass"
+}
 
+// hasAnyErrorReturns vérifie si la fonction retourne (any, error).
+//
+// Params:
+//   - funcDecl: déclaration de fonction
+//
+// Returns:
+//   - bool: true si les retours sont (any, error)
+func hasAnyErrorReturns(funcDecl *ast.FuncDecl) bool {
 	// Vérifier le nombre de retours (2: any, error)
-	// Nombre de retours incorrect - pas une fonction analyzer.Run
 	if funcDecl.Type.Results == nil || len(funcDecl.Type.Results.List) != expectedAnalyzerRunReturnCount {
 		// Pas le bon nombre de retours
 		return false
 	}
 
 	// Vérifier le premier retour (any ou interface{})
-	firstReturn := funcDecl.Type.Results.List[0]
-	// Premier retour non compatible - pas any/interface{}
-	if !isEmptyInterface(firstReturn.Type) {
+	if !isEmptyInterface(funcDecl.Type.Results.List[0].Type) {
 		// Premier retour n'est pas any/interface{}
 		return false
 	}
 
 	// Vérifier le second retour (error)
-	secondReturn := funcDecl.Type.Results.List[1]
-	ident, ok := secondReturn.Type.(*ast.Ident)
-	// Second retour invalide - pas le type error
-	if !ok || ident.Name != "error" {
-		// Second retour n'est pas error
-		return false
-	}
+	return isErrorType(funcDecl.Type.Results.List[1].Type)
+}
 
-	// Signature analysis.Analyzer.Run confirmée
-	return true
+// isErrorType vérifie si le type est error.
+//
+// Params:
+//   - expr: expression de type
+//
+// Returns:
+//   - bool: true si c'est error
+func isErrorType(expr ast.Expr) bool {
+	ident, ok := expr.(*ast.Ident)
+	// Retourne true si c'est le type error
+	return ok && ident.Name == "error"
 }
 
 // isEmptyInterface vérifie si un type est interface{} ou any.

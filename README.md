@@ -282,6 +282,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-TEST-013](docs/rules/KTN-TEST-013.md) | INFO | Coverage cas d'erreur |
 
 ### Interfaces (3 règles) - WARNING/INFO
+
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-INTERFACE-001](docs/rules/KTN-INTERFACE-001.md) | WARNING | Interface non utilisée |
