@@ -1,5 +1,5 @@
-// Package return001 contains test cases for KTN rules.
-package return002
+// Package func013 contains test cases for KTN rules.
+package func013
 
 // badReturnNilSlice returns nil for a slice type.
 //
@@ -7,7 +7,7 @@ package return002
 //   - []string: slice of strings
 func badReturnNilSlice() []string {
 	// Retourne nil au lieu d'un slice vide
-	return nil // want "KTN-RETURN-002"
+	return nil // want "KTN-FUNC-013"
 }
 
 // badReturnNilMap returns nil for a map type.
@@ -16,7 +16,7 @@ func badReturnNilSlice() []string {
 //   - map[string]int: map of strings to integers
 func badReturnNilMap() map[string]int {
 	// Retourne nil au lieu d'une map vide
-	return nil // want "KTN-RETURN-002"
+	return nil // want "KTN-FUNC-013"
 }
 
 // badReturnNilSliceConditional returns nil conditionally.
@@ -30,7 +30,7 @@ func badReturnNilSliceConditional(x int) []int {
 	// Vérifie si x est positif
 	if x > 0 {
 		// Retourne nil au lieu d'un slice vide
-		return nil // want "KTN-RETURN-002"
+		return nil // want "KTN-FUNC-013"
 	}
 	// Retourne un slice avec x
 	return []int{x}
@@ -47,7 +47,7 @@ func badReturnNilMapConditional(key string) map[string]string {
 	// Vérifie si la clé est vide
 	if key == "" {
 		// Retourne nil au lieu d'une map vide
-		return nil // want "KTN-RETURN-002"
+		return nil // want "KTN-FUNC-013"
 	}
 	// Retourne une map avec la clé
 	return map[string]string{key: "value"}
@@ -64,10 +64,10 @@ func badMultipleReturnsWithNil(_flag bool) []byte {
 	// Vérifie le flag
 	if _flag {
 		// Retourne nil au lieu d'un slice vide
-		return nil // want "KTN-RETURN-002"
+		return nil // want "KTN-FUNC-013"
 	}
 	// Retourne nil au lieu d'un slice vide
-	return nil // want "KTN-RETURN-002"
+	return nil // want "KTN-FUNC-013"
 }
 
 // init utilise les fonctions privées

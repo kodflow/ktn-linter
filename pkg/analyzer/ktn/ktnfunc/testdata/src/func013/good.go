@@ -1,5 +1,5 @@
-// Package return001 provides good test cases.
-package return001
+// Package func013 provides good test cases.
+package func013
 
 const (
 	// defaultMapCapacity capacité par défaut des maps

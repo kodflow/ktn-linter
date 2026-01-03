@@ -6,19 +6,18 @@ Central registry aggregating all KTN rule categories. Provides:
 - `GetRulesByCategory(cat)` - Filter by category
 - `GetRuleByCode(code)` - Single rule lookup
 
-## Categories (11 total)
+## Categories (10 total)
 | Package | Prefix | Count | Focus |
 |---------|--------|-------|-------|
-| ktnfunc | KTN-FUNC | 12 | Function length, params, docs |
+| ktnfunc | KTN-FUNC | 13 | Function length, params, docs, nil returns |
 | ktnvar | KTN-VAR | 36 | Variable naming, patterns, modern idioms |
 | ktnstruct | KTN-STRUCT | 6 | Struct fields, embedding |
 | ktnconst | KTN-CONST | 6 | Explicit types, grouping, naming |
-| ktngeneric | KTN-GENERIC | 1 | Generic type constraints |
+| ktngeneric | KTN-GENERIC | 5 | Generic type constraints |
 | ktncomment | KTN-COMMENT | 7 | Comment format, placement |
 | ktntest | KTN-TEST | 11 | Test naming, file conventions |
 | ktnapi | KTN-API | 1 | API field access patterns |
 | ktninterface | KTN-INTERFACE | 1 | Interface size limits |
-| ktnreturn | KTN-RETURN | 1 | Naked return detection |
 | testhelper | - | 0 | Test utilities (not rules) |
 
 ## Registry Pattern

@@ -141,5 +141,4 @@ func init() {
 	registerTestMessages()
 	registerVarMessages()
 	registerInterfaceMessages()
-	registerReturnMessages()
 }

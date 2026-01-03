@@ -229,7 +229,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | KTN-VAR-036 | INFO | slices.Index au lieu de boucle (Go 1.21+) |
 | KTN-VAR-037 | INFO | maps.Keys/Values iterateurs (Go 1.23+) |
 
-### Fonctions (12 règles) - ERROR/WARNING/INFO
+### Fonctions (13 règles) - ERROR/WARNING/INFO
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-FUNC-001](docs/rules/KTN-FUNC-001.md) | ERROR | Erreur toujours en dernière position retour |
@@ -244,6 +244,7 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | [KTN-FUNC-010](docs/rules/KTN-FUNC-010.md) | INFO | Pas de naked returns (sauf <5 lignes) |
 | [KTN-FUNC-011](docs/rules/KTN-FUNC-011.md) | INFO | Complexité cyclomatique max 10 |
 | [KTN-FUNC-012](docs/rules/KTN-FUNC-012.md) | INFO | Named returns pour >3 valeurs de retour |
+| KTN-FUNC-013 | WARNING | Préférer slice/map vide à nil |
 
 ### Structures (6 règles) - WARNING/INFO
 | Code | Sévérité | Description |
@@ -281,11 +282,6 @@ make lint-testdata  # Vérifie détection sur testdata (784 erreurs)
 | Code | Sévérité | Description |
 |------|----------|-------------|
 | [KTN-INTERFACE-001](docs/rules/KTN-INTERFACE-001.md) | WARNING | Interface non utilisée |
-
-### Retours (1 règle) - WARNING
-| Code | Sévérité | Description |
-|------|----------|-------------|
-| [KTN-RETURN-001](docs/rules/KTN-RETURN-001.md) | WARNING | Préférer slice/map vide à nil |
 
 ### API (1 règle) - WARNING
 | Code | Sévérité | Description |
@@ -345,7 +341,7 @@ Suite officielle d'analyseurs Go pour moderniser le code avec les dernières fon
 - **Couverture globale**: 96.3%
 - **Packages 100%**: utils, formatter, ktn, ktnconst, ktngeneric, ktninterface, modernize, severity
 - **Go version**: 1.25+
-- **Total règles KTN**: 80 (7 comment + 6 const + 36 var + 12 func + 6 struct + 6 generic + 11 test + 1 interface + 1 return + 1 api)
+- **Total règles KTN**: 80 (7 comment + 6 const + 36 var + 13 func + 6 struct + 5 generic + 11 test + 1 interface + 1 api)
 - **Total modernize**: 17 analyseurs actifs / 18 totaux
 - **Rapport détaillé**: Voir [COVERAGE.MD](COVERAGE.MD)
 
