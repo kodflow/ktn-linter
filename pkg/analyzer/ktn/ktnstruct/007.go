@@ -3,7 +3,8 @@ package ktnstruct
 
 import (
 	"go/ast"
-	"strings"
+	"reflect"
+	"strconv"
 	"unicode"
 
 	"github.com/kodflow/ktn-linter/pkg/analyzer/shared"
@@ -151,7 +152,7 @@ func isExportedField(name string) bool {
 //
 // Params:
 //   - field: champ à vérifier
-//   - tags: liste des tags de sérialisation reconnus
+//   - tags: liste des tags de sérialisation reconnus (avec ou sans ":")
 //
 // Returns:
 //   - bool: true si le champ a un tag de sérialisation reconnu
@@ -162,17 +163,44 @@ func hasSerializationTag(field *ast.Field, tags []string) bool {
 		return false
 	}
 
-	tagValue := field.Tag.Value
+	// Unquote le tag (enlève les backticks ou quotes)
+	unquoted, err := strconv.Unquote(field.Tag.Value)
+	// Tag invalide traité comme absent
+	if err != nil {
+		return false
+	}
+
+	// Parser le tag avec reflect.StructTag
+	st := reflect.StructTag(unquoted)
 
 	// Parcourir les tags de sérialisation reconnus
 	for _, tag := range tags {
-		// Vérifier si le tag contient un tag de sérialisation
-		if strings.Contains(tagValue, tag) {
-			// Tag trouvé
+		// Enlever le ":" si présent (config peut avoir "json:" ou "json")
+		tagKey := trimTagColon(tag)
+
+		// Lookup exact du tag (pas de substring matching)
+		if v, ok := st.Lookup(tagKey); ok && v != "" && v != "-" {
+			// Tag trouvé avec valeur valide
 			return true
 		}
 	}
 
 	// Aucun tag de sérialisation trouvé
 	return false
+}
+
+// trimTagColon enlève le ":" final d'un nom de tag.
+//
+// Params:
+//   - tag: nom du tag (ex: "json:" ou "json")
+//
+// Returns:
+//   - string: nom du tag sans le ":" final
+func trimTagColon(tag string) string {
+	// Enlever le ":" final si présent
+	if len(tag) > 0 && tag[len(tag)-1] == ':' {
+		return tag[:len(tag)-1]
+	}
+	// Retourner tel quel
+	return tag
 }

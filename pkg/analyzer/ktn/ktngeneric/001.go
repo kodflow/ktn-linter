@@ -99,6 +99,11 @@ func analyzeGenericFunc(pass *analysis.Pass, funcDecl *ast.FuncDecl) {
 // Returns:
 //   - map[string]bool: map des noms de type parameters avec contrainte "any"
 func collectAnyTypeParams(typeParams *ast.FieldList) map[string]bool {
+	// Retourner map vide si aucun type parameter
+	if typeParams == nil || len(typeParams.List) == 0 {
+		return map[string]bool{}
+	}
+
 	// Initialiser la map avec capacite estimee
 	result := make(map[string]bool, len(typeParams.List))
 

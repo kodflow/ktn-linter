@@ -286,6 +286,11 @@ func mergeStringMaps(m1, m2 map[string]string) map[string]string {
 	// Cloner m1 comme base
 	result := maps.Clone(m1)
 
+	// maps.Copy panic si result est nil
+	if result == nil {
+		result = make(map[string]string)
+	}
+
 	// Ajouter m2 au resultat
 	maps.Copy(result, m2)
 
